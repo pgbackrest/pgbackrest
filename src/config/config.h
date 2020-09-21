@@ -95,6 +95,19 @@ bool cfgParameterAllowed(void);
 const StringList *cfgCommandParam(void);
 
 /***********************************************************************************************************************************
+Option Group Functions
+***********************************************************************************************************************************/
+// Are any options in the group with the specified index valid and set?
+bool cfgOptionGroupIndexTest(ConfigOptionGroup groupId, unsigned int index);
+
+// Total indexed groups, 0 if the group is not valid. Note that there may be gaps so each group index will need to be tested with
+// cfgOptionGroupIndexTest() to make sure it contains data.
+unsigned int cfgOptionGroupIndexTotal(ConfigOptionGroup groupId);
+
+// Are any options in the group valid?
+bool cfgOptionGroupValid(ConfigOptionGroup groupId);
+
+/***********************************************************************************************************************************
 Option Functions
 
 Access option values, indexes, and determine if an option is valid for the current command.
@@ -114,9 +127,6 @@ uint64_t cfgOptionUInt64(ConfigOption optionId);
 
 // Get index for option
 unsigned int cfgOptionIndex(ConfigOption optionId);
-
-// Get total indexed values for option
-unsigned int cfgOptionIndexTotal(ConfigOption optionDefId);
 
 // Option name by id
 const char *cfgOptionName(ConfigOption optionId);

@@ -30,9 +30,9 @@ checkManifest(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Loop through all defined databases and attempt to build a manifest
-        for (unsigned int pgIdx = 0; pgIdx < cfgOptionIndexTotal(cfgOptPgPath); pgIdx++)
+        for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIndexTotal(cfgOptGrpPg); pgIdx++)
         {
-            if (cfgOptionTest(cfgOptPgHost + pgIdx) || cfgOptionTest(cfgOptPgPath + pgIdx))
+            if (cfgOptionGroupIndexTest(cfgOptGrpPg, pgIdx))
             {
                 result++;
                 // ??? Placeholder for manifest build

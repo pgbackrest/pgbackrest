@@ -429,6 +429,11 @@ use constant CFGDEF_DEPEND_OPTION                                   => 'depend-o
     push @EXPORT, qw(CFGDEF_DEPEND_OPTION);
 use constant CFGDEF_DEPEND_LIST                                     => 'depend-list';
     push @EXPORT, qw(CFGDEF_DEPEND_LIST);
+
+# Group options together to share common configuration
+use constant CFGDEF_GROUP                                           => 'group';
+    push @EXPORT, qw(CFGDEF_GROUP);
+
 use constant CFGDEF_INDEX                                           => 'index';
     push @EXPORT, qw(CFGDEF_INDEX);
 use constant CFGDEF_INDEX_TOTAL                                     => 'indexTotal';
@@ -605,6 +610,30 @@ my $rhCommandDefine =
     {
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
+    },
+};
+
+####################################################################################################################################
+# Option group definition data
+#
+# Options groups allow related options to be grouped together so, e.g. test and valid, operations can be run across all options in
+# the group.
+####################################################################################################################################
+use constant CFGOPTGRP_PG                                           => CFGDEF_PREFIX_PG;
+use constant CFGOPTGRP_REPO                                         => CFGDEF_PREFIX_REPO;
+
+my $rhOptionGroupDefine =
+{
+    &CFGOPTGRP_PG =>
+    {
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
+    },
+
+    &CFGOPTGRP_REPO =>
+    {
+        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
+        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
     },
 };
 
@@ -1435,10 +1464,9 @@ my %hConfigDefine =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_REPO_CIPHER_PASS =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
         &CFGDEF_REQUIRED => true,
         &CFGDEF_DEPEND =>
@@ -1455,10 +1483,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_CIPHER_TYPE =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => CFGOPTVAL_REPO_CIPHER_TYPE_NONE,
         &CFGDEF_ALLOW_LIST =>
         [
@@ -1474,10 +1501,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_HARDLINK =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_NAME_ALT =>
         {
             'hardlink' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
@@ -1491,11 +1517,10 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_LOCAL =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_INTERNAL => true,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
@@ -1536,10 +1561,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_HOST =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -1555,10 +1579,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_HOST_CMD =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -1587,10 +1610,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_HOST_CONFIG =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
         &CFGDEF_NAME_ALT =>
         {
@@ -1619,10 +1641,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_HOST_PORT =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_PROTOCOL_PORT_MIN, CFGDEF_DEFAULT_PROTOCOL_PORT_MAX],
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
@@ -1638,10 +1659,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_HOST_USER =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => PROJECT_EXE,
         &CFGDEF_NAME_ALT =>
         {
@@ -1657,10 +1677,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_PATH =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => '/var/lib/' . PROJECT_EXE,
         &CFGDEF_NAME_ALT =>
         {
@@ -1671,10 +1690,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_RETENTION_ARCHIVE =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
         &CFGDEF_NAME_ALT =>
@@ -1690,10 +1708,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_RETENTION_ARCHIVE_TYPE =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => CFGOPTVAL_BACKUP_TYPE_FULL,
         &CFGDEF_COMMAND =>
         {
@@ -1714,10 +1731,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_RETENTION_DIFF =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
         &CFGDEF_NAME_ALT =>
@@ -1733,10 +1749,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_RETENTION_FULL =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_RETENTION_MIN, CFGDEF_DEFAULT_RETENTION_MAX],
         &CFGDEF_NAME_ALT =>
@@ -1748,10 +1763,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_RETENTION_FULL_TYPE =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => 'count',
         &CFGDEF_ALLOW_LIST =>
         [
@@ -1767,10 +1781,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_AZURE_ACCOUNT =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
         &CFGDEF_REQUIRED => true,
         &CFGDEF_DEPEND =>
@@ -1794,9 +1807,8 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_AZURE_CONTAINER =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
@@ -1804,10 +1816,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_AZURE_HOST =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
@@ -1831,10 +1842,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_AZURE_PORT =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => 443,
         &CFGDEF_ALLOW_RANGE => [1, 65535],
         &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
@@ -1843,10 +1853,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_AZURE_VERIFY_TLS =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => true,
         &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
@@ -1854,9 +1863,8 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_S3_BUCKET =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_DEPEND =>
         {
@@ -1902,10 +1910,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_S3_KEY =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_SECURE => true,
         &CFGDEF_REQUIRED => true,
         &CFGDEF_DEPEND =>
@@ -1959,10 +1966,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_S3_HOST =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
         &CFGDEF_NAME_ALT =>
@@ -1974,10 +1980,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_S3_PORT =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => 443,
         &CFGDEF_ALLOW_RANGE => [1, 65535],
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
@@ -2013,10 +2018,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_S3_URI_STYLE =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => CFGOPTVAL_REPO_S3_URI_STYLE_HOST,
         &CFGDEF_ALLOW_LIST =>
         [
@@ -2029,10 +2033,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_S3_VERIFY_TLS =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => true,
         &CFGDEF_NAME_ALT =>
         {
@@ -2045,10 +2048,9 @@ my %hConfigDefine =
 
     &CFGOPT_REPO_TYPE =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_REPO,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_REPO,
         &CFGDEF_DEFAULT => CFGOPTVAL_REPO_TYPE_POSIX,
         &CFGDEF_ALLOW_LIST =>
         [
@@ -2528,11 +2530,10 @@ my %hConfigDefine =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_PG_LOCAL =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_PG,
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_INTERNAL => true,
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_DEFAULT => false,
         &CFGDEF_COMMAND =>
         {
@@ -2561,10 +2562,9 @@ my %hConfigDefine =
 
     &CFGOPT_PG_HOST =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_PG,
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -2581,10 +2581,9 @@ my %hConfigDefine =
 
     &CFGOPT_PG_HOST_CMD =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_PG,
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_NAME_ALT =>
         {
@@ -2661,10 +2660,9 @@ my %hConfigDefine =
 
     &CFGOPT_PG_PATH =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_PG,
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => true,
         &CFGDEF_NAME_ALT =>
         {
@@ -2689,10 +2687,9 @@ my %hConfigDefine =
 
     &CFGOPT_PG_PORT =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_PG,
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_DEFAULT => 5432,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_PROTOCOL_PORT_MIN, CFGDEF_DEFAULT_PROTOCOL_PORT_MAX],
         &CFGDEF_NAME_ALT =>
@@ -2729,10 +2726,9 @@ my %hConfigDefine =
 
     &CFGOPT_PG_USER =>
     {
+        &CFGDEF_GROUP => CFGOPTGRP_PG,
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_PREFIX => CFGDEF_PREFIX_PG,
-        &CFGDEF_INDEX_TOTAL => CFGDEF_INDEX_PG,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_COMMAND =>
         {
@@ -2812,15 +2808,37 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
 }
 
 ####################################################################################################################################
+# Process option group defaults
+####################################################################################################################################
+foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
+{
+    # Error if prefix and index total are not both defined
+    if ((defined($rhOptionGroupDefine->{$strGroup}{&CFGDEF_PREFIX}) &&
+            !defined($rhOptionGroupDefine->{$strGroup}{&CFGDEF_INDEX_TOTAL})) ||
+        (!defined($rhOptionGroupDefine->{$strGroup}{&CFGDEF_PREFIX}) &&
+            defined($rhOptionGroupDefine->{$strGroup}{&CFGDEF_INDEX_TOTAL})))
+    {
+        confess &log(
+            ASSERT, "CFGDEF_PREFIX and CFGDEF_INDEX_TOTAL must both be defined (or neither) for option group '${strGroup}'");
+    }
+}
+
+####################################################################################################################################
 # Process option define defaults
 ####################################################################################################################################
 foreach my $strKey (sort(keys(%hConfigDefine)))
 {
-    # Error if prefix and index total are not both defined
-    if ((defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) && !defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL})) ||
-        (!defined($hConfigDefine{$strKey}{&CFGDEF_PREFIX}) && defined($hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL})))
+    my $rhOption = $hConfigDefine{$strKey};
+
+    # Error on invalid configuration
+    if (defined($rhOption->{&CFGDEF_INDEX_TOTAL}))
     {
-        confess &log(ASSERT, "CFGDEF_PREFIX and CFGDEF_INDEX_TOTAL must both be defined (or neither) for option '${strKey}'");
+        confess &log(ASSERT, "CFGDEF_INDEX_TOTAL cannot be defined for option '${strKey}'");
+    }
+
+    if (defined($rhOption->{&CFGDEF_PREFIX}))
+    {
+        confess &log(ASSERT, "CFGDEF_PREFIX cannot be defined for option '${strKey}'");
     }
 
     # If the define is a scalar then copy the entire define from the referenced option
@@ -2843,6 +2861,18 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         {
             $hConfigDefine{$strKey}{$strOptionDef} = $hConfigDefineOverride->{$strOptionDef};
         }
+
+        # Update option variable with new hash reference
+        $rhOption = $hConfigDefine{$strKey}
+    }
+
+    # If the option group is defined then copy configuration from the group to the option
+    if (defined($rhOption->{&CFGDEF_GROUP}))
+    {
+        my $rhGroup = $rhOptionGroupDefine->{$hConfigDefine{$strKey}{&CFGDEF_GROUP}};
+
+        $rhOption->{&CFGDEF_INDEX_TOTAL} = $rhGroup->{&CFGDEF_INDEX_TOTAL};
+        $rhOption->{&CFGDEF_PREFIX} = $rhGroup->{&CFGDEF_PREFIX};
     }
 
     # If the command section is a scalar then copy the section from the referenced option
@@ -2962,6 +2992,16 @@ sub cfgDefineCommand
 }
 
 push @EXPORT, qw(cfgDefineCommand);
+
+####################################################################################################################################
+# Get option group definition
+####################################################################################################################################
+sub cfgDefineOptionGroup
+{
+    return dclone($rhOptionGroupDefine);
+}
+
+push @EXPORT, qw(cfgDefineOptionGroup);
 
 ####################################################################################################################################
 # Get list of all commands
