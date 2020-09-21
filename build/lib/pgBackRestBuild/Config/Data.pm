@@ -604,6 +604,7 @@ my $rhCommandDefine =
 
     &CFGCMD_VERIFY =>
     {
+        &CFGDEF_INTERNAL => true,
     },
 
     &CFGCMD_VERSION =>
