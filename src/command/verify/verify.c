@@ -553,8 +553,8 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         // Initialize the range if it has not yet been initialized and continue to next
         if (walRange == NULL ||
             !strEq(
-                walSegmentNext(
-                    walRange->stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version), walSegment))
+                walSegmentNext(walRange->stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version),
+                walSegment))
         {
             // Add the initialized wal range to the range list
             MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
@@ -613,7 +613,8 @@ verifyArchive(void *data)
         // Add archiveId to the result list if the list is empty or the last processed is not equal to the current archiveId
         if (lstSize(jobData->archiveIdResultList) == 0 ||
             !strEq(
-                ((VerifyArchiveResult *)lstGetLast(jobData->archiveIdResultList))->archiveId, strLstGet(jobData->archiveIdList, 0)))
+                ((VerifyArchiveResult *)lstGetLast(jobData->archiveIdResultList))->archiveId,
+                strLstGet(jobData->archiveIdList, 0)))
         {
             const String *archiveId = strLstGet(jobData->archiveIdList, 0);
 
