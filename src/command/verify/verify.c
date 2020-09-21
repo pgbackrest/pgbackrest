@@ -864,7 +864,7 @@ verifyBackup(void *data)
                             fileName = strNewFmt("%s/%s", strZ(file->reference), strZ(file->name));
                     }
                     else
-                        fileName = strNewFmt("%s/%s", strZ(backupResult->backupLabel), strZ(file->name));
+                        fileName = strNewFmt("%s/%s", strZ(backupResult.backupLabel), strZ(file->name));
 
                     if (fileName != NULL)
                         lstAdd(jobData->backupFileList, &file);
