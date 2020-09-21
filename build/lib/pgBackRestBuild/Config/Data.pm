@@ -749,6 +749,7 @@ my %hConfigDefine =
             &CFGCMD_VERIFY =>
             {
                 &CFGDEF_REQUIRED => false,
+                &CFGDEF_INTERNAL => true,
             },
         }
     },

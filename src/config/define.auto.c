@@ -5360,13 +5360,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgDefCmdVerify)
 
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
-
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Backup set to verify.")
-                CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION
-                (
-                    "Verify all database and archive files associated with the specified backup set."
-                )
             )
         )
     )
