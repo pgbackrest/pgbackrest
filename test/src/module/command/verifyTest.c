@@ -122,11 +122,6 @@ testRun(void)
         "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}");
 
     const Buffer *archiveInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(archiveInfoMultiHistoryContent));
-
-
-    // *****************************************************************************************************************************
-    if (testBegin("verifyManifestFile()"))
-    {
         #define TEST_MANIFEST_HEADER                                                                                               \
             "[backup]\n"                                                                                                           \
             "backup-label=null\n"                                                                                                  \
@@ -169,24 +164,6 @@ testRun(void)
             "[backup:option]\n"                                                                                                    \
             "option-archive-check=true\n"                                                                                          \
             "option-archive-copy=true\n"
-
-        #define TEST_MANIFEST_OPTION_CHECKSUM_PAGE_FALSE                                                                           \
-            "option-checksum-page=false\n"
-
-        #define TEST_MANIFEST_OPTION_CHECKSUM_PAGE_TRUE                                                                            \
-            "option-checksum-page=true\n"
-
-        #define TEST_MANIFEST_OPTION_ONLINE_FALSE                                                                                  \
-            "option-compress=false\n"                                                                                              \
-            "option-compress-type=\"none\"\n"                                                                                      \
-            "option-hardlink=false\n"                                                                                              \
-            "option-online=false\n"
-
-        #define TEST_MANIFEST_OPTION_ONLINE_TRUE                                                                                   \
-            "option-compress=false\n"                                                                                              \
-            "option-compress-type=\"none\"\n"                                                                                      \
-            "option-hardlink=false\n"                                                                                              \
-            "option-online=true\n"
 
         #define TEST_MANIFEST_TARGET                                                                                               \
             "\n"                                                                                                                   \
@@ -235,6 +212,9 @@ testRun(void)
             "mode=\"0700\"\n"                                                                                                      \
             "user=\"user1\"\n"
 
+    // *****************************************************************************************************************************
+    if (testBegin("verifyManifestFile()"))
+    {
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
@@ -709,13 +689,23 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyLogInvalidResult() - missing file");
 
-        TEST_RESULT_UINT(verifyLogInvalidResult(verifyFileMissing, 0, strNew("missingfilename")), 0, "file missing message");
+        TEST_RESULT_UINT(
+            verifyLogInvalidResult(STORAGE_REPO_ARCHIVE_STR, verifyFileMissing, 0, strNew("missingfilename")),
+            0, "file missing message");
         harnessLogResult("P00   WARN: file missing 'missingfilename'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyRender() - missing file, empty invalidList");
 
         List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator);
+        List *backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr);
+
+        TEST_RESULT_STR_Z(
+            verifyRender(archiveIdResultList, backupResultList),
+            "Results:\n"
+            "  archiveId: none found\n"
+            "  backup: none found", "empty result lists");
+
         VerifyArchiveResult archiveIdResult =
         {
             .archiveId = strNew("9.6-1"),
@@ -732,25 +722,48 @@ testRun(void)
         lstAdd(archiveIdResult.walRangeList, &walRange);
         lstAdd(archiveIdResultList, &archiveIdResult);
         TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList),
+            verifyRender(archiveIdResultList, backupResultList),
             "Results:\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
-            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0", "no invalid file list");
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: none found", "archive: no invalid file list");
 
         VerifyInvalidFile invalidFile =
         {
             .fileName = strNew("file"),
             .reason = verifyFileMissing,
         };
-
         lstAdd(walRange.invalidFileList, &invalidFile);
+
+        VerifyBackupResult backupResult =
+        {
+            .backupLabel = strNew("test-backup-label"),
+            .totalFile = 1,
+            .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
+        };
+        lstAdd(backupResult.invalidFileList, &invalidFile);
+        lstAdd(backupResultList, &backupResult);
+
         TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList),
+            verifyRender(archiveIdResultList, backupResultList),
             "Results:\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
-            "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0", "file missing");
+            "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: test-backup-label, total files checked: 1, total valid files: 0\n"
+            "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0", "archive file missing, backup file missing");
 
-        // Coverage test
+        lstRemoveIdx(archiveIdResultList, 0);
+        lstRemoveIdx(backupResult.invalidFileList, 0);
+        TEST_RESULT_STR_Z(
+            verifyRender(archiveIdResultList, backupResultList),
+            "Results:\n"
+            "  archiveId: none found\n"
+            "  backup: test-backup-label, total files checked: 1, total valid files: 0\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0", "archive file missing, backup: no invalid file list");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verifyAddInvalidWalFile() - file missing (coverage test)");
+
         TEST_RESULT_VOID(
             verifyAddInvalidWalFile(archiveIdResult.walRangeList, verifyFileMissing, strNew("test"), strNew("3")), "coverage test");
     }
@@ -894,7 +907,11 @@ testRun(void)
             strZ(strNewFmt(
             "P00   WARN: no archives exist in the repo\n"
             "P00   WARN: unable to open missing file '%s/%s/20200810-171426F/backup.manifest' for read\n"
-            "P00   INFO: backup '20200810-171426F' appears to be in progress, skipping", testPath(), strZ(backupStanzaPath))));
+            "P00   INFO: backup '20200810-171426F' appears to be in progress, skipping\n"
+            "P00   INFO: Results:\n"
+            "              archiveId: none found\n"
+            "              backup: 20200810-171426F, total files checked: 0, total valid files: 0",
+            testPath(), strZ(backupStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info.copy valid, archive.info and copy valid, present but empty backup, empty archive");
@@ -910,7 +927,9 @@ testRun(void)
             "P00   WARN: unable to open missing file '%s/%s/20200810-171426F/backup.manifest' for read\n"
             "P00   INFO: backup '20200810-171426F' appears to be in progress, skipping\n"
             "P00   INFO: Results:\n"
-            "              archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0", testPath(), strZ(backupStanzaPath))));
+            "              archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
+            "              backup: 20200810-171426F, total files checked: 0, total valid files: 0",
+            testPath(), strZ(backupStanzaPath))));
     }
 
     // *****************************************************************************************************************************
@@ -1042,13 +1061,14 @@ testRun(void)
 
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
         harnessLogResult(
-            strZ(strNewFmt(
+            strZ(strNew(
                 "P00   WARN: no backups exist in the repo\n"
                 "P00  ERROR: [028]: duplicate WAL '000000020000000700000FFE' for '11-2' exists, skipping\n"
                 "P00   WARN: path '11-2/0000000200000007' does not contain any valid WAL to be processed\n"
                 "P00   INFO: Results:\n"
                 "              archiveId: 11-2, total WAL checked: 2, total valid WAL: 0\n"
-                "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0")));
+                "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+                "              backup: none found")));
 
         harnessLogLevelReset();
 
@@ -1089,6 +1109,11 @@ testRun(void)
                 walBuffer),
             "write WAL - continue range");
 
+        String *backupLabel = strNew("20200728-160632F_20200728-160649D");
+        TEST_RESULT_VOID(
+            storagePathCreateP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupLabel))),
+            "create empty backup path");
+
         // Set log detail level to capture ranges
         harnessLogLevelSet(logLevelDetail);
 
@@ -1096,22 +1121,26 @@ testRun(void)
         unsigned int errorTotal = 0;
         TEST_RESULT_STR_Z(
             verifyProcess(&errorTotal),
-            "Results:\n"
-            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
-            "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0",
+            strZ(strNewFmt(
+                "Results:\n"
+                "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
+                "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
+                "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
+                "  backup: %s, total files checked: 0, total valid files: 0", strZ(backupLabel))),
             "verifyProcess() results");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
         harnessLogResult(
             strZ(strNewFmt(
-                "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01  ERROR: [028]: invalid checksum "
                     "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
                 "P01  ERROR: [028]: invalid size "
                     "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
-                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000")));
+                "P00   WARN: unable to open missing file '%s/%s/%s/backup.manifest' for read\n"
+                "P00   INFO: backup '%s' appears to be in progress, skipping\n"
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000",
+                testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, start next timeline");
@@ -1138,16 +1167,47 @@ testRun(void)
                 walBuffer),
             "write WAL - end next timeline");
 
+        String *backupFileName = strNewFmt("%s/pg_data/PG_VERSION", strZ(backupLabel));
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupFileName))),
+                BUFSTRDEF("")), "put zero-sized backup file");
+
+        const Buffer *contentLoad = harnessInfoChecksumZ
+        (
+            TEST_MANIFEST_HEADER
+            TEST_MANIFEST_DB_92
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+            TEST_MANIFEST_FILE
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT
+        );
+
+        String *manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel));
+        String *manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write manifest - file checksum mismatch");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad),
+            "write manifest copy - file checksum mismatch");
+
         // Set log level to errors only
         harnessLogLevelSet(logLevelError);
 
-        TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
+        TEST_ERROR(cmdVerify(), RuntimeError, "3 fatal errors encountered, see log for details");
         harnessLogResult(
             strZ(strNewFmt(
                 "P01  ERROR: [028]: invalid checksum "
                     "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
                 "P01  ERROR: [028]: invalid size "
-                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'")));
+                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
+                "P01  ERROR: [028]: invalid checksum '%s'", strZ(backupFileName))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, unreadable WAL file");
@@ -1165,10 +1225,9 @@ testRun(void)
         // Set log level to capture ranges
         harnessLogLevelSet(logLevelDetail);
 
-        TEST_ERROR(cmdVerify(), RuntimeError, "3 fatal errors encountered, see log for details");
+        TEST_ERROR(cmdVerify(), RuntimeError, "4 fatal errors encountered, see log for details");
         harnessLogResult(
             strZ(strNewFmt(
-                "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01  ERROR: [028]: invalid checksum "
@@ -1180,14 +1239,19 @@ testRun(void)
                     "local-1 protocol: unable to open file "
                     "'%s/%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read: "
                     "[13] Permission denied\n"
+                "P00   WARN: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not in "
+                    "the backup.info history\n"
+                "P01  ERROR: [028]: invalid checksum '%s'\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001\n"
                 "P00   INFO: Results:\n"
                 "              archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
                 "              archiveId: 11-2, total WAL checked: 8, total valid WAL: 5\n"
-                "                missing: 0, checksum invalid: 1, size invalid: 1, other: 1",
-                 testPath(), strZ(archiveStanzaPath))));
+                "                missing: 0, checksum invalid: 1, size invalid: 1, other: 1\n"
+                "              backup: %s, total files checked: 1, total valid files: 0\n"
+                "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0",
+                 testPath(), strZ(archiveStanzaPath), strZ(backupLabel), strZ(backupFileName), strZ(backupLabel))));
 
         harnessLogLevelReset();
 

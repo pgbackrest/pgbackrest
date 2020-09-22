@@ -190,8 +190,12 @@ Questions/Concerns
 - How to check WAL for PITR (e.g. after end of last backup?)? ==> If doing async archive and process max = 8 then could be 8 missing. But we don't have access to process-max and we don't know if they had asynch archiving, so if we see gaps in the last 5 minutes of the WAL stream and the last backup stop WAL is there, then we'll just ignore that PITR has gaps. MUST always assume is we don't have access to the configuration.
 
 MAY WANT TO ALLOW RETENTION SETTINGS TO BE PASSED SO GAPS BEFORE CAN BE CONSIDERED LEGIT.
-IF LOG-LEVEL SET TO WARN, WE DO NOT WANT A SUMMARY - ONLY WANT IT FROM NFO LEVEL. ALSO IF NO BACKUPS HAVE PITR, ESP LATEST, THE WE NEED TO REPORT AS ERROR/WARN
-IF FAST VERIFY WE CAN'T CHECK THE COMPRESSED SIZE OF THE WAL (BACKUP IS DIFFERENT) BUT FOR FULL VERIFY CAN'T CHECK
+IF LOG-LEVEL SET TO WARN, WE DO NOT WANT A SUMMARY - ONLY WANT IT FROM INFO LEVEL. ALSO IF NO BACKUPS HAVE PITR, ESP LATEST, THE WE NEED TO REPORT AS ERROR/WARN
+IF FAST VERIFY WE CAN'T CHECK THE COMPRESSED SIZE OF THE WAL. BACKUP IS DIFFERENT because the manifest has repoSize which can be checked against the size from storageInfoList.
+If a fast option has been requested, then only create one process to handle, else create as many as process-max
+    unsigned int numProcesses = cfgOptionTest(cfgOptFast) ? 1 : cfgOptionUInt(cfgOptProcessMax);
+    for (unsigned int processIdx = 1; processIdx <= numProcesses; processIdx++)
+        protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
 
     // CSHANG we will have to check every file - pg_resetwal can change the wal segment size at any time - grrrr. We can spot check in each timeline by checking the first file, but that won't help as we'll just wind up with a bunch of ranges since the segment size will stop matching at some point.  If WAL segment size is reset, then can't do PITR.
     /* CSHANG per David:
@@ -546,14 +550,18 @@ TESTING
 
 After all WAL have been checked, check the backups
  <!--
- CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but if this is not on then all bets are off
- CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup"
+// CSHANG It is possible to have a backup without all the WAL if option-archive-check=false but if this is not on then all bets are off ANSWER - ignore for now
+// CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup" -- ANSWER all wal will be in manifest so will be checked as part of backup processing, so no additional checks are needed as PG will use what is in the backup first during a restore
+// CSHANG if offline backup, then both archive-start and archive-stop could be null so need to verify files but not going to do any wal comparison
  -->
-
-Find the WAL range where walRange.stop >= backup stop.   <!-- but what if the backup.stop is NULL? -->
-IF walRange.start <= backup start
+IF backup archive-stop == NULL (then start would also be NULL)
 THEN
-    Range is found
-    IF walRange has an invalid file
+    skip checking the WAL
+ELSE
+    Find the WAL range where walRange.stop >= backup stop
+    IF walRange.start <= backup start
     THEN
-        backup is not consistent
+        Range is found
+        IF walRange has an invalid file
+        THEN
+            backup is not consistent
