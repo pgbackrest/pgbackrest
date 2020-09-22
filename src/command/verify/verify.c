@@ -837,8 +837,8 @@ verifyBackup(void *data)
                 backupResult.pgId = manData->pgId;
                 backupResult.pgVersion = manData->pgVersion;  // CSHANG May not need?
                 backupResult.pgSystemId = manData->pgSystemId;  // CSHANG May not need?
-                backupResult.archiveStart = strDup(manData->archiveStart);
-                backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this?
+                backupResult.archiveStart = strDup(manData->archiveStart);  // cshang if offline backup, then both of these could be null so need to verify files but not going to do any wal comparison
+                backupResult.archiveStop = strDup(manData->archiveStop); // CSHANG May not have this? ANSWER either have both or none
                 backupResult.optionArchiveCheck = manData->backupOptionArchiveCheck;
                 backupResult.optionArchiveCopy = manData->backupOptionArchiveCopy;
                 backupResult.optionCompressType = manData->backupOptionCompressType;
@@ -868,7 +868,6 @@ verifyBackup(void *data)
 
                     if (fileName != NULL)
                         lstAdd(jobData->backupFileList, &file);
-
                 }
 
                 // Free the manifest since it is no longer needed
@@ -892,7 +891,7 @@ verifyBackup(void *data)
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
                 protocolCommandParamAdd(command, VARSTR(filePathName));
                 protocolCommandParamAdd(command, VARSTRZ(backupFileData->checksumSha1));
-                protocolCommandParamAdd(command, VARUINT64(backupFileData->size));  // CSHANG Not sure if this should be size or repoSize
+                protocolCommandParamAdd(command, VARUINT64(backupFileData->size));
                 protocolCommandParamAdd(command, VARSTR(jobData->backupCipherPass));
 
                 // Assign job to result
@@ -912,7 +911,7 @@ verifyBackup(void *data)
         }
         else
         {
-// CSHANG Should this be an error or a warn? and should we check for it earlier?
+// CSHANG Should this be an error or a warn? and should we check for it earlier? NO
             // No backup files found in the manifest to process, remove this backup from the processing list
             strLstRemoveIdx(jobData->backupList, 0);
         }
@@ -1303,6 +1302,7 @@ verifyProcess(unsigned int *errorTotal)
                 // CSHANG Add this option
                 // // If a fast option has been requested, then only create one process to handle, else create as many as process-max
                 // unsigned int numProcesses = cfgOptionTest(cfgOptFast) ? 1 : cfgOptionUInt(cfgOptProcessMax);
+                // CSHANG From the manifesrt size or repoSize -- this would be for the FAST option
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
@@ -1335,8 +1335,8 @@ verifyProcess(unsigned int *errorTotal)
 
                             archiveIdResult = lstGet(jobData.archiveIdResultList, index);
                         }
-    // CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but if this is not on then all bets are off
-    // CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup"
+    // CSHANG It is possible to have a backup without all the WAL if option-archive-check=false is not set but if this is not on then all bets are off ANSWER - ignore
+    // CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup" -- ANSWER all wal will be in manifest so will be checked
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
