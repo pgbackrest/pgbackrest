@@ -45,10 +45,12 @@ Command constants
     STRING_DECLARE(CFGCMD_START_STR);
 #define CFGCMD_STOP                                                 "stop"
     STRING_DECLARE(CFGCMD_STOP_STR);
+#define CFGCMD_VERIFY                                               "verify"
+    STRING_DECLARE(CFGCMD_VERIFY_STR);
 #define CFGCMD_VERSION                                              "version"
     STRING_DECLARE(CFGCMD_VERSION_STR);
 
-#define CFG_COMMAND_TOTAL                                           20
+#define CFG_COMMAND_TOTAL                                           21
 
 /***********************************************************************************************************************************
 Option constants
@@ -491,6 +493,7 @@ typedef enum
     cfgCmdStanzaUpgrade,
     cfgCmdStart,
     cfgCmdStop,
+    cfgCmdVerify,
     cfgCmdVersion,
     cfgCmdNone,
 } ConfigCommand;

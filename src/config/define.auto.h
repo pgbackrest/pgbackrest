@@ -29,6 +29,7 @@ typedef enum
     cfgDefCmdStanzaUpgrade,
     cfgDefCmdStart,
     cfgDefCmdStop,
+    cfgDefCmdVerify,
     cfgDefCmdVersion,
 } ConfigDefineCommand;
 

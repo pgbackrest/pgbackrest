@@ -1672,6 +1672,31 @@
                 </command-example-list>
             </command>
 
+            <!-- OPERATION - VERIFY COMMAND -->
+            <command id="verify" name="Verify">
+                <summary>Verify the contents of the repository.</summary>
+
+                <text>Verify will attempt to determine if the backups and archives in the repository are valid.</text>
+
+                <option-list>
+                    <!-- OPERATION - VERIFY COMMAND - SET OPTION -->
+                    <option id="set" name="Set">
+                        <summary>Backup set to verify.</summary>
+
+                        <text>Verify all database and archive files associated with the specified backup set.</text>
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+                </option-list>
+
+                <command-example-list>
+                    <command-example>
+                        <text><code-block title="">
+                            {[backrest-exe]} --stanza=db verify
+                        </code-block>
+                        Verify all database and archive files associated with the stanza.</text>
+                    </command-example>
+                </command-example-list>
+            </command>
 
             <!-- OPERATION - VERSION COMMAND -->
             <command id="version" name="Version">

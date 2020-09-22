@@ -41,6 +41,9 @@ SRCS = \
 	command/stanza/create.c \
 	command/stanza/delete.c \
 	command/stanza/upgrade.c \
+	command/verify/file.c \
+	command/verify/protocol.c \
+	command/verify/verify.c \
 	common/compress/helper.c \
 	common/compress/bz2/common.c \
 	common/compress/bz2/compress.c \

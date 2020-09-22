@@ -25,6 +25,7 @@ STRING_EXTERN(CFGCMD_STANZA_DELETE_STR,                             CFGCMD_STANZ
 STRING_EXTERN(CFGCMD_STANZA_UPGRADE_STR,                            CFGCMD_STANZA_UPGRADE);
 STRING_EXTERN(CFGCMD_START_STR,                                     CFGCMD_START);
 STRING_EXTERN(CFGCMD_STOP_STR,                                      CFGCMD_STOP);
+STRING_EXTERN(CFGCMD_VERIFY_STR,                                    CFGCMD_VERIFY);
 STRING_EXTERN(CFGCMD_VERSION_STR,                                   CFGCMD_VERSION);
 
 /***********************************************************************************************************************************
@@ -258,6 +259,19 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
         CONFIG_COMMAND_NAME(CFGCMD_STOP)
 
         CONFIG_COMMAND_INTERNAL(false)
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOCK_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
+    )
+
+    CONFIG_COMMAND
+    (
+        CONFIG_COMMAND_NAME(CFGCMD_VERIFY)
+
+        CONFIG_COMMAND_INTERNAL(true)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
