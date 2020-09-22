@@ -880,6 +880,20 @@ cfgOptionInternal(ConfigOption optionId, VariantType typeRequested, bool nullAll
 }
 
 const Variant *
+cfgOptionIdx(ConfigOption optionId, unsigned int index)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, index);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(configStatic.option[optionId].index == 0);
+
+    FUNCTION_TEST_RETURN(configStatic.option[optionId + index].value);
+}
+
+const Variant *
 cfgOption(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
