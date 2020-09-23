@@ -74,9 +74,10 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg remote command is updated");
         TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd), exe, "    check pg1-host-cmd");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + 1), exeOther, "    check pg2-host-cmd is already set");
-        TEST_RESULT_STR(cfgOptionStrNull(cfgOptPgHostCmd + 2), NULL, "    check pg3-host-cmd is not set");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1), exe, "    check pgX-host-cmd");
+        TEST_RESULT_STR(cfgOptionIdxStr(cfgOptPgHostCmd, 1), exeOther, "    check pg2-host-cmd is already set");
+        TEST_RESULT_STR(cfgOptionIdxStrNull(cfgOptPgHostCmd, 2), NULL, "    check pg3-host-cmd is not set");
+        TEST_RESULT_STR(
+            cfgOptionIdxStr(cfgOptPgHostCmd, cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1), exe, "    check pgX-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
         cfgInit();
