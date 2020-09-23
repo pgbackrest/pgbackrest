@@ -857,9 +857,9 @@ cfgOptionInternal(ConfigOption optionId, unsigned int index, VariantType typeReq
     FUNCTION_TEST_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    CHECK(configOptionData[optionId].index == 0);
+    ASSERT(configOptionData[optionId].index == 0);
     CHECK(!indexed || configOptionData[optionId].group);
-    CHECK(
+    ASSERT(
         (indexed && index <= configStatic.optionGroup[configOptionData[optionId].groupId].indexMax) ||
         (!indexed && index == 0));
 
