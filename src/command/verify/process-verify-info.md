@@ -96,7 +96,47 @@ infoptrcopy-->done(-END-)
 end
 ```
 
-In order to verify that backup/archive.info and their copies are valid, each file will be loaded and checked for the following:
+In order to verify that backup/archive.info and their copies are valid, each file will be loaded and checked as follows:
+
+Results:
+archivePtr - pointer to contents of archive info to keep in memory
+backupPtr - pointer to contents of backup info to keep in memory
+manifestPtr - pointer to contents of the manifest being processed to keep in memory
+checksum - checksum of the file read
+errorCode - 0 if successfully read, else error code
+
+FOR each info file and its copy (archive.info, backup.info)
+    IF archive.info exists and is readable
+    THEN
+        set result checksum to calculated checksum for file;
+        set pointer to the file contents if requested (e.g. if the main was loaded successfully, then there is
+            no need to keep the copy in memory);
+    ELSE
+        set error code (e.g. read error, checksum mismatch, etc)
+    FI
+
+    IF main loaded successfully
+    THEN
+        keep the file in memory
+        load the copy but don't keep the copy contents in memory
+        IF copy loaded successfully
+        THEN
+            IF main checksum != copy checksum
+            THEN
+                one of the files is corrupted so WARN but use main
+            FI
+        FI
+    ELSE IF copy loaded successfully
+        keep the file in memory
+    FI
+ROF        
+
+
+
+
+
+
+
 <!--
 - May have to expose infoBackupNewLoad so can load the backup.info and then the backup.info.copy and compare the 2 - need to know if one is corrupt and always failing over to the other.
         - want to WARN if only one exists
@@ -565,3 +605,68 @@ ELSE
         IF walRange has an invalid file
         THEN
             backup is not consistent
+
+
+## Requirement 5. Verify backup files using manifest
+
+BackupList - list of backup labels in the repository
+
+BackupFile:
+    name - name of the file in the repository (includes backup label directory where located)
+    checksum - checksum of the file from the manifest
+    size - original uncompressed/unencrypted size
+    sizeRepo - size of the file in the repository after compression/encryption
+
+BackupFileList - list of BackupFile being processed
+
+BackupResult:
+    label - backup label
+    totalFile - total number of file expected in the repository for this backup
+    archiveId - location of the WAL for this backup (e.g. 9.4-1)
+
+BackupResultList - list of BackupResult for all backups processed
+
+FOR each backup label in BackupList
+    read the manifest
+    IF usable manifest
+    THEN
+        FOR each target
+            IF reference to a prior backup does exists
+            THEN
+                IF the prior backup label does not exist in BackupResultList
+                THEN
+                    BackupFile.name = prepend the prior backup label to the file name
+                ELSE
+                    skip this file since it was checked in the prior backup
+                FI
+            ELSE
+                prepend the label of the backup to the file name
+            FI
+
+            IF file was not skipped
+            THEN
+                store the file data in BackupFile
+                add the BackupFile to the BackupFileList
+            FI
+        ROF
+
+        BackupResult.label = backup label being processed
+        BackupResult.totalFile = total files being sent for verification (i.e. total number in BackupFileList)
+            // note this does not include files skipped because they were already verified in a prior backup
+        BackupResult.archiveId = database version and PG id (e.g. 9.4-1)
+
+        FOR each file in BackupFileList
+            send file for processing
+        ROF
+
+    ELSE
+        IF manifest not usable because the backup is in progress
+        THEN
+            log a warning that the backup is in progress
+        ELSE
+            log a warning that the backup may have expired
+        FI
+
+        skip the verification of the backup
+    FI
+ROF
