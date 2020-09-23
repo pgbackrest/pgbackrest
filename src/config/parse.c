@@ -920,7 +920,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     {
                         if (dependOptionDefType == cfgDefOptTypeBoolean)
                         {
-                            if (cfgOptionBool(dependOptionId))
+                            if (varBool(cfgOption(dependOptionId)))
                                 dependValue = OPTION_VALUE_1;
                             else
                                 dependValue = OPTION_VALUE_0;

@@ -183,7 +183,7 @@ storagePgGet(unsigned int hostId, bool write)
     // Use Posix storage
     else
     {
-        result = storagePosixNewP(cfgOptionStr(cfgOptPgPath + hostId - 1), .write = write);
+        result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, hostId - 1), .write = write);
     }
 
     FUNCTION_TEST_RETURN(result);

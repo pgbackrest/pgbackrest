@@ -303,40 +303,43 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     strLstAddZ(result, "PasswordAuthentication=no");
 
     // Append port if specified
-    ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort + hostIdx;
+    ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
 
-    if (cfgOptionTest(optHostPort))
+    if (cfgOptionTest(optHostPort + hostIdx))
     {
         strLstAddZ(result, "-p");
-        strLstAdd(result, strNewFmt("%u", cfgOptionUInt(optHostPort)));
+        strLstAdd(result, strNewFmt("%u", cfgOptionIdxUInt(optHostPort, hostIdx)));
     }
 
     // Append user/host
     strLstAdd(
         result,
         strNewFmt(
-            "%s@%s", strZ(cfgOptionStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser + hostIdx)),
-            strZ(cfgOptionStr(isRepo ? cfgOptRepoHost : cfgOptPgHost + hostIdx))));
+            "%s@%s", strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser, hostIdx)),
+            strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx))));
 
     // Option replacements
     KeyValue *optionReplace = kvNew();
 
     // Replace config options with the host versions
-    unsigned int optConfig = isRepo ? cfgOptRepoHostConfig : cfgOptPgHostConfig + hostIdx;
+    unsigned int optConfig = isRepo ? cfgOptRepoHostConfig : cfgOptPgHostConfig;
 
-    kvPut(optionReplace, VARSTR(CFGOPT_CONFIG_STR), cfgOptionSource(optConfig) != cfgSourceDefault  ? cfgOption(optConfig) : NULL);
+    kvPut(
+        optionReplace, VARSTR(CFGOPT_CONFIG_STR),
+        cfgOptionSource(optConfig + hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfig, hostIdx)) : NULL);
 
-    unsigned int optConfigIncludePath = isRepo ? cfgOptRepoHostConfigIncludePath : cfgOptPgHostConfigIncludePath + hostIdx;
+    unsigned int optConfigIncludePath = isRepo ? cfgOptRepoHostConfigIncludePath : cfgOptPgHostConfigIncludePath;
 
     kvPut(
         optionReplace, VARSTR(CFGOPT_CONFIG_INCLUDE_PATH_STR),
-        cfgOptionSource(optConfigIncludePath) != cfgSourceDefault ? cfgOption(optConfigIncludePath) : NULL);
+        cfgOptionSource(optConfigIncludePath + hostIdx) != cfgSourceDefault ?
+            VARSTR(cfgOptionIdxStr(optConfigIncludePath,  + hostIdx)) : NULL);
 
-    unsigned int optConfigPath = isRepo ? cfgOptRepoHostConfigPath : cfgOptPgHostConfigPath + hostIdx;
+    unsigned int optConfigPath = isRepo ? cfgOptRepoHostConfigPath : cfgOptPgHostConfigPath;
 
     kvPut(
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
-        cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
+        cfgOptionSource(optConfigPath + hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
 
     // Set local so host settings configured on the remote will not accidentally be picked up
     kvPut(
@@ -443,7 +446,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
     StringList *commandExec = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true);
-    strLstInsert(commandExec, 0, cfgOptionStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd + hostIdx));
+    strLstInsert(commandExec, 0, cfgOptionIdxStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd, hostIdx));
     strLstAdd(result, strLstJoin(commandExec, " "));
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
@@ -504,18 +507,19 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            unsigned int optHost = isRepo ? cfgOptRepoHost : cfgOptPgHost + hostId - 1;
+            unsigned int optHost = isRepo ? cfgOptRepoHost : cfgOptPgHost;
+            unsigned int optHostIdx = isRepo ? 0 : hostId - 1;
 
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
                 cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, protocolId, hostId - 1),
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strZ(cfgOptionStr(optHost))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strZ(cfgOptionIdxStr(optHost, optHostIdx))),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);
 
             // Create protocol object
             protocolHelperClient->client = protocolClientNew(
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", protocolId, strZ(cfgOptionStr(optHost))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", protocolId, strZ(cfgOptionIdxStr(optHost, optHostIdx))),
                 PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
 
             // Get cipher options from the remote if none are locally configured

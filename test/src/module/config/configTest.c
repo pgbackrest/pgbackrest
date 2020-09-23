@@ -148,7 +148,10 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionGroupIndexTest(cfgOptGrpPg, 0), false, "pg option group index 0 is not set");
         TEST_RESULT_UINT(cfgOptionGroupIndexTotal(cfgOptGrpPg), 0, "pg option group index total is 0");
 
-        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPath + 1, true), "set pg1-path valid");
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPath, true), "set pg1-path valid");
+        TEST_RESULT_STR_Z(cfgOptionIdxStrNull(cfgOptPgPath, 0), NULL, "pg-path index 0 is NULL");
+
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPath + 1, true), "set pg2-path valid");
         TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), true, "pg option group is valid");
         TEST_RESULT_BOOL(cfgOptionGroupIndexTest(cfgOptGrpPg, 0), true, "pg option group index 0 is set");
         TEST_RESULT_BOOL(cfgOptionGroupIndexTest(cfgOptGrpPg, 1), false, "pg option group index 1 is not set");
@@ -159,11 +162,23 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionGroupIndexTest(cfgOptGrpPg, 1), false, "pg option group index 1 is not set");
         TEST_RESULT_BOOL(cfgOptionGroupIndexTest(cfgOptGrpPg, 7), true, "pg option group index 7 is set");
         TEST_RESULT_UINT(cfgOptionGroupIndexTotal(cfgOptGrpPg), 8, "pg option group index total is 8");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 7), "/path", "pg-path index 7 is set");
+
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPort + 7, true), "set pg7-port valid");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptPgPort + 7, cfgSourceParam, VARINT64(6543)), "set pg7-port");
+        TEST_RESULT_INT(cfgOptionIdxInt(cfgOptPgPort, 7), 6543, "pg-port index 7 int is set");
+        TEST_RESULT_INT(cfgOptionIdxInt64(cfgOptPgPort, 7), 6543, "pg-port index 7 int64 is set");
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgPort, 7), 6543, "pg-port index 7 uint is set");
+        TEST_RESULT_UINT(cfgOptionIdxUInt64(cfgOptPgPort, 7), 6543, "pg-port index 7 uint64 is set");
 
         TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPath + 5, true), "set pg5-path valid");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptPgPath + 5, cfgSourceDefault, VARSTRDEF("/path")), "set pg5-path");
         TEST_RESULT_BOOL(cfgOptionGroupIndexTest(cfgOptGrpPg, 5), false, "pg option group index 5 is not set");
         TEST_RESULT_UINT(cfgOptionGroupIndexTotal(cfgOptGrpPg), 8, "pg option group index total is 8");
+
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptRepoHardlink, true), "set repo1-hardlink index 0 valid");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, BOOL_TRUE_VAR), "set repo1-hardlink index 0 value");
+        TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptRepoHardlink, 0), true, "repo1-hardlink index 0 bool is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(cfgOption(cfgOptOnline), NULL, "online is null");

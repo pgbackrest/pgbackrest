@@ -125,6 +125,15 @@ const String *cfgOptionStrNull(ConfigOption optionId);
 unsigned int cfgOptionUInt(ConfigOption optionId);
 uint64_t cfgOptionUInt64(ConfigOption optionId);
 
+// Get indexed config options for various types
+bool cfgOptionIdxBool(ConfigOption optionId, unsigned int index);
+int cfgOptionIdxInt(ConfigOption optionId, unsigned int index);
+int64_t cfgOptionIdxInt64(ConfigOption optionId, unsigned int index);
+unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int index);
+uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int index);
+const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int index);
+const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int index);
+
 // Get index for option
 unsigned int cfgOptionIndex(ConfigOption optionId);
 
