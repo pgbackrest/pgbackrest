@@ -738,7 +738,7 @@ testRun(void)
         VerifyBackupResult backupResult =
         {
             .backupLabel = strNew("test-backup-label"),
-            .totalFile = 1,
+            .totalFileVerify = 1,
             .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
         };
         lstAdd(backupResult.invalidFileList, &invalidFile);

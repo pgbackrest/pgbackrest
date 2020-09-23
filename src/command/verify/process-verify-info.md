@@ -609,54 +609,50 @@ ELSE
 
 ## Requirement 5. Verify backup files using manifest
 
-BackupList - list of backup labels in the repository
+manifestFileIdx:
+    Index of the file within the manifest file list that is being processed.
 
-BackupFile:
-    name - name of the file in the repository (includes backup label directory where located)
-    checksum - checksum of the file from the manifest
-    size - original uncompressed/unencrypted size
-    sizeRepo - size of the file in the repository after compression/encryption
-
-BackupFileList - list of BackupFile being processed
+BackupList:
+    List of backup labels in the repository. Although this list is available through the job processing, it is not persisted as each
+    list item will be removed after it is processed.
 
 BackupResult:
     label - backup label
-    totalFile - total number of file expected in the repository for this backup
-    archiveId - location of the WAL for this backup (e.g. 9.4-1)
+    totalFile - total number of files in the repository for this backup that will be processed. It will be decremented for any file
+        skipped because it was already verified in a prior backup.
+    pgId - db-id of the database that was backed up - used for building the archiveId for checking the WAL
+    pgVersion - PG version of the database that was backed up - used for building the archiveId for checking the WAL
+    pgSystemId - systemId of the database that was backed up // CSHANG DO WE NEED THIS???
 
-BackupResultList - list of BackupResult for all backups processed
+BackupResultList:
+    List of BackupResult for all backups processed. This list will persist after all jobs are completed.
 
 FOR each backup label in BackupList
     read the manifest
     IF usable manifest
     THEN
-        FOR each target
-            IF reference to a prior backup does exists
+        initialize the BackupResult from the manifest and add it to the BackupResultList
+        initialize manifestFileIdx = 0
+
+        FOR each target file
+            get the ManifestFile data at manifestFileIdx
+            fileName = NULL
+            IF reference to a prior backup exists for the file
             THEN
                 IF the prior backup label does not exist in BackupResultList
                 THEN
-                    BackupFile.name = prepend the prior backup label to the file name
-                ELSE
-                    skip this file since it was checked in the prior backup
+                    fileName = prepend the prior backup label to the file name and add the compression extension if any
                 FI
             ELSE
-                prepend the label of the backup to the file name
+                fileName = prepend the label of the backup to the file name
             FI
 
-            IF file was not skipped
+            IF fileName != NULL
             THEN
-                store the file data in BackupFile
-                add the BackupFile to the BackupFileList
+                send file for processing
             FI
-        ROF
 
-        BackupResult.label = backup label being processed
-        BackupResult.totalFile = total files being sent for verification (i.e. total number in BackupFileList)
-            // note this does not include files skipped because they were already verified in a prior backup
-        BackupResult.archiveId = database version and PG id (e.g. 9.4-1)
-
-        FOR each file in BackupFileList
-            send file for processing
+            increment manifestFileIdx
         ROF
 
     ELSE

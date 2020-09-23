@@ -96,25 +96,17 @@ typedef enum
 typedef struct VerifyBackupResult
 {
     String *backupLabel;                                            // Label assigned to the backup
-    unsigned int totalFile;                                         // Total number of backup files from the manifest
+    unsigned int totalFileVerify;                                   // Total number of backup files being verified
     unsigned int totalValidFile;                                    // Total number of backup files that were verified and valid
     String *backupPrior;                                            // Prior backup that this backup depends on, if any
-    String *archiveId;                                              // ArchiveId where the WAL is located for this backup
+    unsigned int pgId;                                              // PG id will be used to find WAL for the backup in the repo
+    unsigned int pgVersion;                                         // PG version will be used with PG id to find WAL in the repo
+    uint64_t pgSystemId;                                            // CSHANG MAY need to reverify that the backup is associated with a known DB history
     String *archiveStart;                                           // First WAL segment in the backup
     String *archiveStop;                                            // Last WAL segment in the backup
-    CompressType optionCompressType;                                // Compression type used for the backup
     VerifyBackupResultStatus status;                                // Final status of the backup
     List *invalidFileList;
 } VerifyBackupResult;
-
-typedef struct VerifyBackupFile
-{
-    String *filePathName;                                           // File name (includes STORAGE_REPO_BACKUP and backup label)
-    const String *checksum;                                         // File checksum
-    const VariantList *checksumPageErrorList;                       // List of page checksum errors if there are any
-    uint64_t size;                                                  // Original size
-    uint64_t sizeRepo;                                              // Size in repo
-} VerifyBackupFile;
 
 // Job data stucture for processing and results collection
 typedef struct VerifyJobData
@@ -124,7 +116,8 @@ typedef struct VerifyJobData
     StringList *walPathList;                                        // WAL path list for a single archive id
     StringList *walFileList;                                        // WAL file list for a single WAL path
     StringList *backupList;                                         // List of backups to verify
-    List *backupFileList;                                           // List of ManifestFile files in a single backup to check
+    Manifest *manifest;                                             // Manifest contents with list of files to verify
+    unsigned int manifestFileIdx;                                   // Index of the file within the manifest file list to process
     String *currentBackup;                                          // In progress backup, if any
     const InfoPg *pgHistory;                                        // Database history list
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
@@ -843,116 +836,111 @@ verifyBackup(void *data)
                 // No files to process so break from the loop to the next backup in the list
                 break;
             }
-            // Else get the files to process from the manifest
+            // Initialize the backup results and manifest for processing
             else
             {
-// CSHANG Do I need a mem TEMP context so manData, fileName and ManifestFile *file get freed?
-                const ManifestData *manData = manifestData(manifest);
+                // Move the manifest to the jobData for processing
+                jobData->manifest = manifestMove(manifest, jobData->memContext);
+
+                // Initialize the jobData
+                MEM_CONTEXT_BEGIN(jobData->memContext)
+                {
+                    // Get the cipher subpass used to decrypt files in the backup and initialize the file list index
+                    jobData->backupCipherPass = strDup(manifestCipherSubPass(jobData->manifest));
+                    jobData->manifestFileIdx = 0;
+                }
+                MEM_CONTEXT_END();
+// CSHANG Do I need a mem TEMP context so *manData gets freed?
+                const ManifestData *manData = manifestData(jobData->manifest);
 
                 MEM_CONTEXT_BEGIN(lstMemContext(jobData->backupResultList))
                 {
-                    backupResult->totalFile = manifestFileTotal(manifest);
+                    backupResult->totalFileVerify = manifestFileTotal(jobData->manifest);
                     backupResult->backupPrior = strDup(manData->backupLabelPrior);
-                    backupResult->archiveId = strNewFmt("%s-%u", strZ(pgVersionToStr(manData->pgVersion)), manData->pgId);
+                    backupResult->pgId = manData->pgId;
+                    backupResult->pgVersion = manData->pgVersion;
+                    backupResult->pgSystemId = manData->pgSystemId;  // CSHANG May not need but if verifying manifests that are not in the history, then may need to do the check again after all results are in
                     backupResult->archiveStart = strDup(manData->archiveStart);
                     backupResult->archiveStop = strDup(manData->archiveStop);
-                    backupResult->optionCompressType = manData->backupOptionCompressType;
                 }
                 MEM_CONTEXT_END();
-
-                // Free the old file list
-                lstFree(jobData->backupFileList);
-
-                MEM_CONTEXT_BEGIN(jobData->memContext)
-                {
-                    jobData->backupFileList = lstNewP(sizeof(VerifyBackupFile), .comparator = lstComparatorStr);
-                    // Get the cipher subpass used to decrypt files in the backup
-                    jobData->backupCipherPass = strDup(manifestCipherSubPass(manifest));
-                }
-                MEM_CONTEXT_END();
-
-// CSHANG Do I need a mem TEMP context to auto-free the fileName and ManifestFile?
-                // Add the backup files from the manifest to the job data
-                for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
-                {
-                    String *fileName = NULL;
-                    const ManifestFile *file = manifestFile(manifest, fileIdx);
-
-                    MEM_CONTEXT_BEGIN(lstMemContext(jobData->backupFileList))
-                    {
-                        VerifyBackupFile backupFile = {0};
-
-                        // Check if the file is referenced in a prior backup
-                        if (file->reference != NULL)
-                        {
-                            // If there is a reference and the prior backup is not in the list then add the file
-                            // NOTE: backups are processed from oldest to newest so if a single backup is being verified, then it would
-                            // not be in the list
-                            if (lstFindIdx(jobData->backupResultList, &file->reference) == LIST_NOT_FOUND)
-                            {
-                                fileName = strNewFmt(
-                                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file->reference), strZ(file->name),
-                                    strZ(compressExtStr(backupResult->optionCompressType)));
-                            }
-                        }
-                        else
-                        {
-                            fileName = strNewFmt(
-                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupResult->backupLabel), strZ(file->name),
-                                strZ(compressExtStr(backupResult->optionCompressType)));
-                        }
-
-                        if (fileName != NULL)
-                        {
-                            backupFile.filePathName = strDup(fileName);
-                            backupFile.checksum = file->checksumSha1[0] != 0 ? strNew(file->checksumSha1) : HASH_TYPE_SHA1_ZERO_STR;
-                            backupFile.size = file->size;
-                            backupFile.sizeRepo = file->sizeRepo;
-                            lstAdd(jobData->backupFileList, &backupFile);
-                        }
-                    }
-                    MEM_CONTEXT_END();
-                }
             }
-
-            // Free the manifest since it is no longer needed
-            manifestFree(manifest);
         }
 
-        if (jobData->backupFileList != NULL && lstSize(jobData->backupFileList) > 0)
+        if (jobData->manifestFileIdx < manifestFileTotal(jobData->manifest))
         {
             do
             {
-                VerifyBackupFile *backupFileData = lstGet(jobData->backupFileList, 0);
-/* CSHANG
-pg_data/base/1/13221={"checksum-page":true,"reference":"20200728-160632F","repo-size":20,"size":0,"timestamp":1595952372}
-which has no checksum, so why is that? And what should I do with this file?
-*/
-                // Set up the job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
-                protocolCommandParamAdd(command, VARSTR(backupFileData->filePathName));
-                protocolCommandParamAdd(command, VARSTR(backupFileData->checksum));
-                protocolCommandParamAdd(command, VARUINT64(backupFileData->size));
-                protocolCommandParamAdd(command, VARSTR(jobData->backupCipherPass));
+// CSHANG Do I need a mem TEMP context so fileData, filePathName get freed?
+                const ManifestFile *fileData = manifestFile(jobData->manifest, jobData->manifestFileIdx);
+                VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
 
-                // Assign job to result
-                result = protocolParallelJobNew(VARSTR(backupFileData->filePathName), command);
+                String *filePathName = NULL;
 
-                // Remove the file to process from the list
-                lstRemoveIdx(jobData->backupFileList, 0);
+                // Check if the file is referenced in a prior backup
+                if (fileData->reference != NULL)
+                {
+                    // If there is a reference and the prior backup is not in the list then add the file
+                    // NOTE: backups are processed from oldest to newest so if a single backup is being verified, then it would
+                    // not be in the list
+                    if (lstFindIdx(jobData->backupResultList, &fileData->reference) == LIST_NOT_FOUND)
+                    {
+                        filePathName = strNewFmt(
+                            STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
+                            strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                    }
+                }
+                else
+                {
+                    filePathName = strNewFmt(
+                        STORAGE_REPO_BACKUP "/%s/%s%s", strZ(backupResult->backupLabel), strZ(fileData->name),
+                        strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                }
 
-                // If this is the last file to process for this backup, then remove the backup from the list
-                if (lstSize(jobData->backupFileList) == 0)
+                if (filePathName != NULL)
+                {
+                    // Set up the job
+                    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
+                    protocolCommandParamAdd(command, VARSTR(filePathName));
+                    protocolCommandParamAdd(
+                        command, VARSTRZ(fileData->checksumSha1[0] != 0 ? fileData->checksumSha1 : HASH_TYPE_SHA1_ZERO));
+                    protocolCommandParamAdd(command, VARUINT64(fileData->size));
+                    protocolCommandParamAdd(command, VARSTR(jobData->backupCipherPass));
+
+                    // Assign job to result
+                    result = protocolParallelJobNew(VARSTR(filePathName), command);
+                }
+                else
+                {
+                    // The file was verified in a prior backup so decrement the total files being verified for this backup
+                    backupResult->totalFileVerify--;
+                }
+
+                // Increment the index for the next file
+                jobData->manifestFileIdx++;
+
+                // If this was the last file to process for this backup, then free the manifest and remove this backup from the
+                // processing list
+                if (jobData->manifestFileIdx == manifestFileTotal(jobData->manifest))
+                {
+                    // Processing complete - free the manifest and remove this backup from the processing list
+                    manifestFree(jobData->manifest);
+                    jobData->manifest = NULL;   // CSHANG Do we need?
                     strLstRemoveIdx(jobData->backupList, 0);
-
-                // Return to process the job found
-                break;
+                }
+// CSHANG Should we strFree(filePathName)?
+                // If a job was found to be processed then break out to process it
+                if (result != NULL)
+                    break;
             }
-            while (lstSize(jobData->backupFileList) > 0);
+            while (jobData->manifestFileIdx < manifestFileTotal(jobData->manifest));
         }
         else
         {
-            // No backup files found in the manifest to process, remove this backup from the processing list
+// CSHANG There should always be some files to process, but if we get here, we should cleanup but should we also WARN/ERROR?
+            // Nothing to process - free the manifest and remove this backup from the processing list
+            manifestFree(jobData->manifest);
+            jobData->manifest = NULL;   // CSHANG Do we need?
             strLstRemoveIdx(jobData->backupList, 0);
         }
 
@@ -1248,9 +1236,9 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
             VerifyBackupResult *backupResult = lstGet(backupResultList, backupIdx);
             strCatFmt(
                 result, "\n  backup: %s, total files checked: %u, total valid files: %u", strZ(backupResult->backupLabel),
-                backupResult->totalFile, backupResult->totalValidFile);
+                backupResult->totalFileVerify, backupResult->totalValidFile);
 
-            if (backupResult->totalFile > 0)
+            if (backupResult->totalFileVerify > 0)
             {
                 unsigned int errMissing = 0;
                 unsigned int errChecksum = 0;
@@ -1346,7 +1334,6 @@ verifyProcess(unsigned int *errorTotal)
                 .memContext = memContextCurrent(),
                 .walPathList = NULL,
                 .walFileList = strLstNew(),
-                .backupFileList = NULL,
                 .pgHistory = infoArchivePg(archiveInfo),
                 .manifestCipherPass = infoPgCipherPass(infoBackupPg(backupInfo)),
                 .walCipherPass = infoPgCipherPass(infoArchivePg(archiveInfo)),
@@ -1427,6 +1414,7 @@ verifyProcess(unsigned int *errorTotal)
                             ASSERT(index != LIST_NOT_FOUND);
 
                             backupResult = lstGet(jobData.backupResultList, index);
+// CSHANG maybe here init the archiveId? strNewFmt("%s-%u", strZ(pgVersionToStr(backupResult->pgVersion)), backupResult->pgId);
                         }
 
                         // The job was successful
