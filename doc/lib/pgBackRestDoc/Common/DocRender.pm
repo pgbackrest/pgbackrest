@@ -741,11 +741,22 @@ sub processTag
                 # Else point locally
                 else
                 {
-                    if ($strType eq 'html' || $strType eq 'markdown')
+                    my $strSection = $oTag->paramGet('section', false);
+
+                    if ($strType eq 'html')
                     {
                         $strUrl =
-                            $oTag->paramGet('page', false) . '.' .
-                            ($strType eq 'html' ? $strType : '.md');
+                            ($strPage ne $self->{strRenderOutKey} ? "${strPage}.html" : '') .
+                            (defined($strSection) ? '#' . substr($strSection, 1) : '');
+                    }
+                    elsif ($strType eq 'markdown')
+                    {
+                        if (defined($strSection))
+                        {
+                            confess &log(ERROR, "page and section links not supported for type ${strType}, value '" . $oTag->valueGet() . "'");
+                        }
+
+                        $strUrl = "${strPage}.md";
                     }
                     else
                     {
