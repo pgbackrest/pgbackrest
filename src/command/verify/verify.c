@@ -850,7 +850,7 @@ verifyBackup(void *data)
                     jobData->manifestFileIdx = 0;
                 }
                 MEM_CONTEXT_END();
-// CSHANG Do I need a mem TEMP context so *manData gets freed?
+
                 const ManifestData *manData = manifestData(jobData->manifest);
 
                 MEM_CONTEXT_BEGIN(lstMemContext(jobData->backupResultList))
@@ -871,7 +871,6 @@ verifyBackup(void *data)
         {
             do
             {
-// CSHANG Do I need a mem TEMP context so fileData, filePathName get freed?
                 const ManifestFile *fileData = manifestFile(jobData->manifest, jobData->manifestFileIdx);
                 VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
 
@@ -1119,6 +1118,35 @@ verifySetBackupCheckArchive(
 }
 
 /***********************************************************************************************************************************
+Helper function to add a file to an invalid file list
+***********************************************************************************************************************************/
+static void
+verifyInvalidFileAdd(List *invalidFileList, VerifyResult reason, const String *fileName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, invalidFileList);                 // Invalid file list to add the filename to
+        FUNCTION_TEST_PARAM(UINT, reason);                          // Reason for invalid file
+        FUNCTION_TEST_PARAM(STRING, fileName);                      // Name of invalid file
+    FUNCTION_TEST_END();
+
+    ASSERT(invalidFileList != NULL);
+    ASSERT(fileName != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(invalidFileList))
+    {
+        VerifyInvalidFile invalidFile =
+        {
+            .fileName = strDup(fileName),
+            .reason = reason,
+        };
+
+        lstAdd(invalidFileList, &invalidFile);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+/***********************************************************************************************************************************
 Add the file to the invalid file list for the range in which it exists
 ***********************************************************************************************************************************/
 static void
@@ -1135,25 +1163,23 @@ verifyAddInvalidWalFile(List *walRangeList, VerifyResult fileResult, String *fil
     ASSERT(fileName != NULL);
     ASSERT(walSegment != NULL);
 
-    for (unsigned int walIdx = 0; walIdx < lstSize(walRangeList); walIdx++)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        VerifyWalRange *walRange = lstGet(walRangeList, walIdx);
-
-        // If the WAL segment is less/equal to the stop file then it falls in this range since ranges are sorted by stop file in
-        // ascending order, therefore first one found is the range
-        if (strCmp(walRange->stop, walSegment) >= 0)
+        for (unsigned int walIdx = 0; walIdx < lstSize(walRangeList); walIdx++)
         {
-            VerifyInvalidFile invalidFile =
-            {
-                .fileName = strDup(fileName),
-                .reason = fileResult,
-            };
+            VerifyWalRange *walRange = lstGet(walRangeList, walIdx);
 
-            // Add the file to the range where it was found and exit the loop
-            lstAdd(walRange->invalidFileList, &invalidFile);
-            break;
+            // If the WAL segment is less/equal to the stop file then it falls in this range since ranges are sorted by stop file in
+            // ascending order, therefore first one found is the range
+            if (strCmp(walRange->stop, walSegment) >= 0)
+            {
+                // Add the file to the range where it was found and exit the loop
+                verifyInvalidFileAdd(walRange->invalidFileList, fileResult, fileName);
+                break;
+            }
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1446,15 +1472,8 @@ verifyProcess(unsigned int *errorTotal)
                                 {
                                     jobData.jobErrorTotal += verifyLogInvalidResult(
                                         fileType, verifyResult, processId, filePathName);
-// CSHANG should I do this in the invalidFileList or backupResultList memory context?
-                                    VerifyInvalidFile invalidFile =
-                                    {
-                                        .fileName = strDup(filePathName),
-                                        .reason = verifyResult,
-                                    };
 
-                                    // Add the file to backup's invalid file list
-                                    lstAdd(backupResult->invalidFileList, &invalidFile);
+                                    verifyInvalidFileAdd(backupResult->invalidFileList, verifyResult, filePathName);
                                 }
                             }
                         }
@@ -1478,15 +1497,7 @@ verifyProcess(unsigned int *errorTotal)
                             }
                             else
                             {
-// CSHANG should I do this in the invalidFileList or backupResultList memory context?
-                                VerifyInvalidFile invalidFile =
-                                {
-                                    .fileName = strDup(filePathName),
-                                    .reason = verifyOtherError,
-                                };
-
-                                // Add the file to backup's invalid file list
-                                lstAdd(backupResult->invalidFileList, &invalidFile);
+                                verifyInvalidFileAdd(backupResult->invalidFileList, verifyOtherError, filePathName);
                             }
                         }
 
