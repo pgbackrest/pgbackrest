@@ -324,7 +324,7 @@
 
         # Install PostgreSQL
         RUN RELEASE_CODENAME=`lsb_release -c | awk '{print $2}'` &amp;&amp; \
-            echo 'deb http://apt.postgresql.org/pub/repos/apt/ '${RELEASE_CODENAME?}'-pgdg main 13' | \
+            echo 'deb http://apt.postgresql.org/pub/repos/apt/ '${RELEASE_CODENAME?}'-pgdg main' | \
                 tee -a /etc/apt/sources.list.d/pgdg.list &amp;&amp; \
             wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - &amp;&amp; \
             apt-get update &amp;&amp; \

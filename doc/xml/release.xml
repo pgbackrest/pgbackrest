@@ -27,16 +27,22 @@
                     </release-item>
                 </release-bug-list>
 
-                <release-improvement-list>
+                <release-feature-list>
                     <release-item>
+                        <commit subject="Ignore backup_manifest in PostgreSQL 13."/>
+                        <commit subject="Update PostgreSQL 13 test catalog versions missed in 6bb111c1."/>
+                        <commit subject="Update test containers for PostgreSQL 13."/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Ignore <file>backup_manifest</file> in <postgres/> 13.</p>
+                        <p><postgres/> 13 support.</p>
                     </release-item>
+                </release-feature-list>
 
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
