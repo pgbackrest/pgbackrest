@@ -87,6 +87,8 @@ typedef struct VerifyInvalidFile
 // Status result of a backup
 typedef enum
 {
+    backupValid,                                                    // Default: All files in backup label repo passed verification
+    backupInvalid,                                                  // One of more files in backup label repo failed verification
     backupConsistent,
     backupConsistentWithPITR,
     backupMissingManifest,
@@ -1508,7 +1510,7 @@ verifyProcess(unsigned int *errorTotal)
                 while (!protocolParallelDone(parallelExec));
 
                 // ??? Need to do the final reconciliation - checking backup required WAL against, valid WAL
-
+// CSHANG May need to have several booleans for backup status instead of enum so statusIsValid, statusIsConsistent, statusIsPitrable
                 // Report results
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList);
             }

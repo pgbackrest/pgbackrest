@@ -105,6 +105,7 @@ manifestPtr - pointer to contents of the manifest being processed to keep in mem
 checksum - checksum of the file read
 errorCode - 0 if successfully read, else error code
 
+```
 FOR each info file and its copy (archive.info, backup.info)
     IF archive.info exists and is readable
     THEN
@@ -130,12 +131,139 @@ FOR each info file and its copy (archive.info, backup.info)
         keep the file in memory
     FI
 ROF        
+```
 
 
+## Requirement 3. Verify WAL
+
+Verify WAL by reporting
+1. Checksum mismatches
+2. Missing WAL
+3. Skipped duplicates
+4. Additional WAL skipped
+
+Considerations:
+1. Is it necessary to report gaps at this point? It might be better to wait until the end, once the ranges are set, to determine gaps that are not legitimate.
+    1. Gaps that are legitimate could be a result of archive expiration or a timeline switch.
+    2. Gaps that are not legitimate are when WAL is expected to be there for a backup to be consistent and it is not there or there are invalid files listed for the backup range.
+    3. Can we access, or have the user pass, retention settings to help determine if gaps are legitimate or not?
+
+## Requirement 5. Verify backup files using manifest
+
+1. Files exist
+2. Checksums and size match
+3. Ignore files with references when every backup will be validated, otherwise, check each file referenced to another file in the backup set. For example, if request to verify a single incremental backup, then the manifest may have references to files in another (prior) backup which then must be checked.
+
+manifestFileIdx:
+- Index of the file within the manifest file list that is being processed.
+
+BackupList:
+- List of backup labels in the repository. Although this list is available through the job processing, it is not persisted as each
+- list item will be removed after it is processed.
+
+BackupResult:
+- label - backup label
+- status - default to valid
+- backupPrior - label of prior backup if any
+- totalFile - total number of files in the repository for this backup that will be processed. It will be decremented for any file skipped because it was already verified in a prior backup.
+- pgId - db-id of the database that was backed up - used for building the archiveId for checking the WAL
+- pgVersion - PG version of the database that was backed up - used for building the archiveId for checking the WAL
+- pgSystemId - systemId of the database that was backed up **// CSHANG DO WE NEED THIS???**
+
+BackupResultList:
+    List of BackupResult for all backups processed. This list will persist after all jobs are completed.
+
+```
+FOR each backup label in BackupList
+    read the manifest
+    IF usable manifest
+    THEN
+        initialize the BackupResult from the manifest and add it to the BackupResultList
+        initialize manifestFileIdx = 0
+
+        FOR each target file referenced by manifestFileIdx
+            get the ManifestFile data at manifestFileIdx
+            fileName = NULL
+            IF reference to a prior backup exists for the file
+            THEN
+                IF the prior backup label does not exist in BackupResultList
+                THEN
+                    fileName = prepend the prior backup label to the file name and add the compression extension if any
+                FI
+            ELSE
+                fileName = prepend the label of the backup to the file name and add the compression extension if any
+            FI
+
+            IF fileName != NULL
+            THEN
+                send file for processing to verify existence, checksum and size
+            FI
+
+            increment manifestFileIdx
+        ROF
+
+    ELSE
+        IF manifest not usable because the backup is in progress
+        THEN
+            log a warning that the backup is in progress
+        ELSE
+            log a warning that the backup may have expired
+        FI
+
+        skip the verification of the backup
+    FI
+ROF
+
+FOR each file sent for processing
+    IF file invalid
+    THEN
+        add file to the invalid file list for this backup
+        log error
+        backup status = not valid  // CSHANG May need to have several booleans instead of enum so statusIsValid, statusIsConsistent, statusIsPitrable
+    FI
+
+```
+
+## Requirement 6. Verify whether a backup is consistent, valid and can be played through PITR
+
+Check each backup, using the following definitions:
+
+- Consistent - no gaps (missing or invalid) in the WAL from the backup start to backup end for a single backup (not backup set)
+- Valid - backup is Consistent and all backed up PG files it references (including ones in a prior backup for DIFF and INCR backups) are verified as OK
+- PITR - backup is Consistent and Valid and no gaps in the WAL from the start of the backup to the last WAL in the archive (timeline can be followed)
+
+Considerations:
+1. If no backups have PITR, especially the latest, then report as error
+2.
+
+Log and error when the backup relies on WAL that is not valid.
+
+```
+
+IF backup archive-stop == NULL (then start would also be NULL)
+THEN
+    skip checking the WAL  // CSHANG: should an INFO or WARN be logged?
+ELSE
+    FOR wal range sorted on stop-file ascending
+        IF backup archive-stop <= walRange.stop
+        THEN
+            IF backup archive-start >= walRange.start
+            THEN
+                // Range is found
+                IF walRange has an invalid file
+                THEN
+                    backup is not consistent
+                    log error
+                    continue to next backup
+                ELSE
+                    backup is consistent
+                    IF backup-prior
+                    THEN
+                        find prior backup in backup result list
+                        IF found and status = consistent, then
 
 
-
-
+```
 
 <!--
 - May have to expose infoBackupNewLoad so can load the backup.info and then the backup.info.copy and compare the 2 - need to know if one is corrupt and always failing over to the other.
@@ -170,40 +298,10 @@ ROF
 
     * Verify the checksum of all WAL/backup files
         - Pass the checksum to verifyFile - this needs to be stripped off from file in WAL but for backup it must be read from the manifest (which we need to read in the jobCallback
-        - Skip checking size for WAL file but should check for size equality with the backup files - if one or the other doesn't match, then corrupt
-        - in verifyFile() function be sure to add IoSync filter and then do IoReadDrain and then look at the results of the filters. See restore/file.c lines 85 though 87 (although need more filters e.g. decrypt, decompress, size, sha, sync).
-
-            // Generate checksum for the file if size is not zero
-            IoRead *read = NULL;
-
-                read = storageReadIo(storageNewReadP(storageRepo(), filename));
-                IoFilterGroup *filterGroup = ioReadFilterGroup(read);
-
-                // Add decryption filter
-                if (cipherPass != NULL)
-                    ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
-
-
-                // Add decompression filter
-                if (repoFileCompressType != compressTypeNone)
-                    ioFilterGroupAdd(filterGroup, decompressFilter(repoFileCompressType));
-
-                // Add sha1 filter
-                ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
-
-                // Add size filter
-                ioFilterGroupAdd(filterGroup, ioSizeNew());
-
-                // Add IoSink - this just throws away data so we don't want to move the data from the remote. The data is thrown away after the file is read, checksummed, etc
-                ioFilterGroupAdd(filterGroup, ioSinkNew());
-
-                ioReadDrain(read); // this will throw away if ioSink was not implemented
-
-                // Then filtergroup get result to validate checksum
-                if (!strEq(pgFileChecksum, varStr(ioFilterGroupResult(filterGroup, CRYPTO_HASH_FILTER_TYPE_STR))))
+        - Skip checking size for WAL file but should check for size equality with the backup files - if one or the other doesn't match, then corrupt -- NO we can get the WAL size from the first WAL file and use that as the size to verify
 
         - For the first pass we only check that all the files in the manifest are on disk. Future we may also WARN if there are files that are on disk but not in the manifest.
-        - verifyJobResult() would check the status of the file (bad) and can either add to a corrupt list or add gaps in the WAL (probaby former) - I need to know what result I was coming from so that is the jobKey - maybe we use the filename as the key - does it begin with Archive then it is WAL, else it's a backup (wait, what about manifest) - maybe we can make the key a variant instead of a string. Need list of backups start/stop to be put into jobData and use this for final reconciliation.
+        - verifyJobResult() would check the status of the file (bad) and can either add to a corrupt list or add gaps in the WAL (probably former) - I need to know what result I was coming from so that is the jobKey - maybe we use the filename as the key - does it begin with Archive then it is WAL, else it's a backup (wait, what about manifest) - maybe we can make the key a variant instead of a string. Need list of backups start/stop to be put into jobData and use this for final reconciliation.
         - Would this be doing mostly what restoreFile() does without the actualy copy? But we have to "sort-of" copy it (you mentioned a technique where we can just throw it away and not write to disk) to get the correct size and checksum...
         - If a corrupt WAL file then warn/log that we have a "corrupt/missing" file and remove it from the range list so it will cause a "gap" then when checking backup it will log another error that the backup that relies on that particular WAL is not valid
 
@@ -250,7 +348,7 @@ If a fast option has been requested, then only create one process to handle, els
     So, for now you'll need to check the first WAL and use that size to verify the sizes of the rest. Later we'll pull size info from archive.info.
     */
 
-I should pobably use an expression to get all the history files too "(^[0-F]{16}$)|(^[0-F]{8}\.history$)" (actually,
+I should rpobably use an expression to get all the history files too "(^[0-F]{16}$)|(^[0-F]{8}\.history$)" (actually,
 given the note below on S3 maybe we get everything and then create lists: history, WALpaths, junk) and then
  Create the stringlist files based on what last history file has: I only need the latest history file since history is continually
  copied from each to the next.
@@ -588,81 +686,8 @@ TESTING
 // 3) Should probably have 1 test that in with encryption? Like a run through with one failure and then all success? Can't set encryption password on command line so can't just pass encryptions type and password as options...
 -->
 
-After all WAL have been checked, check the backups
- <!--
+ <!-- After all WAL have been checked, check the backups
 // CSHANG It is possible to have a backup without all the WAL if option-archive-check=false but if this is not on then all bets are off ANSWER - ignore for now
 // CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup" -- ANSWER all wal will be in manifest so will be checked as part of backup processing, so no additional checks are needed as PG will use what is in the backup first during a restore
 // CSHANG if offline backup, then both archive-start and archive-stop could be null so need to verify files but not going to do any wal comparison
  -->
-IF backup archive-stop == NULL (then start would also be NULL)
-THEN
-    skip checking the WAL
-ELSE
-    Find the WAL range where walRange.stop >= backup stop
-    IF walRange.start <= backup start
-    THEN
-        Range is found
-        IF walRange has an invalid file
-        THEN
-            backup is not consistent
-
-
-## Requirement 5. Verify backup files using manifest
-
-manifestFileIdx:
-    Index of the file within the manifest file list that is being processed.
-
-BackupList:
-    List of backup labels in the repository. Although this list is available through the job processing, it is not persisted as each
-    list item will be removed after it is processed.
-
-BackupResult:
-    label - backup label
-    totalFile - total number of files in the repository for this backup that will be processed. It will be decremented for any file
-        skipped because it was already verified in a prior backup.
-    pgId - db-id of the database that was backed up - used for building the archiveId for checking the WAL
-    pgVersion - PG version of the database that was backed up - used for building the archiveId for checking the WAL
-    pgSystemId - systemId of the database that was backed up // CSHANG DO WE NEED THIS???
-
-BackupResultList:
-    List of BackupResult for all backups processed. This list will persist after all jobs are completed.
-
-FOR each backup label in BackupList
-    read the manifest
-    IF usable manifest
-    THEN
-        initialize the BackupResult from the manifest and add it to the BackupResultList
-        initialize manifestFileIdx = 0
-
-        FOR each target file
-            get the ManifestFile data at manifestFileIdx
-            fileName = NULL
-            IF reference to a prior backup exists for the file
-            THEN
-                IF the prior backup label does not exist in BackupResultList
-                THEN
-                    fileName = prepend the prior backup label to the file name and add the compression extension if any
-                FI
-            ELSE
-                fileName = prepend the label of the backup to the file name
-            FI
-
-            IF fileName != NULL
-            THEN
-                send file for processing
-            FI
-
-            increment manifestFileIdx
-        ROF
-
-    ELSE
-        IF manifest not usable because the backup is in progress
-        THEN
-            log a warning that the backup is in progress
-        ELSE
-            log a warning that the backup may have expired
-        FI
-
-        skip the verification of the backup
-    FI
-ROF
