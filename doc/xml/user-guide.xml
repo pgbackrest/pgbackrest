@@ -2337,6 +2337,8 @@
 
             <p>A new host named <host>repository</host> is created to store the cluster backups.</p>
 
+            <admonition type="note">The <backrest/> version installed on the {[host-repo1]} host must exactly match the version installed on the <postgres/> host.</admonition>
+
             <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-option]}"/>
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository.  Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
