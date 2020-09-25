@@ -507,13 +507,16 @@ testRun(void)
                     "unable to find greeting key 'name'");
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
-                    "expected value 'pgBackRest' for greeting key 'name' but got 'bogus'");
+                    "expected value 'pgBackRest' for greeting key 'name' but got 'bogus'\n"
+                    "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
-                    "expected value 'test' for greeting key 'service' but got 'bogus'");
+                    "expected value 'test' for greeting key 'service' but got 'bogus'\n"
+                    "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
-                    "expected value '" PROJECT_VERSION "' for greeting key 'version' but got 'bogus'");
+                    "expected value '" PROJECT_VERSION "' for greeting key 'version' but got 'bogus'\n"
+                    "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
 
                 // Correct greeting
                 ProtocolClient *client = NULL;

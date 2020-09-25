@@ -70,6 +70,17 @@
 
                         <p>Add hint about starting the stanza when WAL segment not found.</p>
                     </release-item>
+
+                    <release-item>
+                        <commit subject="Add hint and documentation for protocol version mismatches."/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="loop-evgeny"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hint for protocol version mismatch.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -94,6 +105,17 @@
 
             <release-doc-list>
                 <release-improvement-list>
+                    <release-item>
+                        <commit subject="Add hint and documentation for protocol version mismatches."/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="loop-evgeny"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add note that <backrest/> versions must match when running remotely.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="heath.lord"/>
@@ -9018,6 +9040,11 @@
         <contributor id="leonardo.gg.avellar">
             <contributor-name-display>Leonardo GG Avellar</contributor-name-display>
             <contributor-id type="github">L30Bola</contributor-id>
+        </contributor>
+
+        <contributor id="loop-evgeny">
+            <contributor-name-display>loop-evgeny</contributor-name-display>
+            <contributor-id type="github">loop-evgeny</contributor-id>
         </contributor>
 
         <contributor id="luca.ferrari">
