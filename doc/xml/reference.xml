@@ -1557,7 +1557,7 @@
 
                 <text>The <cmd>info</cmd> command operates on a single stanza or all stanzas.  Text output is the default and gives a human-readable summary of backups for the stanza(s) requested.  This format is subject to change with any release.
 
-                For machine-readable output use <setting>--output=json</setting>.  The JSON output contains far more information than the text output and is kept stable unless a bug is found.
+                For machine-readable output use <br-option>--output=json</br-option>.  The JSON output contains far more information than the text output and is kept stable unless a bug is found.
 
                 Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option.  The stanza '<id>status</id>' gives a brief indication of the stanza's health.  If this is '<id>ok</id>' then <backrest/> is functioning normally.  The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive.  Note that there may be gaps due to archive retention policies or other reasons.
 
