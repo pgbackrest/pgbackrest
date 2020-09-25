@@ -1557,7 +1557,21 @@
 
                 <text>The <cmd>info</cmd> command operates on a single stanza or all stanzas.  Text output is the default and gives a human-readable summary of backups for the stanza(s) requested.  This format is subject to change with any release.
 
-                For machine-readable output use <setting>--output=json</setting>.  The JSON output contains far more information than the text output and is kept stable unless a bug is found.</text>
+                For machine-readable output use <br-option>--output=json</br-option>.  The JSON output contains far more information than the text output and is kept stable unless a bug is found.
+
+                Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option.  The stanza '<id>status</id>' gives a brief indication of the stanza's health.  If this is '<id>ok</id>' then <backrest/> is functioning normally.  The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive.  Note that there may be gaps due to archive retention policies or other reasons.
+
+                The '<id>backup/expire running</id>' message will appear beside the '<id>status</id>' information if one of those commands is currently running on the host.
+
+                The backups are displayed oldest to newest.  The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).
+
+                The '<id>timestamp start/stop</id>' defines the time period when the backup ran.  The '<id>timestamp stop</id>' can be used to determine the backup to use when performing Point-In-Time Recovery.  More information about Point-In-Time Recovery can be found in the <link page="user-guide" section="/pitr">Point-In-Time Recovery</link> section.
+
+                The '<id>wal start/stop</id>' defines the WAL range that is required to make the database consistent when restoring.  The <cmd>backup</cmd> command will ensure that this WAL range is in the archive before completing.
+
+                The '<id>database size</id>' is the full uncompressed size of the database while '<id>backup size</id>' is the amount of data actually backed up (these will be the same for full backups).  The '<id>repository size</id>' includes all the files from this backup and any referenced backups that are required to restore the database while '<id>repository backup size</id>' includes only the files in this backup (these will also be the same for full backups).  Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.
+
+                The '<id>backup reference list</id>' contains the additional backups that are required to restore this backup.</text>
 
                 <option-list>
                     <!-- OPERATION - INFO COMMAND - OUTPUT OPTION -->
