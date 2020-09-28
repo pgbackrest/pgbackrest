@@ -416,6 +416,7 @@ verifyManifestFile(const String *backupLabel, const String *cipherPass, bool *cu
 /* CSHANG I'm not so sure this is a good idea. What do I do with the results from the files? If the db-id matches something in the
 history, say db-id=1, then when I get the file result, I can't just check the WAL in the 9.4-1, so what am I reporting on?
 I'd have to figure out, again, whether the db data for each file in the manifest is associated with a db-id in the history - seems wasteful
+ANSWER: Should immediately mark the backup is INVALID (which here means we're not going to check - but need to handle it so that maybe the thing the differencial references doesn't exist) -- ERROR and skip rather than try to validate it --- BUT maybe keep the result and mark the backup invalid
 */
             if (!found)
             {
@@ -810,7 +811,7 @@ verifyBackup(void *data)
             // be changed in verifyManifestFile if a main backup.manifest exists since that would indicate the backup completed during
             // the verify process.
             bool inProgressBackup = strEq(jobData->currentBackup, backupResult->backupLabel);
-
+// CSHANG May need to not add the backup until the manifest is checked. OR need to have a status for a manifest that is invalid (vs missing?) or just a "missing or invalid" status and then they can check the log for details?
             // Get a usable backup manifest file
             Manifest *manifest = verifyManifestFile(
                 backupResult->backupLabel, jobData->manifestCipherPass, &inProgressBackup, jobData->pgHistory);
@@ -884,6 +885,17 @@ verifyBackup(void *data)
                     // If there is a reference and the prior backup is not in the list then add the file
                     // NOTE: backups are processed from oldest to newest so if a single backup is being verified, then it would
                     // not be in the list
+// CSHANG AND IS VALID??? OR WHAT IF THERE IS A DEPENDENCY CHAIN AND THEY REQUESTED --set=INCR - the reference will indicate which in the chain the file exists.
+// CSHANG Check at eand to see if it is invalid I will look at the references for each file
+// then -- if backup that this references is marked invalid, then
+// 1) if reference is in list, don't check file
+
+// LATER:
+// 2) If reference is not on list then check file from the backup it is referenced in
+// 3) later                "" and marked invalid, check invalid file list. If in list then backup is invalid
+// NOW: IF your prior backup is marked invalid then all the backups after that are dependent on it are invalid
+// FUTURE: Maybe at the end processing, then if a dependent has invalid files, then we may need to read the manifest to see if there is a reference for the invalid files in the backup we're checking and this backup was checked out as OK
+
                     if (lstFindIdx(jobData->backupResultList, &fileData->reference) == LIST_NOT_FOUND)
                     {
                         filePathName = strNewFmt(
@@ -1511,6 +1523,27 @@ verifyProcess(unsigned int *errorTotal)
 
                 // ??? Need to do the final reconciliation - checking backup required WAL against, valid WAL
 // CSHANG May need to have several booleans for backup status instead of enum so statusIsValid, statusIsConsistent, statusIsPitrable
+/*
+iterate WAL ranges and if invalidFileList > 0 then report as WARN and if later this causes a backup prroblem THEN it is reported as an error
+Read ALL history files
+If WAL files and no history and visa versa then should be reporting as WARN
+
+1) If 2.history make sure there is at least one timeline 2 range then WARN
+2) If there is a timeline 2 WAL range and no 2.history then WARN
+3) Find relationship between timeline 1 and 2 and if missing WARN
+
+
+IF history file and no wal but it is before any timeline that exists in the ranges then OK
+
+WAL
+2
+3
+4
+
+1/02 -02.history
+2/05 -03.history
+4/06 -05.history
+*/
                 // Report results
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList);
             }

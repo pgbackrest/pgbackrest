@@ -142,11 +142,15 @@ Verify WAL by reporting
 3. Skipped duplicates
 4. Additional WAL skipped
 
+## Requirement 4. Verify all manifests/copies are valid
+
+Minimum to check is:
+1. Files exist
+2. Checksums match
+
 Considerations:
-1. Is it necessary to report gaps at this point? It might be better to wait until the end, once the ranges are set, to determine gaps that are not legitimate.
-    1. Gaps that are legitimate could be a result of archive expiration or a timeline switch.
-    2. Gaps that are not legitimate are when WAL is expected to be there for a backup to be consistent and it is not there or there are invalid files listed for the backup range.
-    3. Can we access, or have the user pass, retention settings to help determine if gaps are legitimate or not?
+1. If a file exists and we deem it usable, then what if the database id, system-id or version is not in the history?
+2. If a manifest is considered unusable, then should there be a backup result for it or do we just report an error in the log and indicate the backup is being skipped? (Need to try to be consistent with archive results).
 
 ## Requirement 5. Verify backup files using manifest
 
@@ -234,7 +238,10 @@ Check each backup, using the following definitions:
 
 Considerations:
 1. If no backups have PITR, especially the latest, then report as error
-2.
+2. Need to determine gaps that are not legitimate.
+    1. Gaps that are legitimate could be a result of archive expiration or a timeline switch.
+    2. Gaps that are not legitimate are when WAL is expected to be there for a backup to be consistent and it is not there or there are invalid files listed for the backup range.
+    3. Can we access, or have the user pass, retention settings to help determine if gaps are legitimate or not?
 
 Log and error when the backup relies on WAL that is not valid.
 
