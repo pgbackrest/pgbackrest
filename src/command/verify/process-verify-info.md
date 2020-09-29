@@ -152,6 +152,35 @@ Considerations:
 1. If a file exists and we deem it usable, then what if the database id, system-id or version is not in the history?
 2. If a manifest is considered unusable, then should there be a backup result for it or do we just report an error in the log and indicate the backup is being skipped? (Need to try to be consistent with archive results).
 
+```
+IF manifest is readable
+THEN
+    IF history NOT found
+    THEN
+        ERROR
+        status = manifest invalid
+    ELSE
+        IF manifest copy is readable
+        THEN
+            IF manifest checksum != manifest copy checksum
+            THEN
+                WARN
+            FI
+        FI
+        move the manifest to result
+    FI
+ELSE
+    IF manifest copy is readable
+    THEN
+        IF manifest is the current backup
+        THEN
+            skip checking backup
+            status = backupMissingManifest
+        FI
+        ELSE
+```            
+
+
 ## Requirement 5. Verify backup files using manifest
 
 1. Files exist
@@ -180,7 +209,10 @@ BackupResultList:
 ```
 FOR each backup label in BackupList
     read the manifest
-    IF usable manifest
+    IF manifest is not usable
+    THEN
+        set backup result status =
+    usable manifest
     THEN
         initialize the BackupResult from the manifest and add it to the BackupResultList
         initialize manifestFileIdx = 0
