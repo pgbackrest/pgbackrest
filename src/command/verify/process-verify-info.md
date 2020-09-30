@@ -150,6 +150,7 @@ Minimum to check is:
 
 Considerations:
 1. If a file exists and we deem it usable, then what if the database id, system-id or version is not in the history?
+    - It was decided that if the database information does not exist in the history of the backup info file, then the backup will be considered invalid and the files will not be checked.
 2. If a manifest is considered unusable, then should there be a backup result for it or do we just report an error in the log and indicate the backup is being skipped? (Need to try to be consistent with archive results).
 
 ```
@@ -178,6 +179,7 @@ ELSE
             status = backupMissingManifest
         FI
         ELSE
+
 ```            
 
 
@@ -185,7 +187,22 @@ ELSE
 
 1. Files exist
 2. Checksums and size match
-3. Ignore files with references when every backup will be validated, otherwise, check each file referenced to another file in the backup set. For example, if request to verify a single incremental backup, then the manifest may have references to files in another (prior) backup which then must be checked.
+3. Files with references should skip processing when every backup will be validated, otherwise, check each file referenced to another file in the backup set. For example, if request to verify a single incremental backup, then the manifest may have references to files in another (prior) backup which then must be checked. (NOTE: See Considerations below on a discussion of the race condition and possible fixes)
+
+Considerations:
+1. Only a valid manifest file will be used - if one is not found, the backup result status will be Invalid and no files will be verified.
+2. Backups are processed in alphabetical order so that backups will be processed after any backups they depend on.
+3. There is a known race condition where the file results for a backup are still being processed when the dependent backup begins processing. Currently there is no mechanism to have the dependent backup wait for all the results of the prior backup, therefore there is a risk that one of more files in the dependent backup will skip processing because it is assumed to be verified OK if it is not yet in the InvalidFileList of the prior backup. One strategy was to mark the dependent backup invalid if the prior backup was marked invalid, however if the prior backup is invalid because of a backup file that, validly, no longer exists and is therefore not part of the dependent backup, then marking the dependent backup is flawed.
+Another flaw here is that we think we can skip checking files in a prior backup but we won't know if a file that was referenced in a
+prior backup was invalid or not until we have completed checking that backup. But since there is no mechanism to wait, we can at least check every file in the dependent backup for a reference to a prior backup and then do the following:
+    - if the prior backup is not in the result list, then assume we are dealing with the --set option and check the file
+    - if the prior backup is in the result list but the total files from the manifest is zero 0 then the backup files were not processed in the prior backup so the file needs to be verified
+    - if the backup is in the result list but the total files from the manifest is not zero (>= 1) then check the invalid file list of the prior backup
+        - If the file exists in the invalid file list, then mark the dependent backup invalid and add the file to the dependent backup invalid file list but continue processing all files
+        - If the file does not exist in the prior backup invalid file list, then the file is deemed valid and processing is skipped
+This isn't the optimal solution because if the file is not "yet" in the prior backup's invalid list, we could still miss checking it because the
+prior backup might still be processing files and it hasn't hit this one yet. But since the files are in the manifest
+in alphabetical order, then hopefully the chances of that happening will be small. WE might also put in a status to indicate when a backup skips files it deems are valid in a prior backup. At the end of processing, if this status is still set for the dependent backup (meaning no invalid files were found) at the end of all processing then during reconciliation, we could then decided that we warn the user this backup MAY not usable vs that it is not usable.
 
 manifestFileIdx:
 - Index of the file within the manifest file list that is being processed.
@@ -198,7 +215,7 @@ BackupResult:
 - label - backup label
 - status - default to valid
 - backupPrior - label of prior backup if any
-- totalFile - total number of files in the repository for this backup that will be processed. It will be decremented for any file skipped because it was already verified in a prior backup.
+- totalFileVerify - total number of files in the manifest for this backup that will be verified. For INCR or DIFF backups, not all of these files will be processed but all will attempt to be verified.
 - pgId - db-id of the database that was backed up - used for building the archiveId for checking the WAL
 - pgVersion - PG version of the database that was backed up - used for building the archiveId for checking the WAL
 - pgSystemId - systemId of the database that was backed up **// CSHANG DO WE NEED THIS???**
@@ -211,10 +228,11 @@ FOR each backup label in BackupList
     read the manifest
     IF manifest is not usable
     THEN
-        set backup result status =
-    usable manifest
+        set backup result status = unusable manifest
     THEN
-        initialize the BackupResult from the manifest and add it to the BackupResultList
+        initialize the backup result totalFileVerify = total files listed in manifest
+        default backup result status = ok
+        add backupResult to the BackupResultList
         initialize manifestFileIdx = 0
 
         FOR each target file referenced by manifestFileIdx
@@ -225,6 +243,20 @@ FOR each backup label in BackupList
                 IF the prior backup label does not exist in BackupResultList
                 THEN
                     fileName = prepend the prior backup label to the file name and add the compression extension if any
+                FI
+                ELSE
+                    IF there were files were checked in the prior backup  (totalFileVerify != 0)
+                    THEN
+                        IF the file is in the prior backup invalid file list
+                        THEN
+                            add file to invalid file list for this backup result
+                            set the backup result to invalid
+                        ELSE
+                            do nothing (skip checking the file - assume it is valid)
+                        FI
+                    ELSE
+                        fileName = prepend the prior backup label to the file name and add the compression extension if any
+                    FI
                 FI
             ELSE
                 fileName = prepend the label of the backup to the file name and add the compression extension if any

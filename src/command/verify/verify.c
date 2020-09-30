@@ -110,7 +110,6 @@ typedef struct VerifyBackupResult
     String *backupPrior;                                            // Prior backup that this backup depends on, if any
     unsigned int pgId;                                              // PG id will be used to find WAL for the backup in the repo
     unsigned int pgVersion;                                         // PG version will be used with PG id to find WAL in the repo
-    uint64_t pgSystemId;                                            // CSHANG MAY need to reverify that the backup is associated with a known DB history
     String *archiveStart;                                           // First WAL segment in the backup
     String *archiveStop;                                            // Last WAL segment in the backup
     List *invalidFileList;
@@ -878,7 +877,6 @@ verifyBackup(void *data)
                     backupResult->backupPrior = strDup(manData->backupLabelPrior);
                     backupResult->pgId = manData->pgId;
                     backupResult->pgVersion = manData->pgVersion;
-                    backupResult->pgSystemId = manData->pgSystemId;  // CSHANG May not need but if verifying manifests that are not in the history, then may need to do the check again after all results are in
                     backupResult->archiveStart = strDup(manData->archiveStart);
                     backupResult->archiveStop = strDup(manData->archiveStop);
                 }
@@ -967,10 +965,13 @@ in alphabetical order, then hopefully the chances of the checking of the file in
                                 String *priorFile = strNewFmt(
                                     "%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
                                     strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+// CSHANG Should we really add it to the invalid file list here? or just increment the joberror, set the backup result state to invalid
                                 unsigned int backupPriorInvalidIdx = lstFindIdx(backupResultPrior->invalidFileList, &priorFile);
+
                                 if (backupPriorInvalidIdx != LIST_NOT_FOUND)
                                 {
-                                    VerifyInvalidFile *invalidFile = lstGet(backupResultPrior->invalidFileList, backupPriorInvalidIdx);
+                                    VerifyInvalidFile *invalidFile = lstGet(
+                                        backupResultPrior->invalidFileList, backupPriorInvalidIdx);
                                     verifyInvalidFileAdd(backupResult->invalidFileList, invalidFile->reason, invalidFile->fileName);
                                     backupResult->status = backupInvalid;
                                 }
@@ -1001,6 +1002,7 @@ in alphabetical order, then hopefully the chances of the checking of the file in
                 }
                 else
                 {
+// CSHANG TODO: totalFileVerify - need to decide what this count means and if this should be decremented even when a fle was found in a prior backups invalid file list and added to this list
                     // The file was verified in a prior backup so decrement the total files being verified for this backup
                     backupResult->totalFileVerify--;
                 }
@@ -1027,9 +1029,10 @@ in alphabetical order, then hopefully the chances of the checking of the file in
         else
         {
 // CSHANG There should always be some files to process, but if we get here, we should cleanup but should we also WARN/ERROR?
-            // Nothing to process - free the manifest and remove this backup from the processing list
+            // Nothing to process so free the manifest, set the status to invalid and remove the backup from the processing list
             manifestFree(jobData->manifest);
-            jobData->manifest = NULL;   // CSHANG Do we need?
+            jobData->manifest = NULL;
+            backupResult->status = backupInvalid;
             strLstRemoveIdx(jobData->backupList, 0);
         }
 
