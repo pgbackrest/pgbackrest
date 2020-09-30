@@ -104,8 +104,9 @@ typedef struct VerifyBackupResult
 {
     String *backupLabel;                                            // Label assigned to the backup
     VerifyBackupResultStatus status;                                // Final status of the backup
+    unsigned int totalFileManifest;                                 // Total number of backup files in the manifest
     unsigned int totalFileVerify;                                   // Total number of backup files being verified
-    unsigned int totalValidFile;                                    // Total number of backup files that were verified and valid
+    unsigned int totalFileValid;                                    // Total number of backup files that were verified and valid
     String *backupPrior;                                            // Prior backup that this backup depends on, if any
     unsigned int pgId;                                              // PG id will be used to find WAL for the backup in the repo
     unsigned int pgVersion;                                         // PG version will be used with PG id to find WAL in the repo
@@ -872,6 +873,7 @@ verifyBackup(void *data)
 
                 MEM_CONTEXT_BEGIN(lstMemContext(jobData->backupResultList))
                 {
+                    backupResult->totalFileManifest = manifestFileTotal(jobData->manifest);
                     backupResult->totalFileVerify = manifestFileTotal(jobData->manifest);
                     backupResult->backupPrior = strDup(manData->backupLabelPrior);
                     backupResult->pgId = manData->pgId;
@@ -932,11 +934,49 @@ This isn't the optimal solution because if it is not "yet" in the prior backup's
 prior backup might still be processing files and it hasn't hit this one yet. But this may be the best we can do - and since the files are in the manifest
 in alphabetical order, then hopefully the chances of the checking of the file in a prior backup will be small.
 */
-                    if (lstFindIdx(jobData->backupResultList, &fileData->reference) == LIST_NOT_FOUND)
+                    unsigned int backupPriorIdx = lstFindIdx(jobData->backupResultList, &fileData->reference);
+                    if (backupPriorIdx == LIST_NOT_FOUND)
                     {
                         filePathName = strNewFmt(
                             STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
                             strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                    }
+                    // Else the backup this file referenced has been processed
+                    else
+                    {
+// CSHANG Should I wrap this in  MEM_CONTEXT_TEMP_BEGIN() and then use MEM_CONTEXT_PRIOR_BEGIN() around filePathName?
+                        MEM_CONTEXT_TEMP_BEGIN()
+                        {
+                            VerifyBackupResult *backupResultPrior = lstGet(jobData->backupResultList, backupPriorIdx);
+
+                            // If no backups were checked in the prior backup then check this file in that location
+                            if (backupResultPrior->totalFileManifest == 0)
+                            {
+                                MEM_CONTEXT_PRIOR_BEGIN()
+                                {
+                                    filePathName = strNewFmt(
+                                        STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
+                                        strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                                }
+                                MEM_CONTEXT_PRIOR_END();
+                            }
+                            // Else if files were checked and the file is in the invalid file list then add the file as invalid
+                            // to this backup result, set the backup result status, and skip the check of this file
+                            else
+                            {
+                                String *priorFile = strNewFmt(
+                                    "%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
+                                    strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                                unsigned int backupPriorInvalidIdx = lstFindIdx(backupResultPrior->invalidFileList, &priorFile);
+                                if (backupPriorInvalidIdx != LIST_NOT_FOUND)
+                                {
+                                    VerifyInvalidFile *invalidFile = lstGet(backupResultPrior->invalidFileList, backupPriorInvalidIdx);
+                                    verifyInvalidFileAdd(backupResult->invalidFileList, invalidFile->reason, invalidFile->fileName);
+                                    backupResult->status = backupInvalid;
+                                }
+                            }
+                        }
+                        MEM_CONTEXT_TEMP_END();
                     }
                 }
                 else
@@ -1317,7 +1357,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
             VerifyBackupResult *backupResult = lstGet(backupResultList, backupIdx);
             strCatFmt(
                 result, "\n  backup: %s, total files checked: %u, total valid files: %u", strZ(backupResult->backupLabel),
-                backupResult->totalFileVerify, backupResult->totalValidFile);
+                backupResult->totalFileVerify, backupResult->totalFileValid);
 
             if (backupResult->totalFileVerify > 0)
             {
@@ -1473,6 +1513,7 @@ verifyProcess(unsigned int *errorTotal)
                         StringList *filePathLst = strLstNewSplit(varStr(protocolParallelJobKey(job)), FSLASH_STR);
                         const String *fileType = strLstGet(filePathLst, 0);
                         strLstRemoveIdx(filePathLst, 0);
+                        // Remove the file type identifier and recreate the path file name without it
                         String *filePathName = strLstJoin(filePathLst, "/");
 
                         VerifyArchiveResult *archiveIdResult = NULL;
@@ -1522,7 +1563,7 @@ verifyProcess(unsigned int *errorTotal)
                             else
                             {
                                 if (verifyResult == verifyOk)
-                                    backupResult->totalValidFile++;
+                                    backupResult->totalFileValid++;
                                 else
                                 {
                                     jobData.jobErrorTotal += verifyLogInvalidResult(
