@@ -732,7 +732,8 @@ sub processTag
             my $strSection = $oTag->paramGet('section', false);
 
             # If a page/section link points to the current page then remove the page portion
-            if (defined($strPage) && defined($strSection) && $strPage eq $self->{strRenderOutKey})
+            if (defined($strPage) && defined($strSection) && defined($self->{strRenderOutKey}) &&
+                $strPage eq $self->{strRenderOutKey})
             {
                 undef($strPage);
             }
@@ -820,6 +821,10 @@ sub processTag
             {
                 $strBuffer = "\\hyperref[$strUrl]{" . $oTag->valueGet() . "}";
             }
+        }
+        elsif ($strType eq 'text')
+        {
+            $strBuffer = $oTag->valueGet();
         }
         else
         {
