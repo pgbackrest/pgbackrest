@@ -1,5 +1,10 @@
 [
     {
+        "commit": "9229d6c866ee6296180bfefdbce42660b9e59b98",
+        "date": "2020-10-05 11:51:45 -0400",
+        "subject": "v2.30: PostgreSQL 13 Support"
+    },
+    {
         "commit": "74151d57ba03a4e9386f8e988d7f832ccfbe1e25",
         "date": "2020-10-05 08:42:18 -0400",
         "subject": "Add apt-get update to contributing guide.",

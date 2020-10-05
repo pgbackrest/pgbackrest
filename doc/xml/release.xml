@@ -12,6 +12,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.31dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2020-10-05" version="2.30" title="PostgreSQL 13 Support">
             <release-core-list>
                 <release-bug-list>
