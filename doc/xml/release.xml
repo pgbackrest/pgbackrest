@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.30dev" title="UNDER DEVELOPMENT">
+        <release date="2020-10-05" version="2.30" title="PostgreSQL 13 Support">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -29,7 +29,7 @@
 
                 <release-feature-list>
                     <release-item>
-                        <commit subject="Ignore backup_manifest in PostgreSQL 13."/>
+                        <commit subject="Ignore backup_manifest in PG13."/>
                         <commit subject="Update PostgreSQL 13 test catalog versions missed in 6bb111c1."/>
                         <commit subject="Update test containers for PostgreSQL 13."/>
 
@@ -117,6 +117,9 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Move info command text to the reference and link to user guide."/>
+                        <commit subject="Add text rendering for page links missed in 597739fa."/>
+
                         <release-item-contributor-list>
                             <release-item-ideator id="christophe.courtois"/>
                             <release-item-reviewer id="cynthia.shang"/>

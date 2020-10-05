@@ -511,6 +511,30 @@ src/command/stanza/upgrade.h:
   class: core
   type: c/h
 
+src/command/verify/file.c:
+  class: core
+  type: c
+
+src/command/verify/file.h:
+  class: core
+  type: c/h
+
+src/command/verify/protocol.c:
+  class: core
+  type: c
+
+src/command/verify/protocol.h:
+  class: core
+  type: c/h
+
+src/command/verify/verify.c:
+  class: core
+  type: c
+
+src/command/verify/verify.h:
+  class: core
+  type: c/h
+
 src/common/assert.h:
   class: core
   type: c/h
@@ -1928,6 +1952,10 @@ test/src/module/command/restoreTest.c:
   type: c
 
 test/src/module/command/stanzaTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/verifyTest.c:
   class: test/module
   type: c
 
