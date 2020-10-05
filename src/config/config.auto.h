@@ -355,6 +355,8 @@ Option constants
     STRING_DECLARE(CFGOPT_REPO1_AZURE_CA_PATH_STR);
 #define CFGOPT_REPO1_AZURE_CONTAINER                                "repo1-azure-container"
     STRING_DECLARE(CFGOPT_REPO1_AZURE_CONTAINER_STR);
+#define CFGOPT_REPO1_AZURE_ENDPOINT                                 "repo1-azure-endpoint"
+    STRING_DECLARE(CFGOPT_REPO1_AZURE_ENDPOINT_STR);
 #define CFGOPT_REPO1_AZURE_HOST                                     "repo1-azure-host"
     STRING_DECLARE(CFGOPT_REPO1_AZURE_HOST_STR);
 #define CFGOPT_REPO1_AZURE_KEY                                      "repo1-azure-key"
@@ -468,7 +470,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            206
+#define CFG_OPTION_TOTAL                                            207
 
 /***********************************************************************************************************************************
 Command enum
@@ -653,6 +655,7 @@ typedef enum
     cfgOptRepoAzureCaFile,
     cfgOptRepoAzureCaPath,
     cfgOptRepoAzureContainer,
+    cfgOptRepoAzureEndpoint,
     cfgOptRepoAzureHost,
     cfgOptRepoAzureKey,
     cfgOptRepoAzureKeyType,

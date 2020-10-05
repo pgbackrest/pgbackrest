@@ -360,8 +360,9 @@ storageRepoGet(const String *type, bool write)
             strEqZ(cfgOptionStr(cfgOptRepoAzureKeyType), STORAGE_AZURE_KEY_TYPE_SHARED) ?
                 storageAzureKeyTypeShared : storageAzureKeyTypeSas,
             cfgOptionStr(cfgOptRepoAzureKey), STORAGE_AZURE_BLOCKSIZE_MIN, cfgOptionStrNull(cfgOptRepoAzureHost),
-            cfgOptionUInt(cfgOptRepoAzurePort), ioTimeoutMs(), cfgOptionBool(cfgOptRepoAzureVerifyTls),
-            cfgOptionStrNull(cfgOptRepoAzureCaFile), cfgOptionStrNull(cfgOptRepoAzureCaPath));
+            cfgOptionStrNull(cfgOptRepoAzureEndpoint), cfgOptionUInt(cfgOptRepoAzurePort), ioTimeoutMs(),
+            cfgOptionBool(cfgOptRepoAzureVerifyTls), cfgOptionStrNull(cfgOptRepoAzureCaFile),
+            cfgOptionStrNull(cfgOptRepoAzureCaPath));
     }
     // Use CIFS storage
     else if (strEqZ(type, STORAGE_CIFS_TYPE))
