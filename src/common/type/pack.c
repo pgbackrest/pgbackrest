@@ -43,7 +43,6 @@ string/binary bytes.
 #include "common/io/io.h"
 #include "common/io/read.h"
 #include "common/io/write.h"
-#include "common/log.h" // !!! REMOVE
 #include "common/type/convert.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
@@ -228,8 +227,11 @@ pckReadNewBuf(const Buffer *buffer)
 }
 
 /***********************************************************************************************************************************
-!!!
-DON"T USE THIS FUNCTION AS A PARAMETER IN FUNCTION CALLS SINCE this->bufferPos MAY BE UPDATED.
+Read bytes from the buffer
+
+IMPORTANT NOTE: To avoid having dyamically creating return buffers the current buffer position (this->bufferPos) is stored in the
+object. Therefore this function should not be used as a parameter in other function calls since the value of this->bufferPos will
+change.
 ***********************************************************************************************************************************/
 static size_t pckReadBuffer(PackRead *this, size_t size)
 {
@@ -263,7 +265,6 @@ static size_t pckReadBuffer(PackRead *this, size_t size)
         if (remaining < 1)
             THROW(FormatError, "unexpected EOF");
 
-        // !!! ASSERT((size < this->bufferMax - this->bufferPos) && size == bufSize);
         FUNCTION_TEST_RETURN(remaining < size ? remaining : size);
     }
 
@@ -307,7 +308,7 @@ pckReadUInt64Internal(PackRead *this)
 }
 
 /***********************************************************************************************************************************
-!!!
+Read next field tag
 ***********************************************************************************************************************************/
 static bool
 pckReadTagNext(PackRead *this)
@@ -316,59 +317,85 @@ pckReadTagNext(PackRead *this)
         FUNCTION_TEST_PARAM(PACK_READ, this);
     FUNCTION_TEST_END();
 
-    bool result = 0;
+    bool result = false;
 
+    // Read the tag byte
     pckReadBuffer(this, 1);
     unsigned int tag = this->bufferPtr[this->bufferPos];
     this->bufferPos++;
 
+    // If the current container is complete (e.g. object)
     if (tag == 0)
+    {
         this->tagNextId = 0xFFFFFFFF;
+    }
+    // Else a regular tag
     else
     {
+        // Read field type (e.g. int64, string)
         this->tagNextType = tag >> 4;
 
+        // If the value can contain multiple bits (e.g. integer)
         if (packTypeData[this->tagNextType].valueMultiBit)
         {
+            // If the value is stored following the tag (value > 1 bit)
             if (tag & 0x8)
             {
+                // Read low order bits of the field ID delta
                 this->tagNextId = tag & 0x3;
 
+                // Read high order bits of the field ID delta when specified
                 if (tag & 0x4)
                     this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 2;
 
+                // Read value
                 this->tagNextValue = pckReadUInt64Internal(this);
             }
+            // Else the value is stored in the tag (value == 1 bit)
             else
             {
+                // Read low order bit of the field ID delta
                 this->tagNextId = tag & 0x1;
 
+                // Read high order bits of the field ID delta when specified
                 if (tag & 0x2)
                     this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 1;
 
-                this->tagNextValue = (tag >> 2) & 0x1;
+                // Read value
+                this->tagNextValue = (tag >> 2) & 0x3;
             }
         }
+        // Else the value is a single bit (e.g. boolean)
         else if (packTypeData[this->tagNextType].valueSingleBit)
         {
+            // Read low order bits of the field ID delta
             this->tagNextId = tag & 0x3;
 
+            // Read high order bits of the field ID delta when specified
             if (tag & 0x4)
                 this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 2;
 
+            // Read value
             this->tagNextValue = (tag >> 3) & 0x1;
         }
+        // Else the value is multiple tags (e.g. container)
         else
         {
+            // Read low order bits of the field ID delta
             this->tagNextId = tag & 0x7;
 
+            // Read high order bits of the field ID delta when specified
             if (tag & 0x8)
                 this->tagNextId |= (unsigned int)pckReadUInt64Internal(this) << 3;
 
+            // Value length is variable so is stored after the tag
             this->tagNextValue = 0;
         }
 
+        // Increment the next tag id
         this->tagNextId += this->tagStackTop->idLast + 1;
+
+        // Tag was found
         result = true;
     }
 
@@ -376,7 +403,9 @@ pckReadTagNext(PackRead *this)
 }
 
 /***********************************************************************************************************************************
-!!!
+Read field tag
+
+Some tags and data may be skipped based on the value of the id parameter.
 ***********************************************************************************************************************************/
 static uint64_t
 pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
@@ -475,7 +504,8 @@ pckReadId(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-// Helper to !!!
+// Internal version of pckReadNull() that does not require a PackIdParam struct. Some functions already have an id variable so
+// assigning that to a PackIdParam struct and then copying it back is wasteful.
 static inline bool
 pckReadNullInternal(PackRead *this, unsigned int *id)
 {
@@ -506,7 +536,7 @@ pckReadNull(PackRead *this, PackIdParam param)
 }
 
 /***********************************************************************************************************************************
-!!!
+Helper function to determine whether a default should be returned when the field is NULL (missing)
 ***********************************************************************************************************************************/
 static inline bool
 pckReadDefaultNull(PackRead *this, bool defaultNull, unsigned int *id)
@@ -925,7 +955,7 @@ pckWriteNewBuf(Buffer *buffer)
 }
 
 /***********************************************************************************************************************************
-!!! NEED TO IMPLEMENT WRITE DIRECTLY TO BUFFER AND WRITE TO IOWRITE()
+Write to io or buffer
 ***********************************************************************************************************************************/
 static void pckWriteBuffer(PackWrite *this, const Buffer *buffer)
 {
@@ -936,27 +966,37 @@ static void pckWriteBuffer(PackWrite *this, const Buffer *buffer)
 
     ASSERT(this != NULL);
 
+    // If writing directly to a buffer
     if (this->write == NULL)
     {
+        // Add space in the buffer to write and add extra space so future writes won't always need to resize the buffer
         if (bufRemains(this->buffer) < bufUsed(buffer))
-            bufResize(this->buffer, (bufSizeAlloc(this->buffer) + bufUsed(buffer)) * 2);
+            bufResize(this->buffer, (bufSizeAlloc(this->buffer) + bufUsed(buffer)) + PACK_EXTRA_MIN);
 
+        // Write to the buffer
         bufCat(this->buffer, buffer);
     }
+    // Else writing to io
     else
     {
+        // If there's enough space to write to the internal buffer then do that
         if (bufRemains(this->buffer) >= bufUsed(buffer))
             bufCat(this->buffer, buffer);
         else
         {
+            // Flush the internal buffer if it has data
             if (bufUsed(this->buffer) > 0)
             {
                 ioWrite(this->write, this->buffer);
                 bufUsedZero(this->buffer);
             }
 
+            // If there's enough space to write to the internal buffer then do that
             if (bufRemains(this->buffer) >= bufUsed(buffer))
+            {
                 bufCat(this->buffer, buffer);
+            }
+            // Else write directly to io
             else
                 ioWrite(this->write, buffer);
         }
@@ -996,7 +1036,7 @@ pckWriteUInt64Internal(PackWrite *this, uint64_t value)
 }
 
 /***********************************************************************************************************************************
-!!!
+Write field tag
 ***********************************************************************************************************************************/
 static void
 pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
@@ -1010,80 +1050,106 @@ pckWriteTag(PackWrite *this, PackType type, unsigned int id, uint64_t value)
 
     ASSERT(this != NULL);
 
+    // If id is not specified then add one to previous tag (and include all NULLs)
     if (id == 0)
-        id = this->tagStackTop->idLast + this->tagStackTop->nullTotal + 1;
-    else
     {
-        ASSERT(id > this->tagStackTop->idLast);
+        id = this->tagStackTop->idLast + this->tagStackTop->nullTotal + 1;
     }
+    // Else the id must be greater than the last one
+    else
+        CHECK(id > this->tagStackTop->idLast);
 
+    // Clear NULLs now that field id has been calculated
     this->tagStackTop->nullTotal = 0;
 
-    uint64_t tag = type << 4;
+    // Calculate field ID delta
     unsigned int tagId = id - this->tagStackTop->idLast - 1;
 
+    // Write field type (e.g. int64, string)
+    uint64_t tag = type << 4;
+
+    // If the value can contain multiple bits (e.g. integer)
     if (packTypeData[type].valueMultiBit)
     {
+        // If the value is stored in the tag (value == 1 bit)
         if (value < 2)
         {
+            // Write low order bit of the value
             tag |= (value & 0x1) << 2;
             value >>= 1;
 
+            // Write low order bit of the field ID delta
             tag |= tagId & 0x1;
             tagId >>= 1;
 
+            // Set bit to indicate that high order bits of the field ID delta are be written after the tag
             if (tagId > 0)
                 tag |= 0x2;
         }
+        // Else the value is stored following the tag (value > 1 bit)
         else
         {
+            // Set bit to indicate that the value is written after the tag
             tag |= 0x8;
 
+            // Write low order bits of the field ID delta
             tag |= tagId & 0x3;
             tagId >>= 2;
 
+            // Set bit to indicate that high order bits of the field ID delta are be written after the tag
             if (tagId > 0)
                 tag |= 0x4;
         }
     }
+    // Else the value is a single bit (e.g. boolean)
     else if (packTypeData[type].valueSingleBit)
     {
+        // Write value
         tag |= (value & 0x1) << 3;
         value >>= 1;
 
+        // Write low order bits of the field ID delta
         tag |= tagId & 0x3;
         tagId >>= 2;
 
+        // Set bit to indicate that high order bits of the field ID delta are be written after the tag
         if (tagId > 0)
             tag |= 0x4;
     }
     else
     {
+        // No value expected
         ASSERT(value == 0);
 
+        // Write low order bits of the field ID delta
         tag |= tagId & 0x7;
         tagId >>= 3;
 
+        // Set bit to indicate that high order bits of the field ID delta must be written after the tag
         if (tagId > 0)
             tag |= 0x8;
     }
 
+    // Write tag
     uint8_t tagByte = (uint8_t)tag;
     pckWriteBuffer(this, BUF(&tagByte, 1));
 
+    // Write low order bits of the field ID delta
     if (tagId > 0)
         pckWriteUInt64Internal(this, tagId);
 
+    // Write low order bits of the value
     if (value > 0)
         pckWriteUInt64Internal(this, value);
 
+    // Set last field id
     this->tagStackTop->idLast = id;
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-!!!
+Write a default as NULL (missing)
 ***********************************************************************************************************************************/
 static inline bool
 pckWriteDefaultNull(PackWrite *this, bool defaultNull, bool defaultEqual)

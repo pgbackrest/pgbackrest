@@ -52,8 +52,19 @@ pckReadEndP();
 This skips the NULLs but in practice it is better to read all the fields just as they were written so static IDs are not required.
 By default each read and write advances the ID by one.
 
-!!! ARRAY EXAMPLE
-!!! IDs RESET TO 1 IN ANY CONTAINER
+Read an array with:
+
+pckReadArrayBeginP(read);
+
+while (pckReadNext(read))
+{
+    // Read array element
+}
+
+pckReadArrayEndP(read);
+
+Note that any container (i.e. array or object) reset the field ID to one so there is no need for the caller to maintain a cumulative
+field ID.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_PACK_H
 #define COMMON_TYPE_PACK_H
@@ -62,7 +73,7 @@ By default each read and write advances the ID by one.
 Minimum number of extra bytes to allocate for packs that are growing or are likely to grow
 ***********************************************************************************************************************************/
 #ifndef PACK_EXTRA_MIN
-    #define PACK_EXTRA_MIN                                          64
+    #define PACK_EXTRA_MIN                                          128
 #endif
 
 /***********************************************************************************************************************************
