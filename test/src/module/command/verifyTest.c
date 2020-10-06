@@ -242,20 +242,23 @@ testRun(void)
         String *manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel));
         String *manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
         bool currentBackup = false;
+        unsigned int jobErrorTotal = 0;
+        VerifyBackupResult backupResult = {.backupLabel = strDup(backupLabel)};
+
         InfoArchive *archiveInfo = NULL;
         TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(archiveInfoBase)), "archive.info");
         InfoPg *infoPg = infoArchivePg(archiveInfo);
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy db section mismatch");
-        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
-        TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, currentBackup, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
-            "P00   WARN: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not in the "
-                "backup.info history",
+            "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not "
+                "in the backup.info history, skipping",
             testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -283,16 +286,16 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy invalid db-id");
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy invalid system-id");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
-        TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, currentBackup, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg system-id mismatch");
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
-            "P00   WARN: '%s' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not in the "
-                "backup.info history",
+            "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not "
+                "in the backup.info history, skipping",
             testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -322,25 +325,22 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy invalid db-id");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
-        TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, currentBackup, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg db-id mismatch");
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
-            "P00   WARN: '%s' may not be recoverable - PG data (id 0, version 9.4, system-id 6625592122879095702) is not in the "
-                "backup.info history",
+            "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 0, version 9.4, system-id 6625592122879095702) is not "
+                "in the backup.info history, skipping",
             testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("current backup true");
 
-        currentBackup = true;
-
         // Only manifest copy exists
-        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
-        TEST_RESULT_BOOL(currentBackup, true, "current backup not changed");
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read",
@@ -357,9 +357,8 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write invalid manifest copy");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
-        TEST_RESULT_BOOL(currentBackup, false, "current backup changed");
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
@@ -383,14 +382,11 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT
         );
 
-        currentBackup = true;
-
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
-        TEST_RESULT_BOOL(currentBackup, false, "current backup changed");
         harnessLogResult("P00   WARN: backup.manifest.copy does not match backup.manifest");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -398,7 +394,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write valid manifest copy");
-        TEST_ASSIGN(manifest, verifyManifestFile(backupLabel, NULL, &currentBackup, infoPg), "verify manifest");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
     }
 
@@ -1176,7 +1172,7 @@ testRun(void)
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
-            TEST_MANIFEST_DB_92
+            TEST_MANIFEST_DB_94
             TEST_MANIFEST_OPTION_ALL
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
@@ -1192,10 +1188,10 @@ testRun(void)
         String *manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
 
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write manifest - file checksum mismatch");
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest");
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad),
-            "write manifest copy - file checksum mismatch");
+            "write valid manifest copy");
 
         // Set log level to errors only
         harnessLogLevelSet(logLevelError);
@@ -1239,8 +1235,6 @@ testRun(void)
                     "local-1 protocol: unable to open file "
                     "'%s/%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read: "
                     "[13] Permission denied\n"
-                "P00   WARN: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not in "
-                    "the backup.info history\n"
                 "P01  ERROR: [028]: invalid checksum '%s'\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
@@ -1251,7 +1245,7 @@ testRun(void)
                 "                missing: 0, checksum invalid: 1, size invalid: 1, other: 1\n"
                 "              backup: %s, total files checked: 1, total valid files: 0\n"
                 "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0",
-                 testPath(), strZ(archiveStanzaPath), strZ(backupLabel), strZ(backupFileName), strZ(backupLabel))));
+                 testPath(), strZ(archiveStanzaPath), strZ(backupFileName), strZ(backupLabel))));
 
         harnessLogLevelReset();
 

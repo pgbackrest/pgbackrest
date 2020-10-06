@@ -104,6 +104,7 @@ typedef struct VerifyBackupResult
 {
     String *backupLabel;                                            // Label assigned to the backup
     VerifyBackupResultStatus status;                                // Final status of the backup
+    bool fileVerifyComplete;                                        // Have all the files of the backup completed verification?
     unsigned int totalFileManifest;                                 // Total number of backup files in the manifest
     unsigned int totalFileVerify;                                   // Total number of backup files being verified
     unsigned int totalFileValid;                                    // Total number of backup files that were verified and valid
@@ -135,6 +136,36 @@ typedef struct VerifyJobData
     List *archiveIdResultList;                                      // Archive results
     List *backupResultList;                                         // Backup results
 } VerifyJobData;
+
+/***********************************************************************************************************************************
+Helper function to add a file to an invalid file list
+***********************************************************************************************************************************/
+static void
+verifyInvalidFileAdd(List *invalidFileList, VerifyResult reason, const String *fileName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, invalidFileList);                 // Invalid file list to add the filename to
+        FUNCTION_TEST_PARAM(UINT, reason);                          // Reason for invalid file
+        FUNCTION_TEST_PARAM(STRING, fileName);                      // Name of invalid file
+    FUNCTION_TEST_END();
+
+    ASSERT(invalidFileList != NULL);
+    ASSERT(fileName != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(invalidFileList))
+    {
+        VerifyInvalidFile invalidFile =
+        {
+            .fileName = strDup(fileName),
+            .reason = reason,
+        };
+
+        lstAdd(invalidFileList, &invalidFile);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Load a file into memory
@@ -334,13 +365,14 @@ Get the manifest file
 ***********************************************************************************************************************************/
 static Manifest *
 verifyManifestFile(
-    VerifyBackupResult backupResult, const String *cipherPass, bool currentBackup, const InfoPg *pgHistory, unsigned int *jobErrorTotal)
+    VerifyBackupResult *backupResult, const String *cipherPass, bool currentBackup, const InfoPg *pgHistory,
+    unsigned int *jobErrorTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_TEST_PARAM_P(VERIFY_BACKUP_RESULT, backupResult);  // The result set for the backup being processed
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
-        FUNCTION_LOG_PARAM(BOOL, currentBackup);
-        FUNCTION_LOG_PARAM(INFO_PG, pgHistory);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Passphrase to access the manifest file
+        FUNCTION_LOG_PARAM(BOOL, currentBackup);                    // Is this possibly a backup currently in progress?
+        FUNCTION_TEST_PARAM(INFO_PG, pgHistory);                    // Database history
         FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                 // Pointer to the overall job error total
     FUNCTION_LOG_END();
 
@@ -417,12 +449,7 @@ verifyManifestFile(
                 }
             }
 
-            // If the PG data is not found in the backup.info history, then warn but check all the files anyway
-/* CSHANG I'm not so sure this is a good idea. What do I do with the results from the files? If the db-id matches something in the
-history, say db-id=1, then when I get the file result, I can't just check the WAL in the 9.4-1, so what am I reporting on?
-I'd have to figure out, again, whether the db data for each file in the manifest is associated with a db-id in the history - seems wasteful
-ANSWER: Should immediately mark the backup is INVALID (which here means we're not going to check - but need to handle it so that maybe the thing the differencial references doesn't exist) -- ERROR and skip rather than try to validate it --- BUT maybe keep the result and mark the backup invalid
-*/
+            // If the PG data is not found in the backup.info history, then error and mark the backup invalid
             if (!found)
             {
                 LOG_ERROR_FMT(
@@ -681,7 +708,7 @@ verifyArchive(void *data)
             do
             {
                 String *walPath = strLstGet(jobData->walPathList, 0);
-
+// CSHANG I should probably get the archiveResult before this do-while - seems a waste to get it each time
                 // Get the archive id info for the current (last) archive id being processed
                 VerifyArchiveResult *archiveResult = lstGetLast(jobData->archiveIdResultList);
 
@@ -815,7 +842,7 @@ verifyBackup(void *data)
 
         // If result list is empty or the last processed is not equal to the backup being processed, then intialize the backup
         // data and results
-        if (lstSize(jobData->backupResultList)== 0 ||
+        if (lstSize(jobData->backupResultList) == 0 ||
             !strEq(((VerifyBackupResult *)lstGetLast(jobData->backupResultList))->backupLabel, strLstGet(jobData->backupList, 0)))
         {
             MEM_CONTEXT_BEGIN(lstMemContext(jobData->backupResultList))
@@ -839,10 +866,10 @@ verifyBackup(void *data)
             // be changed in verifyManifestFile if a main backup.manifest exists since that would indicate the backup completed during
             // the verify process.
             bool inProgressBackup = strEq(jobData->currentBackup, backupResult->backupLabel);
-// CSHANG May need to not add the backup until the manifest is checked. OR need to have a status for a manifest that is invalid (vs missing?) or just a "missing or invalid" status and then they can check the log for details?
+
             // Get a usable backup manifest file
             Manifest *manifest = verifyManifestFile(
-                backupResult, jobData->manifestCipherPass, inProgressBackup, jobData->pgHistory);
+                backupResult, jobData->manifestCipherPass, inProgressBackup, jobData->pgHistory, &jobData->jobErrorTotal);
 
             // If a usable backup.manifest file is not found
             if (manifest == NULL)
@@ -873,7 +900,6 @@ verifyBackup(void *data)
                 MEM_CONTEXT_BEGIN(lstMemContext(jobData->backupResultList))
                 {
                     backupResult->totalFileManifest = manifestFileTotal(jobData->manifest);
-                    backupResult->totalFileVerify = manifestFileTotal(jobData->manifest);
                     backupResult->backupPrior = strDup(manData->backupLabelPrior);
                     backupResult->pgId = manData->pgId;
                     backupResult->pgVersion = manData->pgVersion;
@@ -884,54 +910,24 @@ verifyBackup(void *data)
             }
         }
 
+        VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
+
         if (jobData->manifestFileIdx < manifestFileTotal(jobData->manifest))
         {
             do
             {
                 const ManifestFile *fileData = manifestFile(jobData->manifest, jobData->manifestFileIdx);
-                VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
 
                 String *filePathName = NULL;
-// CSHANG TODO maybe not bother to check if there is no backupPrior set in the backupResult
+
+                // Track file verified in order to determine when the processing of the backup is complete
+                backupResult->totalFileVerify++;
+
                 // Check if the file is referenced in a prior backup
                 if (fileData->reference != NULL)
                 {
-                    // If there is a reference and the prior backup is not in the list then add the file
-                    // NOTE: backups are processed from oldest to newest so if a single backup is being verified, then it would
-                    // not be in the list
-// CSHANG AND IS VALID??? OR WHAT IF THERE IS A DEPENDENCY CHAIN AND THEY REQUESTED --set=INCR - the reference will indicate which in the chain the file exists.
-// CSHANG Check at end to see if it is invalid I will look at the references for each file
-// then -- if backup that this references is marked invalid, then
-// 1) if reference is in list, don't check file // CSHANG This doesn't help because we won't know the references at the end
-
-// LATER:
-// 2) If reference is not on list then check file from the backup it is referenced in
-// 3) later                "" and marked invalid, check invalid file list. If in list then backup is invalid
-// NOW: IF your prior backup is marked invalid then all the backups after that are dependent on it are invalid
-// FUTURE: Maybe at the end processing, then if a dependent has invalid files, then we may need to read the manifest to see if there is a reference for the invalid files in the backup we're checking and this backup was checked out as OK
-
-/* CSHANG WAIT new problem - if the backupfile is in the FULL backup but it went away, then the next DIFF/INCR will not have it in
-the list so even though the backup prior might be invalid, we cannot assume this backup is invalid because it may not be referenced
-in the new backup so we can't just assume the backup is invalid because the prior one was. The solution is to WAIT for each
-backup file processing to be complete before moving on to the next. How?
-The flaw here is that we think we can skip checking files in a prior backup but we won't know if a file that was referenced in a
-prior backup was invalid or not until we have completed checking that backup. So how do we wait? OR we must double check every file
-to be sure - ugh.
-CSHANG protocolParallelResult loops through looking for "done" jobs and if found, removes the job from the jobList then the
-protocolParallelDone checks to see if state of the procesor is done and if not, it checks if the jobList == 0 and will set the
-state to Done and then returns true is state == done.. So is there a way to keep a job on the list but not process it? Is there maybe
-a timeout or a conditional/dependency we can set before starting the next job?
-*/
-
-/* CSHANG TODO Here need to check to see if the referenced back IS in the list but it's state is not OK then, what, do we check them all?
-BUT WAIT - the status of "not OK" may include the fact that files were not even attempted to be checked, so maybe need to also check
-the verifyFileTotal - if it is 0 then we didn't check anything so maybe we should check the file, but if it's not 0 then look for the file
-in the invalidFileList to see if it is there and if it is, then skip processing this file and add it to the
-invalid list for this backup and set this backup invalid - but then do we continue processing the rest of the files (yes, I think we should).
-This isn't the optimal solution because if it is not "yet" in the prior backup's invalid list, we could still miss checking it because the
-prior backup might still be processing files and it hasn't hit this one yet. But this may be the best we can do - and since the files are in the manifest
-in alphabetical order, then hopefully the chances of the checking of the file in a prior backup will be small.
-*/
+                    // If the prior backup is not in the result list, then that backup was never processed (likely due to the
+                    // --set option) so verify the file
                     unsigned int backupPriorIdx = lstFindIdx(jobData->backupResultList, &fileData->reference);
                     if (backupPriorIdx == LIST_NOT_FOUND)
                     {
@@ -939,28 +935,30 @@ in alphabetical order, then hopefully the chances of the checking of the file in
                             STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
                             strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
                     }
-                    // Else the backup this file referenced has been processed
+                    // Else the backup this file references has a result so check the processing state for the referenced backup
                     else
                     {
                         VerifyBackupResult *backupResultPrior = lstGet(jobData->backupResultList, backupPriorIdx);
 
-                        // If no backups were checked in the prior backup then check this file in that location
-                        if (backupResultPrior->totalFileManifest == 0)
+                        // If the verify-state of the backup is not complete then verify the file
+                        if (!backupResultPrior->fileVerifyComplete)
                         {
                             filePathName = strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
                                 strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
                         }
-                        // Else if files were checked and the file is in the invalid file list then add the file as invalid
-                        // to this backup result, set the backup result status, and skip the check of this file
+                        // Else skip verification
                         else
                         {
                             String *priorFile = strNewFmt(
                                 "%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
                                 strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
-// CSHANG Should we really add it to the invalid file list here? or just increment the joberror, set the backup result state to invalid
+
                             unsigned int backupPriorInvalidIdx = lstFindIdx(backupResultPrior->invalidFileList, &priorFile);
 
+                            // If the file is in the invalid file list of the prior backup where it is referenced then add the file
+                            // as invalid to this backup result and set the backup result status; since already logged an error on
+                            // this file, don't log again
                             if (backupPriorInvalidIdx != LIST_NOT_FOUND)
                             {
                                 VerifyInvalidFile *invalidFile = lstGet(
@@ -978,6 +976,7 @@ in alphabetical order, then hopefully the chances of the checking of the file in
                         strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
                 }
 
+                // If contructed file name is not null then send it off for processing
                 if (filePathName != NULL)
                 {
                     // Set up the job
@@ -991,21 +990,14 @@ in alphabetical order, then hopefully the chances of the checking of the file in
                     // Assign job to result
                     result = protocolParallelJobNew(VARSTR(filePathName), command);
                 }
-                else
-                {
-// CSHANG TODO: totalFileVerify - need to decide what this count means and if this should be decremented even when a fle was found in a prior backups invalid file list and added to this list
-                    // The file was verified in a prior backup so decrement the total files being verified for this backup
-                    backupResult->totalFileVerify--;
-                }
 
-                // Increment the index for the next file
+                // Increment the index to point to the next file
                 jobData->manifestFileIdx++;
 
                 // If this was the last file to process for this backup, then free the manifest and remove this backup from the
                 // processing list
                 if (jobData->manifestFileIdx == manifestFileTotal(jobData->manifest))
                 {
-                    // Processing complete - free the manifest and remove this backup from the processing list
                     manifestFree(jobData->manifest);
                     jobData->manifest = NULL;   // CSHANG Do we need? ANSWER: YES and make sure checking
                     strLstRemoveIdx(jobData->backupList, 0);
@@ -1019,11 +1011,20 @@ in alphabetical order, then hopefully the chances of the checking of the file in
         }
         else
         {
-// CSHANG There should always be some files to process, but if we get here, we should cleanup but should we also WARN/ERROR? ANSWER: Log ERROR and incr jobErrorTotal
-            // Nothing to process so free the manifest, set the status to invalid and remove the backup from the processing list
+            // Nothing to process so report an error, free the manifest, set the state/status and remove the backup from the
+            // processing list
+            LOG_ERROR_FMT(
+                errorTypeCode(&FileInvalidError),
+                "backup '%s' manifest appears valid but there are no target files listed to verify",
+                strZ(backupResult->backupLabel));
+
+            jobData->jobErrorTotal++;
+
             manifestFree(jobData->manifest);
             jobData->manifest = NULL;
+
             backupResult->status = backupInvalid;
+
             strLstRemoveIdx(jobData->backupList, 0);
         }
 
@@ -1063,12 +1064,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
         if (result == NULL && jobData->backupProcessing)
         {
-/* CSHANG What if we set up a list of backup labels with a status so that we do not move onto the next so maybe have a flag or some
-way to tell that the backup process has not yet completed BUT we have to somehow return a result? Is the solution to use clientIdx?
-Can we use clientIdx it indicate if we're done with processing a specific backup?
-*/
             result = protocolParallelJobMove(verifyBackup(data), memContextPrior());
-
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -1206,35 +1202,6 @@ verifySetBackupCheckArchive(
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Helper function to add a file to an invalid file list
-***********************************************************************************************************************************/
-static void
-verifyInvalidFileAdd(List *invalidFileList, VerifyResult reason, const String *fileName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, invalidFileList);                 // Invalid file list to add the filename to
-        FUNCTION_TEST_PARAM(UINT, reason);                          // Reason for invalid file
-        FUNCTION_TEST_PARAM(STRING, fileName);                      // Name of invalid file
-    FUNCTION_TEST_END();
-
-    ASSERT(invalidFileList != NULL);
-    ASSERT(fileName != NULL);
-
-    MEM_CONTEXT_BEGIN(lstMemContext(invalidFileList))
-    {
-        VerifyInvalidFile invalidFile =
-        {
-            .fileName = strDup(fileName),
-            .reason = reason,
-        };
-
-        lstAdd(invalidFileList, &invalidFile);
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN_VOID();
-}
 /***********************************************************************************************************************************
 Add the file to the invalid file list for the range in which it exists
 ***********************************************************************************************************************************/
@@ -1589,6 +1556,13 @@ verifyProcess(unsigned int *errorTotal)
                             {
                                 verifyInvalidFileAdd(backupResult->invalidFileList, verifyOtherError, filePathName);
                             }
+                        }
+
+                        // Set backup verification complete for a backup if all files have run through verification
+                        if (strEq(fileType, STORAGE_REPO_BACKUP_STR) &&
+                            backupResult->totalFileVerify == backupResult->totalFileManifest)
+                        {
+                            backupResult->fileVerifyComplete = true;
                         }
 
                         // Free the job

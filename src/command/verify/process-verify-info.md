@@ -194,16 +194,13 @@ Considerations:
 2. Backups are processed in alphabetical order so that backups will be processed after any backups they depend on.
 3. There is a known race condition where the file results for a backup are still being processed when the dependent backup begins processing. Currently there is no mechanism to have the dependent backup wait for all the results of the prior backup, therefore there is a risk that one of more files in the dependent backup will skip processing because it is assumed to be verified OK if it is not yet in the InvalidFileList of the prior backup. One strategy was to mark the dependent backup invalid if the prior backup was marked invalid, however if the prior backup is invalid because of a backup file that, validly, no longer exists and is therefore not part of the dependent backup, then marking the dependent backup is flawed.
 Another flaw here is that we think we can skip checking files in a prior backup but we won't know if a file that was referenced in a
-prior backup was invalid or not until we have completed checking that backup. But since there is no mechanism to wait, we can at least check every file in the dependent backup for a reference to a prior backup and then do the following:
-    - if the prior backup is not in the result list, then assume we are dealing with the --set option and check the file
-    - if the prior backup is in the result list but the total files from the manifest is zero 0 then the backup files were not processed in the prior backup so the file needs to be verified
-    - if the backup is in the result list but the total files from the manifest is not zero (>= 1) then check the invalid file list of the prior backup
-        - If the file exists in the invalid file list, then mark the dependent backup invalid and add the file to the dependent backup invalid file list but continue processing all files
-        - If the file does not exist in the prior backup invalid file list, then the file is deemed valid and processing is skipped
-This isn't the optimal solution because if the file is not "yet" in the prior backup's invalid list, we could still miss checking it because the
-prior backup might still be processing files and it hasn't hit this one yet. But since the files are in the manifest
-in alphabetical order, then hopefully the chances of that happening will be small. WE might also put in a status to indicate when a backup skips files it deems are valid in a prior backup. At the end of processing, if this status is still set for the dependent backup (meaning no invalid files were found) at the end of all processing then during reconciliation, we could then decided that we warn the user this backup MAY not usable vs that it is not usable.
-SOLUTION: Accept that we will recheck the first process-max - 1 because the callback will not be called until the prior backup has freed up slot. So need state flag to indicate when a backup has completed processing all files. So if DONE (decremented total gets to 0) then can skip as long as also not invalid in the prior backup.
+prior backup was invalid or not until we have completed checking that backup. Since the next backup to process will only start when the current backup processing is near the end of its file list - i.e. when one process is freed up to allow for processing of the next backup to begin - then the solution is to employ a state flag to indicated if a backup is in progress or completed. If a referenced backup is still in progress, then it is accepted that the first process-max - 1 files could be reverified. So for each file in a backup:
+    - if the prior backup is not in the result list, then that backup was never processed (likely due to the --set option) so verify the file
+    - if the prior backup is in the result list and the verify-state of the backup is NOT 'completed' then verify the file
+    - if the prior backup is in the result list and the verify-state of the backup is 'completed' then
+        - if the file does not exist in the prior backup invalid file list, then the file is deemed valid and processing is skipped
+        - if the file is in the invalid file list, then mark this backup invalid and add the file to this backup's invalid file list and skip processing this file
+4. The verify-state of a backup is 'completed' when all files sent to be verified have been processed
 
 manifestFileIdx:
 - Index of the file within the manifest file list that is being processed.
