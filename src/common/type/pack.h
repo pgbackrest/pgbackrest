@@ -63,7 +63,7 @@ while (pckReadNext(read))
 
 pckReadArrayEndP(read);
 
-Note that any container (i.e. array or object) reset the field ID to one so there is no need for the caller to maintain a cumulative
+Note that any container (i.e. array or object) resets the field ID to one so there is no need for the caller to maintain a cumulative
 field ID.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_PACK_H
