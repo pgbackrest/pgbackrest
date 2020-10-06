@@ -447,6 +447,7 @@ STRING_EXTERN(CFGOPT_REPO1_AZURE_ACCOUNT_STR,                       CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_AZURE_CA_FILE_STR,                       CFGOPT_REPO1_AZURE_CA_FILE);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_CA_PATH_STR,                       CFGOPT_REPO1_AZURE_CA_PATH);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_CONTAINER_STR,                     CFGOPT_REPO1_AZURE_CONTAINER);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_ENDPOINT_STR,                      CFGOPT_REPO1_AZURE_ENDPOINT);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_HOST_STR,                          CFGOPT_REPO1_AZURE_HOST);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_STR,                           CFGOPT_REPO1_AZURE_KEY);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_TYPE_STR,                      CFGOPT_REPO1_AZURE_KEY_TYPE);
@@ -1707,6 +1708,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_CONTAINER)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureContainer)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_ENDPOINT)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureEndpoint)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

@@ -119,6 +119,7 @@ typedef enum
     cfgDefOptRepoAzureCaFile,
     cfgDefOptRepoAzureCaPath,
     cfgDefOptRepoAzureContainer,
+    cfgDefOptRepoAzureEndpoint,
     cfgDefOptRepoAzureHost,
     cfgDefOptRepoAzureKey,
     cfgDefOptRepoAzureKeyType,
