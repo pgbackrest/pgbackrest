@@ -349,6 +349,15 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
+                    <config-key id="repo-azure-endpoint" name="Azure Repository Endpoint">
+                        <summary>Azure repository endpoint.</summary>
+
+                        <text>Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government.</text>
+
+                        <example>blob.core.usgovcloudapi.net</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
                     <config-key id="repo-azure-host" name="Azure Repository Host">
                         <summary>Azure repository host.</summary>
 

@@ -218,6 +218,7 @@ use constant CFGOPT_REPO_AZURE_ACCOUNT                              => CFGDEF_RE
 use constant CFGOPT_REPO_AZURE_CA_FILE                              => CFGDEF_REPO_AZURE . '-ca-file';
 use constant CFGOPT_REPO_AZURE_CA_PATH                              => CFGDEF_REPO_AZURE . '-ca-path';
 use constant CFGOPT_REPO_AZURE_CONTAINER                            => CFGDEF_REPO_AZURE . '-container';
+use constant CFGOPT_REPO_AZURE_ENDPOINT                             => CFGDEF_REPO_AZURE . '-endpoint';
 use constant CFGOPT_REPO_AZURE_HOST                                 => CFGDEF_REPO_AZURE . '-host';
 use constant CFGOPT_REPO_AZURE_KEY                                  => CFGDEF_REPO_AZURE . '-key';
 use constant CFGOPT_REPO_AZURE_KEY_TYPE                             => CFGDEF_REPO_AZURE . '-key-type';
@@ -1824,6 +1825,12 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_AZURE_ENDPOINT =>
+    {
+        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_HOST,
+        &CFGDEF_DEFAULT => 'blob.core.windows.net',
     },
 
     &CFGOPT_REPO_AZURE_HOST =>
