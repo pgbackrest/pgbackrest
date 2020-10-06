@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Pack Handler
+Pack Type
 
 The pack type encodes binary data compactly while still maintaining structure and strict typing. The idea is based on Thrift,
 ProtocolBuffers, and Avro, compared here: https://medium.com/better-programming/use-binary-encoding-instead-of-json-dec745ec09b6.
@@ -20,7 +20,7 @@ frequently NULL are best stored at the end of an object.
 A pack is an object by default. Objects can store fields, objects, or arrays. Objects and arrays will be referred to collectively as
 containers. Fields contain data to be stored, e.g. integers, strings, etc.
 
-Here a simple example of a pack:
+Here is a simple example of a pack:
 
 PackWrite *write = pckWriteNew(buffer);
 pckWriteU64P(write, 77);

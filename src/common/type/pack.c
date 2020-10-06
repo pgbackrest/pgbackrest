@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Pack Handler
+Pack Type
 
 Each pack field begins with a one byte tag. The four high order bits of the tag contain the field type (PackType). The four lower
 order bits vary by type.
@@ -161,7 +161,7 @@ struct PackWrite
 {
     MemContext *memContext;                                         // Mem context
     IoWrite *write;                                                 // Write pack to
-    bool closeOnEnd;                                                // Close write IO on end
+    Buffer *buffer;                                                 // Buffer to contain write data
 
     List *tagStack;                                                 // Stack of object/array tags
     PackTagStack *tagStackTop;                                      // Top tag on the stack
@@ -899,6 +899,7 @@ pckWriteNew(IoWrite *write)
 
     PackWrite *this = pckWriteNewInternal();
     this->write = write;
+    this->buffer = bufNew(ioBufferSize());
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -916,9 +917,7 @@ pckWriteNewBuf(Buffer *buffer)
 
     MEM_CONTEXT_BEGIN(this->memContext)
     {
-        this->write = ioBufferWriteNew(buffer);
-        ioWriteOpen(this->write);
-        this->closeOnEnd = true;
+        this->buffer = buffer;
     }
     MEM_CONTEXT_END();
 
@@ -937,7 +936,31 @@ static void pckWriteBuffer(PackWrite *this, const Buffer *buffer)
 
     ASSERT(this != NULL);
 
-    ioWrite(this->write, buffer);
+    if (this->write == NULL)
+    {
+        if (bufRemains(this->buffer) < bufUsed(buffer))
+            bufResize(this->buffer, (bufSizeAlloc(this->buffer) + bufUsed(buffer)) * 2);
+
+        bufCat(this->buffer, buffer);
+    }
+    else
+    {
+        if (bufRemains(this->buffer) >= bufUsed(buffer))
+            bufCat(this->buffer, buffer);
+        else
+        {
+            if (bufUsed(this->buffer) > 0)
+            {
+                ioWrite(this->write, this->buffer);
+                bufUsedZero(this->buffer);
+            }
+
+            if (bufRemains(this->buffer) >= bufUsed(buffer))
+                bufCat(this->buffer, buffer);
+            else
+                ioWrite(this->write, buffer);
+        }
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1373,8 +1396,15 @@ pckWriteEnd(PackWrite *this)
     pckWriteUInt64Internal(this, 0);
     this->tagStackTop = NULL;
 
-    if (this->closeOnEnd)
-        ioWriteClose(this->write);
+    // If writing to io flush the internal buffer
+    if (this->write != NULL)
+    {
+        if (bufUsed(this->buffer) > 0)
+            ioWrite(this->write, this->buffer);
+    }
+    // Else resize the external buffer to trim off extra space added during processing
+    else
+        bufResize(this->buffer, bufUsed(this->buffer));
 
     FUNCTION_TEST_RETURN(this);
 }

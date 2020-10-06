@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Packs
+Test Pack Type
 ***********************************************************************************************************************************/
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -292,6 +292,23 @@ testRun(void)
         TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
         TEST_RESULT_Z(pckReadPtrP(packRead, .defaultNull = true), NULL, "read default pointer");
         TEST_RESULT_Z(pckReadPtrP(packRead, .id = 2), "sample", "read pointer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pack/unpack write internal buffer empty");
+
+        pack = bufNew(0);
+        write = ioBufferWriteNew(pack);
+        ioWriteOpen(write);
+
+        // Make internal buffer small enough that it will never be used
+        ioBufferSizeSet(0);
+
+        TEST_ASSIGN(packWrite, pckWriteNew(write), "new write");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("test")), "write string longer than internal buffer");
+        TEST_RESULT_VOID(pckWriteEndP(packWrite), "end with internal buffer empty");
+
+        TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
+        TEST_RESULT_STR_Z(pckReadStrP(packRead), "test", "read string");
     }
 
     // *****************************************************************************************************************************
