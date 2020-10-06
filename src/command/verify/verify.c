@@ -410,9 +410,9 @@ verifyManifestFile(
         }
         else
         {
-            // Attempt to load the copy if this is not the current backup - no attempt is made to check an in-progress backup.
-            // If the main manifest is simply missing, it is assumed the backup is an in-progress backup and verification is skipped
-            // otherwise, if the main is not simply missing, or this is not an in-progress backup then attempt to load the copy.
+            // If this might be an in-progress backup and the main manifest is simply missing, it is assumed the backup is an
+            // actual in-progress backup and verification is skipped, otherwise, if the main is not simply missing, or this is not
+            // an in-progress backup then attempt to load the copy.
             if (!(currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
             {
                 currentBackup = false;
@@ -427,6 +427,19 @@ verifyManifestFile(
 
                     result = verifyManifestInfoCopy.manifest;
                 }
+                else if (verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError) &&
+                    verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
+                {
+                    backupResult->status = backupMissingManifest;
+
+                    LOG_WARN_FMT("Manifest files missing for '%s' - backup may have expired", strZ(backupResult->backupLabel));
+                }
+            }
+            else
+            {
+                backupResult->status = backupInProgress;
+
+                LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult->backupLabel));
             }
         }
 
@@ -449,7 +462,7 @@ verifyManifestFile(
                 }
             }
 
-            // If the PG data is not found in the backup.info history, then error and mark the backup invalid
+            // If the PG data is not found in the backup.info history, then error and reset the result
             if (!found)
             {
                 LOG_ERROR_FMT(
@@ -457,30 +470,17 @@ verifyManifestFile(
                     "'%s' may not be recoverable - PG data (id %u, version %s, system-id %"
                     PRIu64 ") is not in the backup.info history, skipping",
                     strZ(backupResult->backupLabel), manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId);
-                backupResult->status = backupInvalid;
-                (*jobErrorTotal)++;
                 result = NULL;
             }
             else
                 manifestMove(result, memContextPrior());
         }
 
-        // If the result is NULL and the backup status has not yet been set, then set it
+        // If the result is NULL and the backup status has not yet been set, then it is unusable
         if (result == NULL && backupResult->status == backupValid)
         {
-            // Warn if it is not actually the current in-progress backup
-            if (!currentBackup)
-            {
-                backupResult->status = backupMissingManifest;
-
-                LOG_WARN_FMT("Manifest files missing for '%s' - backup may have expired", strZ(backupResult->backupLabel));
-            }
-            else
-            {
-                backupResult->status = backupInProgress;
-
-                LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult->backupLabel));
-            }
+            backupResult->status = backupInvalid;
+            (*jobErrorTotal)++;
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -1316,9 +1316,45 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
         for (unsigned int backupIdx = 0; backupIdx < lstSize(backupResultList); backupIdx++)
         {
             VerifyBackupResult *backupResult = lstGet(backupResultList, backupIdx);
+            String *status = NULL;
+
+            switch (backupResult->status)
+            {
+                case backupValid:
+                {
+                    status = strNew("valid");
+                    break;
+                }
+                case backupInvalid:
+                {
+                    status = strNew("invalid");
+                    break;
+                }
+                case backupConsistent:
+                {
+                    status = strNew("consistent");
+                    break;
+                }
+                case backupConsistentWithPITR:
+                {
+                    status = strNew("pitr-able");
+                    break;
+                }
+                case backupMissingManifest:
+                {
+                    status = strNew("manifest missing");
+                    break;
+                }
+                case backupInProgress:
+                {
+                    status = strNew("in-progress");
+                    break;
+                }
+            }
+
             strCatFmt(
-                result, "\n  backup: %s, total files checked: %u, total valid files: %u", strZ(backupResult->backupLabel),
-                backupResult->totalFileVerify, backupResult->totalFileValid);
+                result, "\n  backup: %s, status: %s, total files checked: %u, total valid files: %u",
+                strZ(backupResult->backupLabel), strZ(status), backupResult->totalFileVerify, backupResult->totalFileValid);
 
             if (backupResult->totalFileVerify > 0)
             {
@@ -1529,7 +1565,7 @@ verifyProcess(unsigned int *errorTotal)
                                 {
                                     jobData.jobErrorTotal += verifyLogInvalidResult(
                                         fileType, verifyResult, processId, filePathName);
-
+                                    backupResult->status = backupInvalid;
                                     verifyInvalidFileAdd(backupResult->invalidFileList, verifyResult, filePathName);
                                 }
                             }
@@ -1554,6 +1590,7 @@ verifyProcess(unsigned int *errorTotal)
                             }
                             else
                             {
+                                backupResult->status = backupInvalid;
                                 verifyInvalidFileAdd(backupResult->invalidFileList, verifyOtherError, filePathName);
                             }
                         }

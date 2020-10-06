@@ -215,6 +215,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("verifyManifestFile()"))
     {
+        // Load Parameters
+        StringList *argList = strLstDup(argListBase);
+        harnessCfgLoad(cfgCmdVerify, argList);
+
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
@@ -230,18 +234,10 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT
         );
 
-        // Load Parameters
-        StringList *argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdVerify, argList);
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest.copy exists, no manifest main, manifest db version not in history, not current db");
-
         Manifest *manifest = NULL;
         String *backupLabel = strNew("20181119-152138F");
         String *manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel));
         String *manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
-        bool currentBackup = false;
         unsigned int jobErrorTotal = 0;
         VerifyBackupResult backupResult = {.backupLabel = strDup(backupLabel)};
 
@@ -249,20 +245,38 @@ testRun(void)
         TEST_ASSIGN(archiveInfo, infoArchiveNewLoad(ioBufferReadNew(archiveInfoBase)), "archive.info");
         InfoPg *infoPg = infoArchivePg(archiveInfo);
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy db section mismatch");
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, currentBackup, infoPg, &jobErrorTotal), "verify manifest");
-        TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no manifests and not current db");
+
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_RESULT_UINT(backupResult.status, backupMissingManifest, "manifests missing");
         harnessLogResult(
             strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
-            "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
-            "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not "
-                "in the backup.info history, skipping",
-            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
+                "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
+                "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
+                "P00   WARN: Manifest files missing for '%s' - backup may have expired",
+                testPath(), strZ(backupStanzaPath), strZ(backupLabel), testPath(), strZ(backupStanzaPath), strZ(backupLabel),
+                strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("rerun copy test with db-system-id invalid");
+        TEST_TITLE("manifest.copy exists, no manifest main, manifest db version not in history, not current db");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write manifest db section mismatch");
+
+        backupResult.status = backupValid;
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
+        TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
+            "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not "
+                "in the backup.info history, skipping",
+            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel))));
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("rerun test with db-system-id invalid and no main");
 
         contentLoad = harnessInfoChecksumZ
         (
@@ -285,11 +299,14 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT
         );
 
+        TEST_RESULT_VOID(storageRemoveP(storageTest, manifestFile), "remove main manifest");
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy invalid system-id");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, currentBackup, infoPg, &jobErrorTotal), "verify manifest");
+        backupResult.status = backupValid;
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg system-id mismatch");
+        TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
@@ -325,8 +342,10 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write manifest copy invalid db-id");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, currentBackup, infoPg, &jobErrorTotal), "verify manifest");
+        backupResult.status = backupValid;
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg db-id mismatch");
+        TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
@@ -336,16 +355,9 @@ testRun(void)
             testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("current backup true");
+        TEST_TITLE("missing main manifest, errored copy");
 
-        // Only manifest copy exists
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
-        TEST_RESULT_PTR(manifest, NULL, "manifest not set");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read",
-            testPath(), strZ(backupStanzaPath), strZ(backupLabel))));
-
+        backupResult.status = backupValid;
         contentLoad = BUFSTRDEF(
             "[backrest]\n"
             "backrest-checksum=\"BOGUS\"\n"
@@ -353,12 +365,25 @@ testRun(void)
             "backrest-version=\"2.28\"\n");
 
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write invalid manifest");
-        TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write invalid manifest copy");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
+        harnessLogResult(
+            strZ(strNewFmt(
+            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
+            "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
+            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, testPath(), strZ(backupStanzaPath), strZ(backupLabel),
+            strZ(backupLabel))));
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("current backup true");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write invalid manifest");
 
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
+        TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         harnessLogResult(
             strZ(strNewFmt(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
@@ -385,8 +410,10 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest");
 
+        backupResult.status = backupValid;
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+        TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
         harnessLogResult("P00   WARN: backup.manifest.copy does not match backup.manifest");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -396,6 +423,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write valid manifest copy");
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
+        TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
     }
 
     // *****************************************************************************************************************************
@@ -734,6 +762,7 @@ testRun(void)
         VerifyBackupResult backupResult =
         {
             .backupLabel = strNew("test-backup-label"),
+            .status = backupInvalid,
             .totalFileVerify = 1,
             .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
         };
@@ -745,17 +774,8 @@ testRun(void)
             "Results:\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
             "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0\n"
-            "  backup: test-backup-label, total files checked: 1, total valid files: 0\n"
+            "  backup: test-backup-label, status: invalid, total files checked: 1, total valid files: 0\n"
             "    missing: 1, checksum invalid: 0, size invalid: 0, other: 0", "archive file missing, backup file missing");
-
-        lstRemoveIdx(archiveIdResultList, 0);
-        lstRemoveIdx(backupResult.invalidFileList, 0);
-        TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList, backupResultList),
-            "Results:\n"
-            "  archiveId: none found\n"
-            "  backup: test-backup-label, total files checked: 1, total valid files: 0\n"
-            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0", "archive file missing, backup: no invalid file list");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyAddInvalidWalFile() - file missing (coverage test)");
@@ -906,7 +926,7 @@ testRun(void)
             "P00   INFO: backup '20200810-171426F' appears to be in progress, skipping\n"
             "P00   INFO: Results:\n"
             "              archiveId: none found\n"
-            "              backup: 20200810-171426F, total files checked: 0, total valid files: 0",
+            "              backup: 20200810-171426F, status: in-progress, total files checked: 0, total valid files: 0",
             testPath(), strZ(backupStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -924,7 +944,7 @@ testRun(void)
             "P00   INFO: backup '20200810-171426F' appears to be in progress, skipping\n"
             "P00   INFO: Results:\n"
             "              archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
-            "              backup: 20200810-171426F, total files checked: 0, total valid files: 0",
+            "              backup: 20200810-171426F, status: in-progress, total files checked: 0, total valid files: 0",
             testPath(), strZ(backupStanzaPath))));
     }
 
@@ -1122,7 +1142,7 @@ testRun(void)
                 "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
                 "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
                 "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
-                "  backup: %s, total files checked: 0, total valid files: 0", strZ(backupLabel))),
+                "  backup: %s, status: in-progress, total files checked: 0, total valid files: 0", strZ(backupLabel))),
             "verifyProcess() results");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
         harnessLogResult(
@@ -1243,7 +1263,7 @@ testRun(void)
                 "              archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
                 "              archiveId: 11-2, total WAL checked: 8, total valid WAL: 5\n"
                 "                missing: 0, checksum invalid: 1, size invalid: 1, other: 1\n"
-                "              backup: %s, total files checked: 1, total valid files: 0\n"
+                "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
                 "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0",
                  testPath(), strZ(archiveStanzaPath), strZ(backupFileName), strZ(backupLabel))));
 
