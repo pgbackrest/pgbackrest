@@ -203,6 +203,7 @@ prior backup was invalid or not until we have completed checking that backup. Bu
 This isn't the optimal solution because if the file is not "yet" in the prior backup's invalid list, we could still miss checking it because the
 prior backup might still be processing files and it hasn't hit this one yet. But since the files are in the manifest
 in alphabetical order, then hopefully the chances of that happening will be small. WE might also put in a status to indicate when a backup skips files it deems are valid in a prior backup. At the end of processing, if this status is still set for the dependent backup (meaning no invalid files were found) at the end of all processing then during reconciliation, we could then decided that we warn the user this backup MAY not usable vs that it is not usable.
+SOLUTION: Accept that we will recheck the first process-max - 1 because the callback will not be called until the prior backup has freed up slot. So need state flag to indicate when a backup has completed processing all files. So if DONE (decremented total gets to 0) then can skip as long as also not invalid in the prior backup.
 
 manifestFileIdx:
 - Index of the file within the manifest file list that is being processed.

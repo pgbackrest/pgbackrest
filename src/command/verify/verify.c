@@ -942,42 +942,33 @@ in alphabetical order, then hopefully the chances of the checking of the file in
                     // Else the backup this file referenced has been processed
                     else
                     {
-// CSHANG Should I wrap this in  MEM_CONTEXT_TEMP_BEGIN() and then use MEM_CONTEXT_PRIOR_BEGIN() around filePathName?
-                        MEM_CONTEXT_TEMP_BEGIN()
+                        VerifyBackupResult *backupResultPrior = lstGet(jobData->backupResultList, backupPriorIdx);
+
+                        // If no backups were checked in the prior backup then check this file in that location
+                        if (backupResultPrior->totalFileManifest == 0)
                         {
-                            VerifyBackupResult *backupResultPrior = lstGet(jobData->backupResultList, backupPriorIdx);
-
-                            // If no backups were checked in the prior backup then check this file in that location
-                            if (backupResultPrior->totalFileManifest == 0)
-                            {
-                                MEM_CONTEXT_PRIOR_BEGIN()
-                                {
-                                    filePathName = strNewFmt(
-                                        STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
-                                        strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
-                                }
-                                MEM_CONTEXT_PRIOR_END();
-                            }
-                            // Else if files were checked and the file is in the invalid file list then add the file as invalid
-                            // to this backup result, set the backup result status, and skip the check of this file
-                            else
-                            {
-                                String *priorFile = strNewFmt(
-                                    "%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
-                                    strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                            filePathName = strNewFmt(
+                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
+                                strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                        }
+                        // Else if files were checked and the file is in the invalid file list then add the file as invalid
+                        // to this backup result, set the backup result status, and skip the check of this file
+                        else
+                        {
+                            String *priorFile = strNewFmt(
+                                "%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
+                                strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
 // CSHANG Should we really add it to the invalid file list here? or just increment the joberror, set the backup result state to invalid
-                                unsigned int backupPriorInvalidIdx = lstFindIdx(backupResultPrior->invalidFileList, &priorFile);
+                            unsigned int backupPriorInvalidIdx = lstFindIdx(backupResultPrior->invalidFileList, &priorFile);
 
-                                if (backupPriorInvalidIdx != LIST_NOT_FOUND)
-                                {
-                                    VerifyInvalidFile *invalidFile = lstGet(
-                                        backupResultPrior->invalidFileList, backupPriorInvalidIdx);
-                                    verifyInvalidFileAdd(backupResult->invalidFileList, invalidFile->reason, invalidFile->fileName);
-                                    backupResult->status = backupInvalid;
-                                }
+                            if (backupPriorInvalidIdx != LIST_NOT_FOUND)
+                            {
+                                VerifyInvalidFile *invalidFile = lstGet(
+                                    backupResultPrior->invalidFileList, backupPriorInvalidIdx);
+                                verifyInvalidFileAdd(backupResult->invalidFileList, invalidFile->reason, invalidFile->fileName);
+                                backupResult->status = backupInvalid;
                             }
                         }
-                        MEM_CONTEXT_TEMP_END();
                     }
                 }
                 else
@@ -1016,10 +1007,10 @@ in alphabetical order, then hopefully the chances of the checking of the file in
                 {
                     // Processing complete - free the manifest and remove this backup from the processing list
                     manifestFree(jobData->manifest);
-                    jobData->manifest = NULL;   // CSHANG Do we need?
+                    jobData->manifest = NULL;   // CSHANG Do we need? ANSWER: YES and make sure checking
                     strLstRemoveIdx(jobData->backupList, 0);
                 }
-// CSHANG Should we strFree(filePathName)?
+
                 // If a job was found to be processed then break out to process it
                 if (result != NULL)
                     break;
@@ -1028,7 +1019,7 @@ in alphabetical order, then hopefully the chances of the checking of the file in
         }
         else
         {
-// CSHANG There should always be some files to process, but if we get here, we should cleanup but should we also WARN/ERROR?
+// CSHANG There should always be some files to process, but if we get here, we should cleanup but should we also WARN/ERROR? ANSWER: Log ERROR and incr jobErrorTotal
             // Nothing to process so free the manifest, set the status to invalid and remove the backup from the processing list
             manifestFree(jobData->manifest);
             jobData->manifest = NULL;
