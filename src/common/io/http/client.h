@@ -29,18 +29,18 @@ typedef struct HttpClient HttpClient;
 #include "common/time.h"
 
 /***********************************************************************************************************************************
-Statistics
+Statistics constants
 ***********************************************************************************************************************************/
-typedef struct HttpClientStat
-{
-    uint64_t object;                                                // Objects created
-    uint64_t session;                                               // Sessions created
-    uint64_t request;                                               // Requests (i.e. calls to httpRequestNew())
-    uint64_t retry;                                                 // Request retries
-    uint64_t close;                                                 // Closes forced by server
-} HttpClientStat;
-
-extern HttpClientStat httpClientStat;
+#define HTTP_STAT_CLIENT                                            "http.client"       // Clients created
+    STRING_DECLARE(HTTP_STAT_CLIENT_STR);
+#define HTTP_STAT_CLOSE                                             "http.close"        // Closes forced by server
+    STRING_DECLARE(HTTP_STAT_CLOSE_STR);
+#define HTTP_STAT_REQUEST                                           "http.request"      // Requests (i.e. calls to httpRequestNew())
+    STRING_DECLARE(HTTP_STAT_REQUEST_STR);
+#define HTTP_STAT_RETRY                                             "http.retry"        // Request retries
+    STRING_DECLARE(HTTP_STAT_RETRY_STR);
+#define HTTP_STAT_SESSION                                           "http.session"      // Sessions created
+    STRING_DECLARE(HTTP_STAT_SESSION_STR);
 
 /***********************************************************************************************************************************
 Constructors
@@ -55,9 +55,6 @@ HttpSession *httpClientOpen(HttpClient *this);
 
 // Request/response finished cleanly so session can be reused
 void httpClientReuse(HttpClient *this, HttpSession *session);
-
-// Format statistics to a string
-String *httpClientStatStr(void);
 
 /***********************************************************************************************************************************
 Getters/Setters

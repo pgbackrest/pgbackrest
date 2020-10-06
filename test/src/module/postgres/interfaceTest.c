@@ -30,15 +30,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgControlVersion() and pgCatalogVersion()"))
+    if (testBegin("pgControlVersion()"))
     {
         TEST_ERROR(pgControlVersion(70300), AssertError, "invalid PostgreSQL version 70300");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_83), 833, "8.3 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
-
-        TEST_ERROR(pgCatalogVersion(70900), AssertError, "invalid PostgreSQL version 70900");
-        TEST_RESULT_UINT(pgCatalogVersion(PG_VERSION_83), 200711281, "8.3 catalog version");
-        TEST_RESULT_UINT(pgCatalogVersion(PG_VERSION_11), 201809051, "11 catalog version");
     }
 
     // *****************************************************************************************************************************
@@ -78,6 +74,7 @@ testRun(void)
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v11");
         TEST_RESULT_UINT(info.systemId, 0xFACEFACE, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201809051, "   check catalog version");
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
@@ -97,11 +94,14 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageTest, controlFile),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF}));
+            pgControlTestToBuffer(
+                (PgControl){
+                    .version = PG_VERSION_83, .systemId = 0xEFEFEFEFEF, .catalogVersion = pgCatalogTestVersion(PG_VERSION_83)}));
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v83");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 200711281, "   check catalog version");
     }
 
     // *****************************************************************************************************************************
@@ -169,10 +169,9 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_96), "location", "check location name");
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_10), "lsn", "check lsn name");
 
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_84), NULL, "check 8.4 tablespace id");
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_90), "PG_9.0_201008051", "check 9.0 tablespace id");
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94), "PG_9.4_201409291", "check 9.4 tablespace id");
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_11), "PG_11_201809051", "check 11 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_84, 200904091), NULL, "check 8.4 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_90, 201008051), "PG_9.0_201008051", "check 9.0 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94, 999999999), "PG_9.4_999999999", "check 9.4 tablespace id");
 
         TEST_RESULT_STR_Z(pgWalName(PG_VERSION_96), "xlog", "check xlog name");
         TEST_RESULT_STR_Z(pgWalName(PG_VERSION_10), "wal", "check wal name");

@@ -35,6 +35,7 @@ struct InfoArchive
     InfoPg *infoPg;                                                 // Contents of the DB data
 };
 
+OBJECT_DEFINE_MOVE(INFO_ARCHIVE);
 OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 
 /***********************************************************************************************************************************
@@ -82,10 +83,8 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
 
-/***********************************************************************************************************************************
-Create new object and load contents from a file
-***********************************************************************************************************************************/
-static InfoArchive *
+/**********************************************************************************************************************************/
+InfoArchive *
 infoArchiveNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -237,7 +236,7 @@ infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 
     ASSERT(this != NULL);
 
-    this->infoPg = infoPgSet(this->infoPg, infoPgArchive, pgVersion, pgSystemId);
+    this->infoPg = infoPgSet(this->infoPg, infoPgArchive, pgVersion, pgSystemId, 0);
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }

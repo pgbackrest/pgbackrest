@@ -29,6 +29,7 @@ typedef enum
     cfgDefCmdStanzaUpgrade,
     cfgDefCmdStart,
     cfgDefCmdStop,
+    cfgDefCmdVerify,
     cfgDefCmdVersion,
 } ConfigDefineCommand;
 
@@ -56,6 +57,7 @@ typedef enum
     cfgDefOptArchiveCheck,
     cfgDefOptArchiveCopy,
     cfgDefOptArchiveGetQueueMax,
+    cfgDefOptArchiveMode,
     cfgDefOptArchivePushQueueMax,
     cfgDefOptArchiveTimeout,
     cfgDefOptBackupStandby,
@@ -146,8 +148,10 @@ typedef enum
     cfgDefOptRepoS3Host,
     cfgDefOptRepoS3Key,
     cfgDefOptRepoS3KeySecret,
+    cfgDefOptRepoS3KeyType,
     cfgDefOptRepoS3Port,
     cfgDefOptRepoS3Region,
+    cfgDefOptRepoS3Role,
     cfgDefOptRepoS3Token,
     cfgDefOptRepoS3UriStyle,
     cfgDefOptRepoS3VerifyTls,

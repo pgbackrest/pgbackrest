@@ -62,6 +62,11 @@ Recovery constants
 #define RECOVERY_TYPE_TIME                                          "time"
     STRING_STATIC(RECOVERY_TYPE_TIME_STR,                           RECOVERY_TYPE_TIME);
 
+#define ARCHIVE_MODE                                                "archive_mode"
+#define ARCHIVE_MODE_OFF                                            "off"
+    STRING_STATIC(ARCHIVE_MODE_OFF_STR,                             ARCHIVE_MODE_OFF);
+STRING_STATIC(ARCHIVE_MODE_PRESERVE_STR,                            "preserve");
+
 /***********************************************************************************************************************************
 Validate restore path
 ***********************************************************************************************************************************/
@@ -928,7 +933,8 @@ restoreCleanBuild(Manifest *manifest)
             // If this is a tablespace append the tablespace identifier
             if (cleanData->target->type == manifestTargetTypeLink && cleanData->target->tablespaceId != 0)
             {
-                const String *tablespaceId = pgTablespaceId(manifestData(manifest)->pgVersion);
+                const String *tablespaceId = pgTablespaceId(
+                    manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
 
                 // Only PostgreSQL >= 9.0 has tablespace indentifiers
                 if (tablespaceId != NULL)
@@ -1176,7 +1182,8 @@ restoreSelectiveExpression(Manifest *manifest)
 
             // Generate tablespace expression
             RegExp *tablespaceRegExp = NULL;
-            const String *tablespaceId = pgTablespaceId(manifestData(manifest)->pgVersion);
+            const String *tablespaceId = pgTablespaceId(
+                manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
 
             if (tablespaceId == NULL)
                 tablespaceRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/[0-9]+/" PG_FILE_PGVERSION));
@@ -1329,11 +1336,31 @@ restoreRecoveryOption(unsigned int pgVersion)
             strLstSort(recoveryOptionKey, sortOrderAsc);
         }
 
+        // If archive-mode is not preserve
+        const String *archiveMode = cfgOptionStr(cfgOptArchiveMode);
+
+        if (!strEq(archiveMode, ARCHIVE_MODE_PRESERVE_STR))
+        {
+            if (pgVersion < PG_VERSION_12)
+            {
+                THROW_FMT(
+                    OptionInvalidError,
+                    "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_STR "\n"
+                        "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
+            }
+
+            // The only other valid option is off
+            ASSERT(strEq(archiveMode, ARCHIVE_MODE_OFF_STR));
+
+            // If archive-mode=off then set archive_mode=off
+            kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTR(ARCHIVE_MODE_OFF_STR));
+        }
+
         // Write restore_command
         if (!strLstExists(recoveryOptionKey, RESTORE_COMMAND_STR))
         {
             // Null out options that it does not make sense to pass from the restore command to archive-get.  All of these have
-            // reasonable defaults so there is no danger of a error -- they just might not be optimal.  In any case, it seems
+            // reasonable defaults so there is no danger of an error -- they just might not be optimal.  In any case, it seems
             // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 

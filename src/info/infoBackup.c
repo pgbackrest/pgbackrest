@@ -64,6 +64,7 @@ struct InfoBackup
     List *backup;                                                   // List of current backups and their associated data
 };
 
+OBJECT_DEFINE_MOVE(INFO_BACKUP);
 OBJECT_DEFINE_FREE(INFO_BACKUP);
 
 /***********************************************************************************************************************************
@@ -87,15 +88,16 @@ infoBackupNewInternal(void)
 
 /**********************************************************************************************************************************/
 InfoBackup *
-infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
+infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
-    ASSERT(pgVersion > 0 && pgSystemId > 0);
+    ASSERT(pgVersion > 0 && pgSystemId > 0 && pgCatalogVersion > 0);
 
     InfoBackup *this = NULL;
 
@@ -105,7 +107,7 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherP
 
         // Initialize the pg data
         this->infoPg = infoPgNew(infoPgBackup, cipherPassSub);
-        infoBackupPgSet(this, pgVersion, pgSystemId);
+        infoBackupPgSet(this, pgVersion, pgSystemId, pgCatalogVersion);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -182,7 +184,8 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
     FUNCTION_TEST_RETURN_VOID();
 }
 
-static InfoBackup *
+/**********************************************************************************************************************************/
+InfoBackup *
 infoBackupNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -305,15 +308,16 @@ infoBackupPg(const InfoBackup *this)
 }
 
 InfoBackup *
-infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId)
+infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
     FUNCTION_LOG_END();
 
-    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId);
+    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId, pgCatalogVersion);
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
@@ -342,7 +346,7 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *((InfoBackupData *)lstGet(this->backup, backupDataIdx)));
+    FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *(InfoBackupData *)lstGet(this->backup, backupDataIdx));
 }
 
 /**********************************************************************************************************************************/

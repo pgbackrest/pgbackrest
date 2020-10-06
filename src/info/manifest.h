@@ -61,6 +61,7 @@ typedef struct ManifestData
     unsigned int pgId;                                              // PostgreSQL id in backup.info
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system identifier
+    unsigned int pgCatalogVersion;                                  // PostgreSQL catalog version
 
     bool backupOptionArchiveCheck;                                  // Will WAL segments be checked at the end of the backup?
     bool backupOptionArchiveCopy;                                   // Will WAL segments be copied to the backup?
@@ -152,8 +153,8 @@ Constructors
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
 Manifest *manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, bool online, bool checksumPage, const StringList *excludeList,
-    const VariantList *tablespaceList);
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage,
+    const StringList *excludeList, const VariantList *tablespaceList);
 
 // Load a manifest from IO
 Manifest *manifestNewLoad(IoRead *read);
@@ -263,6 +264,11 @@ const ManifestData *manifestData(const Manifest *this);
 
 // Set backup label
 void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
+
+/***********************************************************************************************************************************
+Destructor
+***********************************************************************************************************************************/
+void manifestFree(Manifest *this);
 
 /***********************************************************************************************************************************
 Helper functions

@@ -15,6 +15,7 @@ Socket Client
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
 #include "common/memContext.h"
+#include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"
 
@@ -24,9 +25,11 @@ Io client type
 STRING_EXTERN(IO_CLIENT_SOCKET_TYPE_STR,                            IO_CLIENT_SOCKET_TYPE);
 
 /***********************************************************************************************************************************
-Statistics
+Statistics constants
 ***********************************************************************************************************************************/
-static SocketClientStat sckClientStatLocal;
+STRING_EXTERN(SOCKET_STAT_CLIENT_STR,                               SOCKET_STAT_CLIENT);
+STRING_EXTERN(SOCKET_STAT_RETRY_STR,                                SOCKET_STAT_RETRY);
+STRING_EXTERN(SOCKET_STAT_SESSION_STR,                              SOCKET_STAT_SESSION);
 
 /***********************************************************************************************************************************
 Object type
@@ -142,7 +145,7 @@ sckClientOpen(THIS_VOID)
                     LOG_DEBUG_FMT("retry %s: %s", errorTypeName(errorType()), errorMessage());
                     retry = true;
 
-                    sckClientStatLocal.retry++;
+                    statInc(SOCKET_STAT_RETRY_STR);
                 }
                 else
                     RETHROW();
@@ -151,7 +154,7 @@ sckClientOpen(THIS_VOID)
         }
         while (retry);
 
-        sckClientStatLocal.session++;
+        statInc(SOCKET_STAT_SESSION_STR);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -208,29 +211,11 @@ sckClientNew(const String *host, unsigned int port, TimeMSec timeout)
             .timeout = timeout,
         };
 
-        sckClientStatLocal.object++;
+        statInc(SOCKET_STAT_CLIENT_STR);
 
         this = ioClientNew(driver, &sckClientInterface);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_CLIENT, this);
-}
-
-/**********************************************************************************************************************************/
-String *
-sckClientStatStr(void)
-{
-    FUNCTION_TEST_VOID();
-
-    String *result = NULL;
-
-    if (sckClientStatLocal.object > 0)
-    {
-        result = strNewFmt(
-            "socket statistics: objects %" PRIu64 ", sessions %" PRIu64 ", retries %" PRIu64, sckClientStatLocal.object,
-            sckClientStatLocal.session, sckClientStatLocal.retry);
-    }
-
-    FUNCTION_TEST_RETURN(result);
 }

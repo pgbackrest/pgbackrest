@@ -208,8 +208,10 @@ testRun(void)
 
         THROW_ON_SYS_ERROR(chdir("/") != 0, PathMissingError, "unable to chdir()");
         TEST_ERROR(
-            walPath(strNew("relative/path"), pgPathLink, strNew("test")), AssertError,
-            hrnReplaceKey("working path '/' is not the same path as '{[path]}/pg-link'"));
+            walPath(strNew("relative/path"), pgPathLink, strNew("test")), OptionInvalidValueError,
+            hrnReplaceKey(
+                "PostgreSQL working directory '/' is not the same as option pg1-path '{[path]}/pg-link'\n"
+                    "HINT: is the PostgreSQL data_directory configured the same as the pg1-path option?"));
 
         TEST_ERROR(
             walPath(strNew("relative/path"), NULL, strNew("test")), OptionRequiredError,
@@ -237,7 +239,8 @@ testRun(void)
             walSegmentFind(storageRepo(), strNew("9.6-2"), strNew("123456781234567812345678"), 100), ArchiveTimeoutError,
             "WAL segment 123456781234567812345678 was not archived before the 100ms timeout\n"
             "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-            "HINT: check the PostgreSQL server log for errors.");
+            "HINT: check the PostgreSQL server log for errors.\n"
+            "HINT: run the 'start' command if the stanza was previously stopped.");
 
         // Check timeout by making the wal segment appear after 250ms
         HARNESS_FORK_BEGIN()
@@ -330,6 +333,24 @@ testRun(void)
             strLstJoin(walSegmentRange(strNew("000000070000000700000FFE"), 1024 * 1024, PG_VERSION_11, 4), "|"),
             "000000070000000700000FFE|000000070000000700000FFF|000000070000000800000000|000000070000000800000001",
             "get range >= 11/1MB");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("archiveIdComparator()"))
+    {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archiveId comparator sorting");
+
+        StringList *list = strLstComparatorSet(strLstNew(), archiveIdComparator);
+
+        strLstAddZ(list, "10-4");
+        strLstAddZ(list, "11-10");
+        strLstAddZ(list, "9.6-1");
+
+        TEST_RESULT_STR_Z(strLstJoin(strLstSort(list, sortOrderAsc), ", "), "9.6-1, 10-4, 11-10", "sort ascending");
+
+        strLstAddZ(list, "9.4-2");
+        TEST_RESULT_STR_Z(strLstJoin(strLstSort(list, sortOrderDesc), ", "), "11-10, 10-4, 9.4-2, 9.6-1", "sort descending");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

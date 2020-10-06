@@ -60,8 +60,8 @@ testRequest(IoWrite *write, const char *verb, const char *uri, TestRequestParam 
     else
         strCatZ(request, uri);
 
-    // Add HTTP version
-    strCatZ(request, " HTTP/1.1\r\n");
+    // Add HTTP version and user agent
+    strCatZ(request, " HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
 
     // Add authorization string
     if (driver->sharedKey != NULL)

@@ -37,7 +37,7 @@ testRun(void)
         assert(stackTracePush("file1.c", "function1", logLevelDebug) == logLevelDebug);
         stackTracePop("file1.c", "function1", false);
 
-        backTraceState = NULL;
+        stackTraceLocal.backTraceState = NULL;
 #endif
     }
 
@@ -53,10 +53,10 @@ testRun(void)
         stackTraceTestStart();
         assert(stackTraceTest());
 
-        stackSize++;
+        stackTraceLocal.stackSize++;
         stackTraceTestFileLineSet(888);
-        assert(stackTrace[stackSize - 1].fileLine == 888);
-        stackSize--;
+        assert(stackTraceLocal.stack[stackTraceLocal.stackSize - 1].fileLine == 888);
+        stackTraceLocal.stackSize--;
 #endif
     }
 
@@ -68,11 +68,15 @@ testRun(void)
 #ifdef WITH_BACKTRACE
         stackTraceInit(testExe());
 #endif
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check size of StackTraceData");
 
-        TEST_ERROR(stackTracePop("file1", "function1", false), AssertError, "assertion 'stackSize > 0' failed");
+        TEST_RESULT_UINT(sizeof(StackTraceData), TEST_64BIT() ? 48 : 32, "check");
+
+        TEST_ERROR(stackTracePop("file1", "function1", false), AssertError, "assertion 'stackTraceLocal.stackSize > 0' failed");
 
         assert(stackTracePush("file1", "function1", logLevelDebug) == logLevelDebug);
-        assert(stackSize == 1);
+        assert(stackTraceLocal.stackSize == 1);
 
         TEST_ERROR(
             stackTracePop("file2", "function2", false), AssertError,
@@ -100,15 +104,15 @@ testRun(void)
                 "    check stack trace");
 
             assert(stackTracePush("file1.c", "function2", logLevelTrace) == logLevelTrace);
-            stackTrace[stackSize - 2].fileLine = 7777;
+            stackTraceLocal.stack[stackTraceLocal.stackSize - 2].fileLine = 7777;
             assert(strcmp(stackTraceParam(), "trace log level required for parameters") == 0);
-            stackTrace[stackSize - 1].functionLogLevel = logLevelDebug;
+            stackTraceLocal.stack[stackTraceLocal.stackSize - 1].functionLogLevel = logLevelDebug;
 
             TRY_BEGIN()
             {
                 // Function with one param
                 assert(stackTracePush("file2.c", "function2", logLevelDebug) == logLevelDebug);
-                stackTrace[stackSize - 2].fileLine = 7777;
+                stackTraceLocal.stack[stackTraceLocal.stackSize - 2].fileLine = 7777;
 
                 stackTraceParamAdd((size_t)snprintf(stackTraceParamBuffer("param1"), STACK_TRACE_PARAM_MAX, "value1"));
                 stackTraceParamLog();
@@ -116,7 +120,7 @@ testRun(void)
 
                 // Function with multiple params
                 assert(stackTracePush("file3.c", "function3", logLevelTrace) == logLevelTrace);
-                stackTrace[stackSize - 2].fileLine = 7777;
+                stackTraceLocal.stack[stackTraceLocal.stackSize - 2].fileLine = 7777;
 
                 stackTraceParamLog();
                 stackTraceParamAdd((size_t)snprintf(stackTraceParamBuffer("param1"), STACK_TRACE_PARAM_MAX, "value1"));
@@ -125,24 +129,24 @@ testRun(void)
 
                 // Calculate exactly where the buffer will overflow (4 is for the separators)
                 size_t bufferOverflow =
-                    sizeof(functionParamBuffer) - (STACK_TRACE_PARAM_MAX * 2) - strlen("param1") - 4 -
-                    (size_t)(stackTrace[stackSize - 1].param - functionParamBuffer);
+                    sizeof(stackTraceLocal.functionParamBuffer) - (STACK_TRACE_PARAM_MAX * 2) - strlen("param1") - 4 -
+                    (size_t)(stackTraceLocal.stack[stackTraceLocal.stackSize - 1].param - stackTraceLocal.functionParamBuffer);
 
                 // Munge the previous previous param in the stack so that the next one will just barely fit
-                stackTrace[stackSize - 1].paramSize = bufferOverflow - 1;
+                stackTraceLocal.stack[stackTraceLocal.stackSize - 1].paramSize = bufferOverflow - 1;
 
                 assert(stackTracePush("file4.c", "function4", logLevelDebug) == logLevelTrace);
-                stackTrace[stackSize - 2].fileLine = 7777;
+                stackTraceLocal.stack[stackTraceLocal.stackSize - 2].fileLine = 7777;
                 stackTraceParamLog();
-                assert(stackSize == 5);
+                assert(stackTraceLocal.stackSize == 5);
 
                 // This param will fit exactly
                 stackTraceParamAdd((size_t)snprintf(stackTraceParamBuffer("param1"), STACK_TRACE_PARAM_MAX, "value1"));
                 assert(strcmp(stackTraceParam(), "param1: value1") == 0);
 
                 // But when we increment the param pointer by one there will be overflow
-                stackTrace[stackSize - 1].param += 1;
-                stackTrace[stackSize - 1].paramSize = 0;
+                stackTraceLocal.stack[stackTraceLocal.stackSize - 1].param += 1;
+                stackTraceLocal.stack[stackTraceLocal.stackSize - 1].paramSize = 0;
                 stackTraceParamAdd((size_t)snprintf(stackTraceParamBuffer("param1"), STACK_TRACE_PARAM_MAX, "value1"));
                 assert(strcmp(stackTraceParam(), "buffer full - parameters not available") == 0);
 
@@ -158,7 +162,7 @@ testRun(void)
                     "stack trace");
 
                 stackTracePop("file4.c", "function4", false);
-                assert(stackSize == 4);
+                assert(stackTraceLocal.stackSize == 4);
 
                 // Check that stackTracePop() works with test tracing
                 stackTracePush("file_test.c", "function_test", logLevelDebug);
@@ -177,7 +181,7 @@ testRun(void)
             }
             TRY_END();
 
-            assert(stackSize == 2);
+            assert(stackTraceLocal.stackSize == 2);
             THROW(ConfigError, "test");
         }
         CATCH(ConfigError)
@@ -186,7 +190,7 @@ testRun(void)
         }
         TRY_END();
 
-        assert(stackSize == 0);
+        assert(stackTraceLocal.stackSize == 0);
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

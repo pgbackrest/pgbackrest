@@ -1279,6 +1279,7 @@ testRun(void)
         TEST_TITLE("one database selected with tablespace id");
 
         manifest->data.pgVersion = PG_VERSION_94;
+        manifest->data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_94);
 
         MEM_CONTEXT_BEGIN(manifest->memContext)
         {
@@ -1473,16 +1474,30 @@ testRun(void)
             "check recovery options");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("recovery type = standby with recovery GUCs");
+        TEST_TITLE("error when archive-mode set on PG < 12");
+
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "--archive-mode=off");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            restoreRecoveryConf(PG_VERSION_94, restoreLabel), OptionInvalidError,
+            "option 'archive-mode' is not supported on PostgreSQL < 12\n"
+                "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery type = standby with recovery GUCs and archive-mode=off");
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "--type=standby");
+        strLstAddZ(argList, "--archive-mode=off");
         harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_12, restoreLabel),
             RECOVERY_SETTING_HEADER
-            "restore_command = 'my_restore_command'\n",
+            "restore_command = 'my_restore_command'\n"
+            "archive_mode = 'off'\n",
             "check recovery options");
     }
 
@@ -2001,6 +2016,7 @@ testRun(void)
             manifest->info = infoNew(NULL);
             manifest->data.backupLabel = strNew(TEST_LABEL);
             manifest->data.pgVersion = PG_VERSION_10;
+            manifest->data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_10);
             manifest->data.backupType = backupTypeFull;
             manifest->data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 

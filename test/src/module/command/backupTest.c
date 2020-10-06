@@ -1016,7 +1016,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_91, 1000000000000000910, NULL)), ConfigError,
+            backupInit(infoBackupNew(PG_VERSION_91, 1000000000000000910, pgCatalogTestVersion(PG_VERSION_91), NULL)), ConfigError,
              "option 'backup-standby' not valid for PostgreSQL < 9.2");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1036,7 +1036,9 @@ testRun(void)
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         harnessCfgLoad(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, NULL)), "backup init");
+        TEST_RESULT_VOID(
+            backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, pgCatalogTestVersion(PG_VERSION_92), NULL)),
+            "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    check backup-standby");
 
         TEST_RESULT_LOG(
@@ -1059,11 +1061,13 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_11, 1000000000000001100, NULL)), BackupMismatchError,
+            backupInit(infoBackupNew(PG_VERSION_11, 1000000000000001100, pgCatalogTestVersion(PG_VERSION_11), NULL)),
+            BackupMismatchError,
             "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 11, system-id 1000000000000001100\n"
             "HINT: is this the correct stanza?");
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_10, 1000000000000001100, NULL)), BackupMismatchError,
+            backupInit(infoBackupNew(PG_VERSION_10, 1000000000000001100, pgCatalogTestVersion(PG_VERSION_10), NULL)),
+            BackupMismatchError,
             "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 10, system-id 1000000000000001100\n"
             "HINT: is this the correct stanza?");
 
@@ -1084,7 +1088,9 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_START_FAST);
         harnessCfgLoad(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, NULL)), "backup init");
+        TEST_RESULT_VOID(
+            backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, pgCatalogTestVersion(PG_VERSION_83), NULL)),
+            "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "    check start-fast");
 
         TEST_RESULT_LOG("P00   WARN: start-fast option is only available in PostgreSQL >= 8.4");
@@ -1106,7 +1112,9 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
         harnessCfgLoad(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, NULL)), "backup init");
+        TEST_RESULT_VOID(
+            backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, pgCatalogTestVersion(PG_VERSION_84), NULL)),
+            "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "    check stop-auto");
 
         TEST_RESULT_LOG("P00   WARN: stop-auto option is only available in PostgreSQL >= 9.3");
@@ -1135,7 +1143,9 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_RESULT_VOID(dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, NULL))->dbPrimary), "backup init");
+        TEST_RESULT_VOID(
+            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, pgCatalogTestVersion(PG_VERSION_93), NULL))->dbPrimary),
+            "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
 
         TEST_RESULT_LOG(
@@ -1165,7 +1175,9 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_RESULT_VOID(dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, NULL))->dbPrimary), "backup init");
+        TEST_RESULT_VOID(
+            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, pgCatalogTestVersion(PG_VERSION_93), NULL))->dbPrimary),
+            "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
 
         // Create pg_control without page checksums
@@ -1181,7 +1193,9 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_RESULT_VOID(dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, NULL))->dbPrimary), "backup init");
+        TEST_RESULT_VOID(
+            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, pgCatalogTestVersion(PG_VERSION_93), NULL))->dbPrimary),
+            "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
     }
 
@@ -1218,7 +1232,8 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        BackupData *backupData = backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, NULL));
+        BackupData *backupData = backupInit(
+            infoBackupNew(PG_VERSION_93, PG_VERSION_93, pgCatalogTestVersion(PG_VERSION_93), NULL));
 
         TEST_ERROR(backupTime(backupData, true), AssertError, "invalid sleep for online backup time with wait remainder");
         dbFree(backupData->dbPrimary);
@@ -1634,7 +1649,8 @@ testRun(void)
             storagePathCreateP(storagePgWrite(), pgWalPath(PG_VERSION_95), .noParentCreate = true);
 
             // Create a backup manifest that looks like a halted backup manifest
-            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, true, false, NULL, NULL);
+            Manifest *manifestResume = manifestNewBuild(
+                storagePg(), PG_VERSION_95, pgCatalogTestVersion(PG_VERSION_95), true, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -1721,7 +1737,8 @@ testRun(void)
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Create a backup manifest that looks like a halted backup manifest
-            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, true, false, NULL, NULL);
+            Manifest *manifestResume = manifestNewBuild(
+                storagePg(), PG_VERSION_95, pgCatalogTestVersion(PG_VERSION_95), true, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -1914,7 +1931,8 @@ testRun(void)
             manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
 
             // Create a backup manifest that looks like a halted backup manifest
-            Manifest *manifestResume = manifestNewBuild(storagePg(), PG_VERSION_95, true, false, NULL, NULL);
+            Manifest *manifestResume = manifestNewBuild(
+                storagePg(), PG_VERSION_95, pgCatalogTestVersion(PG_VERSION_95), true, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeDiff;
@@ -2122,7 +2140,8 @@ testRun(void)
                 cmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69C000000000 was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-                "HINT: check the PostgreSQL server log for errors.");
+                "HINT: check the PostgreSQL server log for errors.\n"
+                "HINT: run the 'start' command if the stanza was previously stopped.");
 
             // Remove halted backup so there's no resume
             storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191016-042640F"), .recurse = true);
@@ -2286,7 +2305,8 @@ testRun(void)
 
             storagePutP(
                 storageNewWriteP(
-                    storageTest, strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11))),
+                    storageTest,
+                    strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, pgCatalogTestVersion(PG_VERSION_11)))),
                     .timeModified = backupTimeStart),
                 NULL);
 

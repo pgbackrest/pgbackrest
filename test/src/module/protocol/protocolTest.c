@@ -507,13 +507,16 @@ testRun(void)
                     "unable to find greeting key 'name'");
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
-                    "expected value 'pgBackRest' for greeting key 'name' but got 'bogus'");
+                    "expected value 'pgBackRest' for greeting key 'name' but got 'bogus'\n"
+                    "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
-                    "expected value 'test' for greeting key 'service' but got 'bogus'");
+                    "expected value 'test' for greeting key 'service' but got 'bogus'\n"
+                    "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
                 TEST_ERROR(
                     protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
-                    "expected value '" PROJECT_VERSION "' for greeting key 'version' but got 'bogus'");
+                    "expected value '" PROJECT_VERSION "' for greeting key 'version' but got 'bogus'\n"
+                    "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
 
                 // Correct greeting
                 ProtocolClient *client = NULL;
@@ -882,6 +885,7 @@ testRun(void)
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process jobs");
 
                 TEST_RESULT_PTR(protocolParallelResult(parallel), NULL, "check no result");
+                TEST_RESULT_BOOL(protocolParallelDone(parallel), false, "check not done");
 
                 // Process jobs
                 TEST_RESULT_INT(protocolParallelProcess(parallel), 1, "process jobs");
@@ -891,13 +895,27 @@ testRun(void)
                 TEST_RESULT_INT(varIntForce(protocolParallelJobResult(job)), 1, "check result is 1");
 
                 TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
+                TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check still done");
 
-                // Free client
+                TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process zero jobs");
+
+                data = (TestParallelJobCallback){.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
+                TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
+                TEST_RESULT_VOID(protocolParallelClientAdd(parallel, client[0]), "add client");
+
+                TEST_RESULT_INT(protocolParallelProcess(parallel), 0, "process zero jobs");
+                TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
+
+                TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("free clients");
+
                 for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
                     TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), "free client %u", clientIdx);
-
-                // Free parallel
-                TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
             }
             HARNESS_FORK_PARENT_END();
         }

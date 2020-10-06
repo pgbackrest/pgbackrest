@@ -12,6 +12,12 @@ Test HTTP
 #include "common/harnessServer.h"
 
 /***********************************************************************************************************************************
+HTTP user agent header
+***********************************************************************************************************************************/
+#define TEST_USER_AGENT                                                                                                            \
+    HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -172,11 +178,6 @@ testRun(void)
     {
         HttpClient *client = NULL;
 
-        // Reset statistics
-        httpClientStat = (HttpClientStat){0};
-
-        TEST_RESULT_STR(httpClientStatStr(), NULL, "no stats yet");
-
         TEST_ASSIGN(client, httpClientNew(sckClientNew(strNew("localhost"), hrnServerPort(0), 500), 500), "new client");
 
         TEST_ERROR_FMT(
@@ -214,7 +215,7 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptSleep(http, 600);
 
                 hrnServerScriptClose(http);
@@ -228,7 +229,7 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.0 200 OK\n");
 
                 hrnServerScriptClose(http);
@@ -242,7 +243,7 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.0 200\r\n");
 
                 hrnServerScriptClose(http);
@@ -256,21 +257,21 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
-                hrnServerScriptReplyZ(http, "HTTP/1.0 200 OK\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1 200 OK\r\n");
 
                 hrnServerScriptClose(http);
 
                 TEST_ERROR(
                     httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/")), false), FormatError,
-                    "HTTP version of response 'HTTP/1.0 200 OK' must be HTTP/1.1");
+                    "HTTP version of response 'HTTP/1 200 OK' must be HTTP/1.1 or HTTP/1.0");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no space in status");
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200OK\r\n");
 
                 hrnServerScriptClose(http);
@@ -284,7 +285,7 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\n");
 
                 hrnServerScriptClose(http);
@@ -298,7 +299,7 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\nheader-value\r\n");
 
                 hrnServerScriptClose(http);
@@ -312,7 +313,7 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ntransfer-encoding:bogus\r\n");
 
                 hrnServerScriptClose(http);
@@ -326,7 +327,7 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ntransfer-encoding:chunked\r\ncontent-length:777\r\n\r\n");
 
                 hrnServerScriptClose(http);
@@ -340,7 +341,7 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 503 Slow Down\r\n\r\n");
 
                 hrnServerScriptClose(http);
@@ -354,13 +355,15 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET /?name=%2Fpath%2FA%20Z.txt&type=test HTTP/1.1\r\nhost:myhost.com\r\n\r\n");
+                hrnServerScriptExpectZ(http,
+                    "GET /?name=%2Fpath%2FA%20Z.txt&type=test HTTP/1.1\r\n" TEST_USER_AGENT "host:myhost.com\r\n\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 500 Internal Error\r\nConnection:close\r\n\r\n");
 
                 hrnServerScriptClose(http);
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET /?name=%2Fpath%2FA%20Z.txt&type=test HTTP/1.1\r\nhost:myhost.com\r\n\r\n");
+                hrnServerScriptExpectZ(
+                    http, "GET /?name=%2Fpath%2FA%20Z.txt&type=test HTTP/1.1\r\n" TEST_USER_AGENT "host:myhost.com\r\n\r\n");
                 hrnServerScriptReplyZ(
                     http, "HTTP/1.1 200 OK\r\nkey1:0\r\n key2 : value2\r\nConnection:ack\r\ncontent-length:0\r\n\r\n");
 
@@ -409,8 +412,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with content-length but no content");
 
-                hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n\r\n");
-                hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ncontent-length:380\r\n\r\n");
+                hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.0 200 OK\r\ncontent-length:380\r\n\r\n");
+
+                hrnServerScriptClose(http);
 
                 TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, strNew("HEAD"), strNew("/")), true), "request");
                 TEST_RESULT_UINT(httpResponseCode(response), 200, "check response code");
@@ -423,7 +428,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with transfer encoding but no content");
 
-                hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n\r\n");
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
 
                 TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, strNew("HEAD"), strNew("/")), true), "request");
@@ -437,7 +444,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("head request with connection close but no content");
 
-                hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "HEAD / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\nConnection:close\r\n\r\n");
 
                 hrnServerScriptClose(http);
@@ -455,20 +462,20 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 503 Slow Down\r\ncontent-length:3\r\nConnection:close\r\n\r\n123");
 
                 hrnServerScriptClose(http);
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(
                     http, "HTTP/1.1 503 Slow Down\r\nTransfer-Encoding:chunked\r\nConnection:close\r\n\r\n0\r\n\r\n");
 
                 hrnServerScriptClose(http);
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 404 Not Found\r\n\r\n");
 
                 TEST_ASSIGN(request, httpRequestNewP(client, strNew("GET"), strNew("/")), "request");
@@ -488,7 +495,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error with content");
 
-                hrnServerScriptExpectZ(http, "GET /?a=b HTTP/1.1\r\nhdr1:1\r\nhdr2:2\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET /?a=b HTTP/1.1\r\n" TEST_USER_AGENT "hdr1:1\r\nhdr2:2\r\n\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 403 \r\ncontent-length:7\r\n\r\nCONTENT");
 
                 StringList *headerRedact = strLstNew();
@@ -527,7 +534,8 @@ testRun(void)
                 TEST_TITLE("request with content using content-length");
 
                 hrnServerScriptExpectZ(
-                    http, "GET /path/file%201.txt HTTP/1.1\r\ncontent-length:30\r\n\r\n012345678901234567890123456789");
+                    http, "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "content-length:30\r\n\r\n"
+                        "012345678901234567890123456789");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\nConnection:close\r\n\r\n01234567890123456789012345678901");
 
                 hrnServerScriptClose(http);
@@ -552,13 +560,13 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET /path/file%201.txt HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ncontent-length:32\r\n\r\n0123456789012345678901234567890");
 
                 hrnServerScriptClose(http);
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET /path/file%201.txt HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ncontent-length:32\r\n\r\n01234567890123456789012345678901");
 
                 TEST_ASSIGN(
@@ -570,7 +578,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("request with eof before content complete");
 
-                hrnServerScriptExpectZ(http, "GET /path/file%201.txt HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ncontent-length:32\r\n\r\n0123456789012345678901234567890");
 
                 hrnServerScriptClose(http);
@@ -587,7 +595,7 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n\r\n");
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(
                     http,
                     "HTTP/1.1 200 OK\r\nTransfer-Encoding:chunked\r\n\r\n"
@@ -617,7 +625,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("statistics exist");
 
-        TEST_RESULT_BOOL(httpClientStatStr() != NULL, true, "check");
+        TEST_RESULT_BOOL(varLstSize(kvKeyList(statToKv())) > 0, true, "check");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

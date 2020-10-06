@@ -273,7 +273,8 @@ testRun(void)
             cmdCheck(), ArchiveTimeoutError,
             "WAL segment 000000010000000100000001 was not archived before the 500ms timeout\n"
             "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-            "HINT: check the PostgreSQL server log for errors.");
+            "HINT: check the PostgreSQL server log for errors.\n"
+            "HINT: run the 'start' command if the stanza was previously stopped.");
 
         // Create WAL segment
         Buffer *buffer = bufNew(16 * 1024 * 1024);
@@ -443,14 +444,14 @@ testRun(void)
         InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_96, 6569239123849665679, NULL);
         InfoPgData archivePg = infoPgData(infoArchivePg(archiveInfo), infoPgDataCurrentId(infoArchivePg(archiveInfo)));
 
-        InfoBackup *backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665679, NULL);
+        InfoBackup *backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_96), NULL);
         InfoPgData backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_RESULT_VOID(checkStanzaInfo(&archivePg, &backupPg), "stanza info files match");
 
         // Create a corrupted backup file - system id
         // -------------------------------------------------------------------------------------------------------------------------
-        backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, NULL);
+        backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_96), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -461,7 +462,7 @@ testRun(void)
 
         // Create a corrupted backup file - system id and version
         // -------------------------------------------------------------------------------------------------------------------------
-        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, NULL);
+        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_95), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -472,7 +473,7 @@ testRun(void)
 
         // Create a corrupted backup file - version
         // -------------------------------------------------------------------------------------------------------------------------
-        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, NULL);
+        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_95), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -483,7 +484,7 @@ testRun(void)
 
         // Create a corrupted backup file - db id
         // -------------------------------------------------------------------------------------------------------------------------
-        infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679);
+        infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_96));
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(

@@ -18,14 +18,14 @@ Io client type
     STRING_DECLARE(IO_CLIENT_TLS_TYPE_STR);
 
 /***********************************************************************************************************************************
-Statistics
+Statistics constants
 ***********************************************************************************************************************************/
-typedef struct TlsClientStat
-{
-    uint64_t object;                                                // Objects created
-    uint64_t session;                                               // Sessions created
-    uint64_t retry;                                                 // Connection retries
-} TlsClientStat;
+#define TLS_STAT_CLIENT                                             "tls.client"        // Clients created
+    STRING_DECLARE(TLS_STAT_CLIENT_STR);
+#define TLS_STAT_RETRY                                              "tls.retry"         // Connection retries
+    STRING_DECLARE(TLS_STAT_RETRY_STR);
+#define TLS_STAT_SESSION                                            "tls.session"       // Sessions created
+    STRING_DECLARE(TLS_STAT_SESSION_STR);
 
 /***********************************************************************************************************************************
 Constructors

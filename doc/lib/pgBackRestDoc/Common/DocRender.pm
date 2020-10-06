@@ -729,6 +729,14 @@ sub processTag
         if (!defined($strUrl))
         {
             my $strPage = $self->variableReplace($oTag->paramGet('page', false));
+            my $strSection = $oTag->paramGet('section', false);
+
+            # If a page/section link points to the current page then remove the page portion
+            if (defined($strPage) && defined($strSection) && defined($self->{strRenderOutKey}) &&
+                $strPage eq $self->{strRenderOutKey})
+            {
+                undef($strPage);
+            }
 
             # If this is a page URL
             if (defined($strPage))
@@ -741,11 +749,20 @@ sub processTag
                 # Else point locally
                 else
                 {
-                    if ($strType eq 'html' || $strType eq 'markdown')
+                    if ($strType eq 'html')
                     {
-                        $strUrl =
-                            $oTag->paramGet('page', false) . '.' .
-                            ($strType eq 'html' ? $strType : '.md');
+                        $strUrl = "${strPage}.html". (defined($strSection) ? '#' . substr($strSection, 1) : '');
+                    }
+                    elsif ($strType eq 'markdown')
+                    {
+                        if (defined($strSection))
+                        {
+                            confess &log(
+                                ERROR,
+                                "page and section links not supported for type ${strType}, value '" . $oTag->valueGet() . "'");
+                        }
+
+                        $strUrl = "${strPage}.md";
                     }
                     else
                     {
@@ -804,6 +821,10 @@ sub processTag
             {
                 $strBuffer = "\\hyperref[$strUrl]{" . $oTag->valueGet() . "}";
             }
+        }
+        elsif ($strType eq 'text')
+        {
+            $strBuffer = $oTag->valueGet();
         }
         else
         {
