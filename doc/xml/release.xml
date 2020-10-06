@@ -17,11 +17,11 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
-                            <release-item-ideator id="brimo2k"/>
+                            <release-item-ideator id="brian.peterson"/>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
-                            <release-item-reviewer id="brimo2k"/>
+                            <release-item-reviewer id="brian.peterson"/>
                         </release-item-contributor-list>
 
                         <p>Add <br-option>repo-azure-endpoint</br-option> option.</p>
@@ -8742,8 +8742,8 @@
             <contributor-id type="github">scrummyin</contributor-id>
         </contributor>
 
-        <contributor id="brimo2k">
-            <contributor-name-display>brimo2k</contributor-name-display>
+        <contributor id="brian.peterson">
+            <contributor-name-display>Brian Peterson</contributor-name-display>
             <contributor-id type="github">brimo2k</contributor-id>
         </contributor>
 

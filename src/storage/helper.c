@@ -360,7 +360,7 @@ storageRepoGet(const String *type, bool write)
             strEqZ(cfgOptionStr(cfgOptRepoAzureKeyType), STORAGE_AZURE_KEY_TYPE_SHARED) ?
                 storageAzureKeyTypeShared : storageAzureKeyTypeSas,
             cfgOptionStr(cfgOptRepoAzureKey), STORAGE_AZURE_BLOCKSIZE_MIN, cfgOptionStrNull(cfgOptRepoAzureHost),
-            cfgOptionStrNull(cfgOptRepoAzureEndpoint), cfgOptionUInt(cfgOptRepoAzurePort), ioTimeoutMs(),
+            cfgOptionStr(cfgOptRepoAzureEndpoint), cfgOptionUInt(cfgOptRepoAzurePort), ioTimeoutMs(),
             cfgOptionBool(cfgOptRepoAzureVerifyTls), cfgOptionStrNull(cfgOptRepoAzureCaFile),
             cfgOptionStrNull(cfgOptRepoAzureCaPath));
     }
