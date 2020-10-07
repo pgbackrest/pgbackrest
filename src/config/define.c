@@ -319,7 +319,23 @@ cfgDefOptionAllowList(ConfigDefineCommand commandDefId, ConfigDefineOption optio
     FUNCTION_TEST_RETURN(dataDefFound);
 }
 
-const char *
+static unsigned int
+cfgDefOptionAllowListValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandDefId);
+        FUNCTION_TEST_PARAM(ENUM, optionDefId);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandDefId < cfgDefCommandTotal());
+    ASSERT(optionDefId < cfgDefOptionTotal());
+
+    CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowList);
+
+    FUNCTION_TEST_RETURN(dataDefListSize);
+}
+
+static const char *
 cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, unsigned int valueId)
 {
     FUNCTION_TEST_BEGIN();
@@ -335,22 +351,6 @@ cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowList);
 
     FUNCTION_TEST_RETURN((char *)dataDefList[valueId]);
-}
-
-unsigned int
-cfgDefOptionAllowListValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandDefId);
-        FUNCTION_TEST_PARAM(ENUM, optionDefId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandDefId < cfgDefCommandTotal());
-    ASSERT(optionDefId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowList);
-
-    FUNCTION_TEST_RETURN(dataDefListSize);
 }
 
 // Check if the value matches a value in the allow list

@@ -37,9 +37,7 @@ const char *cfgDefCommandHelpSummary(ConfigDefineCommand commandDefId);
 
 // Option allow lists
 bool cfgDefOptionAllowList(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
-unsigned int cfgDefOptionAllowListValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 bool cfgDefOptionAllowListValueValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, const char *value);
-const char *cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, unsigned int valueId);
 
 // Allow range
 bool cfgDefOptionAllowRange(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
