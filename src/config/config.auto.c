@@ -1966,6 +1966,8 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_ENDPOINT)
         CONFIG_OPTION_INDEX(0)
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureEndpoint)
+        CONFIG_OPTION_GROUP(true)
+        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
