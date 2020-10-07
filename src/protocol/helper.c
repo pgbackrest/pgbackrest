@@ -393,7 +393,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
                 if (cfgOptionIdx(optionId) == hostIdx)
                 {
                     kvPut(
-                        optionReplace, VARSTRZ(cfgOptionIdxName(optionId - hostIdx, hostIdx)),
+                        optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
                         cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
                 }
 
