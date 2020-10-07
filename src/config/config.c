@@ -486,7 +486,7 @@ cfgParameterAllowed(void)
 
 /**********************************************************************************************************************************/
 bool
-cfgOptionGroupIndexTest(ConfigOptionGroup groupId, unsigned int index)
+cfgOptionGroupIdxTest(ConfigOptionGroup groupId, unsigned int index)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, groupId);
@@ -501,7 +501,7 @@ cfgOptionGroupIndexTest(ConfigOptionGroup groupId, unsigned int index)
 
 /**********************************************************************************************************************************/
 unsigned int
-cfgOptionGroupIndexTotal(ConfigOptionGroup groupId)
+cfgOptionGroupIdxTotal(ConfigOptionGroup groupId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, groupId);

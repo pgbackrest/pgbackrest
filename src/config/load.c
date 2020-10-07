@@ -71,7 +71,7 @@ cfgLoadUpdateOption(void)
     // Set default for pg-host-cmd
     if (cfgOptionValid(cfgOptPgHostCmd))
     {
-        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIndexTotal(cfgOptGrpPg); optionIdx++)
+        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); optionIdx++)
         {
             if (cfgOptionTest(cfgOptPgHost + optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
                 cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, VARSTR(cfgExe()));
@@ -114,7 +114,7 @@ cfgLoadUpdateOption(void)
     {
         bool pgHostFound = false;
 
-        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIndexTotal(cfgOptGrpPg); optionIdx++)
+        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); optionIdx++)
         {
             if (cfgOptionTest(cfgOptPgHost + optionIdx))
             {
@@ -126,7 +126,7 @@ cfgLoadUpdateOption(void)
         // If a pg-host was found, see if a repo-host is configured
         if (pgHostFound == true)
         {
-            for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIndexTotal(cfgOptGrpRepo); optionIdx++)
+            for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
             {
                 if (cfgOptionTest(cfgOptRepoHost + optionIdx))
                     THROW_FMT(ConfigError, "pg and repo hosts cannot both be configured as remote");
@@ -137,7 +137,7 @@ cfgLoadUpdateOption(void)
     // Warn when repo-retention-full is not set on a configured repo
     if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFullType) && cfgCommandRole() == cfgCmdRoleDefault)
     {
-        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIndexTotal(cfgOptGrpRepo); optionIdx++)
+        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
             // If the repo-type is defined, then see if corresponding retention-full is set
             if (cfgOptionTest(cfgOptRepoType + optionIdx) && !(cfgOptionTest(cfgOptRepoRetentionFull + optionIdx)))
@@ -156,7 +156,7 @@ cfgLoadUpdateOption(void)
     if (cfgOptionValid(cfgOptRepoRetentionArchive))
     {
         // For each possible repo, check and adjust the settings as appropriate
-        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIndexTotal(cfgOptGrpRepo); optionIdx++)
+        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
             const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType + optionIdx);
 
