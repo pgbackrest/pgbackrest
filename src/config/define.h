@@ -37,9 +37,7 @@ const char *cfgDefCommandHelpSummary(ConfigDefineCommand commandDefId);
 
 // Option allow lists
 bool cfgDefOptionAllowList(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
-unsigned int cfgDefOptionAllowListValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 bool cfgDefOptionAllowListValueValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, const char *value);
-const char *cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, unsigned int valueId);
 
 // Allow range
 bool cfgDefOptionAllowRange(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
@@ -82,9 +80,6 @@ bool cfgDefOptionMulti(ConfigDefineOption optionDefId);
 
 // Name of the option
 const char *cfgDefOptionName(ConfigDefineOption optionDefId);
-
-// Option prefix for indexed options
-const char *cfgDefOptionPrefix(ConfigDefineOption optionDefId);
 
 // Is the option required
 bool cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
