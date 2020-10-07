@@ -63,9 +63,9 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Loop through to look for primary and standby (if required)
-        for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIndexTotal(cfgOptGrpPg); pgIdx++)
+        for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
         {
-            if (cfgOptionGroupIndexTest(cfgOptGrpPg, pgIdx))
+            if (cfgOptionGroupIdxTest(cfgOptGrpPg, pgIdx))
             {
                 Db *db = NULL;
                 bool standby = false;
