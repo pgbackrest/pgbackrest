@@ -30,7 +30,7 @@ bool ioReadOpen(IoRead *this);
 size_t ioRead(IoRead *this, Buffer *buffer);
 
 // Same as ioRead() but optimized for small reads
-void ioReadSmall(IoRead *this, Buffer *buffer);
+size_t ioReadSmall(IoRead *this, Buffer *buffer);
 
 // Read linefeed-terminated string
 String *ioReadLine(IoRead *this);

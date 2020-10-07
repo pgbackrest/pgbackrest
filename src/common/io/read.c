@@ -213,7 +213,7 @@ ioRead(IoRead *this, Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-void
+size_t
 ioReadSmall(IoRead *this, Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -234,6 +234,9 @@ ioReadSmall(IoRead *this, Buffer *buffer)
         }
         MEM_CONTEXT_END();
     }
+
+    // Store size of remaining portion of buffer to calculate total read at the end
+    size_t outputRemains = bufRemains(buffer);
 
     do
     {
@@ -272,7 +275,7 @@ ioReadSmall(IoRead *this, Buffer *buffer)
     }
     while (!bufFull(buffer));
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_TEST_RETURN(outputRemains - bufRemains(buffer));
 }
 
 /***********************************************************************************************************************************

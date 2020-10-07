@@ -403,7 +403,7 @@ testRun(void)
         buffer = bufNew(6);
 
         // Start with a small read
-        TEST_RESULT_VOID(ioReadSmall(read, buffer), "read buffer");
+        TEST_RESULT_UINT(ioReadSmall(read, buffer), 6, "read buffer");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "AAAAAA", "    check buffer");
         bufLimitSet(buffer, 3);
 
@@ -416,12 +416,12 @@ testRun(void)
         // Read what was left in the line buffer
         TEST_RESULT_UINT(ioRead(read, buffer), 0, "read buffer");
         bufUsedSet(buffer, 2);
-        TEST_RESULT_VOID(ioReadSmall(read, buffer), "read buffer");
+        TEST_RESULT_UINT(ioReadSmall(read, buffer), 1, "read buffer");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "AAB", "    check buffer");
         bufUsedSet(buffer, 0);
 
         // Now do a full buffer read from the input
-        TEST_RESULT_VOID(ioReadSmall(read, buffer), "read buffer");
+        TEST_RESULT_UINT(ioReadSmall(read, buffer), 3, "read buffer");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "DDD", "    check buffer");
 
         // Read line doesn't work without a linefeed
