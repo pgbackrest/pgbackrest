@@ -214,7 +214,7 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
-                    TEST_KEY_SHARED_STR, 16, NULL, 443, 1000, true, NULL, NULL)),
+                    TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), 443, 1000, true, NULL, NULL)),
             "new azure storage - shared key");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -253,7 +253,7 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
-                    16, NULL, 443, 1000, true, NULL, NULL)),
+                    16, NULL, STRDEF("blob.core.usgovcloudapi.net"), 443, 1000, true, NULL, NULL)),
             "new azure storage - sas key");
 
         query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
@@ -261,7 +261,7 @@ testRun(void)
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
         TEST_RESULT_STR_Z(
-            httpHeaderToLog(header), "{content-length: '66', host: 'account.blob.core.windows.net'}", "check headers");
+            httpHeaderToLog(header), "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "a=b&sig=key", "check query");
     }
 

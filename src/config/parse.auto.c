@@ -1928,6 +1928,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureContainer,
     },
 
+    // repo-azure-endpoint option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = CFGOPT_REPO1_AZURE_ENDPOINT,
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoAzureEndpoint,
+    },
+    {
+        .name = "reset-" CFGOPT_REPO1_AZURE_ENDPOINT,
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoAzureEndpoint,
+    },
+
     // repo-azure-host option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2908,6 +2920,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoAzureCaFile,
     cfgOptRepoAzureCaPath,
     cfgOptRepoAzureContainer,
+    cfgOptRepoAzureEndpoint,
     cfgOptRepoAzureHost,
     cfgOptRepoAzureKey,
     cfgOptRepoAzureKeyType,

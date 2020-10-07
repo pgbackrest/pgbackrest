@@ -33,14 +33,14 @@ to:
 #define PROJECT_VERSION                                             "2.14"
 ```
 
-## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
-```
-${PGBR_REPO?}/doc/release.pl --build
-```
-
 ## Update code counts
 ```
 ${PGBR_REPO?}/test/test.pl --code-count
+```
+
+## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
+```
+${PGBR_REPO?}/doc/release.pl --build
 ```
 
 ## Commit release branch and push to CI for testing
