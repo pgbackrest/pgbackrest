@@ -185,6 +185,7 @@ lstFind(const List *this, const void *item)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->comparator != NULL);
     ASSERT(item != NULL);
 
     if (this->sortOrder == sortOrderAsc)
