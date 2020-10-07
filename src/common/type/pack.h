@@ -6,6 +6,9 @@ ProtocolBuffers, and Avro, compared here: https://medium.com/better-programming/
 The pack type has been further optimized to balance between purely in-memory structures and those intended to be passed via a
 protocol or saved in a file.
 
+Integers are stored with base-128 varint encoding which is equivalent to network byte order, i.e., the endianness of the sending and
+receiving host don't matter.
+
 The overall idea is similar to JSON but IDs are used instead of names, typing is more granular, and the representation is far more
 compact. A pack can readily be converted to JSON but the reverse is not as precise due to loose typing in JSON. A pack is a stream
 format, i.e. it is intended to be read in order from beginning to end.
@@ -14,7 +17,7 @@ Fields in a pack are identified by IDs. A field ID is stored as a delta from the
 that reading from the middle is generally not practical. The size of the gap between field IDs is important -- a gap of 1 never
 incurs extra cost, but depending on the field type larger gaps may require additional bytes to store the field ID delta.
 
-NULLs are not stored in a pack and are therefore not typed. A NULL is essential just a gap in the field IDs. Fields that are
+NULLs are not stored in a pack and are therefore not typed. A NULL is essentially just a gap in the field IDs. Fields that are
 frequently NULL are best stored at the end of an object.
 
 A pack is an object by default. Objects can store fields, objects, or arrays. Objects and arrays will be referred to collectively as
@@ -49,10 +52,10 @@ pckReadU64P(read);
 pckReadStringP(read, .id = 4);
 pckReadEndP();
 
-This skips the NULLs but in practice it is better to read all the fields just as they were written so static IDs are not required.
+This skips the NULLs but in practice it is better to read all the fields just as they were written so constant IDs are not required.
 By default each read and write advances the ID by one.
 
-Read an array with:
+An array can be read with:
 
 pckReadArrayBeginP(read);
 
@@ -63,8 +66,8 @@ while (pckReadNext(read))
 
 pckReadArrayEndP(read);
 
-Note that any container (i.e. array or object) resets the field ID to one so there is no need for the caller to maintain a cumulative
-field ID.
+Note that any container (i.e. array or object) resets the field ID to one so there is no need for the caller to maintain a
+cumulative field ID.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_PACK_H
 #define COMMON_TYPE_PACK_H
@@ -77,7 +80,7 @@ Minimum number of extra bytes to allocate for packs that are growing or are like
 #endif
 
 /***********************************************************************************************************************************
-Object type
+Object types
 ***********************************************************************************************************************************/
 #define PACK_READ_TYPE                                              PackRead
 #define PACK_READ_PREFIX                                            pckRead
@@ -94,7 +97,7 @@ typedef struct PackWrite PackWrite;
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Pack type
+Pack data type
 ***********************************************************************************************************************************/
 typedef enum
 {

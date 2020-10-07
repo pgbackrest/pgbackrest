@@ -57,11 +57,11 @@ Type data
 ***********************************************************************************************************************************/
 typedef struct PackTypeData
 {
-    PackType type;
-    bool valueSingleBit;
-    bool valueMultiBit;
-    bool size;
-    const String *const name;
+    PackType type;                                                  // Data type
+    bool valueSingleBit;                                            // Can the value be stored in a single bit (e.g. bool)
+    bool valueMultiBit;                                             // Can the value require multiple bits (e.g. integer)
+    bool size;                                                      // Does the type require a size (e.g. string)
+    const String *const name;                                       // Type name used in error messages
 } PackTypeData;
 
 static const PackTypeData packTypeData[] =
@@ -128,7 +128,7 @@ static const PackTypeData packTypeData[] =
 };
 
 /***********************************************************************************************************************************
-Object type
+Object types
 ***********************************************************************************************************************************/
 typedef struct PackTagStack
 {
@@ -169,6 +169,7 @@ struct PackWrite
 OBJECT_DEFINE_FREE(PACK_WRITE);
 
 /**********************************************************************************************************************************/
+// Helper to create common data
 static PackRead *
 pckReadNewInternal(void)
 {
@@ -229,7 +230,7 @@ pckReadNewBuf(const Buffer *buffer)
 /***********************************************************************************************************************************
 Read bytes from the buffer
 
-IMPORTANT NOTE: To avoid having dyamically creating return buffers the current buffer position (this->bufferPos) is stored in the
+IMPORTANT NOTE: To avoid having dyamically created return buffers the current buffer position (this->bufferPos) is stored in the
 object. Therefore this function should not be used as a parameter in other function calls since the value of this->bufferPos will
 change.
 ***********************************************************************************************************************************/
@@ -421,16 +422,23 @@ pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
     ASSERT(id != NULL);
     ASSERT((peek && type == pckTypeUnknown) || (!peek && type != pckTypeUnknown));
 
+    // Increment the id by one if no id was specified
     if (*id == 0)
+    {
         *id = this->tagStackTop->idLast + 1;
+    }
+    // Else check that the id has been incremented
     else if (*id <= this->tagStackTop->idLast)
         THROW_FMT(FormatError, "field %u was already read", *id);
 
+    // Search for the requested id
     do
     {
+        // Get the next tag if it has been read yet
         if (this->tagNextId == 0)
             pckReadTagNext(this);
 
+        // Error when the id does not exist
         if (*id < this->tagNextId)
         {
             if (!peek)
@@ -438,8 +446,10 @@ pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
 
             break;
         }
+        // Else the id exists
         else if (*id == this->tagNextId)
         {
+            // When not peeking the next tag (just to see what it is) then error if the type is not as specified
             if (!peek)
             {
                 if (this->tagNextType != type)
@@ -456,7 +466,7 @@ pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
             break;
         }
 
-        // Read data for the field being skipped
+        // Read data for the field being skipped if this is not the field requested
         if (packTypeData[type].size && this->tagNextValue != 0)
         {
             size_t sizeExpected = (size_t)pckReadUInt64Internal(this);
@@ -469,7 +479,10 @@ pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
             }
         }
 
+        // Increment the last id to the id just read
         this->tagStackTop->idLast = this->tagNextId;
+
+        // Read tag on the next iteration
         this->tagNextId = 0;
     }
     while (1);
@@ -615,6 +628,7 @@ pckReadArrayEnd(PackRead *this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 Buffer *
 pckReadBin(PackRead *this, PckReadBinParam param)
 {
@@ -894,6 +908,7 @@ pckReadToLog(const PackRead *this)
 }
 
 /**********************************************************************************************************************************/
+// Helper to create common data
 static PackWrite *
 pckWriteNewInternal(void)
 {
