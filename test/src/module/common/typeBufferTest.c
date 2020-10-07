@@ -11,7 +11,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("bufNew(), bufNewC, bufNewUseC, bufMove(), bufSize(), bufPtr(), and bufFree()"))
+    if (testBegin("bufNew(), bufNewC, bufNewUseC, bufMove(), bufSize(), bufSizeAlloc(), bufPtr(), and bufFree()"))
     {
         Buffer *buffer = NULL;
 
@@ -24,6 +24,7 @@ testRun(void)
 
         TEST_RESULT_PTR(bufPtr(buffer), buffer->buffer, "buffer pointer");
         TEST_RESULT_UINT(bufSize(buffer), 256, "buffer size");
+        TEST_RESULT_UINT(bufSizeAlloc(buffer), 256, "buffer allocation size");
 
         TEST_ASSIGN(buffer, bufNewC("TEST-STR", sizeof("TEST-STR") - 1), "new buffer from string");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST-STR", 8) == 0, true, "check buffer");
