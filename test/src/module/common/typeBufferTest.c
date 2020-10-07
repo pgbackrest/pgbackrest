@@ -94,8 +94,10 @@ testRun(void)
         // Use limits to change size reporting
         TEST_RESULT_VOID(bufLimitSet(buffer, 64), "set limit");
         TEST_RESULT_UINT(bufSize(buffer), 64, "    check limited size");
+        TEST_RESULT_UINT(bufUsed(buffer), 64, "    check used");
         TEST_RESULT_VOID(bufLimitClear(buffer), "    clear limit");
         TEST_RESULT_UINT(bufSize(buffer), 128, "    check unlimited size");
+        TEST_RESULT_UINT(bufUsed(buffer), 64, "     check used did not change");
 
         // Resize to zero buffer
         TEST_RESULT_VOID(bufUsedZero(buffer), "set used to 0");
