@@ -249,11 +249,8 @@ unit:
           common/io/filter/sink: full
           common/io/filter/size: full
           common/io/io: full
-          # common/io/read: full
+          common/io/read: full
           common/io/write: full
-
-        include:
-          - common/io/read
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
