@@ -787,6 +787,22 @@ cfgOptionName(ConfigOption optionId)
     FUNCTION_TEST_RETURN(configOptionData[optionId].name);
 }
 
+const char *
+cfgOptionIdxName(ConfigOption optionId, unsigned int index)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, index);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(configOptionData[optionId].index == 0);
+    ASSERT(configOptionData[optionId].group);
+    ASSERT(index <= configStatic.optionGroup[configOptionData[optionId].groupId].indexMax);
+
+    FUNCTION_TEST_RETURN(configOptionData[optionId + index].name);
+}
+
 /**********************************************************************************************************************************/
 bool
 cfgOptionNegate(ConfigOption optionId)
@@ -1225,6 +1241,22 @@ cfgOptionTest(ConfigOption optionId)
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
     FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configStatic.option[optionId].value != NULL);
+}
+
+bool
+cfgOptionIdxTest(ConfigOption optionId, unsigned int index)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, index);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(configOptionData[optionId].index == 0);
+    ASSERT(configOptionData[optionId].group);
+    ASSERT(index <= configStatic.optionGroup[configOptionData[optionId].groupId].indexMax);
+
+    FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configStatic.option[optionId + index].value != NULL);
 }
 
 /**********************************************************************************************************************************/

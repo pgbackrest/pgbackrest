@@ -43,7 +43,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionIdx(cfgOptPgHostCmd + 6), 6, "option index");
         TEST_RESULT_INT(cfgOptionIdx(cfgOptCompressLevel), 0, "option index");
 
-        TEST_RESULT_Z(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
+        TEST_RESULT_Z(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id to name");
     }
 
     // *****************************************************************************************************************************
@@ -163,6 +163,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionGroupIdxTest(cfgOptGrpPg, 7), true, "pg option group index 7 is set");
         TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 8, "pg option group index total is 8");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 7), "/path", "pg-path index 7 is set");
+        TEST_RESULT_Z(cfgOptionIdxName(cfgOptPgPath, 7), "pg8-path", "indexed option id to name");
+        TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgPath, 7), true, "pg-path index 7 is valid and set");
 
         TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPort + 7, true), "set pg7-port valid");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptPgPort + 7, cfgSourceParam, VARINT64(6543)), "set pg7-port");

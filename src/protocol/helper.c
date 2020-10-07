@@ -97,7 +97,7 @@ pgIsLocal(unsigned int hostId)
 
     ASSERT(hostId > 0);
 
-    FUNCTION_LOG_RETURN(BOOL, !cfgOptionTest(cfgOptPgHost + hostId - 1));
+    FUNCTION_LOG_RETURN(BOOL, !cfgOptionIdxTest(cfgOptPgHost, hostId - 1));
 }
 
 /**********************************************************************************************************************************/
@@ -305,7 +305,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Append port if specified
     ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
 
-    if (cfgOptionTest(optHostPort + hostIdx))
+    if (cfgOptionIdxTest(optHostPort, hostIdx))
     {
         strLstAddZ(result, "-p");
         strLstAdd(result, strNewFmt("%u", cfgOptionIdxUInt(optHostPort, hostIdx)));
@@ -393,7 +393,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
                 if (cfgOptionIdx(optionId) == hostIdx)
                 {
                     kvPut(
-                        optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
+                        optionReplace, VARSTRZ(cfgOptionIdxName(optionId - hostIdx, hostIdx)),
                         cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
                 }
 

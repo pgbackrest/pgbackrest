@@ -67,7 +67,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const Db *
                 PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\nHINT: the %s and %s settings likely reference different clusters.",
                 strZ(pgVersionToStr(dbVersion)), strZ(dbPath), strZ(pgVersionToStr(pgVersion)),
                 strZ(cfgOptionIdxStr(cfgOptPgPath, dbIdx - 1)), strZ(cfgOptionIdxStr(cfgOptPgPath, dbIdx - 1)),
-                cfgOptionName(cfgOptPgPath + (dbIdx - 1)), cfgOptionName(cfgOptPgPort + (dbIdx - 1)));
+                cfgOptionIdxName(cfgOptPgPath, dbIdx - 1), cfgOptionIdxName(cfgOptPgPort, dbIdx - 1));
         }
 
         // Check archive configuration if option is valid for the command and set

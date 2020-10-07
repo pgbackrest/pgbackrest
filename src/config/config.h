@@ -115,36 +115,36 @@ Access option values, indexes, and determine if an option is valid for the curre
 // Get config options for various types
 const Variant *cfgOption(ConfigOption optionId);
 bool cfgOptionBool(ConfigOption optionId);
+bool cfgOptionIdxBool(ConfigOption optionId, unsigned int index);
 double cfgOptionDbl(ConfigOption optionId);
 int cfgOptionInt(ConfigOption optionId);
+int cfgOptionIdxInt(ConfigOption optionId, unsigned int index);
 int64_t cfgOptionInt64(ConfigOption optionId);
+int64_t cfgOptionIdxInt64(ConfigOption optionId, unsigned int index);
 const KeyValue *cfgOptionKv(ConfigOption optionId);
 const VariantList *cfgOptionLst(ConfigOption optionId);
 const String *cfgOptionStr(ConfigOption optionId);
-const String *cfgOptionStrNull(ConfigOption optionId);
-unsigned int cfgOptionUInt(ConfigOption optionId);
-uint64_t cfgOptionUInt64(ConfigOption optionId);
-
-// Get indexed config options for various types
-bool cfgOptionIdxBool(ConfigOption optionId, unsigned int index);
-int cfgOptionIdxInt(ConfigOption optionId, unsigned int index);
-int64_t cfgOptionIdxInt64(ConfigOption optionId, unsigned int index);
-unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int index);
-uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int index);
 const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int index);
+const String *cfgOptionStrNull(ConfigOption optionId);
 const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int index);
+unsigned int cfgOptionUInt(ConfigOption optionId);
+unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int index);
+uint64_t cfgOptionUInt64(ConfigOption optionId);
+uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int index);
 
 // Get index for option
 unsigned int cfgOptionIdx(ConfigOption optionId);
 
 // Option name by id
 const char *cfgOptionName(ConfigOption optionId);
+const char *cfgOptionIdxName(ConfigOption optionId, unsigned int index);
 
 // Is the option valid for this command?
 bool cfgOptionValid(ConfigOption optionId);
 
 // Is the option valid for the command and set?
 bool cfgOptionTest(ConfigOption optionId);
+bool cfgOptionIdxTest(ConfigOption optionId, unsigned int index);
 
 /***********************************************************************************************************************************
 Option Source Enum
