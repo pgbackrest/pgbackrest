@@ -39,9 +39,9 @@ testRun(void)
             "assertion 'index < cfgDefOptionIndexTotal(optionDefId)' failed");
         TEST_RESULT_INT(cfgOptionIdFromDefId(cfgDefOptPgHost, 6), cfgOptPgHost + 6, "option def id to id");
 
-        TEST_ERROR(cfgOptionIndex(CFG_OPTION_TOTAL), AssertError, "assertion 'optionId < CFG_OPTION_TOTAL' failed");
-        TEST_RESULT_INT(cfgOptionIndex(cfgOptPgHostCmd + 6), 6, "option index");
-        TEST_RESULT_INT(cfgOptionIndex(cfgOptCompressLevel), 0, "option index");
+        TEST_ERROR(cfgOptionIdx(CFG_OPTION_TOTAL), AssertError, "assertion 'optionId < CFG_OPTION_TOTAL' failed");
+        TEST_RESULT_INT(cfgOptionIdx(cfgOptPgHostCmd + 6), 6, "option index");
+        TEST_RESULT_INT(cfgOptionIdx(cfgOptCompressLevel), 0, "option index");
 
         TEST_RESULT_Z(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
     }

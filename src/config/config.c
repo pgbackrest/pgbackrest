@@ -714,7 +714,7 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
 
 /**********************************************************************************************************************************/
 unsigned int
-cfgOptionIndex(ConfigOption optionId)
+cfgOptionIdx(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);

@@ -909,7 +909,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 if (cfgDefOptionDepend(commandDefId, optionDefId))
                 {
                     ConfigOption dependOptionId =
-                        cfgOptionIdFromDefId(cfgDefOptionDependOption(commandDefId, optionDefId), cfgOptionIndex(optionId));
+                        cfgOptionIdFromDefId(cfgDefOptionDependOption(commandDefId, optionDefId), cfgOptionIdx(optionId));
                     ConfigDefineOption dependOptionDefId = cfgOptionDefIdFromId(dependOptionId);
                     ConfigDefineOptionType dependOptionDefType = cfgDefOptionType(dependOptionDefId);
 
@@ -1128,7 +1128,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                         if (value != NULL)
                             cfgOptionSet(optionId, cfgSourceDefault, VARSTRZ(value));
-                        else if (cfgOptionIndex(optionId) == 0 && cfgDefOptionRequired(commandDefId, optionDefId) &&
+                        else if (cfgOptionIdx(optionId) == 0 && cfgDefOptionRequired(commandDefId, optionDefId) &&
                                  !cfgCommandHelp())
                         {
                             const char *hint = "";

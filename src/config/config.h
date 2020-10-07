@@ -135,7 +135,7 @@ const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int index);
 const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int index);
 
 // Get index for option
-unsigned int cfgOptionIndex(ConfigOption optionId);
+unsigned int cfgOptionIdx(ConfigOption optionId);
 
 // Option name by id
 const char *cfgOptionName(ConfigOption optionId);

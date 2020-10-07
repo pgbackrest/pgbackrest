@@ -386,11 +386,11 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
                 remove = !cfgDefOptionRequired(commandDefId, optionDefId) || cfgDefOptionDefault(commandDefId, optionDefId) != NULL;
             }
             // Else move/remove pg options with index > 0 since they won't be used
-            else if (cfgOptionIndex(optionId) > 0)
+            else if (cfgOptionIdx(optionId) > 0)
             {
                 // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects
                 // to find pg options in index 0, copy the option to index 0.
-                if (cfgOptionIndex(optionId) == hostIdx)
+                if (cfgOptionIdx(optionId) == hostIdx)
                 {
                     kvPut(
                         optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
