@@ -91,9 +91,6 @@ testRun(void)
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptDbInclude), true, "db-include is multi");
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptStartFast), false, "start-fast is not multi");
 
-        TEST_RESULT_Z(cfgDefOptionPrefix(cfgDefOptPgHost), "pg", "option prefix");
-        TEST_RESULT_Z(cfgDefOptionPrefix(cfgDefOptType), NULL, "option has no prefix");
-
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdBackup, cfgDefOptConfig), true, "option required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdRestore, cfgDefOptRepoHost), false, "option not required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdInfo, cfgDefOptStanza), false, "command option not required");

@@ -273,15 +273,6 @@ sub renderOptional
         $bSingleLine = true;
     }
 
-    if (defined($rhOptional->{&CFGDEF_PREFIX}))
-    {
-        $strBuildSourceOptional .=
-            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
-            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_PREFIX(\"" . $rhOptional->{&CFGDEF_PREFIX} . "\")\n";
-
-        $bSingleLine = true;
-    }
-
     # Output alternate name
     if (!$bCommand && defined($rhOptionHelp->{&CONFIG_HELP_NAME_ALT}))
     {

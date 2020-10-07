@@ -81,9 +81,6 @@ bool cfgDefOptionMulti(ConfigDefineOption optionDefId);
 // Name of the option
 const char *cfgDefOptionName(ConfigDefineOption optionDefId);
 
-// Option prefix for indexed options
-const char *cfgDefOptionPrefix(ConfigDefineOption optionDefId);
-
 // Is the option required
 bool cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
 
