@@ -34,7 +34,7 @@ Constructors
 ***********************************************************************************************************************************/
 Storage *storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host, unsigned int port,
-    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host,
+    const String *endpoint, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif

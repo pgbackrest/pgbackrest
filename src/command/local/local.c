@@ -7,6 +7,7 @@ Local Command
 #include "command/archive/push/protocol.h"
 #include "command/backup/protocol.h"
 #include "command/restore/protocol.h"
+#include "command/verify/protocol.h"
 #include "common/debug.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
@@ -40,6 +41,7 @@ cmdLocal(int fdRead, int fdWrite)
         protocolServerHandlerAdd(server, archivePushProtocol);
         protocolServerHandlerAdd(server, backupProtocol);
         protocolServerHandlerAdd(server, restoreProtocol);
+        protocolServerHandlerAdd(server, verifyProtocol);
         protocolServerProcess(server, retryInterval);
     }
     MEM_CONTEXT_TEMP_END();

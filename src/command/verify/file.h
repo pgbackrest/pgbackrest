@@ -1,28 +1,43 @@
 /***********************************************************************************************************************************
-Version Numbers and Names
+Verify File
 ***********************************************************************************************************************************/
-#ifndef VERSION_H
-#define VERSION_H
+#ifndef COMMAND_VERIFY_FILE_H
+#define COMMAND_VERIFY_FILE_H
+
+#include "common/compress/helper.h"
+#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
-Official name of the project
+File result
 ***********************************************************************************************************************************/
-#define PROJECT_NAME                                                "pgBackRest"
+typedef enum
+{
+    verifyOk,                                                       // Default result - file OK
+    verifyFileMissing,
+    verifyChecksumMismatch,
+    verifySizeInvalid,
+    verifyOtherError,
+} VerifyResult;
 
 /***********************************************************************************************************************************
-Standard binary name
+Functions
 ***********************************************************************************************************************************/
-#define PROJECT_BIN                                                 "pgbackrest"
+typedef struct VerifyFileResult
+{
+    VerifyResult fileResult;
+    String *filePathName;
+} VerifyFileResult;
+
+// Verify a file in the pgBackRest repository
+VerifyResult verifyFile(
+    const String *filePathName, const String *fileChecksum, uint64_t fileSize, const String *cipherPass);
 
 /***********************************************************************************************************************************
-Format Number -- defines format for info and manifest files as well as on-disk structure.  If this number changes then the
-repository will be invalid unless migration functions are written.
+Macros for function logging
 ***********************************************************************************************************************************/
-#define REPOSITORY_FORMAT                                           5
-
-/***********************************************************************************************************************************
-Software version.  Currently this value is maintained in Version.pm and updated by test.pl.
-***********************************************************************************************************************************/
-#define PROJECT_VERSION                                             "2.31dev"
+#define FUNCTION_LOG_VERIFY_FILE_RESULT_TYPE                                                                                       \
+    VerifyFileResult
+#define FUNCTION_LOG_VERIFY_FILE_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
+    objToLog(&value, "VerifyFileResult", buffer, bufferSize)
 
 #endif

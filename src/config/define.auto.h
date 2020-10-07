@@ -29,6 +29,7 @@ typedef enum
     cfgDefCmdStanzaUpgrade,
     cfgDefCmdStart,
     cfgDefCmdStop,
+    cfgDefCmdVerify,
     cfgDefCmdVersion,
 } ConfigDefineCommand;
 
@@ -118,6 +119,7 @@ typedef enum
     cfgDefOptRepoAzureCaFile,
     cfgDefOptRepoAzureCaPath,
     cfgDefOptRepoAzureContainer,
+    cfgDefOptRepoAzureEndpoint,
     cfgDefOptRepoAzureHost,
     cfgDefOptRepoAzureKey,
     cfgDefOptRepoAzureKeyType,

@@ -25,6 +25,7 @@ STRING_EXTERN(CFGCMD_STANZA_DELETE_STR,                             CFGCMD_STANZ
 STRING_EXTERN(CFGCMD_STANZA_UPGRADE_STR,                            CFGCMD_STANZA_UPGRADE);
 STRING_EXTERN(CFGCMD_START_STR,                                     CFGCMD_START);
 STRING_EXTERN(CFGCMD_STOP_STR,                                      CFGCMD_STOP);
+STRING_EXTERN(CFGCMD_VERIFY_STR,                                    CFGCMD_VERIFY);
 STRING_EXTERN(CFGCMD_VERSION_STR,                                   CFGCMD_VERSION);
 
 /***********************************************************************************************************************************
@@ -268,6 +269,19 @@ static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_L
 
     CONFIG_COMMAND
     (
+        CONFIG_COMMAND_NAME(CFGCMD_VERIFY)
+
+        CONFIG_COMMAND_INTERNAL(true)
+        CONFIG_COMMAND_LOG_FILE(true)
+        CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
+        CONFIG_COMMAND_LOCK_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
+        CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
+        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
+    )
+
+    CONFIG_COMMAND
+    (
         CONFIG_COMMAND_NAME(CFGCMD_VERSION)
 
         CONFIG_COMMAND_INTERNAL(false)
@@ -433,6 +447,7 @@ STRING_EXTERN(CFGOPT_REPO1_AZURE_ACCOUNT_STR,                       CFGOPT_REPO1
 STRING_EXTERN(CFGOPT_REPO1_AZURE_CA_FILE_STR,                       CFGOPT_REPO1_AZURE_CA_FILE);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_CA_PATH_STR,                       CFGOPT_REPO1_AZURE_CA_PATH);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_CONTAINER_STR,                     CFGOPT_REPO1_AZURE_CONTAINER);
+STRING_EXTERN(CFGOPT_REPO1_AZURE_ENDPOINT_STR,                      CFGOPT_REPO1_AZURE_ENDPOINT);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_HOST_STR,                          CFGOPT_REPO1_AZURE_HOST);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_STR,                           CFGOPT_REPO1_AZURE_KEY);
 STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_TYPE_STR,                      CFGOPT_REPO1_AZURE_KEY_TYPE);
@@ -1943,6 +1958,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
         CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureContainer)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_ENDPOINT)
+        CONFIG_OPTION_INDEX(0)
+        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureEndpoint)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

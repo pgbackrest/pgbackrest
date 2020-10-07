@@ -59,6 +59,12 @@
         <execute-list host="{[host-contrib]}">
             <title>Install development tools</title>
 
+            <execute user="root" pre="y" show="n">
+                <exe-cmd>
+                    apt-get update
+                </exe-cmd>
+            </execute>
+
             <execute user="root" pre="y">
                 <exe-cmd>
                     apt-get install rsync git devscripts build-essential valgrind lcov autoconf
