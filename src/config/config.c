@@ -52,6 +52,14 @@ typedef struct ConfigCommandData
     .parameterAllowed = parameterAllowedParam,
 
 /***********************************************************************************************************************************
+Option group data
+***********************************************************************************************************************************/
+typedef struct ConfigOptionGroupData
+{
+    const char *name;                                               // All options in the group must be prefixed with this name
+} ConfigOptionGroupData;
+
+/***********************************************************************************************************************************
 Map options names and indexes to option definitions
 ***********************************************************************************************************************************/
 typedef struct ConfigOptionData
@@ -127,6 +135,8 @@ void
 cfgInit(void)
 {
     FUNCTION_TEST_VOID();
+
+    (void)configOptionGroupData; // !!! REMOVE THIS ONCE REFERENCED
 
     // Free the old context
     if (configStatic.memContext != NULL)
