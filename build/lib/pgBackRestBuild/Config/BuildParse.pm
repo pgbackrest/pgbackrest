@@ -239,12 +239,9 @@ sub buildConfigParse
             # Else add option to resolve order list
             elsif (!$rhResolved->{$strOption})
             {
-                $rhResolved->{$strOption} = true;
+                push(@stryResolveOrder, buildConfigOptionEnum($strOption));
 
-                for (my $iIndex = 0; $iIndex < $rhConfigDefine->{$strOption}{&CFGDEF_INDEX_TOTAL}; $iIndex++)
-                {
-                    push(@stryResolveOrder, buildConfigOptionEnum($strOption) . ($iIndex == 0 ? '' : " + $iIndex"));
-                }
+                $rhResolved->{$strOption} = true;
             }
         }
     }
