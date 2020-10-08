@@ -11,7 +11,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("bufNew(), bufNewC, bufNewUseC, bufMove(), bufSize(), bufPtr(), and bufFree()"))
+    if (testBegin("bufNew(), bufNewC, bufNewUseC, bufMove(), bufSize(), bufSizeAlloc(), bufPtr(), and bufFree()"))
     {
         Buffer *buffer = NULL;
 
@@ -24,6 +24,7 @@ testRun(void)
 
         TEST_RESULT_PTR(bufPtr(buffer), buffer->buffer, "buffer pointer");
         TEST_RESULT_UINT(bufSize(buffer), 256, "buffer size");
+        TEST_RESULT_UINT(bufSizeAlloc(buffer), 256, "buffer allocation size");
 
         TEST_ASSIGN(buffer, bufNewC("TEST-STR", sizeof("TEST-STR") - 1), "new buffer from string");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST-STR", 8) == 0, true, "check buffer");
@@ -93,8 +94,10 @@ testRun(void)
         // Use limits to change size reporting
         TEST_RESULT_VOID(bufLimitSet(buffer, 64), "set limit");
         TEST_RESULT_UINT(bufSize(buffer), 64, "    check limited size");
+        TEST_RESULT_UINT(bufUsed(buffer), 64, "    check used");
         TEST_RESULT_VOID(bufLimitClear(buffer), "    clear limit");
         TEST_RESULT_UINT(bufSize(buffer), 128, "    check unlimited size");
+        TEST_RESULT_UINT(bufUsed(buffer), 64, "     check used did not change");
 
         // Resize to zero buffer
         TEST_RESULT_VOID(bufUsedZero(buffer), "set used to 0");

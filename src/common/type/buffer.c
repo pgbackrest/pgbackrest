@@ -299,6 +299,10 @@ bufLimitSet(Buffer *this, size_t limit)
     this->size = limit;
     this->sizeLimit = true;
 
+    // Reduce used if it is now larger than size
+    if (this->used > this->size)
+        this->used = this->size;
+
     FUNCTION_TEST_RETURN_VOID();
 }
 
