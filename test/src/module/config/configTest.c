@@ -276,7 +276,7 @@ testRun(void)
         TEST_RESULT_VOID(cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault), "backup command");
 
         TEST_ERROR(
-            strZ(varStr(cfgOptionDefaultValue(cfgDefOptDbInclude))), AssertError, "default value not available for option type 4");
+            strZ(varStr(cfgOptionDefaultValue(cfgOptDbInclude))), AssertError, "default value not available for option type 4");
         TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptType)), "incr", "backup type default");
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptArchiveAsync)), false, "archive async default");
         TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptProtocolTimeout)), 1830, "backup protocol-timeout default");
