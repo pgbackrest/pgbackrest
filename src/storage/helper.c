@@ -204,7 +204,7 @@ storagePgId(unsigned int hostId)
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             if (storageHelper.storagePg == NULL)
-                storageHelper.storagePg = memNewPtrArray(cfgDefOptionIndexTotal(cfgDefOptPgPath));
+                storageHelper.storagePg = memNewPtrArray(cfgDefOptionIndexTotal(cfgOptPgPath));
 
             storageHelper.storagePg[hostId - 1] = storagePgGet(hostId, false);
         }
@@ -239,7 +239,7 @@ storagePgIdWrite(unsigned int hostId)
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             if (storageHelper.storagePgWrite == NULL)
-                storageHelper.storagePgWrite = memNewPtrArray(cfgDefOptionIndexTotal(cfgDefOptPgPath));
+                storageHelper.storagePgWrite = memNewPtrArray(cfgDefOptionIndexTotal(cfgOptPgPath));
 
             storageHelper.storagePgWrite[hostId - 1] = storagePgGet(hostId, true);
         }

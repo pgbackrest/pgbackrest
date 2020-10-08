@@ -14,6 +14,7 @@ Command and Option Parse
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "config/define.h"
 #include "config/parse.h"
 #include "storage/helper.h"
 #include "version.h"
@@ -1121,8 +1122,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                         if (value != NULL)
                             cfgOptionSet(optionId, cfgSourceDefault, VARSTRZ(value));
-                        else if (cfgOptionIdx(optionId) == 0 && cfgDefOptionRequired(commandId, optionId) &&
-                                 !cfgCommandHelp())
+                        else if (cfgDefOptionRequired(commandId, optionId) && !cfgCommandHelp())
                         {
                             const char *hint = "";
 

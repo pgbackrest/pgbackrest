@@ -7,6 +7,7 @@ Exec Configuration
 
 #include "common/debug.h"
 #include "common/log.h"
+#include "config/define.h"
 #include "config/exec.h"
 
 /**********************************************************************************************************************************/
@@ -33,7 +34,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
             // Skip the option if it is not valid for the specified command or if is secure.  Also skip repo1-cipher-type because
             // there's no point of passing it if the other process doesn't have access to repo1-cipher-pass.  There is probably a
             // better way to do this...
-            if (!cfgDefOptionValid(commandId, optionId) || cfgDefOptionSecure(optionId) || optionId == cfgDefOptRepoCipherType)
+            if (!cfgDefOptionValid(commandId, optionId) || cfgDefOptionSecure(optionId) || optionId == cfgOptRepoCipherType)
             {
                 continue;
             }

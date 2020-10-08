@@ -25,10 +25,6 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionId("target"), cfgOptTarget, "option id from name");
         TEST_RESULT_INT(cfgOptionId(BOGUS_STR), -1, "option id from invalid option name");
 
-        TEST_ERROR(cfgOptionIdx(CFG_OPTION_TOTAL), AssertError, "assertion 'optionId < CFG_OPTION_TOTAL' failed");
-        TEST_RESULT_INT(cfgOptionIdx(cfgOptPgHostCmd + 6), 6, "option index");
-        TEST_RESULT_INT(cfgOptionIdx(cfgOptCompressLevel), 0, "option index");
-
         TEST_RESULT_Z(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id to name");
     }
 

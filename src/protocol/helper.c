@@ -10,6 +10,7 @@ Protocol Helper
 #include "common/exec.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/define.h"
 #include "config/exec.h"
 #include "config/protocol.h"
 #include "postgres/version.h"
@@ -349,9 +350,9 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         BOOL_TRUE_VAR);
 
     // Update/remove repo/pg options that are sent to the remote
-    const String *repoHostPrefix = STR(cfgDefOptionName(cfgDefOptRepoHost));
+    const String *repoHostPrefix = STR(cfgDefOptionName(cfgOptRepoHost));
     const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
-    const String *pgHostPrefix = STR(cfgDefOptionName(cfgDefOptPgHost));
+    const String *pgHostPrefix = STR(cfgDefOptionName(cfgOptPgHost));
     const String *pgPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_PG);
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
@@ -379,27 +380,28 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         }
         else if (strBeginsWith(optionDefName, pgPrefix))
         {
-            // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
-            if (protocolStorageType == protocolStorageTypeRepo)
-            {
-                remove = !cfgDefOptionRequired(cfgCommand(), optionId) || cfgDefOptionDefault(cfgCommand(), optionId) != NULL;
-            }
-            // Else move/remove pg options with index > 0 since they won't be used
-            else if (cfgOptionIdx(optionId) > 0)
-            {
-                // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects
-                // to find pg options in index 0, copy the option to index 0.
-                if (cfgOptionIdx(optionId) == hostIdx)
-                {
-                    kvPut(
-                        optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
-                        cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
-                }
-
-                // Remove pg options that are not needed on the remote.  The remote is only going to look at index 0 so the options
-                // in higher indexes will not be used and just add clutter which makes debugging harder.
-                remove = true;
-            }
+            // !!! FIX THIS
+            // // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
+            // if (protocolStorageType == protocolStorageTypeRepo)
+            // {
+            //     remove = !cfgDefOptionRequired(cfgCommand(), optionId) || cfgDefOptionDefault(cfgCommand(), optionId) != NULL;
+            // }
+            // // Else move/remove pg options with index > 0 since they won't be used
+            // else if (cfgOptionIdx(optionId) > 0)
+            // {
+            //     // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects
+            //     // to find pg options in index 0, copy the option to index 0.
+            //     if (cfgOptionIdx(optionId) == hostIdx)
+            //     {
+            //         kvPut(
+            //             optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
+            //             cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
+            //     }
+            //
+            //     // Remove pg options that are not needed on the remote.  The remote is only going to look at index 0 so the options
+            //     // in higher indexes will not be used and just add clutter which makes debugging harder.
+            //     remove = true;
+            // }
         }
 
         // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient because
@@ -475,9 +477,9 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
             // The number of remotes allowed is the greater of allowed repo or pg configs + 1 (0 is reserved for connections from
             // the main process).  Since these are static and only one will be true it presents a problem for coverage.  We think
             // that pg remotes will always be greater but we'll protect that assumption with an assertion.
-            ASSERT(cfgDefOptionIndexTotal(cfgDefOptPgPath) >= cfgDefOptionIndexTotal(cfgDefOptRepoPath));
+            ASSERT(cfgDefOptionIndexTotal(cfgOptPgPath) >= cfgDefOptionIndexTotal(cfgOptRepoPath));
 
-            protocolHelper.clientRemoteSize = cfgDefOptionIndexTotal(cfgDefOptPgPath) + 1;
+            protocolHelper.clientRemoteSize = cfgDefOptionIndexTotal(cfgOptPgPath) + 1;
             protocolHelper.clientRemote = memNew(protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
 
             for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
