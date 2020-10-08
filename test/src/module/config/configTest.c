@@ -20,24 +20,10 @@ testRun(void)
         TEST_RESULT_INT(cfgCommandId(BOGUS_STR, false), cfgCmdNone, "command none id from bogus");
         TEST_RESULT_INT(cfgCommandId("archive-push", true), cfgCmdArchivePush, "command id from name");
 
-        TEST_ERROR(
-            cfgCommandDefIdFromId(CFG_COMMAND_TOTAL), AssertError, "assertion 'commandId < cfgCmdNone' failed");
-        TEST_RESULT_INT(cfgCommandDefIdFromId(cfgCmdBackup), cfgDefCmdBackup, "command id to def id");
-
         TEST_RESULT_Z(cfgCommandName(cfgCmdBackup), "backup", "command name from id");
-
-        TEST_RESULT_INT(cfgOptionDefIdFromId(cfgOptPgHost + 6), cfgDefOptPgHost, "option id to def id");
 
         TEST_RESULT_INT(cfgOptionId("target"), cfgOptTarget, "option id from name");
         TEST_RESULT_INT(cfgOptionId(BOGUS_STR), -1, "option id from invalid option name");
-
-        TEST_ERROR(
-            cfgOptionIdFromDefId(999999, 6), AssertError,
-            "assertion 'optionId != CFG_OPTION_TOTAL' failed");
-        TEST_ERROR(
-            cfgOptionIdFromDefId(0, 999999), AssertError,
-            "assertion 'index < cfgDefOptionIndexTotal(optionDefId)' failed");
-        TEST_RESULT_INT(cfgOptionIdFromDefId(cfgDefOptPgHost, 6), cfgOptPgHost + 6, "option def id to id");
 
         TEST_ERROR(cfgOptionIdx(CFG_OPTION_TOTAL), AssertError, "assertion 'optionId < CFG_OPTION_TOTAL' failed");
         TEST_RESULT_INT(cfgOptionIdx(cfgOptPgHostCmd + 6), 6, "option index");

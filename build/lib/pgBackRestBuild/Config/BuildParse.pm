@@ -145,7 +145,7 @@ sub buildConfigParse
                 # Add option
                 $strBuildSource .=
                     "    {\n" .
-                    "        .name = " . (defined($strOptionConst) ? $strOptionConst : "\"${strOptionNameOut}\"") . ",\n" .
+                    "        .name = \"${strOptionNameOut}\",\n" .
                     $strOptionArg .
                     "        .val = ${strOptionFlag} ${strOptionVal},\n" .
                     "    },\n";
@@ -156,8 +156,7 @@ sub buildConfigParse
                 {
                     $strBuildSource .=
                         "    {\n" .
-                        "        .name = \"no-" .
-                            (defined($strOptionConst) ? "\" ${strOptionConst}" : "${strOptionNameOut}\"") . ",\n" .
+                        "        .name = \"no-${strOptionNameOut}\",\n" .
                         "        .val = ${strOptionFlag} PARSE_NEGATE_FLAG | ${strOptionVal},\n" .
                         "    },\n";
                 }
@@ -168,8 +167,7 @@ sub buildConfigParse
                 {
                     $strBuildSource .=
                         "    {\n" .
-                        "        .name = \"reset-" .
-                            (defined($strOptionConst) ? "\" ${strOptionConst}" : "${strOptionNameOut}\"") . ",\n" .
+                        "        .name = \"reset-${strOptionNameOut}\",\n" .
                         "        .val = ${strOptionFlag} PARSE_RESET_FLAG | ${strOptionVal},\n" .
                         "    },\n";
                 }

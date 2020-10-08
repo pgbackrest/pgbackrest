@@ -355,102 +355,18 @@ STRING_EXTERN(CFGOPT_MANIFEST_SAVE_THRESHOLD_STR,                   CFGOPT_MANIF
 STRING_EXTERN(CFGOPT_NEUTRAL_UMASK_STR,                             CFGOPT_NEUTRAL_UMASK);
 STRING_EXTERN(CFGOPT_ONLINE_STR,                                    CFGOPT_ONLINE);
 STRING_EXTERN(CFGOPT_OUTPUT_STR,                                    CFGOPT_OUTPUT);
-STRING_EXTERN(CFGOPT_PG1_HOST_STR,                                  CFGOPT_PG1_HOST);
-STRING_EXTERN(CFGOPT_PG2_HOST_STR,                                  CFGOPT_PG2_HOST);
-STRING_EXTERN(CFGOPT_PG3_HOST_STR,                                  CFGOPT_PG3_HOST);
-STRING_EXTERN(CFGOPT_PG4_HOST_STR,                                  CFGOPT_PG4_HOST);
-STRING_EXTERN(CFGOPT_PG5_HOST_STR,                                  CFGOPT_PG5_HOST);
-STRING_EXTERN(CFGOPT_PG6_HOST_STR,                                  CFGOPT_PG6_HOST);
-STRING_EXTERN(CFGOPT_PG7_HOST_STR,                                  CFGOPT_PG7_HOST);
-STRING_EXTERN(CFGOPT_PG8_HOST_STR,                                  CFGOPT_PG8_HOST);
-STRING_EXTERN(CFGOPT_PG1_HOST_CMD_STR,                              CFGOPT_PG1_HOST_CMD);
-STRING_EXTERN(CFGOPT_PG2_HOST_CMD_STR,                              CFGOPT_PG2_HOST_CMD);
-STRING_EXTERN(CFGOPT_PG3_HOST_CMD_STR,                              CFGOPT_PG3_HOST_CMD);
-STRING_EXTERN(CFGOPT_PG4_HOST_CMD_STR,                              CFGOPT_PG4_HOST_CMD);
-STRING_EXTERN(CFGOPT_PG5_HOST_CMD_STR,                              CFGOPT_PG5_HOST_CMD);
-STRING_EXTERN(CFGOPT_PG6_HOST_CMD_STR,                              CFGOPT_PG6_HOST_CMD);
-STRING_EXTERN(CFGOPT_PG7_HOST_CMD_STR,                              CFGOPT_PG7_HOST_CMD);
-STRING_EXTERN(CFGOPT_PG8_HOST_CMD_STR,                              CFGOPT_PG8_HOST_CMD);
-STRING_EXTERN(CFGOPT_PG1_HOST_CONFIG_STR,                           CFGOPT_PG1_HOST_CONFIG);
-STRING_EXTERN(CFGOPT_PG2_HOST_CONFIG_STR,                           CFGOPT_PG2_HOST_CONFIG);
-STRING_EXTERN(CFGOPT_PG3_HOST_CONFIG_STR,                           CFGOPT_PG3_HOST_CONFIG);
-STRING_EXTERN(CFGOPT_PG4_HOST_CONFIG_STR,                           CFGOPT_PG4_HOST_CONFIG);
-STRING_EXTERN(CFGOPT_PG5_HOST_CONFIG_STR,                           CFGOPT_PG5_HOST_CONFIG);
-STRING_EXTERN(CFGOPT_PG6_HOST_CONFIG_STR,                           CFGOPT_PG6_HOST_CONFIG);
-STRING_EXTERN(CFGOPT_PG7_HOST_CONFIG_STR,                           CFGOPT_PG7_HOST_CONFIG);
-STRING_EXTERN(CFGOPT_PG8_HOST_CONFIG_STR,                           CFGOPT_PG8_HOST_CONFIG);
-STRING_EXTERN(CFGOPT_PG1_HOST_CONFIG_INCLUDE_PATH_STR,              CFGOPT_PG1_HOST_CONFIG_INCLUDE_PATH);
-STRING_EXTERN(CFGOPT_PG2_HOST_CONFIG_INCLUDE_PATH_STR,              CFGOPT_PG2_HOST_CONFIG_INCLUDE_PATH);
-STRING_EXTERN(CFGOPT_PG3_HOST_CONFIG_INCLUDE_PATH_STR,              CFGOPT_PG3_HOST_CONFIG_INCLUDE_PATH);
-STRING_EXTERN(CFGOPT_PG4_HOST_CONFIG_INCLUDE_PATH_STR,              CFGOPT_PG4_HOST_CONFIG_INCLUDE_PATH);
-STRING_EXTERN(CFGOPT_PG5_HOST_CONFIG_INCLUDE_PATH_STR,              CFGOPT_PG5_HOST_CONFIG_INCLUDE_PATH);
-STRING_EXTERN(CFGOPT_PG6_HOST_CONFIG_INCLUDE_PATH_STR,              CFGOPT_PG6_HOST_CONFIG_INCLUDE_PATH);
-STRING_EXTERN(CFGOPT_PG7_HOST_CONFIG_INCLUDE_PATH_STR,              CFGOPT_PG7_HOST_CONFIG_INCLUDE_PATH);
-STRING_EXTERN(CFGOPT_PG8_HOST_CONFIG_INCLUDE_PATH_STR,              CFGOPT_PG8_HOST_CONFIG_INCLUDE_PATH);
-STRING_EXTERN(CFGOPT_PG1_HOST_CONFIG_PATH_STR,                      CFGOPT_PG1_HOST_CONFIG_PATH);
-STRING_EXTERN(CFGOPT_PG2_HOST_CONFIG_PATH_STR,                      CFGOPT_PG2_HOST_CONFIG_PATH);
-STRING_EXTERN(CFGOPT_PG3_HOST_CONFIG_PATH_STR,                      CFGOPT_PG3_HOST_CONFIG_PATH);
-STRING_EXTERN(CFGOPT_PG4_HOST_CONFIG_PATH_STR,                      CFGOPT_PG4_HOST_CONFIG_PATH);
-STRING_EXTERN(CFGOPT_PG5_HOST_CONFIG_PATH_STR,                      CFGOPT_PG5_HOST_CONFIG_PATH);
-STRING_EXTERN(CFGOPT_PG6_HOST_CONFIG_PATH_STR,                      CFGOPT_PG6_HOST_CONFIG_PATH);
-STRING_EXTERN(CFGOPT_PG7_HOST_CONFIG_PATH_STR,                      CFGOPT_PG7_HOST_CONFIG_PATH);
-STRING_EXTERN(CFGOPT_PG8_HOST_CONFIG_PATH_STR,                      CFGOPT_PG8_HOST_CONFIG_PATH);
-STRING_EXTERN(CFGOPT_PG1_HOST_PORT_STR,                             CFGOPT_PG1_HOST_PORT);
-STRING_EXTERN(CFGOPT_PG2_HOST_PORT_STR,                             CFGOPT_PG2_HOST_PORT);
-STRING_EXTERN(CFGOPT_PG3_HOST_PORT_STR,                             CFGOPT_PG3_HOST_PORT);
-STRING_EXTERN(CFGOPT_PG4_HOST_PORT_STR,                             CFGOPT_PG4_HOST_PORT);
-STRING_EXTERN(CFGOPT_PG5_HOST_PORT_STR,                             CFGOPT_PG5_HOST_PORT);
-STRING_EXTERN(CFGOPT_PG6_HOST_PORT_STR,                             CFGOPT_PG6_HOST_PORT);
-STRING_EXTERN(CFGOPT_PG7_HOST_PORT_STR,                             CFGOPT_PG7_HOST_PORT);
-STRING_EXTERN(CFGOPT_PG8_HOST_PORT_STR,                             CFGOPT_PG8_HOST_PORT);
-STRING_EXTERN(CFGOPT_PG1_HOST_USER_STR,                             CFGOPT_PG1_HOST_USER);
-STRING_EXTERN(CFGOPT_PG2_HOST_USER_STR,                             CFGOPT_PG2_HOST_USER);
-STRING_EXTERN(CFGOPT_PG3_HOST_USER_STR,                             CFGOPT_PG3_HOST_USER);
-STRING_EXTERN(CFGOPT_PG4_HOST_USER_STR,                             CFGOPT_PG4_HOST_USER);
-STRING_EXTERN(CFGOPT_PG5_HOST_USER_STR,                             CFGOPT_PG5_HOST_USER);
-STRING_EXTERN(CFGOPT_PG6_HOST_USER_STR,                             CFGOPT_PG6_HOST_USER);
-STRING_EXTERN(CFGOPT_PG7_HOST_USER_STR,                             CFGOPT_PG7_HOST_USER);
-STRING_EXTERN(CFGOPT_PG8_HOST_USER_STR,                             CFGOPT_PG8_HOST_USER);
-STRING_EXTERN(CFGOPT_PG1_LOCAL_STR,                                 CFGOPT_PG1_LOCAL);
-STRING_EXTERN(CFGOPT_PG2_LOCAL_STR,                                 CFGOPT_PG2_LOCAL);
-STRING_EXTERN(CFGOPT_PG3_LOCAL_STR,                                 CFGOPT_PG3_LOCAL);
-STRING_EXTERN(CFGOPT_PG4_LOCAL_STR,                                 CFGOPT_PG4_LOCAL);
-STRING_EXTERN(CFGOPT_PG5_LOCAL_STR,                                 CFGOPT_PG5_LOCAL);
-STRING_EXTERN(CFGOPT_PG6_LOCAL_STR,                                 CFGOPT_PG6_LOCAL);
-STRING_EXTERN(CFGOPT_PG7_LOCAL_STR,                                 CFGOPT_PG7_LOCAL);
-STRING_EXTERN(CFGOPT_PG8_LOCAL_STR,                                 CFGOPT_PG8_LOCAL);
-STRING_EXTERN(CFGOPT_PG1_PATH_STR,                                  CFGOPT_PG1_PATH);
-STRING_EXTERN(CFGOPT_PG2_PATH_STR,                                  CFGOPT_PG2_PATH);
-STRING_EXTERN(CFGOPT_PG3_PATH_STR,                                  CFGOPT_PG3_PATH);
-STRING_EXTERN(CFGOPT_PG4_PATH_STR,                                  CFGOPT_PG4_PATH);
-STRING_EXTERN(CFGOPT_PG5_PATH_STR,                                  CFGOPT_PG5_PATH);
-STRING_EXTERN(CFGOPT_PG6_PATH_STR,                                  CFGOPT_PG6_PATH);
-STRING_EXTERN(CFGOPT_PG7_PATH_STR,                                  CFGOPT_PG7_PATH);
-STRING_EXTERN(CFGOPT_PG8_PATH_STR,                                  CFGOPT_PG8_PATH);
-STRING_EXTERN(CFGOPT_PG1_PORT_STR,                                  CFGOPT_PG1_PORT);
-STRING_EXTERN(CFGOPT_PG2_PORT_STR,                                  CFGOPT_PG2_PORT);
-STRING_EXTERN(CFGOPT_PG3_PORT_STR,                                  CFGOPT_PG3_PORT);
-STRING_EXTERN(CFGOPT_PG4_PORT_STR,                                  CFGOPT_PG4_PORT);
-STRING_EXTERN(CFGOPT_PG5_PORT_STR,                                  CFGOPT_PG5_PORT);
-STRING_EXTERN(CFGOPT_PG6_PORT_STR,                                  CFGOPT_PG6_PORT);
-STRING_EXTERN(CFGOPT_PG7_PORT_STR,                                  CFGOPT_PG7_PORT);
-STRING_EXTERN(CFGOPT_PG8_PORT_STR,                                  CFGOPT_PG8_PORT);
-STRING_EXTERN(CFGOPT_PG1_SOCKET_PATH_STR,                           CFGOPT_PG1_SOCKET_PATH);
-STRING_EXTERN(CFGOPT_PG2_SOCKET_PATH_STR,                           CFGOPT_PG2_SOCKET_PATH);
-STRING_EXTERN(CFGOPT_PG3_SOCKET_PATH_STR,                           CFGOPT_PG3_SOCKET_PATH);
-STRING_EXTERN(CFGOPT_PG4_SOCKET_PATH_STR,                           CFGOPT_PG4_SOCKET_PATH);
-STRING_EXTERN(CFGOPT_PG5_SOCKET_PATH_STR,                           CFGOPT_PG5_SOCKET_PATH);
-STRING_EXTERN(CFGOPT_PG6_SOCKET_PATH_STR,                           CFGOPT_PG6_SOCKET_PATH);
-STRING_EXTERN(CFGOPT_PG7_SOCKET_PATH_STR,                           CFGOPT_PG7_SOCKET_PATH);
-STRING_EXTERN(CFGOPT_PG8_SOCKET_PATH_STR,                           CFGOPT_PG8_SOCKET_PATH);
-STRING_EXTERN(CFGOPT_PG1_USER_STR,                                  CFGOPT_PG1_USER);
-STRING_EXTERN(CFGOPT_PG2_USER_STR,                                  CFGOPT_PG2_USER);
-STRING_EXTERN(CFGOPT_PG3_USER_STR,                                  CFGOPT_PG3_USER);
-STRING_EXTERN(CFGOPT_PG4_USER_STR,                                  CFGOPT_PG4_USER);
-STRING_EXTERN(CFGOPT_PG5_USER_STR,                                  CFGOPT_PG5_USER);
-STRING_EXTERN(CFGOPT_PG6_USER_STR,                                  CFGOPT_PG6_USER);
-STRING_EXTERN(CFGOPT_PG7_USER_STR,                                  CFGOPT_PG7_USER);
-STRING_EXTERN(CFGOPT_PG8_USER_STR,                                  CFGOPT_PG8_USER);
+STRING_EXTERN(CFGOPT_PG_HOST_STR,                                   CFGOPT_PG_HOST);
+STRING_EXTERN(CFGOPT_PG_HOST_CMD_STR,                               CFGOPT_PG_HOST_CMD);
+STRING_EXTERN(CFGOPT_PG_HOST_CONFIG_STR,                            CFGOPT_PG_HOST_CONFIG);
+STRING_EXTERN(CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH_STR,               CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH);
+STRING_EXTERN(CFGOPT_PG_HOST_CONFIG_PATH_STR,                       CFGOPT_PG_HOST_CONFIG_PATH);
+STRING_EXTERN(CFGOPT_PG_HOST_PORT_STR,                              CFGOPT_PG_HOST_PORT);
+STRING_EXTERN(CFGOPT_PG_HOST_USER_STR,                              CFGOPT_PG_HOST_USER);
+STRING_EXTERN(CFGOPT_PG_LOCAL_STR,                                  CFGOPT_PG_LOCAL);
+STRING_EXTERN(CFGOPT_PG_PATH_STR,                                   CFGOPT_PG_PATH);
+STRING_EXTERN(CFGOPT_PG_PORT_STR,                                   CFGOPT_PG_PORT);
+STRING_EXTERN(CFGOPT_PG_SOCKET_PATH_STR,                            CFGOPT_PG_SOCKET_PATH);
+STRING_EXTERN(CFGOPT_PG_USER_STR,                                   CFGOPT_PG_USER);
 STRING_EXTERN(CFGOPT_PROCESS_STR,                                   CFGOPT_PROCESS);
 STRING_EXTERN(CFGOPT_PROCESS_MAX_STR,                               CFGOPT_PROCESS_MAX);
 STRING_EXTERN(CFGOPT_PROTOCOL_TIMEOUT_STR,                          CFGOPT_PROTOCOL_TIMEOUT);
@@ -458,48 +374,48 @@ STRING_EXTERN(CFGOPT_RAW_STR,                                       CFGOPT_RAW);
 STRING_EXTERN(CFGOPT_RECOVERY_OPTION_STR,                           CFGOPT_RECOVERY_OPTION);
 STRING_EXTERN(CFGOPT_RECURSE_STR,                                   CFGOPT_RECURSE);
 STRING_EXTERN(CFGOPT_REMOTE_TYPE_STR,                               CFGOPT_REMOTE_TYPE);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_ACCOUNT_STR,                       CFGOPT_REPO1_AZURE_ACCOUNT);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_CA_FILE_STR,                       CFGOPT_REPO1_AZURE_CA_FILE);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_CA_PATH_STR,                       CFGOPT_REPO1_AZURE_CA_PATH);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_CONTAINER_STR,                     CFGOPT_REPO1_AZURE_CONTAINER);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_ENDPOINT_STR,                      CFGOPT_REPO1_AZURE_ENDPOINT);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_HOST_STR,                          CFGOPT_REPO1_AZURE_HOST);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_STR,                           CFGOPT_REPO1_AZURE_KEY);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_KEY_TYPE_STR,                      CFGOPT_REPO1_AZURE_KEY_TYPE);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_PORT_STR,                          CFGOPT_REPO1_AZURE_PORT);
-STRING_EXTERN(CFGOPT_REPO1_AZURE_VERIFY_TLS_STR,                    CFGOPT_REPO1_AZURE_VERIFY_TLS);
-STRING_EXTERN(CFGOPT_REPO1_CIPHER_PASS_STR,                         CFGOPT_REPO1_CIPHER_PASS);
-STRING_EXTERN(CFGOPT_REPO1_CIPHER_TYPE_STR,                         CFGOPT_REPO1_CIPHER_TYPE);
-STRING_EXTERN(CFGOPT_REPO1_HARDLINK_STR,                            CFGOPT_REPO1_HARDLINK);
-STRING_EXTERN(CFGOPT_REPO1_HOST_STR,                                CFGOPT_REPO1_HOST);
-STRING_EXTERN(CFGOPT_REPO1_HOST_CMD_STR,                            CFGOPT_REPO1_HOST_CMD);
-STRING_EXTERN(CFGOPT_REPO1_HOST_CONFIG_STR,                         CFGOPT_REPO1_HOST_CONFIG);
-STRING_EXTERN(CFGOPT_REPO1_HOST_CONFIG_INCLUDE_PATH_STR,            CFGOPT_REPO1_HOST_CONFIG_INCLUDE_PATH);
-STRING_EXTERN(CFGOPT_REPO1_HOST_CONFIG_PATH_STR,                    CFGOPT_REPO1_HOST_CONFIG_PATH);
-STRING_EXTERN(CFGOPT_REPO1_HOST_PORT_STR,                           CFGOPT_REPO1_HOST_PORT);
-STRING_EXTERN(CFGOPT_REPO1_HOST_USER_STR,                           CFGOPT_REPO1_HOST_USER);
-STRING_EXTERN(CFGOPT_REPO1_LOCAL_STR,                               CFGOPT_REPO1_LOCAL);
-STRING_EXTERN(CFGOPT_REPO1_PATH_STR,                                CFGOPT_REPO1_PATH);
-STRING_EXTERN(CFGOPT_REPO1_RETENTION_ARCHIVE_STR,                   CFGOPT_REPO1_RETENTION_ARCHIVE);
-STRING_EXTERN(CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE_STR,              CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE);
-STRING_EXTERN(CFGOPT_REPO1_RETENTION_DIFF_STR,                      CFGOPT_REPO1_RETENTION_DIFF);
-STRING_EXTERN(CFGOPT_REPO1_RETENTION_FULL_STR,                      CFGOPT_REPO1_RETENTION_FULL);
-STRING_EXTERN(CFGOPT_REPO1_RETENTION_FULL_TYPE_STR,                 CFGOPT_REPO1_RETENTION_FULL_TYPE);
-STRING_EXTERN(CFGOPT_REPO1_S3_BUCKET_STR,                           CFGOPT_REPO1_S3_BUCKET);
-STRING_EXTERN(CFGOPT_REPO1_S3_CA_FILE_STR,                          CFGOPT_REPO1_S3_CA_FILE);
-STRING_EXTERN(CFGOPT_REPO1_S3_CA_PATH_STR,                          CFGOPT_REPO1_S3_CA_PATH);
-STRING_EXTERN(CFGOPT_REPO1_S3_ENDPOINT_STR,                         CFGOPT_REPO1_S3_ENDPOINT);
-STRING_EXTERN(CFGOPT_REPO1_S3_HOST_STR,                             CFGOPT_REPO1_S3_HOST);
-STRING_EXTERN(CFGOPT_REPO1_S3_KEY_STR,                              CFGOPT_REPO1_S3_KEY);
-STRING_EXTERN(CFGOPT_REPO1_S3_KEY_SECRET_STR,                       CFGOPT_REPO1_S3_KEY_SECRET);
-STRING_EXTERN(CFGOPT_REPO1_S3_KEY_TYPE_STR,                         CFGOPT_REPO1_S3_KEY_TYPE);
-STRING_EXTERN(CFGOPT_REPO1_S3_PORT_STR,                             CFGOPT_REPO1_S3_PORT);
-STRING_EXTERN(CFGOPT_REPO1_S3_REGION_STR,                           CFGOPT_REPO1_S3_REGION);
-STRING_EXTERN(CFGOPT_REPO1_S3_ROLE_STR,                             CFGOPT_REPO1_S3_ROLE);
-STRING_EXTERN(CFGOPT_REPO1_S3_TOKEN_STR,                            CFGOPT_REPO1_S3_TOKEN);
-STRING_EXTERN(CFGOPT_REPO1_S3_URI_STYLE_STR,                        CFGOPT_REPO1_S3_URI_STYLE);
-STRING_EXTERN(CFGOPT_REPO1_S3_VERIFY_TLS_STR,                       CFGOPT_REPO1_S3_VERIFY_TLS);
-STRING_EXTERN(CFGOPT_REPO1_TYPE_STR,                                CFGOPT_REPO1_TYPE);
+STRING_EXTERN(CFGOPT_REPO_AZURE_ACCOUNT_STR,                        CFGOPT_REPO_AZURE_ACCOUNT);
+STRING_EXTERN(CFGOPT_REPO_AZURE_CA_FILE_STR,                        CFGOPT_REPO_AZURE_CA_FILE);
+STRING_EXTERN(CFGOPT_REPO_AZURE_CA_PATH_STR,                        CFGOPT_REPO_AZURE_CA_PATH);
+STRING_EXTERN(CFGOPT_REPO_AZURE_CONTAINER_STR,                      CFGOPT_REPO_AZURE_CONTAINER);
+STRING_EXTERN(CFGOPT_REPO_AZURE_ENDPOINT_STR,                       CFGOPT_REPO_AZURE_ENDPOINT);
+STRING_EXTERN(CFGOPT_REPO_AZURE_HOST_STR,                           CFGOPT_REPO_AZURE_HOST);
+STRING_EXTERN(CFGOPT_REPO_AZURE_KEY_STR,                            CFGOPT_REPO_AZURE_KEY);
+STRING_EXTERN(CFGOPT_REPO_AZURE_KEY_TYPE_STR,                       CFGOPT_REPO_AZURE_KEY_TYPE);
+STRING_EXTERN(CFGOPT_REPO_AZURE_PORT_STR,                           CFGOPT_REPO_AZURE_PORT);
+STRING_EXTERN(CFGOPT_REPO_AZURE_VERIFY_TLS_STR,                     CFGOPT_REPO_AZURE_VERIFY_TLS);
+STRING_EXTERN(CFGOPT_REPO_CIPHER_PASS_STR,                          CFGOPT_REPO_CIPHER_PASS);
+STRING_EXTERN(CFGOPT_REPO_CIPHER_TYPE_STR,                          CFGOPT_REPO_CIPHER_TYPE);
+STRING_EXTERN(CFGOPT_REPO_HARDLINK_STR,                             CFGOPT_REPO_HARDLINK);
+STRING_EXTERN(CFGOPT_REPO_HOST_STR,                                 CFGOPT_REPO_HOST);
+STRING_EXTERN(CFGOPT_REPO_HOST_CMD_STR,                             CFGOPT_REPO_HOST_CMD);
+STRING_EXTERN(CFGOPT_REPO_HOST_CONFIG_STR,                          CFGOPT_REPO_HOST_CONFIG);
+STRING_EXTERN(CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH_STR,             CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH);
+STRING_EXTERN(CFGOPT_REPO_HOST_CONFIG_PATH_STR,                     CFGOPT_REPO_HOST_CONFIG_PATH);
+STRING_EXTERN(CFGOPT_REPO_HOST_PORT_STR,                            CFGOPT_REPO_HOST_PORT);
+STRING_EXTERN(CFGOPT_REPO_HOST_USER_STR,                            CFGOPT_REPO_HOST_USER);
+STRING_EXTERN(CFGOPT_REPO_LOCAL_STR,                                CFGOPT_REPO_LOCAL);
+STRING_EXTERN(CFGOPT_REPO_PATH_STR,                                 CFGOPT_REPO_PATH);
+STRING_EXTERN(CFGOPT_REPO_RETENTION_ARCHIVE_STR,                    CFGOPT_REPO_RETENTION_ARCHIVE);
+STRING_EXTERN(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE_STR,               CFGOPT_REPO_RETENTION_ARCHIVE_TYPE);
+STRING_EXTERN(CFGOPT_REPO_RETENTION_DIFF_STR,                       CFGOPT_REPO_RETENTION_DIFF);
+STRING_EXTERN(CFGOPT_REPO_RETENTION_FULL_STR,                       CFGOPT_REPO_RETENTION_FULL);
+STRING_EXTERN(CFGOPT_REPO_RETENTION_FULL_TYPE_STR,                  CFGOPT_REPO_RETENTION_FULL_TYPE);
+STRING_EXTERN(CFGOPT_REPO_S3_BUCKET_STR,                            CFGOPT_REPO_S3_BUCKET);
+STRING_EXTERN(CFGOPT_REPO_S3_CA_FILE_STR,                           CFGOPT_REPO_S3_CA_FILE);
+STRING_EXTERN(CFGOPT_REPO_S3_CA_PATH_STR,                           CFGOPT_REPO_S3_CA_PATH);
+STRING_EXTERN(CFGOPT_REPO_S3_ENDPOINT_STR,                          CFGOPT_REPO_S3_ENDPOINT);
+STRING_EXTERN(CFGOPT_REPO_S3_HOST_STR,                              CFGOPT_REPO_S3_HOST);
+STRING_EXTERN(CFGOPT_REPO_S3_KEY_STR,                               CFGOPT_REPO_S3_KEY);
+STRING_EXTERN(CFGOPT_REPO_S3_KEY_SECRET_STR,                        CFGOPT_REPO_S3_KEY_SECRET);
+STRING_EXTERN(CFGOPT_REPO_S3_KEY_TYPE_STR,                          CFGOPT_REPO_S3_KEY_TYPE);
+STRING_EXTERN(CFGOPT_REPO_S3_PORT_STR,                              CFGOPT_REPO_S3_PORT);
+STRING_EXTERN(CFGOPT_REPO_S3_REGION_STR,                            CFGOPT_REPO_S3_REGION);
+STRING_EXTERN(CFGOPT_REPO_S3_ROLE_STR,                              CFGOPT_REPO_S3_ROLE);
+STRING_EXTERN(CFGOPT_REPO_S3_TOKEN_STR,                             CFGOPT_REPO_S3_TOKEN);
+STRING_EXTERN(CFGOPT_REPO_S3_URI_STYLE_STR,                         CFGOPT_REPO_S3_URI_STYLE);
+STRING_EXTERN(CFGOPT_REPO_S3_VERIFY_TLS_STR,                        CFGOPT_REPO_S3_VERIFY_TLS);
+STRING_EXTERN(CFGOPT_REPO_TYPE_STR,                                 CFGOPT_REPO_TYPE);
 STRING_EXTERN(CFGOPT_RESUME_STR,                                    CFGOPT_RESUME);
 STRING_EXTERN(CFGOPT_SCK_BLOCK_STR,                                 CFGOPT_SCK_BLOCK);
 STRING_EXTERN(CFGOPT_SCK_KEEP_ALIVE_STR,                            CFGOPT_SCK_KEEP_ALIVE);
@@ -529,395 +445,264 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_ASYNC)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveAsync)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_CHECK)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveCheck)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_COPY)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveCopy)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_GET_QUEUE_MAX)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveGetQueueMax)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_MODE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveMode)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_PUSH_QUEUE_MAX)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchivePushQueueMax)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_ARCHIVE_TIMEOUT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptArchiveTimeout)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_BACKUP_STANDBY)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptBackupStandby)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_BUFFER_SIZE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptBufferSize)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_CHECKSUM_PAGE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptChecksumPage)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_CIPHER_PASS)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptCipherPass)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_CMD_SSH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptCmdSsh)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_COMPRESS)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptCompress)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_COMPRESS_LEVEL)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptCompressLevel)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_COMPRESS_LEVEL_NETWORK)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptCompressLevelNetwork)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_COMPRESS_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptCompressType)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_CONFIG)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptConfig)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptConfigIncludePath)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptConfigPath)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_DB_INCLUDE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbInclude)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_DB_TIMEOUT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDbTimeout)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_DELTA)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDelta)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_DRY_RUN)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptDryRun)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_EXCLUDE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptExclude)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_EXPIRE_AUTO)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptExpireAuto)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_FILTER)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptFilter)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_FORCE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptForce)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_HOST_ID)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptHostId)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_IGNORE_MISSING)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptIgnoreMissing)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_IO_TIMEOUT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptIoTimeout)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_LINK_ALL)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptLinkAll)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_LINK_MAP)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptLinkMap)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_LOCK_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptLockPath)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_LOG_LEVEL_CONSOLE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptLogLevelConsole)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_LOG_LEVEL_FILE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptLogLevelFile)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_LOG_LEVEL_STDERR)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptLogLevelStderr)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_LOG_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptLogPath)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_LOG_SUBPROCESS)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptLogSubprocess)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_LOG_TIMESTAMP)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptLogTimestamp)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_MANIFEST_SAVE_THRESHOLD)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptManifestSaveThreshold)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_NEUTRAL_UMASK)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptNeutralUmask)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_ONLINE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptOnline)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_OUTPUT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptOutput)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_HOST)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+        CONFIG_OPTION_NAME(CFGOPT_PG_HOST)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -925,9 +710,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_HOST)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+        CONFIG_OPTION_NAME(CFGOPT_PG_HOST_CMD)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -935,9 +718,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_HOST)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+        CONFIG_OPTION_NAME(CFGOPT_PG_HOST_CONFIG)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -945,9 +726,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_HOST)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+        CONFIG_OPTION_NAME(CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -955,9 +734,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_HOST)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+        CONFIG_OPTION_NAME(CFGOPT_PG_HOST_CONFIG_PATH)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -965,9 +742,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_HOST)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+        CONFIG_OPTION_NAME(CFGOPT_PG_HOST_PORT)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -975,9 +750,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_HOST)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+        CONFIG_OPTION_NAME(CFGOPT_PG_HOST_USER)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -985,9 +758,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_HOST)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHost)
+        CONFIG_OPTION_NAME(CFGOPT_PG_LOCAL)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -995,9 +766,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_HOST_CMD)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+        CONFIG_OPTION_NAME(CFGOPT_PG_PATH)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -1005,9 +774,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_HOST_CMD)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+        CONFIG_OPTION_NAME(CFGOPT_PG_PORT)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -1015,9 +782,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_HOST_CMD)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
+        CONFIG_OPTION_NAME(CFGOPT_PG_SOCKET_PATH)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -1025,849 +790,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_HOST_CMD)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_HOST_CMD)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_HOST_CMD)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_HOST_CMD)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_HOST_CMD)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostCmd)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_HOST_CONFIG)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_HOST_CONFIG)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_HOST_CONFIG)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_HOST_CONFIG)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_HOST_CONFIG)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_HOST_CONFIG)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_HOST_CONFIG)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_HOST_CONFIG)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfig)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_HOST_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_HOST_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_HOST_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_HOST_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_HOST_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_HOST_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_HOST_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_HOST_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigIncludePath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_HOST_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_HOST_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_HOST_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_HOST_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_HOST_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_HOST_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_HOST_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_HOST_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostConfigPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_HOST_PORT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_HOST_PORT)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_HOST_PORT)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_HOST_PORT)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_HOST_PORT)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_HOST_PORT)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_HOST_PORT)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_HOST_PORT)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_HOST_USER)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_HOST_USER)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_HOST_USER)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_HOST_USER)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_HOST_USER)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_HOST_USER)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_HOST_USER)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_HOST_USER)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgHostUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_LOCAL)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_LOCAL)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_LOCAL)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_LOCAL)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_LOCAL)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_LOCAL)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_LOCAL)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_LOCAL)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgLocal)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_PATH)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_PATH)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_PATH)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_PATH)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_PATH)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_PATH)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_PATH)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_PORT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_PORT)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_PORT)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_PORT)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_PORT)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_PORT)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_PORT)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_PORT)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgPort)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_SOCKET_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_SOCKET_PATH)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_SOCKET_PATH)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_SOCKET_PATH)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_SOCKET_PATH)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_SOCKET_PATH)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_SOCKET_PATH)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_SOCKET_PATH)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgSocketPath)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG1_USER)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG2_USER)
-        CONFIG_OPTION_INDEX(1)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG3_USER)
-        CONFIG_OPTION_INDEX(2)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG4_USER)
-        CONFIG_OPTION_INDEX(3)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG5_USER)
-        CONFIG_OPTION_INDEX(4)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG6_USER)
-        CONFIG_OPTION_INDEX(5)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG7_USER)
-        CONFIG_OPTION_INDEX(6)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME(CFGOPT_PG8_USER)
-        CONFIG_OPTION_INDEX(7)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptPgUser)
+        CONFIG_OPTION_NAME(CFGOPT_PG_USER)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
     )
@@ -1876,71 +799,48 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_PROCESS)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptProcess)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_PROCESS_MAX)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptProcessMax)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_PROTOCOL_TIMEOUT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptProtocolTimeout)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_RAW)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRaw)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_RECOVERY_OPTION)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRecoveryOption)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_RECURSE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRecurse)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_REMOTE_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRemoteType)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_ACCOUNT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureAccount)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_ACCOUNT)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -1948,9 +848,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_CA_FILE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureCaFile)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_CA_FILE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -1958,9 +856,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_CA_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureCaPath)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_CA_PATH)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -1968,9 +864,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_CONTAINER)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureContainer)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_CONTAINER)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -1978,9 +872,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_ENDPOINT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureEndpoint)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_ENDPOINT)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -1988,9 +880,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_HOST)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureHost)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_HOST)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -1998,9 +888,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_KEY)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureKey)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_KEY)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2008,9 +896,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_KEY_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureKeyType)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_KEY_TYPE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2018,9 +904,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_PORT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzurePort)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_PORT)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2028,9 +912,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_AZURE_VERIFY_TLS)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoAzureVerifyTls)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_AZURE_VERIFY_TLS)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2038,9 +920,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_CIPHER_PASS)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoCipherPass)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_CIPHER_PASS)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2048,9 +928,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_CIPHER_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoCipherType)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_CIPHER_TYPE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2058,9 +936,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_HARDLINK)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHardlink)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_HARDLINK)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2068,9 +944,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_HOST)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHost)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_HOST)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2078,9 +952,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_HOST_CMD)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostCmd)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_HOST_CMD)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2088,9 +960,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_HOST_CONFIG)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostConfig)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_HOST_CONFIG)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2098,9 +968,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_HOST_CONFIG_INCLUDE_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostConfigIncludePath)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2108,9 +976,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_HOST_CONFIG_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostConfigPath)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_HOST_CONFIG_PATH)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2118,9 +984,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_HOST_PORT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostPort)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_HOST_PORT)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2128,9 +992,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_HOST_USER)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoHostUser)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_HOST_USER)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2138,9 +1000,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_LOCAL)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoLocal)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_LOCAL)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2148,9 +1008,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoPath)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_PATH)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2158,9 +1016,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_RETENTION_ARCHIVE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionArchive)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_RETENTION_ARCHIVE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2168,9 +1024,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionArchiveType)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2178,9 +1032,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_RETENTION_DIFF)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionDiff)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_RETENTION_DIFF)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2188,9 +1040,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_RETENTION_FULL)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionFull)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_RETENTION_FULL)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2198,9 +1048,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_RETENTION_FULL_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoRetentionFullType)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_RETENTION_FULL_TYPE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2208,9 +1056,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_BUCKET)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Bucket)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_BUCKET)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2218,9 +1064,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_CA_FILE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3CaFile)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_CA_FILE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2228,9 +1072,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_CA_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3CaPath)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_CA_PATH)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2238,9 +1080,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_ENDPOINT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Endpoint)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_ENDPOINT)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2248,9 +1088,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_HOST)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Host)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_HOST)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2258,9 +1096,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_KEY)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Key)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_KEY)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2268,9 +1104,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_KEY_SECRET)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3KeySecret)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_KEY_SECRET)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2278,9 +1112,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_KEY_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3KeyType)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_KEY_TYPE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2288,9 +1120,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_PORT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Port)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_PORT)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2298,9 +1128,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_REGION)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Region)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_REGION)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2308,9 +1136,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_ROLE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Role)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_ROLE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2318,9 +1144,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_TOKEN)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3Token)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_TOKEN)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2328,9 +1152,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_URI_STYLE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3UriStyle)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_URI_STYLE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2338,9 +1160,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_S3_VERIFY_TLS)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoS3VerifyTls)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_S3_VERIFY_TLS)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2348,9 +1168,7 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
-        CONFIG_OPTION_NAME(CFGOPT_REPO1_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptRepoType)
+        CONFIG_OPTION_NAME(CFGOPT_REPO_TYPE)
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
     )
@@ -2359,170 +1177,113 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_RESUME)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptResume)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_SCK_BLOCK)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptSckBlock)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_SCK_KEEP_ALIVE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptSckKeepAlive)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_SET)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptSet)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_SORT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptSort)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_SPOOL_PATH)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptSpoolPath)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_STANZA)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptStanza)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_START_FAST)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptStartFast)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_STOP_AUTO)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptStopAuto)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TABLESPACE_MAP)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTablespaceMap)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TABLESPACE_MAP_ALL)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTablespaceMapAll)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TARGET)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTarget)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TARGET_ACTION)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTargetAction)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TARGET_EXCLUSIVE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTargetExclusive)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TARGET_TIMELINE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTargetTimeline)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TCP_KEEP_ALIVE_COUNT)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTcpKeepAliveCount)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TCP_KEEP_ALIVE_IDLE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTcpKeepAliveIdle)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TCP_KEEP_ALIVE_INTERVAL)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptTcpKeepAliveInterval)
-        CONFIG_OPTION_GROUP(false)
     )
 
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME(CFGOPT_TYPE)
-        CONFIG_OPTION_INDEX(0)
-        CONFIG_OPTION_DEFINE_ID(cfgDefOptType)
-        CONFIG_OPTION_GROUP(false)
     )
 )

@@ -3,6 +3,11 @@ Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
 #include "config/config.h"
 
+#define CFGOPT_PG1_PATH                                             "pg1-path"
+#define CFGOPT_PG2_HOST                                             "pg2-host"
+#define CFGOPT_PG2_LOCAL                                            "pg2-local"
+#define CFGOPT_PG2_PATH                                             "pg2-path"
+
 /***********************************************************************************************************************************
 Load a test configuration without any side effects
 

@@ -4,6 +4,8 @@ Test Configuration Parse
 #include "protocol/helper.h"
 #include "storage/storage.intern.h"
 
+#include "common/harnessConfig.h"
+
 #define TEST_BACKREST_EXE                                           "pgbackrest"
 
 #define TEST_COMMAND_ARCHIVE_GET                                    "archive-get"
@@ -132,10 +134,9 @@ testRun(void)
             strZ(strNewFmt("%s/global-backup.confsave", strZ(configIncludePath))));
 
         // Set up defaults
-        String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(
-            cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP, true)), cfgOptionDefIdFromId(cfgOptConfig)));
-        String *backupCmdDefConfigInclPathValue = strNew(cfgDefOptionDefault(
-                cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP, true)), cfgOptionDefIdFromId(cfgOptConfigIncludePath)));
+        String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP, true), cfgOptConfig));
+        String *backupCmdDefConfigInclPathValue = strNew(
+            cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP, true), cfgOptConfigIncludePath));
         String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0

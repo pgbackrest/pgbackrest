@@ -10,7 +10,6 @@ config/parse.c sets the command and options and determines which options are val
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/type/stringList.h"
-#include "config/define.h"
 
 #include "config/config.auto.h"
 
@@ -168,10 +167,6 @@ config/load.c.
 // Initialize or reinitialize the configuration data
 void cfgInit(void);
 
-// Get the define id for this command. This can be done by just casting the id to the define id. There may be a time when they are
-// not one to one and this function can be modified to do the mapping.
-ConfigDefineCommand cfgCommandDefIdFromId(ConfigCommand commandId);
-
 // Was help requested?
 bool cfgCommandHelp(void);
 void cfgCommandHelpSet(bool help);
@@ -200,17 +195,11 @@ const Variant *cfgOptionDefault(ConfigOption optionId);
 // more efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 
-// Get the option define for this option
-ConfigDefineOption cfgOptionDefIdFromId(ConfigOption optionId);
-
 // Parse a host option and extract the host and port (if it exists)
 String *cfgOptionHostPort(ConfigOption optionId, unsigned int *port);
 
 // Get option id by name
 int cfgOptionId(const char *optionName);
-
-// Get the id for this option define
-ConfigOption cfgOptionIdFromDefId(ConfigDefineOption optionDefId, unsigned int index);
 
 // Was the option negated?
 bool cfgOptionNegate(ConfigOption optionId);

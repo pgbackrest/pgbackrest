@@ -13,6 +13,7 @@ Common Command Routines
 #include "common/time.h"
 #include "common/type/json.h"
 #include "config/config.h"
+#include "config/define.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -46,9 +47,6 @@ cmdOption(void)
 
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Get command define id used to determine which options are valid for this command
-                ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
-
                 // Add command parameters if they exist
                 const StringList *commandParamList = cfgCommandParam();
 
@@ -78,7 +76,7 @@ cmdOption(void)
                     // Skip the option if not valid for this command.  Generally only one command runs at a time, but sometimes
                     // commands are chained together (e.g. backup and expire) and the second command may not use all the options of
                     // the first command.  Displaying them is harmless but might cause confusion.
-                    if (!cfgDefOptionValid(commandDefId, cfgOptionDefIdFromId(optionId)))
+                    if (!cfgDefOptionValid(cfgCommand(), optionId))
                         continue;
 
                     // If option was negated
@@ -90,13 +88,11 @@ cmdOption(void)
                     // Else set and not default
                     else if (cfgOptionSource(optionId) != cfgSourceDefault && cfgOptionTest(optionId))
                     {
-                        ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
-
                         // Don't show redacted options
-                        if (cfgDefOptionSecure(optionDefId))
+                        if (cfgDefOptionSecure(optionId))
                             strCatFmt(cmdOptionStr, " --%s=<redacted>", cfgOptionName(optionId));
                         // Output boolean option
-                        else if (cfgDefOptionType(optionDefId) == cfgDefOptTypeBoolean)
+                        else if (cfgDefOptionType(optionId) == cfgDefOptTypeBoolean)
                             strCatFmt(cmdOptionStr, " --%s", cfgOptionName(optionId));
                         // Output other options
                         else
@@ -104,7 +100,7 @@ cmdOption(void)
                             StringList *valueList = NULL;
 
                             // Generate the values of hash options
-                            if (cfgDefOptionType(optionDefId) == cfgDefOptTypeHash)
+                            if (cfgDefOptionType(optionId) == cfgDefOptTypeHash)
                             {
                                 valueList = strLstNew();
 
@@ -121,7 +117,7 @@ cmdOption(void)
                                 }
                             }
                             // Generate values for list options
-                            else if (cfgDefOptionType(optionDefId) == cfgDefOptTypeList)
+                            else if (cfgDefOptionType(optionId) == cfgDefOptTypeList)
                             {
                                 valueList = strLstNewVarLst(cfgOptionLst(optionId));
                             }

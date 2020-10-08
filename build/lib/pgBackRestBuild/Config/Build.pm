@@ -19,7 +19,6 @@ use pgBackRestDoc::Common::String;
 use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestBuild::Build::Common;
-use pgBackRestBuild::Config::BuildDefine;
 use pgBackRestBuild::Config::Data;
 
 ####################################################################################################################################
@@ -274,57 +273,42 @@ sub buildConfig
         my $iOptionIndexTotal = $rhConfigDefine->{$strOption}{&CFGDEF_INDEX_TOTAL};
         my $strOptionPrefix = $rhConfigDefine->{$strOption}{&CFGDEF_PREFIX};
 
-        # Builds option data
-        for (my $iOptionIndex = 1; $iOptionIndex <= $iOptionIndexTotal; $iOptionIndex++)
+        # Build C enum
+        my $strOptionEnum = buildConfigOptionEnum($strOption);
+        push(@{$rhEnum->{&BLD_LIST}}, $strOptionEnum);
+        $rhEnum->{&BLD_VALUE}{$strOptionEnum} = $iOptionTotal;
+
+        # Build option constant name
+        $strOptionConst = "CFGOPT_" . uc($strOption);
+        $strOptionConst =~ s/\-/_/g;
+
+        # Add option data
+        $strBuildSource .=
+            "\n" .
+            "    //" . (qw{-} x 126) . "\n" .
+            "    CONFIG_OPTION\n" .
+            "    (\n" .
+            "        CONFIG_OPTION_NAME(${strOptionConst})\n";
+
+        if ($rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
         {
-            # Build C enum
-            my $strOptionEnum = buildConfigOptionEnum($strOption) . ($iOptionIndex == 1 ? '' : $iOptionIndex);
-            push(@{$rhEnum->{&BLD_LIST}}, $strOptionEnum);
-            $rhEnum->{&BLD_VALUE}{$strOptionEnum} = $iOptionTotal;
-
-            # Create the indexed version of the option name
-            my $strOptionIndex = defined($strOptionPrefix) ?
-                "${strOptionPrefix}${iOptionIndex}-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
-
-            # Build option constant name
-            $strOptionConst = "CFGOPT_" . uc($strOptionIndex);
-            $strOptionConst =~ s/\-/_/g;
-
-            # Add option data
             $strBuildSource .=
-                "\n" .
-                "    //" . (qw{-} x 126) . "\n" .
-                "    CONFIG_OPTION\n" .
-                "    (\n" .
-                "        CONFIG_OPTION_NAME(${strOptionConst})\n" .
-                "        CONFIG_OPTION_INDEX(" . ($iOptionIndex - 1) . ")\n" .
-                "        CONFIG_OPTION_DEFINE_ID(" . buildConfigDefineOptionEnum($strOption) . ")\n";
-
-            if ($rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
-            {
-                $strBuildSource .=
-                    "        CONFIG_OPTION_GROUP(true)\n" .
-                    "        CONFIG_OPTION_GROUP_ID(" . buildConfigOptionGroupEnum($rhConfigDefine->{$strOption}{&CFGDEF_GROUP}) .
-                        ")\n";
-            }
-            else
-            {
-                $strBuildSource .=
-                    "        CONFIG_OPTION_GROUP(false)\n";
-            }
-
-            $strBuildSource .=
-                "    )\n";
-
-
-            $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION}{&BLD_CONSTANT}
-                {$strOptionConst}{&BLD_CONSTANT_VALUE} = "\"${strOptionIndex}\"\n    STRING_DECLARE(${strOptionConst}_STR);";
-
-            $strBuildSourceConstant .=
-                "STRING_EXTERN(${strOptionConst}_STR," . (' ' x (49 - length($strOptionConst))) . "${strOptionConst});\n";
-
-            $iOptionTotal += 1;
+                "        CONFIG_OPTION_GROUP(true)\n" .
+                "        CONFIG_OPTION_GROUP_ID(" . buildConfigOptionGroupEnum($rhConfigDefine->{$strOption}{&CFGDEF_GROUP}) .
+                    ")\n";
         }
+
+        $strBuildSource .=
+            "    )\n";
+
+
+        $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION}{&BLD_CONSTANT}
+            {$strOptionConst}{&BLD_CONSTANT_VALUE} = "\"${strOption}\"\n    STRING_DECLARE(${strOptionConst}_STR);";
+
+        $strBuildSourceConstant .=
+            "STRING_EXTERN(${strOptionConst}_STR," . (' ' x (49 - length($strOptionConst))) . "${strOptionConst});\n";
+
+        $iOptionTotal += 1;
     }
 
     $strBuildSource .=

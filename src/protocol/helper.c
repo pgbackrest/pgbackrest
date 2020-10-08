@@ -344,11 +344,11 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Set local so host settings configured on the remote will not accidentally be picked up
     kvPut(
         optionReplace,
-        protocolStorageType == protocolStorageTypeRepo ? VARSTR(CFGOPT_REPO1_LOCAL_STR) : VARSTR(CFGOPT_PG1_LOCAL_STR),
+        protocolStorageType == protocolStorageTypeRepo ?
+            VARSTRZ(cfgOptionName(cfgOptRepoLocal)) : VARSTRZ(cfgOptionName(cfgOptPgLocal)),
         BOOL_TRUE_VAR);
 
     // Update/remove repo/pg options that are sent to the remote
-    ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
     const String *repoHostPrefix = STR(cfgDefOptionName(cfgDefOptRepoHost));
     const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
     const String *pgHostPrefix = STR(cfgDefOptionName(cfgDefOptPgHost));
@@ -356,8 +356,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
-        ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
-        const String *optionDefName = STR(cfgDefOptionName(optionDefId));
+        const String *optionDefName = STR(cfgDefOptionName(optionId));
         bool remove = false;
 
         // Remove repo host options that are not needed on the remote.  The remote is not expecting to see host settings and it
@@ -383,7 +382,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
             // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
             if (protocolStorageType == protocolStorageTypeRepo)
             {
-                remove = !cfgDefOptionRequired(commandDefId, optionDefId) || cfgDefOptionDefault(commandDefId, optionDefId) != NULL;
+                remove = !cfgDefOptionRequired(cfgCommand(), optionId) || cfgDefOptionDefault(cfgCommand(), optionId) != NULL;
             }
             // Else move/remove pg options with index > 0 since they won't be used
             else if (cfgOptionIdx(optionId) > 0)
@@ -527,8 +526,8 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
             {
                 // Options to query
                 VariantList *param = varLstNew();
-                varLstAdd(param, varNewStr(CFGOPT_REPO1_CIPHER_TYPE_STR));
-                varLstAdd(param, varNewStr(CFGOPT_REPO1_CIPHER_PASS_STR));
+                varLstAdd(param, varNewStrZ(cfgOptionName(cfgOptRepoCipherType)));
+                varLstAdd(param, varNewStrZ(cfgOptionName(cfgOptRepoCipherPass)));
 
                 VariantList *optionList = configProtocolOption(protocolHelperClient->client, param);
 

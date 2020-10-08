@@ -9,6 +9,7 @@ Command and Option Configuration
 #include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/define.h"
 
 /***********************************************************************************************************************************
 Map command names to ids and vice versa
@@ -64,10 +65,7 @@ Map options names and indexes to option definitions
 ***********************************************************************************************************************************/
 typedef struct ConfigOptionData
 {
-    const char *name;
-
-    unsigned int index:5;
-    unsigned int defineId:7;
+    const char *name;                                               // Option name
     bool group:1;                                                   // Is the option in a group?
     unsigned int groupId:1;                                         // Group id if option is in a group
 } ConfigOptionData;
@@ -78,12 +76,8 @@ typedef struct ConfigOptionData
 #define CONFIG_OPTION(...)                                                                                                         \
     {__VA_ARGS__},
 
-#define CONFIG_OPTION_INDEX(indexParam)                                                                                            \
-    .index = indexParam,
 #define CONFIG_OPTION_NAME(nameParam)                                                                                              \
     .name = nameParam,
-#define CONFIG_OPTION_DEFINE_ID(defineIdParam)                                                                                     \
-    .defineId = defineIdParam,
 #define CONFIG_OPTION_GROUP(groupParam)                                                                                            \
     .group = groupParam,
 #define CONFIG_OPTION_GROUP_ID(groupIdParam)                                                                                       \
@@ -208,19 +202,6 @@ cfgCommandHelpSet(bool help)
     configStatic.help = help;
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-ConfigDefineCommand
-cfgCommandDefIdFromId(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN((ConfigDefineCommand)commandId);
 }
 
 /**********************************************************************************************************************************/
@@ -536,30 +517,17 @@ cfgOptionGroupValid(ConfigOptionGroup groupId)
 }
 
 /**********************************************************************************************************************************/
-ConfigDefineOption
-cfgOptionDefIdFromId(ConfigOption optionId)
+static Variant *
+cfgOptionDefaultValue(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-
-    FUNCTION_TEST_RETURN(configOptionData[optionId].defineId);
-}
-
-/**********************************************************************************************************************************/
-static Variant *
-cfgOptionDefaultValue(ConfigDefineOption optionDefId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionDefId);
-    FUNCTION_TEST_END();
-
     Variant *result;
-    Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId));
+    Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommand(), optionId));
 
-    switch (cfgDefOptionType(optionDefId))
+    switch (cfgDefOptionType(optionId))
     {
         case cfgDefOptTypeBoolean:
         {
@@ -586,7 +554,7 @@ cfgOptionDefaultValue(ConfigDefineOption optionDefId)
             break;
 
         default:
-            THROW_FMT(AssertError, "default value not available for option type %d", cfgDefOptionType(optionDefId));
+            THROW_FMT(AssertError, "default value not available for option type %d", cfgDefOptionType(optionId));
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -603,13 +571,11 @@ cfgOptionDefault(ConfigOption optionId)
 
     if (configStatic.option[optionId].defaultValue == NULL)
     {
-        ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
-
-        if (cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId) != NULL)
+        if (cfgDefOptionDefault(cfgCommand(), optionId) != NULL)
         {
             MEM_CONTEXT_BEGIN(configStatic.memContext)
             {
-                configStatic.option[optionId].defaultValue = cfgOptionDefaultValue(optionDefId);
+                configStatic.option[optionId].defaultValue = cfgOptionDefaultValue(optionId);
             }
             MEM_CONTEXT_END();
         }
@@ -723,19 +689,6 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
-cfgOptionIdx(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-
-    FUNCTION_TEST_RETURN(configOptionData[optionId].index);
-}
-
-/**********************************************************************************************************************************/
 int
 cfgOptionId(const char *optionName)
 {
@@ -752,34 +705,6 @@ cfgOptionId(const char *optionName)
             result = optionId;
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-ConfigOption
-cfgOptionIdFromDefId(ConfigDefineOption optionDefId, unsigned int index)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionDefId);
-        FUNCTION_TEST_PARAM(UINT, index);
-    FUNCTION_TEST_END();
-
-    // Search for the option
-    ConfigOption optionId;
-
-    for (optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
-    {
-        if (configOptionData[optionId].defineId == optionDefId)
-            break;
-    }
-
-    // If the mapping is not found then there is a bug in the code generator
-    ASSERT(optionId != CFG_OPTION_TOTAL);
-
-    // Make sure the index is valid
-    ASSERT(index < cfgDefOptionIndexTotal(optionDefId));
-
-    // Return with original index
-    FUNCTION_TEST_RETURN(optionId + index);
 }
 
 /***********************************************************************************************************************************
@@ -806,7 +731,6 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int index)
     FUNCTION_TEST_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(configOptionData[optionId].index == 0);
     ASSERT(configOptionData[optionId].group);
     ASSERT(index <= configStatic.optionGroup[configOptionData[optionId].groupId].indexMax);
 
@@ -883,7 +807,6 @@ cfgOptionInternal(ConfigOption optionId, unsigned int index, VariantType typeReq
     FUNCTION_TEST_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(configOptionData[optionId].index == 0);
     CHECK(!indexed || configOptionData[optionId].group);
     ASSERT(
         (indexed && index <= configStatic.optionGroup[configOptionData[optionId].groupId].indexMax) ||
@@ -1142,15 +1065,16 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
             // least one option set in the group for that index.
             if (configOptionData[optionId].group && source != cfgSourceDefault)
             {
-                unsigned int groupId = configOptionData[optionId].groupId;
+                // FIX THIS
+                // unsigned int groupId = configOptionData[optionId].groupId;
 
-                configStatic.optionGroup[groupId].value |= (unsigned int)1 << configOptionData[optionId].index;
-
-                if (configOptionData[optionId].index > configStatic.optionGroup[groupId].indexMax)
-                    configStatic.optionGroup[groupId].indexMax = configOptionData[optionId].index;
+                // configStatic.optionGroup[groupId].value |= (unsigned int)1 << configOptionData[optionId].index;
+                //
+                // if (configOptionData[optionId].index > configStatic.optionGroup[groupId].indexMax)
+                //     configStatic.optionGroup[groupId].indexMax = configOptionData[optionId].index;
             }
 
-            switch (cfgDefOptionType(cfgOptionDefIdFromId(optionId)))
+            switch (cfgDefOptionType(optionId))
             {
                 case cfgDefOptTypeBoolean:
                 {
@@ -1262,7 +1186,6 @@ cfgOptionIdxTest(ConfigOption optionId, unsigned int index)
     FUNCTION_TEST_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(configOptionData[optionId].index == 0);
     ASSERT(configOptionData[optionId].group);
     ASSERT(index <= configStatic.optionGroup[configOptionData[optionId].groupId].indexMax);
 
