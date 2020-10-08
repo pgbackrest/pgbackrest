@@ -196,10 +196,10 @@ ioRead(IoRead *this, Buffer *buffer)
     if (this->output != NULL && bufUsed(this->output) - this->outputPos > 0 && bufRemains(buffer) > 0)
     {
         // Internal output buffer remains taking into account the position
-        size_t outputRemains = bufUsed(this->output) - this->outputPos;
+        size_t outputInternalRemains = bufUsed(this->output) - this->outputPos;
 
         // Determine how much data should be copied
-        size_t size = outputRemains > bufRemains(buffer) ? bufRemains(buffer) : outputRemains;
+        size_t size = outputInternalRemains > bufRemains(buffer) ? bufRemains(buffer) : outputInternalRemains;
 
         // Copy data to the output buffer
         bufCatSub(buffer, this->output, this->outputPos, size);
@@ -243,15 +243,15 @@ ioReadLineParam(IoRead *this, bool allowEof)
     do
     {
         // Internal output buffer remains taking into account the position
-        size_t outputRemains = bufUsed(this->output) - this->outputPos;
+        size_t outputInternalRemains = bufUsed(this->output) - this->outputPos;
 
-        if (outputRemains > 0)
+        if (outputInternalRemains > 0)
         {
             // Internal output buffer pointer taking into account the position
             char *outputPtr = (char *)bufPtr(this->output) + this->outputPos;
 
             // Search for a linefeed in the buffer
-            char *linefeed = memchr(outputPtr, '\n', outputRemains);
+            char *linefeed = memchr(outputPtr, '\n', outputInternalRemains);
 
             // A linefeed was found so get the string
             if (linefeed != NULL)
@@ -269,11 +269,15 @@ ioReadLineParam(IoRead *this, bool allowEof)
         if (result == NULL)
         {
             // If there is remaining data left in the internal output buffer then trim off the used data
-            if (outputRemains > 0)
-                memmove(bufPtr(this->output), bufPtr(this->output) + (bufUsed(this->output) - outputRemains), outputRemains);
+            if (outputInternalRemains > 0)
+            {
+                memmove(
+                    bufPtr(this->output), bufPtr(this->output) + (bufUsed(this->output) - outputInternalRemains),
+                    outputInternalRemains);
+            }
 
             // Set used bytes and reset position
-            bufUsedSet(this->output, outputRemains);
+            bufUsedSet(this->output, outputInternalRemains);
             this->outputPos = 0;
 
             // If the buffer is full then the linefeed (if it exists) is outside the buffer
