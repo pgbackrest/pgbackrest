@@ -43,9 +43,6 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionIndex(cfgOptPgHostCmd + 6), 6, "option index");
         TEST_RESULT_INT(cfgOptionIndex(cfgOptCompressLevel), 0, "option index");
 
-        TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptPgPath), 8, "option index total");
-        TEST_RESULT_INT(cfgOptionIndexTotal(cfgOptLogLevelConsole), 1, "option index total");
-
         TEST_RESULT_Z(cfgOptionName(cfgOptBackupStandby), "backup-standby", "option id from name");
     }
 
@@ -143,6 +140,30 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), false, "option valid but value is null");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptConfig, cfgSourceParam, varNewStrZ("cfg")), "set option config");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), true, "option valid and value not null");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option groups");
+
+        TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), false, "pg option group is not valid");
+        TEST_RESULT_BOOL(cfgOptionGroupIdxTest(cfgOptGrpPg, 0), false, "pg option group index 0 is not set");
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 0, "pg option group index total is 0");
+
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPath + 1, true), "set pg1-path valid");
+        TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), true, "pg option group is valid");
+        TEST_RESULT_BOOL(cfgOptionGroupIdxTest(cfgOptGrpPg, 0), true, "pg option group index 0 is set");
+        TEST_RESULT_BOOL(cfgOptionGroupIdxTest(cfgOptGrpPg, 1), false, "pg option group index 1 is not set");
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 1, "pg option group index total is 1");
+
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPath + 7, true), "set pg7-path valid");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptPgPath + 7, cfgSourceParam, VARSTRDEF("/path")), "set pg7-path");
+        TEST_RESULT_BOOL(cfgOptionGroupIdxTest(cfgOptGrpPg, 1), false, "pg option group index 1 is not set");
+        TEST_RESULT_BOOL(cfgOptionGroupIdxTest(cfgOptGrpPg, 7), true, "pg option group index 7 is set");
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 8, "pg option group index total is 8");
+
+        TEST_RESULT_VOID(cfgOptionValidSet(cfgOptPgPath + 5, true), "set pg5-path valid");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptPgPath + 5, cfgSourceDefault, VARSTRDEF("/path")), "set pg5-path");
+        TEST_RESULT_BOOL(cfgOptionGroupIdxTest(cfgOptGrpPg, 5), false, "pg option group index 5 is not set");
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 8, "pg option group index total is 8");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(cfgOption(cfgOptOnline), NULL, "online is null");
