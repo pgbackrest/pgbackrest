@@ -427,6 +427,7 @@ lstSort(List *this, SortOrder sortOrder)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->comparator != NULL);
 
     switch (sortOrder)
     {
