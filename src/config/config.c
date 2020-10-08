@@ -60,6 +60,8 @@ typedef struct ConfigOptionData
 
     unsigned int index:5;
     unsigned int defineId:7;
+    bool group:1;                                                   // Is the option in a group?
+    unsigned int groupId:1;                                         // Group id if option is in a group
 } ConfigOptionData;
 
 #define CONFIG_OPTION_LIST(...)                                                                                                    \
@@ -74,6 +76,10 @@ typedef struct ConfigOptionData
     .name = nameParam,
 #define CONFIG_OPTION_DEFINE_ID(defineIdParam)                                                                                     \
     .defineId = defineIdParam,
+#define CONFIG_OPTION_GROUP(groupParam)                                                                                            \
+    .group = groupParam,
+#define CONFIG_OPTION_GROUP_ID(groupIdParam)                                                                                       \
+    .groupId = groupIdParam,
 
 /***********************************************************************************************************************************
 Include the automatically generated configuration data
@@ -94,6 +100,14 @@ static struct ConfigStatic
     String *exe;                                                    // Location of the executable
     bool help;                                                      // Was help requested for the command?
     StringList *paramList;                                          // Parameters passed to the command (if any)
+
+    // Group options that are related together to allow valid and test checks across all options in the group
+    struct
+    {
+        bool valid;                                                 // Is option group valid for the current command?
+        unsigned int indexMax;                                      // Max index in option group
+        unsigned int value;                                         // Does option group index have any values?
+    } optionGroup[CFG_OPTION_GROUP_TOTAL];
 
     // Map options names and indexes to option definitions
     struct
@@ -471,6 +485,47 @@ cfgParameterAllowed(void)
 }
 
 /**********************************************************************************************************************************/
+bool
+cfgOptionGroupIdxTest(ConfigOptionGroup groupId, unsigned int index)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, groupId);
+        FUNCTION_TEST_PARAM(UINT, index);
+    FUNCTION_TEST_END();
+
+    ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
+
+    FUNCTION_TEST_RETURN(
+        cfgOptionGroupValid(groupId) && (index == 0 || configStatic.optionGroup[groupId].value & ((unsigned int)1 << index)));
+}
+
+/**********************************************************************************************************************************/
+unsigned int
+cfgOptionGroupIdxTotal(ConfigOptionGroup groupId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, groupId);
+    FUNCTION_TEST_END();
+
+    ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
+
+    FUNCTION_TEST_RETURN(cfgOptionGroupValid(groupId) ? configStatic.optionGroup[groupId].indexMax + 1 : 0);
+}
+
+/**********************************************************************************************************************************/
+bool
+cfgOptionGroupValid(ConfigOptionGroup groupId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, groupId);
+    FUNCTION_TEST_END();
+
+    ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
+
+    FUNCTION_TEST_RETURN(configStatic.optionGroup[groupId].valid);
+}
+
+/**********************************************************************************************************************************/
 ConfigDefineOption
 cfgOptionDefIdFromId(ConfigOption optionId)
 {
@@ -687,19 +742,6 @@ cfgOptionId(const char *optionName)
             result = optionId;
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-cfgOptionIndexTotal(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-
-    FUNCTION_TEST_RETURN(cfgDefOptionIndexTotal(configOptionData[optionId].defineId));
 }
 
 /**********************************************************************************************************************************/
@@ -983,6 +1025,18 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
         // Only set value if it is not null
         if (value != NULL)
         {
+            // If this option is in a group then set the value in the group for the option's index. This indicates that there is at
+            // least one option set in the group for that index.
+            if (configOptionData[optionId].group && source != cfgSourceDefault)
+            {
+                unsigned int groupId = configOptionData[optionId].groupId;
+
+                configStatic.optionGroup[groupId].value |= (unsigned int)1 << configOptionData[optionId].index;
+
+                if (configOptionData[optionId].index > configStatic.optionGroup[groupId].indexMax)
+                    configStatic.optionGroup[groupId].indexMax = configOptionData[optionId].index;
+            }
+
             switch (cfgDefOptionType(cfgOptionDefIdFromId(optionId)))
             {
                 case cfgDefOptTypeBoolean:
@@ -1110,6 +1164,10 @@ cfgOptionValidSet(ConfigOption optionId, bool valid)
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
     configStatic.option[optionId].valid = valid;
+
+    // If this option is in a group then the group is also valid
+    if (configOptionData[optionId].group)
+        configStatic.optionGroup[configOptionData[optionId].groupId].valid = true;
 
     FUNCTION_TEST_RETURN_VOID();
 }
