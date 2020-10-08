@@ -29,7 +29,9 @@ use constant BLDLCL_FILE_CONFIG                                     => 'config';
 
 use constant BLDLCL_CONSTANT_COMMAND                                => '01-constantCommand';
 use constant BLDLCL_CONSTANT_COMMAND_TOTAL                          => 'CFG_COMMAND_TOTAL';
-use constant BLDLCL_CONSTANT_OPTION                                 => '02-constantOption';
+use constant BLDLCL_CONSTANT_OPTION_GROUP                           => '02-constantOptionGroup';
+use constant BLDLCL_CONSTANT_OPTION_GROUP_TOTAL                     => 'CFG_OPTION_GROUP_TOTAL';
+use constant BLDLCL_CONSTANT_OPTION                                 => '03-constantOption';
 use constant BLDLCL_CONSTANT_OPTION_TOTAL                           => 'CFG_OPTION_TOTAL';
 
 use constant BLDLCL_DATA_COMMAND_CONSTANT                           => '01-commandConstant';
@@ -38,7 +40,8 @@ use constant BLDLCL_DATA_OPTION_CONSTANT                            => '03-optio
 use constant BLDLCL_DATA_OPTION                                     => '04-option';
 
 use constant BLDLCL_ENUM_COMMAND                                    => '01-enumCommand';
-use constant BLDLCL_ENUM_OPTION                                     => '02-enumOption';
+use constant BLDLCL_ENUM_OPTION_GROUP                               => '02-enumOptionGroup';
+use constant BLDLCL_ENUM_OPTION                                     => '03-enumOption';
 
 ####################################################################################################################################
 # Definitions for constants and data to build
@@ -58,6 +61,10 @@ my $rhBuild =
                 {
                     &BLD_SUMMARY => 'Command',
                 },
+                &BLDLCL_CONSTANT_OPTION_GROUP =>
+                {
+                    &BLD_SUMMARY => 'Option group',
+                },
                 &BLDLCL_CONSTANT_OPTION =>
                 {
                     &BLD_SUMMARY => 'Option',
@@ -70,6 +77,13 @@ my $rhBuild =
                 {
                     &BLD_SUMMARY => 'Command',
                     &BLD_NAME => 'ConfigCommand',
+                    &BLD_LIST => [],
+                },
+
+                &BLDLCL_ENUM_OPTION_GROUP =>
+                {
+                    &BLD_SUMMARY => 'Option group',
+                    &BLD_NAME => 'ConfigOptionGroup',
                     &BLD_LIST => [],
                 },
 
@@ -123,6 +137,13 @@ sub buildConfigOptionEnum
 }
 
 push @EXPORT, qw(buildConfigOptionEnum);
+
+sub buildConfigOptionGroupEnum
+{
+    return bldEnum('cfgOptGrp', shift)
+}
+
+push @EXPORT, qw(buildConfigOptionGroupEnum);
 
 ####################################################################################################################################
 # Build constants and data
@@ -197,6 +218,24 @@ sub buildConfig
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_COMMAND}{&BLD_CONSTANT}
         {&BLDLCL_CONSTANT_COMMAND_TOTAL}{&BLD_CONSTANT_VALUE} = $iCommandTotal;
 
+    # Build option group constants and data
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $rhOptionGroupDefine = cfgDefineOptionGroup();
+    $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_ENUM}{&BLDLCL_ENUM_OPTION_GROUP};
+    my $iGroupTotal = 0;
+
+    foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
+    {
+        my $strGroupEnum = buildConfigOptionGroupEnum($strGroup);
+        push(@{$rhEnum->{&BLD_LIST}}, $strGroupEnum);
+
+        $iGroupTotal++;
+    }
+
+    # Set option total constant
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION_GROUP}{&BLD_CONSTANT}
+        {&BLDLCL_CONSTANT_OPTION_GROUP_TOTAL}{&BLD_CONSTANT_VALUE} = $iGroupTotal;
+
     # Build option constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $strOptionConst;
@@ -238,7 +277,22 @@ sub buildConfig
                 "    (\n" .
                 "        CONFIG_OPTION_NAME(${strOptionConst})\n" .
                 "        CONFIG_OPTION_INDEX(" . ($iOptionIndex - 1) . ")\n" .
-                "        CONFIG_OPTION_DEFINE_ID(" . buildConfigDefineOptionEnum($strOption) . ")\n" .
+                "        CONFIG_OPTION_DEFINE_ID(" . buildConfigDefineOptionEnum($strOption) . ")\n";
+
+            if ($rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
+            {
+                $strBuildSource .=
+                    "        CONFIG_OPTION_GROUP(true)\n" .
+                    "        CONFIG_OPTION_GROUP_ID(" . buildConfigOptionGroupEnum($rhConfigDefine->{$strOption}{&CFGDEF_GROUP}) .
+                        ")\n";
+            }
+            else
+            {
+                $strBuildSource .=
+                    "        CONFIG_OPTION_GROUP(false)\n";
+            }
+
+            $strBuildSource .=
                 "    )\n";
 
 
