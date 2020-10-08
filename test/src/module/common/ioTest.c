@@ -405,6 +405,7 @@ testRun(void)
         // Start with a small read
         TEST_RESULT_UINT(ioReadSmall(read, buffer), 6, "read buffer");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "AAAAAA", "    check buffer");
+        bufUsedSet(buffer, 3);
         bufLimitSet(buffer, 3);
 
         // Do line reads of various lengths
