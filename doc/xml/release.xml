@@ -12,7 +12,55 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.30dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.31dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="brian.peterson"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="brian.peterson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>repo-azure-endpoint</br-option> option.</p>
+                    </release-item>
+                </release-feature-list>
+
+                <release-development-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add option groups.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Optimize small reads in <code>IoRead</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Reduce buffer used when size limit set."/>
+                        <commit subject="Assert when buffer used is greater than size limit."/>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Assert when buffer used is greater than size limit.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2020-10-05" version="2.30" title="PostgreSQL 13 Support">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -27,16 +75,22 @@
                     </release-item>
                 </release-bug-list>
 
-                <release-improvement-list>
+                <release-feature-list>
                     <release-item>
+                        <commit subject="Ignore backup_manifest in PG13."/>
+                        <commit subject="Update PostgreSQL 13 test catalog versions missed in 6bb111c1."/>
+                        <commit subject="Update test containers for PostgreSQL 13."/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Ignore <file>backup_manifest</file> in <postgres/> 13.</p>
+                        <p><postgres/> 13 support.</p>
                     </release-item>
+                </release-feature-list>
 
+                <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -64,6 +118,17 @@
 
                         <p>Add hint about starting the stanza when WAL segment not found.</p>
                     </release-item>
+
+                    <release-item>
+                        <commit subject="Add hint and documentation for protocol version mismatches."/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="loop-evgeny"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hint for protocol version mismatch.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -85,6 +150,42 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <commit subject="Add hint and documentation for protocol version mismatches."/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="loop-evgeny"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add note that <backrest/> versions must match when running remotely.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Move info command text to the reference and link to user guide."/>
+                        <commit subject="Add text rendering for page links missed in 597739fa."/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="christophe.courtois"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Move info command text to the reference and link to user guide.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="heath.lord"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Update yum repository path for <proper>CentOS/RHEL</proper> user guide.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2020-08-31" version="2.29" title="Auto S3 Credentials on AWS">
@@ -8671,6 +8772,11 @@
             <contributor-id type="github">scrummyin</contributor-id>
         </contributor>
 
+        <contributor id="brian.peterson">
+            <contributor-name-display>Brian Peterson</contributor-name-display>
+            <contributor-id type="github">brimo2k</contributor-id>
+        </contributor>
+
         <contributor id="bruce.burdick">
             <contributor-name-display>Bruce Burdick</contributor-name-display>
             <contributor-id type="github">baburdick</contributor-id>
@@ -8999,6 +9105,11 @@
         <contributor id="leonardo.gg.avellar">
             <contributor-name-display>Leonardo GG Avellar</contributor-name-display>
             <contributor-id type="github">L30Bola</contributor-id>
+        </contributor>
+
+        <contributor id="loop-evgeny">
+            <contributor-name-display>loop-evgeny</contributor-name-display>
+            <contributor-id type="github">loop-evgeny</contributor-id>
         </contributor>
 
         <contributor id="luca.ferrari">

@@ -295,6 +295,7 @@ bufLimitSet(Buffer *this, size_t limit)
 
     ASSERT(this != NULL);
     ASSERT(limit <= this->sizeAlloc);
+    ASSERT(limit >= this->used);
 
     this->size = limit;
     this->sizeLimit = true;

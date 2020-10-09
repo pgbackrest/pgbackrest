@@ -107,7 +107,6 @@ typedef enum
     configDefDataTypeDefault,
     configDefDataTypeDepend,
     configDefDataTypeInternal,
-    configDefDataTypePrefix,
     configDefDataTypeRequired,
     configDefDataTypeHelpNameAlt,
     configDefDataTypeHelpSummary,
@@ -143,9 +142,6 @@ typedef enum
         (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMinParam * 100)) / 1000000000L),                                 \
         (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMaxParam * 100)) % 1000000000L),                                 \
         (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMaxParam * 100)) / 1000000000L)),
-
-#define CFGDEFDATA_OPTION_OPTIONAL_PREFIX(prefixParam)                                                                             \
-    CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypePrefix, 1, 0, prefixParam),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_DEPEND(optionDepend)                                                                            \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeDepend, 0, optionDepend),
@@ -319,7 +315,23 @@ cfgDefOptionAllowList(ConfigDefineCommand commandDefId, ConfigDefineOption optio
     FUNCTION_TEST_RETURN(dataDefFound);
 }
 
-const char *
+static unsigned int
+cfgDefOptionAllowListValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandDefId);
+        FUNCTION_TEST_PARAM(ENUM, optionDefId);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandDefId < cfgDefCommandTotal());
+    ASSERT(optionDefId < cfgDefOptionTotal());
+
+    CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowList);
+
+    FUNCTION_TEST_RETURN(dataDefListSize);
+}
+
+static const char *
 cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, unsigned int valueId)
 {
     FUNCTION_TEST_BEGIN();
@@ -335,22 +347,6 @@ cfgDefOptionAllowListValue(ConfigDefineCommand commandDefId, ConfigDefineOption 
     CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowList);
 
     FUNCTION_TEST_RETURN((char *)dataDefList[valueId]);
-}
-
-unsigned int
-cfgDefOptionAllowListValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandDefId);
-        FUNCTION_TEST_PARAM(ENUM, optionDefId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandDefId < cfgDefCommandTotal());
-    ASSERT(optionDefId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(commandDefId, optionDefId, configDefDataTypeAllowList);
-
-    FUNCTION_TEST_RETURN(dataDefListSize);
 }
 
 // Check if the value matches a value in the allow list
@@ -725,26 +721,6 @@ cfgDefOptionName(ConfigDefineOption optionDefId)
     ASSERT(optionDefId < cfgDefOptionTotal());
 
     FUNCTION_TEST_RETURN(configDefineOptionData[optionDefId].name);
-}
-
-/**********************************************************************************************************************************/
-const char *
-cfgDefOptionPrefix(ConfigDefineOption optionDefId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionDefId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionDefId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(-1, optionDefId, configDefDataTypePrefix);
-
-    char *result = NULL;
-
-    if (dataDefFound)
-        result = (char *)dataDefList[0];
-
-    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/

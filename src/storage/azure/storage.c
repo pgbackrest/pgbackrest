@@ -28,12 +28,6 @@ Storage type
 STRING_EXTERN(STORAGE_AZURE_TYPE_STR,                               STORAGE_AZURE_TYPE);
 
 /***********************************************************************************************************************************
-Azure default hosts
-***********************************************************************************************************************************/
-#define AZURE_HOST                                                  "core.windows.net"
-#define AZURE_BLOB_HOST                                             "blob." AZURE_HOST
-
-/***********************************************************************************************************************************
 Azure http headers
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_HEADER_VERSION_STR,                             "x-ms-version");
@@ -730,8 +724,8 @@ static const StorageInterface storageInterfaceAzure =
 Storage *
 storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host, unsigned int port,
-    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host,
+    const String *endpoint, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -743,6 +737,7 @@ storageAzureNew(
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(STRING, endpoint);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
@@ -769,7 +764,7 @@ storageAzureNew(
             .container = strDup(container),
             .account = strDup(account),
             .blockSize = blockSize,
-            .host = host == NULL ? strNewFmt("%s." AZURE_BLOB_HOST, strZ(account)) : host,
+            .host = host == NULL ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : host,
             .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 

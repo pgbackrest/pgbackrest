@@ -188,6 +188,8 @@ testRun(void)
             "  --repo-azure-ca-file             azure repository TLS CA file\n"
             "  --repo-azure-ca-path             azure repository TLS CA path\n"
             "  --repo-azure-container           azure repository container\n"
+            "  --repo-azure-endpoint            azure repository endpoint\n"
+            "                                   [default=blob.core.windows.net]\n"
             "  --repo-azure-host                azure repository host\n"
             "  --repo-azure-key                 azure repository key\n"
             "  --repo-azure-key-type            azure repository key type [default=shared]\n"

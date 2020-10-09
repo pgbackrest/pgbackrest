@@ -101,7 +101,33 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
                 "summary of backups for the stanza(s) requested. This format is subject to change with any release.\n"
             "\n"
             "For machine-readable output use --output=json. The JSON output contains far more information than the text output and "
-                "is kept stable unless a bug is found."
+                "is kept stable unless a bug is found.\n"
+            "\n"
+            "Each stanza has a separate section and it is possible to limit output to a single stanza with the --stanza option. "
+                "The stanza 'status' gives a brief indication of the stanza's health. If this is 'ok' then pgBackRest is "
+                "functioning normally. The 'wal archive min/max' shows the minimum and maximum WAL currently stored in the "
+                "archive. Note that there may be gaps due to archive retention policies or other reasons.\n"
+            "\n"
+            "The 'backup/expire running' message will appear beside the 'status' information if one of those commands is currently "
+                "running on the host.\n"
+            "\n"
+            "The backups are displayed oldest to newest. The oldest backup will always be a full backup (indicated by an F at the "
+                "end of the label) but the newest backup can be full, differential (ends with D), or incremental (ends with I).\n"
+            "\n"
+            "The 'timestamp start/stop' defines the time period when the backup ran. The 'timestamp stop' can be used to determine "
+                "the backup to use when performing Point-In-Time Recovery. More information about Point-In-Time Recovery can be "
+                "found in the Point-In-Time Recovery section.\n"
+            "\n"
+            "The 'wal start/stop' defines the WAL range that is required to make the database consistent when restoring. The "
+                "backup command will ensure that this WAL range is in the archive before completing.\n"
+            "\n"
+            "The 'database size' is the full uncompressed size of the database while 'backup size' is the amount of data actually "
+                "backed up (these will be the same for full backups). The 'repository size' includes all the files from this "
+                "backup and any referenced backups that are required to restore the database while 'repository backup size' "
+                "includes only the files in this backup (these will also be the same for full backups). Repository sizes reflect "
+                "compressed file sizes if compression is enabled in pgBackRest or the filesystem.\n"
+            "\n"
+            "The 'backup reference list' contains the additional backups that are required to restore this backup."
         )
     )
 
@@ -2227,7 +2253,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "0"
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-host")
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
@@ -2288,7 +2313,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-cmd")
         )
     )
@@ -2329,7 +2353,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-config")
         )
     )
@@ -2370,7 +2393,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
         )
     )
 
@@ -2410,7 +2432,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
         )
     )
 
@@ -2449,7 +2470,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-ssh-port")
         )
     )
@@ -2490,7 +2510,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("postgres")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-user")
         )
     )
@@ -2525,7 +2544,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
@@ -2588,7 +2606,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-path")
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
@@ -2634,7 +2651,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgPath)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("5432")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-port")
         )
     )
@@ -2673,7 +2689,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgPath)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-socket-path")
         )
     )
@@ -2710,7 +2725,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgPath)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("pg")
         )
     )
 
@@ -3047,8 +3061,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "azure"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3100,8 +3112,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "azure"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3153,8 +3163,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "azure"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3209,8 +3217,59 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "azure"
             )
+        )
+    )
 
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
+        CFGDEFDATA_OPTION_NAME("repo-azure-endpoint")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository endpoint.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdStop)
+            CFGDEFDATA_OPTION_COMMAND(cfgDefCmdVerify)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgDefOptRepoType,
+                "azure"
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("blob.core.windows.net")
         )
     )
 
@@ -3262,8 +3321,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "azure"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3315,8 +3372,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "azure"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3379,7 +3434,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("shared")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3434,7 +3488,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("443")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3489,7 +3542,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3541,8 +3593,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoCipherType,
                 "aes-256-cbc"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3601,7 +3651,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("none")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3634,7 +3683,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("hardlink")
         )
     )
@@ -3690,7 +3738,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "0"
             )
 
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-host")
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
@@ -3770,7 +3817,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-cmd")
         )
     )
@@ -3816,7 +3862,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-config")
         )
     )
@@ -3862,7 +3907,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3907,7 +3951,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -3951,7 +3994,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-ssh-port")
         )
     )
@@ -3999,7 +4041,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("pgbackrest")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-user")
         )
     )
@@ -4041,7 +4082,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
@@ -4129,7 +4169,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/var/lib/pgbackrest")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4173,7 +4212,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-archive")
         )
     )
@@ -4219,7 +4257,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("full")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-archive-type")
         )
     )
@@ -4253,7 +4290,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-diff")
         )
     )
@@ -4288,7 +4324,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-full")
         )
     )
@@ -4334,7 +4369,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("count")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4389,8 +4423,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4442,8 +4474,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4495,8 +4525,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4548,8 +4576,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4601,8 +4627,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4654,8 +4678,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoS3KeyType,
                 "shared"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4707,8 +4729,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoS3KeyType,
                 "shared"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4771,7 +4791,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("shared")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4826,7 +4845,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("443")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4878,8 +4896,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoType,
                 "s3"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4931,8 +4947,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoS3KeyType,
                 "auto"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -4984,8 +4998,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgDefOptRepoS3KeyType,
                 "shared"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -5048,7 +5060,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("host")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 
@@ -5103,7 +5114,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("repo-s3-verify-ssl")
         )
     )
@@ -5165,7 +5175,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("posix")
-            CFGDEFDATA_OPTION_OPTIONAL_PREFIX("repo")
         )
     )
 

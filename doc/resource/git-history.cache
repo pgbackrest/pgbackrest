@@ -1,5 +1,157 @@
 [
     {
+        "commit": "9229d6c866ee6296180bfefdbce42660b9e59b98",
+        "date": "2020-10-05 11:51:45 -0400",
+        "subject": "v2.30: PostgreSQL 13 Support"
+    },
+    {
+        "commit": "74151d57ba03a4e9386f8e988d7f832ccfbe1e25",
+        "date": "2020-10-05 08:42:18 -0400",
+        "subject": "Add apt-get update to contributing guide.",
+        "body": "This allows apt-get to work correctly even if the base container is a bit out of date."
+    },
+    {
+        "commit": "293add28fdd306b863b077d27b0f3438b6594110",
+        "date": "2020-10-05 08:37:48 -0400",
+        "subject": "Add text rendering for page links missed in 597739fa.",
+        "body": "Since links are not possible in the command line help just display the name of the linked section.\n\nAlso, during reference text rendering there is no out key so make sure it is defined before trying to use it."
+    },
+    {
+        "commit": "597739fafecf349af470134200aafc65a53eabf2",
+        "date": "2020-09-25 11:26:27 -0400",
+        "subject": "Move info command text to the reference and link to user guide.",
+        "body": "This means the same text will appear in both places, which should make it easier to find.\r\n\r\nAlso update the link code to allow both page and section to be specified rather than only one or the other."
+    },
+    {
+        "commit": "31962377d9d53aed4b8b01accdba7801fa5ce435",
+        "date": "2020-09-25 10:30:29 -0400",
+        "subject": "Add hint and documentation for protocol version mismatches.",
+        "body": "Update the documentation to explicitly state that versions must match across hosts when running remotely.\r\n\r\nAdd a hint to the protocol version mismatch error to help the user identify the problem."
+    },
+    {
+        "commit": "b096a25b49875b1303c066b6f659dd5afffebc56",
+        "date": "2020-09-24 11:19:51 -0400",
+        "subject": "Update test containers for PostgreSQL 13.",
+        "body": "Add older PostgreSQL versions to the u18 container that were not available before.\n\nThis also updates all minor versions for prior versions of PostgreSQL."
+    },
+    {
+        "commit": "ad79932ba5bf3df7e59677c29b32477b7022ea16",
+        "date": "2020-09-22 11:57:38 -0400",
+        "subject": "Add internal verify command.",
+        "body": "Scan the WAL archive for missing or invalid files and build up ranges of WAL that will be used to verify backup integrity. A number of errors and warnings are currently emitted but they should not be considered authoritative (yet).\r\n\r\nThe command is incomplete so is marked internal."
+    },
+    {
+        "commit": "3e8a6febe66ef30dee104a895fd7e3c5f8ad0660",
+        "date": "2020-09-21 14:37:07 -0400",
+        "subject": "Update yum repository path for CentOS/RHEL user guide.",
+        "body": "Update to the current yum.p.o repository so the CentOS/RHEL user guide will build on PostgreSQL 13."
+    },
+    {
+        "commit": "927d9adbee780a51639955edb74ce7a4850db100",
+        "date": "2020-09-18 16:55:26 -0400",
+        "subject": "Improve PostgreSQL version identification.",
+        "body": "Previously, catalog versions were fixed for all versions which made maintaining the catalog versions during PostgreSQL beta and release candidate cycles very painful. A version of pgBackRest which was functionally compatible was rendered useless by a catalog version bump in PostgreSQL.\r\n\r\nInstead use only the control version to identify a PostgreSQL version when possible. Some older versions require a catalog version to positively identify a PostgreSQL version, so include them when required.\r\n\r\nSince the catalog number is required to work with tablespaces it will need to be stored. There's already a copy of it in backup.info so use that (even though we have been ignoring it in the C versions)."
+    },
+    {
+        "commit": "94475bfbe6a694b150091d5f7208b0d01ab07a40",
+        "date": "2020-09-17 15:17:13 -0400",
+        "subject": "Add missing semicolon in backtrace debug code.",
+        "body": "Apparently backtrace has not been used for debugging since it was broken in 7fba1f0b.\n\nEven though this is test code it might be good to find a way to test it to prevent regressions."
+    },
+    {
+        "commit": "4cd61152f510140a30525e995b0901590d55012c",
+        "date": "2020-09-17 12:39:30 -0400",
+        "subject": "Update PostgreSQL 13 test catalog versions missed in 6bb111c1.",
+        "body": "These values are not used by the Perl integration tests so maybe it would be better to remove them, but for now just update since they should not be changing again for PG13."
+    },
+    {
+        "commit": "9db314397302bc01d81a24cb0edaceefa2b2e9d0",
+        "date": "2020-09-17 10:35:27 -0400",
+        "subject": "Error with hints when backup user cannot read pg_settings.",
+        "body": "This condition used to give a not-very-clear error which we have been intending to improve. But in the meantime the changes in fbff299 resulted in a segfault for this condition instead because the data_directory was assumed to be non-NULL.\r\n\r\nFix this by explicitly throwing an error with hints when any row in pg_settings cannot be selected."
+    },
+    {
+        "commit": "c71609879bb3782dd7da40c14313e75e78262bfc",
+        "date": "2020-09-16 09:33:37 -0400",
+        "subject": "Fix incorrect control/catalog versions in command/stanza test.",
+        "body": "These were not caught because backup info load automatically corrects them."
+    },
+    {
+        "commit": "8dce7bbb608c65a16a4e41ae2cd95c588154e9e0",
+        "date": "2020-09-14 10:15:40 -0400",
+        "subject": "Ignore backup_manifest in PG13.",
+        "body": "This file is created by pg_basebackup so might be in the data directory if the cluster was restored from a pg_basebackup backup. Also exclude backup_manifest.tmp since it is possible to find that in the backup directory."
+    },
+    {
+        "commit": "fc77c511824feb77c0a5f4cd5d95795184b65d2e",
+        "date": "2020-09-11 10:10:25 -0400",
+        "subject": "Improve working directory error message.",
+        "body": "Improve the wording of the error message and add a hint to make it clearer what is wrong and how the user can fix it.\r\n\r\nAlso change the assert to a regular error since this is not an internal error."
+    },
+    {
+        "commit": "dac182c06e84ba94a3e03cc0769367bdc89ba3b7",
+        "date": "2020-09-11 08:23:26 -0400",
+        "subject": "Improve alignment in TEST_ERROR output.",
+        "body": "Align the error types and messages so they are easier to compare."
+    },
+    {
+        "commit": "ecb112f802be958fdccf003be2e9b62aada98bb3",
+        "date": "2020-09-08 13:02:13 -0400",
+        "subject": "Add infoArchiveMove() and infoBackupMove()."
+    },
+    {
+        "commit": "5941f5631afc73e504d67827587a90ca91ead399",
+        "date": "2020-09-08 12:55:56 -0400",
+        "subject": "Extern infoBackupNewLoad() and infoArchiveNewLoad()."
+    },
+    {
+        "commit": "4239f8a81aa5da52667149a4933956347492b748",
+        "date": "2020-09-08 12:47:35 -0400",
+        "subject": "Add manifestFree()."
+    },
+    {
+        "commit": "fead0046918ad50eafa30991c2e8d6aabbf254a0",
+        "date": "2020-09-08 12:44:08 -0400",
+        "subject": "Move WAL constants to postgres/interface header."
+    },
+    {
+        "commit": "b8efb13bcb11027fcbb3bd386446280cd8b625ce",
+        "date": "2020-09-08 12:28:56 -0400",
+        "subject": "Move archiveIdComparator() to archive/common module."
+    },
+    {
+        "commit": "9fd31913a8cbff1f1371ccabfebb003cb3c47c05",
+        "date": "2020-09-03 07:49:49 -0400",
+        "subject": "Add hint about starting the stanza when WAL segment not found.",
+        "body": "If a stop command has been issued the check command fails due to archiving timing out.\n\nProvide a hint to document this situation and point the user in the proper direction."
+    },
+    {
+        "commit": "76900d676416758e82b12ea3966daadf6e3b3464",
+        "date": "2020-09-02 14:45:09 -0400",
+        "subject": "Fix contributor name."
+    },
+    {
+        "commit": "41118e1b6813ea41a13c0441c726f3e7c28051d9",
+        "date": "2020-09-02 11:03:49 -0400",
+        "subject": "Allow ProtocolParallel to complete with no jobs.",
+        "body": "If the callback never returned any jobs then protocolParallelDone() would never be true. The reason is that the done state was being set in protocolParallelResult(), which never gets called if there are no results.\r\n\r\nCalling protocolParallelResult() doesn't make much sense in this case so instead move the done logic to protocolParallelDone().\r\n\r\nFor current usage of ProtocolParallel we ensure there are jobs before processing so this is not a live issue, but the new behavior is required for future development."
+    },
+    {
+        "commit": "ce6c492620d9408a432f5b7c04a437ec812788ac",
+        "date": "2020-09-01 11:02:44 -0400",
+        "subject": "Add notes about optional symlinks to repo format 6 design."
+    },
+    {
+        "commit": "bb87d989b840e77d1ceafc8f699972101fb94d96",
+        "date": "2020-08-31 08:20:40 -0400",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "05ef03feb5550f7151ee34afe6b0358637f65fc8",
+        "date": "2020-08-31 07:41:48 -0400",
+        "subject": "Begin v2.30 development."
+    },
+    {
         "commit": "1df7d3eee5baa38504478fafa27de2b1b0fce724",
         "date": "2020-08-31 07:28:22 -0400",
         "subject": "v2.29: Auto S3 Credentials on AWS"
