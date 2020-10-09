@@ -311,14 +311,5 @@ testRun(void)
         TEST_RESULT_STR_Z(pckReadStrP(packRead), "test", "read string");
     }
 
-    // *****************************************************************************************************************************
-    if (testBegin("pckToLog()"))
-    {
-        // TEST_TITLE("log for new pack write");
-        //
-        // PackWrite *packWrite = pckWriteNew(ioBufferWriteNew(bufNew()));
-        // TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{size: 0, extra: 64}", "log");
-    }
-
     FUNCTION_HARNESS_RESULT_VOID();
 }
