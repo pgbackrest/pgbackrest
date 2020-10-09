@@ -4,6 +4,8 @@ Command and Option Configuration Internals
 #ifndef CONFIG_CONFIG_INTERN_H
 #define CONFIG_CONFIG_INTERN_H
 
+#include "config/config.h"
+
 /***********************************************************************************************************************************
 !!!
 ***********************************************************************************************************************************/
@@ -39,7 +41,7 @@ typedef struct Config
     struct
     {
         bool valid;                                                 // Is option valid for current command?
-        Variant *default;                                           // Default value
+        Variant *valueDefault;                                      // Default value
         ConfigOptionValue **valueList;                              // List of values (1 unless the option is indexed)
     } option[CFG_OPTION_TOTAL];
 } Config;

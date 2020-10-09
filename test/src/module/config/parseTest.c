@@ -1472,7 +1472,7 @@ testRun(void)
 
         testOptionFind("no-db-user", 0);
 
-        for (unsigned int optionIdx = 0; optionIdx < cfgDefOptionIndexTotal(cfgDefOptPgPath); optionIdx++)
+        for (unsigned int optionIdx = 0; optionIdx < cfgDefOptionIndexTotal(cfgOptPgPath); optionIdx++)
         {
             testOptionFind(strZ(strNewFmt("db%u-cmd", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostCmd + optionIdx));
             testOptionFind(

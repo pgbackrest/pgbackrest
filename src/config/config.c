@@ -731,10 +731,19 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int index)
     FUNCTION_TEST_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(configOptionData[optionId].group);
-    ASSERT(index <= configStatic.optionGroup[configOptionData[optionId].groupId].indexMax);
 
-    FUNCTION_TEST_RETURN(configOptionData[optionId + index].name);
+    if (configOptionData[optionId].group)
+    {
+        // !!! NOT RIGHT SINCE THIS RETURNS CONST BUT ALLOCATES MEMORY IN THE CALLING CONTEXT
+        String *name = strNewFmt(
+            "%s%u%s", configOptionGroupData[configOptionData[optionId].groupId].name, index + 1,
+            configOptionData[optionId].name + strlen(configOptionGroupData[configOptionData[optionId].groupId].name));
+
+        FUNCTION_TEST_RETURN(strZ(name));
+    }
+
+    ASSERT(index == 0);
+    FUNCTION_TEST_RETURN(cfgOptionName(optionId));
 }
 
 /**********************************************************************************************************************************/
