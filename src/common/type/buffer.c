@@ -295,13 +295,10 @@ bufLimitSet(Buffer *this, size_t limit)
 
     ASSERT(this != NULL);
     ASSERT(limit <= this->sizeAlloc);
+    ASSERT(limit >= this->used);
 
     this->size = limit;
     this->sizeLimit = true;
-
-    // Reduce used if it is now larger than size
-    if (this->used > this->size)
-        this->used = this->size;
 
     FUNCTION_TEST_RETURN_VOID();
 }
