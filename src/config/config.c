@@ -477,6 +477,33 @@ cfgParameterAllowed(void)
 
 /**********************************************************************************************************************************/
 bool
+cfgOptionGroup(ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    FUNCTION_TEST_RETURN(configOptionData[optionId].group);
+}
+
+/**********************************************************************************************************************************/
+unsigned int
+cfgOptionGroupId(ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(configOptionData[optionId].group);
+
+    FUNCTION_TEST_RETURN(configOptionData[optionId].groupId);
+}
+
+/**********************************************************************************************************************************/
+bool
 cfgOptionGroupIdxTest(ConfigOptionGroup groupId, unsigned int index)
 {
     FUNCTION_TEST_BEGIN();

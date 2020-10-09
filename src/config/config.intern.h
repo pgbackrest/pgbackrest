@@ -7,6 +7,11 @@ Command and Option Configuration Internals
 #include "config/config.h"
 
 /***********************************************************************************************************************************
+Define index max
+***********************************************************************************************************************************/
+#define CFG_OPTION_INDEX_MAX                                        256
+
+/***********************************************************************************************************************************
 !!!
 ***********************************************************************************************************************************/
 typedef struct ConfigOptionValue
@@ -34,7 +39,7 @@ typedef struct Config
     {
         bool valid;                                                 // Is option group valid for the current command?
         unsigned int indexTotal;                                    // Max index in option group
-        unsigned int **indexList;                                   // List of indexes
+        unsigned int index[CFG_OPTION_INDEX_MAX];                   // List of indexes
     } optionGroup[CFG_OPTION_GROUP_TOTAL];
 
     // Option data
@@ -42,8 +47,17 @@ typedef struct Config
     {
         bool valid;                                                 // Is option valid for current command?
         Variant *valueDefault;                                      // Default value
-        ConfigOptionValue **valueList;                              // List of values (1 unless the option is indexed)
+        ConfigOptionValue **index;                                  // List of indexed values (only 1 unless the option is indexed)
     } option[CFG_OPTION_TOTAL];
 } Config;
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Is the option in a group?
+bool cfgOptionGroup(ConfigOption optionId);
+
+// Group id if the option is in a group
+unsigned int cfgOptionGroupId(ConfigOption optionId);
 
 #endif
