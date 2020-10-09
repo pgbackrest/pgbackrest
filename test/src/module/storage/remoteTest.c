@@ -227,7 +227,7 @@ testRun(void)
             hrnPackBufToStr(packCheck),
             "1:obj:{2:time:1, 3:u64:5, 4:u32:488, 5:u32:7, 7:str:user, 8:u32:9, 10:str:group}"
             ", 2:obj:{}"
-            ", 3:obj:{1:u32:2, 2:time:-1, 3:u32:0, 4:u32:0, 5:bool:true, 7:u32:0, 8:bool:true, 10:str:../}",
+            ", 3:obj:{1:u32:2, 2:time:-1, 3:u32:0, 4:u32:0, 5:bool:true, 6:u32:0, 7:bool:true, 8:str:../}",
             "check result");
 
         StorageRemoteInfoParseData parseData = {.read = pckReadNewBuf(packCheck)};

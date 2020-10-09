@@ -95,18 +95,20 @@ Callback to write info list into the protocol
 ***********************************************************************************************************************************/
 typedef struct StorageRemoteProtocolInfoListCallbackData
 {
-    MemContext *memContext;
-    PackWrite *write;
-    time_t timeModifiedLast;
-    mode_t modeLast;
-    uid_t userIdLast;
-    gid_t groupIdLast;
-    String *user;
-    String *group;
+    MemContext *memContext;                                         // Mem context used to store values from last call
+    PackWrite *write;                                               // Pack to write into protocol
+    time_t timeModifiedLast;                                        // timeModified from last call
+    mode_t modeLast;                                                // mode from last call
+    uid_t userIdLast;                                               // userId from last call
+    gid_t groupIdLast;                                              // groupId from last call
+    String *user;                                                   // user from last call
+    String *group;                                                  // group from last call
 } StorageRemoteProtocolInfoListCallbackData;
 
 // Helper to write storage info into the protocol. This function is not called unless the info exists so no need to write exists or
 // check for level == storageInfoLevelExists.
+//
+// Fields that do no change from one call to the next are omitted to save bandwidth.
 static void
 storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const StorageInfo *info)
 {
@@ -115,52 +117,56 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
+    // Write type and time
     pckWriteU32P(data->write, info->type, .defaultNull = true);
     pckWriteTimeP(data->write, info->timeModified - data->timeModifiedLast, .defaultNull = true);
 
+    // Write size for files
     if (info->type == storageTypeFile)
         pckWriteU64P(data->write, info->size, .defaultNull = true);
 
+    // Write fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
+        // Write mode
         pckWriteU32P(data->write, info->mode, .defaultNull = true, .defaultValue = data->modeLast);
+
+        // Write user id/name
         pckWriteU32P(data->write, info->userId, .defaultNull = true, .defaultValue = data->userIdLast);
 
         if (info->user == NULL)
-        {
             pckWriteBoolP(data->write, true);
-            pckWriteNullP(data->write);
-        }
         else
         {
             pckWriteNullP(data->write);
             pckWriteStrP(data->write, info->user, .defaultNull = data->user != NULL, .defaultValue = data->user);
         }
 
+        // Write group id/name
         pckWriteU32P(data->write, info->groupId, .defaultNull = true, .defaultValue = data->groupIdLast);
 
         if (info->group == NULL)
-        {
             pckWriteBoolP(data->write, true);
-            pckWriteNullP(data->write);
-        }
         else
         {
             pckWriteNullP(data->write);
             pckWriteStrP(data->write, info->group, .defaultNull = data->group != NULL, .defaultValue = data->group);
         }
 
+        // Write link destination
         if (info->type == storageTypeLink)
             pckWriteStrP(data->write, info->linkDestination);
     }
 
-    data->timeModifiedLast = info->timeModified;
-    data->modeLast = info->mode;
-    data->userIdLast = info->userId;
-    data->groupIdLast = info->groupId;
-
+    // Store defaults to use for the next call. If memContext is NULL this function is only being called one time so there is no
+    // point in storing defaults.
     if (data->memContext != NULL)
     {
+        data->timeModifiedLast = info->timeModified;
+        data->modeLast = info->mode;
+        data->userIdLast = info->userId;
+        data->groupIdLast = info->groupId;
+
         if (!strEq(info->user, data->user) && info->user != NULL)
         {
             strFree(data->user);

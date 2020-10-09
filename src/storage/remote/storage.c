@@ -33,13 +33,13 @@ struct StorageRemote
 /**********************************************************************************************************************************/
 typedef struct StorageRemoteInfoParseData
 {
-    PackRead *read;
-    time_t timeModifiedLast;
-    mode_t modeLast;
-    uid_t userIdLast;
-    gid_t groupIdLast;
-    String *user;
-    String *group;
+    PackRead *read;                                                 // Pack to read from protocol
+    time_t timeModifiedLast;                                        // timeModified from last call
+    mode_t modeLast;                                                // mode from last call
+    uid_t userIdLast;                                               // userId from last call
+    gid_t groupIdLast;                                              // groupId from last call
+    String *user;                                                   // user from last call
+    String *group;                                                  // group from last call
 } StorageRemoteInfoParseData;
 
 // Helper to parse storage info from the protocol output
@@ -51,33 +51,42 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
+    // Read type and time modified
     info->type = pckReadU32P(data->read, .defaultNull = true);
     info->timeModified = pckReadTimeP(data->read, .defaultNull = true) + data->timeModifiedLast;
 
+    // Read size for files
     if (info->type == storageTypeFile)
         info->size = pckReadU64P(data->read, .defaultNull = true);
 
+    // Read fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
+        // Read mode
         info->mode = pckReadU32P(data->read, .defaultNull = true, .defaultValue = data->modeLast);
+
+        // Read user id/name
         info->userId = pckReadU32P(data->read, .defaultNull = true, .defaultValue = data->userIdLast);
 
         if (pckReadBoolP(data->read, .defaultNull = true))
-            info->user = pckReadStrP(data->read, .defaultNull = true);
+            info->user = NULL;
         else
             info->user = pckReadStrP(data->read, .defaultNull = data->user != NULL, .defaultValue = data->user);
 
+        // Read group id/name
         info->groupId = pckReadU32P(data->read, .defaultNull = true, .defaultValue = data->groupIdLast);
 
         if (pckReadBoolP(data->read, .defaultNull = true))
-            info->group = pckReadStrP(data->read, .defaultNull = true);
+            info->group = NULL;
         else
             info->group = pckReadStrP(data->read, .defaultNull = data->group != NULL, .defaultValue = data->group);
 
+        // Read link destination
         if (info->type == storageTypeLink)
             info->linkDestination = pckReadStrP(data->read);
     }
 
+    // Store defaults to use for the next call
     data->timeModifiedLast = info->timeModified;
     data->modeLast = info->mode;
     data->userIdLast = info->userId;
@@ -185,8 +194,7 @@ storageRemoteInfoList(
         // Send command
         protocolClientWriteCommand(this->client, command);
 
-        // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
-        // since the filename is json-encoded so will always include quotes.
+        // Read list
         PackRead *read = pckReadNew(protocolClientIoRead(this->client));
         StorageRemoteInfoParseData parseData = {.read = read};
 
