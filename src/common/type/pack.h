@@ -18,7 +18,10 @@ that reading from the middle is generally not practical. The size of the gap bet
 incurs extra cost, but depending on the field type larger gaps may require additional bytes to store the field ID delta.
 
 NULLs are not stored in a pack and are therefore not typed. A NULL is essentially just a gap in the field IDs. Fields that are
-frequently NULL are best stored at the end of an object.
+frequently NULL are best stored at the end of an object. When using .defaultNull in write functions a NULL will be written (by
+making a gap in the IDs) if the value matches the default. When using .defaultNull in read functions the default will be returned
+when the field is NULL (i.e. missing). The standard default is the C default for that type (e.g. bool = false, int = 0) but can be
+changed with the .defaultValue parameter.
 
 A pack is an object by default. Objects can store fields, objects, or arrays. Objects and arrays will be referred to collectively as
 containers. Fields contain data to be stored, e.g. integers, strings, etc.
@@ -67,7 +70,7 @@ while (pckReadNext(read))
 pckReadArrayEndP(read);
 
 Note that any container (i.e. array or object) resets the field ID to one so there is no need for the caller to maintain a
-cumulative field ID.
+cumulative field ID. At the end of a container the numbering will continue from wherever the outer container left off.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_PACK_H
 #define COMMON_TYPE_PACK_H
