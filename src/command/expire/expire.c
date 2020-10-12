@@ -727,6 +727,37 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
                             // Log if there is more to log
                             else
                                 logExpire(&archiveExpire, archiveId);
+
+                            // Based on the timeline of the backupArchiveStart, look for history files to expire
+                            StringList *historyFilesList =
+                                strLstSort(
+                                    storageListP(
+                                        storageRepo(),
+                                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
+                                        .expression = STRDEF("^[0-F]{8}.history$")),
+                                    sortOrderAsc);
+
+                            for (unsigned int historyFileIdx = 0; historyFileIdx < strLstSize(historyFilesList); historyFileIdx++)
+                            {
+                                String *historyFile = strLstGet(historyFilesList, historyFileIdx);
+
+                                // Extract timeline to compare
+                                if (strCmp(
+                                        strSubN(historyFile, 0, 8), strSubN(archiveRetentionBackup.backupArchiveStart, 0, 8)) < 0)
+                                {
+                                    // Execute the real expiration and deletion only if the dry-run mode is disabled
+                                    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                                    {
+                                        storageRemoveP(
+                                            storageRepoWrite(),
+                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(historyFile)));
+                                    }
+
+                                    LOG_DETAIL_FMT(
+                                        "remove history file: archiveId = %s, file = %s", strZ(archiveId), strZ(historyFile));
+                                }
+                            }
+
                         }
                     }
                 }
