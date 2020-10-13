@@ -48,6 +48,9 @@ pckReadI32P(read, .defaultNull = true, .defaultValue = -1);
 pckReadStringP(read);
 pckReadEndP();
 
+Note that defaults are not stored in the pack so any defaults that were applied when writing (by setting .defaultNull and
+optionally .defaultValue) must be applied again when reading (by setting .defaultNull and optionally .defaultValue).
+
 If we don't care about the NULLs, another way to read is:
 
 PackRead *read = pckReadNew(buffer);
