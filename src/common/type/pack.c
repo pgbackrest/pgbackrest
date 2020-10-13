@@ -4,25 +4,25 @@ Pack Type
 Each pack field begins with a one byte tag. The four high order bits of the tag contain the field type (PackType). The four lower
 order bits vary by type.
 
-Integer types (packTypeData[type].valueMultiBit) when the value is >= -1 and <= 1:
+Integer types (packTypeData[type].valueMultiBit) when an unsigned value is <= 1 or a signed value is >= -1 and <= 0:
   3 - more value indicator bit set to 0
-  2 - value low-order bit
+  2 - value low order bit
   1 - more ID delta indicator bit
   0 - ID delta low order bit
 
-Integer types (packTypeData[type].valueMultiBit) when the value is < -1 or > 1:
+Integer types (packTypeData[type].valueMultiBit) when an unsigned value is > 1 or a signed value is < -1 or > 0:
   3 - more value indicator bit set to 1
   2 - more ID delta indicator bit
 0-1 - ID delta low order bits
 
-String and binary types (packTypeData[type].valueSingleBit):
+String, binary types, and boolean (packTypeData[type].valueSingleBit):
   3 - value bit
   2 - more ID delta indicator bit
 0-1 - ID delta low order bits
 
 Array and object types:
-  4 - more ID delta indicator bit
-0-3 - ID delta low order bits
+  3 - more ID delta indicator bit
+0-2 - ID delta low order bits
 
 When the "more ID delta" indicator is set then the tag will be followed by a base-128 encoded integer with the higher order ID delta
 bits. The ID delta represents the delta from the ID of the previous field. When the "more value indicator" then the tag (and the ID
