@@ -20,6 +20,9 @@ String, binary types, and boolean (packTypeData[type].valueSingleBit):
   2 - more ID delta indicator bit
 0-1 - ID delta low order bits
 
+Note that for string and binary types the value indicates if there is data, not the length of the data, which is stored immediately
+following the tag when the value bit is set. This prevents storing an additional byte when the the string/binary length is zero.
+
 Array and object types:
   3 - more ID delta indicator bit
 0-2 - ID delta low order bits
