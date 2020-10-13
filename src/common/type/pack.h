@@ -223,13 +223,12 @@ int64_t pckReadI64(PackRead *this, PckReadInt64Param param);
 
 void pckReadObjBegin(PackRead *this, PackIdParam param);
 
-
 #define pckReadObjEndP(this)                                                                                                       \
     pckReadObjEnd(this)
 
 void pckReadObjEnd(PackRead *this);
 
-// Read pointer. See pckWritePtrP() for cautions.
+// Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 typedef struct PckReadPtrParam
 {
     VAR_PARAM_HEADER;
@@ -401,7 +400,7 @@ PackWrite *pckWriteObjBegin(PackWrite *this, PackIdParam param);
 
 PackWrite *pckWriteObjEnd(PackWrite *this);
 
-// Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
+// Write pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 typedef struct PckWritePtrParam
 {
     VAR_PARAM_HEADER;

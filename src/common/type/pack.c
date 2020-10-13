@@ -144,7 +144,7 @@ struct PackRead
     Buffer *buffer;                                                 // Buffer to contain read data
     const uint8_t *bufferPtr;                                       // Pointer to buffer
     size_t bufferPos;                                               // Position in the buffer
-    size_t bufferMax;                                               // Maximum position of buffer
+    size_t bufferUsed;                                              // Amount of data in the buffer buffer
 
     unsigned int tagNextId;                                         // Next tag id
     PackType tagNextType;                                           // Next tag type
@@ -222,7 +222,7 @@ pckReadNewBuf(const Buffer *buffer)
 
     PackRead *this = pckReadNewInternal();
     this->bufferPtr = bufPtrConst(buffer);
-    this->bufferMax = bufUsed(buffer);
+    this->bufferUsed = bufUsed(buffer);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -234,7 +234,8 @@ IMPORTANT NOTE: To avoid having dyamically created return buffers the current bu
 object. Therefore this function should not be used as a parameter in other function calls since the value of this->bufferPos will
 change.
 ***********************************************************************************************************************************/
-static size_t pckReadBuffer(PackRead *this, size_t size)
+static size_t
+pckReadBuffer(PackRead *this, size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, this);
@@ -243,7 +244,7 @@ static size_t pckReadBuffer(PackRead *this, size_t size)
 
     ASSERT(this != NULL);
 
-    size_t remaining = this->bufferMax - this->bufferPos;
+    size_t remaining = this->bufferUsed - this->bufferPos;
 
     if (remaining < size)
     {
@@ -259,8 +260,8 @@ static size_t pckReadBuffer(PackRead *this, size_t size)
             // Read bytes
             ioReadSmall(this->read, this->buffer);
             this->bufferPos = 0;
-            this->bufferMax = bufUsed(this->buffer);
-            remaining = this->bufferMax - this->bufferPos;
+            this->bufferUsed = bufUsed(this->buffer);
+            remaining = this->bufferUsed;
         }
 
         if (remaining < 1)
