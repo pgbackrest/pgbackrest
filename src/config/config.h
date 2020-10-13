@@ -161,12 +161,8 @@ Load Functions
 Used primarily by modules that need to manipulate the configuration.  These modules include, but are not limited to, config/parse.c,
 config/load.c.
 ***********************************************************************************************************************************/
-// Initialize or reinitialize the configuration data
-void cfgInit(void);
-
 // Was help requested?
 bool cfgCommandHelp(void);
-void cfgCommandHelpSet(bool help);
 
 // Get command id by name.  If error is true then assert when the command does not exist.
 ConfigCommand cfgCommandId(const char *commandName, bool error);
@@ -183,7 +179,6 @@ const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
 
 // pgBackRest exe
 const String *cfgExe(void);
-void cfgExeSet(const String *exe);
 
 // Option default
 const Variant *cfgOptionDefault(ConfigOption optionId);
@@ -200,19 +195,17 @@ int cfgOptionId(const char *optionName);
 
 // Was the option negated?
 bool cfgOptionNegate(ConfigOption optionId);
-void cfgOptionNegateSet(ConfigOption optionId, bool negate);
+bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int index);
 
 // Was the option reset?
 bool cfgOptionReset(ConfigOption optionId);
-void cfgOptionResetSet(ConfigOption optionId, bool reset);
+bool cfgOptionIdxReset(ConfigOption optionId, unsigned int index);
 
 // Set config option
 void cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value);
+void cfgOptionIdxSet(ConfigOption optionId, unsigned int index, ConfigSource source, const Variant *value);
 
 // How was the option set (default, param, config)?
 ConfigSource cfgOptionSource(ConfigOption optionId);
-
-// Set option valid
-void cfgOptionValidSet(ConfigOption optionId, bool valid);
 
 #endif

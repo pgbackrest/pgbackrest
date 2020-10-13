@@ -46,14 +46,17 @@ typedef struct Config
     struct
     {
         bool valid;                                                 // Is option valid for current command?
-        Variant *valueDefault;                                      // Default value
-        ConfigOptionValue **index;                                  // List of indexed values (only 1 unless the option is indexed)
+        Variant *defaultValue;                                      // Default value
+        ConfigOptionValue *index;                                   // List of indexed values (only 1 unless the option is indexed)
     } option[CFG_OPTION_TOTAL];
 } Config;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Init with new configuration
+void cfgInit(Config *config);
+
 // Is the option in a group?
 bool cfgOptionGroup(ConfigOption optionId);
 

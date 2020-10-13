@@ -65,18 +65,10 @@ cfgLoadUpdateOption(void)
     FUNCTION_LOG_VOID(logLevelTrace);
 
     // Set default for repo-host-cmd
-    if (cfgOptionTest(cfgOptRepoHost) && cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
-        cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
+    cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
 
     // Set default for pg-host-cmd
-    if (cfgOptionValid(cfgOptPgHostCmd))
-    {
-        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); optionIdx++)
-        {
-            if (cfgOptionIdxTest(cfgOptPgHost, optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
-                cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, VARSTR(cfgExe()));
-        }
-    }
+    cfgOptionDefaultSet(cfgOptPgHostCmd, VARSTR(cfgExe()));
 
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&

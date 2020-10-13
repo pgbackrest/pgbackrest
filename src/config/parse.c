@@ -1042,27 +1042,24 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 bool optionGroup = cfgOptionGroup(optionId);
                 unsigned int optionGroupId = optionGroup ? cfgOptionGroupId(optionId) : UINT_MAX;
                 unsigned int optionIndexTotal = optionGroup ? config->optionGroup[optionGroupId].indexTotal : 1;
+                config->option[optionId].index = memNew(sizeof(ConfigOptionValue) * optionIndexTotal);
 
                 // Loop through the option indexes
-                // ParseOption *parseOption = &parseOptionList[optionId];
                 ConfigDefineOptionType optionDefType = cfgDefOptionType(optionId);
 
                 for (unsigned int optionIdx = 0; optionIdx < optionIndexTotal; optionIdx++)
                 {
-                    ParseOptionValue *parseOptionValue = parseOptionIdxValue(
-                        parseOptionList, optionId, optionGroup ? config->optionGroup[optionGroupId].index[optionIdx] : 0);
-                    !!! FIX THIS INDEX ConfigOptionValue *configOptionValue = config->option[optionId].index[optionIdx];
+                    ParseOptionValue *parseOptionValue = optionIdx < parseOptionList[optionId].indexListTotal ?
+                        &parseOptionList[optionId].indexList[optionIdx] : &(ParseOptionValue){0};
+                    ConfigOptionValue *configOptionValue = &config->option[optionId].index[optionIdx];
 
                     // Is the value set for this option?
                     bool optionSet =
                         parseOptionValue->found && (optionDefType == cfgDefOptTypeBoolean || !parseOptionValue->negate) &&
                         !parseOptionValue->reset;
 
-                    // Set negate flag
-                    configOptionValue->negate = parseOptionValue->negate;
-
-                    // Set reset flag
-                    configOptionValue->reset = parseOptionValue->reset;
+                    // Initialize option value and set negate and reset flag
+                    *configOptionValue = (ConfigOptionValue){.negate = parseOptionValue->negate, .reset = parseOptionValue->reset};
 
                     // Check option dependencies
                     bool dependResolved = true;
@@ -1287,7 +1284,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             const char *value = cfgDefOptionDefault(commandId, optionId);
 
                             if (value != NULL)
+                            {
                                 cfgOptionSet(optionId, cfgSourceDefault, VARSTRZ(value));
+                            }
                             else if (cfgDefOptionRequired(commandId, optionId) && !cfgCommandHelp())
                             {
                                 const char *hint = "";
