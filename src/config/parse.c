@@ -954,7 +954,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 }
                 else
                 {
-                    // Error if the option was explicitly set on the command-line is not valid for this command
+                    // Error if the invalid option was explicitly set on the command-line
                     if (parseOptionList[optionId].indexListTotal > 0)
                     {
                         THROW_FMT(
@@ -1010,7 +1010,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 if (!config->option[optionId].valid)
                     continue;
 
-                // Determine the option index total. For options that are not indexed the index total will be 1.
+                // Determine the option index total. For options that are not indexed the index total is 1.
                 bool optionGroup = cfgOptionGroup(optionId);
                 unsigned int optionGroupId = optionGroup ? cfgOptionGroupId(optionId) : UINT_MAX;
                 unsigned int optionIndexTotal = optionGroup ? config->optionGroup[optionGroupId].indexTotal : 1;
@@ -1065,7 +1065,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                             // If depend not resolved and option value is set on the command-line then error.  See unresolved list
                             // depend below for a detailed explanation.
-                            if (optionSet && parseOption->source == cfgSourceParam)
+                            if (optionSet && parseOptionValue->source == cfgSourceParam)
                             {
                                 THROW_FMT(
                                     OptionInvalidError, "option '%s' not valid without option '%s'", cfgOptionName(optionId),
@@ -1081,7 +1081,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             // unresolved options in the config file because they may be there for another command.  For instance,
                             // spool-path is only loaded for the archive-push command when archive-async=y, and the presence of
                             // spool-path in the config file should not cause an error here, it will just end up null.
-                            if (!dependResolved && optionSet && parseOption->source == cfgSourceParam)
+                            if (!dependResolved && optionSet && parseOptionValue->source == cfgSourceParam)
                             {
                                 // Get the depend option name
                                 const String *dependOptionName = STR(cfgOptionName(dependOptionId));
@@ -1135,37 +1135,38 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             if (optionDefType == cfgDefOptTypeBoolean)
                             {
-                                cfgOptionSet(optionId, parseOption->source, VARBOOL(!parseOption->negate));
+                                cfgOptionSet(optionId, parseOptionValue->source, VARBOOL(!parseOptionValue->negate));
                             }
                             else if (optionDefType == cfgDefOptTypeHash)
                             {
                                 Variant *value = varNewKv(kvNew());
                                 KeyValue *keyValue = varKv(value);
 
-                                for (unsigned int listIdx = 0; listIdx < strLstSize(parseOption->valueList); listIdx++)
+                                for (unsigned int listIdx = 0; listIdx < strLstSize(parseOptionValue->valueList); listIdx++)
                                 {
-                                    const char *pair = strZ(strLstGet(parseOption->valueList, listIdx));
+                                    const char *pair = strZ(strLstGet(parseOptionValue->valueList, listIdx));
                                     const char *equal = strchr(pair, '=');
 
                                     if (equal == NULL)
                                     {
                                         THROW_FMT(
                                             OptionInvalidError, "key/value '%s' not valid for '%s' option",
-                                            strZ(strLstGet(parseOption->valueList, listIdx)), cfgOptionName(optionId));
+                                            strZ(strLstGet(parseOptionValue->valueList, listIdx)), cfgOptionName(optionId));
                                     }
 
                                     kvPut(keyValue, VARSTR(strNewN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
                                 }
 
-                                cfgOptionSet(optionId, parseOption->source, value);
+                                cfgOptionSet(optionId, parseOptionValue->source, value);
                             }
                             else if (optionDefType == cfgDefOptTypeList)
                             {
-                                cfgOptionSet(optionId, parseOption->source, varNewVarLst(varLstNewStrLst(parseOption->valueList)));
+                                cfgOptionSet(
+                                    optionId, parseOptionValue->source, varNewVarLst(varLstNewStrLst(parseOptionValue->valueList)));
                             }
                             else
                             {
-                                String *value = strLstGet(parseOption->valueList, 0);
+                                String *value = strLstGet(parseOptionValue->valueList, 0);
 
                                 // If a numeric type check that the value is valid
                                 if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat ||
@@ -1246,11 +1247,11 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         cfgOptionName(optionId));
                                 }
 
-                                cfgOptionSet(optionId, parseOption->source, VARSTR(value));
+                                cfgOptionSet(optionId, parseOptionValue->source, VARSTR(value));
                             }
                         }
-                        else if (parseOption->negate)
-                            cfgOptionSet(optionId, parseOption->source, NULL);
+                        else if (parseOptionValue->negate)
+                            cfgOptionSet(optionId, parseOptionValue->source, NULL);
                         // Else try to set a default
                         else
                         {
