@@ -100,17 +100,45 @@ typedef struct ParseOption
 Get the indexed value, creating the array to contain it if needed
 ***********************************************************************************************************************************/
 static ParseOptionValue *
-parseOptionIdxValue(ParseOption *option, unsigned int optionIdx)
+parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PARSE_OPTION, parseOption);
+        FUNCTION_TEST_PARAM(UINT, optionId);
         FUNCTION_TEST_PARAM(UINT, optionIdx);
     FUNCTION_TEST_END();
 
-    if (optionIdx < option->indexListTotal)
-        FUNCTION_TEST_RETURN(&option->indexList[optionIdx]);
+    if (optionIdx >= optionList[optionId].indexListTotal)
+    {
+        if (cfgOptionGroup(optionId))
+        {
+            unsigned int optionOffset = 0;
 
-    FUNCTION_TEST_RETURN(NULL);
+            if (optionList[optionId].indexListTotal == 0)
+            {
+                optionList[optionId].indexListTotal = optionIdx > 3 ? optionIdx + 1 : 4;
+                optionList[optionId].indexList = memNew(sizeof(ParseOptionValue) * optionList[optionId].indexListTotal);
+            }
+            else
+            {
+                optionOffset = optionList[optionId].indexListTotal;
+                optionList[optionId].indexListTotal *= 2;
+                optionList[optionId].indexList = memResize(
+                    optionList[optionId].indexList, sizeof(ParseOptionValue) * optionList[optionId].indexListTotal);
+            }
+
+            for (unsigned int optionIdx = optionOffset; optionIdx < optionList[optionId].indexListTotal; optionIdx++)
+                optionList[optionId].indexList[optionIdx] = (ParseOptionValue){0};
+        }
+        else
+        {
+            optionList[optionId].indexList = memNew(sizeof(ParseOptionValue));
+            optionList[optionId].indexListTotal = 1;
+            optionList[optionId].indexList[0] = (ParseOptionValue){0};
+        }
+    }
+
+    FUNCTION_TEST_RETURN(&optionList[optionId].indexList[optionIdx]);
 }
 
 /***********************************************************************************************************************************
@@ -568,7 +596,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     }
 
                     // If the the option has not been found yet then set it
-                    ParseOptionValue *optionValue = parseOptionIdxValue(&parseOptionList[optionId], optionIdx);
+                    ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, optionId, optionIdx);
 
                     if (!optionValue->found)
                     {
@@ -734,7 +762,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         THROW_FMT(OptionInvalidValueError, "environment variable '%s' must have a value", strZ(key));
 
                     // Continue if the option has already been specified on the command line
-                    ParseOptionValue *optionValue = parseOptionIdxValue(&parseOptionList[optionId], optionIdx);
+                    ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, optionId, optionIdx);
 
                     if (optionValue->found)
                         continue;
@@ -876,7 +904,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
 
                         // Continue if this option has already been found in another section or command-line/environment
-                        ParseOptionValue *optionValue = parseOptionIdxValue(&parseOptionList[optionId], optionIdx);
+                        ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, optionId, optionIdx);
 
                         if (optionValue->found)
                             continue;
@@ -1016,14 +1044,14 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 unsigned int optionIndexTotal = optionGroup ? config->optionGroup[optionGroupId].indexTotal : 1;
 
                 // Loop through the option indexes
-                ParseOption *parseOption = &parseOptionList[optionId];
+                // ParseOption *parseOption = &parseOptionList[optionId];
                 ConfigDefineOptionType optionDefType = cfgDefOptionType(optionId);
 
                 for (unsigned int optionIdx = 0; optionIdx < optionIndexTotal; optionIdx++)
                 {
-                    ParseOptionValue *parseOptionValue =
-                        parseOptionIdxValue(parseOption, optionGroup ? config->optionGroup[optionGroupId].index[optionIdx] : 0);
-                    ConfigOptionValue *configOptionValue = config->option[optionId].index[optionIdx];
+                    ParseOptionValue *parseOptionValue = parseOptionIdxValue(
+                        parseOptionList, optionId, optionGroup ? config->optionGroup[optionGroupId].index[optionIdx] : 0);
+                    !!! FIX THIS INDEX ConfigOptionValue *configOptionValue = config->option[optionId].index[optionIdx];
 
                     // Is the value set for this option?
                     bool optionSet =
