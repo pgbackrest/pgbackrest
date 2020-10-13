@@ -147,7 +147,7 @@ struct PackRead
     Buffer *buffer;                                                 // Buffer to contain read data
     const uint8_t *bufferPtr;                                       // Pointer to buffer
     size_t bufferPos;                                               // Position in the buffer
-    size_t bufferUsed;                                              // Amount of data in the buffer buffer
+    size_t bufferUsed;                                              // Amount of data in the buffer
 
     unsigned int tagNextId;                                         // Next tag id
     PackType tagNextType;                                           // Next tag type
