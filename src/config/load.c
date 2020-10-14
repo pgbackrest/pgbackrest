@@ -14,7 +14,7 @@ Configuration Load
 #include "common/io/socket/common.h"
 #include "common/lock.h"
 #include "common/log.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "storage/helper.h"
@@ -249,7 +249,7 @@ cfgLoadUpdateOption(void)
         }
 
         // Now invalidate compress so it can't be used and won't be passed to child processes
-        cfgOptionValidSet(cfgOptCompress, false);
+        cfgOptionInvalidate(cfgOptCompress);
         cfgOptionSet(cfgOptCompress, cfgSourceDefault, NULL);
     }
 

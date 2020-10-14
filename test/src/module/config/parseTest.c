@@ -134,9 +134,9 @@ testRun(void)
             strZ(strNewFmt("%s/global-backup.confsave", strZ(configIncludePath))));
 
         // Set up defaults
-        String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP, true), cfgOptConfig));
+        String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
         String *backupCmdDefConfigInclPathValue = strNew(
-            cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP, true), cfgOptConfigIncludePath));
+            cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
         String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
@@ -145,18 +145,26 @@ testRun(void)
         StringList *value = strLstNew();
         strLstAdd(value, configFile);
 
+        parseOptionList[cfgOptConfig].indexListTotal = 1;
         parseOptionList[cfgOptConfig].indexList = memNew(sizeof(ParseOptionValue));
-        parseOptionList[cfgOptConfig].indexList[0].found = true;
-        parseOptionList[cfgOptConfig].indexList[0].source = cfgSourceParam;
-        parseOptionList[cfgOptConfig].indexList[0].valueList = value;
+        parseOptionList[cfgOptConfig].indexList[0] = (ParseOptionValue)
+        {
+            .found = true,
+            .source = cfgSourceParam,
+            .valueList = value,
+        };
 
         value = strLstNew();
         strLstAdd(value, configIncludePath);
 
+        parseOptionList[cfgOptConfigIncludePath].indexListTotal = 1;
         parseOptionList[cfgOptConfigIncludePath].indexList = memNew(sizeof(ParseOptionValue));
-        parseOptionList[cfgOptConfigIncludePath].indexList[0].found = true;
-        parseOptionList[cfgOptConfigIncludePath].indexList[0].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigIncludePath].indexList[0].valueList = value;
+        parseOptionList[cfgOptConfigIncludePath].indexList[0] = (ParseOptionValue)
+        {
+            .found = true,
+            .source = cfgSourceParam,
+            .valueList = value,
+        };
 
         TEST_RESULT_VOID(cfgFileLoadPart(NULL, NULL), "check null part");
 
@@ -381,9 +389,14 @@ testRun(void)
         value = strLstNew();
         strLstAddZ(value, testPath());
 
-        parseOptionList[cfgOptConfigPath].indexList[0].found = true;
-        parseOptionList[cfgOptConfigPath].indexList[0].source = cfgSourceParam;
-        parseOptionList[cfgOptConfigPath].indexList[0].valueList = value;
+        parseOptionList[cfgOptConfigPath].indexListTotal = 1;
+        parseOptionList[cfgOptConfigPath].indexList = memNew(sizeof(ParseOptionValue));
+        parseOptionList[cfgOptConfigPath].indexList[0] = (ParseOptionValue)
+        {
+            .found = true,
+            .source = cfgSourceParam,
+            .valueList = value,
+        };
 
         // Override default paths for config and config-include-path - but no pgbackrest.conf file in override path only in old
         // default so ignored
@@ -793,6 +806,8 @@ testRun(void)
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "load local config");
+        TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleLocal, "    command role is local");
+        TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup:local", "    command/role name is backup:local");
         TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
         TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
 
@@ -808,6 +823,8 @@ testRun(void)
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "load remote config");
+        TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleRemote, "    command role is remote");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "    remote role name");
         TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
         TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
         harnessLogLevelReset();
@@ -1161,6 +1178,16 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "xxx", true);
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is " TEST_COMMAND_BACKUP);
+        TEST_RESULT_BOOL(cfgCommandInternal(cfgCmdBackup), false, "    backup command is not internal");
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "    backup command requires lock");
+        TEST_RESULT_UINT(cfgLockType(), lockTypeBackup, "    backup command requires backup lock type");
+        TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "    backup command requires remote lock");
+        TEST_RESULT_STR_Z(strLstJoin(cfgCommandParam(), "|"), "", "    check command arguments");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleDefault, "command role default enum");
+        TEST_ERROR(cfgCommandRoleEnum(STRDEF("bogus")), CommandInvalidError, "invalid command role 'bogus'");
+        TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleDefault, "    command role is default");
+        TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "    command/role name is backup");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleDefault), NULL, "    default role name is NULL");
 
         TEST_RESULT_STR_Z(cfgExe(), TEST_BACKREST_EXE, "    exe is set");
 
@@ -1250,6 +1277,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "    pg1 and pg2 is set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "    pg2-local is set");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 1), false, "    pg2-host is not set (pg2-local override)");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 1), "/path/to/db2", "    pg2-path is set");
@@ -1284,6 +1312,12 @@ testRun(void)
         unsetenv("PGBACKREST_ONLINE");
         unsetenv("PGBACKREST_START_FAST");
         unsetenv("PGBACKREST_PG1_SOCKET_PATH");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("set command to expire");
+
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdExpire, cfgCommandRoleEnum(STRDEF("async"))), "set command");
+        TEST_RESULT_STR_Z(cfgCommandRoleName(), "expire:async", "command/role name is expire:async");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1474,19 +1508,33 @@ testRun(void)
 
         testOptionFind("no-db-user", 0);
 
-        for (unsigned int optionIdx = 0; optionIdx < cfgDefOptionIndexTotal(cfgOptPgPath); optionIdx++)
+        // Only check 1-8 since 8 was the max index when these option names were deprecated
+        for (unsigned int optionIdx = 0; optionIdx < 8; optionIdx++)
         {
-            testOptionFind(strZ(strNewFmt("db%u-cmd", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostCmd + optionIdx));
             testOptionFind(
-                strZ(strNewFmt("db%u-config", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostConfig + optionIdx));
-            testOptionFind(strZ(strNewFmt("db%u-host", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHost + optionIdx));
-            testOptionFind(strZ(strNewFmt("db%u-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPath + optionIdx));
-            testOptionFind(strZ(strNewFmt("db%u-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPort + optionIdx));
+                strZ(strNewFmt("db%u-cmd", optionIdx + 1)),
+                PARSE_DEPRECATE_FLAG | (optionIdx << PARSE_INDEX_SHIFT) | cfgOptPgHostCmd);
             testOptionFind(
-                strZ(strNewFmt("db%u-socket-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgSocketPath + optionIdx));
+                strZ(strNewFmt("db%u-config", optionIdx + 1)),
+                PARSE_DEPRECATE_FLAG | (optionIdx << PARSE_INDEX_SHIFT) | cfgOptPgHostConfig);
             testOptionFind(
-                strZ(strNewFmt("db%u-ssh-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostPort + optionIdx));
-            testOptionFind(strZ(strNewFmt("db%u-user", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostUser + optionIdx));
+                strZ(strNewFmt("db%u-host", optionIdx + 1)),
+                PARSE_DEPRECATE_FLAG | (optionIdx << PARSE_INDEX_SHIFT) | cfgOptPgHost);
+            testOptionFind(
+                strZ(strNewFmt("db%u-path", optionIdx + 1)),
+                PARSE_DEPRECATE_FLAG | (optionIdx << PARSE_INDEX_SHIFT) | cfgOptPgPath);
+            testOptionFind(
+                strZ(strNewFmt("db%u-port", optionIdx + 1)),
+                PARSE_DEPRECATE_FLAG | (optionIdx << PARSE_INDEX_SHIFT) | cfgOptPgPort);
+            testOptionFind(
+                strZ(strNewFmt("db%u-socket-path", optionIdx + 1)),
+                PARSE_DEPRECATE_FLAG | (optionIdx << PARSE_INDEX_SHIFT) | cfgOptPgSocketPath);
+            testOptionFind(
+                strZ(strNewFmt("db%u-ssh-port", optionIdx + 1)),
+                PARSE_DEPRECATE_FLAG | (optionIdx << PARSE_INDEX_SHIFT) | cfgOptPgHostPort);
+            testOptionFind(
+                strZ(strNewFmt("db%u-user", optionIdx + 1)),
+                PARSE_DEPRECATE_FLAG | (optionIdx << PARSE_INDEX_SHIFT) | cfgOptPgHostUser);
         }
     }
 

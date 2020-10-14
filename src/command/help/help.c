@@ -20,6 +20,52 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 #define CONSOLE_WIDTH                                               80
 
 /***********************************************************************************************************************************
+Get the default value for an option
+***********************************************************************************************************************************/
+static Variant *
+helpOptionDefault(ConfigCommand commandId, ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    Variant *result;
+    Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(commandId, optionId));
+
+    switch (cfgDefOptionType(optionId))
+    {
+        case cfgDefOptTypeBoolean:
+        {
+            result = varNewBool(varBoolForce(defaultValue));
+            break;
+        }
+
+        case cfgDefOptTypeFloat:
+        {
+            result = varNewDbl(varDblForce(defaultValue));
+            break;
+        }
+
+        case cfgDefOptTypeInteger:
+        case cfgDefOptTypeSize:
+        {
+            result = varNewInt64(varInt64Force(defaultValue));
+            break;
+        }
+
+        case cfgDefOptTypePath:
+        case cfgDefOptTypeString:
+            result = varDup(defaultValue);
+            break;
+
+        default:
+            THROW_FMT(AssertError, "default value not available for option type %d", cfgDefOptionType(optionId));
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Helper function for helpRender() to make output look good on a console
 ***********************************************************************************************************************************/
 static String *
@@ -258,7 +304,7 @@ helpRender(void)
                             strlen(cfgDefOptionHelpSummary(commandId, optionId)) - 1));
 
                         // Ouput current and default values if they exist
-                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
+                        const String *defaultValue = helpRenderValue(helpOptionDefault(commandId, optionId));
                         const String *value = NULL;
 
                         if (cfgOptionSource(optionId) != cfgSourceDefault)
@@ -326,7 +372,7 @@ helpRender(void)
                     strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, optionId)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
+                const String *defaultValue = helpRenderValue(helpOptionDefault(commandId, optionId));
                 const String *value = NULL;
 
                 if (cfgOptionSource(optionId) != cfgSourceDefault)

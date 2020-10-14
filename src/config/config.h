@@ -87,9 +87,6 @@ bool cfgLogFile(void);
 // Default log level -- used for log messages that are common to all commands
 LogLevel cfgLogLevelDefault(void);
 
-// Does this command allow parameters?
-bool cfgParameterAllowed(void);
-
 // Command parameters, if any
 const StringList *cfgCommandParam(void);
 
@@ -137,8 +134,9 @@ const char *cfgOptionIdxName(ConfigOption optionId, unsigned int index);
 
 // Is the option valid for this command?
 bool cfgOptionValid(ConfigOption optionId);
+bool cfgOptionIdxValid(ConfigOption optionId, unsigned int index);
 
-// Is the option valid for the command and set?
+// Is the option valid for the command and also has a value?
 bool cfgOptionTest(ConfigOption optionId);
 bool cfgOptionIdxTest(ConfigOption optionId, unsigned int index);
 
@@ -164,10 +162,9 @@ config/load.c.
 // Was help requested?
 bool cfgCommandHelp(void);
 
-// Get command id by name.  If error is true then assert when the command does not exist.
-ConfigCommand cfgCommandId(const char *commandName, bool error);
+// Get command id by name
+ConfigCommand cfgCommandId(const char *commandName);
 
-void cfgCommandParamSet(const StringList *param);
 void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
 
 // Get command/role name with custom separator
@@ -180,15 +177,13 @@ const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
 // pgBackRest exe
 const String *cfgExe(void);
 
-// Option default
-const Variant *cfgOptionDefault(ConfigOption optionId);
-
 // Set option default. Option defaults are generally not set in advance because the vast majority of them are never used.  It is
 // more efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 
 // Parse a host option and extract the host and port (if it exists)
 String *cfgOptionHostPort(ConfigOption optionId, unsigned int *port);
+String *cfgOptionIdxHostPort(ConfigOption optionId, unsigned int index, unsigned int *port);
 
 // Get option id by name
 int cfgOptionId(const char *optionName);
@@ -207,5 +202,6 @@ void cfgOptionIdxSet(ConfigOption optionId, unsigned int index, ConfigSource sou
 
 // How was the option set (default, param, config)?
 ConfigSource cfgOptionSource(ConfigOption optionId);
+ConfigSource cfgOptionIdxSource(ConfigOption optionId, unsigned int index);
 
 #endif

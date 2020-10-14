@@ -19,7 +19,7 @@ typedef struct ConfigOptionValue
     bool negate;                                                // Is the option negated?
     bool reset;                                                 // Is the option reset?
     unsigned int source;                                        // Where the option came from, i.e. ConfigSource enum
-    Variant *value;                                             // Value
+    const Variant *value;                                       // Value
 } ConfigOptionValue;
 
 typedef struct Config
@@ -46,21 +46,36 @@ typedef struct Config
     struct
     {
         bool valid;                                                 // Is option valid for current command?
-        Variant *defaultValue;                                      // Default value
         ConfigOptionValue *index;                                   // List of indexed values (only 1 unless the option is indexed)
     } option[CFG_OPTION_TOTAL];
 } Config;
 
 /***********************************************************************************************************************************
-Functions
+Init Function
 ***********************************************************************************************************************************/
 // Init with new configuration
 void cfgInit(Config *config);
 
+/***********************************************************************************************************************************
+Command Functions
+***********************************************************************************************************************************/
+// Does this command allow parameters?
+bool cfgCommandParameterAllowed(ConfigCommand commandId);
+
+/***********************************************************************************************************************************
+Option Group Functions
+***********************************************************************************************************************************/
 // Is the option in a group?
 bool cfgOptionGroup(ConfigOption optionId);
 
 // Group id if the option is in a group
 unsigned int cfgOptionGroupId(ConfigOption optionId);
+
+/***********************************************************************************************************************************
+Option Functions
+***********************************************************************************************************************************/
+// Invalidate an option so it will not be passed to other processes. This is used to manage deprecated options that have a newer
+// option that should be used when possible, e.g. compress and compress-type.
+void cfgOptionInvalidate(ConfigOption optionId);
 
 #endif
