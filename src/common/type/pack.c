@@ -4,37 +4,91 @@ Pack Type
 Each pack field begins with a one byte tag. The four high order bits of the tag contain the field type (PackType). The four lower
 order bits vary by type.
 
+When the "more ID delta" indicator is set then the tag will be followed by a base-128 encoded integer with the higher order ID delta
+bits. The ID delta represents the delta from the ID of the previous field. When the "more value indicator" then the tag (and the ID
+delta, if any) will be followed by a base-128 encoded integer with the high order value bits, i.e. the bits that were not stored
+directly in the tag.
+
+For integer types the value is the integer being stored but for string and binary types the value is 1 if the size is greater than 0
+and 0 if the size is 0. When the size is greater than 0 the tag is immediately followed by (or after the delta ID if "more ID delta"
+is set) the base-128 encoded size and then by the string/binary bytes. For string and binary types the value bit indicates if there
+is data, not the length of the data, which is why the length is stored immediately following the tag when the value bit is set. This
+prevents storing an additional byte when the string/binary length is zero.
+
+The following are definitions for the pack tag field and examples of how it is interpretted.
+
 Integer types (packTypeData[type].valueMultiBit) when an unsigned value is <= 1 or a signed value is >= -1 and <= 0:
   3 - more value indicator bit set to 0
   2 - value low order bit
   1 - more ID delta indicator bit
   0 - ID delta low order bit
 
+  Example: b704
+    b = unsigned int 64 type
+    7 = tag byte low bits: 0 1 1 1 meaning:
+        "value low order bit" - the value of the u64 field is 1
+        "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
+        "ID delta low order bit" - gaps are interpretted as the currently stored ID minus previously stored ID minus 1, therefore if
+            the previously store ID is 1 and the ID of this u64 field is 11 then a gap of 10 exists. 10 is represented internally as
+            9 since there is always at least a gap of 1 which never needs to be recorded (it is a given). 9 in bit format is
+            1 0 0 1 - the low-order bit is 1 so the "ID delta low order bit" is set.
+    04 = since the low order bit of the internal ID delta was already set in bit 0 of the tag byte, then the remain bits are shifted
+        right by one and represented in this second byte as 4. To get the ID delta for 04, shift the 4 back to the left one and then
+        add back the "ID delta low order bit" to give a binary representation of  1 0 0 1 = 9. Add back the 1 which is never
+        recorded and the ID gap is 10.
+
 Integer types (packTypeData[type].valueMultiBit) when an unsigned value is > 1 or a signed value is < -1 or > 0:
   3 - more value indicator bit set to 1
   2 - more ID delta indicator bit
 0-1 - ID delta low order bits
 
+  Example: 5e021f
+    5 = signed int 64 type
+    e = tag byte low bits:  1 1 1 0 meaning:
+        "more value indicator bit set to 1" - the actual value is < -1 or > 0
+        "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
+        "ID delta low order bits" - here the bit 1 is set to 1 and bit 0 is not so the ID delta has the second low order bit set but
+        not the first
+    02 = since bit 0 and bit 1 of the tag byte are accounted for then the 02 is the result of shifting the ID delta right by 2.
+        Shifting the 2 back to the left by 2 and adding back the second low order bit as 1 and the first low order bit as 0 then
+        the bit representation would be 1 0 1 0 which is ten (10) so the gap between the IDs is 11.
+    1f = signed, zigzag representation of -16 (the actual value)
+
 String, binary types, and boolean (packTypeData[type].valueSingleBit):
   3 - value bit
   2 - more ID delta indicator bit
 0-1 - ID delta low order bits
+  Note: binary type is interpretted the same way as string type
 
-Note that for string and binary types the value indicates if there is data, not the length of the data, which is stored immediately
-following the tag when the value bit is set. This prevents storing an additional byte when the the string/binary length is zero.
+  Example: 8c090673616d706c65
+    8 = string type
+    c = tag byte low bits:  1 1 0 0 meaning:
+        "value bit" - there is data
+        "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
+    09 = since neither "ID delta low order bits" is set in the tag, they are both 0, so shifting 9 left by 2, the 2 low order bits
+        are now 0 so the result is 0x24 = 36 in decimal. Add back the 1 which is never recorded and the ID gap is 37.
+    06 = the length of the string is 6 bytes
+    73616d706c65 = the 6 bytes of the string value ("sample")
+
+  Example: 30
+    3 = boolean type
+    0 = "value bit" 0 means the value is false
+    Note that if the boolean had been pack written with .defaultNull=true there would have been a gap instead of the 30.
 
 Array and object types:
   3 - more ID delta indicator bit
 0-2 - ID delta low order bits
+  Note: arrays and objects are merely containers for the other pack types.
 
-When the "more ID delta" indicator is set then the tag will be followed by a base-128 encoded integer with the higher order ID delta
-bits. The ID delta represents the delta from the ID of the previous field. When the "more value indicator" then the tag (and the ID
-delta, if any) will be followed by a base-128 encoded integer with the high order value bits, i.e. the bits that were not stored
-directly in the tag.
+  Example: 1801  (container begin)
+    1 = array type
+    8 = "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
+    01 = since there are three "ID delta low order bits", the 01 will be shifted left by 3 with zeros, resulting in 8. Add back
+        the 1 which is never recorded and the ID gap is 9.
+    ...
+    00 = container end - the array/object container end will occur when a 0 byte (00) is encountered that is not part of a pack
+        field within the array/object
 
-For integer types the value is the integer being stored. For string and binary types the value is 1 if the size is greater than 0
-and 0 if the size is 0. When the size is greater than 0 the tag is immediately followed the base-128 encoded size and then by the
-string/binary bytes.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
