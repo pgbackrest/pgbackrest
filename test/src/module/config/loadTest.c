@@ -19,113 +19,113 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadLogSetting()"))
     {
-        cfgInit();
-
-        TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings all defaults");
-
-        TEST_RESULT_INT(logLevelStdOut, logLevelOff, "console logging is off");
-        TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
-        TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
-        TEST_RESULT_BOOL(logTimestamp, true, "timestamp logging is on");
+        // cfgInit();
+        //
+        // TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings all defaults");
+        //
+        // TEST_RESULT_INT(logLevelStdOut, logLevelOff, "console logging is off");
+        // TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
+        // TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
+        // TEST_RESULT_BOOL(logTimestamp, true, "timestamp logging is on");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadUpdateOption()"))
     {
-        String *exe = strNew("/path/to/pgbackrest");
-        String *exeOther = strNew("/other/path/to/pgbackrest");
-
-        cfgInit();
-        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
-        cfgExeSet(exe);
-
-        cfgOptionValidSet(cfgOptRepoHost, true);
-        cfgOptionValidSet(cfgOptRepoHostCmd, true);
-        cfgOptionValidSet(cfgOptPgHost, true);
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "hosts are not set so don't update commands");
-
-        cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exe, "    check repo1-host-cmd");
-
-        cfgOptionSet(cfgOptRepoHostCmd, cfgSourceParam, varNewStr(exeOther));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exeOther, "    check repo1-host-cmd");
-
-        cfgOptionSet(cfgOptRepoHost, cfgSourceParam, NULL);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionValidSet(cfgOptPgHostCmd, true);
-        cfgOptionSet(cfgOptPgHost, cfgSourceParam, varNewStrZ("pg1-host"));
-
-        cfgOptionValidSet(cfgOptPgHost + 1, true);
-        cfgOptionSet(cfgOptPgHost + 1, cfgSourceParam, varNewStrZ("pg2-host"));
-        cfgOptionValidSet(cfgOptPgHostCmd + 1, true);
-        cfgOptionSet(cfgOptPgHostCmd + 1, cfgSourceParam, varNewStr(exeOther));
-
-        cfgOptionValidSet(cfgOptPgHostCmd + 2, true);
-
-        cfgOptionValidSet(cfgOptPgHost + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1, true);
-        cfgOptionSet(cfgOptPgHost + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1, cfgSourceParam, varNewStrZ("pgX-host"));
-        cfgOptionValidSet(cfgOptPgHostCmd + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1, true);
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg remote command is updated");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd), exe, "    check pg1-host-cmd");
-        TEST_RESULT_STR(cfgOptionIdxStr(cfgOptPgHostCmd, 1), exeOther, "    check pg2-host-cmd is already set");
-        TEST_RESULT_STR(cfgOptionIdxStrNull(cfgOptPgHostCmd, 2), NULL, "    check pg3-host-cmd is not set");
-        TEST_RESULT_STR(
-            cfgOptionIdxStr(cfgOptPgHostCmd, cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1), exe, "    check pgX-host-cmd");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
-
-        cfgOptionValidSet(cfgOptDbTimeout, true);
-        cfgOptionSet(cfgOptDbTimeout, cfgSourceParam, varNewDbl(100));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg timeout set but not protocol timeout");
-
-        cfgOptionValidSet(cfgOptProtocolTimeout, true);
-        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, varNewDbl(101));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "protocol timeout > pg timeout");
-
-        cfgOptionSet(cfgOptDbTimeout, cfgSourceParam, varNewDbl(100000));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "protocol timeout set automatically");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 100030, "    check protocol timeout");
-
-        cfgOptionValidSet(cfgOptProtocolTimeout, true);
-        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(50.5));
-        TEST_ERROR(
-            cfgLoadUpdateOption(), OptionInvalidValueError,
-            "'50.5' is not valid for 'protocol-timeout' option\n"
-                "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
-
-        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(45));
-        cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(3600));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "set default pg timeout to be less than protocol timeout");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 45, "    check protocol timeout");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 15, "    check db timeout");
-
-        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(11));
-        cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(3600));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "set default pg timeout to be less than test protocol timeout");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 11, "    check protocol timeout");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 5.5, "    check db timeout");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
-        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
-        cfgExeSet(exe);
-
-        cfgOptionValidSet(cfgOptPgHost, true);
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "only repo-host is valid");
-
-        cfgOptionValidSet(cfgOptRepoHost, true);
-        cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
-        cfgOptionValidSet(cfgOptPgHost + 4, true);
-        cfgOptionSet(cfgOptPgHost + 4, cfgSourceParam, varNewStrZ("pg5-host"));
-        TEST_ERROR(cfgLoadUpdateOption(), ConfigError, "pg and repo hosts cannot both be configured as remote");
+        // String *exe = strNew("/path/to/pgbackrest");
+        // String *exeOther = strNew("/other/path/to/pgbackrest");
+        //
+        // cfgInit();
+        // cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
+        // cfgExeSet(exe);
+        //
+        // cfgOptionValidSet(cfgOptRepoHost, true);
+        // cfgOptionValidSet(cfgOptRepoHostCmd, true);
+        // cfgOptionValidSet(cfgOptPgHost, true);
+        //
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "hosts are not set so don't update commands");
+        //
+        // cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
+        //
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
+        // TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exe, "    check repo1-host-cmd");
+        //
+        // cfgOptionSet(cfgOptRepoHostCmd, cfgSourceParam, varNewStr(exeOther));
+        //
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
+        // TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exeOther, "    check repo1-host-cmd");
+        //
+        // cfgOptionSet(cfgOptRepoHost, cfgSourceParam, NULL);
+        //
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // cfgOptionValidSet(cfgOptPgHostCmd, true);
+        // cfgOptionSet(cfgOptPgHost, cfgSourceParam, varNewStrZ("pg1-host"));
+        //
+        // cfgOptionValidSet(cfgOptPgHost + 1, true);
+        // cfgOptionSet(cfgOptPgHost + 1, cfgSourceParam, varNewStrZ("pg2-host"));
+        // cfgOptionValidSet(cfgOptPgHostCmd + 1, true);
+        // cfgOptionSet(cfgOptPgHostCmd + 1, cfgSourceParam, varNewStr(exeOther));
+        //
+        // cfgOptionValidSet(cfgOptPgHostCmd + 2, true);
+        //
+        // cfgOptionValidSet(cfgOptPgHost + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1, true);
+        // cfgOptionSet(cfgOptPgHost + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1, cfgSourceParam, varNewStrZ("pgX-host"));
+        // cfgOptionValidSet(cfgOptPgHostCmd + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1, true);
+        //
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg remote command is updated");
+        // TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd), exe, "    check pg1-host-cmd");
+        // TEST_RESULT_STR(cfgOptionIdxStr(cfgOptPgHostCmd, 1), exeOther, "    check pg2-host-cmd is already set");
+        // TEST_RESULT_STR(cfgOptionIdxStrNull(cfgOptPgHostCmd, 2), NULL, "    check pg3-host-cmd is not set");
+        // TEST_RESULT_STR(
+        //     cfgOptionIdxStr(cfgOptPgHostCmd, cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1), exe, "    check pgX-host-cmd");
+        //
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // cfgInit();
+        //
+        // cfgOptionValidSet(cfgOptDbTimeout, true);
+        // cfgOptionSet(cfgOptDbTimeout, cfgSourceParam, varNewDbl(100));
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg timeout set but not protocol timeout");
+        //
+        // cfgOptionValidSet(cfgOptProtocolTimeout, true);
+        // cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, varNewDbl(101));
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "protocol timeout > pg timeout");
+        //
+        // cfgOptionSet(cfgOptDbTimeout, cfgSourceParam, varNewDbl(100000));
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "protocol timeout set automatically");
+        // TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 100030, "    check protocol timeout");
+        //
+        // cfgOptionValidSet(cfgOptProtocolTimeout, true);
+        // cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(50.5));
+        // TEST_ERROR(
+        //     cfgLoadUpdateOption(), OptionInvalidValueError,
+        //     "'50.5' is not valid for 'protocol-timeout' option\n"
+        //         "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
+        //
+        // cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(45));
+        // cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(3600));
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "set default pg timeout to be less than protocol timeout");
+        // TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 45, "    check protocol timeout");
+        // TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 15, "    check db timeout");
+        //
+        // cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(11));
+        // cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(3600));
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "set default pg timeout to be less than test protocol timeout");
+        // TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 11, "    check protocol timeout");
+        // TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 5.5, "    check db timeout");
+        //
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // cfgInit();
+        // cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
+        // cfgExeSet(exe);
+        //
+        // cfgOptionValidSet(cfgOptPgHost, true);
+        // TEST_RESULT_VOID(cfgLoadUpdateOption(), "only repo-host is valid");
+        //
+        // cfgOptionValidSet(cfgOptRepoHost, true);
+        // cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
+        // cfgOptionValidSet(cfgOptPgHost + 4, true);
+        // cfgOptionSet(cfgOptPgHost + 4, cfgSourceParam, varNewStrZ("pg5-host"));
+        // TEST_ERROR(cfgLoadUpdateOption(), ConfigError, "pg and repo hosts cannot both be configured as remote");
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();

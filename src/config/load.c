@@ -65,10 +65,12 @@ cfgLoadUpdateOption(void)
     FUNCTION_LOG_VOID(logLevelTrace);
 
     // Set default for repo-host-cmd
-    cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
+    if (cfgOptionValid(cfgOptRepoHostCmd))
+        cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
 
     // Set default for pg-host-cmd
-    cfgOptionDefaultSet(cfgOptPgHostCmd, VARSTR(cfgExe()));
+    if (cfgOptionValid(cfgOptPgHostCmd))
+        cfgOptionDefaultSet(cfgOptPgHostCmd, VARSTR(cfgExe()));
 
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
@@ -131,14 +133,13 @@ cfgLoadUpdateOption(void)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            // If the repo-type is defined, then see if corresponding retention-full is set
-            if (cfgOptionIdxTest(cfgOptRepoType, optionIdx) && !(cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx)))
+            if (!(cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx)))
             {
                 LOG_WARN_FMT(
                     "option '%s' is not set for '%s=%s', the repository may run out of space"
                     "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
                     cfgOptionIdxName(cfgOptRepoRetentionFull, optionIdx), cfgOptionIdxName(cfgOptRepoRetentionFullType, optionIdx),
-                    strZ(cfgOptionStr(cfgOptRepoRetentionFullType + optionIdx)),
+                    strZ(cfgOptionIdxStr(cfgOptRepoRetentionFullType, optionIdx)),
                     cfgOptionIdxName(cfgOptRepoRetentionFull, optionIdx));
             }
         }
@@ -150,7 +151,7 @@ cfgLoadUpdateOption(void)
         // For each possible repo, check and adjust the settings as appropriate
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType + optionIdx);
+            const String *archiveRetentionType = cfgOptionIdxStr(cfgOptRepoRetentionArchiveType, optionIdx);
 
             const String *msgArchiveOff = strNewFmt(
                 "WAL segments will not be expired: option '%s=%s' but", cfgOptionName(cfgOptRepoRetentionArchiveType),
@@ -169,8 +170,8 @@ cfgLoadUpdateOption(void)
                             CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT) &&
                         cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx))
                     {
-                        cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            VARUINT(cfgOptionUInt(cfgOptRepoRetentionFull + optionIdx)));
+                        cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
+                            VARUINT(cfgOptionIdxUInt(cfgOptRepoRetentionFull, optionIdx)));
                     }
                 }
                 else if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF))
@@ -178,8 +179,8 @@ cfgLoadUpdateOption(void)
                     // if repo-retention-diff is set then user must have set it
                     if (cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx))
                     {
-                        cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            VARUINT(cfgOptionUInt(cfgOptRepoRetentionDiff + optionIdx)));
+                        cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
+                            VARUINT(cfgOptionIdxUInt(cfgOptRepoRetentionDiff, optionIdx)));
                     }
                     else
                     {
@@ -218,7 +219,7 @@ cfgLoadUpdateOption(void)
     }
 
     // Error if an S3 bucket name contains dots
-    if (cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifyTls) &&
+    if (cfgOptionGroupValid(cfgOptGrpRepo) && cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifyTls) &&
         strChr(cfgOptionStr(cfgOptRepoS3Bucket), '.') != -1)
     {
         THROW_FMT(

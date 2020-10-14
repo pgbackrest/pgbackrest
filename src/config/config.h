@@ -110,6 +110,7 @@ Access option values, indexes, and determine if an option is valid for the curre
 ***********************************************************************************************************************************/
 // Get config options for various types
 const Variant *cfgOption(ConfigOption optionId);
+const Variant *cfgOptionIdx(ConfigOption optionId, unsigned int index);
 bool cfgOptionBool(ConfigOption optionId);
 bool cfgOptionIdxBool(ConfigOption optionId, unsigned int index);
 double cfgOptionDbl(ConfigOption optionId);
@@ -134,7 +135,6 @@ const char *cfgOptionIdxName(ConfigOption optionId, unsigned int index);
 
 // Is the option valid for this command?
 bool cfgOptionValid(ConfigOption optionId);
-bool cfgOptionIdxValid(ConfigOption optionId, unsigned int index);
 
 // Is the option valid for the command and also has a value?
 bool cfgOptionTest(ConfigOption optionId);

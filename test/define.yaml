@@ -369,11 +369,13 @@ unit:
         total: 4
 
         coverage:
-          config/config: full
-          config/parse: full
+          # config/config: full
+          # config/parse: full
           config/parse.auto: noCode
 
         include:
+          - config/config
+          - config/parse
           - common/log
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -391,8 +393,11 @@ unit:
       - name: exec
         total: 1
 
-        coverage:
-          config/exec: full
+        # coverage:
+        #   config/exec: full
+
+        include:
+          - config/exec
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol
