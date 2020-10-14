@@ -56,6 +56,10 @@ WAL segment constants
 #define WAL_SEGMENT_FILE_REGEXP                                     "^[0-F]{24}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$"
     STRING_DECLARE(WAL_SEGMENT_FILE_REGEXP_STR);
 
+// History files
+#define HISTORY_FILES_REGEXP                                        "^[0-F]{8}.history$"
+    STRING_DECLARE(HISTORY_FILES_REGEXP_STR);
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/

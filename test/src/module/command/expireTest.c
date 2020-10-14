@@ -1058,7 +1058,7 @@ testRun(void)
         harnessLogLevelReset();
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire history files - dry run"); //FIXME
+        TEST_TITLE("expire history files - dry run");
 
         // Load Parameters
         argList = strLstDup(argListBase);
@@ -1164,7 +1164,10 @@ testRun(void)
         TEST_RESULT_VOID(cmdExpire(), "expire remove 00000002.history file");
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), false,
-            "history file removed");
+            "00000002.history file removed");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), true,
+            "00000003.history file not removed");
     }
     // *****************************************************************************************************************************
     if (testBegin("info files mismatch"))

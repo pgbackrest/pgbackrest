@@ -734,7 +734,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
                                     storageListP(
                                         storageRepo(),
                                         strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
-                                        .expression = STRDEF("^[0-F]{8}.history$")),
+                                        .expression = STRDEF(HISTORY_FILES_REGEXP)),
                                     sortOrderAsc);
 
                             for (unsigned int historyFileIdx = 0; historyFileIdx < strLstSize(historyFilesList); historyFileIdx++)
