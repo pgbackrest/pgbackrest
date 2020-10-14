@@ -34,9 +34,10 @@ size_t cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize);
 int64_t cvtZToInt64(const char *value);
 int64_t cvtZToInt64Base(const char *value, int base);
 
-// Convert int32/64 to uint32/64 using zigzag encoding and vice versa. Zigzag encoding places the sign bit in the least significant
-// bit so that -1 is encoded as 1, 1 as 2, etc. This moves as many bits as possible into the low order bits which is good for other
-// types of encoding, e.g. base-128.
+// Convert int32/64 to uint32/64 using zigzag encoding and vice versa. Zigzag encoding places the sign in the least significant bit
+// so that signed and unsigned values alternate, e.g. 0 = 0, -1 = 1, 1 = 2, -2 = 3, 2 = 4, -3 = 5, 3 = 6, etc. This moves as many
+// bits as possible into the low order bits which is good for other types of encoding, e.g. base-128. See
+// http://neurocline.github.io/dev/2015/09/17/zig-zag-encoding.html for details.
 __attribute__((always_inline)) static inline uint32_t
 cvtInt32ToZigZag(int32_t value)
 {
