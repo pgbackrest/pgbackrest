@@ -161,7 +161,7 @@ cfgLoadUpdateOption(void)
             const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType + optionIdx);
 
             const String *msgArchiveOff = strNewFmt(
-                "WAL segments will not be expired: option '" CFGOPT_REPO1_RETENTION_ARCHIVE_TYPE "=%s' but",
+                "WAL segments will not be expired: option '%s=%s' but", cfgOptionName(cfgOptRepoRetentionArchiveType + optionIdx),
                 strZ(archiveRetentionType));
 
             // If the archive retention is not explicitly set then determine what it should be defaulted to
@@ -229,11 +229,11 @@ cfgLoadUpdateOption(void)
     {
         THROW_FMT(
             OptionInvalidValueError,
-            "'%s' is not valid for option '" CFGOPT_REPO1_S3_BUCKET "'"
+            "'%s' is not valid for option '%s'"
                 "\nHINT: RFC-2818 forbids dots in wildcard matches."
                 "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
                 "\nHINT: remove dots from the bucket name.",
-            strZ(cfgOptionStr(cfgOptRepoS3Bucket)));
+            strZ(cfgOptionStr(cfgOptRepoS3Bucket)), cfgOptionName(cfgOptRepoS3Bucket));
     }
 
     // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.

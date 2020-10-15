@@ -14,3 +14,18 @@ void harnessCfgLoadRaw(unsigned int argListSize, const char *argList[]);
 // Automatically adds the exe, command (and role), lock-path, and log-path so executing the binary works locally or in a container.
 void harnessCfgLoad(ConfigCommand commandId, const StringList *argList);
 void harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, const StringList *argList);
+
+// Add options to a raw argument list
+void hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const String *value);
+void hrnCfgArgIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, const String *value);
+
+void hrnCfgArgRawFmt(StringList *argList, ConfigOption optionId, const char *format, ...)
+    __attribute__((format(printf, 3, 4)));
+void hrnCfgArgIdRawFmt(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *format, ...)
+    __attribute__((format(printf, 4, 5)));
+
+void hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value);
+void hrnCfgArgIdRawZ(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *value);
+
+void hrnCfgArgBoolRaw(StringList *argList, ConfigOption optionId, bool value);
+void hrnCfgArgBoolIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value);

@@ -4,6 +4,8 @@ Test Configuration Parse
 #include "protocol/helper.h"
 #include "storage/storage.intern.h"
 
+#include "common/harnessConfig.h"
+
 #define TEST_BACKREST_EXE                                           "pgbackrest"
 
 #define TEST_COMMAND_ARCHIVE_GET                                    "archive-get"
@@ -780,7 +782,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--host-id=1"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
@@ -795,7 +797,7 @@ testRun(void)
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
@@ -1133,7 +1135,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew(TEST_COMMAND_ARCHIVE_GET));
         strLstAdd(argList, strNew("000000010000000200000003"));
         strLstAdd(argList, strNew("/path/to/wal/RECOVERYWAL"));
@@ -1185,7 +1187,7 @@ testRun(void)
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("--no-online"));
-        strLstAddZ(argList, "--" CFGOPT_PG2_LOCAL);
+        hrnCfgArgBoolIdRaw(argList, cfgOptPgLocal, 2, true);
         strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
@@ -1202,34 +1204,36 @@ testRun(void)
 
         storagePutP(
             storageNewWriteP(storageLocalWrite(), configFile),
-            BUFSTRDEF(
-                "[global]\n"
-                "compress-level=3\n"
-                "spool-path=/path/to/spool\n"
-                "lock-path=/\n"
-                "\n"
-                "[global:backup]\n"
-                "repo1-hardlink=y\n"
-                "bogus=bogus\n"
-                "no-delta=y\n"
-                "reset-delta=y\n"
-                "archive-copy=y\n"
-                "start-fast=y\n"
-                "online=y\n"
-                "pg1-path=/not/path/to/db\n"
-                "backup-standby=y\n"
-                "buffer-size=65536\n"
-                "\n"
-                "[db:backup]\n"
-                "delta=n\n"
-                "recovery-option=a=b\n"
-                "\n"
-                "[db]\n"
-                "pg1-host=db\n"
-                "pg1-path=/path/to/db\n"
-                CFGOPT_PG2_HOST "=ignore\n"
-                CFGOPT_PG2_PATH "=/path/to/db2\n"
-                "recovery-option=c=d\n"));
+            BUFSTR(
+                strNewFmt(
+                    "[global]\n"
+                    "compress-level=3\n"
+                    "spool-path=/path/to/spool\n"
+                    "lock-path=/\n"
+                    "\n"
+                    "[global:backup]\n"
+                    "repo1-hardlink=y\n"
+                    "bogus=bogus\n"
+                    "no-delta=y\n"
+                    "reset-delta=y\n"
+                    "archive-copy=y\n"
+                    "start-fast=y\n"
+                    "online=y\n"
+                    "pg1-path=/not/path/to/db\n"
+                    "backup-standby=y\n"
+                    "buffer-size=65536\n"
+                    "\n"
+                    "[db:backup]\n"
+                    "delta=n\n"
+                    "recovery-option=a=b\n"
+                    "\n"
+                    "[db]\n"
+                    "pg1-host=db\n"
+                    "pg1-path=/path/to/db\n"
+                    "%s=ignore\n"
+                    "%s=/path/to/db2\n"
+                    "recovery-option=c=d\n",
+                    cfgOptionName(cfgOptPgHost + 1), cfgOptionName(cfgOptPgPath + 1))));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         harnessLogResult(

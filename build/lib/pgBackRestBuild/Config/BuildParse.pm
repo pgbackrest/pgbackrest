@@ -130,8 +130,11 @@ sub buildConfigParse
                 # Build option constant name if this is the current name for the option
                 if ($iOptionNameIdx == 0)
                 {
-                    $strOptionConst = "CFGOPT_" . uc($strOptionNameOut);
-                    $strOptionConst =~ s/\-/_/g;
+                    if (!$rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
+                    {
+                        $strOptionConst = "CFGOPT_" . uc($strOptionNameOut);
+                        $strOptionConst =~ s/\-/_/g;
+                    }
                 }
                 # Else use bare string and mark as deprecated
                 else
