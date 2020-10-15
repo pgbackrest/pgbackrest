@@ -1,10 +1,12 @@
 /***********************************************************************************************************************************
 Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
+#include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
 #include "common/harnessLog.h"
 #include "common/harnessTest.h"
 
+#include "config/config.intern.h"
 #include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
@@ -79,4 +81,17 @@ harnessCfgLoad(ConfigCommand commandId, const StringList *argListParam)
     harnessCfgLoadRole(commandId, cfgCmdRoleDefault, argListParam);
 
     FUNCTION_HARNESS_RESULT_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const char *value)
+{
+    hrnCfgArgIdRaw(argList, optionId, 1, value);
+}
+
+void
+hrnCfgArgIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *value)
+{
+    strLstAdd(argList, strNewFmt("--%s=%s", cfgOptionRawIdxName(optionId, optionIdx - 1), value));
 }

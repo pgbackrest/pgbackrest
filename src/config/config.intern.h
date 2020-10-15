@@ -39,6 +39,7 @@ typedef struct Config
     {
         bool valid;                                                 // Is option group valid for the current command?
         unsigned int indexTotal;                                    // Max index in option group
+        unsigned int indexDefault;                                  // Default index (usually 0)
         unsigned int index[CFG_OPTION_INDEX_MAX];                   // List of indexes
     } optionGroup[CFG_OPTION_GROUP_TOTAL];
 
@@ -74,6 +75,12 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
+// !!!
+const char * cfgOptionRawIdxName(ConfigOption optionId, unsigned int index);
+
+// Total indexes for the option if in a group, 1 otherwise.
+unsigned int cfgOptionIdxTotal(ConfigOption optionId);
+
 // Invalidate an option so it will not be passed to other processes. This is used to manage deprecated options that have a newer
 // option that should be used when possible, e.g. compress and compress-type.
 void cfgOptionInvalidate(ConfigOption optionId);

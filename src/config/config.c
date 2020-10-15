@@ -412,6 +412,7 @@ cfgOptionGroupId(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
+// !!! THIS NO LONGER HAS A PURPOSE
 bool
 cfgOptionGroupIdxTest(ConfigOptionGroup groupId, unsigned int index)
 {
@@ -452,6 +453,20 @@ cfgOptionGroupValid(ConfigOptionGroup groupId)
 }
 
 /**********************************************************************************************************************************/
+unsigned int
+cfgOptionIdxTotal(ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    FUNCTION_TEST_RETURN(
+        configOptionData[optionId].group ? configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal : 1);
+}
+
+/**********************************************************************************************************************************/
 void
 cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 {
@@ -465,10 +480,7 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 
     MEM_CONTEXT_BEGIN(configLocal->memContext)
     {
-        unsigned int indexTotal = configOptionData[optionId].group ?
-            configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal : 1;
-
-        for (unsigned int index = 0; index < indexTotal; index++)
+        for (unsigned int index = 0; index < cfgOptionIdxTotal(optionId); index++)
         {
             if (configLocal->option[optionId].index[index].source == cfgSourceDefault)
                 cfgOptionIdxSet(optionId, index, cfgSourceDefault, defaultValue);
@@ -584,7 +596,7 @@ cfgOptionName(ConfigOption optionId)
 }
 
 const char *
-cfgOptionIdxName(ConfigOption optionId, unsigned int index)
+cfgOptionRawIdxName(ConfigOption optionId, unsigned int index)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
@@ -602,6 +614,28 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int index)
             configOptionData[optionId].name + strlen(configOptionGroupData[configOptionData[optionId].groupId].name));
 
         FUNCTION_TEST_RETURN(strZ(name));
+    }
+
+    FUNCTION_TEST_RETURN(configOptionData[optionId].name);
+}
+
+const char *
+cfgOptionIdxName(ConfigOption optionId, unsigned int index)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, index);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(
+        (!configOptionData[optionId].group && index == 0) ||
+        (configOptionData[optionId].group && index < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+
+    if (configOptionData[optionId].group)
+    {
+        FUNCTION_TEST_RETURN(
+            cfgOptionRawIdxName(optionId, configLocal->optionGroup[configOptionData[optionId].groupId].index[index]));
     }
 
     FUNCTION_TEST_RETURN(configOptionData[optionId].name);
@@ -653,7 +687,6 @@ cfgOptionIdxReset(ConfigOption optionId, unsigned int index)
         FUNCTION_TEST_PARAM(UINT, index);
     FUNCTION_TEST_END();
 
-    ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(
         (!configOptionData[optionId].group && index == 0) ||

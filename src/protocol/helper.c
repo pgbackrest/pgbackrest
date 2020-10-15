@@ -9,7 +9,7 @@ Protocol Helper
 #include "common/debug.h"
 #include "common/exec.h"
 #include "common/memContext.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "config/define.h"
 #include "config/exec.h"
 #include "config/protocol.h"
@@ -90,15 +90,13 @@ repoIsLocalVerify(void)
 
 /**********************************************************************************************************************************/
 bool
-pgIsLocal(unsigned int hostId)
+pgIsLocal(unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT, hostId);
+        FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    ASSERT(hostId > 0);
-
-    FUNCTION_LOG_RETURN(BOOL, !cfgOptionIdxTest(cfgOptPgHost, hostId - 1));
+    FUNCTION_LOG_RETURN(BOOL, !cfgOptionIdxTest(cfgOptPgHost, optionIdx));
 }
 
 /**********************************************************************************************************************************/
@@ -107,7 +105,7 @@ pgIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
 
-    if (!pgIsLocal(1))
+    if (!pgIsLocal(0))
         THROW_FMT(HostInvalidError, "%s command must be run on the " PG_NAME " host", cfgCommandName(cfgCommand()));
 
     FUNCTION_TEST_RETURN_VOID();
@@ -351,63 +349,63 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     // Update/remove repo/pg options that are sent to the remote
     const String *repoHostPrefix = STR(cfgDefOptionName(cfgOptRepoHost));
-    const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
+    // const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
     const String *pgHostPrefix = STR(cfgDefOptionName(cfgOptPgHost));
-    const String *pgPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_PG);
+    // const String *pgPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_PG);
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
-        const String *optionDefName = STR(cfgDefOptionName(optionId));
-        bool remove = false;
+        // Skip options that are not part of a group
+        if (!cfgOptionGroup(optionId))
+            continue;
 
-        // Remove repo host options that are not needed on the remote.  The remote is not expecting to see host settings and it
-        // could get confused about the locality of the repo, i.e. local or remote.
-        if (strBeginsWith(optionDefName, repoHostPrefix))
+        const String *optionDefName = STR(cfgDefOptionName(optionId));
+        unsigned int groupId = cfgOptionGroupId(optionId);
+        bool remove = false;
+        bool skipHostIdx = false;
+
+        // Remove repo host options that are not needed on the remote. The remote is not expecting to see host settings so it could
+        // get confused about the locality of the repo, i.e. local or remote. Also remove repo options when the remote type is pg
+        // since they won't be used.
+        if (groupId == cfgOptGrpRepo)
         {
-            remove = true;
+            remove = protocolStorageType == protocolStorageTypePg || strBeginsWith(optionDefName, repoHostPrefix);
         }
-        // Remove repo options when the remote type is pg since they won't be used
-        else if (strBeginsWith(optionDefName, repoPrefix))
+        // Remove pg host options that are not needed on the remote
+        else
         {
-            if (protocolStorageType == protocolStorageTypePg)
+            ASSERT(groupId == cfgOptGrpPg);
+
+            // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
+            if (protocolStorageType == protocolStorageTypeRepo)
+            {
+                remove = !cfgDefOptionRequired(cfgCommand(), optionId) || cfgDefOptionDefault(cfgCommand(), optionId) != NULL;
+            }
+            // The remote is not expecting to see host settings so it could get confused about the locality of pg, i.e. local or
+            // remote.
+            else if (strBeginsWith(optionDefName, pgHostPrefix))
+            {
                 remove = true;
-        }
-        // Remove pg host options that are not needed on the remote.  The remote is not expecting to see host settings and it could
-        // get confused about the locality of pg, i.e. local or remote.
-        else if (strBeginsWith(optionDefName, pgHostPrefix))
-        {
-            remove = true;
-        }
-        else if (strBeginsWith(optionDefName, pgPrefix))
-        {
-            // !!! FIX THIS
-            // // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
-            // if (protocolStorageType == protocolStorageTypeRepo)
-            // {
-            //     remove = !cfgDefOptionRequired(cfgCommand(), optionId) || cfgDefOptionDefault(cfgCommand(), optionId) != NULL;
-            // }
-            // // Else move/remove pg options with index > 0 since they won't be used
-            // else if (cfgOptionIdx(optionId) > 0)
-            // {
-            //     // If the option index matches the host-id then this is a pg option that the remote needs.  Since the remote expects
-            //     // to find pg options in index 0, copy the option to index 0.
-            //     if (cfgOptionIdx(optionId) == hostIdx)
-            //     {
-            //         kvPut(
-            //             optionReplace, VARSTRZ(cfgOptionName(optionId - hostIdx)),
-            //             cfgOptionSource(optionId) != cfgSourceDefault ? cfgOption(optionId) : NULL);
-            //     }
-            //
-            //     // Remove pg options that are not needed on the remote.  The remote is only going to look at index 0 so the options
-            //     // in higher indexes will not be used and just add clutter which makes debugging harder.
-            //     remove = true;
-            // }
+            }
+            // Else remove pg options that do not equal hostIdx. The remote will only work with one pg index at a time.
+            else
+            {
+                remove = true;
+                skipHostIdx = true;
+            }
         }
 
         // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient because
         // cfgExecParam() won't have to search through as large a list looking for overrides.
-        if (remove && cfgOptionTest(optionId))
-            kvPut(optionReplace, VARSTRZ(cfgOptionName(optionId)), NULL);
+        if (remove)
+        {
+            // Loop through option indexes
+            for (unsigned int optionIdx = 0; optionIdx < cfgOptionIdxTotal(optionId); optionIdx++)
+            {
+                if (cfgOptionIdxTest(optionId, optionIdx) && !(skipHostIdx && optionIdx == hostIdx))
+                    kvPut(optionReplace, VARSTRZ(cfgOptionIdxName(optionId, optionIdx)), NULL);
+            }
+        }
     }
 
     // Don't pass host-id to the remote.  The host will always be in index 0.
