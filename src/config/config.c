@@ -853,6 +853,17 @@ cfgOptionKv(ConfigOption optionId)
     FUNCTION_LOG_RETURN(KEY_VALUE, varKv(cfgOptionIdxInternal(optionId, 0, varTypeKeyValue, false)));
 }
 
+const KeyValue *
+cfgOptionIdxKv(ConfigOption optionId, unsigned int index)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+        FUNCTION_LOG_PARAM(UINT, index);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(KEY_VALUE, varKv(cfgOptionIdxInternal(optionId, index, varTypeKeyValue, false)));
+}
+
 const VariantList *
 cfgOptionLst(ConfigOption optionId)
 {
@@ -860,14 +871,25 @@ cfgOptionLst(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    const Variant *optionValue = cfgOptionIdxInternal(optionId, 0, varTypeVariantList, true);
+    FUNCTION_LOG_RETURN_CONST(VARIANT_LIST, cfgOptionIdxLst(optionId, 0));
+}
+
+const VariantList *
+cfgOptionIdxLst(ConfigOption optionId, unsigned int index)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+        FUNCTION_LOG_PARAM(UINT, index);
+    FUNCTION_LOG_END();
+
+    const Variant *optionValue = cfgOptionIdxInternal(optionId, index, varTypeVariantList, true);
 
     if (optionValue == NULL)
     {
         MEM_CONTEXT_BEGIN(configLocal->memContext)
         {
             optionValue = varNewVarLst(varLstNew());
-            configLocal->option[optionId].index[0].value = optionValue;
+            configLocal->option[optionId].index[index].value = optionValue;
         }
         MEM_CONTEXT_END();
     }
