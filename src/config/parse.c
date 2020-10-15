@@ -1414,7 +1414,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     hint = "\nHINT: does this stanza exist?";
 
                                 THROW_FMT(
-                                    OptionRequiredError, "%s command requires option: %s%s", cfgCommandName(cfgCommand()),
+                                    OptionRequiredError, "%s command requires option: %s%s", cfgCommandName(config->command),
                                     cfgOptionIdxName(optionId, optionIdx), hint);
                             }
                         }

@@ -7,6 +7,13 @@ Harness for Loading Test Configurations
 #define CFGOPT_PG2_HOST                                             "pg2-host"
 #define CFGOPT_PG2_LOCAL                                            "pg2-local"
 #define CFGOPT_PG2_PATH                                             "pg2-path"
+#define CFGOPT_REPO1_CIPHER_PASS                                    "repo1-cipher-pass"
+#define CFGOPT_REPO1_CIPHER_TYPE                                    "repo1-cipher-type"
+#define CFGOPT_REPO1_PATH                                           "repo1-path"
+#define CFGOPT_REPO1_HOST                                           "repo1-host"
+#define CFGOPT_REPO1_TYPE                                           "repo1-type"
+
+#define HRN_PGBACKREST_ENV                                          "PGBACKREST_"
 
 /***********************************************************************************************************************************
 Load a test configuration without any side effects
