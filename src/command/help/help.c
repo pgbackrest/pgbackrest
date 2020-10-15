@@ -12,6 +12,7 @@ Help Command
 #include "common/memContext.h"
 #include "config/config.h"
 #include "config/define.h"
+#include "config/parse.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -348,16 +349,11 @@ helpRender(void)
                     THROW(ParamInvalidError, "only one option allowed for option help");
 
                 // Ensure the option is valid
-                const char *optionName = strZ(strLstGet(cfgCommandParam(), 0));
-                ConfigOption optionId = cfgOptionId(optionName);
+                const String *optionName = strLstGet(cfgCommandParam(), 0);
+                CfgParseOptionResult option = cfgParseOption(optionName);
 
-                if (cfgOptionId(optionName) == -1)
-                {
-                    if (cfgDefOptionId(optionName) != -1)
-                        optionId = cfgDefOptionId(optionName);
-                    else
-                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
-                }
+                if (!option.found)
+                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
 
                 // Output option summary and description
                 strCatFmt(
@@ -367,31 +363,31 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    optionName,
-                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, optionId)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, optionId)), 0, true, CONSOLE_WIDTH)));
+                    strZ(optionName),
+                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, option.optionId)), 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.optionId)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(helpOptionDefault(commandId, optionId));
+                const String *defaultValue = helpRenderValue(helpOptionDefault(commandId, option.optionId));
                 const String *value = NULL;
 
-                if (cfgOptionSource(optionId) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOption(optionId));
+                if (cfgOptionSource(option.optionId) != cfgSourceDefault)
+                    value = helpRenderValue(cfgOption(option.optionId));
 
                 if (value != NULL || defaultValue != NULL)
                 {
                     strCat(result, LF_STR);
 
                     if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(optionId) ? "<redacted>" : strZ(value));
+                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(option.optionId) ? "<redacted>" : strZ(value));
 
                     if (defaultValue != NULL)
                         strCatFmt(result, "default: %s\n", strZ(defaultValue));
                 }
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
-                if (cfgDefOptionHelpNameAlt(optionId))
-                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(optionId, 0));
+                if (cfgDefOptionHelpNameAlt(option.optionId))
+                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(option.optionId, 0));
             }
         }
 

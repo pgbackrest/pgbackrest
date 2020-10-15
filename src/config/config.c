@@ -568,26 +568,6 @@ cfgOptionIdxHostPort(ConfigOption optionId, unsigned int index, unsigned int *po
     FUNCTION_TEST_RETURN(result);
 }
 
-/**********************************************************************************************************************************/
-// !!! NEEDS TO BE MOVED TO PARSE
-int
-cfgOptionId(const char *optionName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, optionName);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionName != NULL);
-
-    int result = -1;
-
-    for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
-        if (strcmp(optionName, configOptionData[optionId].name) == 0)
-            result = optionId;
-
-    FUNCTION_TEST_RETURN(result);
-}
-
 /***********************************************************************************************************************************
 Get option name by id
 ***********************************************************************************************************************************/

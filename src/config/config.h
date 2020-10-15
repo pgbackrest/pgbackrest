@@ -185,9 +185,6 @@ void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 String *cfgOptionHostPort(ConfigOption optionId, unsigned int *port);
 String *cfgOptionIdxHostPort(ConfigOption optionId, unsigned int index, unsigned int *port);
 
-// Get option id by name
-int cfgOptionId(const char *optionName);
-
 // Was the option negated?
 bool cfgOptionNegate(ConfigOption optionId);
 bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int index);
