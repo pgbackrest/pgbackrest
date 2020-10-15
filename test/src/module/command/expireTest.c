@@ -1055,8 +1055,6 @@ testRun(void)
             "P00 DETAIL: remove archive: archiveId = 9.4-1, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00 DETAIL: remove archive: archiveId = 9.4-1, start = 000000010000000000000003, stop = 000000010000000000000003");
 
-        harnessLogLevelReset();
-
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire history files - dry run");
 
@@ -1127,7 +1125,6 @@ testRun(void)
                 "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
                 "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
 
-
         storagePathRemoveP(storageTest, strNewFmt("%s/10-2/0000000100000000", strZ(archiveStanzaPath)), .recurse=true);
         archiveGenerate(storageTest, archiveStanzaPath, 2, 2, "9.4-1", "0000000100000000");
         archiveGenerate(storageTest, archiveStanzaPath, 6, 10, "10-2", "0000000300000000");
@@ -1144,14 +1141,12 @@ testRun(void)
 
         harnessLogResult(
             "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152138F, archiveId = 9.4-1, "
-            "start = 000000010000000000000002\n"
+                "start = 000000010000000000000002\n"
             "P00 DETAIL: [DRY-RUN] no archive to remove, archiveId = 9.4-1\n"
             "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F, archiveId = 10-2, "
-            "start = 000000030000000000000006\n"
+                "start = 000000030000000000000006\n"
             "P00 DETAIL: [DRY-RUN] no archive to remove, archiveId = 10-2\n"
             "P00 DETAIL: [DRY-RUN] remove history file: archiveId = 10-2, file = 00000002.history");
-
-        harnessLogLevelReset();
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire history files - no dry run");
@@ -1169,6 +1164,13 @@ testRun(void)
             storageExistsP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), true,
             "00000003.history file not removed");
 
+        harnessLogResult(
+            "P00 DETAIL: archive retention on backup 20181119-152138F, archiveId = 9.4-1, start = 000000010000000000000002\n"
+            "P00 DETAIL: no archive to remove, archiveId = 9.4-1\n"
+            "P00 DETAIL: archive retention on backup 20181119-152900F, archiveId = 10-2, start = 000000030000000000000006\n"
+            "P00 DETAIL: no archive to remove, archiveId = 10-2\n"
+            "P00 DETAIL: remove history file: archiveId = 10-2, file = 00000002.history");
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire history files via backup command");
 
@@ -1180,11 +1182,25 @@ testRun(void)
 
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), BUFSTRDEF("tmp"));
+
         TEST_RESULT_VOID(cmdExpire(), "expire history files via backup command");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), false,
+            "00000002.history file removed again");
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), true,
             "00000003.history file not removed");
+
+        harnessLogResult(
+            "P00 DETAIL: archive retention on backup 20181119-152138F, archiveId = 9.4-1, start = 000000010000000000000002\n"
+            "P00 DETAIL: no archive to remove, archiveId = 9.4-1\n"
+            "P00 DETAIL: archive retention on backup 20181119-152900F, archiveId = 10-2, start = 000000030000000000000006\n"
+            "P00 DETAIL: no archive to remove, archiveId = 10-2\n"
+            "P00 DETAIL: remove history file: archiveId = 10-2, file = 00000002.history");
+
+        harnessLogLevelReset();
     }
+
     // *****************************************************************************************************************************
     if (testBegin("info files mismatch"))
     {

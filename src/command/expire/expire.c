@@ -728,22 +728,23 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
                             else
                                 logExpire(&archiveExpire, archiveId);
 
-                            // Based on the timeline of the backupArchiveStart, look for history files to expire
+                            // Look for history files to expire based on the timeline of backupArchiveStart
+                            const String *backupArchiveStartTimeline = strSubN(archiveRetentionBackup.backupArchiveStart, 0, 8);
+
                             StringList *historyFilesList =
                                 strLstSort(
                                     storageListP(
-                                        storageRepo(),
-                                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
-                                        .expression = STRDEF(HISTORY_FILES_REGEXP)),
+                                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
+                                        .expression = WAL_TIMELINE_HISTORY_REGEXP_STR),
                                     sortOrderAsc);
+
 
                             for (unsigned int historyFileIdx = 0; historyFileIdx < strLstSize(historyFilesList); historyFileIdx++)
                             {
                                 String *historyFile = strLstGet(historyFilesList, historyFileIdx);
 
-                                // Extract timeline to compare
-                                if (strCmp(
-                                        strSubN(historyFile, 0, 8), strSubN(archiveRetentionBackup.backupArchiveStart, 0, 8)) < 0)
+                                // Expire history files older than the oldest retained timeline
+                                if (strCmp(strSubN(historyFile, 0, 8), backupArchiveStartTimeline) < 0)
                                 {
                                     // Execute the real expiration and deletion only if the dry-run mode is disabled
                                     if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
