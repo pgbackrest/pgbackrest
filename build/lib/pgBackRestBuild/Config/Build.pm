@@ -275,8 +275,7 @@ sub buildConfig
                 "    //" . (qw{-} x 126) . "\n" .
                 "    CONFIG_OPTION\n" .
                 "    (\n" .
-                "        CONFIG_OPTION_NAME(" .
-                    ($rhConfigDefine->{$strOption}{&CFGDEF_GROUP} ? "\"${strOptionIndex}\"" : $strOptionConst) . ")\n" .
+                "        CONFIG_OPTION_NAME(\"${strOptionIndex}\")\n" .
                 "        CONFIG_OPTION_INDEX(" . ($iOptionIndex - 1) . ")\n" .
                 "        CONFIG_OPTION_DEFINE_ID(" . buildConfigDefineOptionEnum($strOption) . ")\n";
 

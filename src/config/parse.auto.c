@@ -12,81 +12,81 @@ static const struct option optionList[] =
     // archive-async option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_ARCHIVE_ASYNC,
+        .name = "archive-async",
         .val = PARSE_OPTION_FLAG | cfgOptArchiveAsync,
     },
     {
-        .name = "no-" CFGOPT_ARCHIVE_ASYNC,
+        .name = "no-archive-async",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveAsync,
     },
     {
-        .name = "reset-" CFGOPT_ARCHIVE_ASYNC,
+        .name = "reset-archive-async",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveAsync,
     },
 
     // archive-check option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_ARCHIVE_CHECK,
+        .name = "archive-check",
         .val = PARSE_OPTION_FLAG | cfgOptArchiveCheck,
     },
     {
-        .name = "no-" CFGOPT_ARCHIVE_CHECK,
+        .name = "no-archive-check",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveCheck,
     },
     {
-        .name = "reset-" CFGOPT_ARCHIVE_CHECK,
+        .name = "reset-archive-check",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveCheck,
     },
 
     // archive-copy option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_ARCHIVE_COPY,
+        .name = "archive-copy",
         .val = PARSE_OPTION_FLAG | cfgOptArchiveCopy,
     },
     {
-        .name = "no-" CFGOPT_ARCHIVE_COPY,
+        .name = "no-archive-copy",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveCopy,
     },
     {
-        .name = "reset-" CFGOPT_ARCHIVE_COPY,
+        .name = "reset-archive-copy",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveCopy,
     },
 
     // archive-get-queue-max option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_ARCHIVE_GET_QUEUE_MAX,
+        .name = "archive-get-queue-max",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptArchiveGetQueueMax,
     },
     {
-        .name = "reset-" CFGOPT_ARCHIVE_GET_QUEUE_MAX,
+        .name = "reset-archive-get-queue-max",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveGetQueueMax,
     },
 
     // archive-mode option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_ARCHIVE_MODE,
+        .name = "archive-mode",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptArchiveMode,
     },
     {
-        .name = "reset-" CFGOPT_ARCHIVE_MODE,
+        .name = "reset-archive-mode",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveMode,
     },
 
     // archive-push-queue-max option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_ARCHIVE_PUSH_QUEUE_MAX,
+        .name = "archive-push-queue-max",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptArchivePushQueueMax,
     },
     {
-        .name = "reset-" CFGOPT_ARCHIVE_PUSH_QUEUE_MAX,
+        .name = "reset-archive-push-queue-max",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchivePushQueueMax,
     },
     {
@@ -102,61 +102,61 @@ static const struct option optionList[] =
     // archive-timeout option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_ARCHIVE_TIMEOUT,
+        .name = "archive-timeout",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptArchiveTimeout,
     },
     {
-        .name = "reset-" CFGOPT_ARCHIVE_TIMEOUT,
+        .name = "reset-archive-timeout",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveTimeout,
     },
 
     // backup-standby option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_BACKUP_STANDBY,
+        .name = "backup-standby",
         .val = PARSE_OPTION_FLAG | cfgOptBackupStandby,
     },
     {
-        .name = "no-" CFGOPT_BACKUP_STANDBY,
+        .name = "no-backup-standby",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptBackupStandby,
     },
     {
-        .name = "reset-" CFGOPT_BACKUP_STANDBY,
+        .name = "reset-backup-standby",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptBackupStandby,
     },
 
     // buffer-size option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_BUFFER_SIZE,
+        .name = "buffer-size",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptBufferSize,
     },
     {
-        .name = "reset-" CFGOPT_BUFFER_SIZE,
+        .name = "reset-buffer-size",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptBufferSize,
     },
 
     // checksum-page option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_CHECKSUM_PAGE,
+        .name = "checksum-page",
         .val = PARSE_OPTION_FLAG | cfgOptChecksumPage,
     },
     {
-        .name = "no-" CFGOPT_CHECKSUM_PAGE,
+        .name = "no-checksum-page",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptChecksumPage,
     },
     {
-        .name = "reset-" CFGOPT_CHECKSUM_PAGE,
+        .name = "reset-checksum-page",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptChecksumPage,
     },
 
     // cipher-pass option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_CIPHER_PASS,
+        .name = "cipher-pass",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptCipherPass,
     },
@@ -164,82 +164,82 @@ static const struct option optionList[] =
     // cmd-ssh option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_CMD_SSH,
+        .name = "cmd-ssh",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptCmdSsh,
     },
     {
-        .name = "reset-" CFGOPT_CMD_SSH,
+        .name = "reset-cmd-ssh",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCmdSsh,
     },
 
     // compress option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_COMPRESS,
+        .name = "compress",
         .val = PARSE_OPTION_FLAG | cfgOptCompress,
     },
     {
-        .name = "no-" CFGOPT_COMPRESS,
+        .name = "no-compress",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptCompress,
     },
     {
-        .name = "reset-" CFGOPT_COMPRESS,
+        .name = "reset-compress",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompress,
     },
 
     // compress-level option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_COMPRESS_LEVEL,
+        .name = "compress-level",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptCompressLevel,
     },
     {
-        .name = "reset-" CFGOPT_COMPRESS_LEVEL,
+        .name = "reset-compress-level",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressLevel,
     },
 
     // compress-level-network option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_COMPRESS_LEVEL_NETWORK,
+        .name = "compress-level-network",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptCompressLevelNetwork,
     },
     {
-        .name = "reset-" CFGOPT_COMPRESS_LEVEL_NETWORK,
+        .name = "reset-compress-level-network",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressLevelNetwork,
     },
 
     // compress-type option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_COMPRESS_TYPE,
+        .name = "compress-type",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptCompressType,
     },
     {
-        .name = "reset-" CFGOPT_COMPRESS_TYPE,
+        .name = "reset-compress-type",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptCompressType,
     },
 
     // config option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_CONFIG,
+        .name = "config",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptConfig,
     },
     {
-        .name = "no-" CFGOPT_CONFIG,
+        .name = "no-config",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptConfig,
     },
 
     // config-include-path option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_CONFIG_INCLUDE_PATH,
+        .name = "config-include-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptConfigIncludePath,
     },
@@ -247,7 +247,7 @@ static const struct option optionList[] =
     // config-path option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_CONFIG_PATH,
+        .name = "config-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptConfigPath,
     },
@@ -255,80 +255,80 @@ static const struct option optionList[] =
     // db-include option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_DB_INCLUDE,
+        .name = "db-include",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptDbInclude,
     },
     {
-        .name = "reset-" CFGOPT_DB_INCLUDE,
+        .name = "reset-db-include",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDbInclude,
     },
 
     // db-timeout option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_DB_TIMEOUT,
+        .name = "db-timeout",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptDbTimeout,
     },
     {
-        .name = "reset-" CFGOPT_DB_TIMEOUT,
+        .name = "reset-db-timeout",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDbTimeout,
     },
 
     // delta option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_DELTA,
+        .name = "delta",
         .val = PARSE_OPTION_FLAG | cfgOptDelta,
     },
     {
-        .name = "no-" CFGOPT_DELTA,
+        .name = "no-delta",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptDelta,
     },
     {
-        .name = "reset-" CFGOPT_DELTA,
+        .name = "reset-delta",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDelta,
     },
 
     // dry-run option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_DRY_RUN,
+        .name = "dry-run",
         .val = PARSE_OPTION_FLAG | cfgOptDryRun,
     },
 
     // exclude option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_EXCLUDE,
+        .name = "exclude",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptExclude,
     },
     {
-        .name = "reset-" CFGOPT_EXCLUDE,
+        .name = "reset-exclude",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
     },
 
     // expire-auto option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_EXPIRE_AUTO,
+        .name = "expire-auto",
         .val = PARSE_OPTION_FLAG | cfgOptExpireAuto,
     },
     {
-        .name = "no-" CFGOPT_EXPIRE_AUTO,
+        .name = "no-expire-auto",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptExpireAuto,
     },
     {
-        .name = "reset-" CFGOPT_EXPIRE_AUTO,
+        .name = "reset-expire-auto",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExpireAuto,
     },
 
     // filter option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_FILTER,
+        .name = "filter",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptFilter,
     },
@@ -336,14 +336,14 @@ static const struct option optionList[] =
     // force option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_FORCE,
+        .name = "force",
         .val = PARSE_OPTION_FLAG | cfgOptForce,
     },
 
     // host-id option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_HOST_ID,
+        .name = "host-id",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptHostId,
     },
@@ -351,181 +351,181 @@ static const struct option optionList[] =
     // ignore-missing option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_IGNORE_MISSING,
+        .name = "ignore-missing",
         .val = PARSE_OPTION_FLAG | cfgOptIgnoreMissing,
     },
 
     // io-timeout option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_IO_TIMEOUT,
+        .name = "io-timeout",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptIoTimeout,
     },
     {
-        .name = "reset-" CFGOPT_IO_TIMEOUT,
+        .name = "reset-io-timeout",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptIoTimeout,
     },
 
     // link-all option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_LINK_ALL,
+        .name = "link-all",
         .val = PARSE_OPTION_FLAG | cfgOptLinkAll,
     },
     {
-        .name = "no-" CFGOPT_LINK_ALL,
+        .name = "no-link-all",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLinkAll,
     },
     {
-        .name = "reset-" CFGOPT_LINK_ALL,
+        .name = "reset-link-all",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLinkAll,
     },
 
     // link-map option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_LINK_MAP,
+        .name = "link-map",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptLinkMap,
     },
     {
-        .name = "reset-" CFGOPT_LINK_MAP,
+        .name = "reset-link-map",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLinkMap,
     },
 
     // lock-path option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_LOCK_PATH,
+        .name = "lock-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptLockPath,
     },
     {
-        .name = "reset-" CFGOPT_LOCK_PATH,
+        .name = "reset-lock-path",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLockPath,
     },
 
     // log-level-console option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_LOG_LEVEL_CONSOLE,
+        .name = "log-level-console",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptLogLevelConsole,
     },
     {
-        .name = "reset-" CFGOPT_LOG_LEVEL_CONSOLE,
+        .name = "reset-log-level-console",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogLevelConsole,
     },
 
     // log-level-file option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_LOG_LEVEL_FILE,
+        .name = "log-level-file",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptLogLevelFile,
     },
     {
-        .name = "reset-" CFGOPT_LOG_LEVEL_FILE,
+        .name = "reset-log-level-file",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogLevelFile,
     },
 
     // log-level-stderr option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_LOG_LEVEL_STDERR,
+        .name = "log-level-stderr",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptLogLevelStderr,
     },
     {
-        .name = "reset-" CFGOPT_LOG_LEVEL_STDERR,
+        .name = "reset-log-level-stderr",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogLevelStderr,
     },
 
     // log-path option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_LOG_PATH,
+        .name = "log-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptLogPath,
     },
     {
-        .name = "reset-" CFGOPT_LOG_PATH,
+        .name = "reset-log-path",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogPath,
     },
 
     // log-subprocess option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_LOG_SUBPROCESS,
+        .name = "log-subprocess",
         .val = PARSE_OPTION_FLAG | cfgOptLogSubprocess,
     },
     {
-        .name = "no-" CFGOPT_LOG_SUBPROCESS,
+        .name = "no-log-subprocess",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogSubprocess,
     },
     {
-        .name = "reset-" CFGOPT_LOG_SUBPROCESS,
+        .name = "reset-log-subprocess",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogSubprocess,
     },
 
     // log-timestamp option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_LOG_TIMESTAMP,
+        .name = "log-timestamp",
         .val = PARSE_OPTION_FLAG | cfgOptLogTimestamp,
     },
     {
-        .name = "no-" CFGOPT_LOG_TIMESTAMP,
+        .name = "no-log-timestamp",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptLogTimestamp,
     },
     {
-        .name = "reset-" CFGOPT_LOG_TIMESTAMP,
+        .name = "reset-log-timestamp",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptLogTimestamp,
     },
 
     // manifest-save-threshold option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_MANIFEST_SAVE_THRESHOLD,
+        .name = "manifest-save-threshold",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptManifestSaveThreshold,
     },
     {
-        .name = "reset-" CFGOPT_MANIFEST_SAVE_THRESHOLD,
+        .name = "reset-manifest-save-threshold",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptManifestSaveThreshold,
     },
 
     // neutral-umask option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_NEUTRAL_UMASK,
+        .name = "neutral-umask",
         .val = PARSE_OPTION_FLAG | cfgOptNeutralUmask,
     },
     {
-        .name = "no-" CFGOPT_NEUTRAL_UMASK,
+        .name = "no-neutral-umask",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptNeutralUmask,
     },
     {
-        .name = "reset-" CFGOPT_NEUTRAL_UMASK,
+        .name = "reset-neutral-umask",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptNeutralUmask,
     },
 
     // online option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_ONLINE,
+        .name = "online",
         .val = PARSE_OPTION_FLAG | cfgOptOnline,
     },
     {
-        .name = "no-" CFGOPT_ONLINE,
+        .name = "no-online",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptOnline,
     },
 
     // output option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_OUTPUT,
+        .name = "output",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptOutput,
     },
@@ -1817,7 +1817,7 @@ static const struct option optionList[] =
     // process option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_PROCESS,
+        .name = "process",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptProcess,
     },
@@ -1825,57 +1825,57 @@ static const struct option optionList[] =
     // process-max option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_PROCESS_MAX,
+        .name = "process-max",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptProcessMax,
     },
     {
-        .name = "reset-" CFGOPT_PROCESS_MAX,
+        .name = "reset-process-max",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptProcessMax,
     },
 
     // protocol-timeout option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_PROTOCOL_TIMEOUT,
+        .name = "protocol-timeout",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptProtocolTimeout,
     },
     {
-        .name = "reset-" CFGOPT_PROTOCOL_TIMEOUT,
+        .name = "reset-protocol-timeout",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptProtocolTimeout,
     },
 
     // raw option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_RAW,
+        .name = "raw",
         .val = PARSE_OPTION_FLAG | cfgOptRaw,
     },
 
     // recovery-option option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_RECOVERY_OPTION,
+        .name = "recovery-option",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptRecoveryOption,
     },
     {
-        .name = "reset-" CFGOPT_RECOVERY_OPTION,
+        .name = "reset-recovery-option",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRecoveryOption,
     },
 
     // recurse option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_RECURSE,
+        .name = "recurse",
         .val = PARSE_OPTION_FLAG | cfgOptRecurse,
     },
 
     // remote-type option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_REMOTE_TYPE,
+        .name = "remote-type",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
     },
@@ -2528,52 +2528,52 @@ static const struct option optionList[] =
     // resume option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_RESUME,
+        .name = "resume",
         .val = PARSE_OPTION_FLAG | cfgOptResume,
     },
     {
-        .name = "no-" CFGOPT_RESUME,
+        .name = "no-resume",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptResume,
     },
     {
-        .name = "reset-" CFGOPT_RESUME,
+        .name = "reset-resume",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptResume,
     },
 
     // sck-block option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_SCK_BLOCK,
+        .name = "sck-block",
         .val = PARSE_OPTION_FLAG | cfgOptSckBlock,
     },
     {
-        .name = "no-" CFGOPT_SCK_BLOCK,
+        .name = "no-sck-block",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptSckBlock,
     },
     {
-        .name = "reset-" CFGOPT_SCK_BLOCK,
+        .name = "reset-sck-block",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptSckBlock,
     },
 
     // sck-keep-alive option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_SCK_KEEP_ALIVE,
+        .name = "sck-keep-alive",
         .val = PARSE_OPTION_FLAG | cfgOptSckKeepAlive,
     },
     {
-        .name = "no-" CFGOPT_SCK_KEEP_ALIVE,
+        .name = "no-sck-keep-alive",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptSckKeepAlive,
     },
     {
-        .name = "reset-" CFGOPT_SCK_KEEP_ALIVE,
+        .name = "reset-sck-keep-alive",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptSckKeepAlive,
     },
 
     // set option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_SET,
+        .name = "set",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptSet,
     },
@@ -2581,7 +2581,7 @@ static const struct option optionList[] =
     // sort option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_SORT,
+        .name = "sort",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptSort,
     },
@@ -2589,19 +2589,19 @@ static const struct option optionList[] =
     // spool-path option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_SPOOL_PATH,
+        .name = "spool-path",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptSpoolPath,
     },
     {
-        .name = "reset-" CFGOPT_SPOOL_PATH,
+        .name = "reset-spool-path",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptSpoolPath,
     },
 
     // stanza option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_STANZA,
+        .name = "stanza",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptStanza,
     },
@@ -2609,61 +2609,61 @@ static const struct option optionList[] =
     // start-fast option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_START_FAST,
+        .name = "start-fast",
         .val = PARSE_OPTION_FLAG | cfgOptStartFast,
     },
     {
-        .name = "no-" CFGOPT_START_FAST,
+        .name = "no-start-fast",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptStartFast,
     },
     {
-        .name = "reset-" CFGOPT_START_FAST,
+        .name = "reset-start-fast",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptStartFast,
     },
 
     // stop-auto option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_STOP_AUTO,
+        .name = "stop-auto",
         .val = PARSE_OPTION_FLAG | cfgOptStopAuto,
     },
     {
-        .name = "no-" CFGOPT_STOP_AUTO,
+        .name = "no-stop-auto",
         .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptStopAuto,
     },
     {
-        .name = "reset-" CFGOPT_STOP_AUTO,
+        .name = "reset-stop-auto",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptStopAuto,
     },
 
     // tablespace-map option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TABLESPACE_MAP,
+        .name = "tablespace-map",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptTablespaceMap,
     },
     {
-        .name = "reset-" CFGOPT_TABLESPACE_MAP,
+        .name = "reset-tablespace-map",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTablespaceMap,
     },
 
     // tablespace-map-all option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TABLESPACE_MAP_ALL,
+        .name = "tablespace-map-all",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptTablespaceMapAll,
     },
     {
-        .name = "reset-" CFGOPT_TABLESPACE_MAP_ALL,
+        .name = "reset-tablespace-map-all",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTablespaceMapAll,
     },
 
     // target option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TARGET,
+        .name = "target",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptTarget,
     },
@@ -2671,7 +2671,7 @@ static const struct option optionList[] =
     // target-action option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TARGET_ACTION,
+        .name = "target-action",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptTargetAction,
     },
@@ -2679,14 +2679,14 @@ static const struct option optionList[] =
     // target-exclusive option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TARGET_EXCLUSIVE,
+        .name = "target-exclusive",
         .val = PARSE_OPTION_FLAG | cfgOptTargetExclusive,
     },
 
     // target-timeline option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TARGET_TIMELINE,
+        .name = "target-timeline",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptTargetTimeline,
     },
@@ -2694,43 +2694,43 @@ static const struct option optionList[] =
     // tcp-keep-alive-count option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TCP_KEEP_ALIVE_COUNT,
+        .name = "tcp-keep-alive-count",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAliveCount,
     },
     {
-        .name = "reset-" CFGOPT_TCP_KEEP_ALIVE_COUNT,
+        .name = "reset-tcp-keep-alive-count",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveCount,
     },
 
     // tcp-keep-alive-idle option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TCP_KEEP_ALIVE_IDLE,
+        .name = "tcp-keep-alive-idle",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAliveIdle,
     },
     {
-        .name = "reset-" CFGOPT_TCP_KEEP_ALIVE_IDLE,
+        .name = "reset-tcp-keep-alive-idle",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveIdle,
     },
 
     // tcp-keep-alive-interval option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TCP_KEEP_ALIVE_INTERVAL,
+        .name = "tcp-keep-alive-interval",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptTcpKeepAliveInterval,
     },
     {
-        .name = "reset-" CFGOPT_TCP_KEEP_ALIVE_INTERVAL,
+        .name = "reset-tcp-keep-alive-interval",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptTcpKeepAliveInterval,
     },
 
     // type option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = CFGOPT_TYPE,
+        .name = "type",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptType,
     },

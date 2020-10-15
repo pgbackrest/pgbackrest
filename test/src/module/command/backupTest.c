@@ -929,9 +929,9 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         harnessCfgLoad(cfgCmdBackup, argList);
 
         time_t timestamp = 1575401652;
@@ -1009,9 +1009,9 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1029,9 +1029,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         harnessCfgLoad(cfgCmdBackup, argList);
@@ -1054,9 +1054,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1081,9 +1081,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--" CFGOPT_START_FAST);
         harnessCfgLoad(cfgCmdBackup, argList);
@@ -1105,9 +1105,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
         harnessCfgLoad(cfgCmdBackup, argList);
@@ -1129,9 +1129,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1161,9 +1161,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_CHECKSUM_PAGE);
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1210,9 +1210,9 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         harnessCfgLoad(cfgCmdBackup, argList);
 
         // Create pg_control
@@ -1246,9 +1246,9 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         harnessCfgLoad(cfgCmdBackup, argList);
@@ -1445,8 +1445,8 @@ testRun(void)
         // Create stanza
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
@@ -1457,9 +1457,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1477,9 +1477,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_FORCE);
@@ -1509,12 +1509,12 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--" CFGOPT_COMPRESS);
-        strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+        hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
         strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1530,9 +1530,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
@@ -1558,9 +1558,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
@@ -1620,8 +1620,8 @@ testRun(void)
             // Create stanza
             StringList *argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
             harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
@@ -1630,9 +1630,9 @@ testRun(void)
             // Load options
             argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
@@ -1727,12 +1727,12 @@ testRun(void)
             // Load options
             StringList *argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
-            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1915,13 +1915,13 @@ testRun(void)
         {
             StringList *argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
-            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
@@ -2084,8 +2084,8 @@ testRun(void)
             // Upgrade stanza
             StringList *argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
             harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
@@ -2094,11 +2094,11 @@ testRun(void)
             // Load options
             argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG2_PATH "=%s", strZ(pg2Path)));
-            strLstAddZ(argList, "--" CFGOPT_PG2_PORT "=5433");
-            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgIdRaw(argList, cfgOptPgPath, 1, pg1Path);
+            hrnCfgArgIdRaw(argList, cfgOptPgPath, 2, pg2Path);
+            hrnCfgArgIdRawZ(argList, cfgOptPgPort, 2, "5433");
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
             strLstAddZ(argList, "--" CFGOPT_START_FAST);
@@ -2232,8 +2232,8 @@ testRun(void)
             // Upgrade stanza
             StringList *argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
             harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
@@ -2242,11 +2242,11 @@ testRun(void)
             // Load options
             argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
-            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
             strLstAddZ(argList, "--" CFGOPT_MANIFEST_SAVE_THRESHOLD "=1");
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
@@ -2428,11 +2428,11 @@ testRun(void)
             // Load options
             StringList *argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
-            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Run backup
@@ -2462,12 +2462,12 @@ testRun(void)
             // Load options
             StringList *argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-            strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pg1Path)));
-            strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
             strLstAddZ(argList, "--" CFGOPT_DELTA);
-            strLstAddZ(argList, "--" CFGOPT_REPO1_HARDLINK);
+            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Update pg_control timestamp
