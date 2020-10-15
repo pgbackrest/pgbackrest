@@ -1168,6 +1168,22 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), true,
             "00000003.history file not removed");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire history files via backup command");
+
+        // Load Parameters
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=2");
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/10-2/00000002.history", strZ(archiveStanzaPath))), BUFSTRDEF("tmp"));
+        TEST_RESULT_VOID(cmdExpire(), "expire history files via backup command");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageTest, strNewFmt("%s/10-2/00000003.history", strZ(archiveStanzaPath))), true,
+            "00000003.history file not removed");
     }
     // *****************************************************************************************************************************
     if (testBegin("info files mismatch"))
