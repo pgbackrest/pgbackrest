@@ -213,7 +213,7 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        DbGetResult db = {.primaryId = 0};
+        DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
 
         TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false).lsn, "1/1", "start backup");
@@ -558,9 +558,9 @@ testRun(void)
 
         TEST_ASSIGN(result, dbGet(true, true, false), "get primary only");
 
-        TEST_RESULT_INT(result.primaryId, 1, "    check primary id");
+        TEST_RESULT_INT(result.primaryIdx, 0, "    check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
-        TEST_RESULT_INT(result.standbyId, 0, "    check standby id");
+        TEST_RESULT_INT(result.standbyIdx, 0, "    check standby id");
         TEST_RESULT_BOOL(result.standby == NULL, true, "    check standby");
         TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_84, "    version set");
         TEST_RESULT_STR_Z(dbPgDataPath(result.primary), "/pgdata", "    path set");
@@ -620,9 +620,9 @@ testRun(void)
 
         TEST_ASSIGN(result, dbGet(false, false, false), "get standbys");
 
-        TEST_RESULT_INT(result.primaryId, 0, "    check primary id");
+        TEST_RESULT_INT(result.primaryIdx, 0, "    check primary id");
         TEST_RESULT_BOOL(result.primary == NULL, true, "    check primary");
-        TEST_RESULT_INT(result.standbyId, 1, "    check standby id");
+        TEST_RESULT_INT(result.standbyIdx, 0, "    check standby id");
         TEST_RESULT_BOOL(result.standby != NULL, true, "    check standby");
 
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
@@ -671,12 +671,12 @@ testRun(void)
             "P00   WARN: unable to check pg-5: [DbConnectError] raised from remote-0 protocol on 'localhost':"
                 " unable to connect to 'dbname='postgres' port=5432': could not connect to server: [NO SUCH FILE OR DIRECTORY]");
 
-        TEST_RESULT_INT(result.primaryId, 8, "    check primary id");
+        TEST_RESULT_INT(result.primaryIdx, 3, "    check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
         TEST_RESULT_STR_Z(dbArchiveMode(result.primary), "on", "    dbArchiveMode");
         TEST_RESULT_STR_Z(dbArchiveCommand(result.primary), PROJECT_BIN, "    dbArchiveCommand");
         TEST_RESULT_STR_Z(dbWalSwitch(result.primary), "000000010000000200000003", "    wal switch");
-        TEST_RESULT_INT(result.standbyId, 1, "    check standby id");
+        TEST_RESULT_INT(result.standbyIdx, 0, "    check standby id");
         TEST_RESULT_BOOL(result.standby != NULL, true, "    check standby");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");

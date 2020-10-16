@@ -38,8 +38,8 @@ const Storage *storageLocal(void);
 const Storage *storageLocalWrite(void);
 
 // PostgreSQL storage by Id
-const Storage *storagePgId(unsigned int hostId);
-const Storage *storagePgIdWrite(unsigned int hostId);
+const Storage *storagePgIdx(unsigned int hostId);
+const Storage *storagePgIdxWrite(unsigned int hostId);
 
 // PostgreSQL storage for the host-id or the default of 1
 const Storage *storagePg(void);

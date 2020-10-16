@@ -16,9 +16,9 @@ Functions
 // Get specified cluster(s)
 typedef struct DbGetResult
 {
-    unsigned int primaryId;
+    unsigned int primaryIdx;
     Db *primary;
-    unsigned int standbyId;
+    unsigned int standbyIdx;
     Db *standby;
 } DbGetResult;
 

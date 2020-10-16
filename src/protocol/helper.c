@@ -115,15 +115,13 @@ pgIsLocalVerify(void)
 Get the command line required for local protocol execution
 ***********************************************************************************************************************************/
 static StringList *
-protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId)
+protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
-        FUNCTION_LOG_PARAM(UINT, hostId);
-        FUNCTION_LOG_PARAM(UINT, protocolId);
+        FUNCTION_LOG_PARAM(UINT, hostIdx);
+        FUNCTION_LOG_PARAM(UINT, processId);
     FUNCTION_LOG_END();
-
-    ASSERT(hostId > 0);
 
     StringList *result = NULL;
 
@@ -133,10 +131,14 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
         KeyValue *optionReplace = kvNew();
 
         // Add the process id -- used when more than one process will be called
-        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(protocolId));
+        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(processId));
 
         // Add the host id
-        kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), VARUINT(hostId));
+        kvPut(
+            optionReplace, VARSTR(CFGOPT_HOST_ID_STR),
+            VARUINT(
+                cfgOptionGroupIdxToRawIdx(
+                    protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg, hostIdx)));
 
         // Add the remote type
         kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
@@ -161,15 +163,13 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostId,
 
 /**********************************************************************************************************************************/
 ProtocolClient *
-protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId)
+protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
-        FUNCTION_LOG_PARAM(UINT, hostId);
-        FUNCTION_LOG_PARAM(UINT, protocolId);
+        FUNCTION_LOG_PARAM(UINT, hostIdx);
+        FUNCTION_LOG_PARAM(UINT, processId);
     FUNCTION_LOG_END();
-
-    ASSERT(hostId > 0);
 
     protocolHelperInit();
 
@@ -187,10 +187,10 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, u
         MEM_CONTEXT_END();
     }
 
-    ASSERT(protocolId <= protocolHelper.clientLocalSize);
+    ASSERT(processId <= protocolHelper.clientLocalSize);
 
     // Create protocol object
-    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientLocal[protocolId - 1];
+    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientLocal[processId - 1];
 
     if (protocolHelperClient->client == NULL)
     {
@@ -198,14 +198,14 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, u
         {
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
-                cfgExe(), protocolLocalParam(protocolStorageType, hostId, protocolId),
-                strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u process", protocolId),
+                cfgExe(), protocolLocalParam(protocolStorageType, hostIdx, processId),
+                strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u process", processId),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);
 
             // Create protocol object
             protocolHelperClient->client = protocolClientNew(
-                strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u protocol", protocolId),
+                strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u protocol", processId),
                 PROTOCOL_SERVICE_LOCAL_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
 
             protocolClientMove(protocolHelperClient->client, execMemContext(protocolHelperClient->exec));
@@ -260,18 +260,16 @@ protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
 
 /**********************************************************************************************************************************/
 void
-protocolLocalFree(unsigned int protocolId)
+protocolLocalFree(unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT, protocolId);
+        FUNCTION_LOG_PARAM(UINT, processId);
     FUNCTION_LOG_END();
-
-    ASSERT(protocolId > 0);
 
     if (protocolHelper.clientLocal != NULL)
     {
-        ASSERT(protocolId <= protocolHelper.clientLocalSize);
-        protocolHelperClientFree(&protocolHelper.clientLocal[protocolId - 1]);
+        ASSERT(processId <= protocolHelper.clientLocalSize);
+        protocolHelperClientFree(&protocolHelper.clientLocal[processId - 1]);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -281,11 +279,11 @@ protocolLocalFree(unsigned int protocolId)
 Get the command line required for remote protocol execution
 ***********************************************************************************************************************************/
 static StringList *
-protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protocolId, unsigned int hostIdx)
+protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int processId, unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
-        FUNCTION_LOG_PARAM(UINT, protocolId);
+        FUNCTION_LOG_PARAM(UINT, processId);
         FUNCTION_LOG_PARAM(UINT, hostIdx);
     FUNCTION_LOG_END();
 
@@ -408,7 +406,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     // Add the process id (or use the current process id if it is valid)
     if (!cfgOptionTest(cfgOptProcess))
-        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARINT((int)protocolId));
+        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARINT((int)processId));
 
     // Don't pass log-path or lock-path since these are host specific
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_PATH_STR), NULL);
@@ -448,14 +446,12 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
 /**********************************************************************************************************************************/
 ProtocolClient *
-protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
+protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
-        FUNCTION_LOG_PARAM(UINT, hostId);
+        FUNCTION_LOG_PARAM(UINT, hostIdx);
     FUNCTION_LOG_END();
-
-    ASSERT(hostId > 0);
 
     // Is this a repo remote?
     bool isRepo = protocolStorageType == protocolStorageTypeRepo;
@@ -484,36 +480,33 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
     // Determine protocol id for the remote.  If the process option is set then use that since we want the remote protocol id to
     // match the local protocol id. Otherwise set to 0 since the remote is being started from a main process and there should only
     // be one remote per host.
-    unsigned int protocolId = 0;
-
-    // Use hostId to determine where to cache to remote
-    unsigned int protocolIdx = hostId - 1;
+    unsigned int processId = 0;
 
     if (cfgOptionTest(cfgOptProcess))
-        protocolId = cfgOptionUInt(cfgOptProcess);
+        processId = cfgOptionUInt(cfgOptProcess);
 
-    CHECK(protocolIdx < protocolHelper.clientRemoteSize);
+    CHECK(hostIdx < protocolHelper.clientRemoteSize);
 
     // Create protocol object
-    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[protocolIdx];
+    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[hostIdx];
 
     if (protocolHelperClient->client == NULL)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
             unsigned int optHost = isRepo ? cfgOptRepoHost : cfgOptPgHost;
-            unsigned int optHostIdx = isRepo ? 0 : hostId - 1;
+            unsigned int optHostIdx = isRepo ? 0 : hostIdx;
 
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
-                cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, protocolId, hostId - 1),
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", protocolId, strZ(cfgOptionIdxStr(optHost, optHostIdx))),
+                cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, hostIdx, hostIdx),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(cfgOptionIdxStr(optHost, optHostIdx))),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);
 
             // Create protocol object
             protocolHelperClient->client = protocolClientNew(
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", protocolId, strZ(cfgOptionIdxStr(optHost, optHostIdx))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, strZ(cfgOptionIdxStr(optHost, optHostIdx))),
                 PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
 
             // Get cipher options from the remote if none are locally configured
@@ -543,16 +536,14 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
 
 /**********************************************************************************************************************************/
 void
-protocolRemoteFree(unsigned int hostId)
+protocolRemoteFree(unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT, hostId);
+        FUNCTION_LOG_PARAM(UINT, hostIdx);
     FUNCTION_LOG_END();
 
-    ASSERT(hostId > 0);
-
     if (protocolHelper.clientRemote != NULL)
-        protocolHelperClientFree(&protocolHelper.clientRemote[hostId - 1]);
+        protocolHelperClientFree(&protocolHelper.clientRemote[hostIdx]);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -624,7 +615,7 @@ protocolFree(void)
     {
         // Free remotes
         for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
-            protocolRemoteFree(clientIdx + 1);
+            protocolRemoteFree(clientIdx);
 
         // Free locals
         for (unsigned int clientIdx = 1; clientIdx <= protocolHelper.clientLocalSize; clientIdx++)

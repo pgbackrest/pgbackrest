@@ -164,26 +164,26 @@ storageLocalWrite(void)
 Get pg storage for the specified host id
 ***********************************************************************************************************************************/
 static Storage *
-storagePgGet(unsigned int hostId, bool write)
+storagePgGet(unsigned int pgIdx, bool write)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, hostId);
+        FUNCTION_TEST_PARAM(UINT, pgIdx);
         FUNCTION_TEST_PARAM(BOOL, write);
     FUNCTION_TEST_END();
 
     Storage *result = NULL;
 
     // Use remote storage
-    if (!pgIsLocal(hostId))
+    if (!pgIsLocal(pgIdx))
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL,
-            protocolRemoteGet(protocolStorageTypePg, hostId), cfgOptionUInt(cfgOptCompressLevelNetwork));
+            protocolRemoteGet(protocolStorageTypePg, pgIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use Posix storage
     else
     {
-        result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, hostId - 1), .write = write);
+        result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -191,13 +191,13 @@ storagePgGet(unsigned int hostId, bool write)
 
 /**********************************************************************************************************************************/
 const Storage *
-storagePgId(unsigned int hostId)
+storagePgIdx(unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, hostId);
+        FUNCTION_TEST_PARAM(UINT, pgIdx);
     FUNCTION_TEST_END();
 
-    if (storageHelper.storagePg == NULL || storageHelper.storagePg[hostId - 1] == NULL)
+    if (storageHelper.storagePg == NULL || storageHelper.storagePg[pgIdx] == NULL)
     {
         storageHelperInit();
 
@@ -206,33 +206,33 @@ storagePgId(unsigned int hostId)
             if (storageHelper.storagePg == NULL)
                 storageHelper.storagePg = memNewPtrArray(cfgDefOptionIndexTotal(cfgOptPgPath));
 
-            storageHelper.storagePg[hostId - 1] = storagePgGet(hostId, false);
+            storageHelper.storagePg[pgIdx] = storagePgGet(pgIdx, false);
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePg[hostId - 1]);
+    FUNCTION_TEST_RETURN(storageHelper.storagePg[pgIdx]);
 }
 
 const Storage *
 storagePg(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgId(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1));
+    FUNCTION_TEST_RETURN(storagePgIdx(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
 const Storage *
-storagePgIdWrite(unsigned int hostId)
+storagePgIdxWrite(unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, hostId);
+        FUNCTION_TEST_PARAM(UINT, pgIdx);
     FUNCTION_TEST_END();
 
     // Writes not allowed in dry-run mode
     if (!storageHelper.dryRunInit || storageHelper.dryRun)
         THROW(AssertError, WRITABLE_WHILE_DRYRUN);
 
-    if (storageHelper.storagePgWrite == NULL || storageHelper.storagePgWrite[hostId - 1] == NULL)
+    if (storageHelper.storagePgWrite == NULL || storageHelper.storagePgWrite[pgIdx] == NULL)
     {
         storageHelperInit();
 
@@ -241,19 +241,19 @@ storagePgIdWrite(unsigned int hostId)
             if (storageHelper.storagePgWrite == NULL)
                 storageHelper.storagePgWrite = memNewPtrArray(cfgDefOptionIndexTotal(cfgOptPgPath));
 
-            storageHelper.storagePgWrite[hostId - 1] = storagePgGet(hostId, true);
+            storageHelper.storagePgWrite[pgIdx] = storagePgGet(pgIdx, true);
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite[hostId - 1]);
+    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite[pgIdx]);
 }
 
 const Storage *
 storagePgWrite(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgIdWrite(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) : 1));
+    FUNCTION_TEST_RETURN(storagePgIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
 /***********************************************************************************************************************************
@@ -349,7 +349,7 @@ storageRepoGet(const String *type, bool write)
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo, 1), cfgOptionUInt(cfgOptCompressLevelNetwork));
+            protocolRemoteGet(protocolStorageTypeRepo, 0), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use Azure storage
     else if (strEqZ(type, STORAGE_AZURE_TYPE))

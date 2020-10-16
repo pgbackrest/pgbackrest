@@ -1220,6 +1220,7 @@ testRun(void)
         strLstAdd(argList, strNew("--no-online"));
         hrnCfgArgIdRawBool(argList, cfgOptPgLocal, 2, true);
         strLstAdd(argList, strNew("--reset-pg1-host"));
+        strLstAdd(argList, strNew("--reset-pg3-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
 
@@ -1263,6 +1264,7 @@ testRun(void)
                     "pg1-path=/path/to/db\n"
                     "%s=ignore\n"
                     "%s=/path/to/db2\n"
+                    "pg3-host=ignore\n"
                     "recovery-option=c=d\n",
                     cfgOptionRawIdxName(cfgOptPgHost, 1), cfgOptionRawIdxName(cfgOptPgPath, 1))));
 

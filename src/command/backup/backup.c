@@ -175,12 +175,12 @@ Get the postgres database and storage objects
 
 typedef struct BackupData
 {
-    unsigned int pgIdPrimary;                                       // Configuration id of the primary
+    unsigned int pgIdxPrimary;                                      // Configuration idx of the primary
     Db *dbPrimary;                                                  // Database connection to the primary
     const Storage *storagePrimary;                                  // Storage object for the primary
     const String *hostPrimary;                                      // Host name of the primary
 
-    unsigned int pgIdStandby;                                       // Configuration id of the standby
+    unsigned int pgIdxStandby;                                      // Configuration idx of the standby
     Db *dbStandby;                                                  // Database connection to the standby
     const Storage *storageStandby;                                  // Storage object for the standby
     const String *hostStandby;                                      // Host name of the standby
@@ -200,7 +200,7 @@ backupInit(const InfoBackup *infoBackup)
 
     // Initialize for offline backup
     BackupData *result = memNew(sizeof(BackupData));
-    *result = (BackupData){.pgIdPrimary = 1};
+    *result = (BackupData){0};
 
     // Check that the PostgreSQL version supports backup from standby. The check is done using the stanza info because pg_control
     // cannot be loaded until a primary is found -- which will also lead to an error if the version does not support standby. If the
@@ -228,23 +228,23 @@ backupInit(const InfoBackup *infoBackup)
         bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
         DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
 
-        result->pgIdPrimary = dbInfo.primaryId;
+        result->pgIdxPrimary = dbInfo.primaryIdx;
         result->dbPrimary = dbInfo.primary;
 
         if (backupStandby)
         {
-            ASSERT(dbInfo.standbyId != 0);
+            ASSERT(dbInfo.standby != NULL);
 
-            result->pgIdStandby = dbInfo.standbyId;
+            result->pgIdxStandby = dbInfo.standbyIdx;
             result->dbStandby = dbInfo.standby;
-            result->storageStandby = storagePgId(result->pgIdStandby);
-            result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdStandby - 1);
+            result->storageStandby = storagePgIdx(result->pgIdxStandby);
+            result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
     }
 
     // Add primary info
-    result->storagePrimary = storagePgId(result->pgIdPrimary);
-    result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdPrimary - 1);
+    result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
+    result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
 
     // Get pg_control info from the primary
     PgControl pgControl = pgControlFromFile(result->storagePrimary);
@@ -864,7 +864,7 @@ backupStart(BackupData *backupData)
         else
         {
             // Check database configuration
-            checkDbConfig(backupData->version, backupData->pgIdPrimary, backupData->dbPrimary, false);
+            checkDbConfig(backupData->version, backupData->pgIdxPrimary, backupData->dbPrimary, false);
 
             // Start backup
             LOG_INFO_FMT(
@@ -897,7 +897,7 @@ backupStart(BackupData *backupData)
                 dbFree(backupData->dbStandby);
 
                 // The standby protocol connection won't be used anymore so free it
-                protocolRemoteFree(backupData->pgIdStandby);
+                protocolRemoteFree(backupData->pgIdxStandby);
             }
         }
     }
@@ -1588,15 +1588,15 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, backupJobCallback, &jobData);
 
         // First client is always on the primary
-        protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, backupData->pgIdPrimary, 1));
+        protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, backupData->pgIdxPrimary, 1));
 
         // Create the rest of the clients on the primary or standby depending on the value of backup-standby.  Note that standby
         // backups don't count the primary client in process-max.
         unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (backupStandby ? 1 : 0);
-        unsigned int pgId = backupStandby ? backupData->pgIdStandby : backupData->pgIdPrimary;
+        unsigned int pgIdx = backupStandby ? backupData->pgIdxStandby : backupData->pgIdxPrimary;
 
         for (unsigned int processIdx = 2; processIdx <= processMax; processIdx++)
-            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgId, processIdx));
+            protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgIdx, processIdx));
 
         // Maintain a list of files that need to be removed from the manifest when the backup is complete
         StringList *fileRemove = strLstNew();
@@ -1625,7 +1625,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         manifest,
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         storagePathP(
-                            protocolParallelJobProcessId(job) > 1 ? storagePgId(pgId) : backupData->storagePrimary,
+                            protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
                             manifestPathPg(manifestFileFind(manifest, varStr(protocolParallelJobKey(job)))->name)),
                         fileRemove, job, sizeTotal, sizeCopied);
                 }
@@ -1997,7 +1997,7 @@ cmdBackup(void)
         // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
         // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to
         // the primary storage object may result in an error (likely eof).
-        protocolRemoteFree(backupData->pgIdPrimary);
+        protocolRemoteFree(backupData->pgIdxPrimary);
 
         // Complete the backup
         LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));

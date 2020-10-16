@@ -1026,7 +1026,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                     for (unsigned int optionIdx = 0; optionIdx < parseOptionList[optionId].indexListTotal; optionIdx++)
                     {
-                        if (parseOptionList[optionId].indexList[optionIdx].found)
+                        if (parseOptionList[optionId].indexList[optionIdx].found &&
+                            !parseOptionList[optionId].indexList[optionIdx].reset)
                         {
                             if (!groupIdxMap[groupId][optionIdx])
                             {
@@ -1095,7 +1096,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 for (unsigned int optionListIdx = 0; optionListIdx < optionListIndexTotal; optionListIdx++)
                 {
                     unsigned optionIdx = optionGroup ? config->optionGroup[optionGroupId].index[optionListIdx] : 0;
-                    ParseOptionValue *parseOptionValue = optionListIdx < parseOptionList[optionId].indexListTotal ?
+                    ParseOptionValue *parseOptionValue = optionIdx < parseOptionList[optionId].indexListTotal ?
                         &parseOptionList[optionId].indexList[optionIdx] : &(ParseOptionValue){0};
                     ConfigOptionValue *configOptionValue = &config->option[optionId].index[optionListIdx];
 
@@ -1431,7 +1432,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         cfgInit(config);
 
         // !!! HACK TO GET HOST-ID WORKING FOR REMOTES UNTIL THERE IS A BETTER WAY
-        if (cfgOptionTest(cfgOptHostId))
+        if (cfgOptionTest(cfgOptHostId) && cfgOptionGroupValid(cfgOptGrpPg))
         {
             ConfigOptionGroup groupId = cfgOptGrpPg;
             unsigned int hostIdx = cfgOptionUInt(cfgOptHostId) - 1;

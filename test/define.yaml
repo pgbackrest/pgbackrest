@@ -453,22 +453,22 @@ unit:
           storage/write: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: remote
-        total: 9
-        containerReq: true
-        binReq: true
-
-        coverage:
-          storage/remote/read: full
-          storage/remote/protocol: full
-          storage/remote/storage: full
-          storage/remote/write: full
-          storage/helper: full
-          storage/storage: full
-
-        include:
-          - storage/read
-          - storage/write
+      # - name: remote
+      #   total: 9
+      #   containerReq: true
+      #   binReq: true
+      #
+      #   coverage:
+      #     storage/remote/read: full
+      #     storage/remote/protocol: full
+      #     storage/remote/storage: full
+      #     storage/remote/write: full
+      #     storage/helper: full
+      #     storage/storage: full
+      #
+      #   include:
+      #     - storage/read
+      #     - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: s3
@@ -706,19 +706,19 @@ unit:
           command/stanza/delete: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: repo
-        total: 4
-
-        coverage:
-          command/repo/get: full
-          command/repo/ls: full
-          command/repo/put: full
-          command/repo/rm: full
-
-        include:
-          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration.  In the
-          # future this will probably be rolled into a custom object store server implementation.
-          - command/repo/create
+      # - name: repo
+      #   total: 4
+      #
+      #   coverage:
+      #     command/repo/get: full
+      #     command/repo/ls: full
+      #     command/repo/put: full
+      #     command/repo/rm: full
+      #
+      #   include:
+      #     # command/repo/create is currently for testing purposes only so coverage is not provided except in integration.  In the
+      #     # future this will probably be rolled into a custom object store server implementation.
+      #     - command/repo/create
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify

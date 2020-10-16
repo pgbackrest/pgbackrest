@@ -117,7 +117,7 @@ ConfigCommand
 cfgCommand(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(configLocal->command);
+    FUNCTION_TEST_RETURN(configLocal == NULL ? cfgCmdNone : configLocal->command);
 }
 
 ConfigCommandRole
@@ -422,6 +422,21 @@ cfgOptionGroupIdxDefault(ConfigOptionGroup groupId)
     ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
 
     FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].indexDefault);
+}
+
+/**********************************************************************************************************************************/
+unsigned int
+cfgOptionGroupIdxToRawIdx(ConfigOptionGroup groupId, unsigned int index)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, groupId);
+        FUNCTION_TEST_PARAM(UINT, index);
+    FUNCTION_TEST_END();
+
+    ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
+    ASSERT(index < configLocal->optionGroup[groupId].indexTotal);
+
+    FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].index[index] + 1);
 }
 
 /**********************************************************************************************************************************/
