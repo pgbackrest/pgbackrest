@@ -473,7 +473,7 @@ pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
         FUNCTION_TEST_PARAM(PACK_READ, this);
         FUNCTION_TEST_PARAM_P(UINT, id);
         FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(BOOL, peek);
+        FUNCTION_TEST_PARAM(BOOL, peek);                            // Look at the next tag without advancing the field id
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -492,7 +492,7 @@ pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
     // Search for the requested id
     do
     {
-        // Get the next tag if it has been read yet
+        // Get the next tag if it has not been read yet
         if (this->tagNextId == 0)
             pckReadTagNext(this);
 

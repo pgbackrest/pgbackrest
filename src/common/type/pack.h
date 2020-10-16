@@ -21,7 +21,8 @@ NULLs are not stored in a pack and are therefore not typed. A NULL is essentiall
 frequently NULL are best stored at the end of an object. When using .defaultNull in write functions a NULL will be written (by
 making a gap in the IDs) if the value matches the default. When using .defaultNull in read functions the default will be returned
 when the field is NULL (i.e. missing). The standard default is the C default for that type (e.g. bool = false, int = 0) but can be
-changed with the .defaultValue parameter.
+changed with the .defaultValue parameter. For example, pckWriteBoolP(write, false) will write a 0 with an ID into the pack, but pckWriteBoolP(write, false, .defaultNull = true) will not write to the pack, it will simply skip the ID. However,
+pckWriteStrP(packWrite, NULL) is not valid, instead .defaultNull=true must also be passed.
 
 A pack is an object by default. Objects can store fields, objects, or arrays. Objects and arrays will be referred to collectively as
 containers. Fields contain data to be stored, e.g. integers, strings, etc.
