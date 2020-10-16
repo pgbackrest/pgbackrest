@@ -96,6 +96,9 @@ Option Group Functions
 // Are any options in the group with the specified index valid for the command and set by the user (i.e. not default)?
 bool cfgOptionGroupIdxTest(ConfigOptionGroup groupId, unsigned int index);
 
+// Get the default index for this group, i.e. the index that will be used if a non-index function like cfgOptionTest() is called.
+unsigned int cfgOptionGroupIdxDefault(ConfigOptionGroup groupId);
+
 // Total indexed groups, 0 if the group is not valid. Note that there may be gaps so each group index will need to be tested with
 // cfgOptionGroupIdxTest() to make sure it contains data.
 unsigned int cfgOptionGroupIdxTotal(ConfigOptionGroup groupId);

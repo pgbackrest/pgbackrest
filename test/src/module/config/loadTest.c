@@ -238,7 +238,7 @@ testRun(void)
         // Invalid bucket name with verification enabled fails
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
@@ -255,7 +255,7 @@ testRun(void)
         // Invalid bucket name with verification disabled succeeds
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
@@ -269,7 +269,7 @@ testRun(void)
         // Valid bucket name
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=cool-bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
@@ -391,7 +391,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--log-level-console=off"));
         strLstAdd(argList, strNew("--log-level-stderr=off"));
         strLstAdd(argList, strNew("--log-level-file=off"));
@@ -408,7 +408,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--no-neutral-umask"));
         strLstAdd(argList, strNew("--log-level-console=off"));
         strLstAdd(argList, strNew("--log-level-stderr=off"));
@@ -490,7 +490,7 @@ testRun(void)
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--host-id=1"));
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
@@ -521,7 +521,7 @@ testRun(void)
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
         strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
@@ -559,7 +559,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testPath()));
         strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");

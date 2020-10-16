@@ -3,19 +3,9 @@ Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
 #include "config/config.h"
 
-#define CFGOPT_PG1_HOST                                             "pg1-host"
-#define CFGOPT_PG1_PATH                                             "pg1-path"
-#define CFGOPT_PG1_PORT                                             "pg1-port"
-#define CFGOPT_PG2_HOST                                             "pg2-host"
-#define CFGOPT_PG2_LOCAL                                            "pg2-local"
-#define CFGOPT_PG2_PATH                                             "pg2-path"
-#define CFGOPT_REPO1_CIPHER_PASS                                    "repo1-cipher-pass"
-#define CFGOPT_REPO1_CIPHER_TYPE                                    "repo1-cipher-type"
-#define CFGOPT_REPO1_PATH                                           "repo1-path"
-#define CFGOPT_REPO1_HOST                                           "repo1-host"
-#define CFGOPT_REPO1_RETENTION_FULL                                 "repo1-retention-full"
-#define CFGOPT_REPO1_TYPE                                           "repo1-type"
-
+/***********************************************************************************************************************************
+Prefix for environment variables
+***********************************************************************************************************************************/
 #define HRN_PGBACKREST_ENV                                          "PGBACKREST_"
 
 /***********************************************************************************************************************************
@@ -31,5 +21,26 @@ void harnessCfgLoad(ConfigCommand commandId, const StringList *argList);
 void harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, const StringList *argList);
 
 // Add options to a raw argument list
-void hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const char *value);
-void hrnCfgArgIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *value);
+void hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const String *value);
+void hrnCfgArgIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, const String *value);
+
+void hrnCfgArgRawFmt(StringList *argList, ConfigOption optionId, const char *format, ...)
+    __attribute__((format(printf, 3, 4)));
+void hrnCfgArgIdRawFmt(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *format, ...)
+    __attribute__((format(printf, 4, 5)));
+
+void hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value);
+void hrnCfgArgIdRawZ(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *value);
+
+void hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value);
+void hrnCfgArgIdRawBool(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value);
+
+// Set environment options
+void hrnCfgEnvRaw(ConfigOption optionId, const String *value);
+void hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionIdx, const String *value);
+
+void hrnCfgEnvRawZ(ConfigOption optionId, const char *value);
+void hrnCfgEnvIdRawZ(ConfigOption optionId, unsigned optionIdx, const char *value);
+
+void hrnCfgEnvRemoveRaw(ConfigOption optionId);
+void hrnCfgEnvIdRemoveRaw(ConfigOption optionId, unsigned optionIdx);

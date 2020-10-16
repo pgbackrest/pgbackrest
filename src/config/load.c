@@ -154,7 +154,7 @@ cfgLoadUpdateOption(void)
             const String *archiveRetentionType = cfgOptionIdxStr(cfgOptRepoRetentionArchiveType, optionIdx);
 
             const String *msgArchiveOff = strNewFmt(
-                "WAL segments will not be expired: option '%s=%s' but", cfgOptionName(cfgOptRepoRetentionArchiveType),
+                "WAL segments will not be expired: option '%s=%s' but", cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
                 strZ(archiveRetentionType));
 
             // If the archive retention is not explicitly set then determine what it should be defaulted to

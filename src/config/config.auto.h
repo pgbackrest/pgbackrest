@@ -146,30 +146,6 @@ Option constants
     STRING_DECLARE(CFGOPT_ONLINE_STR);
 #define CFGOPT_OUTPUT                                               "output"
     STRING_DECLARE(CFGOPT_OUTPUT_STR);
-#define CFGOPT_PG_HOST                                              "pg-host"
-    STRING_DECLARE(CFGOPT_PG_HOST_STR);
-#define CFGOPT_PG_HOST_CMD                                          "pg-host-cmd"
-    STRING_DECLARE(CFGOPT_PG_HOST_CMD_STR);
-#define CFGOPT_PG_HOST_CONFIG                                       "pg-host-config"
-    STRING_DECLARE(CFGOPT_PG_HOST_CONFIG_STR);
-#define CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH                          "pg-host-config-include-path"
-    STRING_DECLARE(CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH_STR);
-#define CFGOPT_PG_HOST_CONFIG_PATH                                  "pg-host-config-path"
-    STRING_DECLARE(CFGOPT_PG_HOST_CONFIG_PATH_STR);
-#define CFGOPT_PG_HOST_PORT                                         "pg-host-port"
-    STRING_DECLARE(CFGOPT_PG_HOST_PORT_STR);
-#define CFGOPT_PG_HOST_USER                                         "pg-host-user"
-    STRING_DECLARE(CFGOPT_PG_HOST_USER_STR);
-#define CFGOPT_PG_LOCAL                                             "pg-local"
-    STRING_DECLARE(CFGOPT_PG_LOCAL_STR);
-#define CFGOPT_PG_PATH                                              "pg-path"
-    STRING_DECLARE(CFGOPT_PG_PATH_STR);
-#define CFGOPT_PG_PORT                                              "pg-port"
-    STRING_DECLARE(CFGOPT_PG_PORT_STR);
-#define CFGOPT_PG_SOCKET_PATH                                       "pg-socket-path"
-    STRING_DECLARE(CFGOPT_PG_SOCKET_PATH_STR);
-#define CFGOPT_PG_USER                                              "pg-user"
-    STRING_DECLARE(CFGOPT_PG_USER_STR);
 #define CFGOPT_PROCESS                                              "process"
     STRING_DECLARE(CFGOPT_PROCESS_STR);
 #define CFGOPT_PROCESS_MAX                                          "process-max"
@@ -184,90 +160,6 @@ Option constants
     STRING_DECLARE(CFGOPT_RECURSE_STR);
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
     STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
-#define CFGOPT_REPO_AZURE_ACCOUNT                                   "repo-azure-account"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_ACCOUNT_STR);
-#define CFGOPT_REPO_AZURE_CA_FILE                                   "repo-azure-ca-file"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_CA_FILE_STR);
-#define CFGOPT_REPO_AZURE_CA_PATH                                   "repo-azure-ca-path"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_CA_PATH_STR);
-#define CFGOPT_REPO_AZURE_CONTAINER                                 "repo-azure-container"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_CONTAINER_STR);
-#define CFGOPT_REPO_AZURE_ENDPOINT                                  "repo-azure-endpoint"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_ENDPOINT_STR);
-#define CFGOPT_REPO_AZURE_HOST                                      "repo-azure-host"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_HOST_STR);
-#define CFGOPT_REPO_AZURE_KEY                                       "repo-azure-key"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_KEY_STR);
-#define CFGOPT_REPO_AZURE_KEY_TYPE                                  "repo-azure-key-type"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_KEY_TYPE_STR);
-#define CFGOPT_REPO_AZURE_PORT                                      "repo-azure-port"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_PORT_STR);
-#define CFGOPT_REPO_AZURE_VERIFY_TLS                                "repo-azure-verify-tls"
-    STRING_DECLARE(CFGOPT_REPO_AZURE_VERIFY_TLS_STR);
-#define CFGOPT_REPO_CIPHER_PASS                                     "repo-cipher-pass"
-    STRING_DECLARE(CFGOPT_REPO_CIPHER_PASS_STR);
-#define CFGOPT_REPO_CIPHER_TYPE                                     "repo-cipher-type"
-    STRING_DECLARE(CFGOPT_REPO_CIPHER_TYPE_STR);
-#define CFGOPT_REPO_HARDLINK                                        "repo-hardlink"
-    STRING_DECLARE(CFGOPT_REPO_HARDLINK_STR);
-#define CFGOPT_REPO_HOST                                            "repo-host"
-    STRING_DECLARE(CFGOPT_REPO_HOST_STR);
-#define CFGOPT_REPO_HOST_CMD                                        "repo-host-cmd"
-    STRING_DECLARE(CFGOPT_REPO_HOST_CMD_STR);
-#define CFGOPT_REPO_HOST_CONFIG                                     "repo-host-config"
-    STRING_DECLARE(CFGOPT_REPO_HOST_CONFIG_STR);
-#define CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH                        "repo-host-config-include-path"
-    STRING_DECLARE(CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH_STR);
-#define CFGOPT_REPO_HOST_CONFIG_PATH                                "repo-host-config-path"
-    STRING_DECLARE(CFGOPT_REPO_HOST_CONFIG_PATH_STR);
-#define CFGOPT_REPO_HOST_PORT                                       "repo-host-port"
-    STRING_DECLARE(CFGOPT_REPO_HOST_PORT_STR);
-#define CFGOPT_REPO_HOST_USER                                       "repo-host-user"
-    STRING_DECLARE(CFGOPT_REPO_HOST_USER_STR);
-#define CFGOPT_REPO_LOCAL                                           "repo-local"
-    STRING_DECLARE(CFGOPT_REPO_LOCAL_STR);
-#define CFGOPT_REPO_PATH                                            "repo-path"
-    STRING_DECLARE(CFGOPT_REPO_PATH_STR);
-#define CFGOPT_REPO_RETENTION_ARCHIVE                               "repo-retention-archive"
-    STRING_DECLARE(CFGOPT_REPO_RETENTION_ARCHIVE_STR);
-#define CFGOPT_REPO_RETENTION_ARCHIVE_TYPE                          "repo-retention-archive-type"
-    STRING_DECLARE(CFGOPT_REPO_RETENTION_ARCHIVE_TYPE_STR);
-#define CFGOPT_REPO_RETENTION_DIFF                                  "repo-retention-diff"
-    STRING_DECLARE(CFGOPT_REPO_RETENTION_DIFF_STR);
-#define CFGOPT_REPO_RETENTION_FULL                                  "repo-retention-full"
-    STRING_DECLARE(CFGOPT_REPO_RETENTION_FULL_STR);
-#define CFGOPT_REPO_RETENTION_FULL_TYPE                             "repo-retention-full-type"
-    STRING_DECLARE(CFGOPT_REPO_RETENTION_FULL_TYPE_STR);
-#define CFGOPT_REPO_S3_BUCKET                                       "repo-s3-bucket"
-    STRING_DECLARE(CFGOPT_REPO_S3_BUCKET_STR);
-#define CFGOPT_REPO_S3_CA_FILE                                      "repo-s3-ca-file"
-    STRING_DECLARE(CFGOPT_REPO_S3_CA_FILE_STR);
-#define CFGOPT_REPO_S3_CA_PATH                                      "repo-s3-ca-path"
-    STRING_DECLARE(CFGOPT_REPO_S3_CA_PATH_STR);
-#define CFGOPT_REPO_S3_ENDPOINT                                     "repo-s3-endpoint"
-    STRING_DECLARE(CFGOPT_REPO_S3_ENDPOINT_STR);
-#define CFGOPT_REPO_S3_HOST                                         "repo-s3-host"
-    STRING_DECLARE(CFGOPT_REPO_S3_HOST_STR);
-#define CFGOPT_REPO_S3_KEY                                          "repo-s3-key"
-    STRING_DECLARE(CFGOPT_REPO_S3_KEY_STR);
-#define CFGOPT_REPO_S3_KEY_SECRET                                   "repo-s3-key-secret"
-    STRING_DECLARE(CFGOPT_REPO_S3_KEY_SECRET_STR);
-#define CFGOPT_REPO_S3_KEY_TYPE                                     "repo-s3-key-type"
-    STRING_DECLARE(CFGOPT_REPO_S3_KEY_TYPE_STR);
-#define CFGOPT_REPO_S3_PORT                                         "repo-s3-port"
-    STRING_DECLARE(CFGOPT_REPO_S3_PORT_STR);
-#define CFGOPT_REPO_S3_REGION                                       "repo-s3-region"
-    STRING_DECLARE(CFGOPT_REPO_S3_REGION_STR);
-#define CFGOPT_REPO_S3_ROLE                                         "repo-s3-role"
-    STRING_DECLARE(CFGOPT_REPO_S3_ROLE_STR);
-#define CFGOPT_REPO_S3_TOKEN                                        "repo-s3-token"
-    STRING_DECLARE(CFGOPT_REPO_S3_TOKEN_STR);
-#define CFGOPT_REPO_S3_URI_STYLE                                    "repo-s3-uri-style"
-    STRING_DECLARE(CFGOPT_REPO_S3_URI_STYLE_STR);
-#define CFGOPT_REPO_S3_VERIFY_TLS                                   "repo-s3-verify-tls"
-    STRING_DECLARE(CFGOPT_REPO_S3_VERIFY_TLS_STR);
-#define CFGOPT_REPO_TYPE                                            "repo-type"
-    STRING_DECLARE(CFGOPT_REPO_TYPE_STR);
 #define CFGOPT_RESUME                                               "resume"
     STRING_DECLARE(CFGOPT_RESUME_STR);
 #define CFGOPT_SCK_BLOCK                                            "sck-block"

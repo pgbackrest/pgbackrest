@@ -28,6 +28,7 @@ STRING_EXTERN(WAL_SEGMENT_REGEXP_STR,                               WAL_SEGMENT_
 STRING_EXTERN(WAL_SEGMENT_PARTIAL_REGEXP_STR,                       WAL_SEGMENT_PARTIAL_REGEXP);
 STRING_EXTERN(WAL_SEGMENT_DIR_REGEXP_STR,                           WAL_SEGMENT_DIR_REGEXP);
 STRING_EXTERN(WAL_SEGMENT_FILE_REGEXP_STR,                          WAL_SEGMENT_FILE_REGEXP);
+STRING_EXTERN(WAL_TIMELINE_HISTORY_REGEXP_STR,                      WAL_TIMELINE_HISTORY_REGEXP);
 
 /***********************************************************************************************************************************
 Global error file constant
@@ -360,7 +361,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
                     OptionInvalidValueError,
                     PG_NAME " working directory '%s' is not the same as option %s '%s'\n"
                         "HINT: is the " PG_NAME " data_directory configured the same as the %s option?",
-                    cfgOptionName(cfgOptPgPath), currentWorkDir, strZ(pgPath), cfgOptionName(cfgOptPgPath));
+                    currentWorkDir, cfgOptionName(cfgOptPgPath), strZ(pgPath), cfgOptionName(cfgOptPgPath));
             }
         }
 

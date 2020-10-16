@@ -1,6 +1,10 @@
 /***********************************************************************************************************************************
 Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
 #include "common/harnessLog.h"
@@ -85,13 +89,100 @@ harnessCfgLoad(ConfigCommand commandId, const StringList *argListParam)
 
 /**********************************************************************************************************************************/
 void
-hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const char *value)
+hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const String *value)
 {
-    hrnCfgArgIdRaw(argList, optionId, 1, value);
+    hrnCfgArgIdRawZ(argList, optionId, 1, strZ(value));
 }
 
 void
-hrnCfgArgIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *value)
+hrnCfgArgIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, const String *value)
+{
+    hrnCfgArgIdRawZ(argList, optionId, optionIdx, strZ(value));
+}
+
+void
+hrnCfgArgRawFmt(StringList *argList, ConfigOption optionId, const char *format, ...)
+{
+    char buffer[256];
+
+    va_list argument;
+    va_start(argument, format);
+    (size_t)vsnprintf(buffer, sizeof(buffer) - 1, format, argument);
+    va_end(argument);
+
+    hrnCfgArgIdRawZ(argList, optionId, 1, buffer);
+}
+
+void
+hrnCfgArgIdRawFmt(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *format, ...)
+{
+    char buffer[256];
+
+    va_list argument;
+    va_start(argument, format);
+    (size_t)vsnprintf(buffer, sizeof(buffer) - 1, format, argument);
+    va_end(argument);
+
+    hrnCfgArgIdRawZ(argList, optionId, optionIdx, buffer);
+}
+
+void
+hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value)
+{
+    hrnCfgArgIdRawZ(argList, optionId, 1, value);
+}
+
+void
+hrnCfgArgIdRawZ(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *value)
 {
     strLstAdd(argList, strNewFmt("--%s=%s", cfgOptionRawIdxName(optionId, optionIdx - 1), value));
+}
+
+void
+hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value)
+{
+    hrnCfgArgIdRawBool(argList, optionId, 1, value);
+}
+
+void
+hrnCfgArgIdRawBool(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value)
+{
+    strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgOptionRawIdxName(optionId, optionIdx - 1)));
+}
+
+/**********************************************************************************************************************************/
+void
+hrnCfgEnvRaw(ConfigOption optionId, const String *value)
+{
+    hrnCfgEnvIdRawZ(optionId, 1, strZ(value));
+}
+
+void
+hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionIdx, const String *value)
+{
+    hrnCfgEnvIdRawZ(optionId, optionIdx, strZ(value));
+}
+
+void
+hrnCfgEnvRawZ(ConfigOption optionId, const char *value)
+{
+    hrnCfgEnvIdRawZ(optionId, 1, value);
+}
+
+void
+hrnCfgEnvIdRawZ(ConfigOption optionId, unsigned optionIdx, const char *value)
+{
+    setenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionRawIdxName(optionId, optionIdx - 1))), value, true);
+}
+
+void
+hrnCfgEnvRemoveRaw(ConfigOption optionId)
+{
+    hrnCfgEnvIdRemoveRaw(optionId, 1);
+}
+
+void
+hrnCfgEnvIdRemoveRaw(ConfigOption optionId, unsigned optionIdx)
+{
+    unsetenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionRawIdxName(optionId, optionIdx - 1))));
 }

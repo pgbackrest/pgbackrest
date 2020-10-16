@@ -1945,8 +1945,8 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pgPath)));
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         strLstAddZ(argList, "--" CFGOPT_TYPE "=" RECOVERY_TYPE_PRESERVE);
         strLstAddZ(argList, "--" CFGOPT_SET "=20161219-212741F");
         strLstAddZ(argList, "--" CFGOPT_FORCE);

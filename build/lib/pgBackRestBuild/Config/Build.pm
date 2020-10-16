@@ -288,7 +288,7 @@ sub buildConfig
             "    //" . (qw{-} x 126) . "\n" .
             "    CONFIG_OPTION\n" .
             "    (\n" .
-            "        CONFIG_OPTION_NAME(${strOptionConst})\n";
+            "        CONFIG_OPTION_NAME(\"${strOption}\")\n";
 
         if ($rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
         {
@@ -302,11 +302,14 @@ sub buildConfig
             "    )\n";
 
 
-        $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION}{&BLD_CONSTANT}
-            {$strOptionConst}{&BLD_CONSTANT_VALUE} = "\"${strOption}\"\n    STRING_DECLARE(${strOptionConst}_STR);";
+        if (!$rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
+        {
+            $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION}{&BLD_CONSTANT}
+                {$strOptionConst}{&BLD_CONSTANT_VALUE} = "\"${strOption}\"\n    STRING_DECLARE(${strOptionConst}_STR);";
 
-        $strBuildSourceConstant .=
-            "STRING_EXTERN(${strOptionConst}_STR," . (' ' x (49 - length($strOptionConst))) . "${strOptionConst});\n";
+            $strBuildSourceConstant .=
+                "STRING_EXTERN(${strOptionConst}_STR," . (' ' x (49 - length($strOptionConst))) . "${strOptionConst});\n";
+        }
 
         $iOptionTotal += 1;
     }

@@ -31,7 +31,7 @@ testRun(void)
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
-                strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
                 strLstAddZ(argList, "--repo1-host=repo-host");
                 strLstAddZ(argList, "--repo1-host-user=repo-host-user");
                 harnessCfgLoad(cfgCmdArchiveGet, argList);
