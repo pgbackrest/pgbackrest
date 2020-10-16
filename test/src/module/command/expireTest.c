@@ -1063,7 +1063,6 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=2");
         strLstAddZ(argList, "--dry-run");
         harnessCfgLoad(cfgCmdExpire, argList);
-        harnessLogLevelSet(logLevelDetail);
 
         // Create backup.info and archives spread over different timelines
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
