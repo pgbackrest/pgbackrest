@@ -412,6 +412,19 @@ cfgOptionGroupId(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
+unsigned int
+cfgOptionGroupIdxDefault(ConfigOptionGroup groupId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, groupId);
+    FUNCTION_TEST_END();
+
+    ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
+
+    FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].indexDefault);
+}
+
+/**********************************************************************************************************************************/
 // !!! THIS NO LONGER HAS A PURPOSE
 bool
 cfgOptionGroupIdxTest(ConfigOptionGroup groupId, unsigned int index)
@@ -450,6 +463,20 @@ cfgOptionGroupValid(ConfigOptionGroup groupId)
     ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
 
     FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].valid);
+}
+
+/**********************************************************************************************************************************/
+unsigned int
+cfgOptionIdxDefault(ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    FUNCTION_TEST_RETURN(
+        configOptionData[optionId].group ? configLocal->optionGroup[configOptionData[optionId].groupId].indexDefault : 0);
 }
 
 /**********************************************************************************************************************************/
@@ -500,7 +527,7 @@ cfgOptionHostPort(ConfigOption optionId, unsigned int *port)
         FUNCTION_TEST_PARAM_P(UINT, port);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(cfgOptionIdxHostPort(optionId, 0, port));
+    FUNCTION_TEST_RETURN(cfgOptionIdxHostPort(optionId, cfgOptionIdxDefault(optionId), port));
 }
 
 String *
@@ -592,7 +619,7 @@ cfgOptionName(ConfigOption optionId)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(cfgOptionIdxName(optionId, 0));
+    FUNCTION_TEST_RETURN(cfgOptionIdxName(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 const char *
@@ -649,7 +676,7 @@ cfgOptionNegate(ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(cfgOptionIdxNegate(optionId, 0));
+    FUNCTION_TEST_RETURN(cfgOptionIdxNegate(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 bool
@@ -676,7 +703,7 @@ cfgOptionReset(ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(cfgOptionIdxReset(optionId, 0));
+    FUNCTION_TEST_RETURN(cfgOptionIdxReset(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 bool
@@ -743,7 +770,7 @@ cfgOption(ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(cfgOptionIdx(optionId, 0));
+    FUNCTION_TEST_RETURN(cfgOptionIdx(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 const Variant *
@@ -768,7 +795,7 @@ cfgOptionBool(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(BOOL, varBool(cfgOptionIdxInternal(optionId, 0, varTypeBool, false)));
+    FUNCTION_LOG_RETURN(BOOL, varBool(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeBool, false)));
 }
 
 bool
@@ -789,7 +816,7 @@ cfgOptionDbl(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(DOUBLE, varDbl(cfgOptionIdxInternal(optionId, 0, varTypeDouble, false)));
+    FUNCTION_LOG_RETURN(DOUBLE, varDbl(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeDouble, false)));
 }
 
 int
@@ -799,7 +826,7 @@ cfgOptionInt(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(INT, varIntForce(cfgOptionIdxInternal(optionId, 0, varTypeInt64, false)));
+    FUNCTION_LOG_RETURN(INT, varIntForce(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeInt64, false)));
 }
 
 int
@@ -820,7 +847,7 @@ cfgOptionInt64(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(INT64, varInt64(cfgOptionIdxInternal(optionId, 0, varTypeInt64, false)));
+    FUNCTION_LOG_RETURN(INT64, varInt64(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeInt64, false)));
 }
 
 int64_t
@@ -841,7 +868,7 @@ cfgOptionUInt(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(UINT, varUIntForce(cfgOptionIdxInternal(optionId, 0, varTypeInt64, false)));
+    FUNCTION_LOG_RETURN(UINT, varUIntForce(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeInt64, false)));
 }
 
 unsigned int
@@ -862,7 +889,7 @@ cfgOptionUInt64(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(UINT64, varUInt64Force(cfgOptionIdxInternal(optionId, 0, varTypeInt64, false)));
+    FUNCTION_LOG_RETURN(UINT64, varUInt64Force(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeInt64, false)));
 }
 
 uint64_t
@@ -883,7 +910,7 @@ cfgOptionKv(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(KEY_VALUE, varKv(cfgOptionIdxInternal(optionId, 0, varTypeKeyValue, false)));
+    FUNCTION_LOG_RETURN(KEY_VALUE, varKv(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeKeyValue, false)));
 }
 
 const KeyValue *
@@ -904,7 +931,7 @@ cfgOptionLst(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN_CONST(VARIANT_LIST, cfgOptionIdxLst(optionId, 0));
+    FUNCTION_LOG_RETURN_CONST(VARIANT_LIST, cfgOptionIdxLst(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 const VariantList *
@@ -937,7 +964,7 @@ cfgOptionStr(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionIdxInternal(optionId, 0, varTypeString, false)));
+    FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeString, false)));
 }
 
 const String *
@@ -958,7 +985,7 @@ cfgOptionStrNull(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionIdxInternal(optionId, 0, varTypeString, true)));
+    FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeString, true)));
 }
 
 const String *
@@ -982,7 +1009,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
         FUNCTION_TEST_PARAM(VARIANT, value);
     FUNCTION_TEST_END();
 
-    cfgOptionIdxSet(optionId, 0, source, value);
+    cfgOptionIdxSet(optionId, cfgOptionIdxDefault(optionId), source, value);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1094,7 +1121,7 @@ cfgOptionSource(ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(cfgOptionIdxSource(optionId, 0));
+    FUNCTION_TEST_RETURN(cfgOptionIdxSource(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 ConfigSource
@@ -1121,7 +1148,7 @@ cfgOptionTest(ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(cfgOptionIdxTest(optionId, 0));
+    FUNCTION_TEST_RETURN(cfgOptionIdxTest(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 bool

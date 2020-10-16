@@ -1431,9 +1431,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         cfgInit(config);
 
         // !!! HACK TO GET HOST-ID WORKING FOR REMOTES UNTIL THERE IS A BETTER WAY
-        if (cfgOptionTest(cfgOptHostId) && cfgOptionTest(cfgOptRemoteType))
+        if (cfgOptionTest(cfgOptHostId))
         {
-            ConfigOptionGroup groupId = strEqZ(cfgOptionStr(cfgOptRemoteType), "pg") ? cfgOptGrpPg : cfgOptGrpRepo;
+            ConfigOptionGroup groupId = cfgOptGrpPg;
             unsigned int hostIdx = cfgOptionUInt(cfgOptHostId) - 1;
 
             unsigned int index = 0;

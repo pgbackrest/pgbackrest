@@ -105,7 +105,7 @@ pgIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
 
-    if (!pgIsLocal(0))
+    if (!pgIsLocal(cfgOptionGroupIdxDefault(cfgOptGrpPg)))
         THROW_FMT(HostInvalidError, "%s command must be run on the " PG_NAME " host", cfgCommandName(cfgCommand()));
 
     FUNCTION_TEST_RETURN_VOID();
@@ -325,33 +325,24 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
 
     kvPut(
         optionReplace, VARSTR(CFGOPT_CONFIG_STR),
-        cfgOptionSource(optConfig + hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfig, hostIdx)) : NULL);
+        cfgOptionIdxSource(optConfig, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfig, hostIdx)) : NULL);
 
     unsigned int optConfigIncludePath = isRepo ? cfgOptRepoHostConfigIncludePath : cfgOptPgHostConfigIncludePath;
 
     kvPut(
         optionReplace, VARSTR(CFGOPT_CONFIG_INCLUDE_PATH_STR),
-        cfgOptionSource(optConfigIncludePath + hostIdx) != cfgSourceDefault ?
-            VARSTR(cfgOptionIdxStr(optConfigIncludePath,  + hostIdx)) : NULL);
+        cfgOptionIdxSource(optConfigIncludePath, hostIdx) != cfgSourceDefault ?
+            VARSTR(cfgOptionIdxStr(optConfigIncludePath, hostIdx)) : NULL);
 
     unsigned int optConfigPath = isRepo ? cfgOptRepoHostConfigPath : cfgOptPgHostConfigPath;
 
     kvPut(
         optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
-        cfgOptionSource(optConfigPath + hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
-
-    // Set local so host settings configured on the remote will not accidentally be picked up
-    kvPut(
-        optionReplace,
-        protocolStorageType == protocolStorageTypeRepo ?
-            VARSTRZ(cfgOptionName(cfgOptRepoLocal)) : VARSTRZ(cfgOptionName(cfgOptPgLocal)),
-        BOOL_TRUE_VAR);
+        cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
 
     // Update/remove repo/pg options that are sent to the remote
     const String *repoHostPrefix = STR(cfgDefOptionName(cfgOptRepoHost));
-    // const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
     const String *pgHostPrefix = STR(cfgDefOptionName(cfgOptPgHost));
-    // const String *pgPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_PG);
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
@@ -408,8 +399,12 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         }
     }
 
-    // Don't pass host-id to the remote.  The host will always be in index 0.
-    kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), NULL);
+    // Set local so host settings configured on the remote will not accidentally be picked up
+    kvPut(
+        optionReplace,
+        protocolStorageType == protocolStorageTypeRepo ?
+            VARSTRZ(cfgOptionIdxName(cfgOptRepoLocal, hostIdx)) : VARSTRZ(cfgOptionIdxName(cfgOptPgLocal, hostIdx)),
+        BOOL_TRUE_VAR);
 
     // Add the process id (or use the current process id if it is valid)
     if (!cfgOptionTest(cfgOptProcess))
