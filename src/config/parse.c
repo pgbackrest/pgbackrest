@@ -538,7 +538,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         opterr = false;
 
         // List of parsed options
-        ParseOption parseOptionList[CFG_OPTION_TOTAL] = {0};
+        ParseOption parseOptionList[CFG_OPTION_TOTAL] = {{0}};
 
         // Only the first non-option parameter should be treated as a command so track if the command has been set
         bool commandSet = false;
@@ -989,7 +989,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             // Phase 4: create the config and resolve indexed options for each group
             // ---------------------------------------------------------------------------------------------------------------------
             // Determine how many indexes are used in each group
-            bool groupIdxMap[CFG_OPTION_GROUP_TOTAL][CFG_OPTION_INDEX_MAX] = {0};
+            bool groupIdxMap[CFG_OPTION_GROUP_TOTAL][CFG_OPTION_INDEX_MAX] = {{0}};
 
             for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
             {

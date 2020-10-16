@@ -29,7 +29,7 @@ testRun(void)
         strLstAddZ(argList, PROJECT_BIN);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
         strLstAddZ(argList, "param1");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -45,7 +45,7 @@ testRun(void)
         strLstAddZ(argList, PROJECT_BIN);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
         strLstAddZ(argList, "param1");
         strLstAddZ(argList, "param 2");
@@ -63,17 +63,17 @@ testRun(void)
         strLstAddZ(argList, PROJECT_BIN);
         strLstAddZ(argList, "--no-" CFGOPT_CONFIG);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg1");
-        strLstAddZ(argList, "--" CFGOPT_PG2_PATH "=/pg2");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_CIPHER_TYPE "=aes-256-cbc");
-        strLstAddZ(argList, "--reset-" CFGOPT_REPO1_HOST);
-        strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/path/to the/repo");
+        hrnCfgArgIdRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgIdRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgArgRawReset(argList, cfgOptRepoHost);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/path/to the/repo");
         strLstAddZ(argList, "--" CFGOPT_DB_INCLUDE "=db1");
         strLstAddZ(argList, "--" CFGOPT_DB_INCLUDE "=db2");
         strLstAddZ(argList, "--" CFGOPT_RECOVERY_OPTION "=standby_mode=on");
         strLstAddZ(argList, "--" CFGOPT_RECOVERY_OPTION "=primary_conninfo=blah");
         strLstAddZ(argList, CFGCMD_RESTORE);
-        setenv(HRN_PGBACKREST_ENV CFGOPT_REPO1_CIPHER_PASS, "SECRET-STUFF", true);
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, "SECRET-STUFF");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(cmdBegin(), "command begin");
@@ -128,6 +128,17 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: statistics: {\"test\":{\"total\":1}}\n"
             "P00   INFO: restore command end: completed successfully");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("switch to a new command so some options are not valid");
+
+        cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleDefault);
+
+        TEST_RESULT_VOID(cmdBegin(), "command begin");
+        harnessLogResult(
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": --no-config --log-timestamp --pg1-path=/pg1 --pg2-path=/pg2"
+            " --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --reset-repo1-host --repo1-path=\"/path/to the/repo\""
+            " --stanza=test");
 
         harnessLogLevelReset();
     }

@@ -150,6 +150,18 @@ hrnCfgArgIdRawBool(StringList *argList, ConfigOption optionId, unsigned optionId
     strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgOptionRawIdxName(optionId, optionIdx - 1)));
 }
 
+void
+hrnCfgArgRawReset(StringList *argList, ConfigOption optionId)
+{
+    hrnCfgArgIdRawReset(argList, optionId, 1);
+}
+
+void
+hrnCfgArgIdRawReset(StringList *argList, ConfigOption optionId, unsigned optionIdx)
+{
+    strLstAdd(argList, strNewFmt("--reset-%s", cfgOptionRawIdxName(optionId, optionIdx - 1)));
+}
+
 /**********************************************************************************************************************************/
 void
 hrnCfgEnvRaw(ConfigOption optionId, const String *value)

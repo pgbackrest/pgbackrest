@@ -30,37 +30,40 @@ helpOptionDefault(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    Variant *result;
+    Variant *result = NULL;
     Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(commandId, optionId));
 
-    switch (cfgDefOptionType(optionId))
+    if (varStr(defaultValue) != NULL)
     {
-        case cfgDefOptTypeBoolean:
+        switch (cfgDefOptionType(optionId))
         {
-            result = varNewBool(varBoolForce(defaultValue));
-            break;
+            case cfgDefOptTypeBoolean:
+            {
+                result = varNewBool(varBoolForce(defaultValue));
+                break;
+            }
+
+            case cfgDefOptTypeFloat:
+            {
+                result = varNewDbl(varDblForce(defaultValue));
+                break;
+            }
+
+            case cfgDefOptTypeInteger:
+            case cfgDefOptTypeSize:
+            {
+                result = varNewInt64(varInt64Force(defaultValue));
+                break;
+            }
+
+            case cfgDefOptTypePath:
+            case cfgDefOptTypeString:
+                result = varDup(defaultValue);
+                break;
+
+            default:
+                break;
         }
-
-        case cfgDefOptTypeFloat:
-        {
-            result = varNewDbl(varDblForce(defaultValue));
-            break;
-        }
-
-        case cfgDefOptTypeInteger:
-        case cfgDefOptTypeSize:
-        {
-            result = varNewInt64(varInt64Force(defaultValue));
-            break;
-        }
-
-        case cfgDefOptTypePath:
-        case cfgDefOptTypeString:
-            result = varDup(defaultValue);
-            break;
-
-        default:
-            THROW_FMT(AssertError, "default value not available for option type %d", cfgDefOptionType(optionId));
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -353,7 +356,14 @@ helpRender(void)
                 CfgParseOptionResult option = cfgParseOption(optionName);
 
                 if (!option.found)
-                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
+                {
+                    int optionId = cfgDefOptionId(strZ(optionName));
+
+                    if (optionId == -1)
+                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
+                    else
+                        option.optionId = (unsigned int)optionId;
+                }
 
                 // Output option summary and description
                 strCatFmt(

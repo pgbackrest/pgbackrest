@@ -35,6 +35,9 @@ void hrnCfgArgIdRawZ(StringList *argList, ConfigOption optionId, unsigned option
 void hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value);
 void hrnCfgArgIdRawBool(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value);
 
+void hrnCfgArgRawReset(StringList *argList, ConfigOption optionId);
+void hrnCfgArgIdRawReset(StringList *argList, ConfigOption optionId, unsigned optionIdx);
+
 // Set environment options
 void hrnCfgEnvRaw(ConfigOption optionId, const String *value);
 void hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionIdx, const String *value);
