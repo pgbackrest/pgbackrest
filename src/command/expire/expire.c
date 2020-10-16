@@ -727,6 +727,38 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention)
                             // Log if there is more to log
                             else
                                 logExpire(&archiveExpire, archiveId);
+
+                            // Look for history files to expire based on the timeline of backupArchiveStart
+                            const String *backupArchiveStartTimeline = strSubN(archiveRetentionBackup.backupArchiveStart, 0, 8);
+
+                            StringList *historyFilesList =
+                                strLstSort(
+                                    storageListP(
+                                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
+                                        .expression = WAL_TIMELINE_HISTORY_REGEXP_STR),
+                                    sortOrderAsc);
+
+
+                            for (unsigned int historyFileIdx = 0; historyFileIdx < strLstSize(historyFilesList); historyFileIdx++)
+                            {
+                                String *historyFile = strLstGet(historyFilesList, historyFileIdx);
+
+                                // Expire history files older than the oldest retained timeline
+                                if (strCmp(strSubN(historyFile, 0, 8), backupArchiveStartTimeline) < 0)
+                                {
+                                    // Execute the real expiration and deletion only if the dry-run mode is disabled
+                                    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                                    {
+                                        storageRemoveP(
+                                            storageRepoWrite(),
+                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(historyFile)));
+                                    }
+
+                                    LOG_DETAIL_FMT(
+                                        "remove history file: archiveId = %s, file = %s", strZ(archiveId), strZ(historyFile));
+                                }
+                            }
+
                         }
                     }
                 }
