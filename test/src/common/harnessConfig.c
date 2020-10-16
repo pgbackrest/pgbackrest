@@ -137,13 +137,13 @@ hrnCfgArgIdRawZ(StringList *argList, ConfigOption optionId, unsigned optionIdx, 
 }
 
 void
-hrnCfgArgBoolRaw(StringList *argList, ConfigOption optionId, bool value)
+hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value)
 {
-    hrnCfgArgBoolIdRaw(argList, optionId, 1, value);
+    hrnCfgArgIdRawBool(argList, optionId, 1, value);
 }
 
 void
-hrnCfgArgBoolIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value)
+hrnCfgArgIdRawBool(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value)
 {
     strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgOptionName(optionId + optionIdx - 1)));
 }
@@ -158,7 +158,7 @@ hrnCfgEnvRaw(ConfigOption optionId, const String *value)
 void
 hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionIdx, const String *value)
 {
-    hrnCfgEnvIdRawZ(optionId, 1, optionIdx, strZ(value));
+    hrnCfgEnvIdRawZ(optionId, optionIdx, strZ(value));
 }
 
 void

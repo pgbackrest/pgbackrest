@@ -1514,7 +1514,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--" CFGOPT_COMPRESS);
-        hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
+        hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
         strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1732,7 +1732,7 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
-            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1921,7 +1921,7 @@ testRun(void)
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
-            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
@@ -2246,7 +2246,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
-            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             strLstAddZ(argList, "--" CFGOPT_MANIFEST_SAVE_THRESHOLD "=1");
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
             harnessCfgLoad(cfgCmdBackup, argList);
@@ -2432,7 +2432,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
-            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Run backup
@@ -2467,7 +2467,7 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
             strLstAddZ(argList, "--" CFGOPT_DELTA);
-            hrnCfgArgBoolRaw(argList, cfgOptRepoHardlink, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Update pg_control timestamp

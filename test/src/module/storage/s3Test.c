@@ -236,7 +236,7 @@ testRun(void)
 
     // TLS can only be verified in a container
     if (!testContainer())
-        hrnCfgArgRawBool(argList, cfgOptRepoS3VerifyTls, false);
+        hrnCfgArgRawBool(commonArgWithoutEndpointList, cfgOptRepoS3VerifyTls, false);
 
     // Config settings that are required for every test (with endpoint)
     StringList *commonArgList = strLstDup(commonArgWithoutEndpointList);
@@ -388,8 +388,8 @@ testRun(void)
                 TEST_TITLE("config with keys, token, and host with custom port");
 
                 StringList *argList = strLstDup(commonArgList);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
-                setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
+                hrnCfgArgRawFmt(argList, cfgOptRepoS3Host, "%s:%u", strZ(host), port);
+                hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
@@ -445,9 +445,9 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_ROLE "=%s", strZ(credRole)));
-                strLstAddZ(argList, "--" CFGOPT_REPO1_S3_KEY_TYPE "=" STORAGE_S3_KEY_TYPE_AUTO);
+                hrnCfgArgRawFmt(argList, cfgOptRepoS3Host, "%s:%u", strZ(host), port);
+                hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, STORAGE_S3_KEY_TYPE_AUTO);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
@@ -1014,8 +1014,8 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3UriStyle, STORAGE_S3_URI_STYLE_PATH);
-                hrnCfgArgRawZ(argList, cfgOptRepoS3Host, host);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Port, "%u", host);
+                hrnCfgArgRaw(argList, cfgOptRepoS3Host, host);
+                hrnCfgArgRawFmt(argList, cfgOptRepoS3Port, "%u", port);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
