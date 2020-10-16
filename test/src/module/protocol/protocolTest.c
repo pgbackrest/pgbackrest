@@ -243,8 +243,8 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR_Z(
-            strLstJoin(protocolLocalParam(protocolStorageTypePg, 1, 1), "|"),
-            "--host-id=2|--log-level-console=off|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg"
+            strLstJoin(protocolLocalParam(protocolStorageTypePg, 0, 1), "|"),
+            "--host-id=1|--log-level-console=off|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg1-path=/pg"
                 "|--process=1|--remote-type=pg|--repo1-retention-full=1|--stanza=test1|backup:local",
             "local pg protocol params");
     }
