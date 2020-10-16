@@ -229,18 +229,22 @@ testRun(void)
     // Config settings that are required for every test (without endpoint for special tests)
     StringList *commonArgWithoutEndpointList = strLstNew();
     strLstAddZ(commonArgWithoutEndpointList, "--" CFGOPT_STANZA "=db");
-    strLstAddZ(commonArgWithoutEndpointList, "--" CFGOPT_REPO1_TYPE "=s3");
-    strLstAdd(commonArgWithoutEndpointList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(path)));
-    strLstAdd(commonArgWithoutEndpointList, strNewFmt("--" CFGOPT_REPO1_S3_BUCKET "=%s", strZ(bucket)));
-    strLstAdd(commonArgWithoutEndpointList, strNewFmt("--" CFGOPT_REPO1_S3_REGION "=%s", strZ(region)));
+    hrnCfgArgRawZ(commonArgWithoutEndpointList, cfgOptRepoType, "s3");
+    hrnCfgArgRaw(commonArgWithoutEndpointList, cfgOptRepoPath, path);
+    hrnCfgArgRaw(commonArgWithoutEndpointList, cfgOptRepoS3Bucket, bucket);
+    hrnCfgArgRaw(commonArgWithoutEndpointList, cfgOptRepoS3Region, region);
 
     // TLS can only be verified in a container
     if (!testContainer())
-        strLstAddZ(commonArgWithoutEndpointList, "--no-" CFGOPT_REPO1_S3_VERIFY_TLS);
+        hrnCfgArgRawBool(argList, cfgOptRepoS3VerifyTls, false);
 
     // Config settings that are required for every test (with endpoint)
     StringList *commonArgList = strLstDup(commonArgWithoutEndpointList);
-    strLstAdd(commonArgList, strNewFmt("--" CFGOPT_REPO1_S3_ENDPOINT "=%s", strZ(endPoint)));
+    hrnCfgArgRaw(commonArgList, cfgOptRepoS3Endpoint, endPoint);
+
+    // Secure options must be loaded into environment variables
+    hrnCfgEnvRaw(cfgOptRepoS3Key, accessKey);
+    hrnCfgEnvRaw(cfgOptRepoS3KeySecret, secretAccessKey);
 
     // *****************************************************************************************************************************
     if (testBegin("storageS3DateTime() and storageS3Auth()"))
@@ -251,8 +255,6 @@ testRun(void)
         TEST_TITLE("config without token");
 
         StringList *argList = strLstDup(commonArgList);
-        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
-        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         StorageS3 *driver = (StorageS3 *)storageDriver(storageRepoGet(STORAGE_S3_TYPE_STR, false));
@@ -320,12 +322,10 @@ testRun(void)
         TEST_TITLE("config with token, endpoint with custom port, and ca-file/path");
 
         argList = strLstDup(commonArgWithoutEndpointList);
-        strLstAddZ(argList, "--" CFGOPT_REPO1_S3_ENDPOINT "=custom.endpoint:333");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_S3_CA_PATH "=/path/to/cert");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_CA_FILE "=%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath()));
-        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
-        setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
-        setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "custom.endpoint:333");
+        hrnCfgArgRawZ(argList, cfgOptRepoS3CaPath, "/path/to/cert");
+        hrnCfgArgRawFmt(argList, cfgOptRepoS3CaFile, "%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
+        hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         driver = (StorageS3 *)storageDriver(storageRepoGet(STORAGE_S3_TYPE_STR, false));
@@ -389,8 +389,6 @@ testRun(void)
 
                 StringList *argList = strLstDup(commonArgList);
                 strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s:%u", strZ(host), port));
-                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
-                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
                 setenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN, strZ(securityToken), true);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -1015,12 +1013,10 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                strLstAddZ(argList, "--" CFGOPT_REPO1_S3_URI_STYLE "=" STORAGE_S3_URI_STYLE_PATH);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_HOST "=%s", strZ(host)));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_S3_PORT "=%u", port));
-                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY, strZ(accessKey), true);
-                setenv("PGBACKREST_" CFGOPT_REPO1_S3_KEY_SECRET, strZ(secretAccessKey), true);
-                unsetenv("PGBACKREST_" CFGOPT_REPO1_S3_TOKEN);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3UriStyle, STORAGE_S3_URI_STYLE_PATH);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3Host, host);
+                hrnCfgArgRawFmt(argList, cfgOptRepoS3Port, "%u", host);
+                hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);

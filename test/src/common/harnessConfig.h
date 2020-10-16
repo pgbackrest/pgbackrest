@@ -4,6 +4,11 @@ Harness for Loading Test Configurations
 #include "config/config.h"
 
 /***********************************************************************************************************************************
+Prefix for environment variables
+***********************************************************************************************************************************/
+#define HRN_PGBACKREST_ENV                                          "PGBACKREST_"
+
+/***********************************************************************************************************************************
 Load a test configuration without any side effects
 
 There's no need to open log files, acquire locks, reset log levels, etc.
@@ -29,3 +34,13 @@ void hrnCfgArgIdRawZ(StringList *argList, ConfigOption optionId, unsigned option
 
 void hrnCfgArgBoolRaw(StringList *argList, ConfigOption optionId, bool value);
 void hrnCfgArgBoolIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value);
+
+// Set environment options
+void hrnCfgEnvRaw(ConfigOption optionId, const String *value);
+void hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionIdx, const String *value);
+
+void hrnCfgEnvRawZ(ConfigOption optionId, const char *value);
+void hrnCfgEnvIdRawZ(ConfigOption optionId, unsigned optionIdx, const char *value);
+
+void hrnCfgEnvRemoveRaw(ConfigOption optionId);
+void hrnCfgEnvIdRemoveRaw(ConfigOption optionId, unsigned optionIdx);

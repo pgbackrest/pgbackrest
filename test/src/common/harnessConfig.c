@@ -3,6 +3,7 @@ Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
@@ -145,4 +146,41 @@ void
 hrnCfgArgBoolIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value)
 {
     strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgOptionName(optionId + optionIdx - 1)));
+}
+
+/**********************************************************************************************************************************/
+void
+hrnCfgEnvRaw(ConfigOption optionId, const String *value)
+{
+    hrnCfgEnvIdRawZ(optionId, 1, strZ(value));
+}
+
+void
+hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionIdx, const String *value)
+{
+    hrnCfgEnvIdRawZ(optionId, 1, optionIdx, strZ(value));
+}
+
+void
+hrnCfgEnvRawZ(ConfigOption optionId, const char *value)
+{
+    hrnCfgEnvIdRawZ(optionId, 1, value);
+}
+
+void
+hrnCfgEnvIdRawZ(ConfigOption optionId, unsigned optionIdx, const char *value)
+{
+    setenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionName(optionId + optionIdx - 1))), value, true);
+}
+
+void
+hrnCfgEnvRemoveRaw(ConfigOption optionId)
+{
+    hrnCfgEnvIdRemoveRaw(optionId, 1);
+}
+
+void
+hrnCfgEnvIdRemoveRaw(ConfigOption optionId, unsigned optionIdx)
+{
+    unsetenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionName(optionId + optionIdx - 1))));
 }
