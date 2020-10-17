@@ -440,21 +440,6 @@ cfgOptionGroupIdxToRawIdx(ConfigOptionGroup groupId, unsigned int index)
 }
 
 /**********************************************************************************************************************************/
-// !!! THIS NO LONGER HAS A PURPOSE
-bool
-cfgOptionGroupIdxTest(ConfigOptionGroup groupId, unsigned int index)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, groupId);
-        FUNCTION_TEST_PARAM(UINT, index);
-    FUNCTION_TEST_END();
-
-    ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
-
-    FUNCTION_TEST_RETURN(index < configLocal->optionGroup[groupId].indexTotal);
-}
-
-/**********************************************************************************************************************************/
 unsigned int
 cfgOptionGroupIdxTotal(ConfigOptionGroup groupId)
 {
