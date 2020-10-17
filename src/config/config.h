@@ -96,10 +96,13 @@ Option Group Functions
 // Get the default index for this group, i.e. the index that will be used if a non-index function like cfgOptionTest() is called.
 unsigned int cfgOptionGroupIdxDefault(ConfigOptionGroup groupId);
 
-// !!!
+// Convert the group index to a raw index, i.e. the index that was used in the original configuration file, command-line, etc.
+// Useful for messages that do not show an option name but must use an index that the user will recognize. It is preferrable to
+// generate an option name with cfgOptionIdxName() when possible.
 unsigned int cfgOptionGroupIdxToRawIdx(ConfigOptionGroup groupId, unsigned int index);
 
-// Total indexes, 0 if the group is not valid.
+// Total indexes, 0 if the group is not valid. Will be the total configured indexes, no matter which raw indexes were used during
+// configuration. e.g., if pg1-path and pg8-path are configured then this function will return 2.
 unsigned int cfgOptionGroupIdxTotal(ConfigOptionGroup groupId);
 
 // Are any options in the group valid for the command?

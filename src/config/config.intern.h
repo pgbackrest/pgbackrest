@@ -75,8 +75,8 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
-// !!!
-const char * cfgOptionRawIdxName(ConfigOption optionId, unsigned int index);
+// Get the option name using the raw index -- i.e. the index that was used during configuration
+const char *cfgOptionRawIdxName(ConfigOption optionId, unsigned int index);
 
 // Total indexes for the option if in a group, 1 otherwise.
 unsigned int cfgOptionIdxTotal(ConfigOption optionId);
