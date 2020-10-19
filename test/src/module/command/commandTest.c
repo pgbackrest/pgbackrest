@@ -63,8 +63,8 @@ testRun(void)
         strLstAddZ(argList, PROJECT_BIN);
         strLstAddZ(argList, "--no-" CFGOPT_CONFIG);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        hrnCfgArgIdRawZ(argList, cfgOptPgPath, 1, "/pg1");
-        hrnCfgArgIdRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
         hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
         hrnCfgArgRawReset(argList, cfgOptRepoHost);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/path/to the/repo");

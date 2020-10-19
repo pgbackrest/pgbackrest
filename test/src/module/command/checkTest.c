@@ -317,8 +317,8 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
-        hrnCfgArgIdRawZ(argList, cfgOptPgHost, 5, "localhost");
-        hrnCfgArgIdRawZ(argList, cfgOptPgHostCmd, 5, "pgbackrest-bogus");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 5, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 5, "pgbackrest-bogus");
         strLstAddZ(argList, "--pg5-path=/path/to/pg5");
         strLstAdd(argList, strNewFmt("--pg5-host-user=%s", testUser()));
         harnessCfgLoad(cfgCmdCheck, argList);

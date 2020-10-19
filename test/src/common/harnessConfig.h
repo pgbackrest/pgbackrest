@@ -22,28 +22,28 @@ void harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId
 
 // Add options to a raw argument list
 void hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const String *value);
-void hrnCfgArgIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, const String *value);
+void hrnCfgArgKeyRaw(StringList *argList, ConfigOption optionId, unsigned optionKey, const String *value);
 
 void hrnCfgArgRawFmt(StringList *argList, ConfigOption optionId, const char *format, ...)
     __attribute__((format(printf, 3, 4)));
-void hrnCfgArgIdRawFmt(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *format, ...)
+void hrnCfgArgKeyRawFmt(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *format, ...)
     __attribute__((format(printf, 4, 5)));
 
 void hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value);
-void hrnCfgArgIdRawZ(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *value);
+void hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *value);
 
 void hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value);
-void hrnCfgArgIdRawBool(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value);
+void hrnCfgArgKeyRawBool(StringList *argList, ConfigOption optionId, unsigned optionKey, bool value);
 
 void hrnCfgArgRawReset(StringList *argList, ConfigOption optionId);
-void hrnCfgArgIdRawReset(StringList *argList, ConfigOption optionId, unsigned optionIdx);
+void hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned optionKey);
 
 // Set environment options
 void hrnCfgEnvRaw(ConfigOption optionId, const String *value);
-void hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionIdx, const String *value);
+void hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionKey, const String *value);
 
 void hrnCfgEnvRawZ(ConfigOption optionId, const char *value);
-void hrnCfgEnvIdRawZ(ConfigOption optionId, unsigned optionIdx, const char *value);
+void hrnCfgEnvIdRawZ(ConfigOption optionId, unsigned optionKey, const char *value);
 
 void hrnCfgEnvRemoveRaw(ConfigOption optionId);
-void hrnCfgEnvIdRemoveRaw(ConfigOption optionId, unsigned optionIdx);
+void hrnCfgEnvIdRemoveRaw(ConfigOption optionId, unsigned optionKey);

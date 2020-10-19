@@ -1218,7 +1218,7 @@ testRun(void)
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("--no-online"));
-        hrnCfgArgIdRawBool(argList, cfgOptPgLocal, 2, true);
+        hrnCfgArgKeyRawBool(argList, cfgOptPgLocal, 2, true);
         strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew("--reset-pg3-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));

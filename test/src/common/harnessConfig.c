@@ -91,13 +91,13 @@ harnessCfgLoad(ConfigCommand commandId, const StringList *argListParam)
 void
 hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const String *value)
 {
-    hrnCfgArgIdRawZ(argList, optionId, 1, strZ(value));
+    hrnCfgArgKeyRawZ(argList, optionId, 1, strZ(value));
 }
 
 void
-hrnCfgArgIdRaw(StringList *argList, ConfigOption optionId, unsigned optionIdx, const String *value)
+hrnCfgArgKeyRaw(StringList *argList, ConfigOption optionId, unsigned optionKey, const String *value)
 {
-    hrnCfgArgIdRawZ(argList, optionId, optionIdx, strZ(value));
+    hrnCfgArgKeyRawZ(argList, optionId, optionKey, strZ(value));
 }
 
 void
@@ -110,11 +110,11 @@ hrnCfgArgRawFmt(StringList *argList, ConfigOption optionId, const char *format, 
     (size_t)vsnprintf(buffer, sizeof(buffer) - 1, format, argument);
     va_end(argument);
 
-    hrnCfgArgIdRawZ(argList, optionId, 1, buffer);
+    hrnCfgArgKeyRawZ(argList, optionId, 1, buffer);
 }
 
 void
-hrnCfgArgIdRawFmt(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *format, ...)
+hrnCfgArgKeyRawFmt(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *format, ...)
 {
     char buffer[256];
 
@@ -123,43 +123,43 @@ hrnCfgArgIdRawFmt(StringList *argList, ConfigOption optionId, unsigned optionIdx
     (size_t)vsnprintf(buffer, sizeof(buffer) - 1, format, argument);
     va_end(argument);
 
-    hrnCfgArgIdRawZ(argList, optionId, optionIdx, buffer);
+    hrnCfgArgKeyRawZ(argList, optionId, optionKey, buffer);
 }
 
 void
 hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value)
 {
-    hrnCfgArgIdRawZ(argList, optionId, 1, value);
+    hrnCfgArgKeyRawZ(argList, optionId, 1, value);
 }
 
 void
-hrnCfgArgIdRawZ(StringList *argList, ConfigOption optionId, unsigned optionIdx, const char *value)
+hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *value)
 {
-    strLstAdd(argList, strNewFmt("--%s=%s", cfgOptionRawIdxName(optionId, optionIdx - 1), value));
+    strLstAdd(argList, strNewFmt("--%s=%s", cfgOptionRawIdxName(optionId, optionKey - 1), value));
 }
 
 void
 hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value)
 {
-    hrnCfgArgIdRawBool(argList, optionId, 1, value);
+    hrnCfgArgKeyRawBool(argList, optionId, 1, value);
 }
 
 void
-hrnCfgArgIdRawBool(StringList *argList, ConfigOption optionId, unsigned optionIdx, bool value)
+hrnCfgArgKeyRawBool(StringList *argList, ConfigOption optionId, unsigned optionKey, bool value)
 {
-    strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgOptionRawIdxName(optionId, optionIdx - 1)));
+    strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgOptionRawIdxName(optionId, optionKey - 1)));
 }
 
 void
 hrnCfgArgRawReset(StringList *argList, ConfigOption optionId)
 {
-    hrnCfgArgIdRawReset(argList, optionId, 1);
+    hrnCfgArgKeyRawReset(argList, optionId, 1);
 }
 
 void
-hrnCfgArgIdRawReset(StringList *argList, ConfigOption optionId, unsigned optionIdx)
+hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned optionKey)
 {
-    strLstAdd(argList, strNewFmt("--reset-%s", cfgOptionRawIdxName(optionId, optionIdx - 1)));
+    strLstAdd(argList, strNewFmt("--reset-%s", cfgOptionRawIdxName(optionId, optionKey - 1)));
 }
 
 /**********************************************************************************************************************************/
@@ -170,9 +170,9 @@ hrnCfgEnvRaw(ConfigOption optionId, const String *value)
 }
 
 void
-hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionIdx, const String *value)
+hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionKey, const String *value)
 {
-    hrnCfgEnvIdRawZ(optionId, optionIdx, strZ(value));
+    hrnCfgEnvIdRawZ(optionId, optionKey, strZ(value));
 }
 
 void
@@ -182,9 +182,9 @@ hrnCfgEnvRawZ(ConfigOption optionId, const char *value)
 }
 
 void
-hrnCfgEnvIdRawZ(ConfigOption optionId, unsigned optionIdx, const char *value)
+hrnCfgEnvIdRawZ(ConfigOption optionId, unsigned optionKey, const char *value)
 {
-    setenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionRawIdxName(optionId, optionIdx - 1))), value, true);
+    setenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionRawIdxName(optionId, optionKey - 1))), value, true);
 }
 
 void
@@ -194,7 +194,7 @@ hrnCfgEnvRemoveRaw(ConfigOption optionId)
 }
 
 void
-hrnCfgEnvIdRemoveRaw(ConfigOption optionId, unsigned optionIdx)
+hrnCfgEnvIdRemoveRaw(ConfigOption optionId, unsigned optionKey)
 {
-    unsetenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionRawIdxName(optionId, optionIdx - 1))));
+    unsetenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionRawIdxName(optionId, optionKey - 1))));
 }

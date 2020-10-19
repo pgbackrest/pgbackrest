@@ -2095,9 +2095,9 @@ testRun(void)
             argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-            hrnCfgArgIdRaw(argList, cfgOptPgPath, 1, pg1Path);
-            hrnCfgArgIdRaw(argList, cfgOptPgPath, 2, pg2Path);
-            hrnCfgArgIdRawZ(argList, cfgOptPgPort, 2, "5433");
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_BACKUP_STANDBY);
