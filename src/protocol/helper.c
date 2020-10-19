@@ -341,7 +341,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
     // Set local so host settings configured on the remote will not accidentally be picked up
     kvPut(
         optionReplace,
-        protocolStorageType == protocolStorageTypeRepo ? VARSTR(CFGOPT_REPO1_LOCAL_STR) : VARSTR(CFGOPT_PG1_LOCAL_STR),
+        protocolStorageType == protocolStorageTypeRepo ?
+            VARSTRZ(cfgOptionName(cfgOptRepoLocal)) : VARSTRZ(cfgOptionName(cfgOptPgLocal)),
         BOOL_TRUE_VAR);
 
     // Update/remove repo/pg options that are sent to the remote
@@ -523,8 +524,8 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId)
             {
                 // Options to query
                 VariantList *param = varLstNew();
-                varLstAdd(param, varNewStr(CFGOPT_REPO1_CIPHER_TYPE_STR));
-                varLstAdd(param, varNewStr(CFGOPT_REPO1_CIPHER_PASS_STR));
+                varLstAdd(param, varNewStrZ(cfgOptionName(cfgOptRepoCipherType)));
+                varLstAdd(param, varNewStrZ(cfgOptionName(cfgOptRepoCipherPass)));
 
                 VariantList *optionList = configProtocolOption(protocolHelperClient->client, param);
 

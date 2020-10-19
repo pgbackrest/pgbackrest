@@ -284,7 +284,11 @@ cmdArchivePush(void)
 
             // pg1-path is not optional for async mode
             if (!cfgOptionTest(cfgOptPgPath))
-                THROW(OptionRequiredError, "'" CFGCMD_ARCHIVE_PUSH "' command in async mode requires option '" CFGOPT_PG1_PATH "'");
+            {
+                THROW_FMT(
+                    OptionRequiredError, "'" CFGCMD_ARCHIVE_PUSH "' command in async mode requires option '%s'",
+                    cfgOptionName(cfgOptPgPath));
+            }
 
             // Loop and wait for the WAL segment to be pushed
             Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
