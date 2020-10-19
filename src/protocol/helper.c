@@ -10,6 +10,7 @@ Protocol Helper
 #include "common/exec.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/define.h"
 #include "config/exec.h"
 #include "config/protocol.h"
 #include "postgres/version.h"
@@ -339,7 +340,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
         cfgOptionSource(optConfigPath) != cfgSourceDefault ? cfgOption(optConfigPath) : NULL);
 
     // Update/remove repo/pg options that are sent to the remote
-    ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
     const String *repoHostPrefix = STR(cfgDefOptionName(cfgDefOptRepoHost));
     const String *repoPrefix = strNewFmt("%s-", PROTOCOL_REMOTE_TYPE_REPO);
     const String *pgHostPrefix = STR(cfgDefOptionName(cfgDefOptPgHost));
@@ -374,7 +374,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int protoc
             // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
             if (protocolStorageType == protocolStorageTypeRepo)
             {
-                remove = !cfgDefOptionRequired(commandDefId, optionDefId) || cfgDefOptionDefault(commandDefId, optionDefId) != NULL;
+                remove = !cfgDefOptionRequired(cfgCommand(), optionDefId) || cfgDefOptionDefault(cfgCommand(), optionDefId) != NULL;
             }
             // Else move/remove pg options with index > 0 since they won't be used
             else if (cfgOptionIndex(optionId) > 0)

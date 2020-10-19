@@ -10,6 +10,7 @@ Harness for Loading Test Configurations
 #include "common/harnessLog.h"
 #include "common/harnessTest.h"
 
+#include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "storage/helper.h"
@@ -53,11 +54,11 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
     StringList *argList = strLstDup(argListParam);
 
     // Set log path if valid
-    if (cfgDefOptionValid(cfgCommandDefIdFromId(commandId), cfgDefOptLogPath))
+    if (cfgDefOptionValid(commandId, cfgDefOptLogPath))
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testDataPath()));
 
     // Set lock path if valid
-    if (cfgDefOptionValid(cfgCommandDefIdFromId(commandId), cfgDefOptLockPath))
+    if (cfgDefOptionValid(commandId, cfgDefOptLockPath))
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
 
     // Insert the command so it does not interfere with parameters

@@ -135,9 +135,9 @@ testRun(void)
 
         // Set up defaults
         String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(
-            cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP, true)), cfgOptionDefIdFromId(cfgOptConfig)));
+            cfgCommandId(TEST_COMMAND_BACKUP, true), cfgOptionDefIdFromId(cfgOptConfig)));
         String *backupCmdDefConfigInclPathValue = strNew(cfgDefOptionDefault(
-                cfgCommandDefIdFromId(cfgCommandId(TEST_COMMAND_BACKUP, true)), cfgOptionDefIdFromId(cfgOptConfigIncludePath)));
+                cfgCommandId(TEST_COMMAND_BACKUP, true), cfgOptionDefIdFromId(cfgOptConfigIncludePath)));
         String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0

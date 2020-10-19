@@ -15,6 +15,7 @@ Configuration Load
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "storage/helper.h"

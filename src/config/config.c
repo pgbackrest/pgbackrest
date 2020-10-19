@@ -9,6 +9,7 @@ Command and Option Configuration
 #include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/define.h"
 
 /***********************************************************************************************************************************
 Map command names to ids and vice versa
@@ -198,19 +199,6 @@ cfgCommandHelpSet(bool help)
     configStatic.help = help;
 
     FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-ConfigDefineCommand
-cfgCommandDefIdFromId(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN((ConfigDefineCommand)commandId);
 }
 
 /**********************************************************************************************************************************/
@@ -547,7 +535,7 @@ cfgOptionDefaultValue(ConfigDefineOption optionDefId)
     FUNCTION_TEST_END();
 
     Variant *result;
-    Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId));
+    Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommand(), optionDefId));
 
     switch (cfgDefOptionType(optionDefId))
     {
@@ -595,7 +583,7 @@ cfgOptionDefault(ConfigOption optionId)
     {
         ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
 
-        if (cfgDefOptionDefault(cfgCommandDefIdFromId(cfgCommand()), optionDefId) != NULL)
+        if (cfgDefOptionDefault(cfgCommand(), optionDefId) != NULL)
         {
             MEM_CONTEXT_BEGIN(configStatic.memContext)
             {

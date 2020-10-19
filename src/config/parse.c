@@ -14,6 +14,7 @@ Command and Option Parse
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "config/define.h"
 #include "config/parse.h"
 #include "storage/helper.h"
 #include "version.h"
@@ -623,7 +624,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         {
             // Phase 2: parse environment variables
             // ---------------------------------------------------------------------------------------------------------------------
-            ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(cfgCommand());
+            ConfigCommand commandId = cfgCommand();
 
             unsigned int environIdx = 0;
 
@@ -671,7 +672,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
 
                     // Continue if the option is not valid for this command
-                    if (!cfgDefOptionValid(commandDefId, optionDefId))
+                    if (!cfgDefOptionValid(commandId, optionDefId))
                         continue;
 
                     if (strSize(value) == 0)
@@ -710,8 +711,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             // ---------------------------------------------------------------------------------------------------------------------
             // Load the configuration file(s)
             String *configString = cfgFileLoad(parseOptionList,
-                STR(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfig))),
-                STR(cfgDefOptionDefault(commandDefId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))),
+                STR(cfgDefOptionDefault(commandId, cfgOptionDefIdFromId(cfgOptConfig))),
+                STR(cfgDefOptionDefault(commandId, cfgOptionDefIdFromId(cfgOptConfigIncludePath))),
                 PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
 
             if (configString != NULL)
@@ -794,7 +795,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             kvPut(optionFound, optionFoundKey, VARSTR(key));
 
                         // Continue if the option is not valid for this command
-                        if (!cfgDefOptionValid(commandDefId, optionDefId))
+                        if (!cfgDefOptionValid(commandId, optionDefId))
                         {
                             // Warn if it is in a command section
                             if (sectionIdx % 2 == 0)
@@ -879,7 +880,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 ConfigDefineOptionType optionDefType = cfgDefOptionType(optionDefId);
 
                 // Error if the option is not valid for this command
-                if (parseOption->found && !cfgDefOptionValid(commandDefId, optionDefId))
+                if (parseOption->found && !cfgDefOptionValid(commandId, optionDefId))
                 {
                     THROW_FMT(
                         OptionInvalidError, "option '%s' not valid for command '%s'", cfgOptionName(optionId),
@@ -887,7 +888,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 }
 
                 // Is the option valid for this command?  If not, there is nothing more to do.
-                cfgOptionValidSet(optionId, cfgDefOptionValid(commandDefId, optionDefId));
+                cfgOptionValidSet(optionId, cfgDefOptionValid(commandId, optionDefId));
 
                 if (!cfgOptionValid(optionId))
                     continue;
@@ -906,10 +907,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 // Check option dependencies
                 bool dependResolved = true;
 
-                if (cfgDefOptionDepend(commandDefId, optionDefId))
+                if (cfgDefOptionDepend(commandId, optionDefId))
                 {
                     ConfigOption dependOptionId =
-                        cfgOptionIdFromDefId(cfgDefOptionDependOption(commandDefId, optionDefId), cfgOptionIndex(optionId));
+                        cfgOptionIdFromDefId(cfgDefOptionDependOption(commandId, optionDefId), cfgOptionIndex(optionId));
                     ConfigDefineOption dependOptionDefId = cfgOptionDefIdFromId(dependOptionId);
                     ConfigDefineOptionType dependOptionDefType = cfgDefOptionType(dependOptionDefId);
 
@@ -942,9 +943,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
                     }
                     // If a depend list exists, make sure the value is in the list
-                    else if (cfgDefOptionDependValueTotal(commandDefId, optionDefId) > 0)
+                    else if (cfgDefOptionDependValueTotal(commandId, optionDefId) > 0)
                     {
-                        dependResolved = cfgDefOptionDependValueValid(commandDefId, optionDefId, strZ(varStr(dependValue)));
+                        dependResolved = cfgDefOptionDependValueValid(commandId, optionDefId, strZ(varStr(dependValue)));
 
                         // If depend not resolved and option value is set on the command-line then error.  It's OK to have
                         // unresolved options in the config file because they may be there for another command.  For instance,
@@ -959,9 +960,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             StringList *dependValueList = strLstNew();
 
                             for (unsigned int listIdx = 0;
-                                    listIdx < cfgDefOptionDependValueTotal(commandDefId, optionDefId); listIdx++)
+                                    listIdx < cfgDefOptionDependValueTotal(commandId, optionDefId); listIdx++)
                             {
-                                const char *dependValue = cfgDefOptionDependValue(commandDefId, optionDefId, listIdx);
+                                const char *dependValue = cfgDefOptionDependValue(commandId, optionDefId, listIdx);
 
                                 // Build list based on depend option type
                                 if (dependOptionDefType == cfgDefOptTypeBoolean)
@@ -1065,9 +1066,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                 TRY_END();
 
                                 // Check value range
-                                if (cfgDefOptionAllowRange(commandDefId, optionDefId) &&
-                                    (valueDbl < cfgDefOptionAllowRangeMin(commandDefId, optionDefId) ||
-                                     valueDbl > cfgDefOptionAllowRangeMax(commandDefId, optionDefId)))
+                                if (cfgDefOptionAllowRange(commandId, optionDefId) &&
+                                    (valueDbl < cfgDefOptionAllowRangeMin(commandId, optionDefId) ||
+                                     valueDbl > cfgDefOptionAllowRangeMax(commandId, optionDefId)))
                                 {
                                     THROW_FMT(
                                         OptionInvalidValueError, "'%s' is out of range for '%s' option", strZ(value),
@@ -1107,8 +1108,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             }
 
                             // If the option has an allow list then check it
-                            if (cfgDefOptionAllowList(commandDefId, optionDefId) &&
-                                !cfgDefOptionAllowListValueValid(commandDefId, optionDefId, strZ(value)))
+                            if (cfgDefOptionAllowList(commandId, optionDefId) &&
+                                !cfgDefOptionAllowListValueValid(commandId, optionDefId, strZ(value)))
                             {
                                 THROW_FMT(
                                     OptionInvalidValueError, "'%s' is not allowed for '%s' option", strZ(value),
@@ -1124,11 +1125,11 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     else
                     {
                         // Get the default value for this option
-                        const char *value = cfgDefOptionDefault(commandDefId, optionDefId);
+                        const char *value = cfgDefOptionDefault(commandId, optionDefId);
 
                         if (value != NULL)
                             cfgOptionSet(optionId, cfgSourceDefault, VARSTRZ(value));
-                        else if (cfgOptionIndex(optionId) == 0 && cfgDefOptionRequired(commandDefId, optionDefId) &&
+                        else if (cfgOptionIndex(optionId) == 0 && cfgDefOptionRequired(commandId, optionDefId) &&
                                  !cfgCommandHelp())
                         {
                             const char *hint = "";
