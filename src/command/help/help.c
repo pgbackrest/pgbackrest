@@ -23,50 +23,31 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 /***********************************************************************************************************************************
 Get the default value for an option
 ***********************************************************************************************************************************/
-static Variant *
+static String *
 helpOptionDefault(ConfigCommand commandId, ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    Variant *result = NULL;
-    Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(commandId, optionId));
+    // Get the default value
+    const char *defaultValue = cfgDefOptionDefault(commandId, optionId);
 
-    if (varStr(defaultValue) != NULL)
+    // Convert to a string if it is not null
+    if (defaultValue != NULL)
     {
-        switch (cfgDefOptionType(optionId))
+        if (cfgDefOptionType(optionId) == cfgDefOptTypeBoolean)
         {
-            case cfgDefOptTypeBoolean:
-            {
-                result = varNewBool(varBoolForce(defaultValue));
-                break;
-            }
+            if (strEqZ(ZERO_STR, defaultValue))
+                FUNCTION_TEST_RETURN(strDup(N_STR));
 
-            case cfgDefOptTypeFloat:
-            {
-                result = varNewDbl(varDblForce(defaultValue));
-                break;
-            }
-
-            case cfgDefOptTypeInteger:
-            case cfgDefOptTypeSize:
-            {
-                result = varNewInt64(varInt64Force(defaultValue));
-                break;
-            }
-
-            case cfgDefOptTypePath:
-            case cfgDefOptTypeString:
-                result = varDup(defaultValue);
-                break;
-
-            default:
-                break;
+            FUNCTION_TEST_RETURN(strDup(Y_STR));
         }
+
+        FUNCTION_TEST_RETURN(strNew(defaultValue));
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(NULL);
 }
 
 /***********************************************************************************************************************************
@@ -130,55 +111,54 @@ helpRenderValue(const Variant *value)
         FUNCTION_LOG_PARAM(VARIANT, value);
     FUNCTION_LOG_END();
 
+    ASSERT(value != NULL);
+
     const String *result = NULL;
 
-    if (value != NULL)
+    if (varType(value) == varTypeBool)
     {
-        if (varType(value) == varTypeBool)
-        {
-            if (varBool(value))
-                result = Y_STR;
-            else
-                result = N_STR;
-        }
-        else if (varType(value) == varTypeKeyValue)
-        {
-            String *resultTemp = strNew("");
-
-            const KeyValue *optionKv = varKv(value);
-            const VariantList *keyList = kvKeyList(optionKv);
-
-            for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
-            {
-                if (keyIdx != 0)
-                    strCatZ(resultTemp, ", ");
-
-                strCatFmt(
-                    resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
-            }
-
-            result = resultTemp;
-        }
-        else if (varType(value) == varTypeVariantList)
-        {
-            String *resultTemp = strNew("");
-
-            const VariantList *list = varVarLst(value);
-
-            for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
-            {
-                if (listIdx != 0)
-                    strCatZ(resultTemp, ", ");
-
-                strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
-            }
-
-            result = resultTemp;
-        }
+        if (varBool(value))
+            result = Y_STR;
         else
-            result = varStrForce(value);
+            result = N_STR;
     }
+    else if (varType(value) == varTypeKeyValue)
+    {
+        String *resultTemp = strNew("");
+
+        const KeyValue *optionKv = varKv(value);
+        const VariantList *keyList = kvKeyList(optionKv);
+
+        for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+        {
+            if (keyIdx != 0)
+                strCatZ(resultTemp, ", ");
+
+            strCatFmt(
+                resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+        }
+
+        result = resultTemp;
+    }
+    else if (varType(value) == varTypeVariantList)
+    {
+        String *resultTemp = strNew("");
+
+        const VariantList *list = varVarLst(value);
+
+        for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
+        {
+            if (listIdx != 0)
+                strCatZ(resultTemp, ", ");
+
+            strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
+        }
+
+        result = resultTemp;
+    }
+    else
+        result = varStrForce(value);
 
     FUNCTION_LOG_RETURN_CONST(STRING, result);
 }
@@ -308,7 +288,7 @@ helpRender(void)
                             strlen(cfgDefOptionHelpSummary(commandId, optionId)) - 1));
 
                         // Ouput current and default values if they exist
-                        const String *defaultValue = helpRenderValue(helpOptionDefault(commandId, optionId));
+                        const String *defaultValue = helpOptionDefault(commandId, optionId);
                         const String *value = NULL;
 
                         if (cfgOptionSource(optionId) != cfgSourceDefault)
@@ -378,7 +358,7 @@ helpRender(void)
                     strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.optionId)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(helpOptionDefault(commandId, option.optionId));
+                const String *defaultValue = helpOptionDefault(commandId, option.optionId);
                 const String *value = NULL;
 
                 if (cfgOptionSource(option.optionId) != cfgSourceDefault)

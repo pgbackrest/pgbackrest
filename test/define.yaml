@@ -656,11 +656,8 @@ unit:
       - name: help
         total: 4
 
-        # coverage:
-        #   command/help/help: full
-
-        include:
-          - command/help/help
+        coverage:
+          command/help/help: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info
