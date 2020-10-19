@@ -138,7 +138,6 @@ testRun(void)
 
         // Recurse
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionValidSet(cfgOptRecurse, true);
         cfgOptionSet(cfgOptRecurse, cfgSourceParam, VARBOOL(true));
 
         output = bufNew(0);
@@ -148,7 +147,6 @@ testRun(void)
 
         // Filter
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionValidSet(cfgOptFilter, true);
         cfgOptionSet(cfgOptFilter, cfgSourceParam, VARSTRDEF("^aaa$"));
 
         output = bufNew(0);
