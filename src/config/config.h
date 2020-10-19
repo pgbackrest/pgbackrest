@@ -184,6 +184,9 @@ const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
 // pgBackRest exe
 const String *cfgExe(void);
 
+// Option default
+const Variant *cfgOptionDefault(ConfigOption optionId);
+
 // Set option default. Option defaults are generally not set in advance because the vast majority of them are never used.  It is
 // more efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);

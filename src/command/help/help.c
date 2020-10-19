@@ -12,43 +12,12 @@ Help Command
 #include "common/memContext.h"
 #include "config/config.h"
 #include "config/define.h"
-#include "config/parse.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
 Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
 ***********************************************************************************************************************************/
 #define CONSOLE_WIDTH                                               80
-
-/***********************************************************************************************************************************
-Get the default value for an option
-***********************************************************************************************************************************/
-static String *
-helpOptionDefault(ConfigCommand commandId, ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    // Get the default value
-    const char *defaultValue = cfgDefOptionDefault(commandId, optionId);
-
-    // Convert to a string if it is not null
-    if (defaultValue != NULL)
-    {
-        if (cfgDefOptionType(optionId) == cfgDefOptTypeBoolean)
-        {
-            if (strEqZ(ZERO_STR, defaultValue))
-                FUNCTION_TEST_RETURN(strDup(N_STR));
-
-            FUNCTION_TEST_RETURN(strDup(Y_STR));
-        }
-
-        FUNCTION_TEST_RETURN(strNew(defaultValue));
-    }
-
-    FUNCTION_TEST_RETURN(NULL);
-}
 
 /***********************************************************************************************************************************
 Helper function for helpRender() to make output look good on a console
@@ -111,10 +80,10 @@ helpRenderValue(const Variant *value)
         FUNCTION_LOG_PARAM(VARIANT, value);
     FUNCTION_LOG_END();
 
-    ASSERT(value != NULL);
-
     const String *result = NULL;
 
+    if (value != NULL)
+    {
     if (varType(value) == varTypeBool)
     {
         if (varBool(value))
@@ -159,6 +128,7 @@ helpRenderValue(const Variant *value)
     }
     else
         result = varStrForce(value);
+    }
 
     FUNCTION_LOG_RETURN_CONST(STRING, result);
 }
@@ -288,7 +258,7 @@ helpRender(void)
                             strlen(cfgDefOptionHelpSummary(commandId, optionId)) - 1));
 
                         // Ouput current and default values if they exist
-                        const String *defaultValue = helpOptionDefault(commandId, optionId);
+                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
                         const String *value = NULL;
 
                         if (cfgOptionSource(optionId) != cfgSourceDefault)
@@ -358,7 +328,7 @@ helpRender(void)
                     strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.optionId)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpOptionDefault(commandId, option.optionId);
+                const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
                 const String *value = NULL;
 
                 if (cfgOptionSource(option.optionId) != cfgSourceDefault)
