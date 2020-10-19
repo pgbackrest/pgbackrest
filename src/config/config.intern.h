@@ -47,6 +47,7 @@ typedef struct Config
     struct
     {
         bool valid;                                                 // Is option valid for current command?
+        const Variant *defaultValue;                                // Default value
         ConfigOptionValue *index;                                   // List of indexed values (only 1 unless the option is indexed)
     } option[CFG_OPTION_TOTAL];
 } Config;

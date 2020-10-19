@@ -12,6 +12,7 @@ Help Command
 #include "common/memContext.h"
 #include "config/config.h"
 #include "config/define.h"
+#include "config/parse.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -328,7 +329,7 @@ helpRender(void)
                     strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.optionId)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
+                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.optionId));
                 const String *value = NULL;
 
                 if (cfgOptionSource(option.optionId) != cfgSourceDefault)

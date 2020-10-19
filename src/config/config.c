@@ -494,6 +494,73 @@ cfgOptionIdxTotal(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
+static Variant *
+cfgOptionDefaultValue(ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    Variant *result;
+    Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommand(), optionId));
+
+    switch (cfgDefOptionType(optionId))
+    {
+        case cfgDefOptTypeBoolean:
+        {
+            result = varNewBool(varBoolForce(defaultValue));
+            break;
+        }
+
+        case cfgDefOptTypeFloat:
+        {
+            result = varNewDbl(varDblForce(defaultValue));
+            break;
+        }
+
+        case cfgDefOptTypeInteger:
+        case cfgDefOptTypeSize:
+        {
+            result = varNewInt64(varInt64Force(defaultValue));
+            break;
+        }
+
+        case cfgDefOptTypePath:
+        case cfgDefOptTypeString:
+            result = varDup(defaultValue);
+            break;
+
+        default:
+            THROW_FMT(AssertError, "default value not available for option type %d", cfgDefOptionType(optionId));
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+const Variant *
+cfgOptionDefault(ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    if (configLocal->option[optionId].defaultValue == NULL)
+    {
+        if (cfgDefOptionDefault(cfgCommand(), optionId) != NULL)
+        {
+            MEM_CONTEXT_BEGIN(configLocal->memContext)
+            {
+                configLocal->option[optionId].defaultValue = cfgOptionDefaultValue(optionId);
+            }
+            MEM_CONTEXT_END();
+        }
+    }
+
+    FUNCTION_TEST_RETURN(configLocal->option[optionId].defaultValue);
+}
+
 void
 cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 {
@@ -507,10 +574,12 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 
     MEM_CONTEXT_BEGIN(configLocal->memContext)
     {
+        configLocal->option[optionId].defaultValue = varDup(defaultValue);
+
         for (unsigned int index = 0; index < cfgOptionIdxTotal(optionId); index++)
         {
             if (configLocal->option[optionId].index[index].source == cfgSourceDefault)
-                cfgOptionIdxSet(optionId, index, cfgSourceDefault, defaultValue);
+                configLocal->option[optionId].index[index].value = configLocal->option[optionId].defaultValue;
         }
     }
     MEM_CONTEXT_END();
