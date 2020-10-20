@@ -231,7 +231,7 @@ sub buildConfig
 
     $strBuildSource =
         'static ConfigOptionGroupData configOptionGroupData[' . BLDLCL_CONSTANT_OPTION_GROUP_TOTAL . "] = \n" .
-        "{\n";
+        "{";
 
     foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
     {
@@ -239,7 +239,9 @@ sub buildConfig
         push(@{$rhEnum->{&BLD_LIST}}, $strGroupEnum);
 
         $strBuildSource .=
+            "\n" .
             "    // ${strGroupEnum}\n" .
+            "    //" . (qw{-} x 126) . "\n" .
             "    {\n" .
             "        .name = \"" . $strGroup . "\"\n" .
             "    },\n";
