@@ -19,6 +19,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db path", testPath()));
+        strLstAddZ(argList, "--pg2-path=/db2");
         strLstAddZ(argList, "--log-subprocess");
         strLstAddZ(argList, "--no-config");
         strLstAddZ(argList, "--reset-neutral-umask");
@@ -34,15 +35,15 @@ testRun(void)
         TEST_RESULT_STR(
             strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, NULL, false, true), "|"),
             strNewFmt(
-                "--archive-async|--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--repo1-path=%s/repo"
-                "|--stanza=test1|archive-get:async",
+                "--archive-async|--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--pg2-path=/db2"
+                "|--repo1-path=%s/repo|--stanza=test1|archive-get:async",
                 testPath(), testPath()),
             "exec archive-get -> archive-get:async");
 
         TEST_RESULT_STR(
             strLstJoin(cfgExecParam(cfgCmdBackup, cfgCmdRoleDefault, NULL, false, false), "|"),
             strNewFmt(
-                "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=%s/db path|--repo1-path=%s/repo"
+                "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=%s/db path|--pg2-path=/db2|--repo1-path=%s/repo"
                 "|--stanza=test1|backup",
                 testPath(), testPath()),
             "exec archive-get -> backup");
