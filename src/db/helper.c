@@ -12,13 +12,13 @@ Database Helper
 
 /**********************************************************************************************************************************/
 static Db *
-dbGetId(unsigned int pgId)
+dbGetIdx(unsigned int pgIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT, pgId);
+        FUNCTION_LOG_PARAM(UINT, pgIdx);
     FUNCTION_LOG_END();
 
-    ASSERT(pgId > 0);
+    ASSERT(pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg));
 
     Db *result = NULL;
 
@@ -26,16 +26,16 @@ dbGetId(unsigned int pgId)
     {
         const String *applicationName = strNewFmt(PROJECT_NAME " [%s]", cfgCommandName(cfgCommand()));
 
-        if (pgIsLocal(pgId))
+        if (pgIsLocal(pgIdx))
         {
             result = dbNew(
                 pgClientNew(
-                    cfgOptionStrNull(cfgOptPgSocketPath + pgId - 1), cfgOptionUInt(cfgOptPgPort + pgId - 1), PG_DB_POSTGRES_STR,
-                    cfgOptionStrNull(cfgOptPgUser + pgId - 1), (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
+                    cfgOptionStrNull(cfgOptPgSocketPath + pgIdx), cfgOptionUInt(cfgOptPgPort + pgIdx), PG_DB_POSTGRES_STR,
+                    cfgOptionStrNull(cfgOptPgUser + pgIdx), (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
                 NULL, applicationName);
         }
         else
-            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgId), applicationName);
+            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx), applicationName);
 
         dbMove(result, memContextPrior());
     }
@@ -72,7 +72,7 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
 
                 TRY_BEGIN()
                 {
-                    db = dbGetId(pgIdx + 1);
+                    db = dbGetIdx(pgIdx);
 
                     // This needs to be nested because db can be reset to NULL on an error in the outer try but we need the pointer
                     // to be able to free it.
@@ -90,7 +90,9 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
                 }
                 CATCH_ANY()
                 {
-                    LOG_WARN_FMT("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
+                    LOG_WARN_FMT(
+                        "unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()),
+                        errorMessage());
                     db = NULL;
                 }
                 TRY_END();
@@ -102,9 +104,9 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
                     if (standby)
                     {
                         // If a standby has not already been found then assign it
-                        if (result.standbyId == 0 && !primaryOnly)
+                        if (result.standby == NULL && !primaryOnly)
                         {
-                            result.standbyId = pgIdx + 1;
+                            result.standbyIdx = pgIdx;
                             result.standby = db;
                         }
                         // Else close the connection since we don't need it
@@ -115,10 +117,10 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
                     else
                     {
                         // Error if more than one primary was found
-                        if (result.primaryId != 0)
+                        if (result.primary != NULL)
                             THROW(DbConnectError, "more than one primary cluster found");
 
-                        result.primaryId = pgIdx + 1;
+                        result.primaryIdx = pgIdx;
                         result.primary = db;
                     }
                 }
@@ -126,11 +128,11 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
         }
 
         // Error if no primary was found
-        if (result.primaryId == 0 && primaryRequired)
+        if (result.primary == NULL && primaryRequired)
             THROW(DbConnectError, "unable to find primary cluster - cannot proceed");
 
         // Error if no standby was found
-        if (result.standbyId == 0 && standbyRequired)
+        if (result.standby == NULL && standbyRequired)
             THROW(DbConnectError, "unable to find standby cluster - cannot proceed");
 
         dbMove(result.primary, memContextPrior());

@@ -42,32 +42,31 @@ checkArchiveCommand(const String *archiveCommand)
 
 /**********************************************************************************************************************************/
 void
-checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const Db *dbObject, bool isStandby)
+checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *dbObject, bool isStandby)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
-        FUNCTION_TEST_PARAM(UINT, dbIdx);
+        FUNCTION_TEST_PARAM(UINT, pgIdx);
         FUNCTION_TEST_PARAM(DB, dbObject);
         FUNCTION_TEST_PARAM(BOOL, isStandby);
     FUNCTION_TEST_END();
 
-    ASSERT(dbIdx > 0);
     ASSERT(dbObject != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         unsigned int dbVersion = dbPgVersion(dbObject);
         const String *dbPath = dbPgDataPath(dbObject);
-        unsigned int pgPath = cfgOptPgPath + (dbIdx - 1);
 
         // Error if the version from the control file and the configured pg-path do not match the values obtained from the database
-        if (pgVersion != dbVersion || strCmp(cfgOptionStr(pgPath), dbPath) != 0)
+        if (pgVersion != dbVersion || strCmp(cfgOptionStr(cfgOptPgPath + pgIdx), dbPath) != 0)
         {
             THROW_FMT(
                 DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
                 PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\nHINT: the %s and %s settings likely reference different clusters.",
-                strZ(pgVersionToStr(dbVersion)), strZ(dbPath), strZ(pgVersionToStr(pgVersion)), strZ(cfgOptionStr(pgPath)),
-                strZ(cfgOptionStr(pgPath)), cfgOptionName(pgPath), cfgOptionName(cfgOptPgPort + (dbIdx - 1)));
+                strZ(pgVersionToStr(dbVersion)), strZ(dbPath), strZ(pgVersionToStr(pgVersion)),
+                strZ(cfgOptionStr(cfgOptPgPath + pgIdx)), strZ(cfgOptionStr(cfgOptPgPath + pgIdx)),
+                cfgOptionName(cfgOptPgPath + pgIdx), cfgOptionName(cfgOptPgPort + pgIdx));
         }
 
         // Check archive configuration if option is valid for the command and set

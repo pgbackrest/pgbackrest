@@ -2107,28 +2107,28 @@ testRun(void)
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
             // but no bytes will be copied.
-            storagePutP(storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), NULL);
-            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("1234"));
+            storagePutP(storageNewWriteP(storagePgIdxWrite(0), STRDEF(PG_PATH_BASE "/1/1"), .timeModified = backupTimeStart), NULL);
+            storagePutP(storageNewWriteP(storagePgIdxWrite(1), STRDEF(PG_PATH_BASE "/1/1")), BUFSTRDEF("1234"));
 
             // Create file to copy from the standby. This file will be smaller on the primary than the standby and have no common
             // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
             // the checksum will change but not the size.
             storagePutP(
-                storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/2"), .timeModified = backupTimeStart),
+                storageNewWriteP(storagePgIdxWrite(0), STRDEF(PG_PATH_BASE "/1/2"), .timeModified = backupTimeStart),
                 BUFSTRDEF("DA"));
-            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/2")), BUFSTRDEF("5678"));
+            storagePutP(storageNewWriteP(storagePgIdxWrite(1), STRDEF(PG_PATH_BASE "/1/2")), BUFSTRDEF("5678"));
 
             // Create file to copy from the standby. This file will be larger on the primary than the standby and have no common
             // data in the bytes that exist on primary and standby.  If the file is copied from the primary instead of the standby
             // the checksum and size will change.
             storagePutP(
-                storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart),
+                storageNewWriteP(storagePgIdxWrite(0), STRDEF(PG_PATH_BASE "/1/3"), .timeModified = backupTimeStart),
                 BUFSTRDEF("TEST"));
-            storagePutP(storageNewWriteP(storagePgIdWrite(2), STRDEF(PG_PATH_BASE "/1/3")), BUFSTRDEF("ABC"));
+            storagePutP(storageNewWriteP(storagePgIdxWrite(1), STRDEF(PG_PATH_BASE "/1/3")), BUFSTRDEF("ABC"));
 
             // Create a file on the primary that does not exist on the standby to test that the file is removed from the manifest
             storagePutP(
-                storageNewWriteP(storagePgIdWrite(1), STRDEF(PG_PATH_BASE "/1/0"), .timeModified = backupTimeStart),
+                storageNewWriteP(storagePgIdxWrite(0), STRDEF(PG_PATH_BASE "/1/0"), .timeModified = backupTimeStart),
                 BUFSTRDEF("DATA"));
 
             // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
@@ -2200,7 +2200,7 @@ testRun(void)
                 "compare file list");
 
             // Remove test files
-            storagePathRemoveP(storagePgIdWrite(2), NULL, .recurse = true);
+            storagePathRemoveP(storagePgIdxWrite(1), NULL, .recurse = true);
             storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);
         }
 

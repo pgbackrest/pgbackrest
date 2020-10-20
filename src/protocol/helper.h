@@ -48,7 +48,7 @@ void protocolRemoteFree(unsigned int hostId);
 Getters/Setters
 ***********************************************************************************************************************************/
 // Is pg local?
-bool pgIsLocal(unsigned int hostId);
+bool pgIsLocal(unsigned int optionIdx);
 
 // Error if PostgreSQL is not local, i.e. pg-host is set
 void pgIsLocalVerify(void);
