@@ -358,7 +358,7 @@ iniLoad(
 
             do
             {
-                const String *line = strTrim(ioReadLineParam(read, true));
+                const String *line = ioReadLineParam(read, true);
                 const char *linePtr = strZ(line);
 
                 // Only interested in lines that are not blank or comments
@@ -405,8 +405,8 @@ iniLoad(
                             retry = false;
 
                             // Get key/value
-                            key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
-                            value = strTrim(strNew(lineEqual + 1));
+                            key = strNewN(linePtr, (size_t)(lineEqual - linePtr));
+                            value = strNew(lineEqual + 1);
 
                             // Check that the value is valid JSON
                             TRY_BEGIN()
