@@ -62,12 +62,12 @@ Parse option flags
 // Indicate that option name has been deprecated and will be removed in a future release
 #define PARSE_DEPRECATE_FLAG                                        (1 << 27)
 
-// Mask for option id
+// Mask for option id (must be 0-255)
 #define PARSE_OPTION_MASK                                           0xFF
 
-// Shift and mask for option index
-#define PARSE_INDEX_SHIFT                                           8
-#define PARSE_INDEX_MASK                                            0xFF
+// Shift and mask for option key index (must be 0-255)
+#define PARSE_KEY_IDX_SHIFT                                         8
+#define PARSE_KEY_IDX_MASK                                          0xFF
 
 /***********************************************************************************************************************************
 Include automatically generated data structure for getopt_long()
@@ -144,6 +144,21 @@ parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int
 /***********************************************************************************************************************************
 Find an option by name in the option list
 ***********************************************************************************************************************************/
+// Helper to parse the option info into a structure
+__attribute__((always_inline)) static inline CfgParseOptionResult
+cfgParseOptionInfo(int info)
+{
+    return (CfgParseOptionResult)
+    {
+        .found = true,
+        .id = info & PARSE_OPTION_MASK,
+        .keyIdx = (info >> PARSE_KEY_IDX_SHIFT) & PARSE_KEY_IDX_MASK,
+        .negate = info & PARSE_NEGATE_FLAG,
+        .reset = info & PARSE_RESET_FLAG,
+        .deprecated = info & PARSE_DEPRECATE_FLAG,
+    };
+}
+
 CfgParseOptionResult
 cfgParseOption(const String *optionName)
 {
@@ -152,8 +167,6 @@ cfgParseOption(const String *optionName)
     FUNCTION_TEST_END();
 
     ASSERT(optionName != NULL);
-
-    CfgParseOptionResult result = {0};
 
     // Search for the option
     unsigned int findIdx = 0;
@@ -168,21 +181,9 @@ cfgParseOption(const String *optionName)
 
     // If the option was found
     if (optionList[findIdx].name != NULL)
-    {
-        int value = optionList[findIdx].val;
+        FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findIdx].val));
 
-        result = (CfgParseOptionResult)
-        {
-            .found = true,
-            .optionId = value & PARSE_OPTION_MASK,
-            .optionIdx = (value >> PARSE_INDEX_SHIFT) & PARSE_INDEX_MASK,
-            .negate = value & PARSE_NEGATE_FLAG,
-            .reset = value & PARSE_RESET_FLAG,
-            .deprecated = value & PARSE_DEPRECATE_FLAG,
-        };
-    }
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN((CfgParseOptionResult){0});
 }
 
 /***********************************************************************************************************************************
@@ -527,7 +528,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
         // Phase 1: parse command line parameters
         // -------------------------------------------------------------------------------------------------------------------------
-        int option;                                                     // Code returned by getopt_long
+        int optionValue;                                                // Value returned by getopt_long
         int optionListIdx;                                              // Index of option is list (if an option was returned)
         bool argFound = false;                                          // Track args found to decide on error or help at the end
 
@@ -543,9 +544,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         // Only the first non-option parameter should be treated as a command so track if the command has been set
         bool commandSet = false;
 
-        while ((option = getopt_long((int)argListSize, (char **)argList, "-:", optionList, &optionListIdx)) != -1)
+        while ((optionValue = getopt_long((int)argListSize, (char **)argList, "-:", optionList, &optionListIdx)) != -1)
         {
-            switch (option)
+            switch (optionValue)
             {
                 // Parse arguments that are not options, i.e. commands and parameters passed to commands
                 case 1:
@@ -614,35 +615,32 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 default:
                 {
                     // Get option id and flags from the option code
-                    ConfigOption optionId = option & PARSE_OPTION_MASK;
-                    unsigned int optionIdx = (option >> PARSE_INDEX_SHIFT) & PARSE_INDEX_MASK;
-                    bool negate = option & PARSE_NEGATE_FLAG;
-                    bool reset = option & PARSE_RESET_FLAG;
+                    CfgParseOptionResult option = cfgParseOptionInfo(optionValue);
 
                     // Make sure the option id is valid
-                    ASSERT(optionId < CFG_OPTION_TOTAL);
+                    ASSERT(option.id < CFG_OPTION_TOTAL);
 
                     // Error if this option is secure and cannot be passed on the command line
-                    if (cfgDefOptionSecure(optionId))
+                    if (cfgDefOptionSecure(option.id))
                     {
                         THROW_FMT(
                             OptionInvalidError,
                             "option '%s' is not allowed on the command-line\n"
                             "HINT: this option could expose secrets in the process list.\n"
                             "HINT: specify the option in a configuration file or an environment variable instead.",
-                            cfgOptionRawIdxName(optionId, optionIdx));
+                            cfgOptionRawIdxName(option.id, option.keyIdx));
                     }
 
                     // If the the option has not been found yet then set it
-                    ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, optionId, optionIdx);
+                    ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
 
                     if (!optionValue->found)
                     {
                         *optionValue = (ParseOptionValue)
                         {
                             .found = true,
-                            .negate = negate,
-                            .reset = reset,
+                            .negate = option.negate,
+                            .reset = option.reset,
                             .source = cfgSourceParam,
                         };
 
@@ -657,47 +655,47 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     {
                         // Make sure option is not negated more than once.  It probably wouldn't hurt anything to accept this case
                         // but there's no point in allowing the user to be sloppy.
-                        if (optionValue->negate && negate)
+                        if (optionValue->negate && option.negate)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' is negated multiple times",
-                                cfgOptionRawIdxName(optionId, optionIdx));
+                                cfgOptionRawIdxName(option.id, option.keyIdx));
                         }
 
                         // Make sure option is not reset more than once.  Same justification as negate.
-                        if (optionValue->reset && reset)
+                        if (optionValue->reset && option.reset)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' is reset multiple times",
-                                cfgOptionRawIdxName(optionId, optionIdx));
+                                cfgOptionRawIdxName(option.id, option.keyIdx));
                         }
 
                         // Don't allow an option to be both negated and reset
-                        if ((optionValue->reset && negate) || (optionValue->negate && reset))
+                        if ((optionValue->reset && option.negate) || (optionValue->negate && option.reset))
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' cannot be negated and reset",
-                                cfgOptionRawIdxName(optionId, optionIdx));
+                                cfgOptionRawIdxName(option.id, option.keyIdx));
                         }
 
                         // Don't allow an option to be both set and negated
-                        if (optionValue->negate != negate)
+                        if (optionValue->negate != option.negate)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' cannot be set and negated",
-                                cfgOptionRawIdxName(optionId, optionIdx));
+                                cfgOptionRawIdxName(option.id, option.keyIdx));
                         }
 
                         // Don't allow an option to be both set and reset
-                        if (optionValue->reset != reset)
+                        if (optionValue->reset != option.reset)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' cannot be set and reset",
-                                cfgOptionRawIdxName(optionId, optionIdx));
+                                cfgOptionRawIdxName(option.id, option.keyIdx));
                         }
 
                         // Add the argument
-                        if (optionList[optionListIdx].has_arg == required_argument && cfgDefOptionMulti(optionId))
+                        if (optionList[optionListIdx].has_arg == required_argument && cfgDefOptionMulti(option.id))
                         {
                             strLstAdd(optionValue->valueList, strNew(optarg));
                         }
@@ -706,7 +704,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' cannot be set multiple times",
-                                cfgOptionRawIdxName(optionId, optionIdx));
+                                cfgOptionRawIdxName(option.id, option.keyIdx));
                         }
                     }
 
@@ -764,29 +762,29 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     const String *value = STR(equalPtr + 1);
 
                     // Find the option
-                    CfgParseOptionResult parseOptionResult = cfgParseOption(key);
+                    CfgParseOptionResult option = cfgParseOption(key);
 
                     // Warn if the option not found
-                    if (!parseOptionResult.found)
+                    if (!option.found)
                     {
                         LOG_WARN_FMT("environment contains invalid option '%s'", strZ(key));
                         continue;
                     }
                     // Warn if negate option found in env
-                    else if (parseOptionResult.negate)
+                    else if (option.negate)
                     {
                         LOG_WARN_FMT("environment contains invalid negate option '%s'", strZ(key));
                         continue;
                     }
                     // Warn if reset option found in env
-                    else if (parseOptionResult.reset)
+                    else if (option.reset)
                     {
                         LOG_WARN_FMT("environment contains invalid reset option '%s'", strZ(key));
                         continue;
                     }
 
                     // Continue if the option is not valid for this command
-                    if (!cfgDefOptionValid(config->command, parseOptionResult.optionId))
+                    if (!cfgDefOptionValid(config->command, option.id))
                         continue;
 
                     if (strSize(value) == 0)
@@ -794,7 +792,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                     // Continue if the option has already been specified on the command line
                     ParseOptionValue *optionValue = parseOptionIdxValue(
-                        parseOptionList, parseOptionResult.optionId, parseOptionResult.optionIdx);
+                        parseOptionList, option.id, option.keyIdx);
 
                     if (optionValue->found)
                         continue;
@@ -803,7 +801,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     optionValue->source = cfgSourceConfig;
 
                     // Convert boolean to string
-                    if (cfgDefOptionType(parseOptionResult.optionId) == cfgDefOptTypeBoolean)
+                    if (cfgDefOptionType(option.id) == cfgDefOptTypeBoolean)
                     {
                         if (strEqZ(value, "n"))
                             optionValue->negate = true;
@@ -811,7 +809,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strZ(key));
                     }
                     // Else split list/hash into separate values
-                    else if (cfgDefOptionMulti(parseOptionResult.optionId))
+                    else if (cfgDefOptionMulti(option.id))
                     {
                         optionValue->valueList = strLstNewSplitZ(value, ":");
                     }
@@ -866,37 +864,36 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         String *key = strLstGet(keyList, keyIdx);
 
                         // Find the optionName in the main list
-                        CfgParseOptionResult parseOptionResult = cfgParseOption(key);
+                        CfgParseOptionResult option = cfgParseOption(key);
 
                         // Warn if the option not found
-                        if (!parseOptionResult.found)
+                        if (!option.found)
                         {
                             LOG_WARN_FMT("configuration file contains invalid option '%s'", strZ(key));
                             continue;
                         }
                         // Warn if negate option found in config
-                        else if (parseOptionResult.negate)
+                        else if (option.negate)
                         {
                             LOG_WARN_FMT("configuration file contains negate option '%s'", strZ(key));
                             continue;
                         }
                         // Warn if reset option found in config
-                        else if (parseOptionResult.reset)
+                        else if (option.reset)
                         {
                             LOG_WARN_FMT("configuration file contains reset option '%s'", strZ(key));
                             continue;
                         }
 
-                        /// Warn if this option should be command-line only
-                        if (cfgDefOptionSection(parseOptionResult.optionId) == cfgDefSectionCommandLine)
+                        // Warn if this option should be command-line only
+                        if (cfgDefOptionSection(option.id) == cfgDefSectionCommandLine)
                         {
                             LOG_WARN_FMT("configuration file contains command-line only option '%s'", strZ(key));
                             continue;
                         }
 
                         // Make sure this option does not appear in the same section with an alternate name
-                        const Variant *optionFoundKey = VARUINT64(
-                            parseOptionResult.optionId * CFG_OPTION_INDEX_MAX + parseOptionResult.optionIdx);
+                        const Variant *optionFoundKey = VARUINT64(option.id * CFG_OPTION_INDEX_MAX + option.keyIdx);
                         const Variant *optionFoundName = kvGet(optionFound, optionFoundKey);
 
                         if (optionFoundName != NULL)
@@ -909,7 +906,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             kvPut(optionFound, optionFoundKey, VARSTR(key));
 
                         // Continue if the option is not valid for this command
-                        if (!cfgDefOptionValid(config->command, parseOptionResult.optionId))
+                        if (!cfgDefOptionValid(config->command, option.id))
                         {
                             // Warn if it is in a command section
                             if (sectionIdx % 2 == 0)
@@ -924,8 +921,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
 
                         // Continue if stanza option is in a global section
-                        if (cfgDefOptionSection(parseOptionResult.optionId) == cfgDefSectionStanza &&
-                            strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
+                        if (cfgDefOptionSection(option.id) == cfgDefSectionStanza && strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
                         {
                             LOG_WARN_FMT(
                                 "configuration file contains stanza-only option '%s' in global section '%s'", strZ(key),
@@ -934,8 +930,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
 
                         // Continue if this option has already been found in another section or command-line/environment
-                        ParseOptionValue *optionValue = parseOptionIdxValue(
-                            parseOptionList, parseOptionResult.optionId, parseOptionResult.optionIdx);
+                        ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
 
                         if (optionValue->found)
                             continue;
@@ -947,11 +942,11 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (iniSectionKeyIsList(ini, section, key))
                         {
                             // Error if the option cannot be specified multiple times
-                            if (!cfgDefOptionMulti(parseOptionResult.optionId))
+                            if (!cfgDefOptionMulti(option.id))
                             {
                                 THROW_FMT(
                                     OptionInvalidError, "option '%s' cannot be set multiple times",
-                                    cfgOptionRawIdxName(parseOptionResult.optionId, parseOptionResult.optionIdx));
+                                    cfgOptionRawIdxName(option.id, option.keyIdx));
                             }
 
                             optionValue->valueList = iniGetList(ini, section, key);
@@ -968,7 +963,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     strZ(key));
                             }
 
-                            if (cfgDefOptionType(parseOptionResult.optionId) == cfgDefOptTypeBoolean)
+                            if (cfgDefOptionType(option.id) == cfgDefOptTypeBoolean)
                             {
                                 if (strEqZ(value, "n"))
                                     optionValue->negate = true;

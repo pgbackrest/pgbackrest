@@ -143,7 +143,7 @@ sub buildConfigParse
                 }
 
                 my $strOptionVal =
-                    ($rhOption->{&CFGDEF_GROUP} ? "(" . ($iOptionIdx - 1) . " << PARSE_INDEX_SHIFT) | " : '') . $strOptionEnum;
+                    ($rhOption->{&CFGDEF_GROUP} ? "(" . ($iOptionIdx - 1) . " << PARSE_KEY_IDX_SHIFT) | " : '') . $strOptionEnum;
 
                 # Add option
                 $strBuildSource .=

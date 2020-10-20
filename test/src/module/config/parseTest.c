@@ -18,16 +18,16 @@ Test Configuration Parse
 Option find test -- this is done a lot in the deprecated tests
 ***********************************************************************************************************************************/
 static void
-testOptionFind(const char *option, unsigned int optionId, unsigned int optionIdx, bool negate, bool reset, bool deprecated)
+testOptionFind(const char *optionName, unsigned int optionId, unsigned int optionKeyIdx, bool negate, bool reset, bool deprecated)
 {
-    CfgParseOptionResult parseOptionResult = cfgParseOption(STR(option));
+    CfgParseOptionResult option = cfgParseOption(STR(optionName));
 
-    TEST_RESULT_BOOL(parseOptionResult.found, true, "check %s found", option);
-    TEST_RESULT_UINT(parseOptionResult.optionId, optionId, "check %s id %u", option, optionId);
-    TEST_RESULT_UINT(parseOptionResult.optionIdx, optionIdx, "check %s idx %u", option, optionId);
-    TEST_RESULT_BOOL(parseOptionResult.negate, negate, "check %s negate %d", option, negate);
-    TEST_RESULT_BOOL(parseOptionResult.reset, reset, "check %s reset %d", option, reset);
-    TEST_RESULT_BOOL(parseOptionResult.deprecated, deprecated, "check %s deprecated %d", option, deprecated);
+    TEST_RESULT_BOOL(option.found, true, "check %s found", optionName);
+    TEST_RESULT_UINT(option.id, optionId, "check %s id %u", optionName, optionId);
+    TEST_RESULT_UINT(option.keyIdx, optionKeyIdx, "check %s key idx %u", optionName, optionKeyIdx);
+    TEST_RESULT_BOOL(option.negate, negate, "check %s negate %d", optionName, negate);
+    TEST_RESULT_BOOL(option.reset, reset, "check %s reset %d", optionName, reset);
+    TEST_RESULT_BOOL(option.deprecated, deprecated, "check %s deprecated %d", optionName, deprecated);
 }
 
 /***********************************************************************************************************************************

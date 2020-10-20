@@ -313,7 +313,7 @@ helpRender(void)
                     if (optionId == -1)
                         THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
                     else
-                        option.optionId = (unsigned int)optionId;
+                        option.id = (unsigned int)optionId;
                 }
 
                 // Output option summary and description
@@ -324,31 +324,31 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    strZ(optionName),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, option.optionId)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.optionId)), 0, true, CONSOLE_WIDTH)));
+                    cfgDefOptionName(option.id),
+                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, option.id)), 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.id)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.optionId));
+                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id));
                 const String *value = NULL;
 
-                if (cfgOptionSource(option.optionId) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOption(option.optionId));
+                if (cfgOptionSource(option.id) != cfgSourceDefault)
+                    value = helpRenderValue(cfgOption(option.id));
 
                 if (value != NULL || defaultValue != NULL)
                 {
                     strCat(result, LF_STR);
 
                     if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(option.optionId) ? "<redacted>" : strZ(value));
+                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(option.id) ? "<redacted>" : strZ(value));
 
                     if (defaultValue != NULL)
                         strCatFmt(result, "default: %s\n", strZ(defaultValue));
                 }
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
-                if (cfgDefOptionHelpNameAlt(option.optionId))
-                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(option.optionId, 0));
+                if (cfgDefOptionHelpNameAlt(option.id))
+                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(option.id, 0));
             }
         }
 

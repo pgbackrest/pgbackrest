@@ -309,7 +309,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strZ(strNewFmt(
-            "%s - 'archive-push' command - 'repo1-s3-host' option help\n"
+            "%s - 'archive-push' command - 'repo-s3-host' option help\n"
             "\n"
             "S3 repository host.\n"
             "\n"
@@ -377,6 +377,15 @@ testRun(void)
         strLstAddZ(argList, "repo-hardlink");
         TEST_RESULT_VOID(
             harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for backup command, repo-hardlink option");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "backup");
+        strLstAddZ(argList, "hardlink");
+        TEST_RESULT_VOID(
+            harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for backup command, deprecated hardlink option");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         // Check admonition

@@ -42,7 +42,8 @@ configProtocol(const String *command, const VariantList *paramList, ProtocolServ
                 CfgParseOptionResult option = cfgParseOption(varStr(varLstGet(paramList, optionIdx)));
                 CHECK(option.found);
 
-                varLstAdd(optionList, varDup(cfgOptionIdx(option.optionId, option.optionIdx)));
+                // !!! THIS IS NOT RIGHT -- THE KEY IDX PASSED WILL NEED TO BE CONVERTED TO A LOCAL OPTION INDEX
+                varLstAdd(optionList, varDup(cfgOptionIdx(option.id, option.keyIdx)));
             }
 
             protocolServerResponse(server, varNewVarLst(optionList));
