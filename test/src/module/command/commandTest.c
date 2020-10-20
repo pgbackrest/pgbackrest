@@ -7,6 +7,8 @@ Test Common Command Routines
 #include "common/stat.h"
 #include "version.h"
 
+#include "common/harnessConfig.h"
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -21,119 +23,122 @@ testRun(void)
         cmdInit();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
-        cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleDefault);
+        TEST_TITLE("single parameter");
 
-        cfgOptionValidSet(cfgOptArchiveAsync, true);
-        cfgOptionSet(cfgOptArchiveAsync, cfgSourceParam, varNewBool(true));
-
-        StringList *commandParamList = strLstNew();
-        strLstAddZ(commandParamList, "param1");
-        cfgCommandParamSet(commandParamList);
-
-        harnessLogLevelSet(logLevelInfo);
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
+        strLstAddZ(argList, "param1");
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameter");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async --pg1-path=/pg1 --stanza=test");
 
-        strLstAddZ(commandParamList, "param 2");
-        cfgCommandParamSet(commandParamList);
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple parameters");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
+        strLstAddZ(argList, "param1");
+        strLstAddZ(argList, "param 2");
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameters");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --archive-async");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --archive-async --pg1-path=/pg1"
+                " --stanza=test");
 
-        cfgInit();
-        cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleDefault);
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("reset, negate, list, hash options");
 
-        cfgOptionValidSet(cfgOptConfig, true);
-        cfgOptionNegateSet(cfgOptConfig, true);
-        cfgOptionSet(cfgOptConfig, cfgSourceParam, NULL);
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawNegate(argList, cfgOptConfig);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgArgRawReset(argList, cfgOptRepoHost);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/path/to the/repo");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "db1");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "db2");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "standby_mode=on");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "primary_conninfo=blah");
+        strLstAddZ(argList, CFGCMD_RESTORE);
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, "SECRET-STUFF");
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        cfgOptionValidSet(cfgOptPgHost, true);
-        cfgOptionSet(cfgOptPgHost, cfgSourceConfig, NULL);
+        TEST_RESULT_VOID(cmdBegin(), "command begin");
 
-        cfgOptionValidSet(cfgOptRepoHost, true);
-        cfgOptionResetSet(cfgOptRepoHost, true);
+        #define RESULT_OPTION                                                                                                      \
+             " --no-config --db-include=db1 --db-include=db2 --pg1-path=/pg1 --pg2-path=/pg2 --recovery-option=standby_mode=on"    \
+             " --recovery-option=primary_conninfo=blah --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc"             \
+             " --reset-repo1-host --repo1-path=\"/path/to the/repo\" --stanza=test"
 
-        cfgOptionValidSet(cfgOptRepoPath, true);
-        cfgOptionSet(cfgOptRepoPath, cfgSourceConfig, varNewStr(strNew("/path/to the/repo")));
-
-        cfgOptionValidSet(cfgOptRepoS3Key, true);
-        cfgOptionSet(cfgOptRepoS3Key, cfgSourceConfig, varNewStr(strNew("SECRET-STUFF")));
-
-        cfgOptionValidSet(cfgOptDbInclude, true);
-        StringList *list = strLstNew();
-        strLstAddZ(list, "db1");
-        strLstAddZ(list, "db2");
-        cfgOptionSet(cfgOptDbInclude, cfgSourceParam, varNewVarLst(varLstNewStrLst(list)));
-
-        cfgOptionValidSet(cfgOptRecoveryOption, true);
-        Variant *recoveryVar = varNewKv(kvNew());
-        KeyValue *recoveryKv = varKv(recoveryVar);
-        kvPut(recoveryKv, varNewStr(strNew("standby_mode")), varNewStr(strNew("on")));
-        kvPut(recoveryKv, varNewStr(strNew("primary_conn_info")), varNewStr(strNew("blah")));
-        cfgOptionSet(cfgOptRecoveryOption, cfgSourceParam, recoveryVar);
-
-        cfgCommandSet(cfgCmdRestore, cfgCmdRoleDefault);
-        TEST_RESULT_VOID(cmdBegin(), "command begin with option logging");
-        harnessLogResult(
-            "P00   INFO: restore command begin " PROJECT_VERSION ": --no-config --db-include=db1 --db-include=db2"
-                " --recovery-option=standby_mode=on --recovery-option=primary_conn_info=blah --reset-repo1-host"
-                " --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>");
-
-        cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleDefault);
-        TEST_RESULT_VOID(cmdBegin(), "command begin with limited option logging");
-        harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": --no-config --reset-repo1-host"
-                " --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>");
+        harnessLogResult("P00   INFO: restore command begin " PROJECT_VERSION ":" RESULT_OPTION);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check options in cache");
 
-        TEST_RESULT_STR_Z(
-            cmdOption(), " --no-config --reset-repo1-host --repo1-path=\"/path/to the/repo\" --repo1-s3-key=<redacted>",
-            "command options");
+        TEST_RESULT_STR_Z(cmdOption(), RESULT_OPTION, "option cache");
 
-        // Nothing should be logged for command begin when the log level is too low
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("command begin does not log when level is too low");
+
         harnessLogLevelSet(logLevelWarn);
-        TEST_RESULT_VOID(cmdBegin(), "command begin no logging");
+        TEST_RESULT_VOID(cmdBegin(), "command begin");
 
-        // Nothing should be logged for command end when the log level is too low
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end no logging");
+        TEST_TITLE("command end does not log when level is too low");
+
+        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end");
         harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cmdEnd(25, strNew("aborted with exception [025]")), "command end with error");
-        harnessLogResult("P00   INFO: archive-get command end: aborted with exception [025]");
+        TEST_TITLE("command end with error");
+
+        TEST_RESULT_VOID(cmdEnd(25, strNew("aborted with exception [025]")), "command end");
+        harnessLogResult("P00   INFO: restore command end: aborted with exception [025]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
-        harnessLogResult("P00   INFO: archive-get command end: completed successfully");
+        TEST_TITLE("command end with time");
 
-        // Make sure time output is covered but don't do expect testing since the output is variable
+        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end");
+        hrnLogReplaceAdd("\\([0-9]+ms\\)", "[0-9]+", "TIME", false);
+        TEST_RESULT_LOG(
+            "P00   INFO: restore command end: completed successfully ([TIME]ms)");
+
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionValidSet(cfgOptLogTimestamp, true);
-        cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(false));
+        TEST_TITLE("command end with stat and without time");
 
-        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
-        harnessLogResult("P00   INFO: archive-get command end: completed successfully");
-
-        cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, varNewBool(true));
-
-        // Add one stat to make sure it gets output
         statInc(STRDEF("test"));
+        cfgOptionSet(cfgOptLogTimestamp, cfgSourceParam, BOOL_FALSE_VAR);
 
         harnessLogLevelSet(logLevelDetail);
 
-        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end with success");
-        hrnLogReplaceAdd("\\([0-9]+ms\\)", "[0-9]+", "TIME", false);
+        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end");
         TEST_RESULT_LOG(
             "P00 DETAIL: statistics: {\"test\":{\"total\":1}}\n"
-            "P00   INFO: archive-get command end: completed successfully ([TIME]ms)");
+            "P00   INFO: restore command end: completed successfully");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("switch to a new command so some options are not valid");
+
+        cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleDefault);
+
+        TEST_RESULT_VOID(cmdBegin(), "command begin");
+        harnessLogResult(
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": --no-config --log-timestamp --pg1-path=/pg1 --pg2-path=/pg2"
+            " --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --reset-repo1-host --repo1-path=\"/path/to the/repo\""
+            " --stanza=test");
 
         harnessLogLevelReset();
     }

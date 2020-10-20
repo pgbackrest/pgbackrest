@@ -150,6 +150,18 @@ hrnCfgArgKeyRawBool(StringList *argList, ConfigOption optionId, unsigned optionK
 }
 
 void
+hrnCfgArgRawNegate(StringList *argList, ConfigOption optionId)
+{
+    hrnCfgArgKeyRawNegate(argList, optionId, 1);
+}
+
+void
+hrnCfgArgKeyRawNegate(StringList *argList, ConfigOption optionId, unsigned optionKey)
+{
+    strLstAdd(argList, strNewFmt("--no-%s", cfgOptionName(optionId + optionKey - 1)));
+}
+
+void
 hrnCfgArgRawReset(StringList *argList, ConfigOption optionId)
 {
     hrnCfgArgKeyRawReset(argList, optionId, 1);

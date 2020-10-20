@@ -85,8 +85,8 @@ cmdOption(void)
                     // If option was reset
                     else if (cfgOptionReset(optionId))
                         strCatFmt(cmdOptionStr, " --reset-%s", cfgOptionName(optionId));
-                    // Else set and not default
-                    else if (cfgOptionSource(optionId) != cfgSourceDefault && cfgOptionTest(optionId))
+                    // Else not default
+                    else if (cfgOptionSource(optionId) != cfgSourceDefault)
                     {
                         ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
 
@@ -215,7 +215,7 @@ cmdEnd(int code, const String *errorMessage)
             {
                 strCatZ(info, "completed successfully");
 
-                if (cfgOptionValid(cfgOptLogTimestamp) && cfgOptionBool(cfgOptLogTimestamp))
+                if (cfgOptionBool(cfgOptLogTimestamp))
                     strCatFmt(info, " (%" PRIu64 "ms)", timeMSec() - timeBegin);
             }
             else
