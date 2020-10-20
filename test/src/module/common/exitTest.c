@@ -29,6 +29,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
+        harnessCfgLoad(cfgCmdHelp, strLstNew());
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(errorTypeCode(&TermError), false)
@@ -44,6 +46,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitSafe()"))
     {
+        harnessCfgLoad(cfgCmdHelp, strLstNew());
+        cfgCommandSet(cfgCmdNone, cfgCmdRoleDefault);
+
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command")
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -100,7 +105,7 @@ testRun(void)
                 "            options: --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            test/module/common/exitTest:testRun:87:(void)\n"
+                "            test/module/common/exitTest:testRun:92:(void)\n"
                 "            test:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [122]\n"
@@ -130,7 +135,7 @@ testRun(void)
                 "            options: --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            test/module/common/exitTest:testRun:118:(void)\n"
+                "            test/module/common/exitTest:testRun:123:(void)\n"
                 "            test:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [025]");
