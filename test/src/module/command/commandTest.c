@@ -27,8 +27,8 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
         strLstAddZ(argList, "param1");
@@ -43,8 +43,8 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
         strLstAddZ(argList, "param1");
@@ -61,17 +61,17 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
-        strLstAddZ(argList, "--no-" CFGOPT_CONFIG);
-        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        hrnCfgArgRawNegate(argList, cfgOptConfig);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
         hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
         hrnCfgArgRawReset(argList, cfgOptRepoHost);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/path/to the/repo");
-        strLstAddZ(argList, "--" CFGOPT_DB_INCLUDE "=db1");
-        strLstAddZ(argList, "--" CFGOPT_DB_INCLUDE "=db2");
-        strLstAddZ(argList, "--" CFGOPT_RECOVERY_OPTION "=standby_mode=on");
-        strLstAddZ(argList, "--" CFGOPT_RECOVERY_OPTION "=primary_conninfo=blah");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "db1");
+        hrnCfgArgRawZ(argList, cfgOptDbInclude, "db2");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "standby_mode=on");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "primary_conninfo=blah");
         strLstAddZ(argList, CFGCMD_RESTORE);
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, "SECRET-STUFF");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
