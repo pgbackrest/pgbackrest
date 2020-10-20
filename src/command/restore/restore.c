@@ -16,7 +16,6 @@ Restore Command
 #include "common/regExp.h"
 #include "common/user.h"
 #include "config/config.h"
-#include "config/define.h"
 #include "config/exec.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
@@ -1410,7 +1409,7 @@ restoreRecoveryOption(unsigned int pgVersion)
         {
             const String *targetAction = cfgOptionStr(cfgOptTargetAction);
 
-            if (!strEqZ(targetAction, cfgDefOptionDefault(cfgCmdRestore, cfgDefOptTargetAction)))
+            if (!strEq(targetAction, varStr(cfgOptionDefault(cfgOptTargetAction))))
             {
                 // Write recovery_target on supported PostgreSQL versions
                 if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
