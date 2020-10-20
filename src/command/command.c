@@ -90,7 +90,7 @@ cmdOption(void)
                         // If option was reset
                         else if (cfgOptionIdxReset(optionId, optionIdx))
                             strCatFmt(cmdOptionStr, " --reset-%s", cfgOptionIdxName(optionId, optionIdx));
-                        // Else set and not default
+                        // Else not default
                         else if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
                         {
                             // Don't show redacted options
