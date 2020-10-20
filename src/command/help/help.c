@@ -12,6 +12,7 @@ Help Command
 #include "common/memContext.h"
 #include "config/config.h"
 #include "config/define.h"
+#include "config/parse.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -303,19 +304,21 @@ helpRender(void)
                     THROW(ParamInvalidError, "only one option allowed for option help");
 
                 // Ensure the option is valid
-                const char *optionName = strZ(strLstGet(cfgCommandParam(), 0));
-                ConfigOption optionId = cfgOptionId(optionName);
+                const String *optionName = strLstGet(cfgCommandParam(), 0);
+                CfgParseOptionResult option = cfgParseOption(optionName);
 
-                if (cfgOptionId(optionName) == -1)
+                if (!option.found)
                 {
-                    if (cfgDefOptionId(optionName) != -1)
-                        optionId = cfgOptionIdFromDefId(cfgDefOptionId(optionName), 0);
+                    int optionId = cfgDefOptionId(strZ(optionName));
+
+                    if (optionId == -1)
+                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
                     else
-                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
+                        option.id = cfgOptionIdFromDefId((unsigned int)optionId, 0);
                 }
 
                 // Output option summary and description
-                ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
+                ConfigDefineOption optionDefId = cfgOptionDefIdFromId(option.id);
 
                 strCatFmt(
                     result,
@@ -324,16 +327,16 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    optionName,
+                    cfgDefOptionName(optionDefId),
                     strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, optionDefId)), 0, true, CONSOLE_WIDTH)),
                     strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, optionDefId)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
+                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id));
                 const String *value = NULL;
 
-                if (cfgOptionSource(optionId) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOption(optionId));
+                if (cfgOptionSource(option.id) != cfgSourceDefault)
+                    value = helpRenderValue(cfgOption(option.id));
 
                 if (value != NULL || defaultValue != NULL)
                 {

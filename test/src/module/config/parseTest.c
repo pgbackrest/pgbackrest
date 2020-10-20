@@ -18,13 +18,15 @@ Test Configuration Parse
 Option find test -- this is done a lot in the deprecated tests
 ***********************************************************************************************************************************/
 static void
-testOptionFind(const char *option, unsigned int value)
+testOptionFind(const char *optionName, unsigned int optionId, unsigned int optionKeyIdx, bool negate, bool reset, bool deprecated)
 {
-    // If not testing for a missing option, then add the option offset that is already added to each option in the list
-    if (value != 0)
-        value |= PARSE_OPTION_FLAG;
+    CfgParseOptionResult option = cfgParseOption(STR(optionName));
 
-    TEST_RESULT_INT(optionList[optionFind(strNew(option))].val, value, "check %s", option);
+    TEST_RESULT_BOOL(option.found, true, "check %s found", optionName);
+    TEST_RESULT_UINT(option.id, optionId + optionKeyIdx, "check %s id %u", optionName, optionId + optionKeyIdx);
+    TEST_RESULT_BOOL(option.negate, negate, "check %s negate %d", optionName, negate);
+    TEST_RESULT_BOOL(option.reset, reset, "check %s reset %d", optionName, reset);
+    TEST_RESULT_BOOL(option.deprecated, deprecated, "check %s deprecated %d", optionName, deprecated);
 }
 
 /***********************************************************************************************************************************
@@ -1433,61 +1435,59 @@ testRun(void)
     {
         // Repository options
         // -------------------------------------------------------------------------------------------------------------------------
-        testOptionFind("hardlink", PARSE_DEPRECATE_FLAG | cfgOptRepoHardlink);
-        testOptionFind("no-hardlink", PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoHardlink);
+        testOptionFind("hardlink", cfgOptRepoHardlink, 0, false, false, true);
+        testOptionFind("no-hardlink", cfgOptRepoHardlink, 0, true, false, true);
 
-        testOptionFind("archive-queue-max", PARSE_DEPRECATE_FLAG | cfgOptArchivePushQueueMax);
-        testOptionFind("reset-archive-queue-max", PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | cfgOptArchivePushQueueMax);
+        testOptionFind("archive-queue-max", cfgOptArchivePushQueueMax, 0, false, false, true);
+        testOptionFind("reset-archive-queue-max", cfgOptArchivePushQueueMax, 0, false, true, true);
 
-        testOptionFind("backup-cmd", PARSE_DEPRECATE_FLAG | cfgOptRepoHostCmd);
-        testOptionFind("backup-config", PARSE_DEPRECATE_FLAG | cfgOptRepoHostConfig);
-        testOptionFind("backup-host", PARSE_DEPRECATE_FLAG | cfgOptRepoHost);
-        testOptionFind("backup-ssh-port", PARSE_DEPRECATE_FLAG | cfgOptRepoHostPort);
-        testOptionFind("backup-user", PARSE_DEPRECATE_FLAG | cfgOptRepoHostUser);
+        testOptionFind("backup-cmd", cfgOptRepoHostCmd, 0, false, false, true);
+        testOptionFind("backup-config", cfgOptRepoHostConfig, 0, false, false, true);
+        testOptionFind("backup-host", cfgOptRepoHost, 0, false, false, true);
+        testOptionFind("backup-ssh-port", cfgOptRepoHostPort, 0, false, false, true);
+        testOptionFind("backup-user", cfgOptRepoHostUser, 0, false, false, true);
 
-        testOptionFind("repo-cipher-pass", PARSE_DEPRECATE_FLAG | cfgOptRepoCipherPass);
-        testOptionFind("repo-cipher-type", PARSE_DEPRECATE_FLAG | cfgOptRepoCipherType);
-        testOptionFind("repo-path", PARSE_DEPRECATE_FLAG | cfgOptRepoPath);
-        testOptionFind("repo-type", PARSE_DEPRECATE_FLAG | cfgOptRepoType);
+        testOptionFind("repo-cipher-pass", cfgOptRepoCipherPass, 0, false, false, true);
+        testOptionFind("repo-cipher-type", cfgOptRepoCipherType, 0, false, false, true);
+        testOptionFind("repo-path", cfgOptRepoPath, 0, false, false, true);
+        testOptionFind("repo-type", cfgOptRepoType, 0, false, false, true);
 
-        testOptionFind("repo-s3-bucket", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Bucket);
-        testOptionFind("repo-s3-ca-file", PARSE_DEPRECATE_FLAG | cfgOptRepoS3CaFile);
-        testOptionFind("repo-s3-ca-path", PARSE_DEPRECATE_FLAG | cfgOptRepoS3CaPath);
-        testOptionFind("repo-s3-endpoint", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Endpoint);
-        testOptionFind("repo-s3-host", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Host);
-        testOptionFind("repo-s3-key", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Key);
-        testOptionFind("repo-s3-key-secret", PARSE_DEPRECATE_FLAG | cfgOptRepoS3KeySecret);
-        testOptionFind("repo-s3-region", PARSE_DEPRECATE_FLAG | cfgOptRepoS3Region);
-        testOptionFind("repo-s3-verify-ssl", PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifyTls);
-        testOptionFind("repo1-s3-verify-ssl", PARSE_DEPRECATE_FLAG | cfgOptRepoS3VerifyTls);
-        testOptionFind("no-repo-s3-verify-ssl", PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | cfgOptRepoS3VerifyTls);
+        testOptionFind("repo-s3-bucket", cfgOptRepoS3Bucket, 0, false, false, true);
+        testOptionFind("repo-s3-ca-file", cfgOptRepoS3CaFile, 0, false, false, true);
+        testOptionFind("repo-s3-ca-path", cfgOptRepoS3CaPath, 0, false, false, true);
+        testOptionFind("repo-s3-endpoint", cfgOptRepoS3Endpoint, 0, false, false, true);
+        testOptionFind("repo-s3-host", cfgOptRepoS3Host, 0, false, false, true);
+        testOptionFind("repo-s3-key", cfgOptRepoS3Key, 0, false, false, true);
+        testOptionFind("repo-s3-key-secret", cfgOptRepoS3KeySecret, 0, false, false, true);
+        testOptionFind("repo-s3-region", cfgOptRepoS3Region, 0, false, false, true);
+        testOptionFind("repo-s3-verify-ssl", cfgOptRepoS3VerifyTls, 0, false, false, true);
+        testOptionFind("repo1-s3-verify-ssl", cfgOptRepoS3VerifyTls, 0, false, false, true);
+        testOptionFind("no-repo-s3-verify-ssl", cfgOptRepoS3VerifyTls, 0, true, false, true);
 
         // PostreSQL options
         // -------------------------------------------------------------------------------------------------------------------------
-        testOptionFind("db-cmd", PARSE_DEPRECATE_FLAG | cfgOptPgHostCmd);
-        testOptionFind("db-config", PARSE_DEPRECATE_FLAG | cfgOptPgHostConfig);
-        testOptionFind("db-host", PARSE_DEPRECATE_FLAG | cfgOptPgHost);
-        testOptionFind("db-path", PARSE_DEPRECATE_FLAG | cfgOptPgPath);
-        testOptionFind("db-port", PARSE_DEPRECATE_FLAG | cfgOptPgPort);
-        testOptionFind("db-socket-path", PARSE_DEPRECATE_FLAG | cfgOptPgSocketPath);
-        testOptionFind("db-ssh-port", PARSE_DEPRECATE_FLAG | cfgOptPgHostPort);
-        testOptionFind("db-user", PARSE_DEPRECATE_FLAG | cfgOptPgHostUser);
+        testOptionFind("db-cmd", cfgOptPgHostCmd, 0, false, false, true);
+        testOptionFind("db-config", cfgOptPgHostConfig, 0, false, false, true);
+        testOptionFind("db-host", cfgOptPgHost, 0, false, false, true);
+        testOptionFind("db-path", cfgOptPgPath, 0, false, false, true);
+        testOptionFind("db-port", cfgOptPgPort, 0, false, false, true);
+        testOptionFind("db-socket-path", cfgOptPgSocketPath, 0, false, false, true);
+        testOptionFind("db-ssh-port", cfgOptPgHostPort, 0, false, false, true);
+        testOptionFind("db-user", cfgOptPgHostUser, 0, false, false, true);
 
-        testOptionFind("no-db-user", 0);
+        TEST_RESULT_BOOL(cfgParseOption(STR("no-db-user")).found, false, "no-db-user not found");
 
-        for (unsigned int optionIdx = 0; optionIdx < cfgDefOptionIndexTotal(cfgDefOptPgPath); optionIdx++)
+        // Only check 1-8 since 8 was the max index when these option names were deprecated
+        for (unsigned int optionIdx = 0; optionIdx < 8; optionIdx++)
         {
-            testOptionFind(strZ(strNewFmt("db%u-cmd", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostCmd + optionIdx));
-            testOptionFind(
-                strZ(strNewFmt("db%u-config", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostConfig + optionIdx));
-            testOptionFind(strZ(strNewFmt("db%u-host", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHost + optionIdx));
-            testOptionFind(strZ(strNewFmt("db%u-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPath + optionIdx));
-            testOptionFind(strZ(strNewFmt("db%u-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgPort + optionIdx));
-            testOptionFind(
-                strZ(strNewFmt("db%u-socket-path", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgSocketPath + optionIdx));
-            testOptionFind(
-                strZ(strNewFmt("db%u-ssh-port", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostPort + optionIdx));
-            testOptionFind(strZ(strNewFmt("db%u-user", optionIdx + 1)), PARSE_DEPRECATE_FLAG | (cfgOptPgHostUser + optionIdx));
+            testOptionFind(strZ(strNewFmt("db%u-cmd", optionIdx + 1)), cfgOptPgHostCmd, optionIdx, false, false, true);
+            testOptionFind(strZ(strNewFmt("db%u-config", optionIdx + 1)), cfgOptPgHostConfig, optionIdx, false, false, true);
+            testOptionFind(strZ(strNewFmt("db%u-host", optionIdx + 1)), cfgOptPgHost, optionIdx, false, false, true);
+            testOptionFind(strZ(strNewFmt("db%u-path", optionIdx + 1)), cfgOptPgPath, optionIdx, false, false, true);
+            testOptionFind(strZ(strNewFmt("db%u-port", optionIdx + 1)), cfgOptPgPort, optionIdx, false, false, true);
+            testOptionFind(strZ(strNewFmt("db%u-socket-path", optionIdx + 1)), cfgOptPgSocketPath, optionIdx, false, false, true);
+            testOptionFind(strZ(strNewFmt("db%u-ssh-port", optionIdx + 1)), cfgOptPgHostPort, optionIdx, false, false, true);
+            testOptionFind(strZ(strNewFmt("db%u-user", optionIdx + 1)), cfgOptPgHostUser, optionIdx, false, false, true);
         }
     }
 

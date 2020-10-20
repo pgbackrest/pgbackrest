@@ -714,25 +714,6 @@ cfgOptionIndex(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-int
-cfgOptionId(const char *optionName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, optionName);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionName != NULL);
-
-    int result = -1;
-
-    for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
-        if (strcmp(optionName, configOptionData[optionId].name) == 0)
-            result = optionId;
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
 ConfigOption
 cfgOptionIdFromDefId(ConfigDefineOption optionDefId, unsigned int index)
 {
