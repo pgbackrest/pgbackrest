@@ -34,7 +34,7 @@ testRun(void)
         TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgCmdBackup, cfgOptType, 2), "incr", "allow list value 2");
         TEST_ERROR(
             cfgDefOptionAllowListValue(cfgCmdBackup, cfgOptType, 3), AssertError,
-            "assertion 'valueId < cfgDefOptionAllowListValueTotal(commandDefId, optionDefId)' failed");
+            "assertion 'valueId < cfgDefOptionAllowListValueTotal(commandId, optionId)' failed");
 
         TEST_RESULT_BOOL(
             cfgDefOptionAllowListValueValid(cfgCmdBackup, cfgOptType, "diff"), true, "allow list value valid");
@@ -52,10 +52,10 @@ testRun(void)
 
         TEST_ERROR(
             cfgDefOptionDefault(cfgDefCommandTotal(), cfgOptCompressLevel), AssertError,
-            "assertion 'commandDefId < cfgDefCommandTotal()' failed");
+            "assertion 'commandId < cfgDefCommandTotal()' failed");
         TEST_ERROR(cfgDefOptionDefault(
             cfgCmdBackup, cfgDefOptionTotal()), AssertError,
-            "assertion 'optionDefId < cfgDefOptionTotal()' failed");
+            "assertion 'optionId < cfgDefOptionTotal()' failed");
         TEST_RESULT_Z(cfgDefOptionDefault(cfgCmdRestore, cfgOptType), "default", "command default exists");
         TEST_RESULT_Z(cfgDefOptionDefault(cfgCmdBackup, cfgOptRepoHost), NULL, "default does not exist");
 
@@ -71,7 +71,7 @@ testRun(void)
         TEST_RESULT_Z(cfgDefOptionDependValue(cfgCmdRestore, cfgOptTarget, 2), "xid", "depend option value 2");
         TEST_ERROR(
             cfgDefOptionDependValue(cfgCmdRestore, cfgOptTarget, 3), AssertError,
-            "assertion 'valueId < cfgDefOptionDependValueTotal(commandDefId, optionDefId)' failed");
+            "assertion 'valueId < cfgDefOptionDependValueTotal(commandId, optionId)' failed");
 
         TEST_RESULT_BOOL(
                 cfgDefOptionDependValueValid(cfgCmdRestore, cfgOptTarget, "time"), true, "depend option value valid");
@@ -80,7 +80,7 @@ testRun(void)
 
         TEST_ERROR(
             cfgDefOptionIndexTotal(cfgDefOptionTotal()), AssertError,
-            "assertion 'optionDefId < cfgDefOptionTotal()' failed");
+            "assertion 'optionId < cfgDefOptionTotal()' failed");
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgOptPgPath), 8, "index total > 1");
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgOptRepoPath), 1, "index total == 1");
 
@@ -107,7 +107,7 @@ testRun(void)
 
         TEST_ERROR(
             cfgDefOptionValid(cfgCmdInfo, cfgDefOptionTotal()), AssertError,
-            "assertion 'optionDefId < cfgDefOptionTotal()' failed");
+            "assertion 'optionId < cfgDefOptionTotal()' failed");
         TEST_RESULT_BOOL(cfgDefOptionValid(cfgCmdBackup, cfgOptType), true, "option valid");
         TEST_RESULT_BOOL(cfgDefOptionValid(cfgCmdInfo, cfgOptType), false, "option not valid");
     }
@@ -121,7 +121,7 @@ testRun(void)
         TEST_RESULT_Z(cfgDefOptionHelpNameAltValue(cfgOptRepoHost, 0), "backup-host", "name alt value 0");
         TEST_ERROR(
             cfgDefOptionHelpNameAltValue(cfgOptRepoHost, 1), AssertError,
-            "assertion 'valueId < cfgDefOptionHelpNameAltValueTotal(optionDefId)' failed");
+            "assertion 'valueId < cfgDefOptionHelpNameAltValueTotal(optionId)' failed");
 
         TEST_RESULT_Z(cfgDefCommandHelpSummary(cfgCmdBackup), "Backup a database cluster.", "backup command help summary");
         TEST_RESULT_Z(

@@ -214,7 +214,7 @@ helpRender(void)
                 KeyValue *optionKv = kvNew();
                 size_t optionSizeMax = 0;
 
-                for (unsigned int optionId = 0; optionId < cfgDefOptionTotal(); optionId++)
+                for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
                     if (cfgDefOptionValid(commandId, optionId) && !cfgDefOptionInternal(commandId, optionId))
                     {
