@@ -41,7 +41,7 @@ const Storage *storageLocalWrite(void);
 const Storage *storagePgIdx(unsigned int pgIdx);
 const Storage *storagePgIdxWrite(unsigned int pgIdx);
 
-// PostgreSQL storage default (calculated from host-id, when set, or the first cfgOptGrpPg index)
+// PostgreSQL storage default (calculated from pg-id, when set, or the first cfgOptGrpPg index)
 const Storage *storagePg(void);
 const Storage *storagePgWrite(void);
 

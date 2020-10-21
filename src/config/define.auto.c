@@ -2500,7 +2500,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Use only the selected PostgreSQL cluster.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Set default PostgreSQL cluster.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "!!!"
@@ -4095,7 +4095,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Use only the selected repository.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Set default repository.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "!!!"

@@ -482,8 +482,8 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="repo-id" name="Select repository">
-                        <summary>Use only the selected repository.</summary>
+                    <config-key id="repo-id" name="Set Default Repository">
+                        <summary>Set default repository.</summary>
 
                         <text>!!!</text>
 
@@ -1046,8 +1046,8 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="pg-id" name="Select PostgreSQL Cluster">
-                        <summary>Use only the selected PostgreSQL cluster.</summary>
+                    <config-key id="pg-id" name="Set Default PostgreSQL Cluster">
+                        <summary>Set default PostgreSQL cluster.</summary>
 
                         <text>!!!</text>
 

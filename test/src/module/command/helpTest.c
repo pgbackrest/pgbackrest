@@ -216,6 +216,7 @@ testRun(void)
             "  --repo-host-port                 repository host port when repo-host is set\n"
             "  --repo-host-user                 repository host user when repo-host is set\n"
             "                                   [default=pgbackrest]\n"
+            "  --repo-id                        set default repository\n"
             "  --repo-path                      path where backups and archive are stored\n"
             "                                   [default=/var/lib/pgbackrest]\n"
             "  --repo-s3-bucket                 s3 repository bucket\n"
@@ -237,6 +238,7 @@ testRun(void)
             "\n"
             "Stanza Options:\n"
             "\n"
+            "  --pg-id                          set default PostgreSQL cluster\n"
             "  --pg-path                        postgreSQL data directory\n"
             "\n"
             "Use 'pgbackrest help restore [option]' for more information.\n"));
