@@ -37,11 +37,11 @@ void storageHelperDryRunInit(bool dryRun);
 const Storage *storageLocal(void);
 const Storage *storageLocalWrite(void);
 
-// PostgreSQL storage by Id
-const Storage *storagePgIdx(unsigned int hostId);
-const Storage *storagePgIdxWrite(unsigned int hostId);
+// PostgreSQL storage by cfgOptGrpPg index
+const Storage *storagePgIdx(unsigned int pgIdx);
+const Storage *storagePgIdxWrite(unsigned int pgIdx);
 
-// PostgreSQL storage for the host-id or the default of 1
+// PostgreSQL storage default (calculated from host-id, when set, or the first cfgOptGrpPg index)
 const Storage *storagePg(void);
 const Storage *storagePgWrite(void);
 

@@ -175,12 +175,12 @@ Get the postgres database and storage objects
 
 typedef struct BackupData
 {
-    unsigned int pgIdxPrimary;                                      // Configuration idx of the primary
+    unsigned int pgIdxPrimary;                                      // cfgOptGrpPg index of the primary
     Db *dbPrimary;                                                  // Database connection to the primary
     const Storage *storagePrimary;                                  // Storage object for the primary
     const String *hostPrimary;                                      // Host name of the primary
 
-    unsigned int pgIdxStandby;                                      // Configuration idx of the standby
+    unsigned int pgIdxStandby;                                      // cfgOptGrpPg index of the standby
     Db *dbStandby;                                                  // Database connection to the standby
     const Storage *storageStandby;                                  // Storage object for the standby
     const String *hostStandby;                                      // Host name of the standby
