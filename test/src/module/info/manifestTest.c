@@ -1715,7 +1715,9 @@ testRun(void)
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
             " mail\t={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                              \
+            "#={\"db-id\":16453,\"db-last-system-id\":12168}\n"                                                                    \
             "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"                                                                    \
+            "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"                                                                    \
             "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
             "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
@@ -1814,7 +1816,9 @@ testRun(void)
                 "\n"
                 "[db]\n"
                 " mail\t={\"db-id\":16456,\"db-last-system-id\":12168}\n"
+                "#={\"db-id\":16453,\"db-last-system-id\":12168}\n"
                 "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
+                "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"
                 "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
                 TEST_MANIFEST_FILE
                 TEST_MANIFEST_FILE_DEFAULT
