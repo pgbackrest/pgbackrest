@@ -352,7 +352,7 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
     ASSERT(key != NULL);
     ASSERT(jsonValue != NULL);
     ASSERT(strSize(jsonValue) != 0);
-    // The json value must not be an array because this may be confused with a section in the ini file
+    // The JSON value must not be an array because this may be confused with a section in the ini file
     ASSERT(strZ(jsonValue)[0] != '[');
 
     // Save section
