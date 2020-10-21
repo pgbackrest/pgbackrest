@@ -90,9 +90,7 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
                 }
                 CATCH_ANY()
                 {
-                    LOG_WARN_FMT(
-                        "unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()),
-                        errorMessage());
+                    LOG_WARN_FMT("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
                     db = NULL;
                 }
                 TRY_END();

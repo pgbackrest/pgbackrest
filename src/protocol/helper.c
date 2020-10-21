@@ -275,11 +275,10 @@ protocolLocalFree(unsigned int processId)
 Get the command line required for remote protocol execution
 ***********************************************************************************************************************************/
 static StringList *
-protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int processId, unsigned int hostIdx)
+protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
-        FUNCTION_LOG_PARAM(UINT, processId);
         FUNCTION_LOG_PARAM(UINT, hostIdx);
     FUNCTION_LOG_END();
 
@@ -405,9 +404,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int proces
     // Don't pass host-id to the remote.  The host will always be in index 0.
     kvPut(optionReplace, VARSTR(CFGOPT_HOST_ID_STR), NULL);
 
-    // Add the process id (or use the current process id if it is valid)
+    // Add the process id if not set. This means that the remote is being started from the main process and should always get a
+    // process id of 0.
     if (!cfgOptionTest(cfgOptProcess))
-        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARINT((int)processId));
+        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARINT(0));
 
     // Don't pass log-path or lock-path since these are host specific
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_PATH_STR), NULL);
@@ -500,7 +500,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
-                cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, hostIdx, hostIdx),
+                cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, hostIdx),
                 strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(cfgOptionStr(optHost + optHostIdx))),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);
