@@ -42,6 +42,37 @@ testRun(void)
         harnessCfgLoad(cfgCmdInfo, argListText);
         TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text - no stanzas");
 
+        // Repo is still empty but stanza option is specified
+        //--------------------------------------------------------------------------------------------------------------------------
+        StringList *argListStanzaOpt = strLstDup(argList);
+        strLstAddZ(argListStanzaOpt, "--stanza=stanza1");
+        harnessCfgLoad(cfgCmdInfo, argListStanzaOpt);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "["
+                "{"
+                    "\"backup\":[],"
+                    "\"db\":[],"
+                    "\"name\":\"stanza1\","
+                    "\"status\":{"
+                        "\"code\":1,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
+                        "\"message\":\"missing stanza path\""
+                        "}"
+                "}"
+            "]",
+            "json - empty repo, stanza option specified");
+
+
+        StringList *argListTextStanzaOpt = strLstDup(argListText);
+        strLstAddZ(argListTextStanzaOpt, "--stanza=stanza1");
+        harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (missing stanza path)\n",
+            "text - empty repo, stanza option specified");
+
         storagePathCreateP(storageLocalWrite(), archivePath);
         storagePathCreateP(storageLocalWrite(), backupPath);
 
