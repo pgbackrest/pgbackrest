@@ -340,14 +340,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptForce,
     },
 
-    // host-id option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "host-id",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptHostId,
-    },
-
     // ignore-missing option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2794,7 +2786,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptExclude,
     cfgOptExpireAuto,
     cfgOptFilter,
-    cfgOptHostId,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
     cfgOptLinkAll,

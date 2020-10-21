@@ -1445,33 +1445,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
-        CFGDEFDATA_OPTION_NAME("host-id")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(true)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 8)
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
         CFGDEFDATA_OPTION_NAME("ignore-missing")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)

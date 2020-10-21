@@ -133,9 +133,9 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
         // Add the process id -- used when more than one process will be called
         kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(processId));
 
-        // Add the host id
+        // Add the group default id
         kvPut(
-            optionReplace, VARSTR(CFGOPT_HOST_ID_STR),
+            optionReplace, VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoId : cfgOptPgId)),
             VARUINT(
                 cfgOptionGroupIdxToRawIdx(
                     protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg, hostIdx)));

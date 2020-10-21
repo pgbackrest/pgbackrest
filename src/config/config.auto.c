@@ -342,7 +342,6 @@ STRING_EXTERN(CFGOPT_EXCLUDE_STR,                                   CFGOPT_EXCLU
 STRING_EXTERN(CFGOPT_EXPIRE_AUTO_STR,                               CFGOPT_EXPIRE_AUTO);
 STRING_EXTERN(CFGOPT_FILTER_STR,                                    CFGOPT_FILTER);
 STRING_EXTERN(CFGOPT_FORCE_STR,                                     CFGOPT_FORCE);
-STRING_EXTERN(CFGOPT_HOST_ID_STR,                                   CFGOPT_HOST_ID);
 STRING_EXTERN(CFGOPT_IGNORE_MISSING_STR,                            CFGOPT_IGNORE_MISSING);
 STRING_EXTERN(CFGOPT_IO_TIMEOUT_STR,                                CFGOPT_IO_TIMEOUT);
 STRING_EXTERN(CFGOPT_LINK_ALL_STR,                                  CFGOPT_LINK_ALL);
@@ -552,12 +551,6 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME("force")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("host-id")
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

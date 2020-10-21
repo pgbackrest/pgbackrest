@@ -114,8 +114,6 @@ Option constants
     STRING_DECLARE(CFGOPT_FILTER_STR);
 #define CFGOPT_FORCE                                                "force"
     STRING_DECLARE(CFGOPT_FORCE_STR);
-#define CFGOPT_HOST_ID                                              "host-id"
-    STRING_DECLARE(CFGOPT_HOST_ID_STR);
 #define CFGOPT_IGNORE_MISSING                                       "ignore-missing"
     STRING_DECLARE(CFGOPT_IGNORE_MISSING_STR);
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
@@ -203,7 +201,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            125
+#define CFG_OPTION_TOTAL                                            124
 
 /***********************************************************************************************************************************
 Command enum
@@ -274,7 +272,6 @@ typedef enum
     cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptForce,
-    cfgOptHostId,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
     cfgOptLinkAll,

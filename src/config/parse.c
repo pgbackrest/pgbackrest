@@ -1427,26 +1427,30 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         cfgInit(config);
 
         // !!! HACK TO GET HOST-ID WORKING FOR REMOTES UNTIL THERE IS A BETTER WAY
-        if (cfgOptionTest(cfgOptHostId) && cfgOptionGroupValid(cfgOptGrpPg))
+        for (unsigned int groupId = 0; groupId < CFG_OPTION_GROUP_TOTAL; groupId++)
         {
-            ConfigOptionGroup groupId = cfgOptGrpPg;
-            unsigned int hostIdx = cfgOptionUInt(cfgOptHostId) - 1;
+            unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPgId : cfgOptRepoId;
 
-            unsigned int index = 0;
-
-            for (; index < cfgOptionGroupIdxTotal(groupId); index++)
+            if (cfgOptionTest(defaultOptionId))
             {
-                if (config->optionGroup[groupId].index[index] == hostIdx)
-                    break;
-            }
+                unsigned int optionIdx = cfgOptionUInt(defaultOptionId) - 1;
+                unsigned int index = 0;
 
-            if (index == cfgOptionGroupIdxTotal(groupId))
-            {
-                THROW_FMT(
-                    OptionInvalidValueError, "'%u' is not valid for '" CFGOPT_HOST_ID "' option", cfgOptionUInt(cfgOptHostId));
-            }
+                for (; index < cfgOptionGroupIdxTotal(groupId); index++)
+                {
+                    if (config->optionGroup[groupId].index[index] == optionIdx)
+                        break;
+                }
 
-            config->optionGroup[groupId].indexDefault = index;
+                if (index == cfgOptionGroupIdxTotal(groupId))
+                {
+                    THROW_FMT(
+                        OptionInvalidValueError, "'%u' is not valid for '%s' option", cfgOptionUInt(defaultOptionId),
+                        cfgOptionName(defaultOptionId));
+                }
+
+                config->optionGroup[groupId].indexDefault = index;
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
