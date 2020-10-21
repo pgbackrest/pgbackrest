@@ -146,6 +146,8 @@ Option constants
     STRING_DECLARE(CFGOPT_ONLINE_STR);
 #define CFGOPT_OUTPUT                                               "output"
     STRING_DECLARE(CFGOPT_OUTPUT_STR);
+#define CFGOPT_PG_ID                                                "pg-id"
+    STRING_DECLARE(CFGOPT_PG_ID_STR);
 #define CFGOPT_PROCESS                                              "process"
     STRING_DECLARE(CFGOPT_PROCESS_STR);
 #define CFGOPT_PROCESS_MAX                                          "process-max"
@@ -160,6 +162,8 @@ Option constants
     STRING_DECLARE(CFGOPT_RECURSE_STR);
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
     STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
+#define CFGOPT_REPO_ID                                              "repo-id"
+    STRING_DECLARE(CFGOPT_REPO_ID_STR);
 #define CFGOPT_RESUME                                               "resume"
     STRING_DECLARE(CFGOPT_RESUME_STR);
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
@@ -199,7 +203,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            123
+#define CFG_OPTION_TOTAL                                            125
 
 /***********************************************************************************************************************************
 Command enum
@@ -293,6 +297,7 @@ typedef enum
     cfgOptPgHostConfigPath,
     cfgOptPgHostPort,
     cfgOptPgHostUser,
+    cfgOptPgId,
     cfgOptPgLocal,
     cfgOptPgPath,
     cfgOptPgPort,
@@ -325,6 +330,7 @@ typedef enum
     cfgOptRepoHostConfigPath,
     cfgOptRepoHostPort,
     cfgOptRepoHostUser,
+    cfgOptRepoId,
     cfgOptRepoLocal,
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,

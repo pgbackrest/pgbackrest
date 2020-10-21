@@ -481,6 +481,15 @@
                         <example>y</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-id" name="Select repository">
+                        <summary>Use only the selected repository.</summary>
+
+                        <text>!!!</text>
+
+                        <example>1</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Path where backups and archive are stored.</summary>
@@ -1034,6 +1043,15 @@
                         <text>This user will also own the remote <backrest/> process and will initiate connections to <postgres/>.  For this to work correctly the user should be the <postgres/> database cluster owner which is generally <id>postgres</id>, the default.</text>
 
                         <example>db_owner</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-id" name="Select PostgreSQL Cluster">
+                        <summary>Use only the selected PostgreSQL cluster.</summary>
+
+                        <text>!!!</text>
+
+                        <example>1</example>
                     </config-key>
 
                     <!-- CONFIG - STANZA SECTION - PG-PATH KEY -->

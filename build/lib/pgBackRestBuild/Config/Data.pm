@@ -185,6 +185,9 @@ use constant CFGDEF_INDEX_REPO                                      => 1;
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
 
+# !!!
+use constant CFGOPT_REPO_ID                                         => CFGDEF_PREFIX_REPO . '-id';
+
 # Repository General
 use constant CFGOPT_REPO_CIPHER_TYPE                                => CFGDEF_PREFIX_REPO . '-cipher-type';
 use constant CFGOPT_REPO_CIPHER_PASS                                => CFGDEF_PREFIX_REPO . '-cipher-pass';
@@ -280,6 +283,9 @@ use constant CFGDEF_INDEX_PG                                        => 8;
 # Prefix that must be used by all db options that allow multiple configurations
 use constant CFGDEF_PREFIX_PG                                       => 'pg';
     push @EXPORT, qw(CFGDEF_PREFIX_PG);
+
+# !!!
+use constant CFGOPT_PG_ID                                           => CFGDEF_PREFIX_PG . '-id';
 
 use constant CFGOPT_PG_LOCAL                                        => CFGDEF_PREFIX_PG . '-local';
 
@@ -1483,6 +1489,17 @@ my %hConfigDefine =
         }
     },
 
+    # Repository selector
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_REPO_ID =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_REPO],
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
     # Repository options
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_REPO_CIPHER_PASS =>
@@ -2566,6 +2583,36 @@ my %hConfigDefine =
 
     # Stanza options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_PG_ID =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_CHECK =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_STANZA_UPGRADE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+        },
+    },
+
     &CFGOPT_PG_LOCAL =>
     {
         &CFGDEF_GROUP => CFGOPTGRP_PG,

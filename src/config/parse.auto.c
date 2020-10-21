@@ -1280,6 +1280,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgHostUser,
     },
 
+    // pg-id option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "pg-id",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptPgId,
+    },
+    {
+        .name = "reset-pg-id",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgId,
+    },
+
     // pg-local option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2169,6 +2181,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoHostUser,
     },
 
+    // repo-id option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo-id",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepoId,
+    },
+    {
+        .name = "reset-repo-id",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoId,
+    },
+
     // repo-local option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2786,6 +2810,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
+    cfgOptPgId,
     cfgOptPgLocal,
     cfgOptPgPath,
     cfgOptPgPort,
@@ -2799,6 +2824,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRemoteType,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
+    cfgOptRepoId,
     cfgOptRepoLocal,
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,
