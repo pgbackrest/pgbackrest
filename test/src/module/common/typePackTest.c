@@ -219,7 +219,11 @@ testRun(void)
         TEST_RESULT_VOID(pckReadObjEndP(packRead), "read object end");
 
         TEST_ERROR(pckReadArrayEndP(packRead), FormatError, "not in array");
-        TEST_RESULT_VOID(pckReadArrayBeginP(packRead, .id = 37), "read array begin");
+        TEST_RESULT_BOOL(pckReadNext(packRead), true, "read next tag which should be an array");
+        TEST_RESULT_UINT(pckReadId(packRead), 37, "check array id");
+        TEST_ERROR(pckReadU64P(packRead, .defaultNull = true), AssertError, "array at id 37 must be read");
+        TEST_RESULT_VOID(pckReadArrayBeginP(packRead, .id = pckReadId(packRead)), "read array begin");
+
         TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in object");
 
         unsigned int value = 0;

@@ -118,6 +118,7 @@ typedef struct PackTypeData
     bool valueSingleBit;                                            // Can the value be stored in a single bit (e.g. bool)
     bool valueMultiBit;                                             // Can the value require multiple bits (e.g. integer)
     bool size;                                                      // Does the type require a size (e.g. string)
+    bool container;                                                 // Is this type a container (e.g. array)
     const String *const name;                                       // Type name used in error messages
 } PackTypeData;
 
@@ -130,6 +131,7 @@ static const PackTypeData packTypeData[] =
     {
         .type = pckTypeArray,
         .name = STRDEF("array"),
+        .container = true,
     },
     {
         .type = pckTypeBin,
@@ -155,6 +157,7 @@ static const PackTypeData packTypeData[] =
     {
         .type = pckTypeObj,
         .name = STRDEF("obj"),
+        .container = true,
     },
     {
         .type = pckTypePtr,
@@ -495,6 +498,11 @@ pckReadTag(PackRead *this, unsigned int *id, PackType type, bool peek)
         // Get the next tag if it has not been read yet
         if (this->tagNextId == 0)
             pckReadTagNext(this);
+
+        // If the next type is a container it must be read explicitly, otherwise we don't know if the user wants the first field in
+        // the container or the next field in the current container
+        if (packTypeData[this->tagNextType].container && type != this->tagNextType)
+            THROW_FMT(AssertError, "%s at id %u must be read", strZ(pckTypeToStr(this->tagNextType)), this->tagNextId);
 
         // Error when the id does not exist
         if (*id < this->tagNextId)
