@@ -135,7 +135,8 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
 
         // Add the group default id
         kvPut(
-            optionReplace, VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoId : cfgOptPgId)),
+            optionReplace,
+            VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoDefault : cfgOptPgDefault)),
             VARUINT(
                 cfgOptionGroupIdxToRawIdx(
                     protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg, hostIdx)));

@@ -482,7 +482,7 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="repo-id" name="Set Default Repository">
+                    <config-key id="repo-default" name="Set Default Repository">
                         <summary>Set default repository.</summary>
 
                         <text>!!!</text>
@@ -1046,7 +1046,7 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="pg-id" name="Set Default PostgreSQL Cluster">
+                    <config-key id="pg-default" name="Set Default PostgreSQL Cluster">
                         <summary>Set default PostgreSQL cluster.</summary>
 
                         <text>!!!</text>

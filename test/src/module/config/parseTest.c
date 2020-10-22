@@ -798,7 +798,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        hrnCfgArgRawZ(argList, cfgOptPgId, "1");
+        hrnCfgArgRawZ(argList, cfgOptPgDefault, "1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));

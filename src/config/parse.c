@@ -1429,7 +1429,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         // !!! HACK TO GET HOST-ID WORKING FOR REMOTES UNTIL THERE IS A BETTER WAY
         for (unsigned int groupId = 0; groupId < CFG_OPTION_GROUP_TOTAL; groupId++)
         {
-            unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPgId : cfgOptRepoId;
+            unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPgDefault : cfgOptRepoDefault;
 
             if (cfgOptionTest(defaultOptionId))
             {

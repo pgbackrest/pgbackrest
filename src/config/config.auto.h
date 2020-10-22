@@ -144,8 +144,8 @@ Option constants
     STRING_DECLARE(CFGOPT_ONLINE_STR);
 #define CFGOPT_OUTPUT                                               "output"
     STRING_DECLARE(CFGOPT_OUTPUT_STR);
-#define CFGOPT_PG_ID                                                "pg-id"
-    STRING_DECLARE(CFGOPT_PG_ID_STR);
+#define CFGOPT_PG_DEFAULT                                           "pg-default"
+    STRING_DECLARE(CFGOPT_PG_DEFAULT_STR);
 #define CFGOPT_PROCESS                                              "process"
     STRING_DECLARE(CFGOPT_PROCESS_STR);
 #define CFGOPT_PROCESS_MAX                                          "process-max"
@@ -160,8 +160,8 @@ Option constants
     STRING_DECLARE(CFGOPT_RECURSE_STR);
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
     STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
-#define CFGOPT_REPO_ID                                              "repo-id"
-    STRING_DECLARE(CFGOPT_REPO_ID_STR);
+#define CFGOPT_REPO_DEFAULT                                         "repo-default"
+    STRING_DECLARE(CFGOPT_REPO_DEFAULT_STR);
 #define CFGOPT_RESUME                                               "resume"
     STRING_DECLARE(CFGOPT_RESUME_STR);
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
@@ -287,6 +287,7 @@ typedef enum
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
+    cfgOptPgDefault,
     cfgOptPgHost,
     cfgOptPgHostCmd,
     cfgOptPgHostConfig,
@@ -294,7 +295,6 @@ typedef enum
     cfgOptPgHostConfigPath,
     cfgOptPgHostPort,
     cfgOptPgHostUser,
-    cfgOptPgId,
     cfgOptPgLocal,
     cfgOptPgPath,
     cfgOptPgPort,
@@ -319,6 +319,7 @@ typedef enum
     cfgOptRepoAzureVerifyTls,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
+    cfgOptRepoDefault,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
     cfgOptRepoHostCmd,
@@ -327,7 +328,6 @@ typedef enum
     cfgOptRepoHostConfigPath,
     cfgOptRepoHostPort,
     cfgOptRepoHostUser,
-    cfgOptRepoId,
     cfgOptRepoLocal,
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,

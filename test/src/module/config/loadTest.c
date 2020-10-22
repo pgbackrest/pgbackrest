@@ -492,7 +492,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        hrnCfgArgRawZ(argList, cfgOptPgId, "1");
+        hrnCfgArgRawZ(argList, cfgOptPgDefault, "1");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
