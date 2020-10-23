@@ -45,6 +45,10 @@ const Storage *storagePgIdxWrite(unsigned int pgIdx);
 const Storage *storagePg(void);
 const Storage *storagePgWrite(void);
 
+// Repository storage by cfgOptGrpRepo index
+const Storage *storageRepoIdx(unsigned int repoIdx);
+const Storage *storageRepoIdxWrite(unsigned int repoIdx);
+
 // Repository storage
 const Storage *storageRepo(void);
 const Storage *storageRepoWrite(void);
