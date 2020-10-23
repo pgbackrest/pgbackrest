@@ -179,7 +179,7 @@ use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-time
 # Repository options
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Determines how many repositories can be configured
-use constant CFGDEF_INDEX_REPO                                      => 1;
+use constant CFGDEF_INDEX_REPO                                      => 4;
 
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
