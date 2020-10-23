@@ -348,14 +348,6 @@ cmdArchivePush(void)
         }
         else
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            storageRepo();
-
-            // Get archive info
-            ArchivePushCheckResult archiveInfo = archivePushCheck(
-                cfgOptionTest(cfgOptPgPath), cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStrNull(cfgOptRepoCipherPass));
-
             // Check if the push queue has been exceeded
             if (cfgOptionTest(cfgOptArchivePushQueueMax) &&
                 archivePushDrop(strPath(walFile), archivePushReadyList(strPath(walFile))))
@@ -365,6 +357,15 @@ cmdArchivePush(void)
             // Else push the file
             else
             {
+                // Get the repo storage in case it is remote and encryption settings need to be pulled down
+                for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+                    storageRepo();
+
+                // Get archive info
+                ArchivePushCheckResult archiveInfo = archivePushCheck(
+                    cfgOptionTest(cfgOptPgPath), cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                    cfgOptionStrNull(cfgOptRepoCipherPass));
+
                 // Push the file to the archive
                 String *warning = archivePushFile(
                     walFile, archiveInfo.archiveId, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
@@ -490,7 +491,8 @@ cmdArchivePushAsync(void)
             else
             {
                 // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                storageRepo();
+                for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+                    storageRepo();
 
                 // Get cipher type
                 jobData.cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
