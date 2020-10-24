@@ -22,8 +22,8 @@ struct List
     unsigned int listSize;
     unsigned int listSizeMax;
     SortOrder sortOrder;
-    unsigned char *listRoot;
-    unsigned char *list;
+    unsigned char *listAlloc;                                       // Pointer to memory allocated for the list
+    unsigned char *list;                                            // Pointer to the current start of the list
     ListComparator *comparator;
 };
 
@@ -296,17 +296,17 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
                 this->list = memResize(this->list, this->listSizeMax * this->itemSize);
             }
 
-            this->listRoot = this->list;
+            this->listAlloc = this->list;
         }
         MEM_CONTEXT_END();
     }
     // Else if there is space before the beginning of the list then move the list down
     else if (
-        (this->list != this->listRoot) &&
-        (this->listSize + ((uintptr_t)(this->list - this->listRoot) / this->itemSize) == this->listSizeMax))
+        (this->list != this->listAlloc) &&
+        (this->listSize + ((uintptr_t)(this->list - this->listAlloc) / this->itemSize) == this->listSizeMax))
     {
-        memmove(this->listRoot, this->list, this->listSize * this->itemSize);
-        this->list = this->listRoot;
+        memmove(this->listAlloc, this->list, this->listSize * this->itemSize);
+        this->list = this->listAlloc;
     }
 
     // If not inserting at the end then move items down to make space
