@@ -19,6 +19,7 @@
                         <release-item-contributor-list>
                             <release-item-ideator id="jefferson.alexandre"/>
                             <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
                         <p>Allow <code>[</code>, <code>#</code>, and <code>space</code> as the first character in database names.</p>
