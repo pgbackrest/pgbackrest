@@ -57,16 +57,16 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
     {
         unsigned int dbVersion = dbPgVersion(dbObject);
         const String *dbPath = dbPgDataPath(dbObject);
+        unsigned int pgPath = cfgOptPgPath + pgIdx;
 
         // Error if the version from the control file and the configured pg-path do not match the values obtained from the database
-        if (pgVersion != dbVersion || strCmp(cfgOptionStr(cfgOptPgPath + pgIdx), dbPath) != 0)
+        if (pgVersion != dbVersion || strCmp(cfgOptionStr(pgPath), dbPath) != 0)
         {
             THROW_FMT(
                 DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
                 PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\nHINT: the %s and %s settings likely reference different clusters.",
-                strZ(pgVersionToStr(dbVersion)), strZ(dbPath), strZ(pgVersionToStr(pgVersion)),
-                strZ(cfgOptionStr(cfgOptPgPath + pgIdx)), strZ(cfgOptionStr(cfgOptPgPath + pgIdx)),
-                cfgOptionName(cfgOptPgPath + pgIdx), cfgOptionName(cfgOptPgPort + pgIdx));
+                strZ(pgVersionToStr(dbVersion)), strZ(dbPath), strZ(pgVersionToStr(pgVersion)), strZ(cfgOptionStr(pgPath)),
+                strZ(cfgOptionStr(pgPath)), cfgOptionName(pgPath), cfgOptionName(cfgOptPgPort + pgIdx));
         }
 
         // Check archive configuration if option is valid for the command and set
