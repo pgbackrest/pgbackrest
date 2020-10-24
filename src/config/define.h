@@ -16,6 +16,7 @@ typedef enum
     cfgDefSectionStanza,                                            // command-line or in any config stanza section
 } ConfigDefSection;
 
+#include "config/config.h"
 #include "config/define.auto.h"
 #include "common/type/string.h"
 
@@ -32,31 +33,31 @@ Functions
 unsigned int cfgDefCommandTotal(void);
 
 // Command help
-const char *cfgDefCommandHelpDescription(ConfigDefineCommand commandDefId);
-const char *cfgDefCommandHelpSummary(ConfigDefineCommand commandDefId);
+const char *cfgDefCommandHelpDescription(ConfigCommand commandId);
+const char *cfgDefCommandHelpSummary(ConfigCommand commandId);
 
 // Option allow lists
-bool cfgDefOptionAllowList(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
-bool cfgDefOptionAllowListValueValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, const char *value);
+bool cfgDefOptionAllowList(ConfigCommand commandId, ConfigDefineOption optionDefId);
+bool cfgDefOptionAllowListValueValid(ConfigCommand commandId, ConfigDefineOption optionDefId, const char *value);
 
 // Allow range
-bool cfgDefOptionAllowRange(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
-double cfgDefOptionAllowRangeMax(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
-double cfgDefOptionAllowRangeMin(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+bool cfgDefOptionAllowRange(ConfigCommand commandId, ConfigDefineOption optionDefId);
+double cfgDefOptionAllowRangeMax(ConfigCommand commandId, ConfigDefineOption optionDefId);
+double cfgDefOptionAllowRangeMin(ConfigCommand commandId, ConfigDefineOption optionDefId);
 
 // Default value for the option
-const char *cfgDefOptionDefault(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+const char *cfgDefOptionDefault(ConfigCommand commandId, ConfigDefineOption optionDefId);
 
 // Dependencies and depend lists
-bool cfgDefOptionDepend(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
-ConfigDefineOption cfgDefOptionDependOption(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
-unsigned int cfgDefOptionDependValueTotal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
-bool cfgDefOptionDependValueValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, const char *value);
-const char *cfgDefOptionDependValue(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId, unsigned int valueId);
+bool cfgDefOptionDepend(ConfigCommand commandId, ConfigDefineOption optionDefId);
+ConfigDefineOption cfgDefOptionDependOption(ConfigCommand commandId, ConfigDefineOption optionDefId);
+unsigned int cfgDefOptionDependValueTotal(ConfigCommand commandId, ConfigDefineOption optionDefId);
+bool cfgDefOptionDependValueValid(ConfigCommand commandId, ConfigDefineOption optionDefId, const char *value);
+const char *cfgDefOptionDependValue(ConfigCommand commandId, ConfigDefineOption optionDefId, unsigned int valueId);
 
 // Option help
-const char *cfgDefOptionHelpDescription(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
-const char *cfgDefOptionHelpSummary(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+const char *cfgDefOptionHelpDescription(ConfigCommand commandId, ConfigDefineOption optionDefId);
+const char *cfgDefOptionHelpSummary(ConfigCommand commandId, ConfigDefineOption optionDefId);
 
 // Option help name alt
 bool cfgDefOptionHelpNameAlt(ConfigDefineOption optionDefId);
@@ -73,7 +74,7 @@ int cfgDefOptionId(const char *optionName);
 unsigned int cfgDefOptionIndexTotal(ConfigDefineOption optionDefId);
 
 // Is the option for internal use only?
-bool cfgDefOptionInternal(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+bool cfgDefOptionInternal(ConfigCommand commandId, ConfigDefineOption optionDefId);
 
 // Does the option accept multiple values?
 bool cfgDefOptionMulti(ConfigDefineOption optionDefId);
@@ -82,7 +83,7 @@ bool cfgDefOptionMulti(ConfigDefineOption optionDefId);
 const char *cfgDefOptionName(ConfigDefineOption optionDefId);
 
 // Is the option required
-bool cfgDefOptionRequired(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+bool cfgDefOptionRequired(ConfigCommand commandId, ConfigDefineOption optionDefId);
 
 // Get option section
 ConfigDefSection cfgDefOptionSection(ConfigDefineOption optionDefId);
@@ -97,6 +98,6 @@ unsigned int cfgDefOptionTotal(void);
 int cfgDefOptionType(ConfigDefineOption optionDefId);
 
 // Is the option valid for the command?
-bool cfgDefOptionValid(ConfigDefineCommand commandDefId, ConfigDefineOption optionDefId);
+bool cfgDefOptionValid(ConfigCommand commandId, ConfigDefineOption optionDefId);
 
 #endif

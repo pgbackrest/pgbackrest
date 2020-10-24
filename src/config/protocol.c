@@ -8,6 +8,7 @@ Configuration Protocol Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/parse.h"
 #include "config/protocol.h"
 
 /***********************************************************************************************************************************
@@ -37,7 +38,12 @@ configProtocol(const String *command, const VariantList *paramList, ProtocolServ
             VariantList *optionList = varLstNew();
 
             for (unsigned int optionIdx = 0; optionIdx < varLstSize(paramList); optionIdx++)
-                varLstAdd(optionList, varDup(cfgOption(cfgOptionId(strZ(varStr(varLstGet(paramList, optionIdx)))))));
+            {
+                CfgParseOptionResult option = cfgParseOption(varStr(varLstGet(paramList, optionIdx)));
+                CHECK(option.found);
+
+                varLstAdd(optionList, varDup(cfgOption(option.id)));
+            }
 
             protocolServerResponse(server, varNewVarLst(optionList));
         }

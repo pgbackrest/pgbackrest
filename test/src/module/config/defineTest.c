@@ -21,62 +21,62 @@ testRun(void)
         TEST_RESULT_INT(cfgDefOptionId("repo-host"), cfgDefOptRepoHost, "define id");
         TEST_RESULT_INT(cfgDefOptionId(BOGUS_STR), -1, "invalid define id");
 
-        TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptLogLevelConsole), true, "allow list valid");
-        TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptPgHost), false, "allow list not valid");
-        TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgDefCmdBackup, cfgDefOptType), true, "command allow list valid");
+        TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgCmdBackup, cfgDefOptLogLevelConsole), true, "allow list valid");
+        TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgCmdBackup, cfgDefOptPgHost), false, "allow list not valid");
+        TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgCmdBackup, cfgDefOptType), true, "command allow list valid");
 
-        TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgDefCmdBackup, cfgDefOptChecksumPage), 0, "allow list total = 0");
+        TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgCmdBackup, cfgDefOptChecksumPage), 0, "allow list total = 0");
 
-        TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgDefCmdBackup, cfgDefOptType), 3, "allow list total");
+        TEST_RESULT_INT(cfgDefOptionAllowListValueTotal(cfgCmdBackup, cfgDefOptType), 3, "allow list total");
 
-        TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 0), "full", "allow list value 0");
-        TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 1), "diff", "allow list value 1");
-        TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 2), "incr", "allow list value 2");
+        TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgCmdBackup, cfgDefOptType, 0), "full", "allow list value 0");
+        TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgCmdBackup, cfgDefOptType, 1), "diff", "allow list value 1");
+        TEST_RESULT_Z(cfgDefOptionAllowListValue(cfgCmdBackup, cfgDefOptType, 2), "incr", "allow list value 2");
         TEST_ERROR(
-            cfgDefOptionAllowListValue(cfgDefCmdBackup, cfgDefOptType, 3), AssertError,
-            "assertion 'valueId < cfgDefOptionAllowListValueTotal(commandDefId, optionDefId)' failed");
+            cfgDefOptionAllowListValue(cfgCmdBackup, cfgDefOptType, 3), AssertError,
+            "assertion 'valueId < cfgDefOptionAllowListValueTotal(commandId, optionDefId)' failed");
 
         TEST_RESULT_BOOL(
-            cfgDefOptionAllowListValueValid(cfgDefCmdBackup, cfgDefOptType, "diff"), true, "allow list value valid");
+            cfgDefOptionAllowListValueValid(cfgCmdBackup, cfgDefOptType, "diff"), true, "allow list value valid");
         TEST_RESULT_BOOL(
-            cfgDefOptionAllowListValueValid(cfgDefCmdBackup, cfgDefOptType, BOGUS_STR), false, "allow list value not valid");
+            cfgDefOptionAllowListValueValid(cfgCmdBackup, cfgDefOptType, BOGUS_STR), false, "allow list value not valid");
 
-        TEST_RESULT_BOOL(cfgDefOptionAllowRange(cfgDefCmdBackup, cfgDefOptCompressLevel), true, "range allowed");
-        TEST_RESULT_BOOL(cfgDefOptionAllowRange(cfgDefCmdBackup, cfgDefOptRepoHost), false, "range not allowed");
+        TEST_RESULT_BOOL(cfgDefOptionAllowRange(cfgCmdBackup, cfgDefOptCompressLevel), true, "range allowed");
+        TEST_RESULT_BOOL(cfgDefOptionAllowRange(cfgCmdBackup, cfgDefOptRepoHost), false, "range not allowed");
 
-        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgDefCmdBackup, cfgDefOptDbTimeout), 0.1, "range min");
-        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMax(cfgDefCmdBackup, cfgDefOptCompressLevel), 9, "range max");
-        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgDefCmdArchivePush, cfgDefOptArchivePushQueueMax), 0, "range min");
+        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgCmdBackup, cfgDefOptDbTimeout), 0.1, "range min");
+        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMax(cfgCmdBackup, cfgDefOptCompressLevel), 9, "range max");
+        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgCmdArchivePush, cfgDefOptArchivePushQueueMax), 0, "range min");
         TEST_RESULT_DOUBLE(
-            cfgDefOptionAllowRangeMax(cfgDefCmdArchivePush, cfgDefOptArchivePushQueueMax), 4503599627370496, "range max");
+            cfgDefOptionAllowRangeMax(cfgCmdArchivePush, cfgDefOptArchivePushQueueMax), 4503599627370496, "range max");
 
         TEST_ERROR(
             cfgDefOptionDefault(cfgDefCommandTotal(), cfgDefOptCompressLevel), AssertError,
-            "assertion 'commandDefId < cfgDefCommandTotal()' failed");
+            "assertion 'commandId < cfgDefCommandTotal()' failed");
         TEST_ERROR(cfgDefOptionDefault(
-            cfgDefCmdBackup, cfgDefOptionTotal()), AssertError,
+            cfgCmdBackup, cfgDefOptionTotal()), AssertError,
             "assertion 'optionDefId < cfgDefOptionTotal()' failed");
-        TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptType), "default", "command default exists");
-        TEST_RESULT_Z(cfgDefOptionDefault(cfgDefCmdBackup, cfgDefOptRepoHost), NULL, "default does not exist");
+        TEST_RESULT_Z(cfgDefOptionDefault(cfgCmdRestore, cfgDefOptType), "default", "command default exists");
+        TEST_RESULT_Z(cfgDefOptionDefault(cfgCmdBackup, cfgDefOptRepoHost), NULL, "default does not exist");
 
-        TEST_RESULT_BOOL(cfgDefOptionDepend(cfgDefCmdRestore, cfgDefOptRepoS3Key), true, "has depend option");
-        TEST_RESULT_BOOL(cfgDefOptionDepend(cfgDefCmdRestore, cfgDefOptType), false, "does not have depend option");
+        TEST_RESULT_BOOL(cfgDefOptionDepend(cfgCmdRestore, cfgDefOptRepoS3Key), true, "has depend option");
+        TEST_RESULT_BOOL(cfgDefOptionDepend(cfgCmdRestore, cfgDefOptType), false, "does not have depend option");
 
-        TEST_RESULT_INT(cfgDefOptionDependOption(cfgDefCmdBackup, cfgDefOptPgHostUser), cfgDefOptPgHost, "depend option id");
-        TEST_RESULT_INT(cfgDefOptionDependOption(cfgDefCmdBackup, cfgDefOptRepoHostCmd), cfgDefOptRepoHost, "depend option id");
+        TEST_RESULT_INT(cfgDefOptionDependOption(cfgCmdBackup, cfgDefOptPgHostUser), cfgDefOptPgHost, "depend option id");
+        TEST_RESULT_INT(cfgDefOptionDependOption(cfgCmdBackup, cfgDefOptRepoHostCmd), cfgDefOptRepoHost, "depend option id");
 
-        TEST_RESULT_INT(cfgDefOptionDependValueTotal(cfgDefCmdRestore, cfgDefOptTarget), 3, "depend option value total");
-        TEST_RESULT_Z(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 0), "name", "depend option value 0");
-        TEST_RESULT_Z(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 1), "time", "depend option value 1");
-        TEST_RESULT_Z(cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 2), "xid", "depend option value 2");
+        TEST_RESULT_INT(cfgDefOptionDependValueTotal(cfgCmdRestore, cfgDefOptTarget), 3, "depend option value total");
+        TEST_RESULT_Z(cfgDefOptionDependValue(cfgCmdRestore, cfgDefOptTarget, 0), "name", "depend option value 0");
+        TEST_RESULT_Z(cfgDefOptionDependValue(cfgCmdRestore, cfgDefOptTarget, 1), "time", "depend option value 1");
+        TEST_RESULT_Z(cfgDefOptionDependValue(cfgCmdRestore, cfgDefOptTarget, 2), "xid", "depend option value 2");
         TEST_ERROR(
-            cfgDefOptionDependValue(cfgDefCmdRestore, cfgDefOptTarget, 3), AssertError,
-            "assertion 'valueId < cfgDefOptionDependValueTotal(commandDefId, optionDefId)' failed");
+            cfgDefOptionDependValue(cfgCmdRestore, cfgDefOptTarget, 3), AssertError,
+            "assertion 'valueId < cfgDefOptionDependValueTotal(commandId, optionDefId)' failed");
 
         TEST_RESULT_BOOL(
-                cfgDefOptionDependValueValid(cfgDefCmdRestore, cfgDefOptTarget, "time"), true, "depend option value valid");
+                cfgDefOptionDependValueValid(cfgCmdRestore, cfgDefOptTarget, "time"), true, "depend option value valid");
         TEST_RESULT_BOOL(
-            cfgDefOptionDependValueValid(cfgDefCmdRestore, cfgDefOptTarget, BOGUS_STR), false, "depend option value not valid");
+            cfgDefOptionDependValueValid(cfgCmdRestore, cfgDefOptTarget, BOGUS_STR), false, "depend option value not valid");
 
         TEST_ERROR(
             cfgDefOptionIndexTotal(cfgDefOptionTotal()), AssertError,
@@ -84,16 +84,16 @@ testRun(void)
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptPgPath), 8, "index total > 1");
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgDefOptRepoPath), 1, "index total == 1");
 
-        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptSet), false, "option set is not internal");
-        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgDefCmdRestore, cfgDefOptPgHost), true, "option pg-host is internal");
+        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgDefOptSet), false, "option set is not internal");
+        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgDefOptPgHost), true, "option pg-host is internal");
 
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptRecoveryOption), true, "recovery-option is multi");
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptDbInclude), true, "db-include is multi");
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgDefOptStartFast), false, "start-fast is not multi");
 
-        TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdBackup, cfgDefOptConfig), true, "option required");
-        TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdRestore, cfgDefOptRepoHost), false, "option not required");
-        TEST_RESULT_BOOL(cfgDefOptionRequired(cfgDefCmdInfo, cfgDefOptStanza), false, "command option not required");
+        TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdBackup, cfgDefOptConfig), true, "option required");
+        TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdRestore, cfgDefOptRepoHost), false, "option not required");
+        TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdInfo, cfgDefOptStanza), false, "command option not required");
 
         TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptRepoS3Key), cfgDefSectionGlobal, "global section");
         TEST_RESULT_INT(cfgDefOptionSection(cfgDefOptPgPath), cfgDefSectionStanza, "stanza section");
@@ -106,10 +106,10 @@ testRun(void)
         TEST_RESULT_INT(cfgDefOptionType(cfgDefOptDelta), cfgDefOptTypeBoolean, "boolean type");
 
         TEST_ERROR(
-            cfgDefOptionValid(cfgDefCmdInfo, cfgDefOptionTotal()), AssertError,
+            cfgDefOptionValid(cfgCmdInfo, cfgDefOptionTotal()), AssertError,
             "assertion 'optionDefId < cfgDefOptionTotal()' failed");
-        TEST_RESULT_BOOL(cfgDefOptionValid(cfgDefCmdBackup, cfgDefOptType), true, "option valid");
-        TEST_RESULT_BOOL(cfgDefOptionValid(cfgDefCmdInfo, cfgDefOptType), false, "option not valid");
+        TEST_RESULT_BOOL(cfgDefOptionValid(cfgCmdBackup, cfgDefOptType), true, "option valid");
+        TEST_RESULT_BOOL(cfgDefOptionValid(cfgCmdInfo, cfgDefOptType), false, "option not valid");
     }
 
     // *****************************************************************************************************************************
@@ -123,24 +123,24 @@ testRun(void)
             cfgDefOptionHelpNameAltValue(cfgDefOptRepoHost, 1), AssertError,
             "assertion 'valueId < cfgDefOptionHelpNameAltValueTotal(optionDefId)' failed");
 
-        TEST_RESULT_Z(cfgDefCommandHelpSummary(cfgDefCmdBackup), "Backup a database cluster.", "backup command help summary");
+        TEST_RESULT_Z(cfgDefCommandHelpSummary(cfgCmdBackup), "Backup a database cluster.", "backup command help summary");
         TEST_RESULT_Z(
-            cfgDefCommandHelpDescription(cfgDefCmdBackup),
+            cfgDefCommandHelpDescription(cfgCmdBackup),
             "pgBackRest does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.",
             "backup command help description");
 
         TEST_RESULT_Z(cfgDefOptionHelpSection(cfgDefOptDelta), "general", "delta option help section");
         TEST_RESULT_Z(
-            cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptBufferSize), "Buffer size for file operations.",
+            cfgDefOptionHelpSummary(cfgCmdBackup, cfgDefOptBufferSize), "Buffer size for file operations.",
             "backup command, delta option help summary");
         TEST_RESULT_Z(
-            cfgDefOptionHelpSummary(cfgDefCmdBackup, cfgDefOptType), "Backup type.", "backup command, type option help summary");
+            cfgDefOptionHelpSummary(cfgCmdBackup, cfgDefOptType), "Backup type.", "backup command, type option help summary");
         TEST_RESULT_Z(
-            cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptLogSubprocess),
+            cfgDefOptionHelpDescription(cfgCmdBackup, cfgDefOptLogSubprocess),
             "Enable file logging for any subprocesses created by this process using the log level specified by log-level-file.",
             "backup command, log-subprocess option help description");
         TEST_RESULT_Z(
-            cfgDefOptionHelpDescription(cfgDefCmdBackup, cfgDefOptType),
+            cfgDefOptionHelpDescription(cfgCmdBackup, cfgDefOptType),
             "The following backup types are supported:\n"
             "\n"
             "* full - all database cluster files will be copied and there will be no dependencies on previous backups.\n"

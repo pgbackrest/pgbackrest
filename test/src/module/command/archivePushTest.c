@@ -177,8 +177,8 @@ testRun(void)
         TEST_TITLE("command must be run on the pg host");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=host");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgHost, "host");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
         harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleDefault, argList);
 
@@ -299,7 +299,7 @@ testRun(void)
 
         argListTemp = strLstNew();
         strLstAddZ(argListTemp, "--" CFGOPT_STANZA "=test");
-        strLstAdd(argListTemp, strNewFmt("--" CFGOPT_REPO1_PATH "=%s/repo", testPath()));
+        hrnCfgArgRawFmt(argListTemp, cfgOptRepoPath, "%s/repo", testPath());
         strLstAdd(argListTemp, strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath()));
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
@@ -442,8 +442,8 @@ testRun(void)
         TEST_TITLE("command must be run on the pg host");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=host");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgHost, "host");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
         strLstAddZ(argList, "--" CFGOPT_SPOOL_PATH "=/spool");
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);

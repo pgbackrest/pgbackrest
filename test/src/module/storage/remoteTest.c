@@ -36,13 +36,10 @@ testRun(void)
 
     // Set type since we'll be running local and remote tests here
     cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("repo"));
-    cfgOptionValidSet(cfgOptRemoteType, true);
 
     // Set pg settings so we can run both db and backup remotes
     cfgOptionSet(cfgOptPgHost, cfgSourceParam, VARSTRDEF("localhost"));
-    cfgOptionValidSet(cfgOptPgHost, true);
     cfgOptionSet(cfgOptPgPath, cfgSourceParam, VARSTR(strNewFmt("%s/pg", testPath())));
-    cfgOptionValidSet(cfgOptPgPath, true);
 
     // Start a protocol server to test the remote protocol
     Buffer *serverRead = bufNew(8192);
@@ -215,7 +212,6 @@ testRun(void)
         // Do these tests against pg for coverage.  We're not really going to get a pg remote here because the remote for this host
         // id has already been created.  This will just test that the pg storage is selected to provide coverage.
         cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
-        cfgOptionValidSet(cfgOptRemoteType, true);
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo/test")));

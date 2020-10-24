@@ -129,7 +129,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -140,7 +140,7 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--repo1-host=remote-host");
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -168,7 +168,7 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=test1");
+        hrnCfgArgRawZ(argList, cfgOptPgHost, "test1");
         strLstAddZ(argList, "--pg1-path=/path/to");
         strLstAddZ(argList, "restore");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -182,13 +182,13 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/bogus");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/bogus");
         strLstAddZ(argList, "--pg7-path=/path/to");
         strLstAddZ(argList, "--pg7-host=test1");
         strLstAddZ(argList, "--host-id=7");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
         strLstAddZ(argList, "--process=0");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -222,7 +222,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -257,7 +257,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, "--repo1-host-user=repo-host-user");
         // Local config settings should never be passed to the remote
@@ -279,8 +279,8 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--log-subprocess");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/unused");       // Will be passed to remote (required)
-        strLstAddZ(argList, "--" CFGOPT_PG1_PORT "=777");           // Not be passed to remote (required but has default)
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");            // Will be passed to remote (required)
+        hrnCfgArgRawZ(argList, cfgOptPgPort, "777");                // Not be passed to remote (required but has default)
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, "--repo1-host-port=444");
         strLstAddZ(argList, "--repo1-host-config=/path/pgbackrest.conf");
@@ -302,7 +302,7 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--process=3");
         strLstAddZ(argList, "--host-id=1");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
@@ -346,15 +346,15 @@ testRun(void)
         strLstAddZ(argList, "--pg2-path=/path/to/2");
         strLstAddZ(argList, "--pg2-host=pg2-host");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 1), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg2-host"
-                "|pgbackrest --log-level-console=off --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/2"
-                " --process=4 --remote-type=pg --stanza=test1 backup:remote",
+                "|pgbackrest --log-level-console=off --log-level-file=off --log-level-stderr=error --pg1-local"
+                " --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote",
             "remote protocol params for db local");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -369,15 +369,16 @@ testRun(void)
         strLstAddZ(argList, "--pg3-socket-path=/socket3");
         strLstAddZ(argList, "--pg3-port=3333");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
-        strLstAddZ(argList, "--" CFGOPT_REPO1_RETENTION_FULL "=1");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_STR_Z(
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1, 2), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg3-host"
-                "|pgbackrest --log-level-console=off --log-level-file=off --log-level-stderr=error --pg1-path=/path/to/3"
-                " --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1 backup:remote",
+                "|pgbackrest --log-level-console=off --log-level-file=off --log-level-stderr=error --pg1-local"
+                " --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1"
+                " backup:remote",
             "remote protocol params for db local");
     }
 
@@ -970,7 +971,7 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAdd(argList, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
         strLstAddZ(argList, "--repo1-host=localhost");
@@ -1029,7 +1030,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAddZ(argList, "--process-max=2");
         harnessCfgLoad(cfgCmdArchiveGet, argList);

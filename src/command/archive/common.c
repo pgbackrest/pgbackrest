@@ -28,6 +28,7 @@ STRING_EXTERN(WAL_SEGMENT_REGEXP_STR,                               WAL_SEGMENT_
 STRING_EXTERN(WAL_SEGMENT_PARTIAL_REGEXP_STR,                       WAL_SEGMENT_PARTIAL_REGEXP);
 STRING_EXTERN(WAL_SEGMENT_DIR_REGEXP_STR,                           WAL_SEGMENT_DIR_REGEXP);
 STRING_EXTERN(WAL_SEGMENT_FILE_REGEXP_STR,                          WAL_SEGMENT_FILE_REGEXP);
+STRING_EXTERN(WAL_TIMELINE_HISTORY_REGEXP_STR,                      WAL_TIMELINE_HISTORY_REGEXP);
 
 /***********************************************************************************************************************************
 Global error file constant
@@ -332,10 +333,10 @@ walPath(const String *walFile, const String *pgPath, const String *command)
         {
             THROW_FMT(
                 OptionRequiredError,
-                "option '" CFGOPT_PG1_PATH "' must be specified when relative wal paths are used\n"
+                "option '%s' must be specified when relative wal paths are used\n"
                     "HINT: is %%f passed to %s instead of %%p?\n"
                     "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
-                strZ(command));
+                cfgOptionName(cfgOptPgPath), strZ(command));
         }
 
         // Get the working directory
@@ -358,9 +359,9 @@ walPath(const String *walFile, const String *pgPath, const String *command)
             {
                 THROW_FMT(
                     OptionInvalidValueError,
-                    PG_NAME " working directory '%s' is not the same as option " CFGOPT_PG1_PATH " '%s'\n"
-                        "HINT: is the " PG_NAME " data_directory configured the same as the " CFGOPT_PG1_PATH " option?",
-                    currentWorkDir, strZ(pgPath));
+                    PG_NAME " working directory '%s' is not the same as option %s '%s'\n"
+                        "HINT: is the " PG_NAME " data_directory configured the same as the %s option?",
+                    currentWorkDir, cfgOptionName(cfgOptPgPath), strZ(pgPath), cfgOptionName(cfgOptPgPath));
             }
         }
 
