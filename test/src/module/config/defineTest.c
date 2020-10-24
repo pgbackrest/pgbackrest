@@ -82,7 +82,7 @@ testRun(void)
             cfgDefOptionIndexTotal(cfgDefOptionTotal()), AssertError,
             "assertion 'optionId < cfgDefOptionTotal()' failed");
         TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgOptPgPath), 8, "index total > 1");
-        TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgOptRepoPath), 1, "index total == 1");
+        TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgOptRepoPath), 4, "index total == 1");
 
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptSet), false, "option set is not internal");
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptPgHost), true, "option pg-host is internal");
