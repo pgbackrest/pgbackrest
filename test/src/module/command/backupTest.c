@@ -419,7 +419,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
                 // Start backup
                 HRNPQ_MACRO_ADVISORY_LOCK(1, true),
                 HRNPQ_MACRO_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart),
-                HRNPQ_MACRO_DATABASE_LIST_1(1, "test1"),
+                HRNPQ_MACRO_DATABASE_LIST_1(1, " test1"),
                 HRNPQ_MACRO_TABLESPACE_LIST_1(1, 32768, "tblspc32768"),
 
                 // Get copy start time
