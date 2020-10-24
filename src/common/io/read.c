@@ -282,7 +282,7 @@ ioReadLineParam(IoRead *this, bool allowEof)
 
             // If the buffer is full then the linefeed (if it exists) is outside the buffer
             if (bufFull(this->output))
-                THROW_FMT(FileReadError, "unable to find line in %zu byte buffer", bufSize(this->output));
+                THROW_FMT(FileReadError, "unable to find line in %zu byte buffer", bufUsed(this->output));
 
             if (ioReadEof(this))
             {

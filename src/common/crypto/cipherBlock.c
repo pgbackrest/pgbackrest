@@ -392,7 +392,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
     FUNCTION_LOG_END();
 
     ASSERT(pass != NULL);
-    ASSERT(bufSize(pass) > 0);
+    ASSERT(bufUsed(pass) > 0);
 
     // Init crypto subsystem
     cryptoInit();
