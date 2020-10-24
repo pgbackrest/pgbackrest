@@ -358,19 +358,15 @@ iniLoad(
 
             do
             {
-                const String *line = strTrim(ioReadLineParam(read, true));
+                const String *line = ioReadLineParam(read, true);
                 const char *linePtr = strZ(line);
 
-                // Only interested in lines that are not blank or comments
-                if (strSize(line) > 0 && linePtr[0] != '#')
+                // Only interested in lines that are not blank
+                if (strSize(line) > 0)
                 {
-                    // Looks like this line is a section
-                    if (linePtr[0] == '[')
+                    // The line is a section. Since the value must be valid JSON this means that the value must never be an array.
+                    if (linePtr[0] == '[' && linePtr[strSize(line) - 1] == ']')
                     {
-                        // Make sure the section ends with ]
-                        if (linePtr[strSize(line) - 1] != ']')
-                            THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", lineIdx + 1, linePtr);
-
                         // Assign section
                         MEM_CONTEXT_PRIOR_BEGIN()
                         {
@@ -378,7 +374,7 @@ iniLoad(
                         }
                         MEM_CONTEXT_PRIOR_END();
                     }
-                    // Else it should be a key/value
+                    // Else it is a key/value
                     else
                     {
                         if (section == NULL)
@@ -405,8 +401,8 @@ iniLoad(
                             retry = false;
 
                             // Get key/value
-                            key = strTrim(strNewN(linePtr, (size_t)(lineEqual - linePtr)));
-                            value = strTrim(strNew(lineEqual + 1));
+                            key = strNewN(linePtr, (size_t)(lineEqual - linePtr));
+                            value = strNew(lineEqual + 1);
 
                             // Check that the value is valid JSON
                             TRY_BEGIN()
