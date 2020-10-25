@@ -35,68 +35,84 @@ testRun(void)
     strLstAdd(argListBase, strNewFmt("--stanza=%s", strZ(stanza)));
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
 
+    #define TEST_BACKUP_DB1_94                                                                                                     \
+        "db-catalog-version=201409291\n"                                                                                           \
+        "db-control-version=942\n"                                                                                                 \
+        "db-id=1\n"                                                                                                                \
+        "db-system-id=6625592122879095702\n"                                                                                       \
+        "db-version=\"9.4\"\n"
+
+    #define TEST_BACKUP_DB2_11                                                                                                     \
+        "db-catalog-version=201707211\n"                                                                                           \
+        "db-control-version=1100\n"                                                                                                \
+        "db-id=2\n"                                                                                                                \
+        "db-system-id=6626363367545678089\n"                                                                                       \
+        "db-version=\"11\"\n"
+
+    #define TEST_BACKUP_DB1_CURRENT_FULL1                                                                                          \
+        "20181119-152138F={"                                                                                                       \
+        "\"backrest-format\":5,\"backrest-version\":\"2.28dev\","                                                                  \
+        "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","              \
+        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                               \
+        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                       \
+        "\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,\"backup-type\":\"full\","                     \
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"                 \
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+    #define TEST_BACKUP_DB1_CURRENT_FULL2                                                                                          \
+        "20181119-152800F={"                                                                                                       \
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                                  \
+        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                               \
+        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                       \
+        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                     \
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"                 \
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+    #define TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
+        "20181119-152900F={"                                                                                                       \
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                                  \
+        "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","              \
+        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                               \
+        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                       \
+        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                     \
+        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"                 \
+        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+    #define TEST_BACKUP_DB1_HISTORY                                                                                                \
+        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"                     \
+            "\"db-version\":\"9.4\"}"
+
+    #define TEST_BACKUP_DB2_HISTORY                                                                                                \
+        "2={\"db-catalog-version\":201707211,\"db-control-version\":1100,\"db-system-id\":6626363367545678089,"                    \
+            "\"db-version\":\"11\"}"
+
     String *backupInfoContent = strNewFmt(
         "[backup:current]\n"
-        "20181119-152138F={"
-        "\"backrest-format\":5,\"backrest-version\":\"2.28dev\","
-        "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,\"backup-type\":\"full\","
-        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+        TEST_BACKUP_DB1_CURRENT_FULL1
         "\n"
         "[db]\n"
-        "db-catalog-version=201409291\n"
-        "db-control-version=942\n"
-        "db-id=1\n"
-        "db-system-id=6625592122879095702\n"
-        "db-version=\"9.4\"\n"
+        TEST_BACKUP_DB1_94
         "\n"
         "[db:history]\n"
-        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-            "\"db-version\":\"9.4\"}");
+        TEST_BACKUP_DB1_HISTORY
+        );
 
     const Buffer *backupInfoBase = harnessInfoChecksumZ(strZ(backupInfoContent));
 
     String *backupInfoMultiHistoryContent = strNewFmt(
         "[backup:current]\n"
-        "20181119-152138F={"
-        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-        "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
-        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-        "20181119-152800F={"
-        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-        "20181119-152900F={"
-        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-        "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
-        "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-        "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-        "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-        "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-        "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+        TEST_BACKUP_DB1_CURRENT_FULL1
+        TEST_BACKUP_DB1_CURRENT_FULL2
+        TEST_BACKUP_DB1_CURRENT_FULL3
         "\n"
         "[db]\n"
-        "db-catalog-version=201707211\n"
-        "db-control-version=1100\n"
-        "db-id=2\n"
-        "db-system-id=6626363367545678089\n"
-        "db-version=\"11\"\n"
+        TEST_BACKUP_DB2_11
         "\n"
         "[db:history]\n"
-        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-            "\"db-version\":\"9.4\"}\n"
-        "2={\"db-catalog-version\":201707211,\"db-control-version\":1100,\"db-system-id\":6626363367545678089,"
-            "\"db-version\":\"11\"}");
+        TEST_BACKUP_DB1_HISTORY
+        "\n"
+        TEST_BACKUP_DB2_HISTORY
+        );
 
     const Buffer *backupInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(backupInfoMultiHistoryContent));
 
@@ -122,95 +138,96 @@ testRun(void)
         "2={\"db-id\":6626363367545678089,\"db-version\":\"11\"}");
 
     const Buffer *archiveInfoMultiHistoryBase = harnessInfoChecksumZ(strZ(archiveInfoMultiHistoryContent));
-        #define TEST_MANIFEST_HEADER                                                                                               \
-            "[backup]\n"                                                                                                           \
-            "backup-label=null\n"                                                                                                  \
-            "backup-timestamp-copy-start=0\n"                                                                                      \
-            "backup-timestamp-start=0\n"                                                                                           \
-            "backup-timestamp-stop=0\n"                                                                                            \
-            "backup-type=\"full\"\n"
 
-        #define TEST_MANIFEST_DB_92                                                                                                \
-            "\n"                                                                                                                   \
-            "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201204301\n"                                                                                       \
-            "db-control-version=922\n"                                                                                             \
-            "db-id=1\n"                                                                                                            \
-            "db-system-id=6625592122879095702\n"                                                                                   \
-            "db-version=\"9.2\"\n"
+    #define TEST_MANIFEST_HEADER                                                                                                   \
+        "[backup]\n"                                                                                                               \
+        "backup-label=null\n"                                                                                                      \
+        "backup-timestamp-copy-start=0\n"                                                                                          \
+        "backup-timestamp-start=0\n"                                                                                               \
+        "backup-timestamp-stop=0\n"                                                                                                \
+        "backup-type=\"full\"\n"
 
-        #define TEST_MANIFEST_DB_94                                                                                                \
-            "\n"                                                                                                                   \
-            "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201409291\n"                                                                                       \
-            "db-control-version=942\n"                                                                                             \
-            "db-id=1\n"                                                                                                            \
-            "db-system-id=6625592122879095702\n"                                                                                   \
-            "db-version=\"9.4\"\n"
+    #define TEST_MANIFEST_DB_92                                                                                                    \
+        "\n"                                                                                                                       \
+        "[backup:db]\n"                                                                                                            \
+        "db-catalog-version=201204301\n"                                                                                           \
+        "db-control-version=922\n"                                                                                                 \
+        "db-id=1\n"                                                                                                                \
+        "db-system-id=6625592122879095702\n"                                                                                       \
+        "db-version=\"9.2\"\n"
 
-        #define TEST_MANIFEST_OPTION_ALL                                                                                           \
-            "\n"                                                                                                                   \
-            "[backup:option]\n"                                                                                                    \
-            "option-archive-check=false\n"                                                                                         \
-            "option-archive-copy=false\n"                                                                                          \
-            "option-checksum-page=false\n"                                                                                         \
-            "option-compress=false\n"                                                                                              \
-            "option-compress-type=\"none\"\n"                                                                                      \
-            "option-hardlink=false\n"                                                                                              \
-            "option-online=false\n"
+    #define TEST_MANIFEST_DB_94                                                                                                    \
+        "\n"                                                                                                                       \
+        "[backup:db]\n"                                                                                                            \
+        "db-catalog-version=201409291\n"                                                                                           \
+        "db-control-version=942\n"                                                                                                 \
+        "db-id=1\n"                                                                                                                \
+        "db-system-id=6625592122879095702\n"                                                                                       \
+        "db-version=\"9.4\"\n"
 
-        #define TEST_MANIFEST_OPTION_ARCHIVE_TRUE                                                                                  \
-            "\n"                                                                                                                   \
-            "[backup:option]\n"                                                                                                    \
-            "option-archive-check=true\n"                                                                                          \
-            "option-archive-copy=true\n"
+    #define TEST_MANIFEST_OPTION_ALL                                                                                               \
+        "\n"                                                                                                                       \
+        "[backup:option]\n"                                                                                                        \
+        "option-archive-check=false\n"                                                                                             \
+        "option-archive-copy=false\n"                                                                                              \
+        "option-checksum-page=false\n"                                                                                             \
+        "option-compress=false\n"                                                                                                  \
+        "option-compress-type=\"none\"\n"                                                                                          \
+        "option-hardlink=false\n"                                                                                                  \
+        "option-online=false\n"
 
-        #define TEST_MANIFEST_TARGET                                                                                               \
-            "\n"                                                                                                                   \
-            "[backup:target]\n"                                                                                                    \
-            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
+    #define TEST_MANIFEST_OPTION_ARCHIVE_TRUE                                                                                      \
+        "\n"                                                                                                                       \
+        "[backup:option]\n"                                                                                                        \
+        "option-archive-check=true\n"                                                                                              \
+        "option-archive-copy=true\n"
 
-        #define TEST_MANIFEST_DB                                                                                                   \
-            "\n"                                                                                                                   \
-            "[db]\n"                                                                                                               \
-            "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
+    #define TEST_MANIFEST_TARGET                                                                                                   \
+        "\n"                                                                                                                       \
+        "[backup:target]\n"                                                                                                        \
+        "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
 
-        #define TEST_MANIFEST_FILE                                                                                                 \
-            "\n"                                                                                                                   \
-            "[target:file]\n"                                                                                                      \
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                        \
-                ",\"size\":4,\"timestamp\":1565282114}\n"
+    #define TEST_MANIFEST_DB                                                                                                       \
+        "\n"                                                                                                                       \
+        "[db]\n"                                                                                                                   \
+        "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
 
-        #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
-            "\n"                                                                                                                   \
-            "[target:file:default]\n"                                                                                              \
-            "group=\"group1\"\n"                                                                                                   \
-            "master=false\n"                                                                                                       \
-            "mode=\"0600\"\n"                                                                                                      \
-            "user=\"user1\"\n"
+    #define TEST_MANIFEST_FILE                                                                                                     \
+        "\n"                                                                                                                       \
+        "[target:file]\n"                                                                                                          \
+        "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                            \
+            ",\"size\":4,\"timestamp\":1565282114}\n"
 
-        #define TEST_MANIFEST_LINK                                                                                                 \
-            "\n"                                                                                                                   \
-            "[target:link]\n"                                                                                                      \
-            "pg_data/pg_stat={\"destination\":\"../pg_stat\"}\n"
+    #define TEST_MANIFEST_FILE_DEFAULT                                                                                             \
+        "\n"                                                                                                                       \
+        "[target:file:default]\n"                                                                                                  \
+        "group=\"group1\"\n"                                                                                                       \
+        "master=false\n"                                                                                                           \
+        "mode=\"0600\"\n"                                                                                                          \
+        "user=\"user1\"\n"
 
-        #define TEST_MANIFEST_LINK_DEFAULT                                                                                         \
-            "\n"                                                                                                                   \
-            "[target:link:default]\n"                                                                                              \
-            "group=\"group1\"\n"                                                                                                   \
-            "user=false\n"
+    #define TEST_MANIFEST_LINK                                                                                                     \
+        "\n"                                                                                                                       \
+        "[target:link]\n"                                                                                                          \
+        "pg_data/pg_stat={\"destination\":\"../pg_stat\"}\n"
 
-        #define TEST_MANIFEST_PATH                                                                                                 \
-            "\n"                                                                                                                   \
-            "[target:path]\n"                                                                                                      \
-            "pg_data={\"user\":\"user1\"}\n"                                                                                       \
+    #define TEST_MANIFEST_LINK_DEFAULT                                                                                             \
+        "\n"                                                                                                                       \
+        "[target:link:default]\n"                                                                                                  \
+        "group=\"group1\"\n"                                                                                                       \
+        "user=false\n"
 
-        #define TEST_MANIFEST_PATH_DEFAULT                                                                                         \
-            "\n"                                                                                                                   \
-            "[target:path:default]\n"                                                                                              \
-            "group=false\n"                                                                                                        \
-            "mode=\"0700\"\n"                                                                                                      \
-            "user=\"user1\"\n"
+    #define TEST_MANIFEST_PATH                                                                                                     \
+        "\n"                                                                                                                       \
+        "[target:path]\n"                                                                                                          \
+        "pg_data={\"user\":\"user1\"}\n"                                                                                           \
+
+    #define TEST_MANIFEST_PATH_DEFAULT                                                                                             \
+        "\n"                                                                                                                       \
+        "[target:path:default]\n"                                                                                                  \
+        "group=false\n"                                                                                                            \
+        "mode=\"0700\"\n"                                                                                                          \
+        "user=\"user1\"\n"
 
     // *****************************************************************************************************************************
     if (testBegin("verifyManifestFile()"))
@@ -1031,18 +1048,14 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
                 harnessInfoChecksumZ(
                     "[db]\n"
-                    "db-catalog-version=201707211\n"
-                    "db-control-version=1100\n"
-                    "db-id=2\n"
-                    "db-system-id=6626363367545678089\n"
-                    "db-version=\"11\"\n"
+                    TEST_BACKUP_DB2_11
                     "\n"
                     "[db:history]\n"
-                    "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                        "\"db-version\":\"9.4\"}\n"
-                    "2={\"db-catalog-version\":201707211,\"db-control-version\":1100,\"db-system-id\":6626363367545678089,"
-                        "\"db-version\":\"11\"}")),
-            "put backup.info files");
+                    TEST_BACKUP_DB1_HISTORY
+                    "\n"
+                    TEST_BACKUP_DB2_HISTORY
+                    )),
+            "put backup.info files - no current backups");
         storageCopy(storageNewReadP(storageTest, backupInfoFileName), storageNewWriteP(storageTest, backupInfoFileNameCopy));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1125,7 +1138,7 @@ testRun(void)
                 walBuffer),
             "write WAL - continue range");
 
-        String *backupLabel = strNew("20200728-160632F_20200728-160649D");
+        String *backupLabel = strNew("20181119-152900F");
         TEST_RESULT_VOID(
             storagePathCreateP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupLabel))),
             "create empty backup path");
@@ -1224,6 +1237,7 @@ testRun(void)
                 "P01  ERROR: [028]: invalid size "
                     "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
                 "P01  ERROR: [028]: invalid checksum '%s'", strZ(backupFileName))));
+// CSHANG TODO: Add prior backup without manifest to get a missing manifest status and maybe also add a dependent backup on the last so it is current? Should try to cover as many cases in this last test as possible...
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, unreadable WAL file");
