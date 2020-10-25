@@ -1409,7 +1409,7 @@ restoreRecoveryOption(unsigned int pgVersion)
         {
             const String *targetAction = cfgOptionStr(cfgOptTargetAction);
 
-            if (!strEqZ(targetAction, cfgDefOptionDefault(cfgDefCmdRestore, cfgDefOptTargetAction)))
+            if (!strEq(targetAction, varStr(cfgOptionDefault(cfgOptTargetAction))))
             {
                 // Write recovery_target on supported PostgreSQL versions
                 if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)

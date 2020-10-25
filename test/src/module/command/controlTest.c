@@ -24,7 +24,7 @@ testRun(void)
         // Load configuration so lock path is set
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_STR_Z(
