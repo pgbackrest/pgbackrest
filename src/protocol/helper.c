@@ -351,7 +351,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         const String *optionDefName = STR(cfgDefOptionName(optionId));
         unsigned int groupId = cfgOptionGroupId(optionId);
         bool remove = false;
-        bool skipHostIdx = false;
+        bool skipHostZero = false;
 
         // Remove repo host options that are not needed on the remote. The remote is not expecting to see host settings so it could
         // get confused about the locality of the repo, i.e. local or remote. Also remove repo options when the remote type is pg
@@ -376,11 +376,18 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
             {
                 remove = true;
             }
-            // Else remove pg options that do not equal hostIdx. The remote will only work with one pg index at a time.
+            // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
             else
             {
+                if (hostIdx != 0)
+                {
+                    kvPut(
+                        optionReplace, VARSTRZ(cfgOptionIdxName(optionId, 0)),
+                        cfgOptionIdxSource(optionId, hostIdx) != cfgSourceDefault ? cfgOptionIdx(optionId, hostIdx) : NULL);
+                }
+
                 remove = true;
-                skipHostIdx = true;
+                skipHostZero = true;
             }
         }
 
@@ -391,7 +398,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
             // Loop through option indexes
             for (unsigned int optionIdx = 0; optionIdx < cfgOptionIdxTotal(optionId); optionIdx++)
             {
-                if (cfgOptionIdxTest(optionId, optionIdx) && !(skipHostIdx && optionIdx == hostIdx))
+                if (cfgOptionIdxTest(optionId, optionIdx) && !(skipHostZero && optionIdx == 0))
                     kvPut(optionReplace, VARSTRZ(cfgOptionIdxName(optionId, optionIdx)), NULL);
             }
         }
@@ -401,8 +408,17 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     kvPut(
         optionReplace,
         protocolStorageType == protocolStorageTypeRepo ?
-            VARSTRZ(cfgOptionIdxName(cfgOptRepoLocal, hostIdx)) : VARSTRZ(cfgOptionIdxName(cfgOptPgLocal, hostIdx)),
+            VARSTRZ(cfgOptionIdxName(cfgOptRepoLocal, hostIdx)) : VARSTRZ(cfgOptionIdxName(cfgOptPgLocal, 0)),
         BOOL_TRUE_VAR);
+
+    // Set default to make it explicit which host will be used on the remote
+    kvPut(
+        optionReplace,
+        VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoDefault : cfgOptPgDefault)),
+        VARUINT(
+            cfgOptionGroupIdxToRawIdx(
+                protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg,
+                protocolStorageType == protocolStorageTypeRepo ? hostIdx : 0)));
 
     // Add the process id if not set. This means that the remote is being started from the main process and should always get a
     // process id of 0.
@@ -496,18 +512,17 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
             unsigned int optHost = isRepo ? cfgOptRepoHost : cfgOptPgHost;
-            unsigned int optHostIdx = isRepo ? 0 : hostIdx;
 
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
                 cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, hostIdx),
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(cfgOptionIdxStr(optHost, optHostIdx))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(cfgOptionIdxStr(optHost, hostIdx))),
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
             execOpen(protocolHelperClient->exec);
 
             // Create protocol object
             protocolHelperClient->client = protocolClientNew(
-                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, strZ(cfgOptionIdxStr(optHost, optHostIdx))),
+                strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u protocol on '%s'", processId, strZ(cfgOptionIdxStr(optHost, hostIdx))),
                 PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
 
             // Get cipher options from the remote if none are locally configured
