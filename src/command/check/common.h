@@ -12,7 +12,7 @@ Check Command Common
 Functions
 ***********************************************************************************************************************************/
 // Check the database path and version are configured correctly
-void checkDbConfig(const unsigned int pgVersion, const unsigned int dbIdx, const Db *dbObject, bool isStandby);
+void checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *dbObject, bool isStandby);
 
 // Validate the archive and backup info files
 void checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo);

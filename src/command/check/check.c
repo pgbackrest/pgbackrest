@@ -36,7 +36,7 @@ checkManifest(void)
             {
                 result++;
                 // ??? Placeholder for manifest build
-                storageListP(storagePgId(pgIdx + 1), varStr(cfgOption(cfgOptPgPath + pgIdx)));
+                storageListP(storagePgIdx(pgIdx), varStr(cfgOption(cfgOptPgPath + pgIdx)));
             }
         }
     }
@@ -70,10 +70,10 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
         }
 
         // Validate the standby database config
-        PgControl pgControl = pgControlFromFile(storagePgId(dbGroup.standbyId));
+        PgControl pgControl = pgControlFromFile(storagePgIdx(dbGroup.standbyIdx));
 
         // Check the user configured path and version against the database
-        checkDbConfig(pgControl.version, dbGroup.standbyId, dbGroup.standby, true);
+        checkDbConfig(pgControl.version, dbGroup.standbyIdx, dbGroup.standby, true);
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
         storageRepo();
@@ -108,10 +108,10 @@ checkPrimary(const DbGetResult dbGroup)
     if (dbGroup.primary != NULL)
     {
         // Validate the primary database config
-        PgControl pgControl = pgControlFromFile(storagePgId(dbGroup.primaryId));
+        PgControl pgControl = pgControlFromFile(storagePgIdx(dbGroup.primaryIdx));
 
         // Check the user configured path and version against the database
-        checkDbConfig(pgControl.version, dbGroup.primaryId, dbGroup.primary, false);
+        checkDbConfig(pgControl.version, dbGroup.primaryIdx, dbGroup.primary, false);
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
         storageRepo();
