@@ -1138,11 +1138,6 @@ testRun(void)
                 walBuffer),
             "write WAL - continue range");
 
-        String *backupLabel = strNew("20181119-152900F");
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupLabel))),
-            "create empty backup path");
-
         // Set log detail level to capture ranges
         harnessLogLevelSet(logLevelDetail);
 
@@ -1150,26 +1145,24 @@ testRun(void)
         unsigned int errorTotal = 0;
         TEST_RESULT_STR_Z(
             verifyProcess(&errorTotal),
-            strZ(strNewFmt(
+            strZ(strNew(
                 "Results:\n"
                 "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
                 "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
                 "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
-                "  backup: %s, status: in-progress, total files checked: 0, total valid files: 0", strZ(backupLabel))),
+                "  backup: none found")),
             "verifyProcess() results");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
         harnessLogResult(
-            strZ(strNewFmt(
+            strZ(strNew(
+                "P00   WARN: no backups exist in the repo\n"
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01  ERROR: [028]: invalid checksum "
                     "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
                 "P01  ERROR: [028]: invalid size "
                     "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
-                "P00   WARN: unable to open missing file '%s/%s/%s/backup.manifest' for read\n"
-                "P00   INFO: backup '%s' appears to be in progress, skipping\n"
-                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000",
-                testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel))));
+                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000")));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, start next timeline");
@@ -1196,13 +1189,58 @@ testRun(void)
                 walBuffer),
             "write WAL - end next timeline");
 
+        // Set log level to errors only
+        harnessLogLevelSet(logLevelError);
+
+        TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
+        harnessLogResult(
+            strZ(strNew(
+                "P01  ERROR: [028]: invalid checksum "
+                    "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+                "P01  ERROR: [028]: invalid size "
+                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'")));
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid info files - various archive/backup errors");
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9",
+                        strZ(archiveStanzaPath)),
+                .modeFile = 0200),
+                walBuffer),
+            "write WAL - file not readable");
+
+        String *backupLabelPriorNoManifest = strNew("20181119-152800F");
+        TEST_RESULT_VOID(
+            storagePathCreateP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupLabelPriorNoManifest))),
+            "prior backup path missing manifests");
+
+        String *backupLabelManifestNoTargetFile = strNew("20181119-152810F");
+        const Buffer *contentLoad = harnessInfoChecksumZ
+        (
+            TEST_MANIFEST_HEADER
+            TEST_MANIFEST_DB_94
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+        );
+
+        String *manifestFileNoTarget = strNewFmt(
+            "%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabelManifestNoTargetFile));
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileNoTarget), contentLoad), "write manifest without target files");
+
+        String *backupLabel = strNew("20181119-152900F");
         String *backupFileName = strNewFmt("%s/pg_data/PG_VERSION", strZ(backupLabel));
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupFileName))),
                 BUFSTRDEF("")), "put zero-sized backup file");
 
-        const Buffer *contentLoad = harnessInfoChecksumZ
+        contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_DB_94
@@ -1226,36 +1264,15 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad),
             "write valid manifest copy");
 
-        // Set log level to errors only
-        harnessLogLevelSet(logLevelError);
-
-        TEST_ERROR(cmdVerify(), RuntimeError, "3 fatal errors encountered, see log for details");
-        harnessLogResult(
-            strZ(strNewFmt(
-                "P01  ERROR: [028]: invalid checksum "
-                    "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-                "P01  ERROR: [028]: invalid size "
-                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
-                "P01  ERROR: [028]: invalid checksum '%s'", strZ(backupFileName))));
-// CSHANG TODO: Add prior backup without manifest to get a missing manifest status and maybe also add a dependent backup on the last so it is current? Should try to cover as many cases in this last test as possible...
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("valid info files, unreadable WAL file");
-
+        String *backupLabelDependent = strNew("20181119-152900F_20181119-152909D");
         TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(
-                    storageTest,
-                    strNewFmt("%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9",
-                        strZ(archiveStanzaPath)),
-                .modeFile = 0200),
-                walBuffer),
-            "write WAL - file not readable");
+            storagePathCreateP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupLabelDependent))),
+            "create empty backup path for newest backup");
 
         // Set log level to capture ranges
         harnessLogLevelSet(logLevelDetail);
 
-        TEST_ERROR(cmdVerify(), RuntimeError, "4 fatal errors encountered, see log for details");
+        TEST_ERROR(cmdVerify(), RuntimeError, "5 fatal errors encountered, see log for details");
         harnessLogResult(
             strZ(strNewFmt(
                 "P00   WARN: archive path '9.4-1' is empty\n"
@@ -1264,11 +1281,18 @@ testRun(void)
                     "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
                 "P01  ERROR: [028]: invalid size "
                     "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
-                "P01  ERROR: [039]: invalid verify "
+                "P01  ERROR: [039]: invalid result "
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
                     "local-1 protocol: unable to open file "
                     "'%s/%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read: "
                     "[13] Permission denied\n"
+                "P00   WARN: unable to open missing file '%s/%s/%s/backup.manifest' for read\n"
+                "P00   WARN: unable to open missing file '%s/%s/%s/backup.manifest.copy' for read\n"
+                "P00   WARN: Manifest files missing for '%s' - backup may have expired\n"
+                "P00   WARN: unable to open missing file '%s/%s/%s/backup.manifest.copy' for read\n"
+                "P00  ERROR: [028]: backup '%s' manifest does not contain any target files to verify\n"
+                "P00   WARN: unable to open missing file '%s/%s/%s/backup.manifest' for read\n"
+                "P00   INFO: backup '%s' appears to be in progress, skipping\n"
                 "P01  ERROR: [028]: invalid checksum '%s'\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
@@ -1277,18 +1301,143 @@ testRun(void)
                 "              archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
                 "              archiveId: 11-2, total WAL checked: 8, total valid WAL: 5\n"
                 "                missing: 0, checksum invalid: 1, size invalid: 1, other: 1\n"
+                "              backup: %s, status: manifest missing, total files checked: 0, total valid files: 0\n"
+                "              backup: %s, status: invalid, total files checked: 0, total valid files: 0\n"
                 "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
-                "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0",
-                 testPath(), strZ(archiveStanzaPath), strZ(backupFileName), strZ(backupLabel))));
+                "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
+                "              backup: %s, status: in-progress, total files checked: 0, total valid files: 0",
+                testPath(), strZ(archiveStanzaPath), testPath(), strZ(backupStanzaPath), strZ(backupLabelPriorNoManifest),
+                testPath(), strZ(backupStanzaPath), strZ(backupLabelPriorNoManifest), strZ(backupLabelPriorNoManifest),
+                testPath(), strZ(backupStanzaPath), strZ(backupLabelManifestNoTargetFile), strZ(backupLabelManifestNoTargetFile),
+                testPath(), strZ(backupStanzaPath), strZ(backupLabelDependent), strZ(backupLabelDependent), strZ(backupFileName),
+                strZ(backupLabelPriorNoManifest), strZ(backupLabelManifestNoTargetFile), strZ(backupLabel),
+                strZ(backupLabelDependent))));
 
         harnessLogLevelReset();
 
+        // Clean up for next test
         TEST_RESULT_VOID(
             storageRemoveP(
                 storageTest,
                 strNewFmt("%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9",
                     strZ(archiveStanzaPath))),
             "remove unreadable WAL");
+        TEST_RESULT_VOID(
+            storagePathRemoveP(storageTest, strNewFmt("%s/11-2/0000000100000000", strZ(archiveStanzaPath)), .recurse = true),
+            "remove empty WAL dir");
+        TEST_RESULT_VOID(
+            storagePathRemoveP(storageTest, strNewFmt("%s/9.4-1", strZ(archiveStanzaPath)), .recurse = true),
+            "remove old WAL dir");
+        TEST_RESULT_VOID(
+            storagePathRemoveP(
+                storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupLabelPriorNoManifest)), .recurse = true),
+            "remove backup");
+        TEST_RESULT_VOID(
+            storagePathRemoveP(
+                storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupLabelManifestNoTargetFile)), .recurse = true),
+            "remove backup");
+
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("CSHANG");
+/* CSHANG TESTS:
+- have a manifest that has more than 1 file in it
+- have a manifest that has references to a prior backup
+*/
+
+        // Reference an invalid file and a valid file
+        const char *fileContents = "acefile";
+        // uint64_t fileSize = 7;
+        // const String *checksum = STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770");
+        String *validBackupFile = strNewFmt("%s/pg_data/testfile", strZ(backupLabel));
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(validBackupFile))), BUFSTRZ(fileContents)), "put valid file");
+
+        contentLoad = harnessInfoChecksumZ
+        (
+            strZ(strNewFmt(
+                "[backup]\n"
+                "backup-archive-start=\"000000020000000700000FFD\"\n"
+                "backup-archive-stop=\"000000020000000700000FFF\"\n"
+                "backup-label=\"%s\"\n"
+                "backup-timestamp-copy-start=0\n"
+                "backup-timestamp-start=0\n"
+                "backup-timestamp-stop=0\n"
+                "backup-type=\"full\"\n"
+                "\n"
+                "[backup:db]\n"
+                TEST_BACKUP_DB2_11
+                TEST_MANIFEST_OPTION_ALL
+                TEST_MANIFEST_TARGET
+                TEST_MANIFEST_DB
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION="
+                    "{\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true,\"size\":4,\"timestamp\":1565282114}\n"
+                "pg_data/testfile="
+                    "{\"checksum\":\"d1cd8a7d11daa26814b93eb604e1d49ab4b43770\",\"master\":true,\"size\":7,\"timestamp\":1565282114}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                TEST_MANIFEST_LINK
+                TEST_MANIFEST_LINK_DEFAULT
+                TEST_MANIFEST_PATH
+                TEST_MANIFEST_PATH_DEFAULT,
+            strZ(backupLabel)))
+        );
+
+        manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel));
+        manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest to full");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad),
+            "write valid manifest copy to full");
+
+        contentLoad = harnessInfoChecksumZ
+        (
+            strZ(strNewFmt(
+                "[backup]\n"
+                "backup-archive-start=\"000000020000000800000000\"\n"
+                "backup-archive-stop=\"000000020000000800000002\"\n"
+                "backup-label=\"%s\"\n"
+                "backup-timestamp-copy-start=0\n"
+                "backup-timestamp-start=0\n"
+                "backup-timestamp-stop=0\n"
+                "backup-type=\"diff\"\n"
+                "\n"
+                "[backup:db]\n"
+                TEST_BACKUP_DB2_11
+                TEST_MANIFEST_OPTION_ALL
+                TEST_MANIFEST_TARGET
+                TEST_MANIFEST_DB
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION="
+                    "{\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true,\"reference\":\"%s\",\"size\":4,"
+                    "\"timestamp\":1565282114}\n"
+                "pg_data/testfile="
+                    "{\"checksum\":\"d1cd8a7d11daa26814b93eb604e1d49ab4b43770\",\"master\":true,\"reference\":\"%s\",\"size\":7,"
+                    "\"timestamp\":1565282114}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                TEST_MANIFEST_LINK
+                TEST_MANIFEST_LINK_DEFAULT
+                TEST_MANIFEST_PATH
+                TEST_MANIFEST_PATH_DEFAULT,
+            strZ(backupLabelDependent), strZ(backupLabel), strZ(backupLabel)))
+        );
+
+        manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabelDependent));
+        manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest to dependant");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad),
+            "write valid manifest copy to dependant");
+// CSHANG This result backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 2, total valid files: 0 is
+// not right because the total valid files: should be 1
+        TEST_ERROR(cmdVerify(), RuntimeError, "3 fatal errors encountered, see log for details");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

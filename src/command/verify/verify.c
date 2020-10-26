@@ -877,8 +877,8 @@ verifyBackup(void *data)
                 // Remove this backup from the processing list
                 strLstRemoveIdx(jobData->backupList, 0);
 
-                // No files to process so break from the loop to the next backup in the list
-                break;
+                // No files to process so continue to the next backup in the list
+                continue;
             }
             // Initialize the backup results and manifest for processing
             else
@@ -966,6 +966,11 @@ verifyBackup(void *data)
                                 verifyInvalidFileAdd(backupResult->invalidFileList, invalidFile->reason, invalidFile->fileName);
                                 backupResult->status = backupInvalid;
                             }
+                            // Else the file in the prior backup was valid so increment the total valid files
+                            else
+                            {
+                                backupResult->totalFileValid++;
+                            }
                         }
                     }
                 }
@@ -976,7 +981,7 @@ verifyBackup(void *data)
                         strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
                 }
 
-                // If contructed file name is not null then send it off for processing
+                // If constructed file name is not null then send it off for processing
                 if (filePathName != NULL)
                 {
                     // Set up the job
@@ -996,10 +1001,10 @@ verifyBackup(void *data)
 
                 // If this was the last file to process for this backup, then free the manifest and remove this backup from the
                 // processing list
-                if (jobData->manifestFileIdx == manifestFileTotal(jobData->manifest))
+                if (jobData->manifestFileIdx == backupResult->totalFileManifest)
                 {
                     manifestFree(jobData->manifest);
-                    jobData->manifest = NULL;   // CSHANG Do we need? ANSWER: YES and make sure checking
+                    jobData->manifest = NULL;
                     strLstRemoveIdx(jobData->backupList, 0);
                 }
 
@@ -1007,7 +1012,7 @@ verifyBackup(void *data)
                 if (result != NULL)
                     break;
             }
-            while (jobData->manifestFileIdx < manifestFileTotal(jobData->manifest));
+            while (jobData->manifestFileIdx < backupResult->totalFileManifest);
         }
         else
         {
@@ -1015,7 +1020,7 @@ verifyBackup(void *data)
             // processing list
             LOG_ERROR_FMT(
                 errorTypeCode(&FileInvalidError),
-                "backup '%s' manifest appears valid but there are no target files listed to verify",
+                "backup '%s' manifest does not contain any target files to verify",
                 strZ(backupResult->backupLabel));
 
             jobData->jobErrorTotal++;
@@ -1091,7 +1096,7 @@ verifyErrorMsg(VerifyResult verifyResult)
     else if (verifyResult == verifySizeInvalid)
         result = strCatZ(result, "invalid size");
     else
-        result = strCatZ(result, "invalid verify");
+        result = strCatZ(result, "invalid result");
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -1631,6 +1636,8 @@ WAL
 2/05 -03.history
 4/06 -05.history
 */
+
+
                 // Report results
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList);
             }

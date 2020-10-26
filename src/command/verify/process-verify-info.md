@@ -153,6 +153,8 @@ Considerations:
     - It was decided that if the database information does not exist in the history of the backup info file, then the backup will be considered invalid and the files will not be checked.
 2. If a manifest is considered unusable, then should there be a backup result for it or do we just report an error in the log and indicate the backup is being skipped? (Need to try to be consistent with archive results).
 
+CSHANG: But what if there are no backups in the backup.info file? Should we still assume the last one on disk is the "current"?
+
 ```
 IF manifest is readable
 THEN
@@ -292,6 +294,10 @@ FOR each file sent for processing
 
 ## Requirement 6. Verify whether a backup is consistent, valid and can be played through PITR
 
+CSHANG TO CONSIDER:
+1) What if the backup is not in the backup.info file after we have completed verifying the backup files? The backup might be good, but it may not be restored unless in the backup.info, right? Also, it may have also just been expired out from under us - but in either case, should we indicate it is not in the backup.info and may not be restore-able?
+2) We are skipping verifying what we believe to be the current backup (only a copy and was the newest backup on disk) so at the end, if it complete, we won't know and also if a dependent backup was invalid, we should probably still indicate the "current" backup is invalid even though we did not check it's files. BUT maybe not - since we didn't check the files, we're not really sure if the file that was a problem in the prior backup was referenced by the current backup - so should probably just report the backup as verification skipped....
+
 Check each backup, using the following definitions:
 
 - Consistent - no gaps (missing or invalid) in the WAL from the backup start to backup end for a single backup (not backup set)
@@ -342,8 +348,8 @@ ELSE
         - We should probably check archive and backup history lists match (expire checks that the backup.info history contains at least the same history as archive.info (it can have more)) since we need to get backup db-id needs to be able to translate exactly to the archiveId (i.e. db-id=2, db-version=9.6 in backu.info must translate to archiveId 9.6-2.
         - If archive-copy set the WAL can be in the backup dirs so just because archive.info is missing, don't want to error
 
-    * Reconstruct backup.info and WARN on mismatches - NO because this doesn't really help us since we do not want to take a lock which means things can be added/removed as we're verifying. So instead:
-        - Get a list of backup on disk and a list of archive ids and pass that to job data
+    * Do not reconstruct backup.info because this doesn't really help us since we do not want to take a lock which means things can be added/removed as we're verifying. So instead:
+        - Get a list of backups on disk and a list of archive ids and pass that to job data
         - When checking backups, if the label is missing then skip (probably expired from underneath us) and then if it is there but only the manifest.copy exists, then skip (could be aborted or in progress so can't really check anything)
         - It is possible to have a backup without all the WAL if option-archive-check=true is not set but in this is not on then all bets are off
 
