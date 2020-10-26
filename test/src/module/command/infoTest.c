@@ -63,7 +63,6 @@ testRun(void)
             "]",
             "json - empty repo, stanza option specified");
 
-
         StringList *argListTextStanzaOpt = strLstDup(argListText);
         strLstAddZ(argListTextStanzaOpt, "--stanza=stanza1");
         harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
