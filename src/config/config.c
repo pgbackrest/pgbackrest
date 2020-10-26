@@ -1139,29 +1139,6 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int index, ConfigSource source, 
                     break;
                 }
 
-                case cfgDefOptTypeHash:
-                {
-                    if (varType(value) == varTypeKeyValue)
-                        configLocal->option[optionId].index[index].value = varDup(value);
-                    else
-                        THROW_FMT(AssertError, "option '%s' must be set with KeyValue variant", cfgOptionIdxName(optionId, index));
-
-                    break;
-                }
-
-                case cfgDefOptTypeList:
-                {
-                    if (varType(value) == varTypeVariantList)
-                        configLocal->option[optionId].index[index].value = varDup(value);
-                    else
-                    {
-                        THROW_FMT(
-                            AssertError, "option '%s' must be set with VariantList variant", cfgOptionIdxName(optionId, index));
-                    }
-
-                    break;
-                }
-
                 case cfgDefOptTypePath:
                 case cfgDefOptTypeString:
                 {
@@ -1172,6 +1149,9 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int index, ConfigSource source, 
 
                     break;
                 }
+
+                default:
+                    THROW_FMT(AssertError, "set not available for option type %d", cfgDefOptionType(optionId));
             }
         }
         else

@@ -1214,13 +1214,13 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "db", "    stanza is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceParam, "    pg1-path is source param");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3KeySecret), "xxx", "    repo1-s3-secret is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "    repo1-s3-secret is source env");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
-        TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 1048576, "    buffer-size is set");
+        TEST_RESULT_INT(cfgOptionIdxInt(cfgOptBufferSize, 0), 1048576, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "    buffer-size is source default");
         TEST_RESULT_Z(cfgOptionName(cfgOptBufferSize), "buffer-size", "    buffer-size name");
 
@@ -1363,6 +1363,12 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 1800, "    db-timeout is set");
+        TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgPort, 1), 5432, "    pg2-port is set");
+        TEST_RESULT_UINT(cfgOptionIdxUInt64(cfgOptPgPort, 1), 5432, "    pg2-port is set");
+        TEST_RESULT_STR(cfgOptionIdxStrNull(cfgOptPgHost, 1), NULL, "    pg2-host is NULL");
+        TEST_RESULT_STR(cfgOptionStrNull(cfgOptPgHost), NULL, "    pg2-host is NULL");
+        TEST_ERROR(cfgOptionStr(cfgOptPgHost), AssertError, "option 'pg2-host' is null but non-null was requested");
 
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "    backup-standby default is false");
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "    backup-standby default is false (again)");
@@ -1376,6 +1382,11 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 1), "/default", "    pg2-socket-path is new default");
 
         TEST_ERROR(cfgOptionDefaultValue(cfgOptDbInclude), AssertError, "default value not available for option type 4");
+        TEST_ERROR(cfgOptionLst(cfgOptDbInclude), AssertError, "option 'db-include' is not valid for the current command");
+        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg2-path' is type 5 but 4 was requested");
+
+        TEST_RESULT_VOID(cfgOptionInvalidate(cfgOptPgPath), "    invalidate pg-path");
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), false, "    pg-path no longer valid");
 
         unsetenv("PGBACKREST_BOGUS");
         unsetenv("PGBACKREST_NO_DELTA");
@@ -1411,8 +1422,9 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLockRequired(), true, "    archive-push:async command requires lock");
         TEST_RESULT_BOOL(cfgLogFile(), true, "    archive-push:async command does file logging");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 4503599627370496, "archive-push-queue-max is set");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptArchivePushQueueMax), 4503599627370496, "archive-push-queue-max is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptArchivePushQueueMax), cfgSourceParam, "    archive-push-queue-max is source config");
-        TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 2097152, "buffer-size is set to bytes from MB");
+        TEST_RESULT_INT(cfgOptionIdxInt64(cfgOptBufferSize, 0), 2097152, "buffer-size is set to bytes from MB");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceParam, "    buffer-size is source config");
         TEST_RESULT_PTR(cfgOption(cfgOptSpoolPath), NULL, "    spool-path is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptSpoolPath), cfgSourceDefault, "    spool-path is source default");
@@ -1467,6 +1479,7 @@ testRun(void)
         const KeyValue *recoveryKv = NULL;
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("a")))), "b", "check recovery option");
+        TEST_ASSIGN(recoveryKv, cfgOptionIdxKv(cfgOptRecoveryOption, 0), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("c")))), "de=fg hi", "check recovery option");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "    restore command does not require lock");
 
@@ -1492,6 +1505,7 @@ testRun(void)
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("f")))), "g", "check recovery option");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk")))), "l", "check recovery option");
+        TEST_RESULT_UINT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "check db include option size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1515,6 +1529,32 @@ testRun(void)
         unsetenv("PGBACKREST_PG1_PATH");
         unsetenv("PGBACKREST_RECOVERY_OPTION");
         unsetenv("PGBACKREST_DB_INCLUDE");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cfgOptionSet() and cfgOptionIdxSet()");
+
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptForce, cfgSourceParam, VARINT(1)), "set force true");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), true, "check force");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptForce, cfgSourceParam, VARBOOL(false)), "set force false");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "check force");
+
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT(1)), "set protocol-timeout to 1");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 1, "check protocol-timeout");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARDBL(2.2)), "set protocol-timeout to 2.2");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 2.2, "check protocol-timeout");
+
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptProcessMax, cfgSourceParam, VARINT(50)), "set process-max to 50");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptProcessMax), 50, "check process-max");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptProcessMax, cfgSourceParam, VARINT64(51)), "set process-max to 51");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptProcessMax), 51, "check process-max");
+
+        TEST_ERROR(cfgOptionSet(cfgOptDbInclude, cfgSourceParam, VARINT(1)), AssertError, "set not available for option type 4");
+
+        TEST_ERROR(
+            cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, VARINT(1)), AssertError,
+            "option 'pg1-path' must be set with String variant");
+        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, VARSTRDEF("/new")), "set pg1-path");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/new", "check pg1-path");
 
         // Stanza options should not be loaded for commands that don't take a stanza
         // -------------------------------------------------------------------------------------------------------------------------

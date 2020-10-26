@@ -370,11 +370,12 @@ unit:
 
         coverage:
           config/config: full
-          config/parse: full
+          # config/parse: full
           config/parse.auto: noCode
 
         include:
           - common/log
+          - config/parse
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: load
