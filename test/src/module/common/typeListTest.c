@@ -115,6 +115,20 @@ testRun(void)
             TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
         }
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("add items to force the list to get moved down");
+
+        TEST_RESULT_INT(lstSize(list), 8, "check size");
+        TEST_RESULT_INT(list->listSizeMax, 16, "check size max");
+
+        for (int listIdx = 0; listIdx < 8; listIdx++)
+        {
+            int item = listIdx + 9;
+            TEST_RESULT_VOID(lstAdd(list, &item), "add item %d", item);
+        }
+
+        TEST_RESULT_INT(list->listSize, list->listSizeMax, "size equals max size");
+
         // Remove last item
         TEST_RESULT_VOID(lstRemoveLast(list), "remove last item");
 
@@ -125,7 +139,7 @@ testRun(void)
             TEST_RESULT_INT(*item, listIdx + 1, "check item %u", listIdx);
         }
 
-        TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 7 from list with 7 value(s)");
+        TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 15 from list with 15 value(s)");
         TEST_RESULT_VOID(lstMove(NULL, memContextTop()), "move null list");
     }
 

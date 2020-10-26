@@ -188,6 +188,33 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("lstRemoveIdx()"))
+    {
+        CHECK(testScale() <= 10000);
+        int testMax = 1000000 * (int)testScale();
+
+        // Generate a large list of values (use int instead of string so there fewer allocations)
+        List *list = lstNewP(sizeof(int));
+
+        for (int listIdx = 0; listIdx < testMax; listIdx++)
+            lstAdd(list, &listIdx);
+
+        CHECK(lstSize(list) == (unsigned int)testMax);
+
+        TEST_LOG_FMT("generated %d item list", testMax);
+
+        // Remove all values from index 0
+        TimeMSec timeBegin = timeMSec();
+
+        for (int listIdx = 0; listIdx < testMax; listIdx++)
+            lstRemoveIdx(list, 0);
+
+        TEST_LOG_FMT("remove completed in %ums", (unsigned int)(timeMSec() - timeBegin));
+
+        CHECK(lstSize(list) == 0);
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("iniLoad()"))
     {
         CHECK(testScale() <= 10000);
