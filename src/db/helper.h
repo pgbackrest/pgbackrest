@@ -16,10 +16,10 @@ Functions
 // Get specified cluster(s)
 typedef struct DbGetResult
 {
-    unsigned int primaryId;
-    Db *primary;
-    unsigned int standbyId;
-    Db *standby;
+    unsigned int primaryIdx;                                        // cfgOptGrpPg index of the primary
+    Db *primary;                                                    // Primary db object (NULL if none requested)
+    unsigned int standbyIdx;                                        // cfgOptGrpPg index of the standby
+    Db *standby;                                                    // Standby db object (NULL if none requested)
 } DbGetResult;
 
 DbGetResult dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired);

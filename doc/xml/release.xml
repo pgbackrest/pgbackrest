@@ -72,6 +72,14 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Use zero-based indexes when referring to option indexes.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-reviewer id="stephen.frost"/>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
