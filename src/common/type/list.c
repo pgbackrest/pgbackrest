@@ -309,9 +309,10 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
         this->list = this->listAlloc;
     }
 
-    // If not inserting at the end then move items down to make space
+    // Calculate the position where this item will be copied
     void *itemPtr = this->list + (listIdx * this->itemSize);
 
+    // If not inserting at the end then move items down to make space
     if (listIdx != lstSize(this))
         memmove(this->list + ((listIdx + 1) * this->itemSize), itemPtr, (lstSize(this) - listIdx) * this->itemSize);
 
