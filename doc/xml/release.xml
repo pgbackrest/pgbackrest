@@ -14,6 +14,18 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.31dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="jefferson.alexandre"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <code>[</code>, <code>#</code>, and <code>space</code> as the first character in database names.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -44,6 +56,14 @@
                         </release-item-contributor-list>
 
                         <p>Add option groups.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Use zero-based indexes when referring to option indexes.</p>
                     </release-item>
 
                     <release-item>
@@ -9026,6 +9046,11 @@
         <contributor id="jeff.mccormick">
             <contributor-name-display>Jeff McCormick</contributor-name-display>
             <contributor-id type="github">jmccormick2001</contributor-id>
+        </contributor>
+
+        <contributor id="jefferson.alexandre">
+            <contributor-name-display>Jefferson Alexandre</contributor-name-display>
+            <contributor-id type="github">jalexandre0</contributor-id>
         </contributor>
 
         <contributor id="jens.wilke">
