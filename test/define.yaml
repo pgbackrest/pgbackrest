@@ -366,16 +366,14 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: parse
-        total: 4
+        total: 5
 
         coverage:
-          # config/config: full
-          # config/parse: full
+          config/config: full
+          config/parse: full
           config/parse.auto: noCode
 
         include:
-          - config/config
-          - config/parse
           - common/log
 
       # ----------------------------------------------------------------------------------------------------------------------------

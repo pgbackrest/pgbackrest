@@ -38,6 +38,15 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // Config functions that are not tested with parse
+    // *****************************************************************************************************************************
+    if (testBegin("cfg*()"))
+    {
+        TEST_TITLE("config command defaults to none before cfgInit()");
+
+        TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
+    }
+
     // config and config-include-path options
     // *****************************************************************************************************************************
     if (testBegin("cfgFileLoad()"))
@@ -617,6 +626,8 @@ testRun(void)
             sizeof(optionResolveOrder) / sizeof(ConfigOption), CFG_OPTION_TOTAL,
             "check that the option resolve list contains an entry for every option");
 
+        TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is " TEST_COMMAND_BACKUP);
+
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
@@ -810,6 +821,7 @@ testRun(void)
         logLevelStdErr = logLevelError;
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "load local config");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleLocal, "    command role is local");
+        TEST_RESULT_BOOL(cfgLockRequired(), false, "    backup:local command does not require lock");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup:local", "    command/role name is backup:local");
         TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
         TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
@@ -1184,6 +1196,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgCommandInternal(cfgCmdBackup), false, "    backup command is not internal");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "    backup command requires lock");
         TEST_RESULT_UINT(cfgLockType(), lockTypeBackup, "    backup command requires backup lock type");
+        TEST_RESULT_UINT(cfgLogLevelDefault(), logLevelInfo, "    backup defaults to log level warn");
+        TEST_RESULT_BOOL(cfgLogFile(), true, "    backup command does file logging");
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "    backup command requires remote lock");
         TEST_RESULT_STR_Z(strLstJoin(cfgCommandParam(), "|"), "", "    check command arguments");
         TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleDefault, "command role default enum");
@@ -1219,6 +1233,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("--no-online"));
         hrnCfgArgKeyRawBool(argList, cfgOptPgLocal, 2, true);
+        hrnCfgArgRawZ(argList, cfgOptPgDefault, "2");
         strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew("--reset-pg3-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));
@@ -1283,20 +1298,23 @@ testRun(void)
                     "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
-        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "    pg1 and pg2 is set");
+        TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 1, "    pg2 is default");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToRawIdx(cfgOptGrpPg, 1), 2, "    pg2 is index 1");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db2", "    default pg-path");
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "    pg1 and pg2 are set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "    pg2-local is set");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 1), false, "    pg2-host is not set (pg2-local override)");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 1), "/path/to/db2", "    pg2-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLockPath), "/", "    lock-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "    lock-path is source config");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgSocketPath), "/path/to/socket", "    pg1-socket-path is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptPgSocketPath), cfgSourceConfig, "    pg1-socket-path is config param");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "    pg1-socket-path is set");
+        TEST_RESULT_INT(cfgOptionIdxSource(cfgOptPgSocketPath, 0), cfgSourceConfig, "    pg1-socket-path is config param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "    start-fast not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStartFast), cfgSourceConfig, "    start-fast is config param");
+        TEST_RESULT_UINT(cfgOptionIdxTotal(cfgOptDelta), 1, "    delta not indexed");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "    delta not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "    archive-check is not set");
@@ -1311,6 +1329,14 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
+
+        TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "    backup-standby default is false");
+        TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "    backup-standby default is false (again)");
+        TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHost), NULL, "    pg-host default is NULL");
+        TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptLogLevelConsole)), "warn", "    log-level-console default is warn");
+        TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptPgPort)), 5432, "    pg-port default is 5432");
+        TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptDbTimeout)), 1800, "    db-timeout default is 1800");
+        TEST_ERROR(cfgOptionDefaultValue(cfgOptDbInclude), AssertError, "default value not available for option type 4");
 
         unsetenv("PGBACKREST_BOGUS");
         unsetenv("PGBACKREST_NO_DELTA");
@@ -1333,7 +1359,7 @@ testRun(void)
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNew("--archive-push-queue-max=4503599627370496"));
         strLstAdd(argList, strNew("--buffer-size=2MB"));
-        strLstAdd(argList, strNew("archive-push"));
+        strLstAdd(argList, strNew("archive-push:async"));
 
         storagePutP(
             storageNewWriteP(storageLocalWrite(), configFile),
@@ -1343,6 +1369,8 @@ testRun(void)
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "archive-push command");
 
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "    archive-push:async command requires lock");
+        TEST_RESULT_BOOL(cfgLogFile(), true, "    archive-push:async command does file logging");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 4503599627370496, "archive-push-queue-max is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptArchivePushQueueMax), cfgSourceParam, "    archive-push-queue-max is source config");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 2097152, "buffer-size is set to bytes from MB");
@@ -1401,6 +1429,7 @@ testRun(void)
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("a")))), "b", "check recovery option");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("c")))), "de=fg hi", "check recovery option");
+        TEST_RESULT_BOOL(cfgLockRequired(), false, "    restore command does not require lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1465,7 +1494,23 @@ testRun(void)
                 "repo1-path=/not/the/path\n"));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "info command");
+        TEST_RESULT_BOOL(cfgLogFile(), false, "    info command does not do file logging");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoPath), "/path/to/repo", "check repo1-path option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info command can be forced to do file logging");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "detail");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdInfo, argList), "info command");
+
+        TEST_RESULT_BOOL(cfgLogFile(), true, "    check logging");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("version command does not do file logging");
+
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdVersion, strLstNew()), "version command");
+        TEST_RESULT_BOOL(cfgLogFile(), false, "    check logging");
     }
 
     // *****************************************************************************************************************************
