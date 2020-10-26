@@ -1222,9 +1222,41 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptOnline), cfgSourceParam, "    online is source default");
         TEST_RESULT_INT(cfgOptionInt(cfgOptBufferSize), 1048576, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "    buffer-size is source default");
+        TEST_RESULT_Z(cfgOptionName(cfgOptBufferSize), "buffer-size", "    buffer-size name");
 
         unsetenv("PGBACKREST_REPO1_S3_KEY");
         unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("port can be parsed from hostname");
+
+        unsigned int port = 55555;
+
+        cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("host.com")) ;
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Host, &port), "host.com", "check plain host");
+        TEST_RESULT_UINT(port, 55555, "check that port was not updated");
+
+        cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777")) ;
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Host, &port), "myhost.com", "check host with port");
+        TEST_RESULT_UINT(port, 777, "check that port was updated");
+
+        cfgOptionSet(cfgOptRepoS3Endpoint, cfgSourceConfig, NULL);
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Endpoint, &port), NULL, "check null host");
+        TEST_RESULT_UINT(port, 777, "check that port was not updated");
+
+        cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777:888")) ;
+        TEST_ERROR(
+            cfgOptionHostPort(cfgOptRepoS3Host, &port), OptionInvalidError,
+            "'myhost.com:777:888' is not valid for option 'repo1-s3-host'"
+                "\nHINT: is more than one port specified?");
+        TEST_RESULT_UINT(port, 777, "check that port was not updated");
+
+        cfgOptionSet(cfgOptRepoS3Endpoint, cfgSourceConfig, varNewStrZ("myendpoint.com:ZZZ"));
+        TEST_ERROR(
+            cfgOptionHostPort(cfgOptRepoS3Endpoint, &port), OptionInvalidError,
+            "'myendpoint.com:ZZZ' is not valid for option 'repo1-s3-endpoint'"
+                "\nHINT: port is not a positive integer.");
+        TEST_RESULT_UINT(port, 777, "check that port was not updated");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1297,7 +1329,8 @@ testRun(void)
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
                     "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
+        TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
+        TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "    pg1-host was reset");
         TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 1, "    pg2 is default");
         TEST_RESULT_UINT(cfgOptionGroupIdxToRawIdx(cfgOptGrpPg, 1), 2, "    pg2 is index 1");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db2", "    default pg-path");
@@ -1325,6 +1358,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "    compress-level is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "    backup-standby is source default");
+        TEST_RESULT_BOOL(cfgOptionReset(cfgOptBackupStandby), true, "    backup-standby was reset");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "    delta is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
@@ -1336,6 +1370,11 @@ testRun(void)
         TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptLogLevelConsole)), "warn", "    log-level-console default is warn");
         TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptPgPort)), 5432, "    pg-port default is 5432");
         TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptDbTimeout)), 1800, "    db-timeout default is 1800");
+
+        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, VARSTRDEF("/default")), "    set pg-socket-path default");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "    pg1-socket-path unchanged");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 1), "/default", "    pg2-socket-path is new default");
+
         TEST_ERROR(cfgOptionDefaultValue(cfgOptDbInclude), AssertError, "default value not available for option type 4");
 
         unsetenv("PGBACKREST_BOGUS");
