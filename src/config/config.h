@@ -87,19 +87,22 @@ bool cfgLogFile(void);
 // Default log level -- used for log messages that are common to all commands
 LogLevel cfgLogLevelDefault(void);
 
+// Does this command allow parameters?
+bool cfgParameterAllowed(void);
+
 // Command parameters, if any
 const StringList *cfgCommandParam(void);
 
 /***********************************************************************************************************************************
 Option Group Functions
 ***********************************************************************************************************************************/
-// Get the default index for this group, i.e. the index that will be used if a non-index function like cfgOptionTest() is called.
+// Get the default index for this group, i.e. the index that will be used if a non-indexed function like cfgOptionTest() is called.
 unsigned int cfgOptionGroupIdxDefault(ConfigOptionGroup groupId);
 
-// Convert the group index to a raw index, i.e. the index that was used in the original configuration file, command-line, etc.
-// Useful for messages that do not show an option name but must use an index that the user will recognize. It is preferrable to
-// generate an option name with cfgOptionIdxName() when possible.
-unsigned int cfgOptionGroupIdxToRawIdx(ConfigOptionGroup groupId, unsigned int index);
+// Convert the group index to a key, i.e. the key that was used in the original configuration file, command-line, etc. Useful for
+// messages that do not show an option name but must use an index that the user will recognize. It is preferrable to generate an
+// option name with cfgOptionIdxName() when possible.
+unsigned int cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int index);
 
 // Total indexes, 0 if the group is not valid. Will be the total configured indexes, no matter which raw indexes were used during
 // configuration. e.g., if pg1-path and pg8-path are configured then this function will return 2.
@@ -111,7 +114,8 @@ bool cfgOptionGroupValid(ConfigOptionGroup groupId);
 /***********************************************************************************************************************************
 Option Functions
 
-Access option values, indexes, and determine if an option is valid for the current command.
+Access option values, indexes, and determine if an option is valid for the current command. Most functions have a variant that
+accepts an index, which currently work with non-indexed options (with optionIdx 0) but they may not always do so.
 ***********************************************************************************************************************************/
 // Get config options for various types
 const Variant *cfgOption(ConfigOption optionId);

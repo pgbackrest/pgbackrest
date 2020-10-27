@@ -59,12 +59,6 @@ Init Function
 void cfgInit(Config *config);
 
 /***********************************************************************************************************************************
-Command Functions
-***********************************************************************************************************************************/
-// Does this command allow parameters?
-bool cfgCommandParameterAllowed(ConfigCommand commandId);
-
-/***********************************************************************************************************************************
 Option Group Functions
 ***********************************************************************************************************************************/
 // Is the option in a group?
@@ -76,8 +70,8 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
-// Get the option name using the raw index -- i.e. the index that was used during configuration
-const char *cfgOptionRawIdxName(ConfigOption optionId, unsigned int index);
+// Get the option name using the key -- i.e. the key that was used during configuration, e.g. the 2 in pg2-host
+const char *cfgOptionKeyIdxName(ConfigOption optionId, unsigned int index);
 
 // Convert the key used in the original configuration to a group index. This is used when an option key must be translated into the
 // local group index, e.g. during parsing or when getting the value of specific options from a remote.

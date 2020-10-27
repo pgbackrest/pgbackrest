@@ -1313,7 +1313,7 @@ testRun(void)
                     "%s=/path/to/db2\n"
                     "pg3-host=ignore\n"
                     "recovery-option=c=d\n",
-                    cfgOptionRawIdxName(cfgOptPgHost, 1), cfgOptionRawIdxName(cfgOptPgPath, 1))));
+                    cfgOptionKeyIdxName(cfgOptPgHost, 1), cfgOptionKeyIdxName(cfgOptPgPath, 1))));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         harnessLogResult(
@@ -1332,7 +1332,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "    pg1-host was reset");
         TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 1, "    pg2 is default");
-        TEST_RESULT_UINT(cfgOptionGroupIdxToRawIdx(cfgOptGrpPg, 1), 2, "    pg2 is index 1");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "    pg2 is index 1");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db2", "    default pg-path");
         TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "    pg1 and pg2 are set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "    pg2-local is set");

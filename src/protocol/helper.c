@@ -138,7 +138,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
             optionReplace,
             VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoDefault : cfgOptPgDefault)),
             VARUINT(
-                cfgOptionGroupIdxToRawIdx(
+                cfgOptionGroupIdxToKey(
                     protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg, hostIdx)));
 
         // Add the remote type
@@ -416,7 +416,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         optionReplace,
         VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoDefault : cfgOptPgDefault)),
         VARUINT(
-            cfgOptionGroupIdxToRawIdx(
+            cfgOptionGroupIdxToKey(
                 protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg,
                 protocolStorageType == protocolStorageTypeRepo ? hostIdx : 0)));
 

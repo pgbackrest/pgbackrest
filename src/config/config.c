@@ -426,7 +426,7 @@ cfgOptionGroupIdxDefault(ConfigOptionGroup groupId)
 
 /**********************************************************************************************************************************/
 unsigned int
-cfgOptionGroupIdxToRawIdx(ConfigOptionGroup groupId, unsigned int index)
+cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int index)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, groupId);
@@ -722,7 +722,7 @@ cfgOptionName(ConfigOption optionId)
 }
 
 const char *
-cfgOptionRawIdxName(ConfigOption optionId, unsigned int index)
+cfgOptionKeyIdxName(ConfigOption optionId, unsigned int index)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
@@ -761,7 +761,7 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int index)
     if (configOptionData[optionId].group)
     {
         FUNCTION_TEST_RETURN(
-            cfgOptionRawIdxName(optionId, configLocal->optionGroup[configOptionData[optionId].groupId].index[index]));
+            cfgOptionKeyIdxName(optionId, configLocal->optionGroup[configOptionData[optionId].groupId].index[index]));
     }
 
     FUNCTION_TEST_RETURN(configOptionData[optionId].name);
