@@ -768,7 +768,7 @@ infoRender(void)
         String *resultStr = strNew("");
 
         // If the backup storage exists, then search for and process any stanzas
-        if (strLstSize(stanzaList) > 0)
+        if (strLstSize(stanzaList) > 0 || stanza != NULL)
             infoList = stanzaInfoList(stanza, stanzaList, backupLabel);
 
         // Format text output
