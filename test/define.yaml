@@ -380,11 +380,10 @@ unit:
       - name: load
         total: 4
 
-        # coverage:
-        #   config/load: full
+        coverage:
+          config/load: full
 
         include:
-          - config/load
           - common/log
           - common/io/socket/common
 
