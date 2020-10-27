@@ -78,7 +78,7 @@ Struct to hold options parsed from the command line
 ***********************************************************************************************************************************/
 typedef struct ParseOption
 {
-    bool found:1;                                                   // Was the option found on the command line?
+    bool found:1;                                                   // Was the option found?
     bool negate:1;                                                  // Was the option negated on the command line?
     bool reset:1;                                                   // Was the option reset on the command line?
     unsigned int source:2;                                          // Where was to option found?
