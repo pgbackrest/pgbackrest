@@ -1590,6 +1590,28 @@ testRun(void)
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdVersion, strLstNew()), "version command");
         TEST_RESULT_BOOL(cfgLogFile(), false, "    check logging");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option key 1 is not required");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdCheck, argList), "check command");
+
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/pg2", "check pg1-path");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 1), "/pg8", "check pg8-path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid pg-default");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
+        hrnCfgArgRawZ(argList, cfgOptPgDefault, "4");
+        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError, "'4' is not valid for 'pg-default' option");
     }
 
     // *****************************************************************************************************************************

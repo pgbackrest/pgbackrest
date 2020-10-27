@@ -836,7 +836,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 // Get the stanza name
                 String *stanza = NULL;
 
-                if (parseOptionList[cfgOptStanza].indexList != NULL && parseOptionList[cfgOptStanza].indexList[0].found)
+                if (parseOptionList[cfgOptStanza].indexList != NULL)
                     stanza = strLstGet(parseOptionList[cfgOptStanza].indexList[0].valueList, 0);
 
                 // Build list of sections to search for options
@@ -996,17 +996,11 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 else
                 {
                     // Error if the invalid option was explicitly set on the command-line
-                    if (parseOptionList[optionId].indexListTotal > 0)
+                    if (parseOptionList[optionId].indexList != NULL)
                     {
-                        for (unsigned int optionIdx = 0; optionIdx < parseOptionList[optionId].indexListTotal; optionIdx++)
-                        {
-                            if (parseOptionList[optionId].indexList[optionIdx].found)
-                            {
-                                THROW_FMT(
-                                    OptionInvalidError, "option '%s' not valid for command '%s'",
-                                    cfgOptionRawIdxName(optionId, optionIdx), cfgCommandName(config->command));
-                            }
-                        }
+                        THROW_FMT(
+                            OptionInvalidError, "option '%s' not valid for command '%s'", cfgDefOptionName(optionId),
+                            cfgCommandName(config->command));
                     }
 
                     // Continue to the next option
@@ -1365,48 +1359,30 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             // Get the default value for this option
                             const char *value = cfgDefOptionDefault(config->command, optionId);
 
+                            // If the option has a default
                             if (value != NULL)
                             {
                                 MEM_CONTEXT_BEGIN(config->memContext)
                                 {
-                                    switch (optionDefType)
+                                    // This would typically be a switch but since not all cases are covered it would require a
+                                    // separate function which does not seem worth it. The eventual plan is to have all the defaults
+                                    // represented as constants so they can be assigned directly without creating variants.
+                                    if (optionDefType == cfgDefOptTypeBoolean)
+                                        configOptionValue->value = strcmp(value, "1") == 0 ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
+                                    else if (optionDefType == cfgDefOptTypeFloat)
+                                        configOptionValue->value = varNewDbl(cvtZToDouble(value));
+                                    else if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize)
+                                        configOptionValue->value = varNewInt64(cvtZToInt64(value));
+                                    else
                                     {
-                                        case cfgDefOptTypeBoolean:
-                                        {
-                                            configOptionValue->value = strcmp(value, "1") == 0 ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
-                                            break;
-                                        }
+                                        ASSERT(optionDefType == cfgDefOptTypePath || optionDefType == cfgDefOptTypeString);
 
-                                        case cfgDefOptTypeFloat:
-                                        {
-                                            configOptionValue->value = varNewDbl(cvtZToDouble(value));
-                                            break;
-                                        }
-
-                                        case cfgDefOptTypeInteger:
-                                        case cfgDefOptTypeSize:
-                                        {
-                                            configOptionValue->value = varNewInt64(cvtZToInt64(value));
-                                            break;
-                                        }
-
-                                        case cfgDefOptTypeHash:
-                                        case cfgDefOptTypeList:
-                                        {
-                                            THROW_FMT(AssertError, "default not supported for type %u", optionDefType);
-                                            break;
-                                        }
-
-                                        case cfgDefOptTypePath:
-                                        case cfgDefOptTypeString:
-                                        {
-                                            configOptionValue->value = varNewStrZ(value);
-                                            break;
-                                        }
+                                        configOptionValue->value = varNewStrZ(value);
                                     }
                                 }
                                 MEM_CONTEXT_END();
                             }
+                            // Else error if option is required and help was not requested
                             else if (cfgDefOptionRequired(config->command, optionId) && !config->help)
                             {
                                 const char *hint = "";
