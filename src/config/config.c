@@ -734,7 +734,8 @@ cfgOptionKeyIdxName(ConfigOption optionId, unsigned int optionIdx)
 
     if (configOptionData[optionId].group)
     {
-        // !!! NOT RIGHT SINCE THIS RETURNS CONST BUT ALLOCATES MEMORY IN THE CALLING CONTEXT
+        // This is somewhat less than ideal since memory is being allocated with each call, rather than caching prior results. In
+        // practice the numnber of allocations should be quite small so we'll ignore this for now.
         String *name = strNewFmt(
             "%s%u%s", configOptionGroupData[configOptionData[optionId].groupId].name, optionIdx + 1,
             configOptionData[optionId].name + strlen(configOptionGroupData[configOptionData[optionId].groupId].name));

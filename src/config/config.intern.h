@@ -7,12 +7,13 @@ Command and Option Configuration Internals
 #include "config/config.h"
 
 /***********************************************************************************************************************************
-Define index max
+The maximum numer of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
 ***********************************************************************************************************************************/
-#define CFG_OPTION_INDEX_MAX                                        256
+#define CFG_OPTION_KEY_MAX                                          256
 
 /***********************************************************************************************************************************
-!!!
+Configuration data. These structures are not directly user-created or accessible. configParse() creates the structures and uses
+cfgInit() to load it as the current configuration. Various cfg*() functions provide access.
 ***********************************************************************************************************************************/
 typedef struct ConfigOptionValue
 {
@@ -40,7 +41,7 @@ typedef struct Config
         bool valid;                                                 // Is option group valid for the current command?
         unsigned int indexTotal;                                    // Max index in option group
         unsigned int indexDefault;                                  // Default index (usually 0)
-        unsigned int index[CFG_OPTION_INDEX_MAX];                   // List of indexes
+        unsigned int index[CFG_OPTION_KEY_MAX];                     // List of index to key mappings
     } optionGroup[CFG_OPTION_GROUP_TOTAL];
 
     // Option data

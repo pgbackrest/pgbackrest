@@ -893,7 +893,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
 
                         // Make sure this option does not appear in the same section with an alternate name
-                        const Variant *optionFoundKey = VARUINT64(option.id * CFG_OPTION_INDEX_MAX + option.keyIdx);
+                        const Variant *optionFoundKey = VARUINT64(option.id * CFG_OPTION_KEY_MAX + option.keyIdx);
                         const Variant *optionFoundName = kvGet(optionFound, optionFoundKey);
 
                         if (optionFoundName != NULL)
@@ -984,7 +984,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             // Phase 4: create the config and resolve indexed options for each group
             // ---------------------------------------------------------------------------------------------------------------------
             // Determine how many indexes are used in each group
-            bool groupIdxMap[CFG_OPTION_GROUP_TOTAL][CFG_OPTION_INDEX_MAX] = {{0}};
+            bool groupIdxMap[CFG_OPTION_GROUP_TOTAL][CFG_OPTION_KEY_MAX] = {{0}};
 
             for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
             {
@@ -1046,7 +1046,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 {
                     unsigned int optionIdxMax = 0;
 
-                    for (unsigned int optionIdx = 0; optionIdx < CFG_OPTION_INDEX_MAX; optionIdx++)
+                    for (unsigned int optionIdx = 0; optionIdx < CFG_OPTION_KEY_MAX; optionIdx++)
                     {
                         if (groupIdxMap[groupId][optionIdx])
                         {

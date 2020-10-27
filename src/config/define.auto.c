@@ -2200,7 +2200,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Set default PostgreSQL cluster.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Set the default PostgreSQL cluster for commands, e.g. backup, that do not automatically operate on multiple "
+                "PostgreSQL clusters."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3707,7 +3708,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_SUMMARY("Set default repository.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
-            "!!!"
+            "Set the default repository for commands that do not automatically operate on multiple repositories."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST

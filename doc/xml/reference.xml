@@ -485,7 +485,7 @@
                     <config-key id="repo-default" name="Set Default Repository">
                         <summary>Set default repository.</summary>
 
-                        <text>!!!</text>
+                        <text>Set the default repository for commands that do not automatically operate on multiple repositories.</text>
 
                         <example>1</example>
                     </config-key>
@@ -1049,7 +1049,7 @@
                     <config-key id="pg-default" name="Set Default PostgreSQL Cluster">
                         <summary>Set default PostgreSQL cluster.</summary>
 
-                        <text>!!!</text>
+                        <text>Set the default PostgreSQL cluster for commands, e.g. backup, that do not automatically operate on multiple PostgreSQL clusters.</text>
 
                         <example>1</example>
                     </config-key>
