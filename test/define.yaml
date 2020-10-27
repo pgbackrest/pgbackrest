@@ -392,11 +392,8 @@ unit:
       - name: exec
         total: 1
 
-        # coverage:
-        #   config/exec: full
-
-        include:
-          - config/exec
+        coverage:
+          config/exec: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol

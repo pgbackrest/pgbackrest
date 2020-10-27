@@ -77,9 +77,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                     strLstAdd(result, strNewFmt("--reset-%s", cfgOptionIdxName(optionId, optionIdx)));
                 }
                 // Else format the value if found
-                else if (
-                    value != NULL && (!local || exists ||
-                    (cfgOptionValid(optionId) && cfgOptionIdxSource(optionId, optionIdx) == cfgSourceParam)))
+                else if (value != NULL && (!local || exists || cfgOptionIdxSource(optionId, optionIdx) == cfgSourceParam))
                 {
                     if (varType(value) == varTypeBool)
                     {
