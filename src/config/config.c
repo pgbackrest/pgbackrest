@@ -441,6 +441,36 @@ cfgOptionGroupIdxToRawIdx(ConfigOptionGroup groupId, unsigned int index)
 
 /**********************************************************************************************************************************/
 unsigned int
+cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, key);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    unsigned int result = 0;
+
+    if (cfgOptionGroup(optionId))
+    {
+        unsigned int groupId = cfgOptionGroupId(optionId);
+
+        for (; result < cfgOptionGroupIdxTotal(groupId); result++)
+        {
+            if (configLocal->optionGroup[groupId].index[result] == key - 1)
+                break;
+        }
+
+        if (result == cfgOptionGroupIdxTotal(groupId))
+            THROW_FMT(AssertError, "key '%u' is not valid for '%s' option", key, configOptionData[optionId].name);
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+unsigned int
 cfgOptionGroupIdxTotal(ConfigOptionGroup groupId)
 {
     FUNCTION_TEST_BEGIN();

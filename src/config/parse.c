@@ -631,7 +631,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             cfgOptionRawIdxName(option.id, option.keyIdx));
                     }
 
-                    // If the the option has not been found yet then set it
+                    // If the option has not been found yet then set it
                     ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
 
                     if (!optionValue->found)

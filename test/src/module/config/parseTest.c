@@ -1601,7 +1601,10 @@ testRun(void)
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdCheck, argList), "check command");
 
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/pg2", "check pg1-path");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 1), "/pg8", "check pg8-path");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 8)), "/pg8", "check pg8-path");
+
+        TEST_RESULT_UINT(cfgOptionKeyToIdx(cfgOptArchiveTimeout, 1), 0, "check archive-timeout");
+        TEST_ERROR(cfgOptionKeyToIdx(cfgOptPgPath, 4), AssertError, "key '4' is not valid for 'pg-path' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid pg-default");
