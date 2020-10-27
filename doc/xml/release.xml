@@ -52,6 +52,17 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="uspen"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve <cmd>info</cmd> command output when a stanza is specified but missing.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
                             <release-item-reviewer id="MannerMan"/>
