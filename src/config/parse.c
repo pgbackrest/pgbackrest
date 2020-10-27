@@ -1400,31 +1400,41 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             }
         }
 
+        // Initialize config
         cfgInit(config);
 
-        // !!! HACK TO GET HOST-ID WORKING FOR REMOTES UNTIL THERE IS A BETTER WAY
+        // Set option group default index. The first index in the group is automatically set unless the group default option, e.g.
+        // pg-default is set. For now the group default options are hard-coded but they could be dynamic. An assert has been added
+        // to make sure the code breaks if a new group is added.
         for (unsigned int groupId = 0; groupId < CFG_OPTION_GROUP_TOTAL; groupId++)
         {
+            ASSERT(groupId == cfgOptGrpPg || groupId == cfgOptGrpRepo);
+
+            // Get the group default option
             unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPgDefault : cfgOptRepoDefault;
 
+            // Does the group default option exist?
             if (cfgOptionTest(defaultOptionId))
             {
-                unsigned int optionIdx = cfgOptionUInt(defaultOptionId) - 1;
+                // Search for the key
+                unsigned int optionKeyIdx = cfgOptionUInt(defaultOptionId) - 1;
                 unsigned int index = 0;
 
                 for (; index < cfgOptionGroupIdxTotal(groupId); index++)
                 {
-                    if (config->optionGroup[groupId].index[index] == optionIdx)
+                    if (config->optionGroup[groupId].index[index] == optionKeyIdx)
                         break;
                 }
 
+                // Error if the key was not found
                 if (index == cfgOptionGroupIdxTotal(groupId))
                 {
                     THROW_FMT(
-                        OptionInvalidValueError, "'%u' is not valid for '%s' option", cfgOptionUInt(defaultOptionId),
+                        OptionInvalidValueError, "key '%u' is not valid for '%s' option", cfgOptionUInt(defaultOptionId),
                         cfgOptionName(defaultOptionId));
                 }
 
+                // Set the default
                 config->optionGroup[groupId].indexDefault = index;
             }
         }

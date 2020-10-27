@@ -1614,7 +1614,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
         hrnCfgArgRawZ(argList, cfgOptPgDefault, "4");
-        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError, "'4' is not valid for 'pg-default' option");
+        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError, "key '4' is not valid for 'pg-default' option");
     }
 
     // *****************************************************************************************************************************

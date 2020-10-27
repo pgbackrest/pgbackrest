@@ -102,7 +102,7 @@ unsigned int cfgOptionGroupIdxDefault(ConfigOptionGroup groupId);
 // Convert the group index to a key, i.e. the key that was used in the original configuration file, command-line, etc. Useful for
 // messages that do not show an option name but must use an index that the user will recognize. It is preferrable to generate an
 // option name with cfgOptionIdxName() when possible.
-unsigned int cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int index);
+unsigned int cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int groupIdx);
 
 // Total indexes, 0 if the group is not valid. Will be the total configured indexes, no matter which raw indexes were used during
 // configuration. e.g., if pg1-path and pg8-path are configured then this function will return 2.
@@ -119,37 +119,37 @@ accepts an index, which currently work with non-indexed options (with optionIdx 
 ***********************************************************************************************************************************/
 // Get config options for various types
 const Variant *cfgOption(ConfigOption optionId);
-const Variant *cfgOptionIdx(ConfigOption optionId, unsigned int index);
+const Variant *cfgOptionIdx(ConfigOption optionId, unsigned int optionIdx);
 bool cfgOptionBool(ConfigOption optionId);
-bool cfgOptionIdxBool(ConfigOption optionId, unsigned int index);
+bool cfgOptionIdxBool(ConfigOption optionId, unsigned int optionIdx);
 double cfgOptionDbl(ConfigOption optionId);
 int cfgOptionInt(ConfigOption optionId);
-int cfgOptionIdxInt(ConfigOption optionId, unsigned int index);
+int cfgOptionIdxInt(ConfigOption optionId, unsigned int optionIdx);
 int64_t cfgOptionInt64(ConfigOption optionId);
-int64_t cfgOptionIdxInt64(ConfigOption optionId, unsigned int index);
+int64_t cfgOptionIdxInt64(ConfigOption optionId, unsigned int optionIdx);
 const KeyValue *cfgOptionKv(ConfigOption optionId);
-const KeyValue *cfgOptionIdxKv(ConfigOption optionId, unsigned int index);
+const KeyValue *cfgOptionIdxKv(ConfigOption optionId, unsigned int optionIdx);
 const VariantList *cfgOptionLst(ConfigOption optionId);
-const VariantList *cfgOptionIdxLst(ConfigOption optionId, unsigned int index);
+const VariantList *cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStr(ConfigOption optionId);
-const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int index);
+const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStrNull(ConfigOption optionId);
-const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int index);
+const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx);
 unsigned int cfgOptionUInt(ConfigOption optionId);
-unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int index);
+unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
 uint64_t cfgOptionUInt64(ConfigOption optionId);
-uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int index);
+uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int optionIdx);
 
 // Option name by id
 const char *cfgOptionName(ConfigOption optionId);
-const char *cfgOptionIdxName(ConfigOption optionId, unsigned int index);
+const char *cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx);
 
 // Is the option valid for this command?
 bool cfgOptionValid(ConfigOption optionId);
 
 // Is the option valid for the command and also has a value?
 bool cfgOptionTest(ConfigOption optionId);
-bool cfgOptionIdxTest(ConfigOption optionId, unsigned int index);
+bool cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx);
 
 /***********************************************************************************************************************************
 Option Source Enum
@@ -197,22 +197,22 @@ void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 
 // Parse a host option and extract the host and port (if it exists)
 String *cfgOptionHostPort(ConfigOption optionId, unsigned int *port);
-String *cfgOptionIdxHostPort(ConfigOption optionId, unsigned int index, unsigned int *port);
+String *cfgOptionIdxHostPort(ConfigOption optionId, unsigned int optionIdx, unsigned int *port);
 
 // Was the option negated?
 bool cfgOptionNegate(ConfigOption optionId);
-bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int index);
+bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx);
 
 // Was the option reset?
 bool cfgOptionReset(ConfigOption optionId);
-bool cfgOptionIdxReset(ConfigOption optionId, unsigned int index);
+bool cfgOptionIdxReset(ConfigOption optionId, unsigned int optionIdx);
 
 // Set config option
 void cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value);
-void cfgOptionIdxSet(ConfigOption optionId, unsigned int index, ConfigSource source, const Variant *value);
+void cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource source, const Variant *value);
 
 // How was the option set (default, param, config)?
 ConfigSource cfgOptionSource(ConfigOption optionId);
-ConfigSource cfgOptionIdxSource(ConfigOption optionId, unsigned int index);
+ConfigSource cfgOptionIdxSource(ConfigOption optionId, unsigned int optionIdx);
 
 #endif
