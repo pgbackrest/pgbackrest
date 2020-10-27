@@ -133,6 +133,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 4, "/pg4");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 4, "pg4");
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo1");
