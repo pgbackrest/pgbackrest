@@ -52,10 +52,10 @@ pgValidate(void)
             DbGetResult dbObject = dbGet(false, true, false);
 
             // Get the pgControl information from the pg*-path deemed to be the master
-            result = pgControlFromFile(storagePgId(dbObject.primaryId));
+            result = pgControlFromFile(storagePgIdx(dbObject.primaryIdx));
 
             // Check the user configured path and version against the database
-            checkDbConfig(result.version, dbObject.primaryId, dbObject.primary, false);
+            checkDbConfig(result.version, dbObject.primaryIdx, dbObject.primary, false);
         }
         // If the database is not online, assume that pg1 is the master
         else

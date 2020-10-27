@@ -68,7 +68,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("writable storage fails when dry-run is not initialized");
 
-        TEST_ERROR(storagePgIdWrite(1), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storagePgIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
         TEST_ERROR(storageRepoWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
         TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
 
@@ -77,7 +77,7 @@ testRun(void)
 
         storageHelperDryRunInit(true);
 
-        TEST_ERROR(storagePgIdWrite(1), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storagePgIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
         TEST_ERROR(storageRepoWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
         TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
     }
@@ -1159,7 +1159,7 @@ testRun(void)
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
@@ -1282,23 +1282,16 @@ testRun(void)
 
         TEST_RESULT_STR(storage->path, strNewFmt("%s/db", testPath()), "check pg storage path");
         TEST_RESULT_BOOL(storage->write, false, "check pg storage write");
-        TEST_RESULT_STR(storagePgId(2)->path, strNewFmt("%s/db2", testPath()), "check pg 2 storage path");
+        TEST_RESULT_STR(storagePgIdx(1)->path, strNewFmt("%s/db2", testPath()), "check pg 2 storage path");
 
         TEST_RESULT_PTR(storageHelper.storagePgWrite, NULL, "pg write storage not cached");
         TEST_ASSIGN(storage, storagePgWrite(), "new pg write storage");
         TEST_RESULT_PTR(storageHelper.storagePgWrite[0], storage, "pg write storage cached");
         TEST_RESULT_PTR(storagePgWrite(), storage, "get cached pg write storage");
-        TEST_RESULT_STR(storagePgIdWrite(2)->path, strNewFmt("%s/db2", testPath()), "check pg 2 write storage path");
+        TEST_RESULT_STR(storagePgIdxWrite(1)->path, strNewFmt("%s/db2", testPath()), "check pg 2 write storage path");
 
         TEST_RESULT_STR(storage->path, strNewFmt("%s/db", testPath()), "check pg write storage path");
         TEST_RESULT_BOOL(storage->write, true, "check pg write storage write");
-
-        // Pg storage from another host id
-        // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionSet(cfgOptHostId, cfgSourceParam, VARUINT64(2));
-        cfgOptionValidSet(cfgOptHostId, true);
-
-        TEST_RESULT_STR(storagePg()->path, strNewFmt("%s/db2", testPath()), "check pg-2 storage path");
 
         // Change the stanza to NULL, stanzaInit flag to false and make sure helper fails because stanza is required
         // -------------------------------------------------------------------------------------------------------------------------

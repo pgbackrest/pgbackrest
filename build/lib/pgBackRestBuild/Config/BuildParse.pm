@@ -130,8 +130,11 @@ sub buildConfigParse
                 # Build option constant name if this is the current name for the option
                 if ($iOptionNameIdx == 0)
                 {
-                    $strOptionConst = "CFGOPT_" . uc($strOptionNameOut);
-                    $strOptionConst =~ s/\-/_/g;
+                    if (!$rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
+                    {
+                        $strOptionConst = "CFGOPT_" . uc($strOptionNameOut);
+                        $strOptionConst =~ s/\-/_/g;
+                    }
                 }
                 # Else use bare string and mark as deprecated
                 else
@@ -140,12 +143,12 @@ sub buildConfigParse
                 }
 
                 my $strOptionVal =
-                    ($iOptionIdx > 1 ? "(" : '') . $strOptionEnum . ($iOptionIdx > 1 ? " + " . ($iOptionIdx - 1) . ')' : '');
+                    ($rhOption->{&CFGDEF_GROUP} ? "(" . ($iOptionIdx - 1) . " << PARSE_KEY_IDX_SHIFT) | " : '') . $strOptionEnum;
 
                 # Add option
                 $strBuildSource .=
                     "    {\n" .
-                    "        .name = " . (defined($strOptionConst) ? $strOptionConst : "\"${strOptionNameOut}\"") . ",\n" .
+                    "        .name = \"${strOptionNameOut}\",\n" .
                     $strOptionArg .
                     "        .val = ${strOptionFlag} ${strOptionVal},\n" .
                     "    },\n";
@@ -156,8 +159,7 @@ sub buildConfigParse
                 {
                     $strBuildSource .=
                         "    {\n" .
-                        "        .name = \"no-" .
-                            (defined($strOptionConst) ? "\" ${strOptionConst}" : "${strOptionNameOut}\"") . ",\n" .
+                        "        .name = \"no-${strOptionNameOut}\",\n" .
                         "        .val = ${strOptionFlag} PARSE_NEGATE_FLAG | ${strOptionVal},\n" .
                         "    },\n";
                 }
@@ -168,8 +170,7 @@ sub buildConfigParse
                 {
                     $strBuildSource .=
                         "    {\n" .
-                        "        .name = \"reset-" .
-                            (defined($strOptionConst) ? "\" ${strOptionConst}" : "${strOptionNameOut}\"") . ",\n" .
+                        "        .name = \"reset-${strOptionNameOut}\",\n" .
                         "        .val = ${strOptionFlag} PARSE_RESET_FLAG | ${strOptionVal},\n" .
                         "    },\n";
                 }

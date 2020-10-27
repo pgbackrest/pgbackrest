@@ -317,8 +317,8 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
-        strLstAddZ(argList, "--pg5-host=localhost");
-        strLstAddZ(argList, "--" CFGOPT_PG5_HOST_CMD "=pgbackrest-bogus");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 5, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 5, "pgbackrest-bogus");
         strLstAddZ(argList, "--pg5-path=/path/to/pg5");
         strLstAdd(argList, strNewFmt("--pg5-host-user=%s", testUser()));
         harnessCfgLoad(cfgCmdCheck, argList);
@@ -371,12 +371,12 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(false, false, false), "get primary and standby");
 
-        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryId, db.primary, false), "valid db config");
+        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config");
 
         // Version mismatch
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            checkDbConfig(PG_VERSION_94, db.primaryId, db.primary, false), DbMismatchError,
+            checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false), DbMismatchError,
             "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
             PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
@@ -385,7 +385,7 @@ testRun(void)
         // Path mismatch
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            checkDbConfig(PG_VERSION_92, db.standbyId, db.standby, true), DbMismatchError,
+            checkDbConfig(PG_VERSION_92, db.standbyIdx, db.standby, true), DbMismatchError,
             "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
             PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg8-path and pg8-port settings likely reference different clusters.",
@@ -397,7 +397,7 @@ testRun(void)
         strLstAddZ(argList, "--no-archive-check");
         harnessCfgLoad(cfgCmdCheck, argList);
 
-        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryId, db.primary, false), "valid db config --no-archive-check");
+        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config --no-archive-check");
 
         // archive-check not valid for command
         // -------------------------------------------------------------------------------------------------------------------------
@@ -410,7 +410,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         TEST_RESULT_VOID(
-            checkDbConfig(PG_VERSION_92, db.primaryId, db.primary, false), "valid db config, archive-check not valid for command");
+            checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config, archive-check not valid for command");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
@@ -432,7 +432,7 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
         TEST_ERROR_FMT(
-            checkDbConfig(PG_VERSION_92, db.primaryId, db.primary, false), FeatureNotSupportedError,
+            checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), FeatureNotSupportedError,
             "archive_mode=always not supported");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
