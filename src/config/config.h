@@ -87,11 +87,11 @@ bool cfgLogFile(void);
 // Default log level -- used for log messages that are common to all commands
 LogLevel cfgLogLevelDefault(void);
 
-// Does this command allow parameters?
-bool cfgParameterAllowed(void);
-
 // Command parameters, if any
 const StringList *cfgCommandParam(void);
+
+// Does this command allow parameters?
+bool cfgCommandParameterAllowed(ConfigCommand commandId);
 
 /***********************************************************************************************************************************
 Option Group Functions
