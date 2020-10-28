@@ -49,12 +49,7 @@ Data Types and Structures
 #define FUNCTION_LOG_VERIFY_INFO_FILE_FORMAT(value, buffer, bufferSize)                                                            \
     objToLog(&value, "VerifyInfoFile", buffer, bufferSize)
 
-#define FUNCTION_LOG_VERIFY_WAL_RANGE_TYPE                                                                                         \
-    VerifyWalRange
-#define FUNCTION_LOG_VERIFY_WAL_RANGE_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(&value, "VerifyWalRange", buffer, bufferSize)
-
-// Structure for verifying archive, backup, and manifest info files
+// Structure for verifying repository info files
 typedef struct VerifyInfoFile
 {
     InfoBackup *backup;                                             // Backup.info file contents
@@ -1494,7 +1489,7 @@ verifyProcess(unsigned int *errorTotal)
                     (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, verifyJobCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
-                    protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
+                    protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
 
                 // Process jobs
                 do
