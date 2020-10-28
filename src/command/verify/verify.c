@@ -94,8 +94,6 @@ typedef enum
 {
     backupValid,                                                    // Default: All files in backup label repo passed verification
     backupInvalid,                                                  // One of more files in backup label repo failed verification
-    backupConsistent,
-    backupConsistentWithPITR,
     backupMissingManifest,
     backupInProgress,
 } VerifyBackupResultStatus;
@@ -432,7 +430,7 @@ verifyManifestFile(
                 {
                     backupResult->status = backupMissingManifest;
 
-                    LOG_WARN_FMT("Manifest files missing for '%s' - backup may have expired", strZ(backupResult->backupLabel));
+                    LOG_WARN_FMT("manifest missing for '%s' - backup may have expired", strZ(backupResult->backupLabel));
                 }
             }
             else
@@ -470,6 +468,7 @@ verifyManifestFile(
                     "'%s' may not be recoverable - PG data (id %u, version %s, system-id %"
                     PRIu64 ") is not in the backup.info history, skipping",
                     strZ(backupResult->backupLabel), manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId);
+                manifestFree(result);
                 result = NULL;
             }
             else
@@ -772,8 +771,9 @@ verifyArchive(void *data)
                         protocolCommandParamAdd(command, VARUINT64(archiveResult->pgWalInfo.size));
                         protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
 
-                        // Assign job to result
-                        result = protocolParallelJobNew(VARSTR(filePathName), command);
+                        // Assign job to result, prepending the archiveId to the key for consistency with backup processing
+                        result = protocolParallelJobNew(
+                            VARSTR(strNewFmt("%s/%s", strZ(archiveResult->archiveId), strZ(filePathName))), command);
 
                         // Remove the file to process from the list
                         strLstRemoveIdx(jobData->walFileList, 0);
@@ -861,10 +861,10 @@ verifyBackup(void *data)
             // Get the result just added so it can be updated directly
             VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
 
-            // If currentBackup is set (meaning the newest backup label on disk was not in the db:current section when the backup.info
-            // file was read) and this is the same label, then set inProgessBackup to true, else false. inProgressBackup may
-            // be changed in verifyManifestFile if a main backup.manifest exists since that would indicate the backup completed during
-            // the verify process.
+            // If currentBackup is set (meaning the newest backup label on disk was not in the db:current section when the
+            // backup.info file was read) and this is the same label, then set inProgessBackup to true, else false.
+            // inProgressBackup may be changed in verifyManifestFile if a main backup.manifest exists since that would indicate the
+            // backup completed during the verify process.
             bool inProgressBackup = strEq(jobData->currentBackup, backupResult->backupLabel);
 
             // Get a usable backup manifest file
@@ -943,6 +943,7 @@ verifyBackup(void *data)
                         // If the verify-state of the backup is not complete then verify the file
                         if (!backupResultPrior->fileVerifyComplete)
                         {
+printf("BACKUP PRIOR NOT COMPLETE\n"); fflush(stdout); // CSHANG
                             filePathName = strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
                                 strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
@@ -966,7 +967,7 @@ verifyBackup(void *data)
                                 verifyInvalidFileAdd(backupResult->invalidFileList, invalidFile->reason, invalidFile->fileName);
                                 backupResult->status = backupInvalid;
                             }
-                            // Else the file in the prior backup was valid so increment the total valid files
+                            // Else the file in the prior backup was valid so increment the total valid files for this backup
                             else
                             {
                                 backupResult->totalFileValid++;
@@ -987,13 +988,15 @@ verifyBackup(void *data)
                     // Set up the job
                     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
                     protocolCommandParamAdd(command, VARSTR(filePathName));
-                    protocolCommandParamAdd(
-                        command, VARSTRZ(fileData->checksumSha1[0] != 0 ? fileData->checksumSha1 : HASH_TYPE_SHA1_ZERO));
+
+                    // If the checksum is not present in the manifest, it will be calculated by manifest load
+                    protocolCommandParamAdd(command, VARSTRZ(fileData->checksumSha1));
                     protocolCommandParamAdd(command, VARUINT64(fileData->size));
                     protocolCommandParamAdd(command, VARSTR(jobData->backupCipherPass));
 
-                    // Assign job to result
-                    result = protocolParallelJobNew(VARSTR(filePathName), command);
+                    // Assign job to result (prepend backup label being processed to the key since some files are in a prior backup)
+                    result = protocolParallelJobNew(
+                        VARSTR(strNewFmt("%s/%s", strZ(backupResult->backupLabel), strZ(filePathName))), command);
                 }
 
                 // Increment the index to point to the next file
@@ -1064,6 +1067,8 @@ verifyJobCallback(void *data, unsigned int clientIdx)
         if (!jobData->backupProcessing)
         {
             result = protocolParallelJobMove(verifyArchive(data), memContextPrior());
+
+            // Set the backupProcessing flag if the archive processing is finished so backup processing can begin immediately after
             jobData->backupProcessing = strLstSize(jobData->archiveIdList) == 0;
         }
 
@@ -1335,16 +1340,6 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
                     status = strNew("invalid");
                     break;
                 }
-                case backupConsistent:
-                {
-                    status = strNew("consistent");
-                    break;
-                }
-                case backupConsistentWithPITR:
-                {
-                    status = strNew("pitr-able");
-                    break;
-                }
                 case backupMissingManifest:
                 {
                     status = strNew("manifest missing");
@@ -1513,11 +1508,15 @@ verifyProcess(unsigned int *errorTotal)
                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
                         unsigned int processId = protocolParallelJobProcessId(job);
                         StringList *filePathLst = strLstNewSplit(varStr(protocolParallelJobKey(job)), FSLASH_STR);
+
+                        // Remove the result and file type identifier and recreate the path file name
+                        const String *resultId = strLstGet(filePathLst, 0);
+                        strLstRemoveIdx(filePathLst, 0);
                         const String *fileType = strLstGet(filePathLst, 0);
                         strLstRemoveIdx(filePathLst, 0);
-                        // Remove the file type identifier and recreate the path file name without it
                         String *filePathName = strLstJoin(filePathLst, "/");
 
+                        // Initialize the result sets
                         VerifyArchiveResult *archiveIdResult = NULL;
                         VerifyBackupResult *backupResult = NULL;
 
@@ -1525,16 +1524,14 @@ verifyProcess(unsigned int *errorTotal)
                         if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
                         {
                             // Find the archiveId in the list - assert if not found since this should never happen
-                            String *archiveId = strLstGet(filePathLst, 0);
-                            unsigned int index = lstFindIdx(jobData.archiveIdResultList, &archiveId);
+                            unsigned int index = lstFindIdx(jobData.archiveIdResultList, &resultId);
                             ASSERT(index != LIST_NOT_FOUND);
 
                             archiveIdResult = lstGet(jobData.archiveIdResultList, index);
                         }
                         else
                         {
-                            String *backupLabel = strLstGet(filePathLst, 0);
-                            unsigned int index = lstFindIdx(jobData.backupResultList, &backupLabel);
+                            unsigned int index = lstFindIdx(jobData.backupResultList, &resultId);
                             ASSERT(index != LIST_NOT_FOUND);
 
                             backupResult = lstGet(jobData.backupResultList, index);
