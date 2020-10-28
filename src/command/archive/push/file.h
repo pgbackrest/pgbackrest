@@ -10,11 +10,24 @@ Archive Push File
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
+Structure to hold information for each repository the archive file will be pushed to. An array of these must be passed to
+archivePushFile() with size equal to cfgOptionGroupIdxTotal(cfgOptGrpRepo).
+***********************************************************************************************************************************/
+typedef struct ArchivePushFileRepoData
+{
+    const String *archiveId;
+    CipherType cipherType;
+    const String *cipherPass;
+    CompressType compressType;
+    int compressLevel;
+} ArchivePushFileRepoData;
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Copy a file from the source to the archive
 String *archivePushFile(
-    const String *walSource, const String *archiveId, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
-    CipherType cipherType, const String *cipherPass, CompressType compressType, int compressLevel);
+    const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
+    const ArchivePushFileRepoData *repoData);
 
 #endif

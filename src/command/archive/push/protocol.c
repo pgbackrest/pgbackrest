@@ -39,14 +39,25 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
     {
         if (strEq(command, PROTOCOL_COMMAND_ARCHIVE_PUSH_STR))
         {
+            CHECK(varUIntForce(varLstGet(paramList, 4)) == cfgOptionGroupIdxTotal(cfgOptGrpRepo));
+
+            ArchivePushFileRepoData *repoData = memNew(cfgOptionGroupIdxTotal(cfgOptGrpRepo) & sizeof(ArchivePushFileRepoData));
+
+            for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+            {
+                repoData[repoIdx].archiveId = varStr(varLstGet(paramList, 5 + (repoIdx * 5)));
+                repoData[repoIdx].cipherType = (CipherType)varUIntForce(varLstGet(paramList, 5 + (repoIdx * 5) + 1));
+                repoData[repoIdx].cipherPass = varStr(varLstGet(paramList, 5 + (repoIdx * 5) + 2));
+                repoData[repoIdx].compressType = (CompressType)varUIntForce(varLstGet(paramList, 5 + (repoIdx * 5) + 3));
+                repoData[repoIdx].compressLevel = varIntForce(varLstGet(paramList, 5 + (repoIdx * 5) + 4));
+            }
+
             protocolServerResponse(
                 server,
                 VARSTR(
                     archivePushFile(
-                        varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1)),
-                        varUIntForce(varLstGet(paramList, 2)), varUInt64(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
-                        (CipherType)varUIntForce(varLstGet(paramList, 5)), varStr(varLstGet(paramList, 6)),
-                        (CompressType)varUIntForce(varLstGet(paramList, 7)), varIntForce(varLstGet(paramList, 8)))));
+                        varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
+                        varStr(varLstGet(paramList, 3)), repoData)));
         }
         else
             found = false;

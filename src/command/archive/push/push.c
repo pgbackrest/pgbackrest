@@ -191,59 +191,83 @@ archiving does not benefit but it makes sense to use the same function.
 #define FUNCTION_LOG_ARCHIVE_PUSH_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                   \
     objToLog(&value, "ArchivePushCheckResult", buffer, bufferSize)
 
+typedef struct ArchivePushCheckResultRepo
+{
+    String *archiveId;                                              // Archive id for current pg version
+    CipherType cipherType;                                          // Repo cipher type
+    String *cipherPass;                                             // Archive cipher passphrase
+} ArchivePushCheckResultRepo;
+
 typedef struct ArchivePushCheckResult
 {
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system id
-    String *archiveId;                                              // Archive id for current pg version
-    String *archiveCipherPass;                                      // Archive cipher passphrase
+    ArchivePushCheckResultRepo *repo;                               // Data for each repo
 } ArchivePushCheckResult;
 
 static ArchivePushCheckResult
-archivePushCheck(bool pgPathSet, CipherType cipherType, const String *cipherPass)
+archivePushCheck(bool pgPathSet)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, pgPathSet);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
-    ArchivePushCheckResult result = {0};
+    ArchivePushCheckResult result = {.repo = memNew(cfgOptionGroupIdxTotal(cfgOptGrpRepo) * sizeof(ArchivePushCheckResultRepo))};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Attempt to load the archive info file
-        InfoArchive *info = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType, cipherPass);
-
-        // Get archive id for the most recent version -- archive-push will only operate against the most recent version
-        String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
-        InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
-
-        // Ensure that stanza version and system identifier match pg_control when available
+        // If we have access to pg_control then load it to get the pg version and system id. If we can't load pg_control then we'll
+        // still compare the pg info stored in the repo to the WAL segment and also all the repos against each other.
         if (pgPathSet)
         {
             // Get info from pg_control
-            PgControl controlInfo = pgControlFromFile(storagePg());
-
-            if (controlInfo.version != archiveInfo.version || controlInfo.systemId != archiveInfo.systemId)
-            {
-                THROW_FMT(
-                    ArchiveMismatchError,
-                    "PostgreSQL version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64
-                    "\nHINT: are you archiving to the correct stanza?",
-                    strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId, strZ(pgVersionToStr(archiveInfo.version)),
-                    archiveInfo.systemId);
-            }
+            PgControl pgControl = pgControlFromFile(storagePg());
+            result.pgVersion = pgControl.version;
+            result.pgSystemId = pgControl.systemId;
         }
 
-        MEM_CONTEXT_PRIOR_BEGIN()
+        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            result.pgVersion = archiveInfo.version;
-            result.pgSystemId = archiveInfo.systemId;
-            result.archiveId = strDup(archiveId);
-            result.archiveCipherPass = strDup(infoArchiveCipherPass(info));
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down
+            storageRepoIdx(repoIdx);
+
+            // Set cipher type in repo data
+            result.repo[repoIdx].cipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+
+            // Attempt to load the archive info file
+            InfoArchive *info = infoArchiveLoadFile(
+                storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, result.repo[repoIdx].cipherType,
+                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+
+            // Get archive id for the most recent version -- archive-push will only operate against the most recent version
+            String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+            InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+
+            // Ensure that stanza version and system identifier match pg_control when available
+            // !!! THIS WILL NEED TO BE MOVED OUT INTO A SEPARATE FUNCTION TO AVOID LOADING PG_CONTROL MULTIPLE TIMES
+            if (pgPathSet || repoIdx > 0)
+            {
+                if (result.pgVersion != archiveInfo.version || result.pgSystemId != archiveInfo.systemId)
+                {
+                    THROW_FMT(
+                        ArchiveMismatchError,
+                        // !!! NEED TO IMPROVE THIS MESSAGE SO WORKS FOR PG TO REPO COMPARISON OR REPO TO REPO COMPARISON
+                        "PostgreSQL version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64
+                        "\nHINT: are you archiving to the correct stanza?",
+                        strZ(pgVersionToStr(result.pgVersion)), result.pgSystemId, strZ(pgVersionToStr(archiveInfo.version)),
+                        archiveInfo.systemId);
+                }
+            }
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.pgVersion = archiveInfo.version;
+                result.pgSystemId = archiveInfo.systemId;
+                result.repo[repoIdx].archiveId = strDup(archiveId);
+                result.repo[repoIdx].cipherPass = strDup(infoArchiveCipherPass(info));
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
-        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -357,14 +381,8 @@ cmdArchivePush(void)
             // Else push the file
             else
             {
-                // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
-                    storageRepo();
-
                 // Get archive info
-                ArchivePushCheckResult archiveInfo = archivePushCheck(
-                    cfgOptionTest(cfgOptPgPath), cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                    cfgOptionStrNull(cfgOptRepoCipherPass));
+                ArchivePushCheckResult archiveInfo = archivePushCheck(cfgOptionTest(cfgOptPgPath));
 
                 // Push the file to the archive
                 String *warning = archivePushFile(
@@ -492,7 +510,7 @@ cmdArchivePushAsync(void)
             {
                 // Get the repo storage in case it is remote and encryption settings need to be pulled down
                 for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
-                    storageRepo();
+                    storageRepoIdx(repoIdx);
 
                 // Get cipher type
                 jobData.cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));

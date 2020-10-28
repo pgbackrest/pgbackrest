@@ -19,24 +19,20 @@ Archive Push File
 /**********************************************************************************************************************************/
 String *
 archivePushFile(
-    const String *walSource, const String *archiveId, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
-    CipherType cipherType, const String *cipherPass, CompressType compressType, int compressLevel)
+    const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
+    const ArchivePushFileRepoData *repoData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSource);
-        FUNCTION_LOG_PARAM(STRING, archiveId);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(STRING, archiveFile);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
-        FUNCTION_LOG_PARAM(ENUM, compressType);
-        FUNCTION_LOG_PARAM(INT, compressLevel);
+        FUNCTION_LOG_PARAM_P(VOID, repoData);
     FUNCTION_LOG_END();
 
     ASSERT(walSource != NULL);
-    ASSERT(archiveId != NULL);
     ASSERT(archiveFile != NULL);
+    ASSERT(repoData != NULL);
 
     String *result = NULL;
 
@@ -75,26 +71,29 @@ archivePushFile(
 
             const String *walSegmentChecksum = varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
 
-            // If the wal segment already exists in the repo then compare checksums
-            walSegmentFile = walSegmentFind(storageRepo(), archiveId, archiveFile, 0);
-
-            if (walSegmentFile != NULL)
+            for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
             {
-                String *walSegmentRepoChecksum = strSubN(walSegmentFile, strSize(archiveFile) + 1, HASH_TYPE_SHA1_SIZE_HEX);
+                // If the wal segment already exists in the repo then compare checksums
+                walSegmentFile = walSegmentFind(storageRepoIdx(repoIdx), repoData[repoIdx].archiveId, archiveFile, 0);
 
-                if (strEq(walSegmentChecksum, walSegmentRepoChecksum))
+                if (walSegmentFile != NULL)
                 {
-                    MEM_CONTEXT_PRIOR_BEGIN()
+                    String *walSegmentRepoChecksum = strSubN(walSegmentFile, strSize(archiveFile) + 1, HASH_TYPE_SHA1_SIZE_HEX);
+
+                    if (strEq(walSegmentChecksum, walSegmentRepoChecksum))
                     {
-                        result = strNewFmt(
-                            "WAL file '%s' already exists in the archive with the same checksum"
-                                "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                            strZ(archiveFile));
+                        MEM_CONTEXT_PRIOR_BEGIN()
+                        {
+                            result = strNewFmt(
+                                "WAL file '%s' already exists in the archive with the same checksum"
+                                    "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
+                                strZ(archiveFile));
+                        }
+                        MEM_CONTEXT_PRIOR_END();
                     }
-                    MEM_CONTEXT_PRIOR_END();
+                    else
+                        THROW_FMT(ArchiveDuplicateError, "WAL file '%s' already exists in the archive", strZ(archiveFile));
                 }
-                else
-                    THROW_FMT(ArchiveDuplicateError, "WAL file '%s' already exists in the archive", strZ(archiveFile));
             }
 
             // Append the checksum to the archive destination
@@ -104,34 +103,43 @@ archivePushFile(
         // Only copy if the file was not found in the archive
         if (walSegmentFile == NULL)
         {
-            StorageRead *source = storageNewReadP(storageLocal(), walSource);
-
-            // Is the file compressible during the copy?
-            bool compressible = true;
-
-            // If the file will be compressed then add compression filter
-            if (isSegment && compressType != compressTypeNone)
+            for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
             {
-                compressExtCat(archiveDestination, compressType);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(source)), compressFilter(compressType, compressLevel));
-                compressible = false;
-            }
+                StorageRead *source = storageNewReadP(storageLocal(), walSource);
 
-            // If there is a cipher then add the encrypt filter
-            if (cipherType != cipherTypeNone)
-            {
-                ioFilterGroupAdd(
-                    ioReadFilterGroup(storageReadIo(source)),
-                    cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
-                compressible = false;
-            }
+                // Is the file compressible during the copy?
+                bool compressible = true;
 
-            // Copy the file
-            storageCopyP(
-                source,
-                storageNewWriteP(
-                    storageRepoWrite(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(archiveDestination)),
-                .compressible = compressible));
+                // If the file will be compressed then add compression filter
+                if (isSegment && repoData[repoIdx].compressType != compressTypeNone)
+                {
+                    compressExtCat(archiveDestination, repoData[repoIdx].compressType);
+                    ioFilterGroupAdd(
+                        ioReadFilterGroup(
+                            storageReadIo(source)), compressFilter(repoData[repoIdx].compressType,
+                            repoData[repoIdx].compressLevel));
+                    compressible = false;
+                }
+
+                // If there is a cipher then add the encrypt filter
+                if (repoData[repoIdx].cipherType != cipherTypeNone)
+                {
+                    ioFilterGroupAdd(
+                        ioReadFilterGroup(storageReadIo(source)),
+                        cipherBlockNew(
+                            cipherModeEncrypt, repoData[repoIdx].cipherType, BUFSTR(repoData[repoIdx].cipherPass), NULL));
+                    compressible = false;
+                }
+
+                // Copy the file
+                // NEED A CUSTOM COPY HERE TO WRITE EACH BUFFER TO ALL REPOS
+                storageCopyP(
+                    source,
+                    storageNewWriteP(
+                        storageRepoIdxWrite(repoIdx),
+                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData[repoIdx].archiveId), strZ(archiveDestination)),
+                    .compressible = compressible));
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
