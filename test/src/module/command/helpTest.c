@@ -202,7 +202,6 @@ testRun(void)
             "                                   [current=<redacted>]\n"
             "  --repo-cipher-type               cipher used to encrypt the repository\n"
             "                                   [current=aes-256-cbc, default=none]\n"
-            "  --repo-default                   set default repository\n"
             "  --repo-host                      repository host when operating remotely via\n"
             "                                   SSH [current=backup.example.net]\n"
             "  --repo-host-cmd                  pgBackRest exe path on the repository host\n"
@@ -238,7 +237,6 @@ testRun(void)
             "\n"
             "Stanza Options:\n"
             "\n"
-            "  --pg-default                     set default PostgreSQL cluster\n"
             "  --pg-path                        postgreSQL data directory\n"
             "\n"
             "Use 'pgbackrest help restore [option]' for more information.\n"));

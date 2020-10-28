@@ -1,5 +1,10 @@
 /***********************************************************************************************************************************
 Command and Option Configuration Internals
+
+These structures and functions are generally used by modules that create configurations, e.g. config/parse, or modules that
+manipulate the configuration as a whole, e.g. protocol/helper, in order to communicate with other processes.
+
+The general-purpose functions for querying the current configuration are found in config.h.
 ***********************************************************************************************************************************/
 #ifndef CONFIG_CONFIG_INTERN_H
 #define CONFIG_CONFIG_INTERN_H

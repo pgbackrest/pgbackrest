@@ -2191,18 +2191,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
+        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Set default PostgreSQL cluster.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Set the default PostgreSQL cluster for commands, e.g. backup, that do not automatically operate on multiple "
-                "PostgreSQL clusters."
-        )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
@@ -3699,17 +3691,10 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
+        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_HELP_SECTION("repository")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("Set default repository.")
-        CFGDEFDATA_OPTION_HELP_DESCRIPTION
-        (
-            "Set the default repository for commands that do not automatically operate on multiple repositories."
-        )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
