@@ -7639,7 +7639,7 @@
         "commit": "7918629f5931b2eeca316d8b37191718db4650f4",
         "date": "2018-11-14 08:16:53 -0500",
         "subject": "Modify value of PERL_EMBED_ERROR macro.",
-        "body": "Remove !!! which by convention we use as a marker for code that needs attention before it can be committed to master."
+        "body": "Remove three exclamation points which by convention we use as a marker for code that needs attention before it can be committed to master."
     },
     {
         "commit": "504e7d77faeecd213df99ec320246e10a526f9ad",
@@ -7651,13 +7651,13 @@
         "commit": "14d2f8b86c4fd3755af6cd9f5210cf1e34e8d090",
         "date": "2018-11-14 08:11:11 -0500",
         "subject": "Reword misleading message in stack trace when parameter buffer is full.",
-        "body": "The prior message stated that there had been a buffer overrun which is not true since the code prevents that.\n\nIn fact, this message means the parameter buffer filled while building the parameter list. Rather than display a partial list we output this message instead.\n\nAlso remove !!! which by convention we use as a marker for code that needs attention before it can be committed to master."
+        "body": "The prior message stated that there had been a buffer overrun which is not true since the code prevents that.\n\nIn fact, this message means the parameter buffer filled while building the parameter list. Rather than display a partial list we output this message instead.\n\nAlso remove three exclamation points which by convention we use as a marker for code that needs attention before it can be committed to master."
     },
     {
         "commit": "8c7e97a369a145f2d71856f2ff2ed734452a9040",
         "date": "2018-11-14 08:08:26 -0500",
         "subject": "Clarify comment about main.c being excluded from unit testing.",
-        "body": "Also remove !!! which by convention we use as a marker for code that needs attention before it can be committed to master."
+        "body": "Also remove three exclamation points which by convention we use as a marker for code that needs attention before it can be committed to master."
     },
     {
         "commit": "73102034913ec2e3ca1b1cc485f8ce04820bba27",
