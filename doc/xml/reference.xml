@@ -485,7 +485,11 @@
                     <config-key id="repo-default" name="Set Default Repository">
                         <summary>Set default repository.</summary>
 
-                        <text>!!!</text>
+                        <text>Set the default repository for a command to operate on.
+
+                        For example, this option may be used to perform a restore from a specific repository, rather than letting <backrest/> choose.
+
+                        Note that some commands, e.g. <cmd>archive-push</cmd>, are intended to operate on all repositories and will ignore the default.</text>
 
                         <example>1</example>
                     </config-key>
@@ -1049,7 +1053,11 @@
                     <config-key id="pg-default" name="Set Default PostgreSQL Cluster">
                         <summary>Set default PostgreSQL cluster.</summary>
 
-                        <text>!!!</text>
+                        <text>Set the default <postgres/> cluster for a command to operate on.
+
+                        For example, this option may be used to perform a restore to a specific <postgres/> cluster, rather than using the first configured cluster.
+
+                        Note that some commands, e.g. <cmd>backup</cmd>, are intended to operate on multiple <postgres/> clusters and will ignore the default.</text>
 
                         <example>1</example>
                     </config-key>

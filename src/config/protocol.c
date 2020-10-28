@@ -7,7 +7,7 @@ Configuration Protocol Handler
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "config/parse.h"
 #include "config/protocol.h"
 
@@ -42,8 +42,7 @@ configProtocol(const String *command, const VariantList *paramList, ProtocolServ
                 CfgParseOptionResult option = cfgParseOption(varStr(varLstGet(paramList, optionIdx)));
                 CHECK(option.found);
 
-                // !!! THIS IS NOT RIGHT -- THE KEY IDX PASSED WILL NEED TO BE CONVERTED TO A LOCAL OPTION INDEX
-                varLstAdd(optionList, varDup(cfgOptionIdx(option.id, option.keyIdx)));
+                varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
             }
 
             protocolServerResponse(server, varNewVarLst(optionList));

@@ -204,7 +204,7 @@ storagePgIdx(unsigned int pgIdx)
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             if (storageHelper.storagePg == NULL)
-                storageHelper.storagePg = memNewPtrArray(cfgDefOptionIndexTotal(cfgOptPgPath));
+                storageHelper.storagePg = memNewPtrArray(cfgOptionGroupIdxTotal(cfgOptGrpPg));
 
             storageHelper.storagePg[pgIdx] = storagePgGet(pgIdx, false);
         }
@@ -239,7 +239,7 @@ storagePgIdxWrite(unsigned int pgIdx)
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             if (storageHelper.storagePgWrite == NULL)
-                storageHelper.storagePgWrite = memNewPtrArray(cfgDefOptionIndexTotal(cfgOptPgPath));
+                storageHelper.storagePgWrite = memNewPtrArray(cfgOptionGroupIdxTotal(cfgOptGrpPg));
 
             storageHelper.storagePgWrite[pgIdx] = storagePgGet(pgIdx, true);
         }

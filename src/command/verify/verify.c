@@ -41,11 +41,6 @@ Data Types and Structures
 #define FUNCTION_LOG_VERIFY_INFO_FILE_FORMAT(value, buffer, bufferSize)                                                            \
     objToLog(&value, "VerifyInfoFile", buffer, bufferSize)
 
-#define FUNCTION_LOG_VERIFY_WAL_RANGE_TYPE                                                                                         \
-    VerifyWalRange
-#define FUNCTION_LOG_VERIFY_WAL_RANGE_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(&value, "VerifyWalRange", buffer, bufferSize)
-
 // Structure for verifying repository info files
 typedef struct VerifyInfoFile
 {

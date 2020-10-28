@@ -1,5 +1,10 @@
 /***********************************************************************************************************************************
 Command and Option Configuration Internals
+
+These structures and functions are generally used by modules that create configurations, e.g. config/parse, or modules that
+manipulate the configuration as a whole, e.g. protocol/helper, in order to communicate with other processes.
+
+The general-purpose functions for querying the current configuration are found in config.h.
 ***********************************************************************************************************************************/
 #ifndef CONFIG_CONFIG_INTERN_H
 #define CONFIG_CONFIG_INTERN_H
@@ -7,12 +12,13 @@ Command and Option Configuration Internals
 #include "config/config.h"
 
 /***********************************************************************************************************************************
-Define index max
+The maximum numer of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
 ***********************************************************************************************************************************/
-#define CFG_OPTION_INDEX_MAX                                        256
+#define CFG_OPTION_KEY_MAX                                          256
 
 /***********************************************************************************************************************************
-!!!
+Configuration data. These structures are not directly user-created or accessible. configParse() creates the structures and uses
+cfgInit() to load it as the current configuration. Various cfg*() functions provide access.
 ***********************************************************************************************************************************/
 typedef struct ConfigOptionValue
 {
@@ -40,7 +46,7 @@ typedef struct Config
         bool valid;                                                 // Is option group valid for the current command?
         unsigned int indexTotal;                                    // Max index in option group
         unsigned int indexDefault;                                  // Default index (usually 0)
-        unsigned int index[CFG_OPTION_INDEX_MAX];                   // List of indexes
+        unsigned int index[CFG_OPTION_KEY_MAX];                     // List of index to key mappings
     } optionGroup[CFG_OPTION_GROUP_TOTAL];
 
     // Option data
@@ -59,12 +65,6 @@ Init Function
 void cfgInit(Config *config);
 
 /***********************************************************************************************************************************
-Command Functions
-***********************************************************************************************************************************/
-// Does this command allow parameters?
-bool cfgCommandParameterAllowed(ConfigCommand commandId);
-
-/***********************************************************************************************************************************
 Option Group Functions
 ***********************************************************************************************************************************/
 // Is the option in a group?
@@ -76,8 +76,12 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
-// Get the option name using the raw index -- i.e. the index that was used during configuration
-const char *cfgOptionRawIdxName(ConfigOption optionId, unsigned int index);
+// Get the option name using the key -- i.e. the key that was used during configuration, e.g. the 2 in pg2-host
+const char *cfgOptionKeyIdxName(ConfigOption optionId, unsigned int optionIdx);
+
+// Convert the key used in the original configuration to a group index. This is used when an option key must be translated into the
+// local group index, e.g. during parsing or when getting the value of specific options from a remote.
+unsigned int cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key);
 
 // Total indexes for the option if in a group, 1 otherwise.
 unsigned int cfgOptionIdxTotal(ConfigOption optionId);
