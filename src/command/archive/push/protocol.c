@@ -39,17 +39,15 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
     {
         if (strEq(command, PROTOCOL_COMMAND_ARCHIVE_PUSH_STR))
         {
-            CHECK(varUIntForce(varLstGet(paramList, 4)) == cfgOptionGroupIdxTotal(cfgOptGrpRepo));
+            CHECK(varLstSize(paramList) - 6 == cfgOptionGroupIdxTotal(cfgOptGrpRepo) * 3);
 
-            ArchivePushFileRepoData *repoData = memNew(cfgOptionGroupIdxTotal(cfgOptGrpRepo) & sizeof(ArchivePushFileRepoData));
+            ArchivePushFileRepoData *repoData = memNew(cfgOptionGroupIdxTotal(cfgOptGrpRepo) * sizeof(ArchivePushFileRepoData));
 
             for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
             {
-                repoData[repoIdx].archiveId = varStr(varLstGet(paramList, 5 + (repoIdx * 5)));
-                repoData[repoIdx].cipherType = (CipherType)varUIntForce(varLstGet(paramList, 5 + (repoIdx * 5) + 1));
-                repoData[repoIdx].cipherPass = varStr(varLstGet(paramList, 5 + (repoIdx * 5) + 2));
-                repoData[repoIdx].compressType = (CompressType)varUIntForce(varLstGet(paramList, 5 + (repoIdx * 5) + 3));
-                repoData[repoIdx].compressLevel = varIntForce(varLstGet(paramList, 5 + (repoIdx * 5) + 4));
+                repoData[repoIdx].archiveId = varStr(varLstGet(paramList, 6 + (repoIdx * 3)));
+                repoData[repoIdx].cipherType = (CipherType)varUIntForce(varLstGet(paramList, 6 + (repoIdx * 3) + 1));
+                repoData[repoIdx].cipherPass = varStr(varLstGet(paramList, 6 + (repoIdx * 3) + 2));
             }
 
             protocolServerResponse(
@@ -57,7 +55,8 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
                 VARSTR(
                     archivePushFile(
                         varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
-                        varStr(varLstGet(paramList, 3)), repoData)));
+                        varStr(varLstGet(paramList, 3)), (CompressType)varUIntForce(varLstGet(paramList, 4)),
+                        varIntForce(varLstGet(paramList, 5)), repoData)));
         }
         else
             found = false;

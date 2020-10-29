@@ -133,7 +133,7 @@ testRun(void)
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
 
         TEST_ERROR(
-            archivePushCheck(true, cipherTypeNone, NULL), ArchiveMismatchError,
+            archivePushCheck(true), ArchiveMismatchError,
             "PostgreSQL version 9.6, system-id 18072658121562454734 do not match stanza version 9.4, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
@@ -148,7 +148,7 @@ testRun(void)
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.6\"}\n"));
 
         TEST_ERROR(
-            archivePushCheck(true, cipherTypeNone, NULL), ArchiveMismatchError,
+            archivePushCheck(true), ArchiveMismatchError,
             "PostgreSQL version 9.6, system-id 18072658121562454734 do not match stanza version 9.6, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
@@ -163,12 +163,13 @@ testRun(void)
                 "1={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"));
 
         ArchivePushCheckResult result = {0};
-        TEST_ASSIGN(result, archivePushCheck(true, cipherTypeNone, NULL), "get archive check result");
+        TEST_ASSIGN(result, archivePushCheck(true), "get archive check result");
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
-        TEST_RESULT_STR_Z(result.archiveId, "9.6-1", "check archive id");
-        TEST_RESULT_STR_Z(result.archiveCipherPass, NULL, "check archive cipher pass (not set in this test)");
+        TEST_RESULT_STR_Z(result.repoData[0].archiveId, "9.6-1", "check archive id");
+        TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check cipher pass");
+        TEST_RESULT_STR_Z(result.repoData[0].cipherPass, NULL, "check cipher pass (not set in this test)");
     }
 
     // *****************************************************************************************************************************
@@ -371,14 +372,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath())));
-        varLstAdd(paramList, varNewStrZ("11-1"));
         varLstAdd(paramList, varNewUInt64(PG_VERSION_11));
         varLstAdd(paramList, varNewUInt64(0xFACEFACEFACEFACE));
         varLstAdd(paramList, varNewStrZ("000000010000000100000002"));
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone));
-        varLstAdd(paramList, NULL);
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewInt(6));
+        varLstAdd(paramList, varNewStrZ("11-1"));
+        varLstAdd(paramList, varNewUInt64(cipherTypeNone));
+        varLstAdd(paramList, NULL);
 
         TEST_RESULT_BOOL(
             archivePushProtocol(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR, paramList, server), true, "protocol archive put");

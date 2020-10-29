@@ -18,8 +18,6 @@ typedef struct ArchivePushFileRepoData
     const String *archiveId;
     CipherType cipherType;
     const String *cipherPass;
-    CompressType compressType;
-    int compressLevel;
 } ArchivePushFileRepoData;
 
 /***********************************************************************************************************************************
@@ -27,7 +25,7 @@ Functions
 ***********************************************************************************************************************************/
 // Copy a file from the source to the archive
 String *archivePushFile(
-    const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
-    const ArchivePushFileRepoData *repoData);
+    const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
+    int compressLevel, const ArchivePushFileRepoData *repoData);
 
 #endif
