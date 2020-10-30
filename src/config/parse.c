@@ -799,8 +799,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         THROW_FMT(OptionInvalidValueError, "environment variable '%s' must have a value", strZ(key));
 
                     // Continue if the option has already been specified on the command line
-                    ParseOptionValue *optionValue = parseOptionIdxValue(
-                        parseOptionList, option.id, option.keyIdx);
+                    ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
 
                     if (optionValue->found)
                         continue;
