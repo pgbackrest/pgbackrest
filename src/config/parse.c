@@ -82,7 +82,7 @@ typedef struct ParseOptionValue
     bool found:1;                                                   // Was the option found?
     bool negate:1;                                                  // Was the option negated on the command line?
     bool reset:1;                                                   // Was the option reset on the command line?
-    unsigned int source:2;                                          // Where was to option found?
+    unsigned int source:2;                                          // Where was the option found?
     StringList *valueList;                                          // List of values found
 } ParseOptionValue;
 
@@ -537,7 +537,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         // Phase 1: parse command line parameters
         // -------------------------------------------------------------------------------------------------------------------------
         int optionValue;                                                // Value returned by getopt_long
-        int optionListIdx;                                              // Index of option is list (if an option was returned)
+        int optionListIdx;                                              // Index of option in list (if an option was returned)
         bool argFound = false;                                          // Track args found to decide on error or help at the end
 
         // Reset optind to 1 in case getopt_long has been called before
