@@ -343,11 +343,11 @@ storageRepoGet(unsigned int repoIdx, bool write)
     Storage *result = NULL;
 
     // Use remote storage
-    if (!repoIsLocal())
+    if (!repoIsLocal(repoIdx))
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo, 0), cfgOptionIdxUInt(cfgOptCompressLevelNetwork, repoIdx));
+            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionIdxUInt(cfgOptCompressLevelNetwork, repoIdx));
     }
     // Use Azure storage
     else

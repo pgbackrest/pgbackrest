@@ -70,10 +70,13 @@ protocolHelperInit(void)
 
 /**********************************************************************************************************************************/
 bool
-repoIsLocal(void)
+repoIsLocal(unsigned int repoIdx)
 {
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(!cfgOptionTest(cfgOptRepoHost));
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(BOOL, !cfgOptionIdxTest(cfgOptRepoHost, repoIdx));
 }
 
 /**********************************************************************************************************************************/
@@ -82,7 +85,7 @@ repoIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
 
-    if (!repoIsLocal())
+    if (!repoIsLocal(cfgOptionGroupIdxDefault(cfgOptGrpRepo)))
         THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName(cfgCommand()));
 
     FUNCTION_TEST_RETURN_VOID();
@@ -133,13 +136,10 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
         // Add the process id -- used when more than one process will be called
         kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(processId));
 
-        // Add the group default id
-        kvPut(
-            optionReplace,
-            VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoDefault : cfgOptPgDefault)),
-            VARUINT(
-                cfgOptionGroupIdxToKey(
-                    protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg, hostIdx)));
+        // Add the pg default. Don't do this for repos because the repo default should come from the user or the local should
+        // handle all the repos equally. Repos don't get special handling like pg primaries or standbys.
+        if (protocolStorageType == protocolStorageTypePg)
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_PG_DEFAULT), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, hostIdx)));
 
         // Add the remote type
         kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));

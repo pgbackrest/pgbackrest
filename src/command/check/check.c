@@ -57,7 +57,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
         if (dbGroup.primary == NULL)
         {
             // If the repo is local or more than one pg-path is found then a master should have been found so error
-            if (repoIsLocal() || pgPathDefinedTotal > 1)
+            if (repoIsLocal(cfgOptionGroupIdxDefault(cfgOptGrpRepo)) || pgPathDefinedTotal > 1)
             {
                 THROW(
                     ConfigError,
