@@ -62,11 +62,19 @@ archivePushFile(
         // Set archive destination initially to the archive file, this will be updated later for wal segments
         String *archiveDestination = strDup(archiveFile);
 
-        // Get wal segment checksum and compare it to what exists in the repo, if any
-        String *walSegmentFile = NULL;
+        // Assume that all repos need a copy of the archive file
+        bool destinationCopyAny = true;
+        bool *destinationCopy = memNew(sizeof(bool) * repoTotal);
 
+        for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+            destinationCopy[repoIdx] = true;
+
+        // Get wal segment checksum and compare it to what exists in the repo, if any
         if (isSegment)
         {
+            // Assume that no repos need a copy of the WAL segment and update when a repo needing a copy is found
+            destinationCopyAny = false;
+
             // Generate a sha1 checksum for the wal segment
             IoRead *read = storageReadIo(storageNewReadP(storageLocal(), walSource));
             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
@@ -77,7 +85,7 @@ archivePushFile(
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
             {
                 // If the wal segment already exists in the repo then compare checksums
-                walSegmentFile = walSegmentFind(storageRepoIdx(repoIdx), repoData[repoIdx].archiveId, archiveFile, 0);
+                const String *walSegmentFile = walSegmentFind(storageRepoIdx(repoIdx), repoData[repoIdx].archiveId, archiveFile, 0);
 
                 if (walSegmentFile != NULL)
                 {
@@ -87,16 +95,32 @@ archivePushFile(
                     {
                         MEM_CONTEXT_PRIOR_BEGIN()
                         {
-                            result = strNewFmt(
-                                "WAL file '%s' already exists in the archive with the same checksum"
+                            if (result == NULL)
+                                result = strNew("");
+                            else
+                                strCatZ(result, "\n");
+
+                            strCatFmt(
+                                result,
+                                "WAL file '%s' already exists in the repo%u archive with the same checksum"
                                     "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                strZ(archiveFile));
+                                strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
                         }
                         MEM_CONTEXT_PRIOR_END();
+
+                        // No need to copy to this repo
+                        destinationCopy[repoIdx] = false;
                     }
                     else
-                        THROW_FMT(ArchiveDuplicateError, "WAL file '%s' already exists in the archive", strZ(archiveFile));
+                    {
+                        THROW_FMT(
+                            ArchiveDuplicateError, "WAL file '%s' already exists in the repo%u archive", strZ(archiveFile),
+                            cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                    }
                 }
+                // Else the destination needs a copy
+                else
+                    destinationCopyAny = true;
             }
 
             // Append the checksum to the archive destination
@@ -104,7 +128,7 @@ archivePushFile(
         }
 
         // Only copy if the file was not found in the archive
-        if (walSegmentFile == NULL)
+        if (destinationCopyAny)
         {
             StorageRead *source = storageNewReadP(storageLocal(), walSource);
 
@@ -124,18 +148,23 @@ archivePushFile(
 
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
             {
-                destination[repoIdx] = storageNewWriteP(
-                    storageRepoIdxWrite(repoIdx),
-                    strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData[repoIdx].archiveId), strZ(archiveDestination)),
-                    .compressible = compressible && repoData[repoIdx].cipherType == cipherTypeNone);
-
-                // If there is a cipher then add the encrypt filter
-                if (repoData[repoIdx].cipherType != cipherTypeNone)
+                // Does this repo need a copy?
+                if (destinationCopy[repoIdx])
                 {
-                    ioFilterGroupAdd(
-                        ioWriteFilterGroup(storageWriteIo(destination[repoIdx])),
-                        cipherBlockNew(
-                            cipherModeEncrypt, repoData[repoIdx].cipherType, BUFSTR(repoData[repoIdx].cipherPass), NULL));
+                    // Create destination file
+                    destination[repoIdx] = storageNewWriteP(
+                        storageRepoIdxWrite(repoIdx),
+                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData[repoIdx].archiveId), strZ(archiveDestination)),
+                        .compressible = compressible && repoData[repoIdx].cipherType == cipherTypeNone);
+
+                    // If there is a cipher then add the encrypt filter
+                    if (repoData[repoIdx].cipherType != cipherTypeNone)
+                    {
+                        ioFilterGroupAdd(
+                            ioWriteFilterGroup(storageWriteIo(destination[repoIdx])),
+                            cipherBlockNew(
+                                cipherModeEncrypt, repoData[repoIdx].cipherType, BUFSTR(repoData[repoIdx].cipherPass), NULL));
+                    }
                 }
             }
 
@@ -144,7 +173,11 @@ archivePushFile(
 
             // Open the destination files now that we know the source file exists and is readable
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
-                ioWriteOpen(storageWriteIo(destination[repoIdx]));
+            {
+                // Does this repo need a copy?
+                if (destinationCopy[repoIdx])
+                    ioWriteOpen(storageWriteIo(destination[repoIdx]));
+            }
 
             // Copy data from source to destination
             Buffer *read = bufNew(ioBufferSize());
@@ -156,7 +189,11 @@ archivePushFile(
 
                 // Write to each destination
                 for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
-                    ioWrite(storageWriteIo(destination[repoIdx]), read);
+                {
+                    // Does this repo need a copy?
+                    if (destinationCopy[repoIdx])
+                        ioWrite(storageWriteIo(destination[repoIdx]), read);
+                }
 
                 // Clear buffer
                 bufUsedZero(read);
@@ -167,7 +204,11 @@ archivePushFile(
             ioReadClose(storageReadIo(source));
 
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
-                ioWriteClose(storageWriteIo(destination[repoIdx]));
+            {
+                // Does this repo need a copy?
+                if (destinationCopy[repoIdx])
+                    ioWriteClose(storageWriteIo(destination[repoIdx]));
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();

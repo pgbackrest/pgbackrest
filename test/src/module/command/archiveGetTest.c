@@ -123,7 +123,9 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoDefault, "2");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 

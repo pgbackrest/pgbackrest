@@ -144,7 +144,7 @@ P00   INFO: start command end: completed successfully
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=none --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
-P00   WARN: WAL file '000000010000000100000002' already exists in the archive with the same checksum
+P00   WARN: WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum
             HINT: this is valid in some recovery scenarios but may also indicate a problem.
 P00   INFO: pushed WAL file '000000010000000100000002' to the archive
 P00   INFO: archive-push command end: completed successfully
@@ -152,7 +152,7 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=none --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
-P00  ERROR: [045]: WAL file '000000010000000100000002' already exists in the archive
+P00  ERROR: [045]: WAL file '000000010000000100000002' already exists in the repo1 archive
 P00   INFO: archive-push command end: aborted with exception [045]
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get --cmd-ssh=/usr/bin/ssh --archive-async --archive-timeout=5 000000010000000100000002 [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG
@@ -182,7 +182,7 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002.partial
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002.partial] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=none --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
-P00   WARN: WAL file '000000010000000100000002.partial' already exists in the archive with the same checksum
+P00   WARN: WAL file '000000010000000100000002.partial' already exists in the repo1 archive with the same checksum
             HINT: this is valid in some recovery scenarios but may also indicate a problem.
 P00   INFO: pushed WAL file '000000010000000100000002.partial' to the archive
 P00   INFO: archive-push command end: completed successfully
@@ -190,5 +190,5 @@ P00   INFO: archive-push command end: completed successfully
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002.partial
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002.partial] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=none --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
-P00  ERROR: [045]: WAL file '000000010000000100000002.partial' already exists in the archive
+P00  ERROR: [045]: WAL file '000000010000000100000002.partial' already exists in the repo1 archive
 P00   INFO: archive-push command end: aborted with exception [045]
