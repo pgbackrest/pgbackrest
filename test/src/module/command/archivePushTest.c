@@ -134,7 +134,8 @@ testRun(void)
 
         TEST_ERROR(
             archivePushCheck(true), ArchiveMismatchError,
-            "PostgreSQL version 9.6, system-id 18072658121562454734 do not match stanza version 9.4, system-id 5555555555555555555"
+            "PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version 9.4, system-id"
+                " 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
         // Fix the version
@@ -149,7 +150,8 @@ testRun(void)
 
         TEST_ERROR(
             archivePushCheck(true), ArchiveMismatchError,
-            "PostgreSQL version 9.6, system-id 18072658121562454734 do not match stanza version 9.6, system-id 5555555555555555555"
+            "PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version 9.6, system-id"
+                " 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
         // Fix archive info
@@ -170,6 +172,66 @@ testRun(void)
         TEST_RESULT_STR_Z(result.repoData[0].archiveId, "9.6-1", "check archive id");
         TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check cipher pass");
         TEST_RESULT_STR_Z(result.repoData[0].cipherPass, NULL, "check cipher pass (not set in this test)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("mismatched repos when pg-path not present");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test");
+        strLstAdd(argList, strNewFmt("--repo2-path=%s/repo2", testPath()));
+        strLstAdd(argList, strNewFmt("--repo4-path=%s/repo4", testPath()));
+        harnessCfgLoad(cfgCmdArchivePush, argList);
+
+        // repo2 has correct info
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo2/archive/test/archive.info")),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=1\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"));
+
+        // repo4 has incorrect info
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo4/archive/test/archive.info")),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=1\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
+
+        TEST_ERROR(
+            archivePushCheck(false), ArchiveMismatchError,
+            "repo2 stanza version 9.6, system-id 18072658121562454734 do not match repo4 stanza version 9.4, system-id"
+                " 5555555555555555555"
+                "\nHINT: are you archiving to the correct stanza?");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("matched repos when pg-path not present");
+
+        // repo4 has correct info
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo4/archive/test/archive.info")),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=2\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
+                "2={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"));
+
+        TEST_ASSIGN(result, archivePushCheck(false), "get archive check result");
+
+        TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
+        TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
+        TEST_RESULT_STR_Z(result.repoData[0].archiveId, "9.6-1", "check repo2 archive id");
+        TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check repo2 cipher pass");
+        TEST_RESULT_STR_Z(result.repoData[0].cipherPass, NULL, "check repo2 cipher pass (not set in this test)");
+        TEST_RESULT_STR_Z(result.repoData[1].archiveId, "9.6-2", "check repo4 archive id");
+        TEST_RESULT_UINT(result.repoData[1].cipherType, cipherTypeNone, "check repo4 cipher pass");
+        TEST_RESULT_STR_Z(result.repoData[1].cipherPass, NULL, "check repo4 cipher pass (not set in this test)");
     }
 
     // *****************************************************************************************************************************
@@ -395,11 +457,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(archivePushProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
 
-        // Create a new encrypted repo to test encryption
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple repos, one encrypted");
+
+        // Remove old repo
         storagePathRemoveP(storageTest, strNew("repo"), .errorOnMissing = true, .recurse = true);
 
-        StorageWrite *infoWrite = storageNewWriteP(storageTest, strNew("repo/archive/test/archive.info"));
+        // repo2 is encrypted
+        StorageWrite *infoWrite = storageNewWriteP(storageTest, strNew("repo2/archive/test/archive.info"));
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(infoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
@@ -417,22 +482,41 @@ testRun(void)
                 "[db:history]\n"
                 "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}"));
 
+        // repo3 is not encrypted
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo3/archive/test/archive.info")),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=1\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}"));
+
         // Push encrypted WAL segment
-        argListTemp = strLstDup(argList);
+        argListTemp = strLstNew();
+        hrnCfgArgRawZ(argListTemp, cfgOptStanza, "test");
+        hrnCfgArgKeyRawFmt(argListTemp, cfgOptPgPath, 1, "%s/pg", testPath());
+        hrnCfgArgKeyRawFmt(argListTemp, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argListTemp, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvIdRawZ(cfgOptRepoCipherPass, 2, "badpassphrase");
+        hrnCfgArgKeyRawFmt(argListTemp, cfgOptRepoPath, 3, "%s/repo3", testPath());
+        hrnCfgArgRawNegate(argListTemp, cfgOptCompress);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
-        strLstAddZ(argListTemp, "--repo1-cipher-type=aes-256-cbc");
-        strLstAddZ(argListTemp, "--no-compress");
-        setenv("PGBACKREST_REPO1_CIPHER_PASS", "badpassphrase", true);
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
-        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
+        hrnCfgEnvIdRemoveRaw(cfgOptRepoCipherPass, 2);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
             storageExistsP(
-                storageTest, strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
-            true, "check repo for WAL file");
+                storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            true, "check repo2 for WAL file");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            true, "check repo3 for WAL file");
     }
 
     // *****************************************************************************************************************************

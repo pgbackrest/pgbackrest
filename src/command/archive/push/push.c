@@ -20,6 +20,7 @@ Archive Push Command
 #include "config/exec.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
+#include "postgres/version.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
@@ -236,19 +237,20 @@ archivePushCheck(bool pgPathSet)
             String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
             InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
 
-            // Ensure that stanza version and system identifier match pg_control when available
-            // !!! THIS WILL NEED TO BE MOVED OUT INTO A SEPARATE FUNCTION TO AVOID LOADING PG_CONTROL MULTIPLE TIMES
+            // Ensure that stanza version and system identifier match pg_control when available or the other repos when pg_control
+            // is not available
             if (pgPathSet || repoIdx > 0)
             {
                 if (result.pgVersion != archiveInfo.version || result.pgSystemId != archiveInfo.systemId)
                 {
                     THROW_FMT(
                         ArchiveMismatchError,
-                        // !!! NEED TO IMPROVE THIS MESSAGE SO WORKS FOR PG TO REPO COMPARISON OR REPO TO REPO COMPARISON
-                        "PostgreSQL version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64
+                        "%s version %s, system-id %" PRIu64 " do not match %s stanza version %s, system-id %" PRIu64
                         "\nHINT: are you archiving to the correct stanza?",
-                        strZ(pgVersionToStr(result.pgVersion)), result.pgSystemId, strZ(pgVersionToStr(archiveInfo.version)),
-                        archiveInfo.systemId);
+                        pgPathSet ? PG_NAME : strZ(strNewFmt("repo%u stanza", cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0))),
+                        strZ(pgVersionToStr(result.pgVersion)), result.pgSystemId,
+                        strZ(strNewFmt("repo%u", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx))),
+                        strZ(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId);
                 }
             }
 

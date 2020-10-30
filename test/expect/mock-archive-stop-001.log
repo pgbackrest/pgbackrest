@@ -54,12 +54,12 @@ backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match stanza version 8.0, system-id 1000000000000000094
+P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match repo1 stanza version 8.0, system-id 1000000000000000094
             HINT: are you archiving to the correct stanza?
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000003
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match stanza version 8.0, system-id 1000000000000000094
+P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match repo1 stanza version 8.0, system-id 1000000000000000094
             HINT: are you archiving to the correct stanza?
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000004 --repo1-host=bogus

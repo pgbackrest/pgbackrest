@@ -140,7 +140,7 @@ archivePushFile(
             }
 
             // Open source file
-            if (ioReadOpen(storageReadIo(source)))
+            ioReadOpen(storageReadIo(source));
 
             // Open the destination files now that we know the source file exists and is readable
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
