@@ -133,7 +133,7 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_BOOL(repoIsLocal(), true, "repo is local");
+        TEST_RESULT_BOOL(repoIsLocal(0), true, "repo is local");
         TEST_RESULT_VOID(repoIsLocalVerify(), "    local verified");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -145,7 +145,7 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_BOOL(repoIsLocal(), false, "repo is remote");
+        TEST_RESULT_BOOL(repoIsLocal(0), false, "repo is remote");
         TEST_ERROR_FMT(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -229,7 +229,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolLocalParam(protocolStorageTypeRepo, 0, 0), "|"),
             "--log-level-console=off|--log-level-file=off|--log-level-stderr=error|--pg1-path=/path/to/pg|--process=0"
-                "|--remote-type=repo|--repo-default=1|--stanza=test1|archive-get:local",
+                "|--remote-type=repo|--stanza=test1|archive-get:local",
             "local repo protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
