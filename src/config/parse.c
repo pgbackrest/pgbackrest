@@ -451,7 +451,7 @@ cfgFileLoad(                                                        // NOTE: Pas
             result = strNewBuf(buffer);
         else if (strEq(configFileName, optConfigDefaultCurrent))
         {
-            // If confg is current default and it was not found, attempt to load the config file from the old default location
+            // If config is current default and it was not found, attempt to load the config file from the old default location
             buffer = storageGetP(storageNewReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
 
             if (buffer != NULL)

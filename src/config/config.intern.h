@@ -12,7 +12,7 @@ The general-purpose functions for querying the current configuration are found i
 #include "config/config.h"
 
 /***********************************************************************************************************************************
-The maximum numer of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
+The maximum number of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
 ***********************************************************************************************************************************/
 #define CFG_OPTION_KEY_MAX                                          256
 
