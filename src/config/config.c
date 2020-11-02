@@ -101,6 +101,8 @@ cfgInit(Config *config)
         FUNCTION_TEST_PARAM_P(VOID, config);
     FUNCTION_TEST_END();
 
+    ASSERT(config != NULL);
+
     // Free the old context
     if (configLocal != NULL)
         memContextFree(configLocal->memContext);

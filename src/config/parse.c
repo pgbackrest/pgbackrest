@@ -88,7 +88,6 @@ typedef struct ParseOptionValue
 
 typedef struct ParseOption
 {
-    unsigned int indexListAlloc;                                    // Allocated size of index list
     unsigned int indexListTotal;                                    // Total options in indexed list
     ParseOptionValue *indexList;                                    // List of indexed option values
 } ParseOption;
