@@ -76,8 +76,9 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
-// Get the option name using the key -- i.e. the key that was used during configuration, e.g. the 2 in pg2-host
-const char *cfgOptionKeyIdxName(ConfigOption optionId, unsigned int optionIdx);
+// Get the option name using the key index -- i.e. the key that was used during configuration - 1, e.g. to get pg2-host pass 1 to
+// keyIdx.
+const char *cfgOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
 
 // Convert the key used in the original configuration to a group index. This is used when an option key must be translated into the
 // local group index, e.g. during parsing or when getting the value of specific options from a remote.
