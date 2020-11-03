@@ -44,7 +44,7 @@ typedef struct Config
     struct
     {
         bool valid;                                                 // Is option group valid for the current command?
-        unsigned int indexTotal;                                    // Max index in option group
+        unsigned int indexTotal;                                    // Total number of indexes with values in option group
         unsigned int indexDefault;                                  // Default index (usually 0)
         unsigned int index[CFG_OPTION_KEY_MAX];                     // List of index to key mappings
     } optionGroup[CFG_OPTION_GROUP_TOTAL];
