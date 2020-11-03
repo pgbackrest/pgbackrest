@@ -99,16 +99,16 @@ typedef struct ParseOption
 Get the indexed value, creating the array to contain it if needed
 ***********************************************************************************************************************************/
 static ParseOptionValue *
-parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int optionIdx)
+parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int optionKeyIdx)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PARSE_OPTION, parseOption);
-        FUNCTION_TEST_PARAM(UINT, optionId);
-        FUNCTION_TEST_PARAM(UINT, optionIdx);
+        FUNCTION_TEST_PARAM(PARSE_OPTION, parseOption);             // Structure containing all options being parsed
+        FUNCTION_TEST_PARAM(UINT, optionId);                        // Unique ID which also identifies the option in the parse list
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);                    // Zero-based key index (e.g. pg3-path => 2), 0 for non-indexed
     FUNCTION_TEST_END();
 
     // If the requested index is beyond what has already been allocated
-    if (optionIdx >= optionList[optionId].indexListTotal)
+    if (optionKeyIdx >= optionList[optionId].indexListTotal)
     {
         // If the option is in a group
         if (cfgOptionGroup(optionId))
@@ -119,7 +119,7 @@ parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int
             if (optionList[optionId].indexListTotal == 0)
             {
                 optionList[optionId].indexListTotal =
-                    optionIdx >= (LIST_INITIAL_SIZE / 2) ? optionIdx + 1 : (LIST_INITIAL_SIZE / 2);
+                    optionKeyIdx >= (LIST_INITIAL_SIZE / 2) ? optionKeyIdx + 1 : (LIST_INITIAL_SIZE / 2);
                 optionList[optionId].indexList = memNew(sizeof(ParseOptionValue) * optionList[optionId].indexListTotal);
             }
             // Allocate more memory when needed. This could be more efficient but the limited number of indexes currently allowed
@@ -127,13 +127,14 @@ parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int
             else
             {
                 optionOffset = optionList[optionId].indexListTotal;
-                optionList[optionId].indexListTotal = optionIdx + 1;
+                optionList[optionId].indexListTotal = optionKeyIdx + 1;
                 optionList[optionId].indexList = memResize(
                     optionList[optionId].indexList, sizeof(ParseOptionValue) * optionList[optionId].indexListTotal);
             }
 
-            for (unsigned int optionIdx = optionOffset; optionIdx < optionList[optionId].indexListTotal; optionIdx++)
-                optionList[optionId].indexList[optionIdx] = (ParseOptionValue){0};
+            // Initialize the newly allocated memory
+            for (unsigned int optKeyIdx = optionOffset; optKeyIdx < optionList[optionId].indexListTotal; optKeyIdx++)
+                optionList[optionId].indexList[optKeyIdx] = (ParseOptionValue){0};
         }
         // Else the option is not in a group so there can only be one value
         else
@@ -145,7 +146,7 @@ parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int
     }
 
     // Return the indexed value
-    FUNCTION_TEST_RETURN(&optionList[optionId].indexList[optionIdx]);
+    FUNCTION_TEST_RETURN(&optionList[optionId].indexList[optionKeyIdx]);
 }
 
 /***********************************************************************************************************************************
@@ -1022,15 +1023,15 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                     // Scan the option values to determine which indexes are in use. Store them in a map that will later be scanned
                     // to create a list of just the used indexes.
-                    for (unsigned int optionIdx = 0; optionIdx < parseOptionList[optionId].indexListTotal; optionIdx++)
+                    for (unsigned int optionKeyIdx = 0; optionKeyIdx < parseOptionList[optionId].indexListTotal; optionKeyIdx++)
                     {
-                        if (parseOptionList[optionId].indexList[optionIdx].found &&
-                            !parseOptionList[optionId].indexList[optionIdx].reset)
+                        if (parseOptionList[optionId].indexList[optionKeyIdx].found &&
+                            !parseOptionList[optionId].indexList[optionKeyIdx].reset)
                         {
-                            if (!groupIdxMap[groupId][optionIdx])
+                            if (!groupIdxMap[groupId][optionKeyIdx])
                             {
                                 config->optionGroup[groupId].indexTotal++;
-                                groupIdxMap[groupId][optionIdx] = true;
+                                groupIdxMap[groupId][optionKeyIdx] = true;
                             }
                         }
                     }
@@ -1054,21 +1055,21 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 else
                 {
                     unsigned int optionIdxMax = 0;
-                    unsigned int optionIdx = 0;
+                    unsigned int optionKeyIdx = 0;
 
                     // ??? For the pg group, key 1 is required to maintain compatibilty with older versions
                     // !!! THIS IS PRETTY HACKY BUT IT DOES NOT BREAK CURRENT FUNCTIONALITY.
                     if (groupId == cfgOptGrpPg)
                     {
-                        optionIdx = 1;
+                        optionKeyIdx = 1;
                         optionIdxMax = 1;
                     }
 
-                    for (; optionIdx < CFG_OPTION_KEY_MAX; optionIdx++)
+                    for (; optionKeyIdx < CFG_OPTION_KEY_MAX; optionKeyIdx++)
                     {
-                        if (groupIdxMap[groupId][optionIdx])
+                        if (groupIdxMap[groupId][optionKeyIdx])
                         {
-                            config->optionGroup[groupId].index[optionIdxMax] = optionIdx;
+                            config->optionGroup[groupId].index[optionIdxMax] = optionKeyIdx;
                             optionIdxMax++;
                         }
                     }
