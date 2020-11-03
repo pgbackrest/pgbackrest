@@ -1054,8 +1054,17 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 else
                 {
                     unsigned int optionIdxMax = 0;
+                    unsigned int optionIdx = 0;
 
-                    for (unsigned int optionIdx = 0; optionIdx < CFG_OPTION_KEY_MAX; optionIdx++)
+                    // ??? For the pg group, key 1 is required to maintain compatibilty with older versions
+                    // !!! THIS IS PRETTY HACKY BUT IT DOES NOT BREAK CURRENT FUNCTIONALITY.
+                    if (groupId == cfgOptGrpPg)
+                    {
+                        optionIdx = 1;
+                        optionIdxMax = 1;
+                    }
+
+                    for (; optionIdx < CFG_OPTION_KEY_MAX; optionIdx++)
                     {
                         if (groupIdxMap[groupId][optionIdx])
                         {

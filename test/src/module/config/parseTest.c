@@ -1337,7 +1337,7 @@ testRun(void)
         TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "    pg1 and pg2 are set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "    pg2-local is set");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 1), false, "    pg2-host is not set (pg2-local override)");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 1), "/path/to/db2", "    pg2-path is set");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 2)), "/path/to/db2", "    pg2-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "    pg1-path is source config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLockPath), "/", "    lock-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "    lock-path is source config");
@@ -1387,6 +1387,9 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgOptionInvalidate(cfgOptPgPath), "    invalidate pg-path");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), false, "    pg-path no longer valid");
+
+        TEST_RESULT_UINT(cfgOptionKeyToIdx(cfgOptArchiveTimeout, 1), 0, "check archive-timeout");
+        TEST_ERROR(cfgOptionKeyToIdx(cfgOptPgPath, 4), AssertError, "key '4' is not valid for 'pg-path' option");
 
         unsetenv("PGBACKREST_BOGUS");
         unsetenv("PGBACKREST_NO_DELTA");
@@ -1592,26 +1595,23 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLogFile(), false, "    check logging");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("option key 1 is not required");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
-        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdCheck, argList), "check command");
-
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/pg2", "check pg1-path");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 8)), "/pg8", "check pg8-path");
-
-        TEST_RESULT_UINT(cfgOptionKeyToIdx(cfgOptArchiveTimeout, 1), 0, "check archive-timeout");
-        TEST_ERROR(cfgOptionKeyToIdx(cfgOptPgPath, 4), AssertError, "key '4' is not valid for 'pg-path' option");
+        // TEST_TITLE("option key 1 is not required");
+        //
+        // argList = strLstNew();
+        // hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        // hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        // hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
+        // TEST_RESULT_VOID(harnessCfgLoad(cfgCmdCheck, argList), "check command");
+        //
+        // TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/pg2", "check pg1-path");
+        // TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 8)), "/pg8", "check pg8-path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid pg-default");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
         hrnCfgArgRawZ(argList, cfgOptPgDefault, "4");
         TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError, "key '4' is not valid for 'pg-default' option");
