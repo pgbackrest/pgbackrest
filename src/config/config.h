@@ -188,7 +188,7 @@ const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
 // pgBackRest exe
 const String *cfgExe(void);
 
-// Option default
+// Option default - should only be called by Help
 const Variant *cfgOptionDefault(ConfigOption optionId);
 
 // Set option default. Option defaults are generally not set in advance because the vast majority of them are never used.  It is
