@@ -12,7 +12,6 @@ config/parse.c sets the command and options and determines which options are val
 #include "common/type/stringList.h"
 
 #include "config/config.auto.h"
-#include "config/define.auto.h"
 
 /***********************************************************************************************************************************
 Command Role Enum
@@ -88,20 +87,25 @@ bool cfgLogFile(void);
 // Default log level -- used for log messages that are common to all commands
 LogLevel cfgLogLevelDefault(void);
 
-// Does this command allow parameters?
-bool cfgParameterAllowed(void);
-
 // Command parameters, if any
 const StringList *cfgCommandParam(void);
+
+// Does this command allow parameters?
+bool cfgCommandParameterAllowed(ConfigCommand commandId);
 
 /***********************************************************************************************************************************
 Option Group Functions
 ***********************************************************************************************************************************/
-// Are any options in the group with the specified index valid for the command and set by the user (i.e. not default)?
-bool cfgOptionGroupIdxTest(ConfigOptionGroup groupId, unsigned int index);
+// Get the default index for this group, i.e. the index that will be used if a non-indexed function like cfgOptionTest() is called.
+unsigned int cfgOptionGroupIdxDefault(ConfigOptionGroup groupId);
 
-// Total indexed groups, 0 if the group is not valid. Note that there may be gaps so each group index will need to be tested with
-// cfgOptionGroupIdxTest() to make sure it contains data.
+// Convert the group index to a key, i.e. the key that was used in the original configuration file, command-line, etc. Useful for
+// messages that do not show an option name but must use an index that the user will recognize. It is preferrable to generate an
+// option name with cfgOptionIdxName() when possible.
+unsigned int cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int groupIdx);
+
+// Total indexes, 0 if the group is not valid. Will be the total configured indexes, no matter which raw indexes were used during
+// configuration. e.g., if pg1-path and pg8-path are configured then this function will return 2.
 unsigned int cfgOptionGroupIdxTotal(ConfigOptionGroup groupId);
 
 // Are any options in the group valid for the command?
@@ -110,32 +114,42 @@ bool cfgOptionGroupValid(ConfigOptionGroup groupId);
 /***********************************************************************************************************************************
 Option Functions
 
-Access option values, indexes, and determine if an option is valid for the current command.
+Access option values, indexes, and determine if an option is valid for the current command. Most functions have a variant that
+accepts an index, which currently work with non-indexed options (with optionIdx 0) but they may not always do so.
 ***********************************************************************************************************************************/
 // Get config options for various types
 const Variant *cfgOption(ConfigOption optionId);
+const Variant *cfgOptionIdx(ConfigOption optionId, unsigned int optionIdx);
 bool cfgOptionBool(ConfigOption optionId);
+bool cfgOptionIdxBool(ConfigOption optionId, unsigned int optionIdx);
 double cfgOptionDbl(ConfigOption optionId);
 int cfgOptionInt(ConfigOption optionId);
+int cfgOptionIdxInt(ConfigOption optionId, unsigned int optionIdx);
 int64_t cfgOptionInt64(ConfigOption optionId);
+int64_t cfgOptionIdxInt64(ConfigOption optionId, unsigned int optionIdx);
 const KeyValue *cfgOptionKv(ConfigOption optionId);
+const KeyValue *cfgOptionIdxKv(ConfigOption optionId, unsigned int optionIdx);
 const VariantList *cfgOptionLst(ConfigOption optionId);
+const VariantList *cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStr(ConfigOption optionId);
+const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStrNull(ConfigOption optionId);
+const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx);
 unsigned int cfgOptionUInt(ConfigOption optionId);
+unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
 uint64_t cfgOptionUInt64(ConfigOption optionId);
-
-// Get index for option
-unsigned int cfgOptionIndex(ConfigOption optionId);
+uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int optionIdx);
 
 // Option name by id
 const char *cfgOptionName(ConfigOption optionId);
+const char *cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx);
 
 // Is the option valid for this command?
 bool cfgOptionValid(ConfigOption optionId);
 
-// Is the option valid for the command and set?
+// Is the option valid for the command and also has a value?
 bool cfgOptionTest(ConfigOption optionId);
+bool cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx);
 
 /***********************************************************************************************************************************
 Option Source Enum
@@ -156,17 +170,12 @@ Load Functions
 Used primarily by modules that need to manipulate the configuration.  These modules include, but are not limited to, config/parse.c,
 config/load.c.
 ***********************************************************************************************************************************/
-// Initialize or reinitialize the configuration data
-void cfgInit(void);
-
 // Was help requested?
 bool cfgCommandHelp(void);
-void cfgCommandHelpSet(bool help);
 
-// Get command id by name.  If error is true then assert when the command does not exist.
-ConfigCommand cfgCommandId(const char *commandName, bool error);
+// Get command id by name
+ConfigCommand cfgCommandId(const char *commandName);
 
-void cfgCommandParamSet(const StringList *param);
 void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
 
 // Get command/role name with custom separator
@@ -178,39 +187,32 @@ const String *cfgCommandRoleStr(ConfigCommandRole commandRole);
 
 // pgBackRest exe
 const String *cfgExe(void);
-void cfgExeSet(const String *exe);
 
-// Option default
+// Option default - should only be called by the help command
 const Variant *cfgOptionDefault(ConfigOption optionId);
 
 // Set option default. Option defaults are generally not set in advance because the vast majority of them are never used.  It is
 // more efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 
-// Get the option define for this option
-ConfigDefineOption cfgOptionDefIdFromId(ConfigOption optionId);
-
 // Parse a host option and extract the host and port (if it exists)
 String *cfgOptionHostPort(ConfigOption optionId, unsigned int *port);
-
-// Get the id for this option define
-ConfigOption cfgOptionIdFromDefId(ConfigDefineOption optionDefId, unsigned int index);
+String *cfgOptionIdxHostPort(ConfigOption optionId, unsigned int optionIdx, unsigned int *port);
 
 // Was the option negated?
 bool cfgOptionNegate(ConfigOption optionId);
-void cfgOptionNegateSet(ConfigOption optionId, bool negate);
+bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx);
 
 // Was the option reset?
 bool cfgOptionReset(ConfigOption optionId);
-void cfgOptionResetSet(ConfigOption optionId, bool reset);
+bool cfgOptionIdxReset(ConfigOption optionId, unsigned int optionIdx);
 
 // Set config option
 void cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value);
+void cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource source, const Variant *value);
 
 // How was the option set (default, param, config)?
 ConfigSource cfgOptionSource(ConfigOption optionId);
-
-// Set option valid
-void cfgOptionValidSet(ConfigOption optionId, bool valid);
+ConfigSource cfgOptionIdxSource(ConfigOption optionId, unsigned int optionIdx);
 
 #endif

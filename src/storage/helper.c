@@ -183,7 +183,7 @@ storagePgGet(unsigned int pgIdx, bool write)
     // Use Posix storage
     else
     {
-        result = storagePosixNewP(cfgOptionStr(cfgOptPgPath + pgIdx), .write = write);
+        result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -204,7 +204,7 @@ storagePgIdx(unsigned int pgIdx)
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             if (storageHelper.storagePg == NULL)
-                storageHelper.storagePg = memNewPtrArray(cfgDefOptionIndexTotal(cfgDefOptPgPath));
+                storageHelper.storagePg = memNewPtrArray(cfgOptionGroupIdxTotal(cfgOptGrpPg));
 
             storageHelper.storagePg[pgIdx] = storagePgGet(pgIdx, false);
         }
@@ -218,7 +218,7 @@ const Storage *
 storagePg(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgIdx(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) - 1 : 0));
+    FUNCTION_TEST_RETURN(storagePgIdx(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
 const Storage *
@@ -239,7 +239,7 @@ storagePgIdxWrite(unsigned int pgIdx)
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
             if (storageHelper.storagePgWrite == NULL)
-                storageHelper.storagePgWrite = memNewPtrArray(cfgDefOptionIndexTotal(cfgDefOptPgPath));
+                storageHelper.storagePgWrite = memNewPtrArray(cfgOptionGroupIdxTotal(cfgOptGrpPg));
 
             storageHelper.storagePgWrite[pgIdx] = storagePgGet(pgIdx, true);
         }
@@ -253,7 +253,7 @@ const Storage *
 storagePgWrite(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgIdxWrite(cfgOptionTest(cfgOptHostId) ? cfgOptionUInt(cfgOptHostId) - 1 : 0));
+    FUNCTION_TEST_RETURN(storagePgIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
 /***********************************************************************************************************************************

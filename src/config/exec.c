@@ -8,6 +8,7 @@ Exec Configuration
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/define.h"
+#include "config/config.intern.h"
 #include "config/exec.h"
 
 /**********************************************************************************************************************************/
@@ -31,95 +32,100 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
 
         for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         {
-            ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
-
-            // Skip the option if it is not valid for the specified command or if is secure.  Also skip repo1-cipher-type because
-            // there's no point of passing it if the other process doesn't have access to repo1-cipher-pass.  There is probably a
-            // better way to do this...
-            if (!cfgDefOptionValid(commandId, optionDefId) || cfgDefOptionSecure(optionDefId) ||
-                optionDefId == cfgDefOptRepoCipherType)
+            // Skip the option if it is not valid for the original/specified command or if is secure. Also skip repo1-cipher-type
+            // because there's no point of passing it if the other process doesn't have access to repo1-cipher-pass. There is
+            // probably a better way to do this last part...
+            if (!cfgDefOptionValid(commandId, optionId) || cfgDefOptionSecure(optionId) || optionId == cfgOptRepoCipherType)
             {
                 continue;
             }
 
-            // First check for a replacement
-            const Variant *key = VARSTRZ(cfgOptionName(optionId));
-            const Variant *value = NULL;
-            bool exists = false;
+            // Loop through option indexes
+            unsigned int optionIdxTotal = cfgOptionGroup(optionId) ? cfgOptionGroupIdxTotal(cfgOptionGroupId(optionId)) : 1;
 
-            if (optionReplace != NULL)
+            for (unsigned int optionIdx = 0; optionIdx < optionIdxTotal; optionIdx++)
             {
-                exists = kvKeyExists(optionReplace, key);
+                // First check for a replacement
+                const Variant *key = VARSTRZ(cfgOptionIdxName(optionId, optionIdx));
+                const Variant *value = NULL;
+                bool exists = false;
 
-                if (exists)
-                    value = kvGet(optionReplace, key);
-            }
-
-            // If the key exists but is NULL then skip this option
-            if (exists && value == NULL)
-                continue;
-
-            // If no replacement then see if this option is valid for the current command and is not default
-            if (value == NULL && cfgOptionValid(optionId))
-            {
-                if (cfgOptionNegate(optionId))
-                    value = BOOL_FALSE_VAR;
-                else if (cfgOptionSource(optionId) != cfgSourceDefault)
-                    value = cfgOption(optionId);
-            }
-
-            // If the option was reset
-            if (cfgOptionReset(optionId))
-            {
-                strLstAdd(result, strNewFmt("--reset-%s", cfgOptionName(optionId)));
-            }
-            // Else format the value if found
-            else if (value != NULL && (!local || exists || cfgOptionSource(optionId) == cfgSourceParam))
-            {
-                if (varType(value) == varTypeBool)
+                // If an option is requested to be replaced (usually because remote processes do not have access to the config)
+                // then if the option exists, get the new value for replacement
+                if (optionReplace != NULL)
                 {
-                    strLstAdd(result, strNewFmt("--%s%s", varBool(value) ? "" : "no-", cfgOptionName(optionId)));
+                    exists = kvKeyExists(optionReplace, key);
+
+                    if (exists)
+                        value = kvGet(optionReplace, key);
                 }
-                else
+
+                // If the key exists but its value is NULL then skip this option
+                if (exists && value == NULL)
+                    continue;
+
+                // If no replacement then see if this option is not default
+                if (value == NULL && cfgOptionValid(optionId))
                 {
-                    StringList *valueList = NULL;
+                    if (cfgOptionIdxNegate(optionId, optionIdx))
+                        value = BOOL_FALSE_VAR;
+                    else if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
+                        value = cfgOptionIdx(optionId, optionIdx);
+                }
 
-                    if (varType(value) == varTypeKeyValue)
+                // If the option was reset
+                if (cfgOptionValid(optionId) && cfgOptionIdxReset(optionId, optionIdx))
+                {
+                    strLstAdd(result, strNewFmt("--reset-%s", cfgOptionIdxName(optionId, optionIdx)));
+                }
+                // Else format the value if found, even if the option is not valid for the command
+                else if (value != NULL && (!local || exists || cfgOptionIdxSource(optionId, optionIdx) == cfgSourceParam))
+                {
+                    if (varType(value) == varTypeBool)
                     {
-                        valueList = strLstNew();
-
-                        const KeyValue *optionKv = varKv(value);
-                        const VariantList *keyList = kvKeyList(optionKv);
-
-                        for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
-                        {
-                            strLstAdd(
-                                valueList,
-                                strNewFmt(
-                                    "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
-                        }
+                        strLstAdd(result, strNewFmt("--%s%s", varBool(value) ? "" : "no-", cfgOptionIdxName(optionId, optionIdx)));
                     }
-                    else if (varType(value) == varTypeVariantList)
-                    {
-                        valueList = strLstNewVarLst(varVarLst(value));
-                    }
-                    // Else only one value
                     else
                     {
-                        valueList = strLstNew();
-                        strLstAdd(valueList, varStrForce(value));
-                    }
+                        StringList *valueList = NULL;
 
-                    // Output options and values
-                    for (unsigned int valueListIdx = 0; valueListIdx < strLstSize(valueList); valueListIdx++)
-                    {
-                        const String *value = strLstGet(valueList, valueListIdx);
+                        if (varType(value) == varTypeKeyValue)
+                        {
+                            valueList = strLstNew();
 
-                        if (quote && strchr(strZ(value), ' ') != NULL)
-                            value = strNewFmt("\"%s\"", strZ(value));
+                            const KeyValue *optionKv = varKv(value);
+                            const VariantList *keyList = kvKeyList(optionKv);
 
-                        strLstAdd(result, strNewFmt("--%s=%s", cfgOptionName(optionId), strZ(value)));
+                            for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+                            {
+                                strLstAdd(
+                                    valueList,
+                                    strNewFmt(
+                                        "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                                        strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
+                            }
+                        }
+                        else if (varType(value) == varTypeVariantList)
+                        {
+                            valueList = strLstNewVarLst(varVarLst(value));
+                        }
+                        // Else only one value
+                        else
+                        {
+                            valueList = strLstNew();
+                            strLstAdd(valueList, varStrForce(value));
+                        }
+
+                        // Output options and values
+                        for (unsigned int valueListIdx = 0; valueListIdx < strLstSize(valueList); valueListIdx++)
+                        {
+                            const String *value = strLstGet(valueList, valueListIdx);
+
+                            if (quote && strchr(strZ(value), ' ') != NULL)
+                                value = strNewFmt("\"%s\"", strZ(value));
+
+                            strLstAdd(result, strNewFmt("--%s=%s", cfgOptionIdxName(optionId, optionIdx), strZ(value)));
+                        }
                     }
                 }
             }

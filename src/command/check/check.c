@@ -32,12 +32,9 @@ checkManifest(void)
         // Loop through all defined databases and attempt to build a manifest
         for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
         {
-            if (cfgOptionGroupIdxTest(cfgOptGrpPg, pgIdx))
-            {
-                result++;
-                // ??? Placeholder for manifest build
-                storageListP(storagePgIdx(pgIdx), varStr(cfgOption(cfgOptPgPath + pgIdx)));
-            }
+            result++;
+            // ??? Placeholder for manifest build
+            storageListP(storagePgIdx(pgIdx), cfgOptionIdxStr(cfgOptPgPath, pgIdx));
         }
     }
     MEM_CONTEXT_TEMP_END();
