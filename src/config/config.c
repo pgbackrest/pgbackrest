@@ -450,7 +450,7 @@ cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int groupIdx)
     ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
     ASSERT(groupIdx < configLocal->optionGroup[groupId].indexTotal);
 
-    FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].index[groupIdx] + 1);
+    FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].indexMap[groupIdx] + 1);
 }
 
 /**********************************************************************************************************************************/
@@ -475,7 +475,7 @@ cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key)
         // Seach the group for the key
         for (; result < cfgOptionGroupIdxTotal(groupId); result++)
         {
-            if (configLocal->optionGroup[groupId].index[result] == key - 1)
+            if (configLocal->optionGroup[groupId].indexMap[result] == key - 1)
                 break;
         }
 
@@ -792,7 +792,7 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
     if (configOptionData[optionId].group)
     {
         FUNCTION_TEST_RETURN(
-            cfgOptionKeyIdxName(optionId, configLocal->optionGroup[configOptionData[optionId].groupId].index[optionIdx]));
+            cfgOptionKeyIdxName(optionId, configLocal->optionGroup[configOptionData[optionId].groupId].indexMap[optionIdx]));
     }
 
     FUNCTION_TEST_RETURN(configOptionData[optionId].name);

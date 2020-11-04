@@ -1069,7 +1069,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     {
                         if (groupIdxMap[groupId][optionKeyIdx])
                         {
-                            config->optionGroup[groupId].index[optionIdxMax] = optionKeyIdx;
+                            config->optionGroup[groupId].indexMap[optionIdxMax] = optionKeyIdx;
                             optionIdxMax++;
                         }
                     }
@@ -1104,7 +1104,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 for (unsigned int optionListIdx = 0; optionListIdx < optionListIndexTotal; optionListIdx++)
                 {
                     // Get the key index by looking it up in the group or by defaulting to 0 for ungrouped options
-                    unsigned optionKeyIdx = optionGroup ? config->optionGroup[optionGroupId].index[optionListIdx] : 0;
+                    unsigned optionKeyIdx = optionGroup ? config->optionGroup[optionGroupId].indexMap[optionListIdx] : 0;
 
                     // Get the parsed value using the key index. Provide a default structure when the value was not found.
                     ParseOptionValue *parseOptionValue = optionKeyIdx < parseOptionList[optionId].indexListTotal ?
@@ -1450,7 +1450,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                 for (; index < cfgOptionGroupIdxTotal(groupId); index++)
                 {
-                    if (config->optionGroup[groupId].index[index] == optionKeyIdx)
+                    if (config->optionGroup[groupId].indexMap[index] == optionKeyIdx)
                         break;
                 }
 
