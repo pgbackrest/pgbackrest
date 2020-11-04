@@ -1057,8 +1057,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     unsigned int optionIdxMax = 0;
                     unsigned int optionKeyIdx = 0;
 
-                    // ??? For the pg group, key 1 is required to maintain compatibilty with older versions
-                    // !!! THIS IS PRETTY HACKY BUT IT DOES NOT BREAK CURRENT FUNCTIONALITY.
+                    // ??? For the pg group, key 1 is required to maintain compatibilty with older versions. Before removing this
+                    // constraint the pg group remap to key 1 for remotes will need to be dealt with in the protocol/helper module.
                     if (groupId == cfgOptGrpPg)
                     {
                         optionKeyIdx = 1;
