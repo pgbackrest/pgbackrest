@@ -626,8 +626,6 @@ testRun(void)
             sizeof(optionResolveOrder) / sizeof(ConfigOption), CFG_OPTION_TOTAL,
             "check that the option resolve list contains an entry for every option");
 
-        TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is " TEST_COMMAND_BACKUP);
-
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
