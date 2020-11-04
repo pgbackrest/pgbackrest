@@ -532,13 +532,16 @@ cmdArchivePushAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
+                            // If there was a warning then output it to the log
                             const String *warning = varStr(protocolParallelJobResult(job));
 
                             if (warning != NULL)
                                 LOG_WARN_PID(processId, strZ(warning));
 
+                            // Log success
                             LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
 
+                            // Write the status file
                             archiveAsyncStatusOkWrite(archiveModePush, walFile, warning);
                         }
                         // Else the job errored
