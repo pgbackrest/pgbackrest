@@ -735,9 +735,6 @@ testRun(void)
         storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR, .recurse = true);
         storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
-        // storagePathRemoveP(storageRepoWrite(), strNew(STORAGE_REPO_ARCHIVE "/9.4-1"), .recurse = true);
-        // storagePathCreateP(storageRepoWrite(), strNew(STORAGE_REPO_ARCHIVE "/9.4-1"));
-
         storagePathRemoveP(storagePgWrite(), strNew("pg_xlog/archive_status"), .recurse = true);
         storagePathCreateP(storagePgWrite(), strNew("pg_xlog/archive_status"));
 
@@ -806,6 +803,9 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000001.ok|000000010000000100000002.error", "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create and push previously missing WAL");
 
         // Create WAL 2 segment
         Buffer *walBuffer2 = bufNew((size_t)16 * 1024 * 1024);
