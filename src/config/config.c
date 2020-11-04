@@ -101,6 +101,8 @@ cfgInit(Config *config)
         FUNCTION_TEST_PARAM_P(VOID, config);
     FUNCTION_TEST_END();
 
+    ASSERT(config != NULL);
+
     // Free the old context
     if (configLocal != NULL)
         memContextFree(configLocal->memContext);
@@ -448,7 +450,7 @@ cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int groupIdx)
     ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
     ASSERT(groupIdx < configLocal->optionGroup[groupId].indexTotal);
 
-    FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].index[groupIdx] + 1);
+    FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].indexMap[groupIdx] + 1);
 }
 
 /**********************************************************************************************************************************/
@@ -473,7 +475,7 @@ cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key)
         // Seach the group for the key
         for (; result < cfgOptionGroupIdxTotal(groupId); result++)
         {
-            if (configLocal->optionGroup[groupId].index[result] == key - 1)
+            if (configLocal->optionGroup[groupId].indexMap[result] == key - 1)
                 break;
         }
 
@@ -747,15 +749,15 @@ cfgOptionName(ConfigOption optionId)
 }
 
 const char *
-cfgOptionKeyIdxName(ConfigOption optionId, unsigned int optionIdx)
+cfgOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
-        FUNCTION_TEST_PARAM(UINT, optionIdx);
+        FUNCTION_TEST_PARAM(UINT, keyIdx);
     FUNCTION_TEST_END();
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT((!configOptionData[optionId].group && optionIdx == 0) || configOptionData[optionId].group);
+    ASSERT((!configOptionData[optionId].group && keyIdx == 0) || configOptionData[optionId].group);
 
     // If the option is in a group then construct the name
     if (configOptionData[optionId].group)
@@ -763,7 +765,7 @@ cfgOptionKeyIdxName(ConfigOption optionId, unsigned int optionIdx)
         // This is somewhat less than ideal since memory is being allocated with each call, rather than caching prior results. In
         // practice the number of allocations should be quite small so we'll ignore this for now.
         String *name = strNewFmt(
-            "%s%u%s", configOptionGroupData[configOptionData[optionId].groupId].name, optionIdx + 1,
+            "%s%u%s", configOptionGroupData[configOptionData[optionId].groupId].name, keyIdx + 1,
             configOptionData[optionId].name + strlen(configOptionGroupData[configOptionData[optionId].groupId].name));
 
         FUNCTION_TEST_RETURN(strZ(name));
@@ -790,7 +792,7 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
     if (configOptionData[optionId].group)
     {
         FUNCTION_TEST_RETURN(
-            cfgOptionKeyIdxName(optionId, configLocal->optionGroup[configOptionData[optionId].groupId].index[optionIdx]));
+            cfgOptionKeyIdxName(optionId, configLocal->optionGroup[configOptionData[optionId].groupId].indexMap[optionIdx]));
     }
 
     FUNCTION_TEST_RETURN(configOptionData[optionId].name);

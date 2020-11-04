@@ -12,7 +12,7 @@ The general-purpose functions for querying the current configuration are found i
 #include "config/config.h"
 
 /***********************************************************************************************************************************
-The maximum numer of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
+The maximum number of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
 ***********************************************************************************************************************************/
 #define CFG_OPTION_KEY_MAX                                          256
 
@@ -44,9 +44,9 @@ typedef struct Config
     struct
     {
         bool valid;                                                 // Is option group valid for the current command?
-        unsigned int indexTotal;                                    // Max index in option group
+        unsigned int indexTotal;                                    // Total number of indexes with values in option group
         unsigned int indexDefault;                                  // Default index (usually 0)
-        unsigned int index[CFG_OPTION_KEY_MAX];                     // List of index to key mappings
+        unsigned int indexMap[CFG_OPTION_KEY_MAX];                  // List of index to key index mappings
     } optionGroup[CFG_OPTION_GROUP_TOTAL];
 
     // Option data
@@ -76,8 +76,9 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
-// Get the option name using the key -- i.e. the key that was used during configuration, e.g. the 2 in pg2-host
-const char *cfgOptionKeyIdxName(ConfigOption optionId, unsigned int optionIdx);
+// Get the option name using the key index -- i.e. the key that was used during configuration - 1, e.g. to get pg2-host pass 1 to
+// keyIdx.
+const char *cfgOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
 
 // Convert the key used in the original configuration to a group index. This is used when an option key must be translated into the
 // local group index, e.g. during parsing or when getting the value of specific options from a remote.

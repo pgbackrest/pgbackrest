@@ -50,6 +50,8 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                 const Variant *value = NULL;
                 bool exists = false;
 
+                // If an option is requested to be replaced (usually because remote processes do not have access to the config)
+                // then if the option exists, get the new value for replacement
                 if (optionReplace != NULL)
                 {
                     exists = kvKeyExists(optionReplace, key);
@@ -58,7 +60,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                         value = kvGet(optionReplace, key);
                 }
 
-                // If the key exists but is NULL then skip this option
+                // If the key exists but its value is NULL then skip this option
                 if (exists && value == NULL)
                     continue;
 
@@ -76,7 +78,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                 {
                     strLstAdd(result, strNewFmt("--reset-%s", cfgOptionIdxName(optionId, optionIdx)));
                 }
-                // Else format the value if found
+                // Else format the value if found, even if the option is not valid for the command
                 else if (value != NULL && (!local || exists || cfgOptionIdxSource(optionId, optionIdx) == cfgSourceParam))
                 {
                     if (varType(value) == varTypeBool)
