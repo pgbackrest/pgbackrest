@@ -40,6 +40,8 @@ Recovery constants
 #define RECOVERY_TARGET_XID                                         "recovery_target_xid"
 
 #define RECOVERY_TARGET_ACTION                                      "recovery_target_action"
+#define RECOVERY_TARGET_ACTION_PAUSE                                "pause"
+    STRING_STATIC(RECOVERY_TARGET_ACTION_PAUSE_STR,                 RECOVERY_TARGET_ACTION_PAUSE);
 #define RECOVERY_TARGET_ACTION_SHUTDOWN                             "shutdown"
     STRING_STATIC(RECOVERY_TARGET_ACTION_SHUTDOWN_STR,              RECOVERY_TARGET_ACTION_SHUTDOWN);
 
@@ -1409,7 +1411,7 @@ restoreRecoveryOption(unsigned int pgVersion)
         {
             const String *targetAction = cfgOptionStr(cfgOptTargetAction);
 
-            if (!strEq(targetAction, varStr(cfgOptionDefault(cfgOptTargetAction))))
+            if (!strEq(targetAction, RECOVERY_TARGET_ACTION_PAUSE_STR))
             {
                 // Write recovery_target on supported PostgreSQL versions
                 if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
