@@ -44,8 +44,8 @@ Standard config include path name
 /***********************************************************************************************************************************
 Option value constants
 ***********************************************************************************************************************************/
-VARIANT_STRDEF_STATIC(OPTION_VALUE_0,                               "0");
-VARIANT_STRDEF_STATIC(OPTION_VALUE_1,                               "1");
+VARIANT_STRDEF_STATIC(OPTION_VALUE_0,                               ZERO_Z);
+VARIANT_STRDEF_STATIC(OPTION_VALUE_1,                               ONE_Z);
 
 /***********************************************************************************************************************************
 Parse option flags
@@ -1182,7 +1182,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     if (dependOptionDefType == cfgDefOptTypeBoolean)
                                     {
                                         // Boolean outputs depend option name as no-* when false
-                                        if (strcmp(dependValue, "0") == 0)
+                                        if (strcmp(dependValue, ZERO_Z) == 0)
                                         {
                                             dependOptionName =
                                                 strNewFmt("no-%s", cfgOptionKeyIdxName(dependOptionId, optionKeyIdx));
@@ -1395,7 +1395,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     // separate function which does not seem worth it. The eventual plan is to have all the defaults
                                     // represented as constants so they can be assigned directly without creating variants.
                                     if (optionDefType == cfgDefOptTypeBoolean)
-                                        configOptionValue->value = strcmp(value, "1") == 0 ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
+                                        configOptionValue->value = strcmp(value, ONE_Z) == 0 ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
                                     else if (optionDefType == cfgDefOptTypeFloat)
                                         configOptionValue->value = varNewDbl(cvtZToDouble(value));
                                     else if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize)
