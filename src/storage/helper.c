@@ -48,8 +48,8 @@ static struct StorageHelper
     Storage *storageLocalWrite;                                     // Local write storage
     Storage **storagePg;                                            // PostgreSQL read-only storage
     Storage **storagePgWrite;                                       // PostgreSQL write storage
-    Storage *storageRepo;                                           // Repository read-only storage
-    Storage *storageRepoWrite;                                      // Repository write storage
+    Storage **storageRepo;                                          // Repository read-only storage
+    Storage **storageRepoWrite;                                     // Repository write storage
     Storage *storageSpool;                                          // Spool read-only storage
     Storage *storageSpoolWrite;                                     // Spool write storage
 
@@ -333,83 +333,95 @@ storageRepoPathExpression(const String *expression, const String *path)
 Get the repo storage
 ***********************************************************************************************************************************/
 static Storage *
-storageRepoGet(const String *type, bool write)
+storageRepoGet(unsigned int repoIdx, bool write)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, type);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(BOOL, write);
     FUNCTION_TEST_END();
-
-    ASSERT(type != NULL);
 
     Storage *result = NULL;
 
     // Use remote storage
-    if (!repoIsLocal())
+    if (!repoIsLocal(repoIdx))
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo, 0), cfgOptionUInt(cfgOptCompressLevelNetwork));
+            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionIdxUInt(cfgOptCompressLevelNetwork, repoIdx));
     }
     // Use Azure storage
-    else if (strEqZ(type, STORAGE_AZURE_TYPE))
-    {
-        result = storageAzureNew(
-            cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoAzureContainer),
-            cfgOptionStr(cfgOptRepoAzureAccount),
-            strEqZ(cfgOptionStr(cfgOptRepoAzureKeyType), STORAGE_AZURE_KEY_TYPE_SHARED) ?
-                storageAzureKeyTypeShared : storageAzureKeyTypeSas,
-            cfgOptionStr(cfgOptRepoAzureKey), STORAGE_AZURE_BLOCKSIZE_MIN, cfgOptionStrNull(cfgOptRepoAzureHost),
-            cfgOptionStr(cfgOptRepoAzureEndpoint), cfgOptionUInt(cfgOptRepoAzurePort), ioTimeoutMs(),
-            cfgOptionBool(cfgOptRepoAzureVerifyTls), cfgOptionStrNull(cfgOptRepoAzureCaFile),
-            cfgOptionStrNull(cfgOptRepoAzureCaPath));
-    }
-    // Use CIFS storage
-    else if (strEqZ(type, STORAGE_CIFS_TYPE))
-    {
-        result = storageCifsNew(
-            cfgOptionStr(cfgOptRepoPath), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression);
-    }
-    // Use Posix storage
-    else if (strEqZ(type, STORAGE_POSIX_TYPE))
-    {
-        result = storagePosixNewP(
-            cfgOptionStr(cfgOptRepoPath), .write = write, .pathExpressionFunction = storageRepoPathExpression);
-    }
-    // Use S3 storage
-    else if (strEqZ(type, STORAGE_S3_TYPE))
-    {
-        // Set the default port
-        unsigned int port = cfgOptionUInt(cfgOptRepoS3Port);
-
-        // Extract port from the endpoint and host if it is present
-        const String *endPoint = cfgOptionHostPort(cfgOptRepoS3Endpoint, &port);
-        const String *host = cfgOptionHostPort(cfgOptRepoS3Host, &port);
-
-        // If the port option was set explicitly then use it in preference to appended ports
-        if (cfgOptionSource(cfgOptRepoS3Port) != cfgSourceDefault)
-            port = cfgOptionUInt(cfgOptRepoS3Port);
-
-        result = storageS3New(
-            cfgOptionStr(cfgOptRepoPath), write, storageRepoPathExpression, cfgOptionStr(cfgOptRepoS3Bucket), endPoint,
-            strEqZ(cfgOptionStr(cfgOptRepoS3UriStyle), STORAGE_S3_URI_STYLE_HOST) ? storageS3UriStyleHost : storageS3UriStylePath,
-            cfgOptionStr(cfgOptRepoS3Region),
-            strEqZ(cfgOptionStr(cfgOptRepoS3KeyType), STORAGE_S3_KEY_TYPE_SHARED) ? storageS3KeyTypeShared : storageS3KeyTypeAuto,
-            cfgOptionStrNull(cfgOptRepoS3Key), cfgOptionStrNull(cfgOptRepoS3KeySecret), cfgOptionStrNull(cfgOptRepoS3Token),
-            cfgOptionStrNull(cfgOptRepoS3Role), STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(),
-            cfgOptionBool(cfgOptRepoS3VerifyTls), cfgOptionStrNull(cfgOptRepoS3CaFile), cfgOptionStrNull(cfgOptRepoS3CaPath));
-    }
     else
-        THROW_FMT(AssertError, "invalid storage type '%s'", strZ(type));
+    {
+        const String *type = cfgOptionIdxStr(cfgOptRepoType, repoIdx);
+
+        if (strEqZ(type, STORAGE_AZURE_TYPE))
+        {
+            result = storageAzureNew(
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
+                cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx),
+                strEqZ(cfgOptionIdxStr(cfgOptRepoAzureKeyType, repoIdx), STORAGE_AZURE_KEY_TYPE_SHARED) ?
+                    storageAzureKeyTypeShared : storageAzureKeyTypeSas,
+                cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
+                cfgOptionIdxStrNull(cfgOptRepoAzureHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoAzurePort, repoIdx), ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoAzureVerifyTls, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoAzureCaFile, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoAzureCaPath, repoIdx));
+        }
+        // Use CIFS storage
+        else if (strEqZ(type, STORAGE_CIFS_TYPE))
+        {
+            result = storageCifsNew(
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
+                storageRepoPathExpression);
+        }
+        // Use Posix storage
+        else if (strEqZ(type, STORAGE_POSIX_TYPE))
+        {
+            result = storagePosixNewP(
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression);
+        }
+        // Use S3 storage
+        else
+        {
+            // Storage must be S3
+            CHECK(strEqZ(type, STORAGE_S3_TYPE));
+
+            // Set the default port
+            unsigned int port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
+
+            // Extract port from the endpoint and host if it is present
+            const String *endPoint = cfgOptionIdxHostPort(cfgOptRepoS3Endpoint, repoIdx, &port);
+            const String *host = cfgOptionIdxHostPort(cfgOptRepoS3Host, repoIdx, &port);
+
+            // If the port option was set explicitly then use it in preference to appended ports
+            if (cfgOptionIdxSource(cfgOptRepoS3Port, repoIdx) != cfgSourceDefault)
+                port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
+
+            result = storageS3New(
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
+                cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
+                strEqZ(cfgOptionIdxStr(cfgOptRepoS3UriStyle, repoIdx), STORAGE_S3_URI_STYLE_HOST) ?
+                    storageS3UriStyleHost : storageS3UriStylePath,
+                cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
+                strEqZ(cfgOptionIdxStr(cfgOptRepoS3KeyType, repoIdx), STORAGE_S3_KEY_TYPE_SHARED) ?
+                    storageS3KeyTypeShared : storageS3KeyTypeAuto,
+                cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
+                STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoS3CaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3CaPath, repoIdx));
+        }
+    }
 
     FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
 const Storage *
-storageRepo(void)
+storageRepoIdx(unsigned int repoIdx)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+    FUNCTION_TEST_END();
 
     if (storageHelper.storageRepo == NULL)
     {
@@ -419,18 +431,36 @@ storageRepo(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageRepo = storageRepoGet(cfgOptionStr(cfgOptRepoType), false);
+            storageHelper.storageRepo = memNewPtrArray(cfgOptionGroupIdxTotal(cfgOptGrpRepo));
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageRepo);
+    if (storageHelper.storageRepo[repoIdx] == NULL)
+    {
+        MEM_CONTEXT_BEGIN(storageHelper.memContext)
+        {
+            storageHelper.storageRepo[repoIdx] = storageRepoGet(repoIdx, false);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN(storageHelper.storageRepo[repoIdx]);
 }
 
 const Storage *
-storageRepoWrite(void)
+storageRepo(void)
 {
     FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(storageRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+}
+
+const Storage *
+storageRepoIdxWrite(unsigned int repoIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+    FUNCTION_TEST_END();
 
     // Writes not allowed in dry-run mode
     if (!storageHelper.dryRunInit || storageHelper.dryRun)
@@ -444,12 +474,28 @@ storageRepoWrite(void)
 
         MEM_CONTEXT_BEGIN(storageHelper.memContext)
         {
-            storageHelper.storageRepoWrite = storageRepoGet(cfgOptionStr(cfgOptRepoType), true);
+            storageHelper.storageRepoWrite = memNewPtrArray(cfgOptionGroupIdxTotal(cfgOptGrpRepo));
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageRepoWrite);
+    if (storageHelper.storageRepoWrite[repoIdx] == NULL)
+    {
+        MEM_CONTEXT_BEGIN(storageHelper.memContext)
+        {
+            storageHelper.storageRepoWrite[repoIdx] = storageRepoGet(repoIdx, true);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN(storageHelper.storageRepoWrite[repoIdx]);
+}
+
+const Storage *
+storageRepoWrite(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
 /***********************************************************************************************************************************

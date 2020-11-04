@@ -69,7 +69,7 @@ testRun(void)
         TEST_TITLE("writable storage fails when dry-run is not initialized");
 
         TEST_ERROR(storagePgIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
-        TEST_ERROR(storageRepoWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageRepoIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
         TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ testRun(void)
         storageHelperDryRunInit(true);
 
         TEST_ERROR(storagePgIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
-        TEST_ERROR(storageRepoWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageRepoIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
         TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
     }
 
@@ -1163,14 +1163,11 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ERROR(storageRepoGet(strNew(BOGUS_STR), false), AssertError, "invalid storage type 'BOGUS'");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         const Storage *storage = NULL;
 
         TEST_RESULT_PTR(storageHelper.storageRepo, NULL, "repo storage not cached");
         TEST_ASSIGN(storage, storageRepo(), "new storage");
-        TEST_RESULT_PTR(storageHelper.storageRepo, storage, "repo storage cached");
+        TEST_RESULT_PTR(storageHelper.storageRepo[0], storage, "repo storage cached");
         TEST_RESULT_PTR(storageRepo(), storage, "get cached storage");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1221,7 +1218,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_PTR(storageHelper.storageRepoWrite, NULL, "repo write storage not cached");
         TEST_ASSIGN(storage, storageRepoWrite(), "new write storage");
-        TEST_RESULT_PTR(storageHelper.storageRepoWrite, storage, "repo write storage cached");
+        TEST_RESULT_PTR(storageHelper.storageRepoWrite[0], storage, "repo write storage cached");
         TEST_RESULT_PTR(storageRepoWrite(), storage, "get cached storage");
 
         TEST_RESULT_BOOL(storage->write, true, "get write enabled");

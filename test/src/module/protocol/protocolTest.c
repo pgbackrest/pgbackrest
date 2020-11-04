@@ -133,7 +133,7 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_BOOL(repoIsLocal(), true, "repo is local");
+        TEST_RESULT_BOOL(repoIsLocal(0), true, "repo is local");
         TEST_RESULT_VOID(repoIsLocalVerify(), "    local verified");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -145,7 +145,7 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_RESULT_BOOL(repoIsLocal(), false, "repo is remote");
+        TEST_RESULT_BOOL(repoIsLocal(0), false, "repo is remote");
         TEST_ERROR_FMT(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------

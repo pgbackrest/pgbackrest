@@ -70,10 +70,13 @@ protocolHelperInit(void)
 
 /**********************************************************************************************************************************/
 bool
-repoIsLocal(void)
+repoIsLocal(unsigned int repoIdx)
 {
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(!cfgOptionTest(cfgOptRepoHost));
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(BOOL, !cfgOptionIdxTest(cfgOptRepoHost, repoIdx));
 }
 
 /**********************************************************************************************************************************/
@@ -82,7 +85,7 @@ repoIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
 
-    if (!repoIsLocal())
+    if (!repoIsLocal(cfgOptionGroupIdxDefault(cfgOptGrpRepo)))
         THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName(cfgCommand()));
 
     FUNCTION_TEST_RETURN_VOID();
