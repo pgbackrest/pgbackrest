@@ -351,7 +351,7 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
             {
                 const ManifestFile *file = manifestFile(manifest, fileIdx);
 
-                if(file->checksumPageError)
+                if (file->checksumPageError)
                     varLstAdd(checksumPageErrorList, varNewStr(manifestPathPg(file->name)));
             }
 
@@ -731,7 +731,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                         varVarLst(kvGet(backupInfo, BACKUP_KEY_CHECKSUM_PAGE_ERROR_LIST_VAR)));
 
                     strCatFmt(
-                        backupResult, "            files with page checksum error: %s\n",
+                        backupResult, "            page checksum error: %s\n",
                         strZ(strLstJoin(checksumPageErrorList, ", ")));
                 }
             }
