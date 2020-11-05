@@ -180,7 +180,6 @@ archivePushFile(
             // Open the destination files now that we know the source file exists and is readable
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
             {
-                // Does this repo need a copy?
                 if (destinationCopy[repoIdx])
                     ioWriteOpen(storageWriteIo(destination[repoIdx]));
             }
@@ -196,7 +195,6 @@ archivePushFile(
                 // Write to each destination
                 for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
                 {
-                    // Does this repo need a copy?
                     if (destinationCopy[repoIdx])
                         ioWrite(storageWriteIo(destination[repoIdx]), read);
                 }
@@ -211,7 +209,6 @@ archivePushFile(
 
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
             {
-                // Does this repo need a copy?
                 if (destinationCopy[repoIdx])
                     ioWriteClose(storageWriteIo(destination[repoIdx]));
             }
