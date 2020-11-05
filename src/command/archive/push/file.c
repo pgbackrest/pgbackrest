@@ -27,6 +27,8 @@ archivePushFile(
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(STRING, archiveFile);
+        FUNCTION_LOG_PARAM(ENUM, compressType);
+        FUNCTION_LOG_PARAM(INT, compressLevel);
         FUNCTION_LOG_PARAM_P(VOID, repoData);
     FUNCTION_LOG_END();
 
