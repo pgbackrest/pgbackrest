@@ -334,7 +334,6 @@ testRun(void)
 
         // Set up for manifestNewBuild tests
         // -------------------------------------------------------------------------------------------------------------------------
-
         // Temp relations to ignore
         storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1"), .modeFile = 0400,
            .timeModified = 1565282113), NULL);
@@ -1113,7 +1112,6 @@ testRun(void)
                 "pg_data/pg_xlog={}\n"
                 TEST_MANIFEST_PATH_DEFAULT))),
             "check manifest");
-
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to pg_data");
