@@ -853,6 +853,38 @@ testRun(void)
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P01 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create and push WAL 3 to both repos");
+
+        // Create WAL 3 segment
+        Buffer *walBuffer3 = bufNew((size_t)16 * 1024 * 1024);
+        bufUsedSet(walBuffer3, bufSize(walBuffer3));
+        memset(bufPtr(walBuffer3), 0x44, bufSize(walBuffer3));
+        pgWalTestToBuffer((PgWal){.version = PG_VERSION_94, .systemId = 0xAAAABBBBCCCCDDDD}, walBuffer3);
+        const char *walBuffer3Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer3)));
+
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/000000010000000100000003")), walBuffer3);
+
+        // Create ready file
+        storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000003.ready")), NULL);
+
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segment");
+        harnessLogResult(
+            "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000003\n"
+            "P01 DETAIL: pushed WAL file '000000010000000100000003' to the archive");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1)),
+            true, "check repo1 for WAL 3 file");
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest, strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1)),
+            true, "check repo3 for WAL 3 file");
+
+        // Remove the ready file to prevent WAL 3 from being considered for the next test
+        storageRemoveP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000003.ready"), .errorOnMissing = true);
+
         // Check that drop functionality works
         // -------------------------------------------------------------------------------------------------------------------------
         // Remove status files

@@ -29,9 +29,6 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
 
     ASSERT(command != NULL);
 
-    // Get the repo storage in case it is remote and encryption settings need to be pulled down
-    storageRepo();
-
     // Attempt to satisfy the request -- we may get requests that are meant for other handlers
     bool found = true;
 
@@ -39,17 +36,24 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
     {
         if (strEq(command, PROTOCOL_COMMAND_ARCHIVE_PUSH_STR))
         {
-            CHECK(varLstSize(paramList) - 6 == cfgOptionGroupIdxTotal(cfgOptGrpRepo) * 3);
+            const unsigned int paramFixed = 6;                      // Fixed params before the repo param array
+            const unsigned int paramRepo = 3;                       // Parameters in each index of the repo array
 
+            // Check that the correct number of repo parameters were passed
+            CHECK(varLstSize(paramList) - paramFixed == cfgOptionGroupIdxTotal(cfgOptGrpRepo) * paramRepo);
+
+            // Build the repo data array
             ArchivePushFileRepoData *repoData = memNew(cfgOptionGroupIdxTotal(cfgOptGrpRepo) * sizeof(ArchivePushFileRepoData));
 
             for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
             {
-                repoData[repoIdx].archiveId = varStr(varLstGet(paramList, 6 + (repoIdx * 3)));
-                repoData[repoIdx].cipherType = (CipherType)varUIntForce(varLstGet(paramList, 6 + (repoIdx * 3) + 1));
-                repoData[repoIdx].cipherPass = varStr(varLstGet(paramList, 6 + (repoIdx * 3) + 2));
+                repoData[repoIdx].archiveId = varStr(varLstGet(paramList, paramFixed + (repoIdx * paramRepo)));
+                repoData[repoIdx].cipherType = (CipherType)varUIntForce(
+                    varLstGet(paramList, paramFixed + (repoIdx * paramRepo) + 1));
+                repoData[repoIdx].cipherPass = varStr(varLstGet(paramList, paramFixed + (repoIdx * paramRepo) + 2));
             }
 
+            // Push the file
             protocolServerResponse(
                 server,
                 VARSTR(

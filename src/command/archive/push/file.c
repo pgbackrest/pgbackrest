@@ -82,6 +82,7 @@ archivePushFile(
 
             const String *walSegmentChecksum = varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
 
+            // Check each repo for the WAL segment
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
             {
                 // If the wal segment already exists in the repo then compare checksums
@@ -91,15 +92,18 @@ archivePushFile(
                 {
                     String *walSegmentRepoChecksum = strSubN(walSegmentFile, strSize(archiveFile) + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
+                    // If the checksums are the same then succeed but warn in case this is a symptom of some other issue
                     if (strEq(walSegmentChecksum, walSegmentRepoChecksum))
                     {
                         MEM_CONTEXT_PRIOR_BEGIN()
                         {
+                            // Add LF if there has already been a warning
                             if (result == NULL)
                                 result = strNew("");
                             else
                                 strCatZ(result, "\n");
 
+                            // Add warning to the result that will be returned to the main process
                             strCatFmt(
                                 result,
                                 "WAL file '%s' already exists in the repo%u archive with the same checksum"
@@ -111,6 +115,7 @@ archivePushFile(
                         // No need to copy to this repo
                         destinationCopy[repoIdx] = false;
                     }
+                    // Else error so we don't overwrite the existing segment
                     else
                     {
                         THROW_FMT(
@@ -118,7 +123,7 @@ archivePushFile(
                             cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
                     }
                 }
-                // Else the destination needs a copy
+                // Else the repo needs a copy
                 else
                     destinationCopyAny = true;
             }
@@ -127,9 +132,10 @@ archivePushFile(
             strCatFmt(archiveDestination, "-%s", strZ(walSegmentChecksum));
         }
 
-        // Only copy if the file was not found in the archive
+        // Copy if the file is missing in any repo
         if (destinationCopyAny)
         {
+            // Source file is read once and copied to all repos
             StorageRead *source = storageNewReadP(storageLocal(), walSource);
 
             // Is the file compressible during the copy?
@@ -143,7 +149,7 @@ archivePushFile(
                 compressible = false;
             }
 
-            // Initialize per-repo destinations
+            // Initialize per-repo destination files
             StorageWrite **destination = memNew(sizeof(StorageWrite *) * repoTotal);
 
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)

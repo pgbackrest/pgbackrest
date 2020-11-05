@@ -435,6 +435,7 @@ static ProtocolParallelJob *archivePushAsyncCallback(void *data, unsigned int cl
         protocolCommandParamAdd(command, VARUINT(jobData->compressType));
         protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
 
+        // Add data for each repo to push to
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
             protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.repoData[repoIdx].archiveId));
