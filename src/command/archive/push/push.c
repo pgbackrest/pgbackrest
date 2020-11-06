@@ -409,7 +409,8 @@ typedef struct ArchivePushAsyncData
     ArchivePushCheckResult archiveInfo;                             // Archive info
 } ArchivePushAsyncData;
 
-static ProtocolParallelJob *archivePushAsyncCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+archivePushAsyncCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
