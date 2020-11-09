@@ -92,6 +92,7 @@
                         <commit subject="Use harnessCfgLoad() in config/load unit tests."/>
                         <commit subject="Use a constant to check restore target action."/>
                         <commit subject="Prepare configuration module for multi-repository support."/>
+                        <commit subject="Fix override of user option reset."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>

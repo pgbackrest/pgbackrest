@@ -237,6 +237,7 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--pg1-path=/pg");
+        hrnCfgArgRawReset(argList, cfgOptPgDefault);
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--log-subprocess");
         strLstAddZ(argList, "backup");
