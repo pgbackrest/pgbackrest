@@ -170,7 +170,7 @@ testRun(void)
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
         TEST_RESULT_STR_Z(result.repoData[0].archiveId, "9.6-1", "check archive id");
-        TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check cipher pass");
+        TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check cipher type");
         TEST_RESULT_STR_Z(result.repoData[0].cipherPass, NULL, "check cipher pass (not set in this test)");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -230,7 +230,7 @@ testRun(void)
         TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check repo2 cipher pass");
         TEST_RESULT_STR_Z(result.repoData[0].cipherPass, NULL, "check repo2 cipher pass (not set in this test)");
         TEST_RESULT_STR_Z(result.repoData[1].archiveId, "9.6-2", "check repo4 archive id");
-        TEST_RESULT_UINT(result.repoData[1].cipherType, cipherTypeNone, "check repo4 cipher pass");
+        TEST_RESULT_UINT(result.repoData[1].cipherType, cipherTypeNone, "check repo4 cipher type");
         TEST_RESULT_STR_Z(result.repoData[1].cipherPass, NULL, "check repo4 cipher pass (not set in this test)");
     }
 
@@ -521,7 +521,7 @@ testRun(void)
             true, "check repo3 for WAL file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remove WAL from one repo as push again");
+        TEST_TITLE("remove WAL from one repo and push again");
 
         storageRemoveP(
             storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
