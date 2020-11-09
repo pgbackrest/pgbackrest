@@ -134,7 +134,7 @@ archivePushFile(
             strCatFmt(archiveDestination, "-%s", strZ(walSegmentChecksum));
         }
 
-        // Copy if the file is missing in any repo
+        // Copy the file if one or more repos require it
         if (destinationCopyAny)
         {
             // Source file is read once and copied to all repos
