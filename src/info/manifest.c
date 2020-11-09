@@ -761,7 +761,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 }
 
                 // If the tablespace id is present then the tablespace link destination path is not the path where data will be
-                // stored so we can just store it as dummy path.
+                // stored so we can just store it as a dummy path.
                 if (buildData.tablespaceId != NULL)
                 {
                     const ManifestPath *pathTblSpc = manifestPathFind(

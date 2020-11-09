@@ -183,7 +183,7 @@ testRun(void)
         TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("protocol output that is not tested elsewhere (basic)");
+        TEST_TITLE("protocol output that is not tested elsewhere (detail)");
 
         info = (StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")};
         TEST_RESULT_VOID(storageRemoteInfoWrite(server, &info), "write link info");
