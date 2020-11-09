@@ -58,6 +58,7 @@ testRun(void)
         strLstAddZ(argList, "--db-include=2");
         strLstAddZ(argList, "--recovery-option=a=b");
         strLstAddZ(argList, "--recovery-option=c=d");
+        hrnCfgArgRawReset(argList, cfgOptLogPath);
         strLstAddZ(argList, "restore");
 
         setenv("PGBACKREST_REPO1_HOST", "bogus", true);
@@ -67,11 +68,12 @@ testRun(void)
         KeyValue *optionReplace = kvNew();
         kvPut(optionReplace, varNewStr(strNew("repo1-path")), varNewStr(strNew("/replace/path")));
         kvPut(optionReplace, varNewStr(strNew("stanza")), NULL);
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_PATH), VARSTRDEF("/log"));
 
         TEST_RESULT_STR(
             strLstJoin(cfgExecParam(cfgCmdRestore, cfgCmdRoleDefault, optionReplace, true, false), "|"),
             strNewFmt(
-                "--db-include=1|--db-include=2|--pg1-path=%s/db path|--recovery-option=a=b|--recovery-option=c=d"
+                "--db-include=1|--db-include=2|--log-path=/log|--pg1-path=%s/db path|--recovery-option=a=b|--recovery-option=c=d"
                     "|--repo1-path=/replace/path|restore",
                 testPath()),
             "exec restore -> restore");
