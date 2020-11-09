@@ -356,7 +356,8 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer2);
 
         TEST_ERROR(
-            cmdArchivePush(), ArchiveDuplicateError, "WAL file '000000010000000100000001' already exists in the repo1 archive");
+            cmdArchivePush(), ArchiveDuplicateError,
+            "WAL file '000000010000000100000001' already exists in the repo1 archive with a different checksum");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("WAL with absolute path and no pg1-path");

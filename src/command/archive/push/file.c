@@ -121,8 +121,8 @@ archivePushFile(
                     else
                     {
                         THROW_FMT(
-                            ArchiveDuplicateError, "WAL file '%s' already exists in the repo%u archive", strZ(archiveFile),
-                            cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                            ArchiveDuplicateError, "WAL file '%s' already exists in the repo%u archive with a different checksum",
+                            strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
                     }
                 }
                 // Else the repo needs a copy
