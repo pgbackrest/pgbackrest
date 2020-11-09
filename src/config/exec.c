@@ -74,7 +74,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                 }
 
                 // If the option was reset
-                if (cfgOptionValid(optionId) && cfgOptionIdxReset(optionId, optionIdx))
+                if (value == NULL && cfgOptionValid(optionId) && cfgOptionIdxReset(optionId, optionIdx))
                 {
                     strLstAdd(result, strNewFmt("--reset-%s", cfgOptionIdxName(optionId, optionIdx)));
                 }
