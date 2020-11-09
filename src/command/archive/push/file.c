@@ -163,7 +163,7 @@ archivePushFile(
                     destination[repoIdx] = storageNewWriteP(
                         storageRepoIdxWrite(repoIdx),
                         strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData[repoIdx].archiveId), strZ(archiveDestination)),
-                        .compressible = compressible && repoData[repoIdx].cipherType == cipherTypeNone);
+                        .compressible = compressible);
 
                     // If there is a cipher then add the encrypt filter
                     if (repoData[repoIdx].cipherType != cipherTypeNone)
