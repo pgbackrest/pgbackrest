@@ -807,7 +807,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        hrnCfgArgRawZ(argList, cfgOptPgDefault, "1");
+        hrnCfgArgRawZ(argList, cfgOptPg, "1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
@@ -1263,7 +1263,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("--no-online"));
         hrnCfgArgKeyRawBool(argList, cfgOptPgLocal, 2, true);
-        hrnCfgArgRawZ(argList, cfgOptPgDefault, "2");
+        hrnCfgArgRawZ(argList, cfgOptPg, "2");
         strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew("--reset-pg3-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));
@@ -1605,14 +1605,14 @@ testRun(void)
         // TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 8)), "/pg8", "check pg8-path");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("invalid pg-default");
+        TEST_TITLE("invalid pg option");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
-        hrnCfgArgRawZ(argList, cfgOptPgDefault, "4");
-        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError, "key '4' is not valid for 'pg-default' option");
+        hrnCfgArgRawZ(argList, cfgOptPg, "4");
+        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError, "key '4' is not valid for 'pg' option");
     }
 
     // *****************************************************************************************************************************

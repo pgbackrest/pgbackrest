@@ -139,7 +139,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
         // Add the group default id
         kvPut(
             optionReplace,
-            VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoDefault : cfgOptPgDefault)),
+            VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepo : cfgOptPg)),
             VARUINT(
                 cfgOptionGroupIdxToKey(
                     protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg, hostIdx)));
@@ -417,7 +417,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     // Set default to make it explicit which host will be used on the remote
     kvPut(
         optionReplace,
-        VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoDefault : cfgOptPgDefault)),
+        VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepo : cfgOptPg)),
         VARUINT(protocolStorageType == protocolStorageTypeRepo ? cfgOptionGroupIdxToKey(cfgOptGrpRepo, hostIdx) : 1));
 
     // Add the process id if not set. This means that the remote is being started from the main process and should always get a
