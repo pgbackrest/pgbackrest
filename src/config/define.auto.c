@@ -3097,14 +3097,40 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
             CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
             CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
             CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 4)
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdArchivePush)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdCheck)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaCreate)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaUpgrade)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
         )
     )
 
