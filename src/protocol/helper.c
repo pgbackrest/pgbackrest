@@ -85,7 +85,18 @@ repoIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
 
-    if (!repoIsLocal(cfgOptionGroupIdxDefault(cfgOptGrpRepo)))
+    repoIsLocalVerifyIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+repoIsLocalVerifyIdx(unsigned int repoIdx)
+{
+    FUNCTION_TEST_VOID();
+
+    if (!repoIsLocal(repoIdx))
         THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName(cfgCommand()));
 
     FUNCTION_TEST_RETURN_VOID();
