@@ -130,11 +130,18 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        strLstAddZ(argList, "--repo1-path=/repo-local");
+        strLstAddZ(argList, "--repo4-path=/remote-host-new");
+        strLstAddZ(argList, "--repo4-host=remote-host-new");
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(repoIsLocal(0), true, "repo is local");
         TEST_RESULT_VOID(repoIsLocalVerify(), "    local verified");
+        TEST_RESULT_VOID(repoIsLocalVerifyIdx(0), "    local by index verified");
+        TEST_ERROR_FMT(
+            repoIsLocalVerifyIdx(cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1), HostInvalidError,
+            "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();

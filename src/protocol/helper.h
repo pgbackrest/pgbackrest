@@ -58,6 +58,7 @@ bool repoIsLocal(unsigned int repoIdx);
 
 // Error if the repository is not local
 void repoIsLocalVerify(void);
+void repoIsLocalVerifyIdx(unsigned int repoIdx);
 
 // Get enum/string for protocol storage type
 ProtocolStorageType protocolStorageTypeEnum(const String *type);
