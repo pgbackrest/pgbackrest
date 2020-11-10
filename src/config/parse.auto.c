@@ -522,16 +522,16 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptOutput,
     },
 
-    // pg-default option
+    // pg option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = "pg-default",
+        .name = "pg",
         .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptPgDefault,
+        .val = PARSE_OPTION_FLAG | cfgOptPg,
     },
     {
-        .name = "reset-pg-default",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPgDefault,
+        .name = "reset-pg",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPg,
     },
 
     // pg-host option and deprecations
@@ -1884,6 +1884,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
     },
 
+    // repo option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepo,
+    },
+    {
+        .name = "reset-repo",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepo,
+    },
+
     // repo-azure-account option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2372,18 +2384,6 @@ static const struct option optionList[] =
     {
         .name = "reset-repo4-cipher-type",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoCipherType,
-    },
-
-    // repo-default option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo-default",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptRepoDefault,
-    },
-    {
-        .name = "reset-repo-default",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepoDefault,
     },
 
     // repo-hardlink option and deprecations
@@ -3971,7 +3971,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
-    cfgOptPgDefault,
+    cfgOptPg,
     cfgOptPgLocal,
     cfgOptPgPath,
     cfgOptPgPort,
@@ -3983,8 +3983,8 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRaw,
     cfgOptRecurse,
     cfgOptRemoteType,
+    cfgOptRepo,
     cfgOptRepoCipherType,
-    cfgOptRepoDefault,
     cfgOptRepoHardlink,
     cfgOptRepoLocal,
     cfgOptRepoPath,

@@ -482,14 +482,14 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="repo-default" name="Set Default Repository">
+                    <config-key id="repo" name="Set Repository">
                         <summary>Set default repository.</summary>
 
-                        <text>Set the default repository for a command to operate on.
+                        <text>Set the repository for a command to operate on.
 
                         For example, this option may be used to perform a restore from a specific repository, rather than letting <backrest/> choose.
 
-                        Note that some commands, e.g. <cmd>archive-push</cmd>, are intended to operate on all repositories and will ignore the default.</text>
+                        Note that some commands, e.g. <cmd>archive-push</cmd>, are intended to operate on all repositories and will ignore this option.</text>
 
                         <example>1</example>
                     </config-key>
@@ -1050,14 +1050,14 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="pg-default" name="Set Default PostgreSQL Cluster">
-                        <summary>Set default PostgreSQL cluster.</summary>
+                    <config-key id="pg" name="Set PostgreSQL Cluster">
+                        <summary>Set PostgreSQL cluster.</summary>
 
-                        <text>Set the default <postgres/> cluster for a command to operate on.
+                        <text>Set the <postgres/> cluster for a command to operate on.
 
                         For example, this option may be used to perform a restore to a specific <postgres/> cluster, rather than using the first configured cluster.
 
-                        Note that some commands, e.g. <cmd>backup</cmd>, are intended to operate on multiple <postgres/> clusters and will ignore the default.</text>
+                        Note that some commands, e.g. <cmd>backup</cmd>, are intended to operate on multiple <postgres/> clusters and will ignore this option.</text>
 
                         <example>1</example>
                     </config-key>

@@ -185,7 +185,7 @@ use constant CFGDEF_INDEX_REPO                                      => 4;
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
 
 # Set default repository
-use constant CFGOPT_REPO_DEFAULT                                    => CFGDEF_PREFIX_REPO . '-default';
+use constant CFGOPT_REPO                                            => CFGDEF_PREFIX_REPO;
 
 # Repository General
 use constant CFGOPT_REPO_CIPHER_TYPE                                => CFGDEF_PREFIX_REPO . '-cipher-type';
@@ -284,7 +284,7 @@ use constant CFGDEF_PREFIX_PG                                       => 'pg';
     push @EXPORT, qw(CFGDEF_PREFIX_PG);
 
 # Set default PostgreSQL cluster
-use constant CFGOPT_PG_DEFAULT                                      => CFGDEF_PREFIX_PG . '-default';
+use constant CFGOPT_PG                                              => CFGDEF_PREFIX_PG;
 
 use constant CFGOPT_PG_LOCAL                                        => CFGDEF_PREFIX_PG . '-local';
 
@@ -1474,7 +1474,7 @@ my %hConfigDefine =
 
     # Repository selector
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_REPO_DEFAULT =>
+    &CFGOPT_REPO =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
@@ -2567,7 +2567,7 @@ my %hConfigDefine =
 
     # Stanza options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_PG_DEFAULT =>
+    &CFGOPT_PG =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,

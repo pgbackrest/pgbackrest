@@ -139,7 +139,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
         // Add the pg default. Don't do this for repos because the repo default should come from the user or the local should
         // handle all the repos equally. Repos don't get special handling like pg primaries or standbys.
         if (protocolStorageType == protocolStorageTypePg)
-            kvPut(optionReplace, VARSTRDEF(CFGOPT_PG_DEFAULT), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, hostIdx)));
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_PG), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, hostIdx)));
 
         // Add the remote type
         kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
@@ -414,7 +414,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     // Set default to make it explicit which host will be used on the remote
     kvPut(
         optionReplace,
-        VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepoDefault : cfgOptPgDefault)),
+        VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepo : cfgOptPg)),
         VARUINT(protocolStorageType == protocolStorageTypeRepo ? cfgOptionGroupIdxToKey(cfgOptGrpRepo, hostIdx) : 1));
 
     // Add the process id if not set. This means that the remote is being started from the main process and should always get a
