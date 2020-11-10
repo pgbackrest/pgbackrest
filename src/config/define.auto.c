@@ -2191,10 +2191,23 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(true)
+        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Set PostgreSQL cluster.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Set the PostgreSQL cluster for a command to operate on.\n"
+            "\n"
+            "For example, this option may be used to perform a restore to a specific PostgreSQL cluster, rather than using the "
+                "first configured cluster.\n"
+            "\n"
+            "Note that some commands, e.g. backup, are intended to operate on multiple PostgreSQL clusters and will ignore this "
+                "option."
+        )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (
@@ -3050,10 +3063,22 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(true)
+        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("repository")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("Set repository.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "Set the repository for a command to operate on.\n"
+            "\n"
+            "For example, this option may be used to perform a restore from a specific repository, rather than letting pgBackRest "
+                "choose.\n"
+            "\n"
+            "Note that some commands, e.g. archive-push, are intended to operate on all repositories and will ignore this option."
+        )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
         (

@@ -186,6 +186,7 @@ testRun(void)
             "\n",
             "Repository Options:\n"
             "\n"
+            "  --repo                           set repository\n"
             "  --repo-azure-account             azure repository account\n"
             "  --repo-azure-ca-file             azure repository TLS CA file\n"
             "  --repo-azure-ca-path             azure repository TLS CA path\n"
@@ -237,6 +238,7 @@ testRun(void)
             "\n"
             "Stanza Options:\n"
             "\n"
+            "  --pg                             set PostgreSQL cluster\n"
             "  --pg-path                        postgreSQL data directory\n"
             "\n"
             "Use 'pgbackrest help restore [option]' for more information.\n"));

@@ -1478,7 +1478,6 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_INTERNAL => true,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_REPO],
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
@@ -2571,7 +2570,6 @@ my %hConfigDefine =
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_INTERNAL => true,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG],
         &CFGDEF_COMMAND =>
