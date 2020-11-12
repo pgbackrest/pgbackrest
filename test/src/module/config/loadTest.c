@@ -50,7 +50,7 @@ testRun(void)
         TEST_TITLE("error when repo option not set and repo total > 1 or first repo index != 1");
 
         argList = strLstNew();
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
         TEST_ERROR(
             harnessCfgLoad(cfgCmdInfo, argList), OptionRequiredError,
