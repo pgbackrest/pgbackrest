@@ -15,6 +15,7 @@ Configuration Load
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.intern.h"
+#include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "storage/helper.h"
@@ -63,6 +64,29 @@ void
 cfgLoadUpdateOption(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
+
+    // Prevent pg and repo options from being used for the default command role when they are internal. This is a cheap and cheerful
+    // way to prevent users from setting these options but still allow them to be used for other roles.
+    if (cfgCommandRole() == cfgCmdRoleDefault)
+    {
+        if (cfgOptionTest(cfgOptPg) && cfgDefOptionInternal(cfgCommand(), cfgOptPg))
+            THROW_FMT(OptionInvalidError, "option '" CFGOPT_PG "' not valid for command '%s'", cfgCommandName(cfgCommand()));
+
+        if (cfgOptionTest(cfgOptRepo) && cfgDefOptionInternal(cfgCommand(), cfgOptRepo))
+            THROW_FMT(OptionInvalidError, "option '" CFGOPT_REPO "' not valid for command '%s'", cfgCommandName(cfgCommand()));
+    }
+
+    // Make sure repo option is set for the default command role when it is not internal and more than one repo is configured or the
+    // first configured repo is not key 1.
+    if (cfgOptionValid(cfgOptRepo) && !cfgDefOptionInternal(cfgCommand(), cfgOptRepo) && !cfgOptionTest(cfgOptRepo) &&
+        (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
+    {
+        THROW_FMT(
+            OptionRequiredError,
+            "%s command requires option: " CFGOPT_REPO "\n"
+            "HINT: this command requires a specific repository to operate on",
+            cfgCommandName(cfgCommand()));
+    }
 
     // Set default for repo-host-cmd
     if (cfgOptionValid(cfgOptRepoHostCmd))
