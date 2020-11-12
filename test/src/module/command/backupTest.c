@@ -2467,7 +2467,7 @@ testRun(void)
             hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
             hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
             hrnCfgArgKeyRawBool(argList, cfgOptRepoHardlink, 2, true);
-            hrnCfgArgRawZ(argList, cfgOptRepoDefault, "2");
+            hrnCfgArgRawZ(argList, cfgOptRepo, "2");
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
