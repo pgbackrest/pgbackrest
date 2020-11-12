@@ -1480,7 +1480,37 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_REPO],
-        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_EXPIRE => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_REPO_CREATE => {},
+            &CFGCMD_REPO_GET => {},
+            &CFGCMD_REPO_LS => {},
+            &CFGCMD_REPO_PUT => {},
+            &CFGCMD_REPO_RM => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_VERIFY => {},
+        },
     },
 
     # Repository options

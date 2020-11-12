@@ -32,9 +32,42 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadUpdateOption()"))
     {
-        TEST_TITLE("repo-host-cmd is defaulted when null");
+        TEST_TITLE("error if user passes pg/repo options when they are internal");
 
         StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptPg, "1");
+        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidError, "option 'pg' not valid for command 'check'");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidError, "option 'repo' not valid for command 'check'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when repo option not set and repo total > 1 or first repo index != 1");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
+        TEST_ERROR(
+            harnessCfgLoad(cfgCmdInfo, argList), OptionRequiredError,
+            "info command requires option: repo\n"
+            "HINT: this command requires a specific repository to operate on");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
+        TEST_ERROR(
+            harnessCfgLoad(cfgCmdInfo, argList), OptionRequiredError,
+            "info command requires option: repo\n"
+            "HINT: this command requires a specific repository to operate on");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo-host-cmd is defaulted when null");
+
+        argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         harnessCfgLoad(cfgCmdCheck, argList);
@@ -151,6 +184,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo1");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdInfo, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -265,6 +299,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPg, "1");
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
