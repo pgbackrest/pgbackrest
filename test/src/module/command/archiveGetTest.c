@@ -125,7 +125,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo", testPath());
-        hrnCfgArgRawZ(argList, cfgOptRepoDefault, "2");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
