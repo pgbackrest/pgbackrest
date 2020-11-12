@@ -53,9 +53,10 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
     // If a standby is defined, check the configuration
     if (dbGroup.standby != NULL)
     {
-        // If primary was not found
+        // If primary was not found (only have 1 pg configured locally, and we want to still run because this is a standby)
         if (dbGroup.primary == NULL)
         {
+// CSHANG Need to decide what to do here and in the rest of this function. think this is a standby configured as a repo host (because the pgtotal > 1) Check in loop and if any one is local then error because we're probably on a repo host?
             // If the repo is local or more than one pg-path is found then a master should have been found so error
             if (repoIsLocal(cfgOptionGroupIdxDefault(cfgOptGrpRepo)) || pgPathDefinedTotal > 1)
             {
@@ -110,31 +111,36 @@ checkPrimary(const DbGetResult dbGroup)
         // Check the user configured path and version against the database
         checkDbConfig(pgControl.version, dbGroup.primaryIdx, dbGroup.primary, false);
 
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
-        storageRepo();
+        // Check each repository configured
+        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+        {
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
+            const Storage *storageRepo = storageRepoIdx(repoIdx);
 
-        // Check that the backup and archive info files exist and are valid for the current database of the stanza
-        checkStanzaInfoPg(
-            storageRepo(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
+            // Check that the backup and archive info files exist and are valid for the current database of the stanza
+            checkStanzaInfoPg(
+                storageRepo, pgControl.version, pgControl.systemId, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
-        // Attempt to load the archive info file and retrieve the archiveId
-        InfoArchive *archiveInfo = infoArchiveLoadFile(
-            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
-        const String *archiveId = infoArchiveId(archiveInfo);
+            // Attempt to load the archive info file and retrieve the archiveId
+            InfoArchive *archiveInfo = infoArchiveLoadFile(
+                storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+            const String *archiveId = infoArchiveId(archiveInfo);
 
-        // Perform a WAL switch
-        const String *walSegment = dbWalSwitch(dbGroup.primary);
-        dbFree(dbGroup.primary);
+            // Perform a WAL switch
+            const String *walSegment = dbWalSwitch(dbGroup.primary);
+            dbFree(dbGroup.primary);
 
-        // Wait for the WAL to appear in the repo
-        TimeMSec archiveTimeout = (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
-        const String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, walSegment, archiveTimeout);
+            // Wait for the WAL to appear in the repo
+            TimeMSec archiveTimeout = (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
+            const String *walSegmentFile = walSegmentFind(storageRepo, archiveId, walSegment, archiveTimeout);
 
-        LOG_INFO_FMT(
-            "WAL segment %s successfully archived to '%s'", strZ(walSegment),
-            strZ(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walSegmentFile)))));
+            LOG_INFO_FMT(
+                "WAL segment %s successfully archived to '%s' on repo%u", strZ(walSegment),
+                strZ(storagePathP(storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walSegmentFile)))),
+                cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
