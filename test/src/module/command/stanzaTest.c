@@ -124,13 +124,13 @@ testRun(void)
         TEST_TITLE("cmdStanzaCreate success - multi-repo and encryption");
 
         argList = strLstDup(argListBase);
-        strLstAdd(argList, strNewFmt("--repo2-path=%s/repo2", testPath()));
-        strLstAddZ(argList, "--repo2-cipher-type=aes-256-cbc");
-        setenv("PGBACKREST_REPO2_CIPHER_PASS", "12345678", true);
-        strLstAdd(argList, strNewFmt("--repo3-path=%s/repo3", testPath()));
-        strLstAdd(argList, strNewFmt("--repo4-path=%s/repo4", testPath()));
-        strLstAddZ(argList, "--repo4-cipher-type=aes-256-cbc");
-        setenv("PGBACKREST_REPO4_CIPHER_PASS", "87654321", true);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvIdRawZ(cfgOptRepoCipherPass, 2, "12345678");
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 3, "%s/repo3", testPath());
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 4, "%s/repo4", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 4, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvIdRawZ(cfgOptRepoCipherPass, 4, "87654321");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist on repo1 and both are valid");
@@ -243,12 +243,12 @@ testRun(void)
         TEST_TITLE("cmdStanzaDelete - multi-repo and encryption, delete");
 
         StringList *argListCmd = strLstNew();
-        strLstAdd(argListCmd, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argListCmd, strNewFmt("--repo2-path=%s/repo3", testPath()));
-        strLstAdd(argListCmd, strNewFmt("--repo3-path=%s/repo3", testPath()));
-        strLstAdd(argListCmd, strNewFmt("--repo4-path=%s/repo4", testPath()));
-        strLstAdd(argListCmd, strNewFmt("--stanza=%s", strZ(stanza)));
-        strLstAdd(argListCmd, strNewFmt("--pg1-path=%s/%s", testPath(), strZ(stanza)));
+        hrnCfgArgKeyRawFmt(argListCmd, cfgOptRepoPath, 1, "%s/repo", testPath());
+        hrnCfgArgKeyRawFmt(argListCmd, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawFmt(argListCmd, cfgOptRepoPath, 3, "%s/repo3", testPath());
+        hrnCfgArgKeyRawFmt(argListCmd, cfgOptRepoPath, 4, "%s/repo4", testPath());
+        hrnCfgArgRawFmt(argListCmd, cfgOptStanza, "%s", strZ(stanza));
+        hrnCfgArgKeyRawFmt(argListCmd, cfgOptPgPath, 1, "%s/%s", testPath(), strZ(stanza));
 
         StringList *argListDelete = strLstDup(argListCmd);
         hrnCfgArgRawZ(argListDelete, cfgOptRepo, "4");
@@ -269,7 +269,9 @@ testRun(void)
             storagePathExistsP(storageTest, strNewFmt("repo4/archive/%s", strZ(stanza))), false, "    stanza deleted");
         TEST_RESULT_BOOL(
             storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))), false, "    stop file removed");
-        unsetenv("PGBACKREST_REPO4_CIPHER_PASS");
+
+        // Remove the cipher pass environment variable otherwise stanza-create will recreate the stanza
+        hrnCfgEnvIdRemoveRaw(cfgOptRepoCipherPass, 4);
 
         // Stanza with directories only
         argListDelete = strLstDup(argListCmd);
@@ -296,9 +298,9 @@ testRun(void)
         TEST_TITLE("cmdStanzaCreate errors");
 
         argList = strLstDup(argListBase);
-        strLstAdd(argList, strNewFmt("--repo2-path=%s/repo2", testPath()));
-        strLstAddZ(argList, "--repo2-cipher-type=aes-256-cbc");
-        setenv("PGBACKREST_REPO2_CIPHER_PASS", "12345678", true);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvIdRawZ(cfgOptRepoCipherPass, 2, "12345678");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Backup files removed - archive.info and archive.info.copy exist repo2
@@ -330,8 +332,17 @@ testRun(void)
         argListDelete = strLstDup(argListCmd);
         hrnCfgArgRawZ(argListDelete, cfgOptRepo, "2");
         harnessCfgLoad(cfgCmdStanzaDelete, argListDelete);
+
+        // Create the stop file
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
+                "create stop file");
+
         TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - only 1 remains");
-        unsetenv("PGBACKREST_REPO2_CIPHER_PASS");
+
+        // Remove the cipher pass environment variable otherwise stanza-create will recreate the stanza
+        hrnCfgEnvIdRemoveRaw(cfgOptRepoCipherPass, 2);
 
         argList = strLstDup(argListBase);
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
@@ -558,6 +569,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, strNewFmt("repo/archive/%s/archive.info", strZ(stanza))), true, "    stanza created");
 
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), false, NULL, NULL),
@@ -565,7 +577,9 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - db online");
-        harnessLogResult("P00   INFO: stanza 'db' is already up to date");
+        harnessLogResult(
+            "P00   INFO: beginning stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: stanza 'db' on repo1 is already up to date");
 
         // Version mismatch
         //--------------------------------------------------------------------------------------------------------------------------
@@ -709,6 +723,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaUpgrade()"))
     {
+        // Create pg_control
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
+                pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679})),
+            "create pg_control");
+
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-host=/repo/not/local");
@@ -731,31 +752,54 @@ testRun(void)
             storageRemoveP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "    remove the stop file");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        // Load Parameters
-        argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        TEST_TITLE("cmdStanzaUpgrade - info file mismatches");
 
-        // Create pg_control
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+        // Stanza with only archive.info and backup.info but no .copy files
+        String *contentBackup = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.6\"}\n"
+        );
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+                "put backup info to file");
 
-        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
+        String *contentArchive = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.6\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
+        );
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+                "put archive info file");
 
-        //--------------------------------------------------------------------------------------------------------------------------
-        argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
-
-        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - files already exist and both are valid");
-        harnessLogResult("P00   INFO: stanza 'db' is already up to date");
-
-        // Remove the copy files
-        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName)), .errorOnMissing = true);
-        storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)), .errorOnMissing = true);
-
+//         argList = strLstDup(argListBase);
+//         harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
+//
+//         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - files already exist and both are valid");
+//         harnessLogResult("P00   INFO: stanza 'db' is already up to date");
+        // // Remove the copy files
+        // storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName)), .errorOnMissing = true);
+        // storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)), .errorOnMissing = true);
+        //
         // backup info up to date but archive info db-id mismatch
         //--------------------------------------------------------------------------------------------------------------------------
-        String *contentArchive = strNew
+        contentArchive = strNew
         (
             "[db]\n"
             "db-id=2\n"
@@ -771,14 +815,15 @@ testRun(void)
                 "put archive info to file");
 
         TEST_ERROR_FMT(
-            cmdStanzaUpgrade(), FileInvalidError, "backup info file and archive info file do not match on repo%u\n"
+            cmdStanzaUpgrade(), FileInvalidError, "backup info file and archive info file do not match\n"
             "archive: id = 2, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "HINT: this may be a symptom of repository corruption!", 1);
+            "HINT: this may be a symptom of repository corruption!");
+        harnessLogResult("P00   INFO: beginning stanza-upgrade for stanza 'db' on repo1");
 
         // backup info up to date but archive info version is not
         //--------------------------------------------------------------------------------------------------------------------------
-        String *contentBackup = strNew
+        contentBackup = strNew
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -814,6 +859,7 @@ testRun(void)
                 "put archive info to file");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - version");
+        harnessLogResult("P00   INFO: beginning stanza-upgrade for stanza 'db' on repo1");
         contentArchive = strNew
         (
             "[db]\n"
@@ -838,167 +884,167 @@ testRun(void)
                 storageGetP(storageNewReadP(storageTest, fileName)))),
             true, "    test and stanza archive info files are equal");
 
-        // archive info up to date but backup info version is not
-        //--------------------------------------------------------------------------------------------------------------------------
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.5\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.5\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put backup info to file");
-
-        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - version");
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=2\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.5\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
-                "    put backup info to test file");
-
-        TEST_RESULT_BOOL(
-            (bufEq(
-                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))) &&
-            bufEq(
-                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
-                storageGetP(storageNewReadP(storageTest, fileName)))),
-            true, "    test and stanza backup info files are equal");
-
-        // backup info up to date but archive info system-id is not
-        //--------------------------------------------------------------------------------------------------------------------------
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=2\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.5\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put backup info to file");
-
-        contentArchive = strNew
-        (
-            "[db]\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
-                "put archive info to file");
-
-        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - system-id");
-        contentArchive = strNew
-        (
-            "[db]\n"
-            "db-id=2\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
-            "2={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
-                "    put archive info to test file");
-        TEST_RESULT_BOOL(
-            (bufEq(
-                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName))))) &&
-            bufEq(
-                storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
-                storageGetP(storageNewReadP(storageTest, fileName)))),
-            true, "    test and stanza archive info files are equal");
-
-        // archive info up to date but backup info system-id is not
-        //--------------------------------------------------------------------------------------------------------------------------
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
-                "put backup info to file");
-
-        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - system-id");
-        contentBackup = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=2\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
-                "\"db-version\":\"9.6\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.6\"}\n"
-        );
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
-                "    put backup info to test file");
-
-        TEST_RESULT_BOOL(
-            (bufEq(
-                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
-                storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))) &&
-            bufEq(
-                storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
-                storageGetP(storageNewReadP(storageTest, fileName)))),
-            true, "    test and stanza backup info files are equal");
+        // // archive info up to date but backup info version is not
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // contentBackup = strNew
+        // (
+        //     "[db]\n"
+        //     "db-catalog-version=201608131\n"
+        //     "db-control-version=960\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.5\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+        //         "\"db-version\":\"9.5\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+        //         "put backup info to file");
+        //
+        // TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - version");
+        // contentBackup = strNew
+        // (
+        //     "[db]\n"
+        //     "db-catalog-version=201608131\n"
+        //     "db-control-version=960\n"
+        //     "db-id=2\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+        //         "\"db-version\":\"9.5\"}\n"
+        //     "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+        //         "\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
+        //         "    put backup info to test file");
+        //
+        // TEST_RESULT_BOOL(
+        //     (bufEq(
+        //         storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))) &&
+        //     bufEq(
+        //         storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+        //         storageGetP(storageNewReadP(storageTest, fileName)))),
+        //     true, "    test and stanza backup info files are equal");
+        //
+        // // backup info up to date but archive info system-id is not
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // contentBackup = strNew
+        // (
+        //     "[db]\n"
+        //     "db-catalog-version=201608131\n"
+        //     "db-control-version=960\n"
+        //     "db-id=2\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665999,"
+        //         "\"db-version\":\"9.5\"}\n"
+        //     "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+        //         "\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+        //         "put backup info to file");
+        //
+        // contentArchive = strNew
+        // (
+        //     "[db]\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665999\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
+        //         "put archive info to file");
+        //
+        // TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - system-id");
+        // contentArchive = strNew
+        // (
+        //     "[db]\n"
+        //     "db-id=2\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
+        //     "2={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentArchive)),
+        //         "    put archive info to test file");
+        // TEST_RESULT_BOOL(
+        //     (bufEq(
+        //         storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName))))) &&
+        //     bufEq(
+        //         storageGetP(storageNewReadP(storageTest, archiveInfoFileName)),
+        //         storageGetP(storageNewReadP(storageTest, fileName)))),
+        //     true, "    test and stanza archive info files are equal");
+        //
+        // // archive info up to date but backup info system-id is not
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // contentBackup = strNew
+        // (
+        //     "[db]\n"
+        //     "db-catalog-version=201608131\n"
+        //     "db-control-version=960\n"
+        //     "db-id=1\n"
+        //     "db-system-id=6569239123849665999\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
+        //         "\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
+        //         "put backup info to file");
+        //
+        // TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - system-id");
+        // contentBackup = strNew
+        // (
+        //     "[db]\n"
+        //     "db-catalog-version=201608131\n"
+        //     "db-control-version=960\n"
+        //     "db-id=2\n"
+        //     "db-system-id=6569239123849665679\n"
+        //     "db-version=\"9.6\"\n"
+        //     "\n"
+        //     "[db:history]\n"
+        //     "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999,"
+        //         "\"db-version\":\"9.6\"}\n"
+        //     "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679,"
+        //         "\"db-version\":\"9.6\"}\n"
+        // );
+        // TEST_RESULT_VOID(
+        //     storagePutP(
+        //         storageNewWriteP(storageTest, fileName), harnessInfoChecksum(contentBackup)),
+        //         "    put backup info to test file");
+        //
+        // TEST_RESULT_BOOL(
+        //     (bufEq(
+        //         storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+        //         storageGetP(storageNewReadP(storageTest,  strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))) &&
+        //     bufEq(
+        //         storageGetP(storageNewReadP(storageTest, backupInfoFileName)),
+        //         storageGetP(storageNewReadP(storageTest, fileName)))),
+        //     true, "    test and stanza backup info files are equal");
     }
 
     // *****************************************************************************************************************************
