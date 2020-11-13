@@ -49,7 +49,7 @@ cmdStanzaCreate(void)
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
             LOG_INFO_FMT(
-                "beginning %s for stanza '%s' on repo%u", cfgCommandName(cfgCommand()), strZ(cfgOptionStr(cfgOptStanza)),
+                "%s for stanza '%s' on repo%u", cfgCommandName(cfgCommand()), strZ(cfgOptionStr(cfgOptStanza)),
                 cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
 
             const Storage *storageRepoReadStanza = storageRepoIdx(repoIdx);
