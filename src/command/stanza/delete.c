@@ -82,8 +82,9 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                     strZ(cfgOptionStr(cfgOptStanza)));
             }
 
-            // If the repo option was set, then use it (minus 1) else 0
-            unsigned int repoIdx = cfgOptionTest(cfgOptRepo) ? (cfgOptionUInt(cfgOptRepo) - 1) : 0;
+            // If the repo option was set, then use it (minus 1) else get the default
+            unsigned int repoIdx = cfgOptionTest(
+                cfgOptRepo) ? (cfgOptionUInt(cfgOptRepo) - 1) : cfgOptionGroupIdxDefault(cfgOptGrpRepo);
 
             // If a force has not been issued and Postgres is running, then error
             if (!cfgOptionBool(cfgOptForce) && storageExistsP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
