@@ -67,7 +67,7 @@ testRun(void)
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - one repo, no files exist");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         String *contentArchive = strNew
         (
@@ -135,11 +135,11 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist on repo1 and both are valid");
         harnessLogResult(
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo1\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo1\n"
             "P00   INFO: stanza 'db' already exists on repo1 and is valid\n"
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo2\n"
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo3\n"
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo4");
+            "P00   INFO: stanza-create for stanza 'db' on repo2\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo3\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo4");
 
         String *archiveInfoFileNameRepo2 = strNewFmt("repo2/archive/%s/archive.info", strZ(stanza));
         String *backupInfoFileNameRepo2 = strNewFmt("repo2/backup/%s/backup.info", strZ(stanza));
@@ -207,10 +207,10 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - success with missing files");
         harnessLogResult(
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo1\n"
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo2\n"
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo3\n"
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo4");
+            "P00   INFO: stanza-create for stanza 'db' on repo1\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo2\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo3\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo4");
 
         TEST_RESULT_BOOL(
             bufEq(
@@ -313,9 +313,9 @@ testRun(void)
             cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing on repo2\n"
             "HINT: this may be a symptom of repository corruption!");
         harnessLogResult(
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo1\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo1\n"
             "P00   INFO: stanza 'db' already exists on repo1 and is valid\n"
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo2");
+            "P00   INFO: stanza-create for stanza 'db' on repo2");
 
         // Archive files removed - backup.info and backup.info.copy exist repo1
         TEST_RESULT_VOID(
@@ -326,7 +326,7 @@ testRun(void)
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileMissingError, "backup.info exists but archive.info is missing on repo1\n"
             "HINT: this may be a symptom of repository corruption!");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // Delete the last repo so only 1 remains
         argListDelete = strLstDup(argListCmd);
@@ -354,7 +354,7 @@ testRun(void)
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileMissingError, "backup.info exists but archive.info is missing on repo1\n"
             "HINT: this may be a symptom of repository corruption!");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // Archive files removed - backup.info.copy exists
         TEST_RESULT_VOID(
@@ -365,7 +365,7 @@ testRun(void)
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileMissingError, "backup.info exists but archive.info is missing on repo1\n"
             "HINT: this may be a symptom of repository corruption!");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // Backup files removed - archive.info file exists
         TEST_RESULT_VOID(
@@ -378,7 +378,7 @@ testRun(void)
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing on repo1\n"
             "HINT: this may be a symptom of repository corruption!");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // Backup files removed - archive.info.copy file exists
         TEST_RESULT_VOID(
@@ -389,7 +389,7 @@ testRun(void)
         TEST_ERROR_FMT(
             cmdStanzaCreate(), FileMissingError, "archive.info exists but backup.info is missing on repo1\n"
             "HINT: this may be a symptom of repository corruption!");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // checkStanzaInfo() - already checked in checkTest so just a sanity check here
         //--------------------------------------------------------------------------------------------------------------------------
@@ -417,7 +417,7 @@ testRun(void)
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         //--------------------------------------------------------------------------------------------------------------------------
         // Copy files may or may not exist - remove
@@ -462,7 +462,7 @@ testRun(void)
             cmdStanzaCreate(), FileInvalidError, "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // Create archive.info and backup.info files that match but do not match the current database system-id
         contentArchive = strNew
@@ -502,7 +502,7 @@ testRun(void)
             cmdStanzaCreate(), FileInvalidError, "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // Remove the info files and add sub directory to backup
         TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileName, .errorOnMissing = true), "archive.info removed");
@@ -512,7 +512,7 @@ testRun(void)
             storagePathCreateP(storageTest, strNewFmt("%s/backup.history", strZ(backupStanzaPath))),
             "create directory in backup");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "backup directory not empty");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // File in archive, directory in backup
         TEST_RESULT_VOID(
@@ -520,13 +520,13 @@ testRun(void)
                 storageNewWriteP(storageTest, strNewFmt("%s/somefile", strZ(archiveStanzaPath))), BUFSTRDEF("some content")),
             "create file in archive");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "backup directory and/or archive directory not empty");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // File in archive, backup empty
         TEST_RESULT_VOID(
             storagePathRemoveP(storageTest, strNewFmt("%s/backup.history", strZ(backupStanzaPath))), "remove backup subdir");
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // Repeat last test using --force (deprecated)
         //--------------------------------------------------------------------------------------------------------------------------
@@ -535,7 +535,7 @@ testRun(void)
         TEST_ERROR_FMT(cmdStanzaCreate(), PathNotEmptyError, "archive directory not empty");
         harnessLogResult(
             "P00   WARN: option --force is no longer supported\n"
-            "P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+            "P00   INFO: stanza-create for stanza 'db' on repo1");
     }
 
     // *****************************************************************************************************************************
@@ -565,7 +565,7 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - db online");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, strNewFmt("repo/archive/%s/archive.info", strZ(stanza))), true, "    stanza created");
 
@@ -578,7 +578,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - db online");
         harnessLogResult(
-            "P00   INFO: beginning stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
             "P00   INFO: stanza 'db' on repo1 is already up to date");
 
         // Version mismatch
@@ -745,7 +745,7 @@ testRun(void)
             "archive: id = 2, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
-        harnessLogResult("P00   INFO: beginning stanza-upgrade for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
 
         // backup info up to date but archive info version is not
         //--------------------------------------------------------------------------------------------------------------------------
@@ -785,7 +785,7 @@ testRun(void)
                 "put archive info to file");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - version");
-        harnessLogResult("P00   INFO: beginning stanza-upgrade for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
         contentArchive = strNew
         (
             "[db]\n"
@@ -831,7 +831,7 @@ testRun(void)
                 "put backup info to file");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - version");
-        harnessLogResult("P00   INFO: beginning stanza-upgrade for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
         contentBackup = strNew
         (
             "[db]\n"
@@ -899,7 +899,7 @@ testRun(void)
                 "put archive info to file");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - system-id");
-        harnessLogResult("P00   INFO: beginning stanza-upgrade for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
         contentArchive = strNew
         (
             "[db]\n"
@@ -945,7 +945,7 @@ testRun(void)
                 "put backup info to file");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - system-id");
-        harnessLogResult("P00   INFO: beginning stanza-upgrade for stanza 'db' on repo1");
+        harnessLogResult("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
         contentBackup = strNew
         (
             "[db]\n"
@@ -1008,7 +1008,7 @@ testRun(void)
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza that will not be deleted");
-        harnessLogResult("P00   INFO: beginning stanza-create for stanza 'otherstanza' on repo1");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'otherstanza' on repo1");
 
         argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));

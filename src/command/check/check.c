@@ -56,15 +56,20 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
         // If primary was not found (only have 1 pg configured locally, and we want to still run because this is a standby)
         if (dbGroup.primary == NULL)
         {
-// CSHANG Need to decide what to do here and in the rest of this function. think this is a standby configured as a repo host (because the pgtotal > 1) Check in loop and if any one is local then error because we're probably on a repo host?
-            // If the repo is local or more than one pg-path is found then a master should have been found so error
-            if (repoIsLocal(cfgOptionGroupIdxDefault(cfgOptGrpRepo)) || pgPathDefinedTotal > 1)
+            // If any repo is local or more than one pg-path is found then a master should have been found so error
+            bool error = pgPathDefinedTotal > 1;
+            unsigned int repoIdx = 0;
+
+            while (!error && repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo))
             {
-                THROW(
-                    ConfigError,
-                    "primary database not found\n"
-                    "HINT: check indexed pg-path/pg-host configurations");
+                if (repoIsLocal(repoIdx))
+                    error = true;
+
+                repoIdx++;
             }
+
+            if (error)
+                THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
         }
 
         // Validate the standby database config
@@ -73,13 +78,19 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
         // Check the user configured path and version against the database
         checkDbConfig(pgControl.version, dbGroup.standbyIdx, dbGroup.standby, true);
 
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
-        storageRepo();
+        // Check each repository configured
+        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+        {
+            LOG_INFO_FMT("%s repo%u from standby", cfgCommandName(cfgCommand()), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
 
-        // Check that the backup and archive info files exist and are valid for the current database of the stanza
-        checkStanzaInfoPg(
-            storageRepo(), pgControl.version, pgControl.systemId, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
+            const Storage *storageRepo = storageRepoIdx(repoIdx);
+
+            // Check that the backup and archive info files exist and are valid for the current database of the stanza
+            checkStanzaInfoPg(
+                storageRepo, pgControl.version, pgControl.systemId, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+        }
 
         LOG_INFO("switch wal not performed because this is a standby");
 
@@ -114,6 +125,8 @@ checkPrimary(const DbGetResult dbGroup)
         // Check each repository configured
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
+            LOG_INFO_FMT("%s repo%u from primary", cfgCommandName(cfgCommand()), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
             const Storage *storageRepo = storageRepoIdx(repoIdx);
 
