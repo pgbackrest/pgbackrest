@@ -655,71 +655,6 @@ testRun(void)
         TEST_RESULT_UINT(pgControl.catalogVersion, 201204301, "    catalogVersion set");
     }
 
-// DELETE - covered in run=1
-     // *****************************************************************************************************************************
-//     if (testBegin("encryption, multi-repos"))
-//     {
-//         StringList *argList = strLstNew();
-//         strLstAddZ(argList, "--no-online");
-//         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));
-//         strLstAdd(argList, strNewFmt("--pg1-path=%s/%s", testPath(), strZ(stanza)));
-//         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-//         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
-//         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
-//         strLstAdd(argList, strNewFmt("--repo3-path=%s/repo3", testPath()));
-//         strLstAdd(argList, strNewFmt("--repo4-path=%s/repo4", testPath()));
-//         strLstAddZ(argList, "--repo4-cipher-type=aes-256-cbc");
-//         setenv("PGBACKREST_REPO4_CIPHER_PASS", "87654321", true);
-//         harnessCfgLoad(cfgCmdStanzaCreate, argList);
-//
-//         // Create pg_control
-//         storagePutP(
-//             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-//             pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
-//
-//         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption, multi repo");
-//
-//         InfoArchive *infoArchive = NULL;
-//         TEST_ASSIGN(
-//             infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
-//             "  load archive info");
-//         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
-//
-//         InfoBackup *infoBackup = NULL;
-//         TEST_ASSIGN(
-//             infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeAes256Cbc, strNew("12345678")),
-//             "  load backup info");
-//         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
-//
-//         TEST_RESULT_BOOL(
-//             strEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
-//             "  cipher sub different for archive and backup");
-//
-//         // Confirm non-encrypted repo created successfully
-//         TEST_ASSIGN(
-//             infoArchive, infoArchiveLoadFile(storageTest, strNewFmt("repo3/archive/%s/archive.info", strZ(stanza)), cipherTypeNone,
-//             NULL), "  load archive info");
-//         TEST_RESULT_PTR(infoArchiveCipherPass(infoArchive), NULL, "  archive cipher sub not set on non-encrypted repo");
-//
-//         TEST_ASSIGN(
-//             infoBackup, infoBackupLoadFile(storageTest, strNewFmt("repo3/backup/%s/backup.info", strZ(stanza)), cipherTypeNone,
-//             NULL),"  load backup info");
-//         TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "  backup cipher sub not set on non-encrypted repo");
-//
-//         // Confirm other repo encrypted with different password
-//         TEST_ASSIGN(
-//             infoArchive, infoArchiveLoadFile(storageTest, strNewFmt("repo4/archive/%s/archive.info", strZ(stanza)),
-//             cipherTypeAes256Cbc, strNew("87654321")), "  load archive info");
-//         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
-//
-//         TEST_ASSIGN(
-//             infoBackup, infoBackupLoadFile(storageTest, strNewFmt("repo4/backup/%s/backup.info", strZ(stanza)), cipherTypeAes256Cbc,
-//             strNew("87654321")), "  load backup info");
-//         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
-// // CSHANG Should probably integrate delete test here so we can delete one of the repos and rerun with issues/failure - like remove the info.copy files from one, have a host optino set for another and confirm nothing after is created/touched (info message that the stanza already created on a repo should show us that some were skipped)
-//
-    // }
-
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaUpgrade()"))
     {
@@ -787,16 +722,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info file");
-// CSHANG Remove
-//         argList = strLstDup(argListBase);
-//         harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
-//
-//         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - files already exist and both are valid");
-//         harnessLogResult("P00   INFO: stanza 'db' is already up to date");
-        // // Remove the copy files
-        // storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileName)), .errorOnMissing = true);
-        // storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)), .errorOnMissing = true);
-        //
+
         // backup info up to date but archive info db-id mismatch
         //--------------------------------------------------------------------------------------------------------------------------
         contentArchive = strNew
@@ -1096,63 +1022,6 @@ testRun(void)
         TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), strLstNew(), NULL), true, "    archiveList=0, backupList=NULL");
         TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), NULL, strLstNew()), true, "    archiveList=NULL, backupList=0");
         TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), strLstNew(), strLstNew()), true, "    archiveList=0, backupList=0");
-
-        // create and delete a stanza
-// CSHANG Could probably combine this one test with the encryption, multi-repo test and also to confirm only the repo that is requested is deleted. It appears stanza-delete should NOT have to be changed at all - all error messages are not repo specific but stanza specific - we're forcing the user to delete one at a time. BUT we need to be aware of --force option - will this cause any issues? (hopefully not)
-        //--------------------------------------------------------------------------------------------------------------------------
-        // argList = strLstDup(argListCmd);
-        // strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));
-        // strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strZ(stanza)));
-        // strLstAddZ(argList, "--no-online");
-        // harnessCfgLoad(cfgCmdStanzaCreate, argList);
-        //
-        // // Create pg_control for stanza-create
-        // storagePutP(
-        //     storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-        //     pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
-// CSHANG These are no longer necessary
-        // TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza to be deleted");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageTest, strNewFmt("repo/archive/%s/archive.info", strZ(stanza))), true, "    stanza created");
-// CSHANG Moving to run =1
-        // argList = strLstDup(argListCmd);
-        // strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));
-        // strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strZ(stanza)));
-        // harnessCfgLoad(cfgCmdStanzaDelete, argList);
-        //
-        // TEST_ERROR_FMT(
-        //     cmdStanzaDelete(), FileMissingError, "stop file does not exist for stanza 'db'\n"
-        //     "HINT: has the pgbackrest stop command been run on this server for this stanza?");
-        //
-        // // Create the stop file
-        // TEST_RESULT_VOID(
-        //     storagePutP(
-        //         storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
-        //         "create stop file");
-        //
-        // TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete");
-        // TEST_RESULT_BOOL(
-        //     storagePathExistsP(storageTest, strNewFmt("repo/archive/%s", strZ(stanza))), false, "    stanza deleted");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))), false, "    stop file removed");
-
-        // // Create stanza with directories only
-        // //--------------------------------------------------------------------------------------------------------------------------
-        // TEST_RESULT_VOID(
-        //     storagePathCreateP(storageTest, strNewFmt("repo/archive/%s/9.6-1/1234567812345678", strZ(stanza))),
-        //     "create archive sub directory");
-        // TEST_RESULT_VOID(
-        //     storagePathCreateP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strZ(stanza))),
-        //     "create backup sub directory");
-        // TEST_RESULT_VOID(
-        //     storagePutP(
-        //         storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
-        //         "create stop file");
-        // TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - sub directories only");
-        // TEST_RESULT_BOOL(
-        //     storagePathExistsP(storageTest, strNewFmt("repo/archive/%s", strZ(stanza))), false, "    stanza archive deleted");
-        // TEST_RESULT_BOOL(
-        //     storagePathExistsP(storageTest, strNewFmt("repo/backup/%s", strZ(stanza))), false, "    stanza backup deleted");
 
         // Create stanza archive only
         //--------------------------------------------------------------------------------------------------------------------------
