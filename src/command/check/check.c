@@ -143,7 +143,6 @@ checkPrimary(const DbGetResult dbGroup)
 
             // Perform a WAL switch
             const String *walSegment = dbWalSwitch(dbGroup.primary);
-            dbFree(dbGroup.primary);
 
             // Wait for the WAL to appear in the repo
             TimeMSec archiveTimeout = (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
@@ -154,6 +153,8 @@ checkPrimary(const DbGetResult dbGroup)
                 strZ(storagePathP(storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walSegmentFile)))),
                 cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
         }
+
+        dbFree(dbGroup.primary);
     }
 
     FUNCTION_LOG_RETURN_VOID();
