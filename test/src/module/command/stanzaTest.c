@@ -33,7 +33,7 @@ testRun(void)
     strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdStanzaCreate(), checkStanzaInfo()"))
+    if (testBegin("cmdStanzaCreate(), checkStanzaInfo(), cmdStanzaDelete()"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -46,7 +46,13 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        TEST_ERROR_FMT(
+            harnessCfgLoad(cfgCmdStanzaCreate, argList), OptionInvalidError, "option 'repo' not valid for command 'stanza-create'");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        harnessCfgLoad(cfgCmdStanzaCreate, argListBase);
 
         // Create the stop file
         TEST_RESULT_VOID(
@@ -250,6 +256,11 @@ testRun(void)
         hrnCfgArgRawFmt(argListCmd, cfgOptStanza, "%s", strZ(stanza));
         hrnCfgArgKeyRawFmt(argListCmd, cfgOptPgPath, 1, "%s/%s", testPath(), strZ(stanza));
 
+        TEST_ERROR_FMT(
+            harnessCfgLoad(cfgCmdStanzaDelete, argListCmd), OptionRequiredError, "stanza-delete command requires option: repo\n"
+            "HINT: this command requires a specific repository to operate on");
+
+        // Add the repo option
         StringList *argListDelete = strLstDup(argListCmd);
         hrnCfgArgRawZ(argListDelete, cfgOptRepo, "4");
         harnessCfgLoad(cfgCmdStanzaDelete, argListDelete);
@@ -675,7 +686,14 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argListBase);
-        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        TEST_ERROR_FMT(
+            harnessCfgLoad(cfgCmdStanzaUpgrade, argList), OptionInvalidError,
+            "option 'repo' not valid for command 'stanza-upgrade'");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        harnessCfgLoad(cfgCmdStanzaUpgrade, argListBase);
 
         // Create the stop file
         TEST_RESULT_VOID(
