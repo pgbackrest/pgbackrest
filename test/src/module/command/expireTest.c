@@ -848,57 +848,78 @@ testRun(void)
         harnessLogResult(
             "P00   INFO: [DRY-RUN] expire full backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] remove expired backup 20181119-152138F");
+// CSHANG maybe copy the info files to another repo for multi-repo tests
+        // // Save a copy of the info files for a later test
+        // storageCopy(
+        //     storageNewReadP(storageTest, backupInfoFileName),
+        //     storageNewWriteP(storageTest, strNewFmt("%s%s", strZ(backupInfoFileName), ".save")));
+        // storageCopy(
+        //     storageNewReadP(storageTest, archiveInfoFileName),
+        //     storageNewWriteP(storageTest, strNewFmt("%s%s", strZ(archiveInfoFileName), ".save")));
 
-        // Save a copy of the info files for a later test
-        storageCopy(
-            storageNewReadP(storageTest, backupInfoFileName),
-            storageNewWriteP(storageTest, strNewFmt("%s%s", strZ(backupInfoFileName), ".save")));
-        storageCopy(
-            storageNewReadP(storageTest, archiveInfoFileName),
-            storageNewWriteP(storageTest, strNewFmt("%s%s", strZ(archiveInfoFileName), ".save")));
+        // Copy the repo to another repo
+        TEST_SYSTEM_FMT("mkdir %s/repo2", testPath());
+        TEST_SYSTEM_FMT("cp -r %s/repo/* %s/repo2/", testPath(), testPath());
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire via backup command");
 
+        // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
         strLstAddZ(argList, "--repo1-retention-diff=3");
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchiveType, 2, "diff");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1/0000000100000000")), false,
-            "archive sub path removed");
+            storagePathExistsP(storageTest, STRDEF("repo2/archive/db/9.4-1/0000000100000000")), false,
+            "archive sub path removed repo2");
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageTest, strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanzaPath))), true,
+            "archive sub path repo1 not removed");
+
+        String *backupLabel = strNew("20181119-152138F");
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageTest, STRDEF("repo2/backup/db/backup.info"), cipherTypeNone, NULL),
+            "get backup.info repo2");
+        TEST_RESULT_BOOL(strLstExists(infoBackupDataLabelList(infoBackup, NULL), backupLabel), false, "backup removed from repo2");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info repo1");
+        TEST_RESULT_BOOL(strLstExists(infoBackupDataLabelList(infoBackup, NULL), backupLabel), true, "backup exists repo1");
+
         harnessLogResult(
             "P00   INFO: expire full backup 20181119-152138F\n"
             "P00   INFO: remove expired backup 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire command - no dry run");
+        TEST_TITLE("expire command requires repo option");
 
         argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "3");
+
+        TEST_ERROR_FMT(
+            harnessCfgLoad(cfgCmdExpire, argList), OptionRequiredError, "expire command requires option: repo\n"
+            "HINT: this command requires a specific repository to operate on");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire command - no dry run");
+
+        // Add to previous list and specify repo
         strLstAddZ(argList, "--repo1-retention-full=2");
         strLstAddZ(argList, "--repo1-retention-diff=3");
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdExpire, argList);
-
-        // Restore info files from a previous test
-        storageCopy(
-            storageNewReadP(storageTest, strNewFmt("%s%s", strZ(backupInfoFileName), ".save")),
-            storageNewWriteP(storageTest, backupInfoFileName));
-        storageCopy(
-            storageNewReadP(storageTest,  strNewFmt("%s%s", strZ(archiveInfoFileName), ".save")),
-            storageNewWriteP(storageTest, archiveInfoFileName));
-
-        // Write out manifest and archive that will be removed
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
-        archiveGenerate(storageTest, archiveStanzaPath, 2, 2, "9.4-1", "0000000100000000");
 
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
