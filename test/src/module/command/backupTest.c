@@ -1451,6 +1451,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         cmdStanzaCreate();
+        harnessLogResult("P00   INFO: stanza-create for stanza 'test1' on repo1");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg appears to be running");
@@ -1626,6 +1627,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
             cmdStanzaCreate();
+            harnessLogResult("P00   INFO: stanza-create for stanza 'test1' on repo1");
 
             // Load options
             argList = strLstNew();
@@ -2091,6 +2093,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
+            harnessLogResult("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
 
             // Load options
             argList = strLstNew();
@@ -2239,6 +2242,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
+            harnessLogResult("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
 
             // Load options
             argList = strLstNew();
