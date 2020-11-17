@@ -54,10 +54,10 @@ Environment helper functions
 Add and remove environment options, which are required to pass secrets, e.g. repo1-cipher-pass.
 ***********************************************************************************************************************************/
 void hrnCfgEnvRaw(ConfigOption optionId, const String *value);
-void hrnCfgEnvIdRaw(ConfigOption optionId, unsigned optionKey, const String *value);
+void hrnCfgEnvKeyRaw(ConfigOption optionId, unsigned optionKey, const String *value);
 
 void hrnCfgEnvRawZ(ConfigOption optionId, const char *value);
-void hrnCfgEnvIdRawZ(ConfigOption optionId, unsigned optionKey, const char *value);
+void hrnCfgEnvKeyRawZ(ConfigOption optionId, unsigned optionKey, const char *value);
 
 void hrnCfgEnvRemoveRaw(ConfigOption optionId);
-void hrnCfgEnvIdRemoveRaw(ConfigOption optionId, unsigned optionKey);
+void hrnCfgEnvKeyRemoveRaw(ConfigOption optionId, unsigned optionKey);
