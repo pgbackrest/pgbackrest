@@ -133,6 +133,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-path=/repo-local");
         strLstAddZ(argList, "--repo4-path=/remote-host-new");
         strLstAddZ(argList, "--repo4-host=remote-host-new");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
