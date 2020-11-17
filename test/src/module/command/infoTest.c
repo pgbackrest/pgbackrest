@@ -301,6 +301,8 @@ testRun(void)
 
         StringList *argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
+        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
@@ -311,9 +313,22 @@ testRun(void)
             "\n"
             "    db (current)\n"
             "        wal archive min/max (9.4-3): 000000010000000000000004/000000010000000000000004\n",
-            "text - single stanza, one wal segment");
+            "text - multi-repo, single stanza, one wal segment");
 
         TEST_RESULT_VOID(storageRemoveP(storageLocalWrite(), archiveDb3Wal, .errorOnMissing = true), "remove WAL file");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList2 = strLstDup(argListText);
+        strLstAddZ(argList2, "--stanza=stanza1");
+        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (missing stanza path)\n",
+            "text - multi-repo, requested stanza missing on selected repo");
 
         // Coverage for stanzaStatus branches
         //--------------------------------------------------------------------------------------------------------------------------
