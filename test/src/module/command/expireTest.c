@@ -848,21 +848,13 @@ testRun(void)
         harnessLogResult(
             "P00   INFO: [DRY-RUN] expire full backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] remove expired backup 20181119-152138F");
-// CSHANG maybe copy the info files to another repo for multi-repo tests
-        // // Save a copy of the info files for a later test
-        // storageCopy(
-        //     storageNewReadP(storageTest, backupInfoFileName),
-        //     storageNewWriteP(storageTest, strNewFmt("%s%s", strZ(backupInfoFileName), ".save")));
-        // storageCopy(
-        //     storageNewReadP(storageTest, archiveInfoFileName),
-        //     storageNewWriteP(storageTest, strNewFmt("%s%s", strZ(archiveInfoFileName), ".save")));
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire via backup command");
 
         // Copy the repo to another repo
         TEST_SYSTEM_FMT("mkdir %s/repo2", testPath());
         TEST_SYSTEM_FMT("cp -r %s/repo/* %s/repo2/", testPath(), testPath());
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire via backup command");
 
         // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);
