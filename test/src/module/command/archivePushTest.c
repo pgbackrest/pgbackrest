@@ -500,12 +500,12 @@ testRun(void)
         hrnCfgArgKeyRawFmt(argListTemp, cfgOptPgPath, 1, "%s/pg", testPath());
         hrnCfgArgKeyRawFmt(argListTemp, cfgOptRepoPath, 2, "%s/repo2", testPath());
         hrnCfgArgKeyRawZ(argListTemp, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
-        hrnCfgEnvIdRawZ(cfgOptRepoCipherPass, 2, "badpassphrase");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "badpassphrase");
         hrnCfgArgKeyRawFmt(argListTemp, cfgOptRepoPath, 3, "%s/repo3", testPath());
         hrnCfgArgRawNegate(argListTemp, cfgOptCompress);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
-        hrnCfgEnvIdRemoveRaw(cfgOptRepoCipherPass, 2);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
