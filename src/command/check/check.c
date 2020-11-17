@@ -81,7 +81,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
         // Check each repository configured
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            LOG_INFO_FMT("%s repo%u from standby", cfgCommandName(cfgCommand()), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+            LOG_INFO_FMT(CFGCMD_CHECK " repo%u (standby)", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
             const Storage *storageRepo = storageRepoIdx(repoIdx);
@@ -125,7 +125,7 @@ checkPrimary(const DbGetResult dbGroup)
         // Check each repository configured
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            LOG_INFO_FMT("%s repo%u from primary", cfgCommandName(cfgCommand()), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+            LOG_INFO_FMT(CFGCMD_CHECK " repo%u (primary)", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
             const Storage *storageRepo = storageRepoIdx(repoIdx);

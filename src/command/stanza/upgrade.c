@@ -46,7 +46,7 @@ cmdStanzaUpgrade(void)
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
             LOG_INFO_FMT(
-                "%s for stanza '%s' on repo%u", cfgCommandName(cfgCommand()), strZ(cfgOptionStr(cfgOptStanza)),
+                CFGCMD_STANZA_UPGRADE " for stanza '%s' on repo%u", strZ(cfgOptionStr(cfgOptStanza)),
                 cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
 
             const Storage *storageRepoReadStanza = storageRepoIdx(repoIdx);

@@ -224,7 +224,7 @@ testRun(void)
         // Error on primary but standby check ok
         TEST_ERROR_FMT(cmdCheck(), ArchiveDisabledError, "archive_mode must be enabled");
         harnessLogResult(
-            "P00   INFO: check repo1 from standby\n"
+            "P00   INFO: check repo1 (standby)\n"
             "P00   INFO: switch wal not performed because this is a standby");
 
         // Multi-repo - add a second repo (repo2)
@@ -255,7 +255,7 @@ testRun(void)
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
             testPath(), testPath(), strZ(strNewFmt("%s/repo2/archive/test1/archive.info", testPath())),
             strZ(strNewFmt("%s/repo2/archive/test1/archive.info.copy", testPath())));
-        harnessLogResult("P00   INFO: check repo1 from standby\nP00   INFO: check repo2 from standby");
+        harnessLogResult("P00   INFO: check repo1 (standby)\nP00   INFO: check repo2 (standby)");
 
         // Single primary
         // -------------------------------------------------------------------------------------------------------------------------
@@ -285,7 +285,7 @@ testRun(void)
             "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
             "HINT: check the PostgreSQL server log for errors.\n"
             "HINT: run the 'start' command if the stanza was previously stopped.");
-        harnessLogResult("P00   INFO: check repo1 from primary");
+        harnessLogResult("P00   INFO: check repo1 (primary)");
 
         // Create WAL segment
         Buffer *buffer = bufNew(16 * 1024 * 1024);
@@ -326,10 +326,10 @@ testRun(void)
         harnessLogResult(
             strZ(
                 strNewFmt(
-                    "P00   INFO: check repo1 from primary\n"
+                    "P00   INFO: check repo1 (primary)\n"
                     "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo/archive/test1/9.2-1/"
                         "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
-                    "P00   INFO: check repo2 from primary\n"
+                    "P00   INFO: check repo2 (primary)\n"
                     "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo2/archive/test1/9.2-1/"
                         "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2",
                     testPath(), testPath())));

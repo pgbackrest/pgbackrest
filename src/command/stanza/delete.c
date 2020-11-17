@@ -85,14 +85,10 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
             // If a force has not been issued and Postgres is running, then error
             if (!cfgOptionBool(cfgOptForce) && storageExistsP(storagePg(), STRDEF(PG_FILE_POSTMASTERPID)))
             {
-                // If the repo option was set, then use it (minus 1) else get the default
-                unsigned int repoIdx = cfgOptionTest(
-                    cfgOptRepo) ? (cfgOptionUInt(cfgOptRepo) - 1) : cfgOptionGroupIdxDefault(cfgOptGrpRepo);
-
                 THROW_FMT(
                     PgRunningError, PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running. "
                     "To delete stanza '%s' on repo%u, shut down " PG_NAME " for stanza '%s' and try again, or use --force.",
-                    strZ(cfgOptionStr(cfgOptStanza)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                    strZ(cfgOptionStr(cfgOptStanza)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
                     strZ(cfgOptionStr(cfgOptStanza)));
             }
 
