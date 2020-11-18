@@ -132,11 +132,11 @@ testRun(void)
         argList = strLstDup(argListBase);
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
         hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
-        hrnCfgEnvIdRawZ(cfgOptRepoCipherPass, 2, "12345678");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 3, "%s/repo3", testPath());
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 4, "%s/repo4", testPath());
         hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 4, CIPHER_TYPE_AES_256_CBC);
-        hrnCfgEnvIdRawZ(cfgOptRepoCipherPass, 4, "87654321");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist on repo1 and both are valid");
@@ -282,7 +282,7 @@ testRun(void)
             storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))), false, "    stop file removed");
 
         // Remove the cipher pass environment variable otherwise stanza-create will recreate the stanza
-        hrnCfgEnvIdRemoveRaw(cfgOptRepoCipherPass, 4);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 4);
 
         // Stanza with directories only
         argListDelete = strLstDup(argListCmd);
@@ -311,7 +311,7 @@ testRun(void)
         argList = strLstDup(argListBase);
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
         hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
-        hrnCfgEnvIdRawZ(cfgOptRepoCipherPass, 2, "12345678");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Backup files removed - archive.info and archive.info.copy exist repo2
@@ -353,7 +353,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaDelete(), "    stanza delete - only 1 remains");
 
         // Remove the cipher pass environment variable otherwise stanza-create will recreate the stanza
-        hrnCfgEnvIdRemoveRaw(cfgOptRepoCipherPass, 2);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         argList = strLstDup(argListBase);
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
