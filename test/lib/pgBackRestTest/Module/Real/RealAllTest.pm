@@ -52,19 +52,19 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => PG_VERSION_83, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt => false, compress => NONE},
-        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt =>  true, compress =>   GZ},
-        {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt =>  true, compress =>  BZ2},
-        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt => false, compress => NONE},
-        {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress => NONE},
-        {pg => PG_VERSION_93, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>   GZ},
-        {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress =>  LZ4},
-        {pg => PG_VERSION_95, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt => false, compress =>  BZ2},
-        {pg => PG_VERSION_96, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt => false, compress => NONE},
-        {pg => PG_VERSION_10, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt =>  true, compress =>   GZ},
-        {pg => PG_VERSION_11, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>  ZST},
-        {pg => PG_VERSION_12, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt =>  true, compress =>  LZ4},
-        {pg => PG_VERSION_13, repoDest => HOST_DB_STANDBY, storage => AZURE, encrypt => false, compress =>  ZST},
+        {pg => PG_VERSION_83, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt => false, compress => NONE, repo => 1},
+        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt =>  true, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt =>  true, compress =>  BZ2, repo => 1},
+        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt => false, compress => NONE, repo => 1},
+        {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress => NONE, repo => 1},
+        {pg => PG_VERSION_93, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress =>  LZ4, repo => 1},
+        {pg => PG_VERSION_95, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt => false, compress =>  BZ2, repo => 1},
+        {pg => PG_VERSION_96, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt => false, compress => NONE, repo => 2},
+        {pg => PG_VERSION_10, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt =>  true, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_11, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>  ZST, repo => 1},
+        {pg => PG_VERSION_12, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt =>  true, compress =>  LZ4, repo => 1},
+        {pg => PG_VERSION_13, repoDest => HOST_DB_STANDBY, storage => AZURE, encrypt => false, compress =>  ZST, repo => 1},
     )
     {
         # Only run tests for this pg version
@@ -77,6 +77,7 @@ sub run
         my $strStorage = $rhRun->{storage};
         my $bRepoEncrypt = $rhRun->{encrypt};
         my $strCompressType = $rhRun->{compress};
+        my $iRepoTotal = $rhRun->{repo};
 
         # Use a specific VM and version of PostgreSQL for expect testing. This version will also be used to run tests that are not
         # version specific.
@@ -93,7 +94,7 @@ sub run
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
              strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
-             bRepoEncrypt => $bRepoEncrypt});
+             bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal});
 
         # Some commands will fail because of the bogus host created when a standby is present. These options reset the bogus host
         # so it won't interfere with commands that won't tolerate a connection failure.

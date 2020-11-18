@@ -268,6 +268,10 @@ testRun(void)
         strLstAddZ(argList, "--archive-timeout=.5");
         harnessCfgLoad(cfgCmdCheck, argList);
 
+        // Create stanza files on repo2
+        storagePutP(storageNewWriteP(storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
+        storagePutP(storageNewWriteP(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR), backupInfoContent);
+
         // Error when WAL segment not found
         harnessPqScriptSet((HarnessPq [])
         {
@@ -278,31 +282,29 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        // Only first repo is checked because of the error
         TEST_ERROR(
             cmdCheck(), ArchiveTimeoutError,
             "WAL segment 000000010000000100000001 was not archived before the 500ms timeout\n"
             "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
             "HINT: check the PostgreSQL server log for errors.\n"
             "HINT: run the 'start' command if the stanza was previously stopped.");
-        harnessLogResult("P00   INFO: check repo1 (primary)");
+        harnessLogResult(
+            "P00   INFO: check repo1 configuration (primary)\n"
+            "P00   INFO: check repo2 configuration (primary)\n"
+            "P00   INFO: check repo1 archive for WAL (primary)");
 
         // Create WAL segment
         Buffer *buffer = bufNew(16 * 1024 * 1024);
         memset(bufPtr(buffer), 0, bufSize(buffer));
         bufUsedSet(buffer, bufSize(buffer));
 
-        // WAL segment switch is performed for each repo
+        // WAL segment switch is performed once for all repos
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
             HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
-
-            HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
-            HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
             HRNPQ_MACRO_CLOSE(1),
-
             HRNPQ_MACRO_DONE()
         });
 
@@ -318,18 +320,16 @@ testRun(void)
                 strNew(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
             buffer);
 
-        // Create stanza files on repo2
-        storagePutP(storageNewWriteP(storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
-        storagePutP(storageNewWriteP(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR), backupInfoContent);
-
         TEST_RESULT_VOID(cmdCheck(), "check primary, WAL archived");
         harnessLogResult(
             strZ(
                 strNewFmt(
-                    "P00   INFO: check repo1 (primary)\n"
+                    "P00   INFO: check repo1 configuration (primary)\n"
+                    "P00   INFO: check repo2 configuration (primary)\n"
+                    "P00   INFO: check repo1 archive for WAL (primary)\n"
                     "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo/archive/test1/9.2-1/"
                         "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
-                    "P00   INFO: check repo2 (primary)\n"
+                    "P00   INFO: check repo2 archive for WAL (primary)\n"
                     "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo2/archive/test1/9.2-1/"
                         "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2",
                     testPath(), testPath())));

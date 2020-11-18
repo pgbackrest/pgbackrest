@@ -56,7 +56,8 @@ cmdRemote(int fdRead, int fdWrite)
                     lockStopTest();
 
                     // Acquire the lock
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
+                    // !!! NEED TO FIX THIS LOCK !!!
+                    // lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
                 }
             }
 

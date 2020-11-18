@@ -300,9 +300,9 @@ P00   INFO: archive-get command end: completed successfully
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - create first full backup  (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo1-retention-full=2 --no-online --type=full --stanza=db backup
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo1-retention-full=2 --no-online --repo=1 --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db --start-fast --type=full
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum f92539dea1f9482e2946c1138eeeecdea29d7f19
@@ -312,7 +312,7 @@ P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/00
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -446,9 +446,9 @@ backrest-checksum="[CHECKSUM]"
 ------------------------------------------------------------------------------------------------------------------------------------
 
 diff backup - diff changed to full backup (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo1-retention-full=2 --no-online --type=diff --stanza=db backup
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo1-retention-full=2 --no-online --repo=1 --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
@@ -459,7 +459,7 @@ P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/00
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db
 P00   INFO: remove archive path: [TEST_PATH]/db-primary/repo/archive/db/9.3-1
 P00   INFO: expire command end: completed successfully
 
@@ -489,9 +489,9 @@ archive-copy=y
 start-fast=y
 
 stanza-delete db - fail on missing stop file (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stanza-delete
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo=1 --stanza=db stanza-delete
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
+P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00  ERROR: [055]: stop file does not exist for stanza 'db'
             HINT: has the pgbackrest stop command been run on this server for this stanza?
 P00   INFO: stanza-delete command end: aborted with exception [055]
@@ -513,9 +513,9 @@ P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-prima
 P00   INFO: stop command end: completed successfully
 
 stanza-delete db - successfully delete the stanza (db-primary host)
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stanza-delete
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo=1 --stanza=db stanza-delete
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
+P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: stanza-delete command end: completed successfully
 
 db must not exist for successful delete

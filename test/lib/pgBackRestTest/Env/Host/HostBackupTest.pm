@@ -161,6 +161,9 @@ sub new
         $self->{strRepoPath} = '/';
     }
 
+    # If there is a repo2 it will always be posix on the repo host
+    $self->{strRepo2Path} = $self->testRunGet()->testPath() . "/$$oParam{strBackupDestination}/" . HOST_PATH_REPO . "2";
+
     # Set log/lock paths
     $self->{strLogPath} = $self->testPath() . '/' . HOST_PATH_LOG;
     storageTest()->pathCreate($self->{strLogPath}, {strMode => '0770'});
@@ -325,6 +328,7 @@ sub backupBegin
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
         (defined($oParam->{strRepoType}) ? " --repo1-type=$oParam->{strRepoType}" : '') .
+        ' --repo=' . (defined($oParam->{iRepo}) ? $oParam->{iRepo} : '1') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus},
@@ -839,6 +843,7 @@ sub expire
         (defined($$oParam{iRetentionFull}) ? " --repo1-retention-full=$$oParam{iRetentionFull}" : '') .
         (defined($$oParam{iRetentionDiff}) ? " --repo1-retention-diff=$$oParam{iRetentionDiff}" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
+        ' --repo=' . (defined($oParam->{iRepo}) ? $oParam->{iRepo} : '1') .
         '  --stanza=' . $self->stanza() . ' expire',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()});
@@ -1031,6 +1036,7 @@ sub stanzaDelete
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
+        ' --repo=' . (defined($oParam->{iRepo}) ? $oParam->{iRepo} : '1') .
         ' --stanza=' . $self->stanza() .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' stanza-delete',
@@ -1145,6 +1151,13 @@ sub configCreate
 
     my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{bArchiveAsync} : false;
 
+    my $iRepoTotal = defined($oParam->{iRepoTotal}) ? $oParam->{iRepoTotal} : 1;
+
+    if ($iRepoTotal < 1 || $iRepoTotal > 2)
+    {
+        confess "invalid repo total ${iRepoTotal}";
+    }
+
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-level-console'} = lc(DETAIL);
@@ -1204,6 +1217,11 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-container'} = HOST_AZURE_CONTAINER;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-host'} = HOST_AZURE;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-verify-tls'} = 'n';
+        }
+
+        if ($iRepoTotal == 2)
+        {
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-path'} = $self->repo2Path();
         }
 
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
@@ -1300,6 +1318,14 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-user'} = $oHostBackup->userGet();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
+
+            if ($iRepoTotal == 2)
+            {
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host'} = $oHostBackup->nameGet();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-user'} = $oHostBackup->userGet();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-cmd'} = $oHostBackup->backrestExe();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-config'} = $oHostBackup->backrestConfig();
+            }
 
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'lock-path'} = $self->lockPath();
@@ -1680,6 +1706,7 @@ sub restore
         $bTablespace,
         $strUser,
         $strBackupExpected,
+        $iRepo,
     ) =
         logDebugParam
         (
@@ -1701,6 +1728,7 @@ sub restore
             {name => 'bTablespace', optional => true},
             {name => 'strUser', optional => true},
             {name => 'strBackupExpected', optional => true},
+            {name => 'iRepo', optional => true, default => 1},
         );
 
     # Build link map options
@@ -1815,7 +1843,7 @@ sub restore
         (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
         (defined($strTargetAction) && $strTargetAction ne 'pause' ? " --target-action=${strTargetAction}" : '') .
-        ' --stanza=' . $self->stanza() . ' restore',
+        " --repo=${iRepo} --stanza=" . $self->stanza() . ' restore',
         {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()},
         $strUser);
@@ -2191,6 +2219,7 @@ sub logPath {return shift->{strLogPath}}
 sub repoArchivePath {return shift->repoSubPath('archive', shift)}
 sub repoBackupPath {return shift->repoSubPath('backup', shift)}
 sub repoPath {return shift->{strRepoPath}}
+sub repo2Path {return shift->{strRepo2Path}}
 sub repoEncrypt {return shift->{bRepoEncrypt}}
 sub stanza {return testRunGet()->stanza()}
 sub synthetic {return shift->{bSynthetic}}
