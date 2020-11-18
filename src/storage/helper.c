@@ -347,7 +347,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionIdxUInt(cfgOptCompressLevelNetwork, repoIdx));
+            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use Azure storage
     else
