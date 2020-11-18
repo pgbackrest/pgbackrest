@@ -620,9 +620,6 @@ testRun(void)
         storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR, .recurse = true);
         storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
-        storagePathRemoveP(storageRepoWrite(), strNew(STORAGE_REPO_ARCHIVE "/9.4-1"), .recurse = true);
-        storagePathCreateP(storageRepoWrite(), strNew(STORAGE_REPO_ARCHIVE "/9.4-1"));
-
         storagePathRemoveP(storagePgWrite(), strNew("pg_xlog/archive_status"), .recurse = true);
         storagePathCreateP(storagePgWrite(), strNew("pg_xlog/archive_status"));
 
@@ -639,8 +636,9 @@ testRun(void)
             strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "global.error", "check status files");
 
-        // Push WAL
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push already pushed WAL and error on missing WAL");
+
         // Recreate ready file for WAL 1
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
 
@@ -652,6 +650,8 @@ testRun(void)
             strZ(
                 strNewFmt(
                     "P00   INFO: push 2 WAL file(s) to archive: 000000010000000100000001...000000010000000100000002\n"
+                    "P01   WARN: WAL file '000000010000000100000001' already exists in the archive with the same checksum\n"
+                    "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
                     "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
                     "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
                         "[55] raised from local-1 protocol: " STORAGE_ERROR_READ_MISSING,
@@ -665,6 +665,9 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
             "000000010000000100000001.ok|000000010000000100000002.error", "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create and push previously missing WAL");
 
         // Create WAL 2 segment
         Buffer *walBuffer2 = bufNew((size_t)16 * 1024 * 1024);
