@@ -598,16 +598,17 @@ sub storageRepo
         );
 
     # Create storage if not defined
-    if (!defined($oRepoStorage))
+    if (!defined($oRepoStorage->{$iRepo}))
     {
-        $oRepoStorage = new pgBackRestTest::Common::StorageRepo($strStorageRepoCommand, $strStorageRepoType, 64 * 1024, 60, $iRepo);
+        $oRepoStorage->{$iRepo} = new pgBackRestTest::Common::StorageRepo(
+            $strStorageRepoCommand, $strStorageRepoType, 64 * 1024, 60, $iRepo);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oStorageRepo', value => $oRepoStorage, trace => true},
+        {name => 'oStorageRepo', value => $oRepoStorage->{$iRepo}, trace => true},
     );
 }
 
