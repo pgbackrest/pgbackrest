@@ -142,6 +142,11 @@ Verify WAL by reporting
 3. Skipped duplicates
 4. Additional WAL skipped
 
+Considerations:
+1. What to do with .partial or .backup files? Currently only WAL files with/without compression extension are verified.
+2. Should we try to verify .history files? Currently we do not but we will need to read and follow them for final archive/backup reconciliation.
+
+
 ## Requirement 4. Verify all manifests/copies are valid
 
 Minimum to check is:
@@ -152,8 +157,8 @@ Considerations:
 1. If a file exists and we deem it usable, then what if the database id, system-id or version is not in the history?
     - It was decided that if the database information does not exist in the history of the backup info file, then the backup will be considered invalid and the files will not be checked.
 2. If a manifest is considered unusable, then should there be a backup result for it or do we just report an error in the log and indicate the backup is being skipped? (Need to try to be consistent with archive results).
-
-CSHANG: But what if there are no backups in the backup.info file? Should we still assume the last one on disk is the "current"?
+3. What if there are no backups in the backup.info file? Should we still assume the last one on disk is the "current"?
+    - As a temporary "current" until the manifest is determined to exist or not.
 
 ```
 IF manifest is readable
@@ -445,6 +450,31 @@ list. We'll need to do this for all lists for first get everything and then filt
 anything else we should put in a separate list (e.g. archiveIdInvalidFileList) to inform the user of "junk" in the directory.
 Note, though, that .partial and .backup should not be considered "junk" in the WAL directory.
 */
+
+// CSHANG May need to have several booleans for backup status instead of enum so statusIsValid, statusIsConsistent, statusIsPitrable
+/*
+iterate WAL ranges and if invalidFileList > 0 then report as WARN and if later this causes a backup problem THEN it is reported as an error
+Read ALL history files
+If WAL files and no history and visa versa then should be reporting as WARN
+
+1) If 2.history make sure there is at least one timeline 2 range then WARN
+2) If there is a timeline 2 WAL range and no 2.history then WARN
+3) Find relationship between timeline 1 and 2 and if missing WARN
+
+
+IF history file and no wal but it is before any timeline that exists in the ranges then OK
+
+WAL
+2
+3
+4
+
+1/02 -02.history
+2/05 -03.history
+4/06 -05.history
+*/
+
+
 */
 /**********************************************************************************************************************************/
 // typedef enum // CSHANG Don't think I will need

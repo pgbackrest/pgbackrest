@@ -1606,29 +1606,6 @@ verifyProcess(unsigned int *errorTotal)
                 while (!protocolParallelDone(parallelExec));
 
                 // ??? Need to do the final reconciliation - checking backup required WAL against, valid WAL
-// CSHANG May need to have several booleans for backup status instead of enum so statusIsValid, statusIsConsistent, statusIsPitrable
-/*
-iterate WAL ranges and if invalidFileList > 0 then report as WARN and if later this causes a backup prroblem THEN it is reported as an error
-Read ALL history files
-If WAL files and no history and visa versa then should be reporting as WARN
-
-1) If 2.history make sure there is at least one timeline 2 range then WARN
-2) If there is a timeline 2 WAL range and no 2.history then WARN
-3) Find relationship between timeline 1 and 2 and if missing WARN
-
-
-IF history file and no wal but it is before any timeline that exists in the ranges then OK
-
-WAL
-2
-3
-4
-
-1/02 -02.history
-2/05 -03.history
-4/06 -05.history
-*/
-
 
                 // Report results
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList);
