@@ -699,12 +699,12 @@ verifyArchive(void *data)
         // If there are WAL paths then get the file lists
         if (strLstSize(jobData->walPathList) > 0)
         {
+            // Get the archive id info for the current (last) archive id being processed
+            VerifyArchiveResult *archiveResult = lstGetLast(jobData->archiveIdResultList);
+
             do
             {
                 String *walPath = strLstGet(jobData->walPathList, 0);
-// CSHANG I should probably get the archiveResult before this do-while - seems a waste to get it each time
-                // Get the archive id info for the current (last) archive id being processed
-                VerifyArchiveResult *archiveResult = lstGetLast(jobData->archiveIdResultList);
 
                 // Get the WAL files for the first item in the WAL paths list and initialize WAL info and ranges
                 if (strLstSize(jobData->walFileList) == 0)
