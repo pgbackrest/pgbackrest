@@ -1278,6 +1278,38 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("exec-id")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(true)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("expire-auto")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)

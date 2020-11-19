@@ -416,6 +416,8 @@ sub regExpReplaceAll
     $strLine = $self->regExpReplace($strLine, 'USER', '[^ ]+\@db\-primary', '^[^\@]+');
     $strLine = $self->regExpReplace($strLine, 'USER', '[\( ]{1}' . TEST_USER . '[\,\)]{1}', TEST_USER);
 
+    $strLine = $self->regExpReplace($strLine, 'EXEC-ID', '--exec-id=[^ ]+', '[^=]+$', false);
+
     $strLine = $self->regExpReplace($strLine, 'CIPHER-PASS', '^cipher\-pass\=.+$', '[^\=]+$');
 
     $strLine = $self->regExpReplace($strLine, 'PORT', 'db[1-9]{0,1}-port=[0-9]+', '[0-9]+$');

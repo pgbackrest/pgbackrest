@@ -50,6 +50,7 @@ typedef enum
     cfgDefOptDelta,
     cfgDefOptDryRun,
     cfgDefOptExclude,
+    cfgDefOptExecId,
     cfgDefOptExpireAuto,
     cfgDefOptFilter,
     cfgDefOptForce,

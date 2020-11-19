@@ -4,7 +4,7 @@ run 001 - rmt 0, cmp none, error version, storage posix, enc 1
 stanza-create db - create required data for stanza (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/repo/backup/db/backup.info

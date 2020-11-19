@@ -125,6 +125,7 @@ use constant CFGOPT_OUTPUT                                          => 'output';
 
 # Command-line only local/remote options
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPT_EXEC_ID                                         => 'exec-id';
 use constant CFGOPT_PROCESS                                         => 'process';
 use constant CFGOPT_HOST_ID                                         => 'host-id';
 use constant CFGOPT_REMOTE_TYPE                                     => 'remote-type';
@@ -995,6 +996,31 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_EXEC_ID =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_CHECK => {},
+            &CFGCMD_INFO => {},
+            &CFGCMD_REPO_CREATE => {},
+            &CFGCMD_REPO_GET => {},
+            &CFGCMD_REPO_LS => {},
+            &CFGCMD_REPO_PUT => {},
+            &CFGCMD_REPO_RM => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
+            &CFGCMD_STANZA_UPGRADE => {},
+            &CFGCMD_VERIFY => {},
+        },
+    },
+
     &CFGOPT_HOST_ID =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
