@@ -462,7 +462,8 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
         {
             // Try to acquire a lock. If not possible, assume another backup or expire is already running.
-            backupLockHeld = !lockAcquire(cfgOptionStr(cfgOptLockPath), stanzaListName, lockTypeBackup, 0, false);
+            backupLockHeld = !lockAcquire(
+                cfgOptionStr(cfgOptLockPath), stanzaListName, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
 
             // Immediately release the lock acquired
             lockRelease(!backupLockHeld);

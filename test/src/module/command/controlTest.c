@@ -265,7 +265,8 @@ testRun(void)
                 ioWriteOpen(write);
 
                 TEST_RESULT_BOOL(
-                    lockAcquire(lockPath, cfgOptionStr(cfgOptStanza), 0, 30000, true), true,"    child process acquires lock");
+                    lockAcquire(lockPath, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), 0, 30000, true),
+                    true,"    child process acquires lock");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew(""));

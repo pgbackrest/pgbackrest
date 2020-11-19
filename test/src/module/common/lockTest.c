@@ -123,34 +123,37 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, 0, true), "archive lock by file");
-        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, lockTypeArchive, 0, false), false, "archive already locked");
+        TEST_RESULT_BOOL(
+            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeArchive, 0, false), false, "archive already locked");
         TEST_ERROR(
-            lockAcquire(lockPath, stanza, lockTypeArchive, 0, true), LockAcquireError,
+            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeArchive, 0, true), LockAcquireError,
             strZ(strNewFmt(
                 "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                 "HINT: is another pgBackRest process running?", strZ(archiveLockFile))));
         TEST_ERROR(
-            lockAcquire(lockPath, stanza, lockTypeAll, 0, true), LockAcquireError,
+            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeAll, 0, true), LockAcquireError,
             strZ(strNewFmt(
                 "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                 "HINT: is another pgBackRest process running?", strZ(archiveLockFile))));
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLockFile), "release lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, lockTypeArchive, 0, true), true, "archive lock");
+        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeArchive, 0, true), true, "archive lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
-        TEST_ERROR(lockAcquire(lockPath, stanza, lockTypeArchive, 0, false), AssertError, "lock is already held by this process");
+        TEST_ERROR(
+            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeArchive, 0, false), AssertError,
+            "lock is already held by this process");
         TEST_RESULT_VOID(lockRelease(true), "release archive lock");
 
         // // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, 0, true), "backup lock by file");
         TEST_ERROR(
-            lockAcquire(lockPath, stanza, lockTypeBackup, 0, true), LockAcquireError,
+            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), LockAcquireError,
             strZ(strNewFmt(
                 "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                 "HINT: is another pgBackRest process running?", strZ(backupLockFile))));
         TEST_ERROR(
-            lockAcquire(lockPath, stanza, lockTypeAll, 0, true), LockAcquireError,
+            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeAll, 0, true), LockAcquireError,
             strZ(strNewFmt(
                 "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                 "HINT: is another pgBackRest process running?", strZ(backupLockFile))));
@@ -158,16 +161,16 @@ testRun(void)
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, backupLockFile), "release lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, lockTypeAll, 0, true), true, "all lock");
+        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeAll, 0, true), true, "all lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
         TEST_ERROR(
-            lockAcquire(lockPath, stanza, lockTypeAll, 0, false), AssertError,
+            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeAll, 0, false), AssertError,
             "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
         TEST_RESULT_VOID(lockRelease(true), "release all lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, lockTypeBackup, 0, true), true, "backup lock");
+        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
 
         lockFdTest = lockFd[lockTypeBackup];
         String *lockFileTest = strDup(lockFile[lockTypeBackup]);
@@ -177,7 +180,7 @@ testRun(void)
         lockReleaseFile(lockFdTest, lockFileTest);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, lockTypeAll, 0, true), true, "all lock");
+        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeAll, 0, true), true, "all lock");
         TEST_RESULT_VOID(lockClear(true), "clear all lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file still exists");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file still exists");

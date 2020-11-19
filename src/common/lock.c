@@ -143,11 +143,13 @@ lockReleaseFile(int lockFd, const String *lockFile)
 
 /**********************************************************************************************************************************/
 bool
-lockAcquire(const String *lockPath, const String *stanza, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
+lockAcquire(
+    const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, lockPath);
         FUNCTION_LOG_PARAM(STRING, stanza);
+        FUNCTION_LOG_PARAM(STRING, execId);
         FUNCTION_LOG_PARAM(ENUM, lockType);
         FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);

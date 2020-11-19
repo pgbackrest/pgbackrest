@@ -1001,24 +1001,6 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_INTERNAL => true,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_VERIFY => {},
-        },
     },
 
     &CFGOPT_HOST_ID =>
@@ -2939,8 +2921,19 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $rhOption->{&CFGDEF_PREFIX} = $rhGroup->{&CFGDEF_PREFIX};
     }
 
-    # If the command section is a scalar then copy the section from the referenced option
-    if (defined($hConfigDefine{$strKey}{&CFGDEF_COMMAND}) && !ref($hConfigDefine{$strKey}{&CFGDEF_COMMAND}))
+
+    # If command is not specified then the option is valid for all commands except version and help
+    if (!defined($rhOption->{&CFGDEF_COMMAND}))
+    {
+        foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
+        {
+            next if $strCommand eq CFGCMD_HELP || $strCommand eq CFGCMD_VERSION;
+
+            $rhOption->{&CFGDEF_COMMAND}{$strCommand} = {};
+        }
+    }
+    # Else if the command section is a scalar then copy the section from the referenced option
+    elsif (defined($hConfigDefine{$strKey}{&CFGDEF_COMMAND}) && !ref($hConfigDefine{$strKey}{&CFGDEF_COMMAND}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_COMMAND} =
             dclone($hConfigDefine{$hConfigDefine{$strKey}{&CFGDEF_COMMAND}}{&CFGDEF_COMMAND});

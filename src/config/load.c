@@ -383,7 +383,10 @@ cfgLoad(unsigned int argListSize, const char *argList[])
 
             // Acquire a lock if this command requires a lock
             if (cfgLockRequired() && !cfgCommandHelp())
-                lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
+            {
+                lockAcquire(
+                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0, true);
+            }
 
             // Update options that have complex rules
             cfgLoadUpdateOption();
