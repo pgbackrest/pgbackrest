@@ -1604,7 +1604,7 @@ testRun(void)
                 RECOVERY_SETTING_HEADER
                 "restore_command = 'my_restore_command'\n",
             "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), false, "recovery.signal exists");
         TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), true, "standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated {[path]}/pg/postgresql.auto.conf");
