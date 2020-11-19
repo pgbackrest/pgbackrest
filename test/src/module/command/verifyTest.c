@@ -267,19 +267,6 @@ testRun(void)
         InfoPg *infoPg = infoArchivePg(archiveInfo);
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("no manifests and not current db");
-
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
-        TEST_RESULT_UINT(backupResult.status, backupMissingManifest, "manifests missing");
-        harnessLogResult(
-            strZ(strNewFmt(
-                "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
-                "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
-                "P00   WARN: manifest missing for '%s' - backup may have expired",
-                testPath(), strZ(backupStanzaPath), strZ(backupLabel), testPath(), strZ(backupStanzaPath), strZ(backupLabel),
-                strZ(backupLabel))));
-
-        //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest.copy exists, no manifest main, manifest db version not in history, not current db");
 
         TEST_RESULT_VOID(
@@ -436,15 +423,6 @@ testRun(void)
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
         harnessLogResult(strZ(strNewFmt("P00   WARN: backup '%s' manifest.copy does not match manifest", strZ(backupLabel))));
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("valid manifest and copy");
-
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write valid manifest copy");
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
-        TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
-        TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
     }
 
     // *****************************************************************************************************************************
@@ -704,15 +682,6 @@ testRun(void)
 
         unsigned int errTotal = 0;
 
-        TEST_RESULT_STR_Z(
-            verifySetBackupCheckArchive(
-                strLstNew(), backupInfo, strLstNew(), pgHistory, &errTotal), NULL, "no archives or backups");
-        TEST_RESULT_UINT(errTotal, 0, "no error");
-        TEST_RESULT_STR_Z(
-            verifySetBackupCheckArchive(
-                backupList, backupInfo, archiveIdList, pgHistory, &errTotal), NULL, "no current backup, no missing archive");
-        TEST_RESULT_UINT(errTotal, 0, "no error");
-
         // Add backup to end of list
         strLstAddZ(backupList, "20181119-153000F");
         strLstAddZ(archiveIdList, "12-3");
@@ -744,12 +713,6 @@ testRun(void)
 
         List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator);
         List *backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr);
-
-        TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList, backupResultList),
-            "Results:\n"
-            "  archiveId: none found\n"
-            "  backup: none found", "empty result lists");
 
         VerifyArchiveResult archiveIdResult =
         {
@@ -811,20 +774,6 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
         harnessCfgLoad(cfgCmdVerify, argList);
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("neither backup nor archive info files exist");
-
-        TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/backup.info' for read\n"
-            "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable backup.info file\n"
-            "P00   WARN: unable to open missing file '%s/%s/archive.info' for read\n"
-            "P00   WARN: unable to open missing file '%s/%s/archive.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable archive.info file", testPath(), strZ(backupStanzaPath), testPath(),
-            strZ(backupStanzaPath), testPath(), strZ(archiveStanzaPath), testPath(), strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, neither backup copy nor archive infos exist");
@@ -926,47 +875,6 @@ testRun(void)
             "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file", testPath(), strZ(backupStanzaPath), testPath(),
             strZ(backupStanzaPath))));
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup.info.copy valid, archive.info and copy valid, present but empty backup");
-
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, backupInfoFileName), backupInfoMultiHistoryBase),
-            "write valid backup.info");
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, backupInfoFileNameCopy), backupInfoMultiHistoryBase),
-            "write valid backup.info.copy");
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("%s/20200810-171426F", strZ(backupStanzaPath))),
-            "create empty backup label path");
-        TEST_RESULT_VOID(cmdVerify(), "no archives, empty backup label path");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: no archives exist in the repo\n"
-            "P00   WARN: unable to open missing file '%s/%s/20200810-171426F/backup.manifest' for read\n"
-            "P00   INFO: backup '20200810-171426F' appears to be in progress, skipping\n"
-            "P00   INFO: Results:\n"
-            "              archiveId: none found\n"
-            "              backup: 20200810-171426F, status: in-progress, total files checked: 0, total valid files: 0",
-            testPath(), strZ(backupStanzaPath))));
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup.info.copy valid, archive.info and copy valid, present but empty backup, empty archive");
-
-        TEST_RESULT_VOID(
-            storagePathCreateP(storageTest, strNewFmt("%s/9.4-1", strZ(archiveStanzaPath))),
-            "create empty path for archiveId");
-
-        TEST_RESULT_VOID(cmdVerify(), "no jobs - empty archive id and backup label paths");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: archive path '9.4-1' is empty\n"
-            "P00   WARN: unable to open missing file '%s/%s/20200810-171426F/backup.manifest' for read\n"
-            "P00   INFO: backup '20200810-171426F' appears to be in progress, skipping\n"
-            "P00   INFO: Results:\n"
-            "              archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
-            "              backup: 20200810-171426F, status: in-progress, total files checked: 0, total valid files: 0",
-            testPath(), strZ(backupStanzaPath))));
     }
 
     // *****************************************************************************************************************************
@@ -985,10 +893,7 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRZ(fileContents)), "put file");
 
-        TEST_RESULT_UINT(verifyFile(filePathName, fileChecksum, fileSize, NULL), verifyOk, "file size ok");
         TEST_RESULT_UINT(verifyFile(filePathName, fileChecksum, 0, NULL), verifySizeInvalid, "file size invalid");
-        TEST_RESULT_UINT(
-            verifyFile(filePathName, strNew("badchecksum"), fileSize, NULL), verifyChecksumMismatch, "file checksum mismatch");
         TEST_RESULT_UINT(
             verifyFile(
                 strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), fileChecksum, 0, NULL), verifyFileMissing, "file missing");
@@ -1652,7 +1557,6 @@ testRun(void)
 /* CSHANG TODO
 - backups with compression
 - encrypted - or will that be done in real/integration tests?
-- separate test where we test valid all the way through
 */
     }
 
