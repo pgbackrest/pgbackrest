@@ -11,29 +11,29 @@ By the default the command will:
     1. Files exist
     2. Checksums match
     3. PG histories match
-2. Verify all manifests/copies are valid
-3. Verify WAL by reporting:
+2. Verify WAL by reporting:
     1. Checksum mismatches
     2. Missing WAL
     3. Skipped duplicates
     4. Additional WAL skipped
-4. Verify all manifests/copies are valid
+    5. Size matches expected WAL size
+3. Verify all manifests/copies are valid
     1. Files exist
     2. Checksums match
-5. Verify backup files using manifest
+4. Verify backup files using manifest
     1. Files exist
     2. Checksums and size match
     3. Ignore files with references when every backup will be validated, otherwise, check each file referenced to another file in the backup set. For example, if request to verify a single incremental backup, then the manifest may have references to files in another (prior) backup which then must be checked.
-6. Verify whether a backup is consistent, valid and can be played through PITR
+5. Verify whether a backup is consistent, valid and can be played through PITR
     * Consistent = no gaps (missing or invalid) in the WAL from the backup start to backup end for a single backup (not backup set)
     * Valid = Consistent and all backed up PG files it references (including ones in a prior backup for DIFF and INCR backups) are verified as OK
     * PITR = Consistent, Valid and no gaps in the WAL from the start of the backup to the last WAL in the archive (timeline can be followed)
-7. The command can be modified with the following options:
+6. The command can be modified with the following options:
     * --set - only verify the specified backup and associated WAL (including PITR)
     * --no-pitr only verify the WAL required to make the backup consistent.
     * --fast - check only that the file is present and has the correct size.
-8. Additional features (which may not be in the initially released version):
-    1. WARN on extra files
+7. Additional features (which may not be in the initially released version):
+    1. WARN on extra files (e.g. junk files or files not in the manifest)
     2. Check that history files exist for timelines after the first (the first timeline will not have a history file if it is the oldest timeline ever written to the repo)
     3. Check that copies of the manifests exist in backup.history
 
@@ -46,6 +46,7 @@ The following must be assumed to be true:
 4. Archive and Backup info files are required to exist in order for archives and backups to be verified
 5. A valid manifest file will be required to verify backup files
 6. The archive-start and archive-stop for a single backup (not a set) will never cross a timeline
+7. Neither links nor tables spaces will be verified
 
 
 # Design
@@ -134,20 +135,28 @@ ROF
 ```
 
 
-## Requirement 3. Verify WAL
+## Requirement 2. Verify WAL
 
 Verify WAL by reporting
 1. Checksum mismatches
+    - retrieved from the file name
 2. Missing WAL
+    - this will create a WAL ranges collected and will be analyzed in reconciliation phase (where backups are verified Consistent/PITRable)
 3. Skipped duplicates
+    - duplicates will be reported and skipped, creating a gap in the WAL ranges
 4. Additional WAL skipped
+    - specific to PG 9.2 where WAL FF never exists, so if it does it is reported and that file is skipped
+5. Size matches expected WAL size
+    - WAL size will be retrieved from the first WAL found in an archive Id directory (e.g. 9.6-1). **NOTE** all WAL will be expected to be of the same size - variable WAL sizes are not supported.
 
 Considerations:
 1. What to do with .partial or .backup files? Currently only WAL files with/without compression extension are verified.
 2. Should we try to verify .history files? Currently we do not but we will need to read and follow them for final archive/backup reconciliation.
+3. Option-archive-copy copies WAL to backup dir but since all that WAL will then be in the backup manifest, it will also be checked, although not in the same way, it still will result in a backup being invalid because Postgres will use the WAL from the backup dir first during a restore.
+4. For our purposes the size should never change for a db-id. But, we'll need to put in code to check if the size changes and force them to do a stanza-upgrade in that case. (<- in archive push/get) So, for now you'll need to check the first WAL and use that size to verify the sizes of the rest. Later we'll pull size info from archive.info.
 
 
-## Requirement 4. Verify all manifests/copies are valid
+## Requirement 3. Verify all manifests/copies are valid
 
 Minimum to check is:
 1. Files exist
@@ -156,9 +165,11 @@ Minimum to check is:
 Considerations:
 1. If a file exists and we deem it usable, then what if the database id, system-id or version is not in the history?
     - It was decided that if the database information does not exist in the history of the backup info file, then the backup will be considered invalid and the files will not be checked.
-2. If a manifest is considered unusable, then should there be a backup result for it or do we just report an error in the log and indicate the backup is being skipped? (Need to try to be consistent with archive results).
+2. If a manifest is considered unusable, then should there be a backup result for it or do we just report an error in the log and indicate the backup is being skipped? Be consistent with WAL.
+    - Every backup and every WAL on disk will have a result structure. If a manifest is unusable, the backup result status for that backup will be set to invalid
 3. What if there are no backups in the backup.info file? Should we still assume the last one on disk is the "current"?
-    - As a temporary "current" until the manifest is determined to exist or not.
+    - Consider it a temporary "current" until the manifest is determined to exist or not.
+4. If the backup label is not thought to be the current and it is NOT in the backup.info file, then it is not restorable by the restore command (it relies on the backup:current section of backup.info to perform any restore), so shouldn't we error? And should we check it anyway or skip this backup?
 
 ```
 IF manifest is readable
@@ -190,16 +201,16 @@ ELSE
 ```            
 
 
-## Requirement 5. Verify backup files using manifest
+## Requirement 4. Verify backup files using manifest
 
 1. Files exist
 2. Checksums and size match
 3. Files with references should skip processing when every backup will be validated, otherwise, check each file referenced to another file in the backup set. For example, if request to verify a single incremental backup, then the manifest may have references to files in another (prior) backup which then must be checked. (NOTE: See Considerations below on a discussion of the race condition and possible fixes)
 
 Considerations:
-1. Only a valid manifest file will be used - if one is not found, the backup result status will be Invalid and no files will be verified.
+1. Only a valid manifest file will be used - if one is not found, the backup result status will indicate the backup is not valid and no files will be verified.
 2. Backups are processed in alphabetical order so that backups will be processed after any backups they depend on.
-3. There is a known race condition where the file results for a backup are still being processed when the dependent backup begins processing. Currently there is no mechanism to have the dependent backup wait for all the results of the prior backup, therefore there is a risk that one of more files in the dependent backup will skip processing because it is assumed to be verified OK if it is not yet in the InvalidFileList of the prior backup. One strategy was to mark the dependent backup invalid if the prior backup was marked invalid, however if the prior backup is invalid because of a backup file that, validly, no longer exists and is therefore not part of the dependent backup, then marking the dependent backup is flawed.
+3. There is a known race condition where the file results for a backup are still being processed when the dependent backup begins processing. Currently there is no mechanism to have the dependent backup wait for all the results of the prior backup, therefore there is a risk that one or more files in the dependent backup will skip processing because it is assumed to be verified OK if it is not yet in the InvalidFileList of the prior backup. One strategy was to mark the dependent backup invalid if the prior backup was marked invalid, however if the prior backup is invalid because of a backup file that, validly, no longer exists and is therefore not part of the dependent backup, then marking the dependent backup is flawed.
 Another flaw here is that we think we can skip checking files in a prior backup but we won't know if a file that was referenced in a
 prior backup was invalid or not until we have completed checking that backup. Since the next backup to process will only start when the current backup processing is near the end of its file list - i.e. when one process is freed up to allow for processing of the next backup to begin - then the solution is to employ a state flag to indicated if a backup is in progress or completed. If a referenced backup is still in progress, then it is accepted that the first process-max - 1 files could be reverified. So for each file in a backup:
     - if the prior backup is not in the result list, then that backup was never processed (likely due to the --set option) so verify the file
@@ -207,7 +218,7 @@ prior backup was invalid or not until we have completed checking that backup. Si
     - if the prior backup is in the result list and the verify-state of the backup is 'completed' then
         - if the file does not exist in the prior backup invalid file list, then the file is deemed valid and processing is skipped
         - if the file is in the invalid file list, then mark this backup invalid and add the file to this backup's invalid file list and skip processing this file
-4. The verify-state of a backup is 'completed' when all files sent to be verified have been processed
+4. The verify-state of a backup is 'completed' when all files sent to be verified have been processed.
 
 manifestFileIdx:
 - Index of the file within the manifest file list that is being processed.
@@ -297,11 +308,7 @@ FOR each file sent for processing
 
 ```
 
-## Requirement 6. Verify whether a backup is consistent, valid and can be played through PITR
-
-CSHANG TO CONSIDER:
-1) What if the backup is not in the backup.info file after we have completed verifying the backup files? The backup might be good, but it may not be restored unless in the backup.info, right? Also, it may have also just been expired out from under us - but in either case, should we indicate it is not in the backup.info and may not be restore-able?
-2) We are skipping verifying what we believe to be the current backup (only a copy and was the newest backup on disk) so at the end, if it complete, we won't know and also if a dependent backup was invalid, we should probably still indicate the "current" backup is invalid even though we did not check it's files. BUT maybe not - since we didn't check the files, we're not really sure if the file that was a problem in the prior backup was referenced by the current backup - so should probably just report the backup as verification skipped....
+## Requirement 5. Verify whether a backup is consistent, valid and can be played through PITR
 
 Check each backup, using the following definitions:
 
@@ -310,13 +317,39 @@ Check each backup, using the following definitions:
 - PITR - backup is Consistent and Valid and no gaps in the WAL from the start of the backup to the last WAL in the archive (timeline can be followed)
 
 Considerations:
-1. If no backups have PITR, especially the latest, then report as error
+1. If no backups have PITR, especially the latest, then report an error
 2. Need to determine gaps that are not legitimate.
     1. Gaps that are legitimate could be a result of archive expiration or a timeline switch.
     2. Gaps that are not legitimate are when WAL is expected to be there for a backup to be consistent and it is not there or there are invalid files listed for the backup range.
     3. Can we access, or have the user pass, retention settings to help determine if gaps are legitimate or not?
+3. What if the backup is not in the backup.info file after we have completed verifying the backup files? The backup might be good, but it may not be restorable unless in the backup.info, right? Also, it may have just been expired out from under us - but in either case, should we indicate it is not in the backup.info and may not be restore-able?
+4. We are skipping verifying what we believe to be the current backup (only a copy and was the newest backup on disk) so at the end, if it complete, we won't know and also if a dependent backup was invalid, we should probably still indicate the "current" backup is invalid even though we did not check it's files. BUT maybe not - since we didn't check the files, we're not really sure if the file that was a problem in the prior backup was referenced by the current backup - so should probably just report the backup as verification skipped....
+5. It is possible to have a backup without all the WAL? Yes, if option-archive-check=false but if this is not on then all bets are off, but should we have special reporting for this case?
+6. There can be valid gaps in the WAL so "missing" is only if it is expected to be there for a backup to be consistent. Log an error when the backup relies on WAL that is not valid. If invalidFileList not NULL (or maybe size > 0) then there is a problem in this range but that does not mean it affects a backup (but maybe PITR) so check but should do this AFTER using the archive timeline history file to confirm that indeed there are or are not actual gaps in the WAL when timeline switches occurred.
+7. How to check WAL for PITR (e.g. after end of last backup - is that last backup or last completed backup?)? If doing async archive and process max = 8 then could be 8 missing. But we don't have access to process-max and we don't know if they had asynch archiving, so if we see gaps in the last 5 minutes of the WAL stream and the last backup stop WAL is there, then we'll just ignore that PITR has gaps?
+8. History and WAL files:
+    1. If WAL files and no history and visa versa then should be reporting as WARN
+    2. If 00002.history make sure there is at least one timeline 2 range then WARN
+    3. If there is a timeline 2 WAL range and no 2.history then WARN
+    4. Find relationship between timeline 1 and 2 and if missing WARN
+    5. If history file and no wal but it is before any timeline that exists in the ranges then OK
+9. History files retrieval and reading:
+    - Maybe use an expression to get all the history files along with the WAL files "(^[0-F]{16}$)|(^[0-F]{8}\.history$)" (OR maybe we get everything and then create lists: history, WALranges, junk)
+    - Originally it was thought that we'd only need the latest history file since history is continually copied from each to the next. However, if we were on timeline 3 and then we did a restore and recovered only to timeline 3, then timeline 3, is what, invalid? So PITR then only valid on timeline 2?
+    - NOTE!!! The timeline history file format is changed in version 9.3. The (validated) formats are:
+    ```
+    9.3 and later:
+     timelineId	LSN	"reason"
+     2	0/7000000	before 2000-01-01 00:00:00+00
+    9.2 and earlier:
+     timelineId	WAL_segment	"reason"
+     1	000000010000000000000009	before 2000-01-01 01:00:00+01
+     2	00000002000000000000000C	no recovery target specified
+     ```
+10. Timing. If originally had F1 D1 I1 dependency chain but when I go to check, and D1 is gone, then the I1 is no loner valid.
+11. If offline backup, then both archive-start and archive-stop could be null so need to verify files but not going to do any wal comparison
 
-Log and error when the backup relies on WAL that is not valid.
+### Pseudo-code
 
 ```
 
@@ -345,235 +378,33 @@ ELSE
 
 ```
 
-<!--
-- May have to expose infoBackupNewLoad so can load the backup.info and then the backup.info.copy and compare the 2 - need to know if one is corrupt and always failing over to the other.
-        - want to WARN if only one exists
-        - If backup.info/copy AND/OR archive.info/copy is missing then do not abort. ONLY error and abort if encrypted since we can't read the archive dir or backup dirs
-        - checkStanzaInfoPg() makes sure the archive and backup info files (not copies just that one or the other) exist and are valid for the database version - BUT the db being available is not allowed because restore doesn't require it - so maybe just check archive and backup info DB sections match each other. BUT this throws an error if can't open one or the other - so would need to catch this and do LOG_ERROR() - maybe prefix with VERIFY-ERROR - or just take out the conditions and check for what we need OR maybe call checkStanzaInfo
-        - We should probably check archive and backup history lists match (expire checks that the backup.info history contains at least the same history as archive.info (it can have more)) since we need to get backup db-id needs to be able to translate exactly to the archiveId (i.e. db-id=2, db-version=9.6 in backu.info must translate to archiveId 9.6-2.
-        - If archive-copy set the WAL can be in the backup dirs so just because archive.info is missing, don't want to error
+## Requirement 6. The command can be modified with the following options
 
-    * Do not reconstruct backup.info because this doesn't really help us since we do not want to take a lock which means things can be added/removed as we're verifying. So instead:
-        - Get a list of backups on disk and a list of archive ids and pass that to job data
-        - When checking backups, if the label is missing then skip (probably expired from underneath us) and then if it is there but only the manifest.copy exists, then skip (could be aborted or in progress so can't really check anything)
-        - It is possible to have a backup without all the WAL if option-archive-check=true is not set but in this is not on then all bets are off
+These options will be available for the Verify command and are detailed in the following sections
+    * --set - only verify the specified backup and associated WAL (including PITR)
+    * --no-pitr only verify the WAL required to make the backup consistent.
+    * --fast - check only that the file is present and has the correct size.
 
-    * Check for missing WAL and backup files
-        - This would be where we'd need to start the parallel executor, right? YES
-        - At this point, we would have valid info files, so, starting with the WAL, get start/stop list for each archiveId so maybe a structure with archiveID and then a start/stop list for gaps? e.g.
-            [0] 9.4-1
-                [0] start, stop
-                                <--- gap
-                [1] start, stop
-            [1] 10-2
-                [0] start, stop
 
-            BUT what does "missing WAL" mean - there can be gaps so "missing" is only if it is expected to be there for a backup to be consistent
-        - The filename always include the WAL segment (timeline?) so all I need is the filename. BUT if I have to verify the checksums, so should I do it in the verifyFile function
+### -- set
 
-    * Verify all manifests/copies are valid
-        - Both the manifest and manifest.copy exist, loadable and are identical. WARN if any condition is false (this should be in the jobCallback).
-         If most recent has only copy, then move on since it could be the latest backup in progress. If missing both, then expired so skip. But if only copy and not the most recent then the backup still needs to be checked since restore will just try to read the manifest BUT it checks the manifest against the backup.info current section so if not in there (than what does restore do? WARN? ERROR?). If main is not there and copy is but it is not the latest then warn that main is missing
-         BUT should we skip because backup reconstruct would remove it from current backup.info or should we use it to verify the backups? Meaning go with the copy if not the latest backup and warn? cmdRestore does not reconstruct the backup.info when it loads it.
+### -- no-pitr
 
-    * Verify the checksum of all WAL/backup files
-        - Pass the checksum to verifyFile - this needs to be stripped off from file in WAL but for backup it must be read from the manifest (which we need to read in the jobCallback
-        - Skip checking size for WAL file but should check for size equality with the backup files - if one or the other doesn't match, then corrupt -- NO we can get the WAL size from the first WAL file and use that as the size to verify
+### -- fast
+    A list of files and their sizes will be retrieved and files will only be checked for the size and existence.
 
-        - For the first pass we only check that all the files in the manifest are on disk. Future we may also WARN if there are files that are on disk but not in the manifest.
-        - verifyJobResult() would check the status of the file (bad) and can either add to a corrupt list or add gaps in the WAL (probably former) - I need to know what result I was coming from so that is the jobKey - maybe we use the filename as the key - does it begin with Archive then it is WAL, else it's a backup (wait, what about manifest) - maybe we can make the key a variant instead of a string. Need list of backups start/stop to be put into jobData and use this for final reconciliation.
-        - Would this be doing mostly what restoreFile() does without the actualy copy? But we have to "sort-of" copy it (you mentioned a technique where we can just throw it away and not write to disk) to get the correct size and checksum...
-        - If a corrupt WAL file then warn/log that we have a "corrupt/missing" file and remove it from the range list so it will cause a "gap" then when checking backup it will log another error that the backup that relies on that particular WAL is not valid
-
-    * Ignore files with references when every backup will be validated, otherwise, check each file referenced to another file in the backup set. For example, if ask for an incremental backup verify, then the manifest may have references to files in another (prior) backup so go check them.
-
-The command can be modified with the following options:
-
-    --set - only verify the specified backup and associated WAL (including PITR)
-    --no-pitr only verify the WAL required to make the backup consistent.
-    --fast - check only that the file is present and has the correct size.
-
-We would like these additional features, but are willing to release the first version without them:
-
-    * WARN on extra files
-    * Check that history files exist for timelines after the first (the first timeline will not have a history file if it is the oldest timeline ever written to the repo)
-    * Check that copies of the manifests exist in backup.history
-
-Questions/Concerns
-- How much crossover with the Check command are we anticipating?
-- The command can be run locally or remotely, so from any pgbackrest host, right? YES
-- Data.pm: ALL OF THESE ARE NO
-    * Will we be verifying links? Does the cmd_verify need to be in Data.pm CFGOPT_LINK_ALL, CFGOPT_LINK_MAP
-    * Same question for tablespaces
-- How to check WAL for PITR (e.g. after end of last backup?)? ==> If doing async archive and process max = 8 then could be 8 missing. But we don't have access to process-max and we don't know if they had asynch archiving, so if we see gaps in the last 5 minutes of the WAL stream and the last backup stop WAL is there, then we'll just ignore that PITR has gaps. MUST always assume is we don't have access to the configuration.
-
-MAY WANT TO ALLOW RETENTION SETTINGS TO BE PASSED SO GAPS BEFORE CAN BE CONSIDERED LEGIT.
-IF LOG-LEVEL SET TO WARN, WE DO NOT WANT A SUMMARY - ONLY WANT IT FROM INFO LEVEL. ALSO IF NO BACKUPS HAVE PITR, ESP LATEST, THE WE NEED TO REPORT AS ERROR/WARN
-IF FAST VERIFY WE CAN'T CHECK THE COMPRESSED SIZE OF THE WAL. BACKUP IS DIFFERENT because the manifest has repoSize which can be checked against the size from storageInfoList.
-If a fast option has been requested, then only create one process to handle, else create as many as process-max
+Considerations:
+1. WAL file checks will be limited. If the WAL is compressed, the listed size cannot be verified because there will be no attempt to open the file. The only existence check is if there are gaps: e.g. missing files or duplicates
+2. Backup files require the manifest and will be checked for existence and size. If the backup is compressed, the file size must be checked against the repo-size entry.  If the backup is uncompressed, the repo-size entry will not exist and the file size must checked against the size entry in the manifest.
+3. Only one process will be created for jobs so:
+```
     unsigned int numProcesses = cfgOptionTest(cfgOptFast) ? 1 : cfgOptionUInt(cfgOptProcessMax);
     for (unsigned int processIdx = 1; processIdx <= numProcesses; processIdx++)
         protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
+```
 
-    // CSHANG we will have to check every file - pg_resetwal can change the wal segment size at any time - grrrr. We can spot check in each timeline by checking the first file, but that won't help as we'll just wind up with a bunch of ranges since the segment size will stop matching at some point.  If WAL segment size is reset, then can't do PITR.
-    /* CSHANG per David:
-    16MB is the whole segment.
-    The header is like 40 bytes.
-    What we need is for pgWalFromFile() to look more like pgControlFromFile().
-    i.e. takes a storage object and reads the first few bytes from the file.
-    But, if you just want to read the first 512 bytes for now and use pgWalFromBuffer() then that's fine. We can improve that later.
-    But people do use pg_resetwal just to change the WAL size. You won't lose data if you do a clean shutdown and then pg_resetwal.
-    So, for our purposes the size should never change for a db-id.
-    We'll need to put in code to check if the size changes and force them to do a stanza-upgrade in that case. (<- in archive push/get)
-    So, for now you'll need to check the first WAL and use that size to verify the sizes of the rest. Later we'll pull size info from archive.info.
-    */
+<!--
 
-I should rpobably use an expression to get all the history files too "(^[0-F]{16}$)|(^[0-F]{8}\.history$)" (actually,
-given the note below on S3 maybe we get everything and then create lists: history, WALpaths, junk) and then
- Create the stringlist files based on what last history file has: I only need the latest history file since history is continually
- copied from each to the next.
-
- NOTE!!! The timeline history file format is changed in version 9.3. Formats of versions 9.3 or later and earlier both are shown
- below but not in detail - so need to confirm this.
-
- Later version 9.3:
- timelineId	LSN	"reason"
- 2	0/7000000	before 2000-01-01 00:00:00+00
- Until version 9.2:
- timelineId	WAL_segment	"reason"
- 1	000000010000000000000009	before 2000-01-01 01:00:00+01
- 2	00000002000000000000000C	no recovery target specified
-
-/* CSHANG because of S3 and because we may want to report on stuff in the directories that shouldn't be there, we should get
-everything and then filter out the WAL via expression for walFileList and any other files we should just call it out in a separate
-list. We'll need to do this for all lists for first get everything and then filter on an expression to get the valid stuff and
-anything else we should put in a separate list (e.g. archiveIdInvalidFileList) to inform the user of "junk" in the directory.
-Note, though, that .partial and .backup should not be considered "junk" in the WAL directory.
-*/
-
-// CSHANG May need to have several booleans for backup status instead of enum so statusIsValid, statusIsConsistent, statusIsPitrable
-/*
-iterate WAL ranges and if invalidFileList > 0 then report as WARN and if later this causes a backup problem THEN it is reported as an error
-Read ALL history files
-If WAL files and no history and visa versa then should be reporting as WARN
-
-1) If 2.history make sure there is at least one timeline 2 range then WARN
-2) If there is a timeline 2 WAL range and no 2.history then WARN
-3) Find relationship between timeline 1 and 2 and if missing WARN
-
-
-IF history file and no wal but it is before any timeline that exists in the ranges then OK
-
-WAL
-2
-3
-4
-
-1/02 -02.history
-2/05 -03.history
-4/06 -05.history
-*/
-
-
-*/
-/**********************************************************************************************************************************/
-// typedef enum // CSHANG Don't think I will need
-// {
-//     verifyWal,
-//     verifyBackup,
-// } VerifyState;
-//
-// typedef struct VerifyData
-// {
-//     bool fast;                                                      // Has the fast option been requested
-//     VerifyState state; // CSHANG Don't think I need this as I will just be checking the Lists and removing(?) each item verified
-//         // CSHANG list of WAL / WAL directories / archiveId to check
-//         StringList *archiveIdList;
-//         StringList *walPathList;
-//         StringList *walFileList;
-//
-//         // CSHANG list of Backup directories/files to check
-//         StringList *backupList;
-//         StringList *backupFileList;
-// // } VerifyData;
-
-// static ProtocolParallelJob *
-// verifyJobCallback(void *data, unsigned int clientIdx)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM_P(VOID, data);
-//         FUNCTION_TEST_PARAM(UINT, clientIdx);
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(data != NULL); -- or can it be - like when there is no more data
-//
-//     // No special logic based on the client, we'll just get the next job
-//     (void)clientIdx;
-//
-//     // Get a new job if there are any left
-//     VerifyData *jobData = data;
-// if archiveIDlist ==Null
-//     go get a list of archiveid.
-//     done.
-//
-// if (walPathList size == 0)
-//     go read the walpath
-//     add all walPathlist
-//     remove archiveid from list
-//
-// if walPathlist > 0
-//     go read the walPathlist[i]
-//     add all walFilelist
-//     Here we check for gaps? Then when check for backup consistency, we warn if a specific backup can't do pitr or can do pitr
-//     remove walPathlist[i] from list
-//
-// maybe have some info log (like "checking archinve id 9.4-1" and then detail level logging could in addition list the archive files being checked).
-//
-//     if (walFilelist)
-//     {
-//         process the 1 walFile from the list
-//         remove that from the list
-//
-//         below are the guts from the PROTOCOL_COMMAND_ARCHIVE_GET_STR
-//
-//         const String *walSegment = strLstGet(jobData->walSegmentList, jobData->walSegmentIdx);
-//         jobData->walSegmentIdx++;
-//
-//         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR); // CSHANG Replace with PROTOCOL_COMMAND_VERIFY_FILE_STR
-//         protocolCommandParamAdd(command, VARSTR(walSegment));
-//
-//         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walSegment), command));
-//     }
-// else // OR maybe just have a verifyFile - may be that it just takes a file name and it doesn't know what type of file it is - like pass it the compress type, encryption, etc - whatever it needs to read the file. Make the verifyFile dumb. There is a funtion to get the compression type. BUT can't test compression on the files in backup because need to read the manifest to determine that.
-//     if (backupList)
-//         {
-//             next backup thing to process
-//
-//             FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walSegment), command));
-//         }
-//
-//     FUNCTION_TEST_RETURN(NULL);
-// }
-//
-// verifyJobResult(...)
-// {
-//     // Check that the job was successful
-//     if (protocolParallelJobErrorCode(job) == 0)
-//     {
-//         MEM_CONTEXT_TEMP_BEGIN()
-//         {
-//             THISMAYBEASTRUCT result = varSOMETHING(protocolParallelJobResult(job));
-// // CSHANG This is just an example - we need to do logging based on INFO for what we're checking, DETAIL for each files checked, then BACKUP success, WAL success would also be INFO, WARN logLevelWarn or ERROR logLevelError
-//             LOG_PID(logLevelInfo, protocolParallelJobProcessId(job), 0, strZ(log));
-//         }
-//         MEM_CONTEXT_TEMP_END();
-//
-//         // Free the job
-//         protocolParallelJobFree(job);
-//     }
-//     else
-//         THROW_CODE(protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
-// }
 //***********************************************************************************************************************************
 /* CSHANG NOTES for PITR, For example:
 postgres@pg-primary:~$ more /var/lib/pgbackrest/archive/demo/12-1/00000002.history
@@ -715,14 +546,14 @@ CSHANG pseudo code if job successful:
         If found, add the file name and the reason to the invalidFileList
 
 
-Final stage, after all jobs are complete, is to reconcile the archive with the backup data which, it seems at this pioint is just determining if the backup is 1) consistent (no gaps) 2) can run through PITR (trickier - not sure what this would look like....)
+Final stage, after all jobs are complete, is to reconcile the archive with the backup data which, it seems at this point is just determining if the backup is 1) consistent (no gaps) 2) can run through PITR (trickier - not sure what this would look like....)
 Let's say we have archives such that walList Ranges are:
 start 000000010000000000000001, stop 000000010000000000000005
 start 000000020000000000000005, stop 000000020000000000000006
 start 000000030000000000000007, stop 000000030000000000000007
 
-After all jobs complete: If invalidFileList not NULL (or maybe size > 0) then there is a problem in this range
-        PROBLEM: I am generating WAL ranges by timeline so in the above, because we are in a new timeline, it looks like a gap. So how would I determine that the following is OK? Would MUST use the archive timeline history file to confirm that indeed there are no actual gaps in the WAL
+After all jobs complete: If invalidFileList not NULL (or maybe size > 0) then there is a problem in this range.
+MUST use the archive timeline history file to confirm that indeed there are no actual gaps in the WAL when timeline switches occurred
 
         full backup: 20200810-171426F
             wal start/stop: 000000010000000000000002 / 000000010000000000000002
@@ -760,23 +591,6 @@ total 76
 -rw-r----- 1 postgres postgres 74873 Aug 10 17:15 000000030000000000000007-fb920b357b0bccc168b572196dccd42fcca05f53.gz
 
 
-    // CSHANG No - maybe what we need to do is just store the full names in a list because we have to know which DB-ID the wal belongs to and tie that back to the backup data (from the manifest file) A: David says we shouldn't be tying back to backup.info, but rather the manifest - which is where the data in backup.info is coming from anyway
-    // CSHANG and what about individual backup files, if any one of them is invalid (or any gaps in archive), that entire backup needs to be marked invalid, right? So maybe we need to be creating a list of invalid backups such that String *strLstAddIfMissing(StringList *this, const String *string); is called when we find a backup that is not good. And remove from the jobdata.backupList()?
-
-To tie the backup back to the archive, we need to be able to search for the db-id - so maybe we need an strEndsWith?
-
-/* CSHANG When getting the initial backuplist should we be sorting the backups newest to oldest? That way we can just filter off the first one if it is a current
-"in progress" backup and maybe LOG_WARN or LOG_INFO that skipping? That way we don't need separate logic for backup. BUT the
-problem will still always be that the current backup may complete before we're done checking the archives. I feel like we need to
-draw the line somewhere...or do we feel we need to check that it is not in the backup.info current list AND that it only has a copy
-AND is the newest backup?
-
-CSHANG maybe backu.info should be the ground truth. David says problems with backup.info reconstruct is that restore does not use
-so it's why we're not doing it here but we keep going around whether we should and whether backup.info should be the ground truth.
-I was thinking maybe we figure out what backups to check (pare down the list) BEFORE we start processing. Specifically, if we were
-able to determine if the list has holes in any dependency chain. Does reconstruct do this? If originally had F1 D1 I1 then dependency
-chain is F1 D1 I1 but when I go to check, and D1 is gone, then the I1 is no loner valid.
-*/
  ------------------------------------------------------------------------------------
 TESTING
 // CSHANG Tests - parens for logging, e.g. (ERROR) means LOG_ERROR and continue:
@@ -790,9 +604,3 @@ TESTING
 // 2) Local and remote tests
 // 3) Should probably have 1 test that in with encryption? Like a run through with one failure and then all success? Can't set encryption password on command line so can't just pass encryptions type and password as options...
 -->
-
- <!-- After all WAL have been checked, check the backups
-// CSHANG It is possible to have a backup without all the WAL if option-archive-check=false but if this is not on then all bets are off ANSWER - ignore for now
-// CSHANG But what about option-archive-copy? If this is true then the WAL, even if missing from the repo archive dir, could be in the backup dir "storing the WAL segments required for consistency directly in the backup" -- ANSWER all wal will be in manifest so will be checked as part of backup processing, so no additional checks are needed as PG will use what is in the backup first during a restore
-// CSHANG if offline backup, then both archive-start and archive-stop could be null so need to verify files but not going to do any wal comparison
- -->
