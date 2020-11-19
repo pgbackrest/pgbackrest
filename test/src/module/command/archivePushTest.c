@@ -660,8 +660,7 @@ testRun(void)
                 ioWriteOpen(write);
 
                 lockAcquire(
-                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 30000,
-                    true);
+                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("555-fefefefe"), cfgLockType(), 30000, true);
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew(""));
