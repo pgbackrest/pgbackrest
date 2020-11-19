@@ -404,6 +404,10 @@ Considerations:
 ```
 
 <!--
+ ------------------------------------------------------------------------------------
+TESTING
+1) Local and remote tests
+2) Compressed backups
 
 //***********************************************************************************************************************************
 /* CSHANG NOTES for PITR, For example:
@@ -476,9 +480,8 @@ It makes that backup invalid because of missing wal, but dependent backups may b
 */ -->
 
 <!--
-/* CSHANG manifest questions:
-1) What sections of the manifest can we really verify? I don't want to read the manifest again if I can help it so now that we have it,
-what sections can we check?
+
+1) What sections of the manifest can we really verify?
     [backrest] - NO
     [backup] - maybe we should save all or a subset of this information in the result to check later? Definitely archive-start/stop but is anything else important?
                 ==> No, start/stop all we need, at least for now
@@ -529,31 +532,8 @@ what sections can we check?
     [target:path] - NO
     [target:path:default] - NO
 
-2) If there are "reference" to prior backup, we should be able to skip checking them, no?
-    ==> Yes, definitely skip them or we’ll just be doing the same work over and over.
 -->
 <!--
-CSHANG pseudo code if job successful:
-
-    If archive file
-        Get the archiveId from the filePathName (stringList[1] - is there a better way?)
-        Loop through verifyResultData.archiveIdResultList and find the archiveId
-        If found, find the range in which this file falls into and add the file name and the reason to the invalidFileList
-
-    If backup file
-        Get the backup label from the filePathName (stringList[1] - is there a better way?)
-        Loop through verifyResultData.backupList and find the backup label - NO we are removing the labels as we go along, so we will need to build the result
-        If found, add the file name and the reason to the invalidFileList
-
-
-Final stage, after all jobs are complete, is to reconcile the archive with the backup data which, it seems at this point is just determining if the backup is 1) consistent (no gaps) 2) can run through PITR (trickier - not sure what this would look like....)
-Let's say we have archives such that walList Ranges are:
-start 000000010000000000000001, stop 000000010000000000000005
-start 000000020000000000000005, stop 000000020000000000000006
-start 000000030000000000000007, stop 000000030000000000000007
-
-After all jobs complete: If invalidFileList not NULL (or maybe size > 0) then there is a problem in this range.
-MUST use the archive timeline history file to confirm that indeed there are no actual gaps in the WAL when timeline switches occurred
 
         full backup: 20200810-171426F
             wal start/stop: 000000010000000000000002 / 000000010000000000000002
@@ -590,17 +570,4 @@ total 192
 total 76
 -rw-r----- 1 postgres postgres 74873 Aug 10 17:15 000000030000000000000007-fb920b357b0bccc168b572196dccd42fcca05f53.gz
 
-
- ------------------------------------------------------------------------------------
-TESTING
-// CSHANG Tests - parens for logging, e.g. (ERROR) means LOG_ERROR and continue:
-//
-// 1) Backup.info:
-//     - only backup.info exists (WARN) and is OK
-//     - only backup.info exists (WARN) and is NOT OK (ERROR):
-//         - checksum in file (corrupt it) does not match generated checksum
-//     - only backup.info.copy exists (WARN) and is OK
-//     - both info & copy exist and are valid but don't match each other (in this case are we always reading the main file? If so, then we must check the main file in the code against the archive.info file)
-// 2) Local and remote tests
-// 3) Should probably have 1 test that in with encryption? Like a run through with one failure and then all success? Can't set encryption password on command line so can't just pass encryptions type and password as options...
 -->
