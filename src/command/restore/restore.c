@@ -1637,7 +1637,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                     .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
                 NULL);
         }
-        // The recovery.signal file is required for targeted recovery
+        // Else the recovery.signal file is required for targeted recovery
         else
         {
             storagePutP(
