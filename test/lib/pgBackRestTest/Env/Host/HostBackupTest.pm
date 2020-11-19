@@ -390,7 +390,7 @@ sub backupEnd
     if (!defined($oParam->{iRepo}) || $oParam->{iRepo} == 1)
     {
         # If a real backup then load the expected manifest from the actual manifest. An expected manifest can't be generated
-        # perfectly because a running database is always in flux. Even so, it allows us test many things.
+        # perfectly because a running database is always in flux. Even so, it allows us to test many things.
         if (!$self->synthetic())
         {
             $oExpectedManifest = iniParse(
