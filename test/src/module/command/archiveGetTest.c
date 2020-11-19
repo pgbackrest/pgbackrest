@@ -714,7 +714,9 @@ testRun(void)
         // Make sure the process times out when it can't get a lock
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30000, true), "acquire lock");
+            lockAcquire(
+                cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 30000, true),
+            "acquire lock");
         TEST_RESULT_VOID(lockClear(true), "clear lock");
 
         HARNESS_FORK_BEGIN()

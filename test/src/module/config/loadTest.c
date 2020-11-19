@@ -536,6 +536,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
         TEST_RESULT_INT(lstat(strZ(strNewFmt("%s/db-backup.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_PTR_NE(cfgOptionStr(cfgOptExecId), NULL, "   exec-id is set");
         TEST_RESULT_BOOL(socketLocal.init, true, "   check socketLocal.init");
         TEST_RESULT_BOOL(socketLocal.block, false, "   check socketLocal.block");
         TEST_RESULT_BOOL(socketLocal.keepAlive, true, "   check socketLocal.keepAlive");
@@ -556,10 +557,12 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPg, "1");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
+        hrnCfgArgRawZ(argList, cfgOptExecId, "1111-fe70d611");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
         TEST_RESULT_INT(lstat(strZ(strNewFmt("%s/db-backup-local-001.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptExecId), "1111-fe70d611", "   exec-id is preserved");
 
         // Remote command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------

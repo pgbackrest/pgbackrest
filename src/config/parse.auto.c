@@ -310,6 +310,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
     },
 
+    // exec-id option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "exec-id",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptExecId,
+    },
+
     // expire-auto option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -3954,6 +3962,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptDelta,
     cfgOptDryRun,
     cfgOptExclude,
+    cfgOptExecId,
     cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptIgnoreMissing,
