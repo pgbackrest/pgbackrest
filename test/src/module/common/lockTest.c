@@ -24,22 +24,33 @@ testRun(void)
         int lockFdTest = -1;
 
         TEST_RESULT_INT(system(strZ(strNewFmt("touch %s", strZ(archiveLock)))), 0, "touch lock file");
-        TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLock, 0, true), "get lock");
+        TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLock, STRDEF("1-test"), 0, true), "get lock");
         TEST_RESULT_BOOL(lockFdTest != -1, true, "lock succeeds");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLock), true, "lock file was created");
-        TEST_ERROR(lockAcquireFile(archiveLock, 0, true), LockAcquireError,
+        TEST_ERROR(lockAcquireFile(archiveLock, STRDEF("2-test"), 0, true), LockAcquireError,
+            strZ(
+                strNewFmt(
+                    "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
+                    "HINT: is another pgBackRest process running?", strZ(archiveLock))));
+        TEST_RESULT_BOOL(lockAcquireFile(archiveLock, STRDEF("2-test"), 0, false) == -1, true, "lock is already held");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("acquire file lock on the same exec-id");
+
+        TEST_RESULT_INT(lockAcquireFile(archiveLock, STRDEF("1-test"), 0, true), -2, "allow lock with same exec id");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fail file lock on the same exec-id when lock file is empty");
+
+        TEST_RESULT_INT(system(strZ(strNewFmt("echo '' > %s", strZ(archiveLock)))), 0, "overwrite lock file");
+
+        TEST_ERROR(lockAcquireFile(archiveLock, STRDEF("2-test"), 0, true), LockAcquireError,
             strZ(
                 strNewFmt(
                     "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                     "HINT: is another pgBackRest process running?", strZ(archiveLock))));
 
-        TEST_ERROR(
-            lockAcquireFile(archiveLock, 0, true), LockAcquireError,
-            strZ(strNewFmt(
-                "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                "HINT: is another pgBackRest process running?", strZ(archiveLock))));
-        TEST_RESULT_BOOL(lockAcquireFile(archiveLock, 0, false) == -1, true, "lock is already held");
-
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLock), "release lock");
 
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLock), "release lock");
@@ -49,7 +60,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         String *subPathLock = strNewFmt("%s/sub1/sub2/db-backup" LOCK_FILE_EXT, testPath());
 
-        TEST_ASSIGN(lockFdTest, lockAcquireFile(subPathLock, 0, true), "get lock in subpath");
+        TEST_ASSIGN(lockFdTest, lockAcquireFile(subPathLock, STRDEF("1-test"), 0, true), "get lock in subpath");
         TEST_RESULT_BOOL(storageExistsP(storageTest, subPathLock), true, "lock file was created");
         TEST_RESULT_BOOL(lockFdTest != -1, true, "lock succeeds");
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, subPathLock), "release lock");
@@ -61,7 +72,7 @@ testRun(void)
         TEST_RESULT_INT(system(strZ(strNewFmt("mkdir -p 750 %s", strZ(dirLock)))), 0, "create dirtest.lock dir");
 
         TEST_ERROR(
-            lockAcquireFile(dirLock, 0, true), LockAcquireError,
+            lockAcquireFile(dirLock, STRDEF("1-test"), 0, true), LockAcquireError,
             strZ(strNewFmt("unable to acquire lock on file '%s': Is a directory", strZ(dirLock))));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -70,7 +81,7 @@ testRun(void)
         TEST_RESULT_INT(system(strZ(strNewFmt("chmod 000 %s", strZ(strPath(noPermLock))))), 0, "chmod noperm dir");
 
         TEST_ERROR(
-            lockAcquireFile(noPermLock, 100, true), LockAcquireError,
+            lockAcquireFile(noPermLock, STRDEF("1-test"), 100, true), LockAcquireError,
             strZ(
                 strNewFmt(
                     "unable to acquire lock on file '%s': Permission denied\n"
@@ -84,7 +95,7 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
-                TEST_RESULT_INT_NE(lockAcquireFile(backupLock, 0, true), -1, "lock on fork");
+                TEST_RESULT_INT_NE(lockAcquireFile(backupLock, STRDEF("1-test"), 0, true), -1, "lock on fork");
                 sleepMSec(500);
             }
             HARNESS_FORK_CHILD_END();
@@ -93,7 +104,7 @@ testRun(void)
             {
                 sleepMSec(250);
                 TEST_ERROR(
-                    lockAcquireFile(backupLock, 0, true),
+                    lockAcquireFile(backupLock, STRDEF("2-test"), 0, true),
                     LockAcquireError,
                     strZ(
                         strNewFmt(
@@ -122,16 +133,16 @@ testRun(void)
         TEST_RESULT_BOOL(lockClear(false), false, "release when there is no lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, 0, true), "archive lock by file");
+        TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, STRDEF("1-test"), 0, true), "archive lock by file");
         TEST_RESULT_BOOL(
-            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeArchive, 0, false), false, "archive already locked");
+            lockAcquire(lockPath, stanza, STRDEF("2-test"), lockTypeArchive, 0, false), false, "archive already locked");
         TEST_ERROR(
-            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeArchive, 0, true), LockAcquireError,
+            lockAcquire(lockPath, stanza, STRDEF("2-test"), lockTypeArchive, 0, true), LockAcquireError,
             strZ(strNewFmt(
                 "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                 "HINT: is another pgBackRest process running?", strZ(archiveLockFile))));
         TEST_ERROR(
-            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeAll, 0, true), LockAcquireError,
+            lockAcquire(lockPath, stanza, STRDEF("2-test"), lockTypeAll, 0, true), LockAcquireError,
             strZ(strNewFmt(
                 "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                 "HINT: is another pgBackRest process running?", strZ(archiveLockFile))));
@@ -146,14 +157,14 @@ testRun(void)
         TEST_RESULT_VOID(lockRelease(true), "release archive lock");
 
         // // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, 0, true), "backup lock by file");
+        TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, STRDEF("1-test"), 0, true), "backup lock by file");
         TEST_ERROR(
-            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), LockAcquireError,
+            lockAcquire(lockPath, stanza, STRDEF("2-test"), lockTypeBackup, 0, true), LockAcquireError,
             strZ(strNewFmt(
                 "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                 "HINT: is another pgBackRest process running?", strZ(backupLockFile))));
         TEST_ERROR(
-            lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeAll, 0, true), LockAcquireError,
+            lockAcquire(lockPath, stanza, STRDEF("2-test"), lockTypeAll, 0, true), LockAcquireError,
             strZ(strNewFmt(
                 "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                 "HINT: is another pgBackRest process running?", strZ(backupLockFile))));
@@ -177,6 +188,21 @@ testRun(void)
 
         TEST_RESULT_VOID(lockClear(true), "clear backup lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file still exists");
+        lockReleaseFile(lockFdTest, lockFileTest);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("acquire lock on the same exec-id and release");
+
+        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+
+        lockFdTest = lockFd[lockTypeBackup];
+        lockFileTest = strDup(lockFile[lockTypeBackup]);
+
+        TEST_RESULT_VOID(lockClear(true), "clear backup lock");
+
+        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock again");
+        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
+
         lockReleaseFile(lockFdTest, lockFileTest);
 
         // -------------------------------------------------------------------------------------------------------------------------
