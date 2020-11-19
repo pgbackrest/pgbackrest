@@ -339,6 +339,7 @@ STRING_EXTERN(CFGOPT_DB_TIMEOUT_STR,                                CFGOPT_DB_TI
 STRING_EXTERN(CFGOPT_DELTA_STR,                                     CFGOPT_DELTA);
 STRING_EXTERN(CFGOPT_DRY_RUN_STR,                                   CFGOPT_DRY_RUN);
 STRING_EXTERN(CFGOPT_EXCLUDE_STR,                                   CFGOPT_EXCLUDE);
+STRING_EXTERN(CFGOPT_EXEC_ID_STR,                                   CFGOPT_EXEC_ID);
 STRING_EXTERN(CFGOPT_EXPIRE_AUTO_STR,                               CFGOPT_EXPIRE_AUTO);
 STRING_EXTERN(CFGOPT_FILTER_STR,                                    CFGOPT_FILTER);
 STRING_EXTERN(CFGOPT_FORCE_STR,                                     CFGOPT_FORCE);
@@ -533,6 +534,12 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     CONFIG_OPTION
     (
         CONFIG_OPTION_NAME("exclude")
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
+        CONFIG_OPTION_NAME("exec-id")
     )
 
     //------------------------------------------------------------------------------------------------------------------------------

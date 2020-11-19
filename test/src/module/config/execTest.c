@@ -35,16 +35,16 @@ testRun(void)
         TEST_RESULT_STR(
             strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, NULL, false, true), "|"),
             strNewFmt(
-                "--archive-async|--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\"|--pg2-path=/db2"
-                "|--repo1-path=%s/repo|--stanza=test1|archive-get:async",
+                "--archive-async|--no-config|--exec-id=1-test|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\""
+                "|--pg2-path=/db2|--repo1-path=%s/repo|--stanza=test1|archive-get:async",
                 testPath(), testPath()),
             "exec archive-get -> archive-get:async");
 
         TEST_RESULT_STR(
             strLstJoin(cfgExecParam(cfgCmdBackup, cfgCmdRoleDefault, NULL, false, false), "|"),
             strNewFmt(
-                "--no-config|--log-subprocess|--reset-neutral-umask|--pg1-path=%s/db path|--pg2-path=/db2|--repo1-path=%s/repo"
-                "|--stanza=test1|backup",
+                "--no-config|--exec-id=1-test|--log-subprocess|--reset-neutral-umask|--pg1-path=%s/db path|--pg2-path=/db2"
+                "|--repo1-path=%s/repo|--stanza=test1|backup",
                 testPath(), testPath()),
             "exec archive-get -> backup");
 
@@ -73,8 +73,8 @@ testRun(void)
         TEST_RESULT_STR(
             strLstJoin(cfgExecParam(cfgCmdRestore, cfgCmdRoleDefault, optionReplace, true, false), "|"),
             strNewFmt(
-                "--db-include=1|--db-include=2|--log-path=/log|--pg1-path=%s/db path|--recovery-option=a=b|--recovery-option=c=d"
-                    "|--repo1-path=/replace/path|restore",
+                "--db-include=1|--db-include=2|--exec-id=1-test|--log-path=/log|--pg1-path=%s/db path|--recovery-option=a=b"
+                    "|--recovery-option=c=d|--repo1-path=/replace/path|restore",
                 testPath()),
             "exec restore -> restore");
     }

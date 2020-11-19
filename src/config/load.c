@@ -5,9 +5,11 @@ Configuration Load
 
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "command/command.h"
 #include "common/compress/helper.intern.h"
+#include "common/crypto/common.h"
 #include "common/memContext.h"
 #include "common/debug.h"
 #include "common/io/io.h"
@@ -358,12 +360,27 @@ cfgLoad(unsigned int argListSize, const char *argList[])
             // Open the log file if this command logs to a file
             cfgLoadLogFile();
 
+            // Create the exec-id used to identify all locals and remotes spawned by this process. This allows lock contention to be
+            // easily resolved and makes it easier to associate processes from various logs.
+            if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
+            {
+                // Generate some random bytes
+                uint32_t execRandom;
+                cryptoRandomBytes((unsigned char *)&execRandom, sizeof(execRandom));
+
+                // Format a string with the pid and the random bytes to serve as the exec id
+                cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));
+            }
+
             // Begin the command
             cmdBegin();
 
             // Acquire a lock if this command requires a lock
             if (cfgLockRequired() && !cfgCommandHelp())
-                lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, true);
+            {
+                lockAcquire(
+                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0, true);
+            }
 
             // Update options that have complex rules
             cfgLoadUpdateOption();
