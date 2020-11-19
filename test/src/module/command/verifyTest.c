@@ -435,7 +435,7 @@ testRun(void)
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
-        harnessLogResult("P00   WARN: backup.manifest.copy does not match backup.manifest");
+        harnessLogResult(strZ(strNewFmt("P00   WARN: backup '%s' manifest.copy does not match manifest", strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid manifest and copy");
@@ -1398,6 +1398,34 @@ testRun(void)
         StringList *argList = strLstDup(argListBase);
         harnessCfgLoad(cfgCmdVerify, argList);
 
+        // Backup labels
+        String *backupLabelFull = strNew("20181119-152900F");
+        String *backupLabelDiff = strNew("20181119-152900F_20181119-152909D");
+        String *backupLabelFullDb2 = strNew("20201119-163000F");
+
+        #define TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                \
+            "20181119-152900F_20181119-152909D={"                                                                                  \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000007\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+        #define TEST_BACKUP_DB2_CURRENT_FULL1                                                                                      \
+            "20201119-163000F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000020000000000000001\",\"backup-archive-stop\":\"000000020000000000000001\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("prior backup verification incomplete - referenced file checked");
+
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, archiveInfoFileName), archiveInfoMultiHistoryBase),
             "write archive.info");
@@ -1406,6 +1434,11 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
                 harnessInfoChecksumZ(
+                    "[backup:current]\n"
+                    TEST_BACKUP_DB1_CURRENT_FULL3
+                    TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1
+                    TEST_BACKUP_DB2_CURRENT_FULL1
+                    "\n"
                     "[db]\n"
                     TEST_BACKUP_DB2_11
                     "\n"
@@ -1417,10 +1450,7 @@ testRun(void)
             "write backup.info");
         storageCopy(storageNewReadP(storageTest, backupInfoFileName), storageNewWriteP(storageTest, backupInfoFileNameCopy));
 
-        // Create valid full backup and valid diff backup
-        String *backupLabelFull = strNew("20181119-152900F");
-        String *backupLabelDiff = strNew("20181119-152900F_20181119-152909D");
-
+        // Create valid full backup and valid diff backup for DB1
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
@@ -1455,41 +1485,169 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION="
-                    "{\"checksum\":\"%s\",\"master\":true,\"reference\":\"%s\",\"size\":%" PRIu64 ",\"timestamp\":1565282114}\n"
+                    "{\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true,\"reference\":\"%s\",\"size\":4,"
+                    "\"timestamp\":1565282114}\n"
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
                 TEST_MANIFEST_LINK_DEFAULT
                 TEST_MANIFEST_PATH
                 TEST_MANIFEST_PATH_DEFAULT,
-             strZ(fileChecksum), strZ(backupLabelFull), fileSize))
+            strZ(backupLabelFull)))
         );
 
         // Write manifests for diff backup
-        manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabelDiff));
-        manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
+        String *manifestFileDiff = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabelDiff));
+        String *manifestFileCopyDiff = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFileDiff));
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest - diff");
+            storagePutP(storageNewWriteP(storageTest, manifestFileDiff), contentLoad), "write valid manifest - diff");
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write valid manifest copy - diff");
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopyDiff), contentLoad), "write valid manifest copy - diff");
 
         // Put the file referenced by both backups into the full backup
         String *filePathName = strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(backupLabelFull));
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRZ(fileContents)), "put file");
-/* CSHANG This appears to be a problem because if the full backup says the PG_VERSION file that is being referenced by the full is bad, then so should the diff that is referencing it!
-    expected log to be empty but actual log was:
 
-    P00   WARN: no archives exist in the repo
-    P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'
-    P00   INFO: Results:
-                  archiveId: none found
-                  backup: 20181119-152900F, status: invalid, total files checked: 1, total valid files: 0
-                    missing: 0, checksum invalid: 1, size invalid: 0, other: 0
-                  backup: 20181119-152900F_20181119-152909D, status: valid, total files checked: 1, total valid files: 1
-                    missing: 0, checksum invalid: 0, size invalid: 0, other: 0
-*/
+        TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
 
+        // The error for the referenced file is logged twice because it is checked again by the second backup since the first backup
+        // verification had not yet completed before the second backup verification began
+        harnessLogResult(
+            strZ(strNewFmt(
+                "P00   WARN: no archives exist in the repo\n"
+                "P01  ERROR: [028]: invalid checksum '%s/pg_data/PG_VERSION'\n"
+                "P01  ERROR: [028]: invalid checksum '%s/pg_data/PG_VERSION'\n"
+                "P00   INFO: Results:\n"
+                "              archiveId: none found\n"
+                "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
+                "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
+                "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
+                "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0",
+                strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelDiff))));
 
-TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid backup, prior backup verification complete - referenced file not checked");
+
+        // Set process max to 1 and add more files to check so first backup completes before second is checked
+        strLstAddZ(argList, "--process-max=1");
+        harnessCfgLoad(cfgCmdVerify, argList);
+
+        contentLoad = harnessInfoChecksumZ
+        (
+            strZ(strNewFmt(
+                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_94
+                TEST_MANIFEST_OPTION_ALL
+                TEST_MANIFEST_TARGET
+                TEST_MANIFEST_DB
+                TEST_MANIFEST_FILE
+                "pg_data/base/1/555_init="
+                    "{\"checksum\":\"%s\",\"master\":false,\"size\":1,\"timestamp\":1565282114}\n"
+                "pg_data/base/1/555_init.1={\"master\":false,\"size\":0,\"timestamp\":1565282114}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                TEST_MANIFEST_LINK
+                TEST_MANIFEST_LINK_DEFAULT
+                TEST_MANIFEST_PATH
+                TEST_MANIFEST_PATH_DEFAULT,
+                strZ(fileChecksum)))
+        );
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest - full");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write valid manifest copy - full");
+        filePathName = strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/base/1/555_init", strZ(backupLabelFull));
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRZ(fileContents)),
+            "put file - invalid size");
+
+        contentLoad = harnessInfoChecksumZ
+        (
+            strZ(strNewFmt(
+                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_DB_94
+                TEST_MANIFEST_OPTION_ALL
+                TEST_MANIFEST_TARGET
+                TEST_MANIFEST_DB
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION="
+                    "{\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true,\"reference\":\"%s\",\"size\":4,"
+                    "\"timestamp\":1565282114}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                TEST_MANIFEST_LINK
+                TEST_MANIFEST_LINK_DEFAULT
+                TEST_MANIFEST_PATH
+                TEST_MANIFEST_PATH_DEFAULT,
+                strZ(backupLabelFull)))
+        );
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileDiff), contentLoad), "write valid manifest - diff");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopyDiff), contentLoad), "write valid manifest copy - diff");
+
+        // Create valid full backup and valid diff backup
+        contentLoad = harnessInfoChecksumZ
+        (
+            strZ(strNewFmt(
+                TEST_MANIFEST_HEADER
+                "\n"
+                "[backup:db]\n"
+                TEST_BACKUP_DB2_11
+                TEST_MANIFEST_OPTION_ALL
+                TEST_MANIFEST_TARGET
+                TEST_MANIFEST_DB
+                "\n"
+                "[target:file]\n"
+                "pg_data/validfile={\"checksum\":\"%s\",\"master\":true,\"size\":%u,\"timestamp\":1565282114}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                TEST_MANIFEST_LINK
+                TEST_MANIFEST_LINK_DEFAULT
+                TEST_MANIFEST_PATH
+                TEST_MANIFEST_PATH_DEFAULT,
+                strZ(fileChecksum), (unsigned int)fileSize))
+        );
+
+        manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabelFullDb2));
+        manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFile), contentLoad), "write valid manifest - full");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write valid manifest copy - full");
+        filePathName =  strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/validfile", strZ(backupLabelFullDb2));
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRZ(fileContents)), "put valid file");
+
+        // Create WAL file with just header info and small WAL size
+        Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
+        bufUsedSet(walBuffer, bufSize(walBuffer));
+        memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
+        pgWalTestToBuffer(
+            (PgWal){.version = PG_VERSION_11, .systemId = 6626363367545678089, .size = 1024 * 1024}, walBuffer);
+        const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNewFmt("%s/11-2/0000000200000000/000000020000000000000001-%s", strZ(archiveStanzaPath), walBufferSha1)),
+                walBuffer),
+            "write valid WAL");
+
+        TEST_ERROR(cmdVerify(), RuntimeError, "3 fatal errors encountered, see log for details");
+
+        harnessLogResult(
+            strZ(strNewFmt(
+                "P01  ERROR: [028]: invalid checksum '%s/pg_data/PG_VERSION'\n"
+                "P01  ERROR: [028]: invalid size '%s/pg_data/base/1/555_init'\n"
+                "P01  ERROR: [028]: file missing '%s/pg_data/base/1/555_init.1'\n"
+                "P00   INFO: Results:\n"
+                "              archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
+                "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+                "              backup: %s, status: invalid, total files checked: 3, total valid files: 0\n"
+                "                missing: 1, checksum invalid: 1, size invalid: 1, other: 0\n"
+                "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
+                "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
+                "              backup: %s, status: valid, total files checked: 1, total valid files: 1\n"
+                "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0",
+                strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull),
+                strZ(backupLabelDiff), strZ(backupLabelFullDb2))));
+                //
         // TEST_RESULT_VOID(cmdVerify(), "valid backups");
 /* CSHANG TODO
 - backups with compression

@@ -398,7 +398,7 @@ verifyManifestFile(
                 // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
                 // corrupt so log a warning but trust main
                 if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
-                    LOG_WARN("backup.manifest.copy does not match backup.manifest");
+                    LOG_WARN_FMT("backup '%s' manifest.copy does not match manifest", strZ(backupResult->backupLabel));
             }
         }
         else
@@ -938,7 +938,6 @@ verifyBackup(void *data)
                         // If the verify-state of the backup is not complete then verify the file
                         if (!backupResultPrior->fileVerifyComplete)
                         {
-printf("BACKUP PRIOR NOT COMPLETE\n"); fflush(stdout); // CSHANG
                             filePathName = strNewFmt(
                                 STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileData->reference), strZ(fileData->name),
                                 strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
@@ -1067,9 +1066,11 @@ verifyJobCallback(void *data, unsigned int clientIdx)
             jobData->backupProcessing = strLstSize(jobData->archiveIdList) == 0;
         }
 
-        if (result == NULL && jobData->backupProcessing)
+        if (jobData->backupProcessing)
         {
-            result = protocolParallelJobMove(verifyBackup(data), memContextPrior());
+            // Process the last result if there is one to process before beginning backup verification
+            if (result == NULL)
+                result = protocolParallelJobMove(verifyBackup(data), memContextPrior());
         }
     }
     MEM_CONTEXT_TEMP_END();
