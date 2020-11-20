@@ -1629,19 +1629,21 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                 .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
             BUFSTR(content));
 
-        // The recovery.signal file is required for targeted recovery
-        storagePutP(
-            storageNewWriteP(
-                storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
-            NULL);
-
         // The standby.signal file is required for standby mode
         if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
         {
             storagePutP(
                 storageNewWriteP(
                     storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
+                    .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                NULL);
+        }
+        // Else the recovery.signal file is required for targeted recovery
+        else
+        {
+            storagePutP(
+                storageNewWriteP(
+                    storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
                     .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
                 NULL);
         }
