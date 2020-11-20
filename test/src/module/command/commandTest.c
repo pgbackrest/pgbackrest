@@ -47,7 +47,6 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        hrnCfgArgRawZ(argList, cfgOptExecId, "1-fe0157ad");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
         strLstAddZ(argList, "param1");
         strLstAddZ(argList, "param 2");
