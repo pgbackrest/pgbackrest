@@ -325,7 +325,7 @@ Considerations:
 3. What if the backup is not in the backup.info file after we have completed verifying the backup files? The backup might be good, but it may not be restorable unless in the backup.info, right? Also, it may have just been expired out from under us - but in either case, should we indicate it is not in the backup.info and may not be restore-able?
 4. We are skipping verifying what we believe to be the current backup (only a copy and was the newest backup on disk) so at the end, if it complete, we won't know and also if a dependent backup was invalid, we should probably still indicate the "current" backup is invalid even though we did not check it's files. BUT maybe not - since we didn't check the files, we're not really sure if the file that was a problem in the prior backup was referenced by the current backup - so should probably just report the backup as verification skipped....
 5. It is possible to have a backup without all the WAL? Yes, if option-archive-check=false but if this is not on then all bets are off, but should we have special reporting for this case?
-6. There can be valid gaps in the WAL so "missing" is only if it is expected to be there for a backup to be consistent. Log an error when the backup relies on WAL that is not valid. If invalidFileList not NULL (or maybe size > 0) then there is a problem in this range but that does not mean it affects a backup (but maybe PITR) so check but should do this AFTER using the archive timeline history file to confirm that indeed there are or are not actual gaps in the WAL when timeline switches occurred.
+6. There can be valid gaps in the WAL so "missing" is only if it is expected to be there for a backup to be consistent. Log an error when the backup relies on WAL that is not valid. If archive invalidFileList not NULL (or maybe size > 0) then there is a problem in this range but that does not mean it affects a backup (but maybe PITR) so check but should do this AFTER using the archive timeline history file to confirm that indeed there are or are not actual gaps in the WAL when timeline switches occurred.
 7. How to check WAL for PITR (e.g. after end of last backup - is that last backup or last completed backup?)? If doing async archive and process max = 8 then could be 8 missing. But we don't have access to process-max and we don't know if they had asynch archiving, so if we see gaps in the last 5 minutes of the WAL stream and the last backup stop WAL is there, then we'll just ignore that PITR has gaps?
 8. History and WAL files:
     1. If WAL files and no history and visa versa then should be reporting as WARN
@@ -346,7 +346,7 @@ Considerations:
      1	000000010000000000000009	before 2000-01-01 01:00:00+01
      2	00000002000000000000000C	no recovery target specified
      ```
-10. Timing. If originally had F1 D1 I1 dependency chain but when I go to check, and D1 is gone, then the I1 is no loner valid.
+10. Timing. If originally had F1 D1 I1 list of backups in a dependency chain but then when we are finished processing, and D1 is gone, then the I1 is no loner valid - but this should not happen since all dependents should have been expired so this would only happen if there was a problem so I1 being invalid is probably not the worst of it.
 11. If offline backup, then both archive-start and archive-stop could be null so need to verify files but not going to do any wal comparison
 
 ### Pseudo-code
