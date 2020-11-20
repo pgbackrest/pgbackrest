@@ -24,6 +24,16 @@
 
                         <p>Allow <code>[</code>, <code>#</code>, and <code>space</code> as the first character in database names.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="keith.fiske"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Create <file>standby.signal</file> only on <postgres/> 12 when <cmd>restore</cmd> type is <id>standby</id>.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
