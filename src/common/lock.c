@@ -22,10 +22,8 @@ Lock Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-// Indicates a lock error
-#define LOCK_ERROR                                                  -1
-
-// Indicates a lock that was made by matching exec-id rather than holding an actual lock
+// Indicates a lock that was made by matching exec-id rather than holding an actual lock. This disguishes it from -1, which is a
+// general system error.
 #define LOCK_ON_EXEC_ID                                             -2
 
 /***********************************************************************************************************************************
@@ -61,7 +59,7 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
     ASSERT(lockFile != NULL);
     ASSERT(execId != NULL);
 
-    int result = LOCK_ERROR;
+    int result = -1;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -112,14 +110,14 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
                     if (strLstSize(parse) == 3 && strEq(strLstGet(parse, 1), execId))
                         result = LOCK_ON_EXEC_ID;
                     else
-                        result = LOCK_ERROR;
+                        result = -1;
                 }
             }
         }
-        while (result == LOCK_ERROR && (waitMore(wait) || retry));
+        while (result == -1 && (waitMore(wait) || retry));
 
         // If the lock was not successful
-        if (result == LOCK_ERROR)
+        if (result == -1)
         {
             // Error when requested
             if (failOnNoLock)
@@ -226,7 +224,7 @@ lockAcquire(
 
             lockFd[lockIdx] = lockAcquireFile(lockFile[lockIdx], execId, lockTimeout, failOnNoLock);
 
-            if (lockFd[lockIdx] == LOCK_ERROR)
+            if (lockFd[lockIdx] == -1)
             {
                 error = true;
                 break;
