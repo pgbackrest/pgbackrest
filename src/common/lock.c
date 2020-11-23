@@ -22,14 +22,9 @@ Lock Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-// Indicates a lock error
-#define LOCK_ERROR                                                  -1
-
-// Indicates a lock that was made by matching exec-id rather than holding an actual lock
+// Indicates a lock that was made by matching exec-id rather than holding an actual lock. This disguishes it from -1, which is a
+// general system error.
 #define LOCK_ON_EXEC_ID                                             -2
-
-// Size of buffer used to load lock file
-#define LOCK_BUFFER_SIZE                                            128
 
 /***********************************************************************************************************************************
 Lock type names
@@ -61,7 +56,10 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
 
-    int result = LOCK_ERROR;
+    ASSERT(lockFile != NULL);
+    ASSERT(execId != NULL);
+
+    int result = -1;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -112,14 +110,14 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
                     if (strLstSize(parse) == 3 && strEq(strLstGet(parse, 1), execId))
                         result = LOCK_ON_EXEC_ID;
                     else
-                        result = LOCK_ERROR;
+                        result = -1;
                 }
             }
         }
-        while (result == LOCK_ERROR && (waitMore(wait) || retry));
+        while (result == -1 && (waitMore(wait) || retry));
 
         // If the lock was not successful
-        if (result == LOCK_ERROR)
+        if (result == -1)
         {
             // Error when requested
             if (failOnNoLock)
@@ -142,7 +140,7 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
         else if (result != LOCK_ON_EXEC_ID)
         {
             // Write pid of the current process
-            ioFdWriteOneStr(result, strNewFmt("%d\n%s\n", getpid(), strZ(execId)));
+            ioFdWriteOneStr(result, strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(execId)));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -186,6 +184,10 @@ lockAcquire(
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
 
+    ASSERT(lockPath != NULL);
+    ASSERT(stanza != NULL);
+    ASSERT(execId != NULL);
+
     bool result = false;
 
     // Don't allow failures when locking more than one file.  This makes cleanup difficult and there are no known use cases.
@@ -222,7 +224,7 @@ lockAcquire(
 
             lockFd[lockIdx] = lockAcquireFile(lockFile[lockIdx], execId, lockTimeout, failOnNoLock);
 
-            if (lockFd[lockIdx] == LOCK_ERROR)
+            if (lockFd[lockIdx] == -1)
             {
                 error = true;
                 break;

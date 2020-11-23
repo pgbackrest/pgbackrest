@@ -76,7 +76,7 @@ cmdStop(void)
                     }
 
                     // The file is locked so that means there is a running process - read the process id and send it a term signal
-                    char contents[64];
+                    char contents[LOCK_BUFFER_SIZE];
                     ssize_t actualBytes = read(fd, contents, sizeof(contents));
                     String *processId = actualBytes > 0 ?
                         strTrim(strLstGet(strLstNewSplitZ(strNewN(contents, (size_t)actualBytes), LF_Z), 0)) : NULL;
