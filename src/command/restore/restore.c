@@ -1366,6 +1366,7 @@ restoreRecoveryOption(unsigned int pgVersion)
             // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 
+            kvPut(optionReplace, VARSTR(CFGOPT_EXEC_ID_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);

@@ -36,7 +36,8 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameter");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async --pg1-path=/pg1 --stanza=test");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async --exec-id=1-test --pg1-path=/pg1"
+                " --stanza=test");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple parameters");
@@ -53,8 +54,8 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameters");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --archive-async --pg1-path=/pg1"
-                " --stanza=test");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --archive-async --exec-id=1-test"
+                " --pg1-path=/pg1 --stanza=test");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reset, negate, list, hash options");
@@ -79,9 +80,9 @@ testRun(void)
         TEST_RESULT_VOID(cmdBegin(), "command begin");
 
         #define RESULT_OPTION                                                                                                      \
-             " --no-config --db-include=db1 --db-include=db2 --pg1-path=/pg1 --pg2-path=/pg2 --recovery-option=standby_mode=on"    \
-             " --recovery-option=primary_conninfo=blah --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc"             \
-             " --reset-repo1-host --repo1-path=\"/path/to the/repo\" --stanza=test"
+             " --no-config --db-include=db1 --db-include=db2 --exec-id=1-test --pg1-path=/pg1 --pg2-path=/pg2"                     \
+             " --recovery-option=standby_mode=on --recovery-option=primary_conninfo=blah --repo1-cipher-pass=<redacted>"           \
+             " --repo1-cipher-type=aes-256-cbc --reset-repo1-host --repo1-path=\"/path/to the/repo\" --stanza=test"
 
         harnessLogResult("P00   INFO: restore command begin " PROJECT_VERSION ":" RESULT_OPTION);
 
@@ -136,9 +137,9 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBegin(), "command begin");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": --no-config --log-timestamp --pg1-path=/pg1 --pg2-path=/pg2"
-            " --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --reset-repo1-host --repo1-path=\"/path/to the/repo\""
-            " --stanza=test");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": --no-config --exec-id=1-test --log-timestamp"
+            " --pg1-path=/pg1 --pg2-path=/pg2 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --reset-repo1-host"
+            " --repo1-path=\"/path/to the/repo\" --stanza=test");
 
         harnessLogLevelReset();
     }

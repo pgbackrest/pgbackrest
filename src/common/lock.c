@@ -20,6 +20,13 @@ Lock Handler
 #include "version.h"
 
 /***********************************************************************************************************************************
+Constants
+***********************************************************************************************************************************/
+// Indicates a lock that was made by matching exec-id rather than holding an actual lock. This disguishes it from -1, which is a
+// general system error.
+#define LOCK_ON_EXEC_ID                                             -2
+
+/***********************************************************************************************************************************
 Lock type names
 ***********************************************************************************************************************************/
 static const char *const lockTypeName[] =
@@ -40,13 +47,17 @@ static LockType lockTypeHeld = lockTypeNone;
 Acquire a lock using a file on the local filesystem
 ***********************************************************************************************************************************/
 static int
-lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
+lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeout, bool failOnNoLock)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, lockFile);
+        FUNCTION_LOG_PARAM(STRING, execId);
         FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
+
+    ASSERT(lockFile != NULL);
+    ASSERT(execId != NULL);
 
     int result = -1;
 
@@ -59,7 +70,7 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
         do
         {
             // Attempt to open the file
-            if ((result = open(strZ(lockFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
+            if ((result = open(strZ(lockFile), O_RDWR | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
             {
                 // Save the error for reporting outside the loop
                 errNo = errno;
@@ -79,9 +90,27 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
                     // Save the error for reporting outside the loop
                     errNo = errno;
 
-                    // Close the file and reset the file descriptor
+                    // Even though we were unable to lock the file, it may be that it is already locked by another process with the
+                    // same exec-id, i.e. spawned by the same original main process. If so, report the lock as successful.
+                    char buffer[LOCK_BUFFER_SIZE];
+
+                    // Read from file
+                    ssize_t actualBytes = read(result, buffer, sizeof(buffer));
+
+                    // Close the file
                     close(result);
-                    result = -1;
+
+                    // Make sure the read was successful. The file is already open and the chance of a failed read seems pretty
+                    // remote so don't integrate this with the rest of the lock error handling.
+                    THROW_ON_SYS_ERROR_FMT(actualBytes == -1, FileReadError, "unable to read '%s", strZ(lockFile));
+
+                    // Parse the file and see if the exec id matches
+                    const StringList *parse = strLstNewSplitZ(strNewN(buffer, (size_t)actualBytes), LF_Z);
+
+                    if (strLstSize(parse) == 3 && strEq(strLstGet(parse, 1), execId))
+                        result = LOCK_ON_EXEC_ID;
+                    else
+                        result = -1;
                 }
             }
         }
@@ -108,10 +137,10 @@ lockAcquireFile(const String *lockFile, TimeMSec lockTimeout, bool failOnNoLock)
                     errorHint == NULL ? "" : strZ(errorHint));
             }
         }
-        else
+        else if (result != LOCK_ON_EXEC_ID)
         {
             // Write pid of the current process
-            ioFdWriteOneStr(result, strNewFmt("%d\n", getpid()));
+            ioFdWriteOneStr(result, strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(execId)));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -131,7 +160,7 @@ lockReleaseFile(int lockFd, const String *lockFile)
     FUNCTION_LOG_END();
 
     // Can't release lock if there isn't one
-    ASSERT(lockFd != -1);
+    ASSERT(lockFd >= 0);
 
     // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
     // right before the delete which means the file locked by the other process will get deleted.
@@ -143,15 +172,21 @@ lockReleaseFile(int lockFd, const String *lockFile)
 
 /**********************************************************************************************************************************/
 bool
-lockAcquire(const String *lockPath, const String *stanza, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
+lockAcquire(
+    const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, lockPath);
         FUNCTION_LOG_PARAM(STRING, stanza);
+        FUNCTION_LOG_PARAM(STRING, execId);
         FUNCTION_LOG_PARAM(ENUM, lockType);
         FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
+
+    ASSERT(lockPath != NULL);
+    ASSERT(stanza != NULL);
+    ASSERT(execId != NULL);
 
     bool result = false;
 
@@ -187,7 +222,7 @@ lockAcquire(const String *lockPath, const String *stanza, LockType lockType, Tim
         {
             lockFile[lockIdx] = strNewFmt("%s/%s-%s" LOCK_FILE_EXT, strZ(lockPath), strZ(stanza), lockTypeName[lockIdx]);
 
-            lockFd[lockIdx] = lockAcquireFile(lockFile[lockIdx], lockTimeout, failOnNoLock);
+            lockFd[lockIdx] = lockAcquireFile(lockFile[lockIdx], execId, lockTimeout, failOnNoLock);
 
             if (lockFd[lockIdx] == -1)
             {
@@ -261,7 +296,9 @@ lockRelease(bool failOnNoLock)
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {
-            lockReleaseFile(lockFd[lockIdx], lockFile[lockIdx]);
+            if (lockFd[lockIdx] != LOCK_ON_EXEC_ID)
+                lockReleaseFile(lockFd[lockIdx], lockFile[lockIdx]);
+
             strFree(lockFile[lockIdx]);
         }
 

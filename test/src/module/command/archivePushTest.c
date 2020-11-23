@@ -543,7 +543,8 @@ testRun(void)
                 IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
-                lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30000, true);
+                lockAcquire(
+                    cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("555-fefefefe"), cfgLockType(), 30000, true);
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew(""));

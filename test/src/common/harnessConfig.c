@@ -31,6 +31,10 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     configParse(argListSize, argList, false);
     cfgLoadUpdateOption();
 
+    // Use a static exec-id for testing if it is not set explicitly
+    if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
+        cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTRDEF("1-test"));
+
     // Set dry-run mode for storage and logging
     storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
 #ifndef NO_LOG

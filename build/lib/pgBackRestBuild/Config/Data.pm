@@ -125,6 +125,7 @@ use constant CFGOPT_OUTPUT                                          => 'output';
 
 # Command-line only local/remote options
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPT_EXEC_ID                                         => 'exec-id';
 use constant CFGOPT_PROCESS                                         => 'process';
 use constant CFGOPT_HOST_ID                                         => 'host-id';
 use constant CFGOPT_REMOTE_TYPE                                     => 'remote-type';
@@ -995,6 +996,13 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_EXEC_ID =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_INTERNAL => true,
+    },
+
     &CFGOPT_HOST_ID =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
@@ -2913,8 +2921,19 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $rhOption->{&CFGDEF_PREFIX} = $rhGroup->{&CFGDEF_PREFIX};
     }
 
-    # If the command section is a scalar then copy the section from the referenced option
-    if (defined($hConfigDefine{$strKey}{&CFGDEF_COMMAND}) && !ref($hConfigDefine{$strKey}{&CFGDEF_COMMAND}))
+
+    # If command is not specified then the option is valid for all commands except version and help
+    if (!defined($rhOption->{&CFGDEF_COMMAND}))
+    {
+        foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
+        {
+            next if $strCommand eq CFGCMD_HELP || $strCommand eq CFGCMD_VERSION;
+
+            $rhOption->{&CFGDEF_COMMAND}{$strCommand} = {};
+        }
+    }
+    # Else if the command section is a scalar then copy the section from the referenced option
+    elsif (defined($hConfigDefine{$strKey}{&CFGDEF_COMMAND}) && !ref($hConfigDefine{$strKey}{&CFGDEF_COMMAND}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_COMMAND} =
             dclone($hConfigDefine{$hConfigDefine{$strKey}{&CFGDEF_COMMAND}}{&CFGDEF_COMMAND});

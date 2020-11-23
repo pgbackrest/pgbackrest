@@ -223,8 +223,8 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), lockTypeBackup, 0, true), -1,
-                    "create backup/expire lock");
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    -1, "create backup/expire lock");
 
                 sleepMSec(1000);
                 lockRelease(true);
@@ -476,8 +476,8 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), lockTypeBackup, 0, true), -1,
-                    "create backup/expire lock");
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
+                    -1, "create backup/expire lock");
 
                 sleepMSec(1000);
                 lockRelease(true);
