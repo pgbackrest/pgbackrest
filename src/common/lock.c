@@ -28,9 +28,6 @@ Constants
 // Indicates a lock that was made by matching exec-id rather than holding an actual lock
 #define LOCK_ON_EXEC_ID                                             -2
 
-// Size of buffer used to load lock file
-#define LOCK_BUFFER_SIZE                                            128
-
 /***********************************************************************************************************************************
 Lock type names
 ***********************************************************************************************************************************/
@@ -60,6 +57,9 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
         FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
+
+    ASSERT(lockFile != NULL);
+    ASSERT(execId != NULL);
 
     int result = LOCK_ERROR;
 
@@ -142,7 +142,7 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
         else if (result != LOCK_ON_EXEC_ID)
         {
             // Write pid of the current process
-            ioFdWriteOneStr(result, strNewFmt("%d\n%s\n", getpid(), strZ(execId)));
+            ioFdWriteOneStr(result, strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(execId)));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -185,6 +185,10 @@ lockAcquire(
         FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
+
+    ASSERT(lockPath != NULL);
+    ASSERT(stanza != NULL);
+    ASSERT(execId != NULL);
 
     bool result = false;
 
