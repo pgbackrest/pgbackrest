@@ -238,13 +238,13 @@ backupInit(const InfoBackup *infoBackup)
             result->pgIdxStandby = dbInfo.standbyIdx;
             result->dbStandby = dbInfo.standby;
             result->storageStandby = storagePgIdx(result->pgIdxStandby);
-            result->hostStandby = cfgOptionStrNull(cfgOptPgHost + result->pgIdxStandby);
+            result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
     }
 
     // Add primary info
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
-    result->hostPrimary = cfgOptionStrNull(cfgOptPgHost + result->pgIdxPrimary);
+    result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
 
     // Get pg_control info from the primary
     PgControl pgControl = pgControlFromFile(result->storagePrimary);

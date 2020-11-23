@@ -17,6 +17,7 @@ typedef struct CfgParseOptionResult
 {
     bool found;                                                     // Was the option found?
     ConfigOption id;                                                // Option ID
+    unsigned int keyIdx;                                            // Option key index, i.e. option key - 1
     bool negate;                                                    // Was the option negated?
     bool reset;                                                     // Was the option reset?
     bool deprecated;                                                // Is the option deprecated?

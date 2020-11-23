@@ -127,7 +127,6 @@ use constant CFGOPT_OUTPUT                                          => 'output';
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_EXEC_ID                                         => 'exec-id';
 use constant CFGOPT_PROCESS                                         => 'process';
-use constant CFGOPT_HOST_ID                                         => 'host-id';
 use constant CFGOPT_REMOTE_TYPE                                     => 'remote-type';
 
 # Command-line only storage options
@@ -185,6 +184,9 @@ use constant CFGDEF_INDEX_REPO                                      => 1;
 
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
+
+# Set default repository
+use constant CFGOPT_REPO                                            => CFGDEF_PREFIX_REPO;
 
 # Repository General
 use constant CFGOPT_REPO_CIPHER_TYPE                                => CFGDEF_PREFIX_REPO . '-cipher-type';
@@ -281,6 +283,9 @@ use constant CFGDEF_INDEX_PG                                        => 8;
 # Prefix that must be used by all db options that allow multiple configurations
 use constant CFGDEF_PREFIX_PG                                       => 'pg';
     push @EXPORT, qw(CFGDEF_PREFIX_PG);
+
+# Set default PostgreSQL cluster
+use constant CFGOPT_PG                                              => CFGDEF_PREFIX_PG;
 
 use constant CFGOPT_PG_LOCAL                                        => CFGDEF_PREFIX_PG . '-local';
 
@@ -1003,22 +1008,6 @@ my %hConfigDefine =
         &CFGDEF_INTERNAL => true,
     },
 
-    &CFGOPT_HOST_ID =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG > CFGDEF_INDEX_REPO ? CFGDEF_INDEX_PG : CFGDEF_INDEX_REPO],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_VERIFY => {},
-        },
-    },
-
     &CFGOPT_PROCESS =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
@@ -1489,6 +1478,18 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_VERIFY => {},
         }
+    },
+
+    # Repository selector
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_REPO =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_REPO],
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     # Repository options
@@ -2574,6 +2575,37 @@ my %hConfigDefine =
 
     # Stanza options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_PG =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_CHECK =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_STANZA_UPGRADE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+        },
+    },
+
     &CFGOPT_PG_LOCAL =>
     {
         &CFGDEF_GROUP => CFGOPTGRP_PG,

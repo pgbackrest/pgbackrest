@@ -84,19 +84,32 @@
 
                 <release-development-list>
                     <release-item>
+                        <commit subject="Declare cfgDefOptionAllowListValue/Total() static."/>
+                        <commit subject="Remove unused cfgDefOptionPrefix() function and data."/>
+                        <commit subject="Add option groups."/>
+                        <commit subject="Remove indexed option constants."/>
+                        <commit subject="Remove extraneous calls to cfgOptionValid() in unit tests."/>
+                        <commit subject="Use harnessCfgLoadRaw() in command/help unit test."/>
+                        <commit subject="Reset additional options in real/all integration test."/>
+                        <commit subject="Fix repo/pg-local option being overwritten."/>
+                        <commit subject="Remove ConfigDefineCommand enum."/>
+                        <commit subject="Remove cfgOptionId() and replace it with cfgParseOption()."/>
+                        <commit subject="Get target-action default from cfgOptionDefault() in restore command."/>
+                        <commit subject="Use harnessCfgLoadRaw() in command/command and common/exit unit tests."/>
+                        <commit subject="Add indexed option > 1 to config/exec unit test."/>
+                        <commit subject="Use zero-based indexes when referring to option indexes."/>
+                        <commit subject="Fix comment."/>
+                        <commit subject="Use harnessCfgLoad() in config/load unit tests."/>
+                        <commit subject="Use a constant to check restore target action."/>
+                        <commit subject="Fix override of user option reset."/>
+                        <commit subject="Rename hrnCfgEnvId*() to hrnCfgEnvKey*()."/>
+                        <commit subject="Prepare configuration module for multi-repository support."/>
+
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Add option groups.</p>
-                    </release-item>
-
-                    <release-item>
-                        <release-item-contributor-list>
-                            <release-item-reviewer id="cynthia.shang"/>
-                        </release-item-contributor-list>
-
-                        <p>Use zero-based indexes when referring to option indexes.</p>
+                        <p>Prepare configuration module for multi-repository support.</p>
                     </release-item>
 
                     <release-item>
@@ -106,6 +119,14 @@
                         </release-item-contributor-list>
 
                         <p>Optimize small reads in <code>IoRead</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow multiple remote locks from the same main process.</p>
                     </release-item>
 
                     <release-item>

@@ -16,8 +16,7 @@ Configuration Load
 #include "common/io/socket/common.h"
 #include "common/lock.h"
 #include "common/log.h"
-#include "config/config.h"
-#include "config/define.h"
+#include "config/config.intern.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "storage/helper.h"
@@ -68,18 +67,12 @@ cfgLoadUpdateOption(void)
     FUNCTION_LOG_VOID(logLevelTrace);
 
     // Set default for repo-host-cmd
-    if (cfgOptionTest(cfgOptRepoHost) && cfgOptionSource(cfgOptRepoHostCmd) == cfgSourceDefault)
+    if (cfgOptionValid(cfgOptRepoHostCmd))
         cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
 
     // Set default for pg-host-cmd
     if (cfgOptionValid(cfgOptPgHostCmd))
-    {
-        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); optionIdx++)
-        {
-            if (cfgOptionTest(cfgOptPgHost + optionIdx) && cfgOptionSource(cfgOptPgHostCmd + optionIdx) == cfgSourceDefault)
-                cfgOptionDefaultSet(cfgOptPgHostCmd + optionIdx, VARSTR(cfgExe()));
-        }
-    }
+        cfgOptionDefaultSet(cfgOptPgHostCmd, VARSTR(cfgExe()));
 
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
@@ -119,7 +112,7 @@ cfgLoadUpdateOption(void)
 
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); optionIdx++)
         {
-            if (cfgOptionTest(cfgOptPgHost + optionIdx))
+            if (cfgOptionIdxTest(cfgOptPgHost, optionIdx))
             {
                 pgHostFound = true;
                 break;
@@ -131,7 +124,7 @@ cfgLoadUpdateOption(void)
         {
             for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
             {
-                if (cfgOptionTest(cfgOptRepoHost + optionIdx))
+                if (cfgOptionIdxTest(cfgOptRepoHost, optionIdx))
                     THROW_FMT(ConfigError, "pg and repo hosts cannot both be configured as remote");
             }
         }
@@ -142,15 +135,14 @@ cfgLoadUpdateOption(void)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            // If the repo-type is defined, then see if corresponding retention-full is set
-            if (cfgOptionTest(cfgOptRepoType + optionIdx) && !(cfgOptionTest(cfgOptRepoRetentionFull + optionIdx)))
+            if (!(cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx)))
             {
                 LOG_WARN_FMT(
                     "option '%s' is not set for '%s=%s', the repository may run out of space"
                     "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
-                    cfgOptionName(cfgOptRepoRetentionFull + optionIdx), cfgOptionName(cfgOptRepoRetentionFullType + optionIdx),
-                    strZ(cfgOptionStr(cfgOptRepoRetentionFullType + optionIdx)),
-                    cfgOptionName(cfgOptRepoRetentionFull + optionIdx));
+                    cfgOptionIdxName(cfgOptRepoRetentionFull, optionIdx), cfgOptionIdxName(cfgOptRepoRetentionFullType, optionIdx),
+                    strZ(cfgOptionIdxStr(cfgOptRepoRetentionFullType, optionIdx)),
+                    cfgOptionIdxName(cfgOptRepoRetentionFull, optionIdx));
             }
         }
     }
@@ -161,41 +153,43 @@ cfgLoadUpdateOption(void)
         // For each possible repo, check and adjust the settings as appropriate
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            const String *archiveRetentionType = cfgOptionStr(cfgOptRepoRetentionArchiveType + optionIdx);
+            const String *archiveRetentionType = cfgOptionIdxStr(cfgOptRepoRetentionArchiveType, optionIdx);
 
             const String *msgArchiveOff = strNewFmt(
-                "WAL segments will not be expired: option '%s=%s' but", cfgOptionName(cfgOptRepoRetentionArchiveType + optionIdx),
+                "WAL segments will not be expired: option '%s=%s' but", cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
                 strZ(archiveRetentionType));
 
             // If the archive retention is not explicitly set then determine what it should be defaulted to
-            if (!cfgOptionTest(cfgOptRepoRetentionArchive + optionIdx))
+            if (!cfgOptionIdxTest(cfgOptRepoRetentionArchive, optionIdx))
             {
                 // If repo-retention-archive-type is default (full), then if repo-retention-full is set, set the
                 // repo-retention-archive to this value when retention-full-type is 'count', else ignore archiving. If
                 // retention-full-type is 'time' then the the expire command will default the archive retention accordingly.
                 if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL))
                 {
-                    if (strEqZ(cfgOptionStr(cfgOptRepoRetentionFullType + optionIdx), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT)
-                        && cfgOptionTest(cfgOptRepoRetentionFull + optionIdx))
+                    if (strEqZ(
+                            cfgOptionIdxStr(cfgOptRepoRetentionFullType, optionIdx),
+                            CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT) &&
+                        cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx))
                     {
-                        cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            VARUINT(cfgOptionUInt(cfgOptRepoRetentionFull + optionIdx)));
+                        cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
+                            VARUINT(cfgOptionIdxUInt(cfgOptRepoRetentionFull, optionIdx)));
                     }
                 }
                 else if (strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF))
                 {
                     // if repo-retention-diff is set then user must have set it
-                    if (cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx))
+                    if (cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx))
                     {
-                        cfgOptionSet(cfgOptRepoRetentionArchive + optionIdx, cfgSourceDefault,
-                            VARUINT(cfgOptionUInt(cfgOptRepoRetentionDiff + optionIdx)));
+                        cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
+                            VARUINT(cfgOptionIdxUInt(cfgOptRepoRetentionDiff, optionIdx)));
                     }
                     else
                     {
                         LOG_WARN_FMT(
                             "%s neither option '%s' nor option '%s' is set", strZ(msgArchiveOff),
-                            cfgOptionName(cfgOptRepoRetentionArchive + optionIdx),
-                            cfgOptionName(cfgOptRepoRetentionDiff + optionIdx));
+                            cfgOptionIdxName(cfgOptRepoRetentionArchive, optionIdx),
+                            cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx));
                     }
                 }
                 else
@@ -204,7 +198,7 @@ cfgLoadUpdateOption(void)
 
                     LOG_WARN_FMT(
                         "%s option '%s' is not set", strZ(msgArchiveOff),
-                        cfgOptionName(cfgOptRepoRetentionArchive + optionIdx));
+                        cfgOptionIdxName(cfgOptRepoRetentionArchive, optionIdx));
                 }
             }
             else
@@ -213,21 +207,21 @@ cfgLoadUpdateOption(void)
                 // corresponding setting is UNDEF since UNDEF means backups will not be expired but they should be in the
                 // practice of setting this value even though expiring the archive itself is OK and will be performed.
                 if ((strEqZ(archiveRetentionType, CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) &&
-                    (!cfgOptionTest(cfgOptRepoRetentionDiff + optionIdx)))
+                    (!cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx)))
                 {
                     LOG_WARN_FMT("option '%s' is not set for '%s=%s'\n"
                         "HINT: to retain differential backups indefinitely (without warning), set option '%s' to the maximum.",
-                        cfgOptionName(cfgOptRepoRetentionDiff + optionIdx),
-                        cfgOptionName(cfgOptRepoRetentionArchiveType + optionIdx),
+                        cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx),
+                        cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
                         CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF,
-                        cfgOptionName(cfgOptRepoRetentionDiff + optionIdx));
+                        cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx));
                 }
             }
         }
     }
 
     // Error if an S3 bucket name contains dots
-    if (cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifyTls) &&
+    if (cfgOptionGroupValid(cfgOptGrpRepo) && cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifyTls) &&
         strChr(cfgOptionStr(cfgOptRepoS3Bucket), '.') != -1)
     {
         THROW_FMT(
@@ -258,7 +252,7 @@ cfgLoadUpdateOption(void)
         }
 
         // Now invalidate compress so it can't be used and won't be passed to child processes
-        cfgOptionValidSet(cfgOptCompress, false);
+        cfgOptionInvalidate(cfgOptCompress);
         cfgOptionSet(cfgOptCompress, cfgSourceDefault, NULL);
     }
 

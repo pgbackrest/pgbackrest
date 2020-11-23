@@ -257,7 +257,7 @@ testRun(void)
         StringList *argList = strLstDup(commonArgList);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
-        StorageS3 *driver = (StorageS3 *)storageDriver(storageRepoGet(STORAGE_S3_TYPE_STR, false));
+        StorageS3 *driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
 
         TEST_RESULT_STR(driver->bucket, bucket, "check bucket");
         TEST_RESULT_STR(driver->region, region, "check region");
@@ -328,7 +328,7 @@ testRun(void)
         hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
-        driver = (StorageS3 *)storageDriver(storageRepoGet(STORAGE_S3_TYPE_STR, false));
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
 
         TEST_RESULT_STR(driver->securityToken, securityToken, "check security token");
         TEST_RESULT_STR(
@@ -392,7 +392,7 @@ testRun(void)
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
-                Storage *s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
+                Storage *s3 = storageRepoGet(0, true);
                 StorageS3 *driver = (StorageS3 *)s3->driver;
 
                 TEST_RESULT_STR(s3->path, path, "check path");
@@ -450,7 +450,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, STORAGE_S3_KEY_TYPE_AUTO);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
-                s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
+                s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)s3->driver;
 
                 TEST_RESULT_STR(s3->path, path, "check path");
@@ -1019,7 +1019,7 @@ testRun(void)
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
-                s3 = storageRepoGet(STORAGE_S3_TYPE_STR, true);
+                s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)s3->driver;
 
                 // Set deleteMax to a small value for testing

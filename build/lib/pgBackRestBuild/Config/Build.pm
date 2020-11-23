@@ -19,7 +19,6 @@ use pgBackRestDoc::Common::String;
 use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestBuild::Build::Common;
-use pgBackRestBuild::Config::BuildDefine;
 use pgBackRestBuild::Config::Data;
 
 ####################################################################################################################################
@@ -36,8 +35,9 @@ use constant BLDLCL_CONSTANT_OPTION_TOTAL                           => 'CFG_OPTI
 
 use constant BLDLCL_DATA_COMMAND_CONSTANT                           => '01-commandConstant';
 use constant BLDLCL_DATA_COMMAND                                    => '02-command';
-use constant BLDLCL_DATA_OPTION_CONSTANT                            => '03-optionConstant';
-use constant BLDLCL_DATA_OPTION                                     => '04-option';
+use constant BLDLCL_DATA_OPTION_GROUP                               => '03-optionGroup';
+use constant BLDLCL_DATA_OPTION_CONSTANT                            => '04-optionConstant';
+use constant BLDLCL_DATA_OPTION                                     => '05-option';
 
 use constant BLDLCL_ENUM_COMMAND                                    => '01-enumCommand';
 use constant BLDLCL_ENUM_OPTION_GROUP                               => '02-enumOptionGroup';
@@ -105,6 +105,11 @@ my $rhBuild =
                 &BLDLCL_DATA_COMMAND =>
                 {
                     &BLD_SUMMARY => 'Command data',
+                },
+
+                &BLDLCL_DATA_OPTION_GROUP =>
+                {
+                    &BLD_SUMMARY => 'Option group data',
                 },
 
                 &BLDLCL_DATA_OPTION_CONSTANT =>
@@ -224,13 +229,30 @@ sub buildConfig
     $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_ENUM}{&BLDLCL_ENUM_OPTION_GROUP};
     my $iGroupTotal = 0;
 
+    $strBuildSource =
+        'static ConfigOptionGroupData configOptionGroupData[' . BLDLCL_CONSTANT_OPTION_GROUP_TOTAL . "] = \n" .
+        "{";
+
     foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
     {
         my $strGroupEnum = buildConfigOptionGroupEnum($strGroup);
         push(@{$rhEnum->{&BLD_LIST}}, $strGroupEnum);
 
+        $strBuildSource .=
+            "\n" .
+            "    // ${strGroupEnum}\n" .
+            "    //" . (qw{-} x 126) . "\n" .
+            "    {\n" .
+            "        .name = \"" . $strGroup . "\"\n" .
+            "    },\n";
+
         $iGroupTotal++;
     }
+
+    $strBuildSource .=
+        "};\n";
+
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_DATA}{&BLDLCL_DATA_OPTION_GROUP}{&BLD_SOURCE} = $strBuildSource;
 
     # Set option total constant
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION_GROUP}{&BLD_CONSTANT}
@@ -253,60 +275,45 @@ sub buildConfig
         my $iOptionIndexTotal = $rhConfigDefine->{$strOption}{&CFGDEF_INDEX_TOTAL};
         my $strOptionPrefix = $rhConfigDefine->{$strOption}{&CFGDEF_PREFIX};
 
-        # Builds option data
-        for (my $iOptionIndex = 1; $iOptionIndex <= $iOptionIndexTotal; $iOptionIndex++)
+        # Build C enum
+        my $strOptionEnum = buildConfigOptionEnum($strOption);
+        push(@{$rhEnum->{&BLD_LIST}}, $strOptionEnum);
+        $rhEnum->{&BLD_VALUE}{$strOptionEnum} = $iOptionTotal;
+
+        # Build option constant name
+        $strOptionConst = "CFGOPT_" . uc($strOption);
+        $strOptionConst =~ s/\-/_/g;
+
+        # Add option data
+        $strBuildSource .=
+            "\n" .
+            "    //" . (qw{-} x 126) . "\n" .
+            "    CONFIG_OPTION\n" .
+            "    (\n" .
+            "        CONFIG_OPTION_NAME(\"${strOption}\")\n";
+
+        if ($rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
         {
-            # Build C enum
-            my $strOptionEnum = buildConfigOptionEnum($strOption) . ($iOptionIndex == 1 ? '' : $iOptionIndex);
-            push(@{$rhEnum->{&BLD_LIST}}, $strOptionEnum);
-            $rhEnum->{&BLD_VALUE}{$strOptionEnum} = $iOptionTotal;
-
-            # Create the indexed version of the option name
-            my $strOptionIndex = defined($strOptionPrefix) ?
-                "${strOptionPrefix}${iOptionIndex}-" . substr($strOption, length($strOptionPrefix) + 1) : $strOption;
-
-            # Build option constant name
-            $strOptionConst = "CFGOPT_" . uc($strOptionIndex);
-            $strOptionConst =~ s/\-/_/g;
-
-            # Add option data
             $strBuildSource .=
-                "\n" .
-                "    //" . (qw{-} x 126) . "\n" .
-                "    CONFIG_OPTION\n" .
-                "    (\n" .
-                "        CONFIG_OPTION_NAME(\"${strOptionIndex}\")\n" .
-                "        CONFIG_OPTION_INDEX(" . ($iOptionIndex - 1) . ")\n" .
-                "        CONFIG_OPTION_DEFINE_ID(" . buildConfigDefineOptionEnum($strOption) . ")\n";
-
-            if ($rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
-            {
-                $strBuildSource .=
-                    "        CONFIG_OPTION_GROUP(true)\n" .
-                    "        CONFIG_OPTION_GROUP_ID(" . buildConfigOptionGroupEnum($rhConfigDefine->{$strOption}{&CFGDEF_GROUP}) .
-                        ")\n";
-            }
-            else
-            {
-                $strBuildSource .=
-                    "        CONFIG_OPTION_GROUP(false)\n";
-            }
-
-            $strBuildSource .=
-                "    )\n";
-
-
-            if (!$rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
-            {
-                $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION}{&BLD_CONSTANT}
-                    {$strOptionConst}{&BLD_CONSTANT_VALUE} = "\"${strOptionIndex}\"\n    STRING_DECLARE(${strOptionConst}_STR);";
-
-                $strBuildSourceConstant .=
-                    "STRING_EXTERN(${strOptionConst}_STR," . (' ' x (49 - length($strOptionConst))) . "${strOptionConst});\n";
-            }
-
-            $iOptionTotal += 1;
+                "        CONFIG_OPTION_GROUP(true)\n" .
+                "        CONFIG_OPTION_GROUP_ID(" . buildConfigOptionGroupEnum($rhConfigDefine->{$strOption}{&CFGDEF_GROUP}) .
+                    ")\n";
         }
+
+        $strBuildSource .=
+            "    )\n";
+
+
+        if (!$rhConfigDefine->{$strOption}{&CFGDEF_GROUP})
+        {
+            $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION}{&BLD_CONSTANT}
+                {$strOptionConst}{&BLD_CONSTANT_VALUE} = "\"${strOption}\"\n    STRING_DECLARE(${strOptionConst}_STR);";
+
+            $strBuildSourceConstant .=
+                "STRING_EXTERN(${strOptionConst}_STR," . (' ' x (49 - length($strOptionConst))) . "${strOptionConst});\n";
+        }
+
+        $iOptionTotal += 1;
     }
 
     $strBuildSource .=
