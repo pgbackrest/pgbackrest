@@ -2152,6 +2152,19 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="multi-repo">
+        <title>Multiple Repositories</title>
+
+        <p>Multiple repositories may be configured as demonstrated in <link section="/s3-support">S3 Support</link>. A potential benefit is the ability to have a local repository for fast restores and a remote repository for redundancy.</p>
+
+        <p>Some commands, e.g. <cmd>stanza-create</cmd>/<cmd>stanza-update</cmd>, will automatically work with all configured repositories while others, e.g. <link section="/delete-stanza">stanza-delete</link>, will require a repository to be specified using the <br-option>repo</br-option> option. See the <link url="command.html">command reference</link> for details on which commands require the repository to be specified.</p>
+
+        <p>Note that the <br-option>repo</br-option> option is not required when only <br-option>repo1</br-option> is configured in order to maintain backward compatibility. However, the <br-option>repo</br-option> option <i>is</i> required when a single repo is configured as, e.g. <br-option>repo2</br-option>. This is to prevent command breakage if a new repository is added later.</p>
+
+        <p>The <cmd>archive-push</cmd> command will always push WAL to the archive in all configured repositories but backups will need to be scheduled individually for each repository. In many cases this is desirable since backup types and retention will vary by repository. Likewise, restores must specify a repository. It is generally better to specify a repository for restores that has low latency/cost even if that means more recovery time. Only restore testing can determine which repository will be most efficient.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="azure-support" if="'{[azure-all]}' ne 'y'" depend="/quickstart/configure-archiving">
         <title>Azure-Compatible Object Store Support</title>
 
@@ -2284,19 +2297,8 @@
         </execute-list>
     </section>
 
-    <!-- ======================================================================================================================= -->
-    <section id="multi-repo" depend="/s3-support">
-        <title>Multiple Repositories</title>
-
-        <p>Multiple repositories may be configured as demonstrated in <link section="/s3-support">S3 Support</link>. A potential benefit is the ability to have a local repository for fast restores and a remote repository for redundancy.</p>
-
-        <p>Some commands, e.g. <cmd>stanza-create</cmd>/<cmd>stanza-update</cmd>, will automatically work with all configured repositories while others, e.g. <link section="/delete-stanza">stanza-delete</link>, will require a repository to be specified using the <br-option>repo</br-option> option. See the <link url="command.html">command reference</link> for details on which commands require the repository to be specified.</p>
-
-        <p>The <cmd>archive-push</cmd> command will always push WAL to the archive in all configured repositories but backups will need to be scheduled individually for each repository. In many cases this is desirable since backup types and retention will vary by repository. Likewise, restores must specify a repository. It is generally better to specify a repository for restores that has low latency/cost even if that means more recovery time. Only restore testing can determine which repository will be most efficient.</p>
-    </section>
-
     <!-- SECTION => REPOSITORY HOST -->
-    <section id="delete-stanza" depend="/multi-repo">
+    <section id="delete-stanza"  depend="/s3-support">
         <title>Delete a Stanza</title>
 
         <cmd-description key="stanza-delete"/>
@@ -2317,8 +2319,6 @@
                 <exe-highlight>completed successfully</exe-highlight>
             </execute>
         </execute-list>
-
-        <p>A stanza may only be deleted from one repository at a time. To delete the stanza from multiple repositories, repeat the <cmd>stanza-delete</cmd> command for each repository.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Delete the stanza from one repository</title>
