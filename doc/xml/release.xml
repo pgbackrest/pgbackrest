@@ -101,14 +101,15 @@
                         <commit subject="Fix comment."/>
                         <commit subject="Use harnessCfgLoad() in config/load unit tests."/>
                         <commit subject="Use a constant to check restore target action."/>
-                        <commit subject="Prepare configuration module for multi-repository support."/>
                         <commit subject="Fix override of user option reset."/>
+                        <commit subject="Rename hrnCfgEnvId*() to hrnCfgEnvKey*()."/>
+                        <commit subject="Prepare configuration module for multi-repository support."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Configuration module refactor.</p>
+                        <p>Prepare configuration module for multi-repository support.</p>
                     </release-item>
 
                     <release-item>
@@ -118,6 +119,14 @@
                         </release-item-contributor-list>
 
                         <p>Optimize small reads in <code>IoRead</code>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow multiple remote locks from the same main process.</p>
                     </release-item>
 
                     <release-item>

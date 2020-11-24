@@ -668,12 +668,11 @@ unit:
           command/local/local: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      # !!! NEED TO FIX THE LOCK IN THIS TEST
-      # - name: remote
-      #   total: 1
-      #
-      #   coverage:
-      #     command/remote/remote: full
+      - name: remote
+        total: 1
+
+        coverage:
+          command/remote/remote: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
