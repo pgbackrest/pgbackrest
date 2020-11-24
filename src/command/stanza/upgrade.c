@@ -38,7 +38,7 @@ cmdStanzaUpgrade(void)
         PgControl pgControl = pgValidate();
 
         // Verify all the repos are local (i.e. repo*-host is not set) - this is a simple way to confirm we are not executing
-        // stanza-create from a pg host as it will immediately error
+        // stanza-upgrade from a pg host as it will immediately error
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
             repoIsLocalVerifyIdx(repoIdx);
 
