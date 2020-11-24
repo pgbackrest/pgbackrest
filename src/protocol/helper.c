@@ -534,19 +534,19 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
                 PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
 
             // Get cipher options from the remote if none are locally configured
-            if (isRepo && strEq(cfgOptionStr(cfgOptRepoCipherType), CIPHER_TYPE_NONE_STR))
+            if (isRepo && strEq(cfgOptionIdxStr(cfgOptRepoCipherType, hostIdx), CIPHER_TYPE_NONE_STR))
             {
                 // Options to query
                 VariantList *param = varLstNew();
-                varLstAdd(param, varNewStrZ(cfgOptionName(cfgOptRepoCipherType)));
-                varLstAdd(param, varNewStrZ(cfgOptionName(cfgOptRepoCipherPass)));
+                varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherType, hostIdx)));
+                varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherPass, hostIdx)));
 
                 VariantList *optionList = configProtocolOption(protocolHelperClient->client, param);
 
                 if (!strEq(varStr(varLstGet(optionList, 0)), CIPHER_TYPE_NONE_STR))
                 {
-                    cfgOptionSet(cfgOptRepoCipherType, cfgSourceConfig, varLstGet(optionList, 0));
-                    cfgOptionSet(cfgOptRepoCipherPass, cfgSourceConfig, varLstGet(optionList, 1));
+                    cfgOptionIdxSet(cfgOptRepoCipherType, hostIdx, cfgSourceConfig, varLstGet(optionList, 0));
+                    cfgOptionIdxSet(cfgOptRepoCipherPass, hostIdx, cfgSourceConfig, varLstGet(optionList, 1));
                 }
             }
 

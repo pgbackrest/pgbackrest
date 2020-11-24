@@ -1005,20 +1005,31 @@ testRun(void)
             BUFSTRDEF(
                 "[global]\n"
                 "repo1-cipher-type=aes-256-cbc\n"
-                "repo1-cipher-pass=dcba\n"));
+                "repo1-cipher-pass=dcba\n"
+                "repo2-cipher-type=aes-256-cbc\n"
+                "repo2-cipher-pass=xxxx\n"));
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--pg1-path=/pg");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAdd(argList, strNewFmt("--repo1-host-config=%s/pgbackrest.conf", testPath()));
         strLstAddZ(argList, "--repo1-host=localhost");
         strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        harnessCfgLoad(cfgCmdInfo, argList);
+        strLstAdd(argList, strNewFmt("--repo2-host-config=%s/pgbackrest.conf", testPath()));
+        strLstAddZ(argList, "--repo2-host=localhost");
+        strLstAdd(argList, strNewFmt("--repo2-host-user=%s", testUser()));
+        strLstAdd(argList, strNewFmt("--repo2-path=%s2", testPath()));
+        harnessCfgLoad(cfgCmdCheck, argList);
 
-        TEST_RESULT_PTR(cfgOptionStrNull(cfgOptRepoCipherPass), NULL, "check cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "dcba", "check cipher pass after");
+        TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 0), NULL, "check repo1 cipher pass before");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get repo1 remote protocol");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 0), "dcba", "check repo1 cipher pass after");
+
+        TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 1), NULL, "check repo2 cipher pass before");
+        TEST_RESULT_VOID(protocolRemoteGet(protocolStorageTypeRepo, 1), "get repo2 remote protocol");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 1), "xxxx", "check repo2 cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
 
