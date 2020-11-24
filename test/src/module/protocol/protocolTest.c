@@ -289,7 +289,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--log-subprocess");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");            // Will be passed to remote (required)
-        hrnCfgArgRawZ(argList, cfgOptPgPort, "777");                // Not be passed to remote (required but has default)
+        hrnCfgArgRawZ(argList, cfgOptPgPort, "777");                // Not passed to remote (required but has default)
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, "--repo1-host-port=444");
         strLstAddZ(argList, "--repo1-host-config=/path/pgbackrest.conf");
