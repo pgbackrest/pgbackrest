@@ -235,7 +235,10 @@ static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LI
             "* Run the stanza-delete command on the repository host.\n"
             "\n"
             "Once the command successfully completes, it is the responsibility of the user to remove the stanza from all "
-                "pgBackRest configuration files."
+                "pgBackRest configuration files and/or environment variables.\n"
+            "\n"
+            "A stanza may only be deleted from one repository at a time. To delete the stanza from multiple repositories, repeat "
+                "the stanza-delete command for each repository while specifying the repo option."
         )
     )
 
