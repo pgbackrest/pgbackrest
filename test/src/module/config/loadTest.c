@@ -7,6 +7,8 @@ Test Configuration Load
 #include "version.h"
 
 #include "common/harnessConfig.h"
+#include "storage/cifs/storage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Test run
@@ -63,6 +65,49 @@ testRun(void)
             harnessCfgLoad(cfgCmdInfo, argList), OptionRequiredError,
             "info command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local default repo paths must be different");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 4, "4");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 3, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "host2");
+        TEST_ERROR(
+            harnessCfgLoad(cfgCmdExpire, argList), OptionInvalidValueError,
+            "local repo3 and repo4 paths are both '/var/lib/pgbackrest' but must be different");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local default repo paths for cifs repo type must be different");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, STORAGE_CIFS_TYPE);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, STORAGE_CIFS_TYPE);
+        TEST_ERROR(
+            harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidValueError,
+            "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local repo paths same but types different");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, STORAGE_POSIX_TYPE);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, STORAGE_CIFS_TYPE);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 3, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 3, "cool-bucket");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 3, "region");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 3, "endpoint");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 3, "mykey");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 3, "mysecretkey");
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 3);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 3);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo-host-cmd is defaulted when null");

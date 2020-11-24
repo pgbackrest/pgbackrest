@@ -20,6 +20,8 @@ Configuration Load
 #include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
+#include "storage/cifs/storage.h"
+#include "storage/posix/storage.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -88,6 +90,34 @@ cfgLoadUpdateOption(void)
             "%s command requires option: " CFGOPT_REPO "\n"
             "HINT: this command requires a specific repository to operate on",
             cfgCommandName(cfgCommand()));
+    }
+
+    // If there is more than one repo configured
+    if (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
+    {
+        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
+        {
+            // If the repo is local and either posix or cifs
+            if (!(cfgOptionIdxTest(cfgOptRepoHost, optionIdx)) &&
+                (strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), STORAGE_POSIX_TYPE_STR) ||
+                strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), STORAGE_CIFS_TYPE_STR)))
+            {
+                // Ensure a local repo does not have the same path as another local repo of the same type
+                for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+                {
+                    if (optionIdx != repoIdx && !(cfgOptionIdxTest(cfgOptRepoHost, repoIdx)) &&
+                        strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), cfgOptionIdxStr(cfgOptRepoType, repoIdx)) &&
+                        strEq(cfgOptionIdxStr(cfgOptRepoPath, optionIdx), cfgOptionIdxStr(cfgOptRepoPath, repoIdx)))
+                    {
+                        THROW_FMT(
+                            OptionInvalidValueError,
+                            "local repo%u and repo%u paths are both '%s' but must be different",
+                            cfgOptionGroupIdxToKey(cfgOptGrpRepo, optionIdx), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                            strZ(cfgOptionIdxStr(cfgOptRepoPath, repoIdx)));
+                    }
+                }
+            }
+        }
     }
 
     // Set default for repo-host-cmd
