@@ -117,15 +117,15 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         harnessCfgLoad(cfgCmdCheck, argList);
 
-        cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
+        cfgOptionIdxSet(cfgOptRepoHost, 0, cfgSourceParam, varNewStrZ("repo-host"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoHostCmd), testProjectExe(), "    check repo1-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), testProjectExe(), "    check repo1-host-cmd");
 
-        cfgOptionSet(cfgOptRepoHostCmd, cfgSourceParam, VARSTRDEF("/other"));
+        cfgOptionIdxSet(cfgOptRepoHostCmd, 0, cfgSourceParam, VARSTRDEF("/other"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoHostCmd), "/other", "    check repo1-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), "/other", "    check repo1-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg-host-cmd is defaulted when null");
@@ -337,28 +337,34 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        setenv("PGBACKREST_REPO1_S3_KEY", "mykey", true);
-        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "mysecretkey", true);
-
         // Invalid bucket name with verification enabled fails
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawZ(argList, cfgOptPg, "1");
-        strLstAdd(argList, strNew("--repo1-type=s3"));
-        strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
-        strLstAdd(argList, strNew("--repo1-s3-region=region"));
-        strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
-        strLstAdd(argList, strNew("--repo1-path=/repo"));
+        strLstAdd(argList, strNew("--repo2-type=s3"));
+        strLstAdd(argList, strNew("--repo2-s3-bucket=bogus.bucket"));
+        strLstAdd(argList, strNew("--repo2-s3-region=region"));
+        strLstAdd(argList, strNew("--repo2-s3-endpoint=endpoint"));
+        strLstAdd(argList, strNew("--repo2-path=/repo"));
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 2, "mykey");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 2, "mysecretkey");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 
         TEST_ERROR(
             harnessCfgLoad(cfgCmdArchiveGet, argList), OptionInvalidValueError,
-            "'bogus.bucket' is not valid for option 'repo1-s3-bucket'"
+            "'bogus.bucket' is not valid for option 'repo2-s3-bucket'"
                 "\nHINT: RFC-2818 forbids dots in wildcard matches."
                 "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
                 "\nHINT: remove dots from the bucket name.");
 
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 2);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 2);
+
         // Invalid bucket name with verification disabled succeeds
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 1, "mykey");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 1, "mysecretkey");
+
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");

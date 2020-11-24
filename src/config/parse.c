@@ -1431,15 +1431,22 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         // Initialize config
         cfgInit(config);
 
-        // Set option group default index. The first index in the group is automatically set unless the group option, e.g. repo, is
-        // set. For now the group default options are hard-coded but they could be dynamic. An assert has been added to make sure
-        // the code breaks if a new group is added.
+        // Set option group default index. For now the group default options are hard-coded but they could be dynamic. An assert has
+        // been added to make sure the code breaks if a new group is added.
         for (unsigned int groupId = 0; groupId < CFG_OPTION_GROUP_TOTAL; groupId++)
         {
             ASSERT(groupId == cfgOptGrpPg || groupId == cfgOptGrpRepo);
 
             // Get the group default option
             unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPg : cfgOptRepo;
+
+            // Does a default always exist?
+            config->optionGroup[groupId].indexDefaultExists =
+                // A default always exists for the pg group
+                groupId == cfgOptGrpPg ||
+                // The repo group allows a default when the repo option is not internal, i.e. either repo1 is the only key set
+                // or a repo is specified
+                (cfgOptionValid(cfgOptRepo) && !cfgDefOptionInternal(cfgCommand(), cfgOptRepo));
 
             // Does the group default option exist?
             if (cfgOptionTest(defaultOptionId))
@@ -1464,6 +1471,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                 // Set the default
                 config->optionGroup[groupId].indexDefault = index;
+                config->optionGroup[groupId].indexDefaultExists = true;
             }
         }
     }

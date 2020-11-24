@@ -274,17 +274,20 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // Error if an S3 bucket name contains dots
-    if (cfgOptionGroupValid(cfgOptGrpRepo) && cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifyTls) &&
-        strChr(cfgOptionStr(cfgOptRepoS3Bucket), '.') != -1)
+    // For each possible repo, error if an S3 bucket name contains dots
+    for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
     {
-        THROW_FMT(
-            OptionInvalidValueError,
-            "'%s' is not valid for option '%s'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches."
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
-                "\nHINT: remove dots from the bucket name.",
-            strZ(cfgOptionStr(cfgOptRepoS3Bucket)), cfgOptionName(cfgOptRepoS3Bucket));
+        if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx) &&
+            strChr(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), '.') != -1)
+        {
+            THROW_FMT(
+                OptionInvalidValueError,
+                "'%s' is not valid for option '%s'"
+                    "\nHINT: RFC-2818 forbids dots in wildcard matches."
+                    "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
+                    "\nHINT: remove dots from the bucket name.",
+                strZ(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx)), cfgOptionIdxName(cfgOptRepoS3Bucket, repoIdx));
+        }
     }
 
     // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.

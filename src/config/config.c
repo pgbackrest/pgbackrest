@@ -525,6 +525,7 @@ cfgOptionIdxDefault(ConfigOption optionId)
 
     ASSERT(configLocal != NULL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(!configOptionData[optionId].group || configLocal->optionGroup[configOptionData[optionId].groupId].indexDefaultExists);
 
     FUNCTION_TEST_RETURN(
         configOptionData[optionId].group ? configLocal->optionGroup[configOptionData[optionId].groupId].indexDefault : 0);
