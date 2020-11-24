@@ -64,11 +64,14 @@ lockAcquireFile(const String *lockFile, const String *execId, TimeMSec lockTimeo
     MEM_CONTEXT_TEMP_BEGIN()
     {
         Wait *wait = waitNew(lockTimeout);
-        bool retry = false;
+        bool retry;
         int errNo = 0;
 
         do
         {
+            // Assume there will be no retry
+            retry = false;
+
             // Attempt to open the file
             if ((result = open(strZ(lockFile), O_RDWR | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
             {
