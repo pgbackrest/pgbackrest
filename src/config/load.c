@@ -82,8 +82,8 @@ cfgLoadUpdateOption(void)
 
     // Make sure repo option is set for the default command role when it is not internal and more than one repo is configured or the
     // first configured repo is not key 1.
-    if (cfgOptionValid(cfgOptRepo) && !cfgDefOptionInternal(cfgCommand(), cfgOptRepo) && !cfgOptionTest(cfgOptRepo) &&
-        (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepo) && !cfgDefOptionInternal(cfgCommand(), cfgOptRepo) &&
+        !cfgOptionTest(cfgOptRepo) && (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
     {
         THROW_FMT(
             OptionRequiredError,
