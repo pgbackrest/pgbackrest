@@ -433,6 +433,7 @@ cfgOptionGroupIdxDefault(ConfigOptionGroup groupId)
 
     ASSERT(configLocal != NULL);
     ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
+    ASSERT(configLocal->optionGroup[groupId].indexDefaultExists);
 
     FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].indexDefault);
 }
