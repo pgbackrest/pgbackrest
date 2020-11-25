@@ -1771,7 +1771,8 @@ testRun(void)
                 NULL);
             manifestFileAdd(
                 manifestResume, &(ManifestFile){
-                    .name = STRDEF("pg_data/size-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", .size = 33});
+                    .name = STRDEF("pg_data/size-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                    .size = 33});
 
             // Time does not match between cluster and resume manifest
             storagePutP(
@@ -1955,7 +1956,7 @@ testRun(void)
             manifestFileAdd(
                 manifestResume, &(ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
 
-            // Time does not match between cluster and resume manifest (but resume because time is in future so delta enabled).  Note
+            // Time does not match between cluster and resume manifest (but resume because time is in future so delta enabled). Note
             // also that the repo file is intenionally corrupt to generate a warning about corruption in the repository.
             storagePutP(
                 storageNewWriteP(storagePgWrite(), STRDEF("time-mismatch2"), .timeModified = backupTimeStart + 100),
@@ -2011,8 +2012,8 @@ testRun(void)
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/time-mismatch2 does not have expected checksum"
-                    " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be an"
-                    " issue unless the resumed backup path in the repository is known to be corrupted.\n"
+                    " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
+                    " an issue unless the resumed backup path in the repository is known to be corrupted.\n"
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
                 "P01   INFO: backup file {[path]}/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
@@ -2522,7 +2523,8 @@ testRun(void)
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
-                "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
+                    ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191027-181320F\""

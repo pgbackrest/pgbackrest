@@ -108,14 +108,14 @@ Option constants
     STRING_DECLARE(CFGOPT_DRY_RUN_STR);
 #define CFGOPT_EXCLUDE                                              "exclude"
     STRING_DECLARE(CFGOPT_EXCLUDE_STR);
+#define CFGOPT_EXEC_ID                                              "exec-id"
+    STRING_DECLARE(CFGOPT_EXEC_ID_STR);
 #define CFGOPT_EXPIRE_AUTO                                          "expire-auto"
     STRING_DECLARE(CFGOPT_EXPIRE_AUTO_STR);
 #define CFGOPT_FILTER                                               "filter"
     STRING_DECLARE(CFGOPT_FILTER_STR);
 #define CFGOPT_FORCE                                                "force"
     STRING_DECLARE(CFGOPT_FORCE_STR);
-#define CFGOPT_HOST_ID                                              "host-id"
-    STRING_DECLARE(CFGOPT_HOST_ID_STR);
 #define CFGOPT_IGNORE_MISSING                                       "ignore-missing"
     STRING_DECLARE(CFGOPT_IGNORE_MISSING_STR);
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
@@ -146,6 +146,8 @@ Option constants
     STRING_DECLARE(CFGOPT_ONLINE_STR);
 #define CFGOPT_OUTPUT                                               "output"
     STRING_DECLARE(CFGOPT_OUTPUT_STR);
+#define CFGOPT_PG                                                   "pg"
+    STRING_DECLARE(CFGOPT_PG_STR);
 #define CFGOPT_PROCESS                                              "process"
     STRING_DECLARE(CFGOPT_PROCESS_STR);
 #define CFGOPT_PROCESS_MAX                                          "process-max"
@@ -160,6 +162,8 @@ Option constants
     STRING_DECLARE(CFGOPT_RECURSE_STR);
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
     STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
+#define CFGOPT_REPO                                                 "repo"
+    STRING_DECLARE(CFGOPT_REPO_STR);
 #define CFGOPT_RESUME                                               "resume"
     STRING_DECLARE(CFGOPT_RESUME_STR);
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
@@ -199,7 +203,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            207
+#define CFG_OPTION_TOTAL                                            125
 
 /***********************************************************************************************************************************
 Command enum
@@ -267,10 +271,10 @@ typedef enum
     cfgOptDelta,
     cfgOptDryRun,
     cfgOptExclude,
+    cfgOptExecId,
     cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptForce,
-    cfgOptHostId,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
     cfgOptLinkAll,
@@ -286,102 +290,19 @@ typedef enum
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
+    cfgOptPg,
     cfgOptPgHost,
-    cfgOptPgHost2,
-    cfgOptPgHost3,
-    cfgOptPgHost4,
-    cfgOptPgHost5,
-    cfgOptPgHost6,
-    cfgOptPgHost7,
-    cfgOptPgHost8,
     cfgOptPgHostCmd,
-    cfgOptPgHostCmd2,
-    cfgOptPgHostCmd3,
-    cfgOptPgHostCmd4,
-    cfgOptPgHostCmd5,
-    cfgOptPgHostCmd6,
-    cfgOptPgHostCmd7,
-    cfgOptPgHostCmd8,
     cfgOptPgHostConfig,
-    cfgOptPgHostConfig2,
-    cfgOptPgHostConfig3,
-    cfgOptPgHostConfig4,
-    cfgOptPgHostConfig5,
-    cfgOptPgHostConfig6,
-    cfgOptPgHostConfig7,
-    cfgOptPgHostConfig8,
     cfgOptPgHostConfigIncludePath,
-    cfgOptPgHostConfigIncludePath2,
-    cfgOptPgHostConfigIncludePath3,
-    cfgOptPgHostConfigIncludePath4,
-    cfgOptPgHostConfigIncludePath5,
-    cfgOptPgHostConfigIncludePath6,
-    cfgOptPgHostConfigIncludePath7,
-    cfgOptPgHostConfigIncludePath8,
     cfgOptPgHostConfigPath,
-    cfgOptPgHostConfigPath2,
-    cfgOptPgHostConfigPath3,
-    cfgOptPgHostConfigPath4,
-    cfgOptPgHostConfigPath5,
-    cfgOptPgHostConfigPath6,
-    cfgOptPgHostConfigPath7,
-    cfgOptPgHostConfigPath8,
     cfgOptPgHostPort,
-    cfgOptPgHostPort2,
-    cfgOptPgHostPort3,
-    cfgOptPgHostPort4,
-    cfgOptPgHostPort5,
-    cfgOptPgHostPort6,
-    cfgOptPgHostPort7,
-    cfgOptPgHostPort8,
     cfgOptPgHostUser,
-    cfgOptPgHostUser2,
-    cfgOptPgHostUser3,
-    cfgOptPgHostUser4,
-    cfgOptPgHostUser5,
-    cfgOptPgHostUser6,
-    cfgOptPgHostUser7,
-    cfgOptPgHostUser8,
     cfgOptPgLocal,
-    cfgOptPgLocal2,
-    cfgOptPgLocal3,
-    cfgOptPgLocal4,
-    cfgOptPgLocal5,
-    cfgOptPgLocal6,
-    cfgOptPgLocal7,
-    cfgOptPgLocal8,
     cfgOptPgPath,
-    cfgOptPgPath2,
-    cfgOptPgPath3,
-    cfgOptPgPath4,
-    cfgOptPgPath5,
-    cfgOptPgPath6,
-    cfgOptPgPath7,
-    cfgOptPgPath8,
     cfgOptPgPort,
-    cfgOptPgPort2,
-    cfgOptPgPort3,
-    cfgOptPgPort4,
-    cfgOptPgPort5,
-    cfgOptPgPort6,
-    cfgOptPgPort7,
-    cfgOptPgPort8,
     cfgOptPgSocketPath,
-    cfgOptPgSocketPath2,
-    cfgOptPgSocketPath3,
-    cfgOptPgSocketPath4,
-    cfgOptPgSocketPath5,
-    cfgOptPgSocketPath6,
-    cfgOptPgSocketPath7,
-    cfgOptPgSocketPath8,
     cfgOptPgUser,
-    cfgOptPgUser2,
-    cfgOptPgUser3,
-    cfgOptPgUser4,
-    cfgOptPgUser5,
-    cfgOptPgUser6,
-    cfgOptPgUser7,
-    cfgOptPgUser8,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
@@ -389,6 +310,7 @@ typedef enum
     cfgOptRecoveryOption,
     cfgOptRecurse,
     cfgOptRemoteType,
+    cfgOptRepo,
     cfgOptRepoAzureAccount,
     cfgOptRepoAzureCaFile,
     cfgOptRepoAzureCaPath,

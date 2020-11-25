@@ -190,7 +190,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         Storage *storage = NULL;
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_AZURE_TYPE), false), "get repo storage");
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
         TEST_RESULT_STR(((StorageAzure *)storage->driver)->account, TEST_ACCOUNT_STR, "    check account");
         TEST_RESULT_STR(((StorageAzure *)storage->driver)->container, TEST_CONTAINER_STR, "    check container");
@@ -299,7 +299,7 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *storage = NULL;
-                TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_AZURE_TYPE), true), "get repo storage");
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
                 driver = (StorageAzure *)storage->driver;
                 TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
@@ -731,7 +731,7 @@ testRun(void)
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SAS);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
-                TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_AZURE_TYPE), true), "get repo storage");
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
                 driver = (StorageAzure *)storage->driver;
                 TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");

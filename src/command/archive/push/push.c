@@ -303,7 +303,9 @@ cmdArchivePush(void)
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent more than
                 // one async process being launched.
                 if (!pushed && !forked &&
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
+                    lockAcquire(
+                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0,
+                        false))
                 {
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
@@ -348,14 +350,6 @@ cmdArchivePush(void)
         }
         else
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            storageRepo();
-
-            // Get archive info
-            ArchivePushCheckResult archiveInfo = archivePushCheck(
-                cfgOptionTest(cfgOptPgPath), cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStrNull(cfgOptRepoCipherPass));
-
             // Check if the push queue has been exceeded
             if (cfgOptionTest(cfgOptArchivePushQueueMax) &&
                 archivePushDrop(strPath(walFile), archivePushReadyList(strPath(walFile))))
@@ -365,6 +359,14 @@ cmdArchivePush(void)
             // Else push the file
             else
             {
+                // Get the repo storage in case it is remote and encryption settings need to be pulled down
+                storageRepo();
+
+                // Get archive info
+                ArchivePushCheckResult archiveInfo = archivePushCheck(
+                    cfgOptionTest(cfgOptPgPath), cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                    cfgOptionStrNull(cfgOptRepoCipherPass));
+
                 // Push the file to the archive
                 String *warning = archivePushFile(
                     walFile, archiveInfo.archiveId, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
@@ -523,8 +525,17 @@ cmdArchivePushAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
+                            // If there was a warning then output it to the log
+                            const String *warning = varStr(protocolParallelJobResult(job));
+
+                            if (warning != NULL)
+                                LOG_WARN_PID(processId, strZ(warning));
+
+                            // Log success
                             LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
-                            archiveAsyncStatusOkWrite(archiveModePush, walFile, varStr(protocolParallelJobResult(job)));
+
+                            // Write the status file
+                            archiveAsyncStatusOkWrite(archiveModePush, walFile, warning);
                         }
                         // Else the job errored
                         else

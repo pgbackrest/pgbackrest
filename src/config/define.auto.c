@@ -378,7 +378,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
-                    cfgDefOptOnline,
+                    cfgOptOnline,
                     "1"
                 )
             )
@@ -426,7 +426,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
-                    cfgDefOptArchiveCheck,
+                    cfgOptArchiveCheck,
                     "1"
                 )
             )
@@ -1278,6 +1278,41 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("exec-id")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(true)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("expire-auto")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -1368,7 +1403,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
-                    cfgDefOptOnline,
+                    cfgOptOnline,
                     "0"
                 )
 
@@ -1439,33 +1474,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                         "running stop --force on the database server will shutdown the backup process on the backup server."
                 )
             )
-        )
-    )
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    CFGDEFDATA_OPTION
-    (
-        CFGDEFDATA_OPTION_NAME("host-id")
-        CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(true)
-
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
-        CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
-        CFGDEFDATA_OPTION_OPTIONAL_LIST
-        (
-            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 8)
         )
     )
 
@@ -2214,6 +2222,63 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("pg")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(true)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 8)
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdBackup)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdCheck)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaCreate)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
+
+            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaUpgrade)
+
+                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
+            )
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("pg-host")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
@@ -2249,7 +2314,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptPgLocal,
+                cfgOptPgLocal,
                 "0"
             )
 
@@ -2312,7 +2377,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-cmd")
         )
     )
@@ -2351,7 +2416,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-config")
         )
@@ -2391,7 +2456,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d")
         )
     )
@@ -2430,7 +2495,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest")
         )
     )
@@ -2469,7 +2534,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-ssh-port")
         )
     )
@@ -2508,7 +2573,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("postgres")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-user")
         )
@@ -2649,7 +2714,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgPath)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgPath)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("5432")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-port")
         )
@@ -2688,7 +2753,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgPath)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgPath)
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-socket-path")
         )
     )
@@ -2724,7 +2789,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptPgPath)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgPath)
         )
     )
 
@@ -2915,7 +2980,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptType,
+                cfgOptType,
                 "default",
                 "immediate",
                 "name",
@@ -3016,6 +3081,46 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("repo")
+        CFGDEFDATA_OPTION_REQUIRED(false)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
+        CFGDEFDATA_OPTION_INTERNAL(true)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 1)
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("repo-azure-account")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
@@ -3058,7 +3163,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
         )
@@ -3109,7 +3214,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
         )
@@ -3160,7 +3265,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
         )
@@ -3214,7 +3319,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
         )
@@ -3265,7 +3370,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
 
@@ -3318,7 +3423,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
         )
@@ -3369,7 +3474,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
         )
@@ -3429,7 +3534,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
 
@@ -3483,7 +3588,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
 
@@ -3537,7 +3642,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "azure"
             )
 
@@ -3590,7 +3695,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoCipherType,
+                cfgOptRepoCipherType,
                 "aes-256-cbc"
             )
         )
@@ -3734,7 +3839,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoLocal,
+                cfgOptRepoLocal,
                 "0"
             )
 
@@ -3816,7 +3921,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-cmd")
         )
     )
@@ -3860,7 +3965,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-config")
         )
@@ -3905,7 +4010,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d")
         )
     )
@@ -3949,7 +4054,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest")
         )
     )
@@ -3993,7 +4098,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-ssh-port")
         )
     )
@@ -4039,7 +4144,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptRepoHost)
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("pgbackrest")
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-user")
         )
@@ -4420,7 +4525,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
         )
@@ -4471,7 +4576,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
         )
@@ -4522,7 +4627,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
         )
@@ -4573,7 +4678,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
         )
@@ -4624,7 +4729,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
         )
@@ -4675,7 +4780,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoS3KeyType,
+                cfgOptRepoS3KeyType,
                 "shared"
             )
         )
@@ -4726,7 +4831,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoS3KeyType,
+                cfgOptRepoS3KeyType,
                 "shared"
             )
         )
@@ -4786,7 +4891,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
 
@@ -4840,7 +4945,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
 
@@ -4893,7 +4998,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
         )
@@ -4944,7 +5049,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoS3KeyType,
+                cfgOptRepoS3KeyType,
                 "auto"
             )
         )
@@ -4995,7 +5100,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoS3KeyType,
+                cfgOptRepoS3KeyType,
                 "shared"
             )
         )
@@ -5055,7 +5160,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
 
@@ -5109,7 +5214,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptRepoType,
+                cfgOptRepoType,
                 "s3"
             )
 
@@ -5339,7 +5444,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdInfo)
 
-                CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgDefOptStanza)
+                CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptStanza)
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
 
                 CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY("Backup set to detail.")
@@ -5470,7 +5575,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
-                    cfgDefOptArchiveAsync,
+                    cfgOptArchiveAsync,
                     "1"
                 )
             )
@@ -5481,7 +5586,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
-                    cfgDefOptArchiveAsync,
+                    cfgOptArchiveAsync,
                     "1"
                 )
             )
@@ -5754,7 +5859,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
-                    cfgDefOptType,
+                    cfgOptType,
                     "name",
                     "time",
                     "xid"
@@ -5801,7 +5906,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
-                    cfgDefOptType,
+                    cfgOptType,
                     "immediate",
                     "name",
                     "time",
@@ -5851,7 +5956,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
-                    cfgDefOptType,
+                    cfgOptType,
                     "time",
                     "xid"
                 )
@@ -5895,7 +6000,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
                 (
-                    cfgDefOptType,
+                    cfgOptType,
                     "default",
                     "name",
                     "standby",
@@ -5960,7 +6065,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 32)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptSckKeepAlive,
+                cfgOptSckKeepAlive,
                 "1"
             )
         )
@@ -6013,7 +6118,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 3600)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptSckKeepAlive,
+                cfgOptSckKeepAlive,
                 "1"
             )
         )
@@ -6066,7 +6171,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 900)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
             (
-                cfgDefOptSckKeepAlive,
+                cfgOptSckKeepAlive,
                 "1"
             )
         )

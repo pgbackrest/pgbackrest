@@ -671,7 +671,7 @@ testRun(void)
             "P00   WARN: unable to check pg-5: [DbConnectError] raised from remote-0 protocol on 'localhost':"
                 " unable to connect to 'dbname='postgres' port=5432': could not connect to server: [NO SUCH FILE OR DIRECTORY]");
 
-        TEST_RESULT_INT(result.primaryIdx, 7, "    check primary id");
+        TEST_RESULT_INT(result.primaryIdx, 3, "    check primary idx");
         TEST_RESULT_BOOL(result.primary != NULL, true, "    check primary");
         TEST_RESULT_STR_Z(dbArchiveMode(result.primary), "on", "    dbArchiveMode");
         TEST_RESULT_STR_Z(dbArchiveCommand(result.primary), PROJECT_BIN, "    dbArchiveCommand");

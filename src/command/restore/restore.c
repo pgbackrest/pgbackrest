@@ -40,6 +40,8 @@ Recovery constants
 #define RECOVERY_TARGET_XID                                         "recovery_target_xid"
 
 #define RECOVERY_TARGET_ACTION                                      "recovery_target_action"
+#define RECOVERY_TARGET_ACTION_PAUSE                                "pause"
+    STRING_STATIC(RECOVERY_TARGET_ACTION_PAUSE_STR,                 RECOVERY_TARGET_ACTION_PAUSE);
 #define RECOVERY_TARGET_ACTION_SHUTDOWN                             "shutdown"
     STRING_STATIC(RECOVERY_TARGET_ACTION_SHUTDOWN_STR,              RECOVERY_TARGET_ACTION_SHUTDOWN);
 
@@ -1364,6 +1366,7 @@ restoreRecoveryOption(unsigned int pgVersion)
             // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 
+            kvPut(optionReplace, VARSTR(CFGOPT_EXEC_ID_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);
@@ -1409,7 +1412,7 @@ restoreRecoveryOption(unsigned int pgVersion)
         {
             const String *targetAction = cfgOptionStr(cfgOptTargetAction);
 
-            if (!strEq(targetAction, varStr(cfgOptionDefault(cfgOptTargetAction))))
+            if (!strEq(targetAction, RECOVERY_TARGET_ACTION_PAUSE_STR))
             {
                 // Write recovery_target on supported PostgreSQL versions
                 if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
@@ -1626,19 +1629,21 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                 .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
             BUFSTR(content));
 
-        // The recovery.signal file is required for targeted recovery
-        storagePutP(
-            storageNewWriteP(
-                storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
-                .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
-            NULL);
-
         // The standby.signal file is required for standby mode
         if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
         {
             storagePutP(
                 storageNewWriteP(
                     storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
+                    .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
+                NULL);
+        }
+        // Else the recovery.signal file is required for targeted recovery
+        else
+        {
+            storagePutP(
+                storageNewWriteP(
+                    storagePgWrite(), PG_FILE_RECOVERYSIGNAL_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
                     .noAtomic = true, .noSyncPath = true, .user = dataPath.user, .group = dataPath.group),
                 NULL);
         }
