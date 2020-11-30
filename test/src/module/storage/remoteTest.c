@@ -29,17 +29,18 @@ testRun(void)
     strLstAddZ(argList, "--stanza=db");
     strLstAddZ(argList, "--protocol-timeout=10");
     strLstAddZ(argList, "--buffer-size=16384");
+    hrnCfgArgKeyRawFmt(argList, cfgOptPgPath, 1, "%s/pg", testPath());
     strLstAddZ(argList, "--repo1-host=localhost");
     strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
     strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-    harnessCfgLoad(cfgCmdArchivePush, argList);
+    hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+    harnessCfgLoad(cfgCmdArchiveGet, argList);
 
     // Set type since we'll be running local and remote tests here
     cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("repo"));
 
-    // Set pg settings so we can run both db and backup remotes
+    // Set pg host so we can run both pg and repo remotes
     cfgOptionSet(cfgOptPgHost, cfgSourceParam, VARSTRDEF("localhost"));
-    cfgOptionSet(cfgOptPgPath, cfgSourceParam, VARSTR(strNewFmt("%s/pg", testPath())));
 
     // Start a protocol server to test the remote protocol
     Buffer *serverRead = bufNew(8192);

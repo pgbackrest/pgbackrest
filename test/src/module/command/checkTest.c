@@ -193,7 +193,8 @@ testRun(void)
                 "\n"
                 "[db:history]\n"
                 "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n"));
-        storagePutP(storageNewWriteP(storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
+
+        storagePutP(storageNewWriteP(storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
 
         const Buffer *backupInfoContent = harnessInfoChecksum(
             strNew(
@@ -207,7 +208,7 @@ testRun(void)
                 "[db:history]\n"
                 "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
                     "\"db-version\":\"9.2\"}\n"));
-        storagePutP(storageNewWriteP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR), backupInfoContent);
+        storagePutP(storageNewWriteP(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE_STR), backupInfoContent);
 
         // Single repo config - error when checking archive mode setting on database
         harnessPqScriptSet((HarnessPq [])
@@ -310,7 +311,7 @@ testRun(void)
 
         storagePutP(
             storageNewWriteP(
-                storageRepoWrite(),
+                storageRepoIdxWrite(0),
                 strNew(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
             buffer);
 
