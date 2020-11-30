@@ -238,7 +238,6 @@ testRun(void)
             "\n"
             "Stanza Options:\n"
             "\n"
-            "  --pg                             set PostgreSQL cluster\n"
             "  --pg-path                        postgreSQL data directory\n"
             "\n"
             "Use 'pgbackrest help restore [option]' for more information.\n"));

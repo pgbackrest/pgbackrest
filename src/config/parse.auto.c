@@ -537,10 +537,6 @@ static const struct option optionList[] =
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptPg,
     },
-    {
-        .name = "reset-pg",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPg,
-    },
 
     // pg-host option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1898,10 +1894,6 @@ static const struct option optionList[] =
         .name = "repo",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptRepo,
-    },
-    {
-        .name = "reset-repo",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepo,
     },
 
     // repo-azure-account option

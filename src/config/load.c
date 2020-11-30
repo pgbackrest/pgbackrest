@@ -73,9 +73,6 @@ cfgLoadUpdateOption(void)
     // way to prevent users from setting these options but still allow them to be used for other roles.
     if (cfgCommandRole() == cfgCmdRoleDefault)
     {
-        if (cfgOptionTest(cfgOptPg) && cfgDefOptionInternal(cfgCommand(), cfgOptPg))
-            THROW_FMT(OptionInvalidError, "option '" CFGOPT_PG "' not valid for command '%s'", cfgCommandName(cfgCommand()));
-
         if (cfgOptionTest(cfgOptRepo) && cfgDefOptionInternal(cfgCommand(), cfgOptRepo))
             THROW_FMT(OptionInvalidError, "option '" CFGOPT_REPO "' not valid for command '%s'", cfgCommandName(cfgCommand()));
     }

@@ -39,12 +39,6 @@ testRun(void)
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        hrnCfgArgRawZ(argList, cfgOptPg, "1");
-        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidError, "option 'pg' not valid for command 'check'");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidError, "option 'repo' not valid for command 'check'");
 
