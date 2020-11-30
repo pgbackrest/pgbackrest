@@ -48,6 +48,15 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Report page checksum errors in <cmd>info</cmd> command <id>text</id> output.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="brian.peterson"/>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
