@@ -72,6 +72,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--pg1-path=/path/to/pg");
+                strLstAddZ(argList, "--pg1-database=testdb");
                 strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
                 strLstAddZ(argList, "--process=0");
                 harnessCfgLoadRole(cfgCmdBackup, cfgCmdRoleRemote, argList);
@@ -79,13 +80,13 @@ testRun(void)
                 // Set script
                 harnessPqScriptSet((HarnessPq [])
                 {
-                    HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
+                    HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
                     HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
                     HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, "/pgdata", NULL, NULL),
                     HRNPQ_MACRO_CLOSE(1),
 
-                    HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
+                    HRNPQ_MACRO_OPEN(1, "dbname='testdb' port=5432"),
                     HRNPQ_MACRO_SET_SEARCH_PATH(1),
                     HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
                     HRNPQ_MACRO_VALIDATE_QUERY(1, PG_VERSION_84, "/pgdata", NULL, NULL),
