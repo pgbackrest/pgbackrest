@@ -1064,11 +1064,11 @@
 
                     <!-- ======================================================================================================= -->
                     <config-key id="pg-database" name="PostgreSQL Database">
-                        <summary><postgres/> database user.</summary>
+                        <summary><postgres/> database.</summary>
 
                         <text>The database name used when connecting to <postgres/>. The default is usually best but some installations may not contain this database.
 
-                        Note that for legacy reasons the setting of <id>PGDATABASE</id> will be ignored.</text>
+                        Note that for legacy reasons the setting of the <id>PGDATABASE</id> environment variable will be ignored.</text>
 
                         <example>backupdb</example>
                     </config-key>

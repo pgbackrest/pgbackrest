@@ -2289,13 +2289,13 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
-        CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL database user.")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL database.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "The database name used when connecting to PostgreSQL. The default is usually best but some installations may not "
                 "contain this database.\n"
             "\n"
-            "Note that for legacy reasons the setting of PGDATABASE will be ignored."
+            "Note that for legacy reasons the setting of the PGDATABASE environment variable will be ignored."
         )
 
         CFGDEFDATA_OPTION_COMMAND_LIST
