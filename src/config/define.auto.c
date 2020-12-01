@@ -2279,6 +2279,44 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     // -----------------------------------------------------------------------------------------------------------------------------
     CFGDEFDATA_OPTION
     (
+        CFGDEFDATA_OPTION_NAME("pg-database")
+        CFGDEFDATA_OPTION_REQUIRED(true)
+        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
+        CFGDEFDATA_OPTION_INTERNAL(false)
+
+        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
+        CFGDEFDATA_OPTION_SECURE(false)
+
+        CFGDEFDATA_OPTION_HELP_SECTION("stanza")
+        CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL database user.")
+        CFGDEFDATA_OPTION_HELP_DESCRIPTION
+        (
+            "The database name used when connecting to PostgreSQL. The default is usually best but some installations may not "
+                "contain this database.\n"
+            "\n"
+            "Note that for legacy reasons the setting of PGDATABASE will be ignored."
+        )
+
+        CFGDEFDATA_OPTION_COMMAND_LIST
+        (
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
+            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+        )
+
+        CFGDEFDATA_OPTION_OPTIONAL_LIST
+        (
+            CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgPath)
+            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("postgres")
+        )
+    )
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    CFGDEFDATA_OPTION
+    (
         CFGDEFDATA_OPTION_NAME("pg-host")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
