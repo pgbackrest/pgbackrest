@@ -143,6 +143,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-path=/pg1");
+        strLstAddZ(argList, "--pg1-database=backupdb");
         harnessCfgLoad(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -151,7 +152,7 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN(1, "dbname='postgres' port=5432"),
+            HRNPQ_MACRO_OPEN(1, "dbname='backupdb' port=5432"),
             HRNPQ_MACRO_SET_SEARCH_PATH(1),
             HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
 
@@ -199,7 +200,7 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='postgres' port=5432", PG_VERSION_83, "/pg1", NULL, NULL),
+            HRNPQ_MACRO_OPEN_LE_91(1, "dbname='backupdb' port=5432", PG_VERSION_83, "/pg1", NULL, NULL),
 
             // Get advisory lock
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -226,7 +227,7 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='backupdb' port=5432", PG_VERSION_95, "/pg1", false, NULL, NULL),
 
             // Get start time
             HRNPQ_MACRO_TIME_QUERY(1, 1000),
@@ -282,7 +283,7 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='backupdb' port=5432", PG_VERSION_95, "/pg1", false, NULL, NULL),
 
             // Start backup when backup is in progress
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -321,7 +322,7 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='backupdb' port=5432", PG_VERSION_96, "/pg1", false, NULL, NULL),
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
