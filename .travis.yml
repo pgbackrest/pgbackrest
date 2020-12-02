@@ -30,9 +30,6 @@ jobs:
     # All integration tests
     - env: PGB_CI="test --vm=u18 --param=build-package --param=module=mock --param=module=real"
 
-    # All integration tests
-    - env: PGB_CI="test --vm=co6 --param=build-package --param=module=mock --param=module=real"
-
     # Valgrind is disabled due to some platform-specific issues in getpwuid() and getgrgid() that do not seem to be pgBackRest bugs.
     # Run in a different timezone to check time tests.
     - arch: ppc64le
@@ -43,9 +40,6 @@ jobs:
 
     # All unit tests (with coverage) on the newest gcc available
     - env: PGB_CI="test --vm=f32 --param=c-only --param=no-performance"
-
-    # RHEL/CentOS 6 documentation
-    - env: PGB_CI=" doc --vm=co6"
 
     # RHEL/CentOS 7 documentation
     - env: PGB_CI=" doc --vm=co7"

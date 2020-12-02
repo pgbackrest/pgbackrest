@@ -7,22 +7,16 @@
     <variable-list>
         <!-- Defined OS types -->
         <variable key="os-debian">debian</variable>
-        <variable key="os-centos6">centos6</variable>
         <variable key="os-centos7">centos7</variable>
 
         <!-- OS titles -->
         <variable key="os-debian-title">Debian &amp; Ubuntu</variable>
-        <variable key="os-centos6-title">RHEL &amp; CentOS 6</variable>
         <variable key="os-centos7-title">RHEL &amp; CentOS 7</variable>
 
         <!-- Base PostgreSQL versions -->
         <variable key="os-debian-pg-version">12</variable>
         <variable key="os-debian-pg-version-min">12</variable>
         <variable key="os-debian-pg-version-max">13</variable>
-
-        <variable key="os-centos6-pg-version">9.5</variable>
-        <variable key="os-centos6-pg-version-min">9.2</variable>
-        <variable key="os-centos6-pg-version-max">9.5</variable>
 
         <variable key="os-centos7-pg-version">10</variable>
         <variable key="os-centos7-pg-version-min">9.6</variable>
@@ -31,7 +25,7 @@
         <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
         <variable key="package">none</variable>
 
-        <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos6, centos7 -->
+        <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos7 -->
         <variable key="os-type">debian</variable>
 
         <!-- Will encryption be used in the documentation? It can be useful for testing to omit encryption. -->
@@ -39,21 +33,17 @@
 
         <!-- Common if expressions for testing os-type -->
         <variable key="os-type-is-debian">'{[os-type]}' eq '{[os-debian]}'</variable>
-        <variable key="os-type-is-centos6">'{[os-type]}' eq '{[os-centos6]}'</variable>
         <variable key="os-type-is-centos7">'{[os-type]}' eq '{[os-centos7]}'</variable>
-        <variable key="os-type-is-centos">({[os-type-is-centos6]} || {[os-type-is-centos7]})</variable>
+        <variable key="os-type-is-centos">({[os-type-is-centos7]})</variable>
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:16.04</variable>
-        <variable key="os-image" if="{[os-type-is-centos6]}">centos:6</variable>
         <variable key="os-image" if="{[os-type-is-centos7]}">centos:7</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
-        <variable key="user-guide-subtitle" if="{[os-type-is-centos6]}">{[os-centos6-title]}</variable>
         <variable key="user-guide-subtitle" if="{[os-type-is-centos7]}">{[os-centos7-title]}</variable>
 
         <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
-        <variable key="user-guide-os" if="{[os-type-is-centos6]}">RHEL/CentOS 6</variable>
         <variable key="user-guide-os" if="{[os-type-is-centos7]}">RHEL/CentOS 7</variable>
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
@@ -71,10 +61,6 @@
         <variable key="pg-version-min" if="{[os-type-is-debian]}">{[os-debian-pg-version-min]}</variable>
         <variable key="pg-version-max" if="{[os-type-is-debian]}">{[os-debian-pg-version-max]}</variable>
 
-        <variable key="pg-version" if="{[os-type-is-centos6]}">{[os-centos6-pg-version]}</variable>
-        <variable key="pg-version-min" if="{[os-type-is-centos6]}">{[os-centos6-pg-version-min]}</variable>
-        <variable key="pg-version-max" if="{[os-type-is-centos6]}">{[os-centos6-pg-version-max]}</variable>
-
         <variable key="pg-version" if="{[os-type-is-centos7]}">{[os-centos7-pg-version]}</variable>
         <variable key="pg-version-min" if="{[os-type-is-centos7]}">{[os-centos7-pg-version-min]}</variable>
         <variable key="pg-version-max" if="{[os-type-is-centos7]}">{[os-centos7-pg-version-max]}</variable>
@@ -86,7 +72,6 @@
         <variable key="wal-level" if="{[pg-version]} &gt;= 9.6">replica</variable>
 
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">13</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-centos6]}">9.6</variable>
         <variable key="pg-version-upgrade" if="{[os-type-is-centos7]}">11</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
@@ -226,31 +211,24 @@
         <variable key="pg-cluster-create-upgrade" if="{[os-type-is-debian]}">pg_createcluster {[pg-version-upgrade]} {[postgres-cluster-demo]}</variable>
 
         <variable key="pg-cluster-start" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} start</variable>
-        <variable key="pg-cluster-start" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} start</variable>
         <variable key="pg-cluster-start" if="{[os-type-is-centos7]}">systemctl start postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-start-upgrade" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version-upgrade]} {[postgres-cluster-demo]} start</variable>
-        <variable key="pg-cluster-start-upgrade" if="{[os-type-is-centos6]}">service postgresql-{[pg-version-upgrade]} start</variable>
         <variable key="pg-cluster-start-upgrade" if="{[os-type-is-centos7]}">systemctl start postgresql-{[pg-version-upgrade]}.service</variable>
 
         <variable key="pg-cluster-stop" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} stop</variable>
-        <variable key="pg-cluster-stop" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} stop</variable>
         <variable key="pg-cluster-stop" if="{[os-type-is-centos7]}">systemctl stop postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-restart" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} restart</variable>
-        <variable key="pg-cluster-restart" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} restart</variable>
         <variable key="pg-cluster-restart" if="{[os-type-is-centos7]}">systemctl restart postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-reload" if="{[os-type-is-debian]}">pg_ctlcluster {[pg-version]} {[postgres-cluster-demo]} reload</variable>
-        <variable key="pg-cluster-reload" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} reload</variable>
         <variable key="pg-cluster-reload" if="{[os-type-is-centos7]}">systemctl reload postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-check" if="{[os-type-is-debian]}">pg_lsclusters</variable>
-        <variable key="pg-cluster-check" if="{[os-type-is-centos6]}">service postgresql-{[pg-version]} status</variable>
         <variable key="pg-cluster-check" if="{[os-type-is-centos7]}">systemctl status postgresql-{[pg-version]}.service</variable>
 
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-debian]}">pg_lsclusters</variable>
-        <variable key="pg-cluster-check-upgrade" if="{[os-type-is-centos6]}">service postgresql-{[pg-version-upgrade]} status</variable>
         <variable key="pg-cluster-check-upgrade" if="{[os-type-is-centos7]}">systemctl status postgresql-{[pg-version-upgrade]}.service</variable>
 
         <!-- Add more tables to make the backup more interesting. This is a rough and ready solution that can be pasted into the
@@ -347,37 +325,6 @@
         ENV LANG en_US.UTF-8
 
         ENTRYPOINT service ssh restart &amp;&amp; bash
-    </host-define>
-
-    <host-define if="{[os-type-is-centos6]}" image="{[host-image]}" from="{[os-image]}">
-        {[copy-ca-cert]}
-
-        # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim 2>&amp;1
-
-        {[sudo-disable-core-dump]}
-
-        # Install CA certificate
-        RUN update-ca-trust enable &amp;&amp; \
-            update-ca-trust extract
-
-        # Regenerate SSH keys
-        RUN rm -f /etc/ssh/ssh_host_rsa_key* &amp;&amp; \
-            ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
-
-        # Install PostgreSQL
-        RUN rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG-10 &amp;&amp; \
-            rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-6-x86_64/pgdg-redhat-repo-latest.noarch.rpm &amp;&amp; \
-            yum install -y postgresql{[pg-version-nodot]}-server postgresql{[pg-version-upgrade-nodot]}-server
-
-        # Create an ssh key for root so all hosts can ssh to each other as root
-        RUN \ {[ssh-key-install]}
-
-        # Add doc user with sudo privileges
-        RUN adduser -n {[host-user]} &amp;&amp; \
-            echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
-
-        ENTRYPOINT /usr/sbin/sshd -D
     </host-define>
 
     <host-define if="{[os-type-is-centos7]}" image="{[host-image]}" from="{[os-image]}">
@@ -1280,18 +1227,8 @@
                     <exe-highlight>could not find the database system</exe-highlight>
                 </execute>
 
-                <execute if="{[os-type-is-centos6]}" user="root" show="n">
-                    <exe-cmd>rm -f {[postgres-log-pgstartup-demo]}</exe-cmd>
-                </execute>
-
                 <execute if="{[os-type-is-centos]}" user="root" err-expect="1">
                     <exe-cmd>{[pg-cluster-start]}</exe-cmd>
-                </execute>
-
-                <execute if="{[os-type-is-centos6]}" user="root" output="y">
-                    <exe-cmd>cat {[postgres-log-pgstartup-demo]}</exe-cmd>
-                    <exe-highlight-type>error</exe-highlight-type>
-                    <exe-highlight>could not find the database system</exe-highlight>
                 </execute>
 
                 <execute if="{[os-type-is-centos7]}" user="root" output="y" err-expect="3">
