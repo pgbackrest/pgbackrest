@@ -213,7 +213,8 @@ parseTime(const String *value)
     if (result == 0 && strcmp(strZ(value), "0") != 0)
         THROW_FMT(FormatError, "value '%s' is not valid", strZ(value));
 
-    FUNCTION_TEST_RETURN((uint64_t)(result * 1000));
+    // !!! THIS BIT IS A PRETTY HACKY
+    FUNCTION_TEST_RETURN((uint64_t)(result * (strEndsWithZ(value, "ms") ? 1 : 1000)));
 }
 
 /***********************************************************************************************************************************
@@ -1325,7 +1326,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                             }
                                             MEM_CONTEXT_END();
 
-                                            valueInt64 = varInt64Force(configOptionValue->value);
+                                            valueInt64 = varInt64(configOptionValue->value);
                                         }
                                     }
                                     CATCH_ANY()
@@ -1337,12 +1338,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     TRY_END();
 
                                     // Check value range
-                                    // !!! NEED TO FIX THIS -- DEFINE NEEDS TO RETURN INT64
-                                    double valueDbl = (double)valueInt64 / (optionDefType == cfgDefOptTypeTime ? 1000 : 1);
-
                                     if (cfgDefOptionAllowRange(config->command, optionId) &&
-                                        (valueDbl < cfgDefOptionAllowRangeMin(config->command, optionId) ||
-                                         valueDbl > cfgDefOptionAllowRangeMax(config->command, optionId)))
+                                        (valueInt64 < cfgDefOptionAllowRangeMin(config->command, optionId) ||
+                                         valueInt64 > cfgDefOptionAllowRangeMax(config->command, optionId)))
                                     {
                                         THROW_FMT(
                                             OptionInvalidValueError, "'%s' is out of range for '%s' option", strZ(value),

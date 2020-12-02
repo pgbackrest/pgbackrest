@@ -180,18 +180,6 @@ Macros to compare results of common data types
 #define TEST_RESULT_BOOL(statement, expected, ...)                                                                                 \
     TEST_RESULT_BOOL_PARAM(statement, expected, __VA_ARGS__);
 
-#define TEST_RESULT_DOUBLE_PARAM(statement, expected, ...)                                                                         \
-    do                                                                                                                             \
-    {                                                                                                                              \
-        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
-        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
-        hrnTestResultDouble(statement, expected);                                                                                  \
-    }                                                                                                                              \
-    while (0)
-
-#define TEST_RESULT_DOUBLE(statement, expected, ...)                                                                               \
-    TEST_RESULT_DOUBLE_PARAM(statement, expected, __VA_ARGS__);
-
 #define TEST_RESULT_INT_PARAM(statement, expected, operation, ...)                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \

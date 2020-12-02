@@ -74,7 +74,6 @@ testRun(void)
         TEST_RESULT_STR_Z(helpRenderValue(varNewBool(true)), "y", "boolean y");
         TEST_RESULT_STR_Z(helpRenderValue(varNewBool(false)), "n", "boolean n");
         TEST_RESULT_STR_Z(helpRenderValue(varNewStrZ("test-string")), "test-string", "string");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewDbl(1.234)), "1.234", "double");
         TEST_RESULT_STR_Z(helpRenderValue(varNewInt(1234)), "1234", "int");
     }
 

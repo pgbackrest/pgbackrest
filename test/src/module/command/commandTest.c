@@ -29,6 +29,7 @@ testRun(void)
         strLstAddZ(argList, PROJECT_BIN);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "10");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
         strLstAddZ(argList, "param1");
@@ -36,8 +37,8 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameter");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async --exec-id=1-test --pg1-path=/pg1"
-                " --stanza=test");
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async --archive-timeout=10000ms"
+                " --exec-id=1-test --pg1-path=/pg1 --stanza=test");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple parameters");

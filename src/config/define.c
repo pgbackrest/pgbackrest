@@ -138,10 +138,10 @@ typedef enum
 #define CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(rangeMinParam, rangeMaxParam)                                                       \
     CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
         configDefDataTypeAllowRange, 4, 0,                                                                                         \
-        (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMinParam * 100)) % 1000000000L),                                 \
-        (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMinParam * 100)) / 1000000000L),                                 \
-        (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMaxParam * 100)) % 1000000000L),                                 \
-        (const void *)(intptr_t)(int32_t)(((int64_t)((double)rangeMaxParam * 100)) / 1000000000L)),
+        (const void *)(intptr_t)(int32_t)((int64_t)rangeMinParam >> 32),                                                           \
+        (const void *)(intptr_t)(int32_t)((int64_t)rangeMinParam & 0xFFFFFFFF),                                                    \
+        (const void *)(intptr_t)(int32_t)((int64_t)rangeMaxParam >> 32),                                                           \
+        (const void *)(intptr_t)(int32_t)((int64_t)rangeMaxParam & 0xFFFFFFFF)),                                                   \
 
 #define CFGDEFDATA_OPTION_OPTIONAL_DEPEND(optionDepend)                                                                            \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeDepend, 0, optionDepend),
@@ -391,7 +391,7 @@ cfgDefOptionAllowRange(ConfigCommand commandId, ConfigOption optionId)
     FUNCTION_TEST_RETURN(dataDefFound);
 }
 
-double
+int64_t
 cfgDefOptionAllowRangeMax(ConfigCommand commandId, ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -404,11 +404,10 @@ cfgDefOptionAllowRangeMax(ConfigCommand commandId, ConfigOption optionId)
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeAllowRange);
 
-    FUNCTION_TEST_RETURN(
-        ((double)(((int64_t)(intptr_t)dataDefList[2]) + (((int64_t)(intptr_t)dataDefList[3]) * 1000000000L))) / 100);
+    FUNCTION_TEST_RETURN((int64_t)(intptr_t)dataDefList[2] << 32 | (int64_t)(intptr_t)dataDefList[3]);
 }
 
-double
+int64_t
 cfgDefOptionAllowRangeMin(ConfigCommand commandId, ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -421,8 +420,7 @@ cfgDefOptionAllowRangeMin(ConfigCommand commandId, ConfigOption optionId)
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeAllowRange);
 
-    FUNCTION_TEST_RETURN(
-        ((double)(((int64_t)(intptr_t)dataDefList[0]) + (((int64_t)(intptr_t)dataDefList[1]) * 1000000000L))) / 100);
+    FUNCTION_TEST_RETURN((int64_t)(intptr_t)dataDefList[0] << 32 | (int64_t)(intptr_t)dataDefList[1]);
 }
 
 /**********************************************************************************************************************************/

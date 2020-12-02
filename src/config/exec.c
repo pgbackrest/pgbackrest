@@ -109,6 +109,11 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                         {
                             valueList = strLstNewVarLst(varVarLst(value));
                         }
+                        else if (cfgDefOptionType(optionId) == cfgDefOptTypeTime)
+                        {
+                            valueList = strLstNew();
+                            strLstAdd(valueList, strNewFmt("%" PRId64 "ms", varInt64(value)));
+                        }
                         // Else only one value
                         else
                         {

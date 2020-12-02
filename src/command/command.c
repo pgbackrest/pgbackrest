@@ -126,6 +126,12 @@ cmdOption(void)
                                 {
                                     valueList = strLstNewVarLst(cfgOptionIdxLst(optionId, optionIdx));
                                 }
+                                // Generate time value
+                                else if (cfgDefOptionType(optionId) == cfgDefOptTypeTime)
+                                {
+                                    valueList = strLstNew();
+                                    strLstAdd(valueList, strNewFmt("%" PRId64 "ms", cfgOptionIdxInt64(optionId, optionIdx)));
+                                }
                                 // Else only one value
                                 else
                                 {
