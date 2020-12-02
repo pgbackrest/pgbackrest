@@ -203,8 +203,7 @@ protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx, 
             // Execute the protocol command
             protocolHelperClient->exec = execNew(
                 cfgExe(), protocolLocalParam(protocolStorageType, hostIdx, processId),
-                strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u process", processId),
-                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
+                strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u process", processId), cfgOptionUInt64(cfgOptProtocolTimeout));
             execOpen(protocolHelperClient->exec);
 
             // Create protocol object
@@ -517,7 +516,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
             protocolHelperClient->exec = execNew(
                 cfgOptionStr(cfgOptCmdSsh), protocolRemoteParam(protocolStorageType, hostIdx),
                 strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u process on '%s'", processId, strZ(cfgOptionIdxStr(optHost, hostIdx))),
-                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
+                cfgOptionUInt64(cfgOptProtocolTimeout));
             execOpen(protocolHelperClient->exec);
 
             // Create protocol object

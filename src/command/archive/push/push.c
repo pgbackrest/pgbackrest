@@ -291,7 +291,7 @@ cmdArchivePush(void)
             }
 
             // Loop and wait for the WAL segment to be pushed
-            Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
+            Wait *wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
 
             do
             {
@@ -341,8 +341,8 @@ cmdArchivePush(void)
             if (!pushed)
             {
                 THROW_FMT(
-                    ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %lg second(s)",
-                    strZ(archiveFile), cfgOptionDbl(cfgOptArchiveTimeout));
+                    ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %" PRIu64 "ms",
+                    strZ(archiveFile), cfgOptionUInt64(cfgOptArchiveTimeout));
             }
 
             // Log success
@@ -503,7 +503,7 @@ cmdArchivePushAsync(void)
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
-                    (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, archivePushAsyncCallback, &jobData);
+                    cfgOptionUInt64(cfgOptProtocolTimeout) / 2, archivePushAsyncCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));

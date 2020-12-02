@@ -138,68 +138,6 @@ cvtCharToZ(char value, char *buffer, size_t bufferSize)
 
 /**********************************************************************************************************************************/
 size_t
-cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DOUBLE, value);
-        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
-        FUNCTION_TEST_PARAM(SIZE, bufferSize);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-
-    // Convert to a string
-    size_t result = (size_t)snprintf(buffer, bufferSize, "%lf", value);
-
-    if (result >= bufferSize)
-        THROW(AssertError, "buffer overflow");
-
-    // Any formatted double should be at least 8 characters, i.e. 0.000000
-    ASSERT(strlen(buffer) >= 8);
-    // Any formatted double should have a decimal point
-    ASSERT(strchr(buffer, '.') != NULL);
-
-    // Strip off any final 0s and the decimal point if there are no non-zero digits after it
-    char *end = buffer + strlen(buffer) - 1;
-
-    while (*end == '0' || *end == '.')
-    {
-        // It should not be possible to go past the beginning because format "%lf" will always write a decimal point
-        ASSERT(end > buffer);
-
-        end--;
-
-        if (*(end + 1) == '.')
-            break;
-    }
-
-    // Zero terminate the string
-    end[1] = 0;
-
-    // Return string length
-    FUNCTION_TEST_RETURN((size_t)(end - buffer + 1));
-}
-
-double
-cvtZToDouble(const char *value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, value);
-    FUNCTION_TEST_END();
-
-    ASSERT(value != NULL);
-
-    double result = 0;
-    sscanf(value, "%lf", &result);
-
-    if (result == 0 && strcmp(value, "0") != 0)
-        THROW_FMT(FormatError, "unable to convert string '%s' to double", value);
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-size_t
 cvtIntToZ(int value, char *buffer, size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();

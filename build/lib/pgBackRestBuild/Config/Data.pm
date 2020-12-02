@@ -473,8 +473,6 @@ use constant CFGDEF_TYPE                                            => 'type';
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGDEF_TYPE_BOOLEAN                                    => 'boolean';
     push @EXPORT, qw(CFGDEF_TYPE_BOOLEAN);
-use constant CFGDEF_TYPE_FLOAT                                      => 'float';
-    push @EXPORT, qw(CFGDEF_TYPE_FLOAT);
 use constant CFGDEF_TYPE_HASH                                       => 'hash';
     push @EXPORT, qw(CFGDEF_TYPE_HASH);
 use constant CFGDEF_TYPE_INTEGER                                    => 'integer';
@@ -487,6 +485,8 @@ use constant CFGDEF_TYPE_STRING                                     => 'string';
     push @EXPORT, qw(CFGDEF_TYPE_STRING);
 use constant CFGDEF_TYPE_SIZE                                       => 'size';
     push @EXPORT, qw(CFGDEF_TYPE_SIZE);
+use constant CFGDEF_TYPE_TIME                                       => 'time';
+    push @EXPORT, qw(CFGDEF_TYPE_TIME);
 
 # Option config sections
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -1141,7 +1141,7 @@ my %hConfigDefine =
     &CFGOPT_ARCHIVE_TIMEOUT =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_TYPE => CFGDEF_TYPE_TIME,
         &CFGDEF_DEFAULT => 60,
         &CFGDEF_ALLOW_RANGE => [WAIT_TIME_MINIMUM, 86400],
         &CFGDEF_COMMAND =>
@@ -1247,7 +1247,7 @@ my %hConfigDefine =
     &CFGOPT_DB_TIMEOUT =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_TYPE => CFGDEF_TYPE_TIME,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_DB_TIMEOUT,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_DB_TIMEOUT_MIN, CFGDEF_DEFAULT_DB_TIMEOUT_MAX],
         &CFGDEF_COMMAND =>
@@ -1399,7 +1399,7 @@ my %hConfigDefine =
     &CFGOPT_IO_TIMEOUT =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_TYPE => CFGDEF_TYPE_TIME,
         &CFGDEF_DEFAULT => 60,
         &CFGDEF_ALLOW_RANGE => [.1, 3600],
         &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
@@ -1457,7 +1457,7 @@ my %hConfigDefine =
     &CFGOPT_PROTOCOL_TIMEOUT =>
     {
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_FLOAT,
+        &CFGDEF_TYPE => CFGDEF_TYPE_TIME,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_DB_TIMEOUT + 30,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_DB_TIMEOUT_MIN, CFGDEF_DEFAULT_DB_TIMEOUT_MAX],
         &CFGDEF_COMMAND =>
@@ -3045,11 +3045,11 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
 
     # All int and float options must have an allow range
     if (($hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_INTEGER ||
-         $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_FLOAT ||
+         $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ||
          $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_SIZE) &&
          !(defined($hConfigDefine{$strKey}{&CFGDEF_ALLOW_RANGE}) || defined($hConfigDefine{$strKey}{&CFGDEF_ALLOW_LIST})))
     {
-        confess &log(ASSERT, "int/float option '${strKey}' must have allow range or list");
+        confess &log(ASSERT, "int/size/time option '${strKey}' must have allow range or list");
     }
 
     # Ensure all commands are valid

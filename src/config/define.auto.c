@@ -563,7 +563,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("archive-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeFloat)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
@@ -1127,7 +1127,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("db-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeFloat)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
@@ -1517,7 +1517,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("io-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeFloat)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
@@ -2872,7 +2872,7 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("protocol-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
-        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeFloat)
+        CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
