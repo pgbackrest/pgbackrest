@@ -141,7 +141,7 @@ typedef enum
         (const void *)(intptr_t)(int32_t)((int64_t)rangeMinParam >> 32),                                                           \
         (const void *)(intptr_t)(int32_t)((int64_t)rangeMinParam & 0xFFFFFFFF),                                                    \
         (const void *)(intptr_t)(int32_t)((int64_t)rangeMaxParam >> 32),                                                           \
-        (const void *)(intptr_t)(int32_t)((int64_t)rangeMaxParam & 0xFFFFFFFF)),                                                   \
+        (const void *)(intptr_t)(int32_t)((int64_t)rangeMaxParam & 0xFFFFFFFF)),
 
 #define CFGDEFDATA_OPTION_OPTIONAL_DEPEND(optionDepend)                                                                            \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeDepend, 0, optionDepend),
