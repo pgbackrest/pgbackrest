@@ -73,9 +73,9 @@ testRun(void)
             cvtZToInt("-9223372036854775807"), FormatError, "unable to convert base 10 string '-9223372036854775807' to int");
 
         TEST_RESULT_INT(cvtZToIntBase("-FF", 16), -255, "convert string to int");
-        TEST_RESULT_DOUBLE(cvtZToInt("0"), 0, "convert string to int");
-        TEST_RESULT_DOUBLE(cvtZToInt("1234567890"), 1234567890, "convert string to int");
-        TEST_RESULT_DOUBLE(cvtZToInt("-1234567890"), -1234567890, "convert string to int");
+        TEST_RESULT_INT(cvtZToInt("0"), 0, "convert string to int");
+        TEST_RESULT_INT(cvtZToInt("1234567890"), 1234567890, "convert string to int");
+        TEST_RESULT_INT(cvtZToInt("-1234567890"), -1234567890, "convert string to int");
     }
 
     // *****************************************************************************************************************************
