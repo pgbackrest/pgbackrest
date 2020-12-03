@@ -542,6 +542,81 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPg,
     },
 
+    // pg-database option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "pg1-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg1-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg2-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg2-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg3-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg3-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg4-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg4-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg5-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg5-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg6-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg6-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg7-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg7-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg8-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg8-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+
     // pg-host option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2850,6 +2925,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
     cfgOptForce,
+    cfgOptPgDatabase,
     cfgOptPgHost,
     cfgOptPgHostCmd,
     cfgOptPgHostConfig,
