@@ -91,6 +91,8 @@ use constant VM_NONE                                                => 'none';
 
 use constant VM_CO7                                                 => 'co7';
     push @EXPORT, qw(VM_CO7);
+use constant VM_CO8                                                 => 'co8';
+    push @EXPORT, qw(VM_CO8);
 use constant VM_F32                                                 => 'f32';
     push @EXPORT, qw(VM_F32);
 use constant VM_U12                                                 => 'u12';
