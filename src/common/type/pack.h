@@ -59,8 +59,9 @@ pckReadU64P(read);
 pckReadStringP(read, .id = 4);
 pckReadEndP();
 
-This skips the NULLs but in practice it is better to read all the fields just as they were written so constant IDs are not required.
-By default each read and write advances the ID by one.
+By default each read/write advances the field ID by one. If an ID is specified it must be unique and increasing, because it will
+advance the field ID beyond the value specified. An error will occur if an ID is attempted to be read/written but the field ID has
+advanced beyond it.
 
 An array can be read with:
 
