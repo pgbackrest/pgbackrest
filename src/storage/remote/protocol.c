@@ -108,7 +108,7 @@ typedef struct StorageRemoteProtocolInfoListCallbackData
 // Helper to write storage info into the protocol. This function is not called unless the info exists so no need to write exists or
 // check for level == storageInfoLevelExists.
 //
-// Fields that do no change from one call to the next are omitted to save bandwidth.
+// Fields that do not change from one call to the next are omitted to save bandwidth.
 static void
 storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const StorageInfo *info)
 {

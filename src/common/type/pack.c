@@ -379,6 +379,8 @@ pckReadTagNext(PackRead *this)
         FUNCTION_TEST_PARAM(PACK_READ, this);
     FUNCTION_TEST_END();
 
+    ASSERT(this != NULL);
+
     bool result = false;
 
     // Read the tag byte
@@ -1310,6 +1312,8 @@ pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param)
         FUNCTION_TEST_PARAM(UINT, param.id);
         FUNCTION_TEST_PARAM(BOOL, param.defaultNull);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     if (!pckWriteDefaultNull(this, param.defaultNull, value == NULL))
     {
