@@ -46,12 +46,12 @@ pgbackrest/test/test.pl --vm=none --dry-run
     P00   INFO: test begin - log level info
     P00   INFO: check version info
     P00   INFO: builds required: bin
---> P00   INFO: 69 tests selected
+--> P00   INFO: 68 tests selected
                 
-    P00   INFO: P1-T01/69 - vm=none, module=common, test=error
-           [filtered 66 lines of output]
-    P00   INFO: P1-T68/69 - vm=none, module=performance, test=type
-    P00   INFO: P1-T69/69 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/68 - vm=none, module=common, test=error
+           [filtered 65 lines of output]
+    P00   INFO: P1-T67/68 - vm=none, module=performance, test=type
+    P00   INFO: P1-T68/68 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
