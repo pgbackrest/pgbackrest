@@ -10,6 +10,7 @@ Harness for Loading Test Configurations
 #include "common/harnessLog.h"
 #include "common/harnessTest.h"
 
+#include "config/config.intern.h"
 #include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
@@ -30,6 +31,10 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
 
     configParse(argListSize, argList, false);
     cfgLoadUpdateOption();
+
+    // Use a static exec-id for testing if it is not set explicitly
+    if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
+        cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTRDEF("1-test"));
 
     // Set dry-run mode for storage and logging
     storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
@@ -54,11 +59,11 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
     StringList *argList = strLstDup(argListParam);
 
     // Set log path if valid
-    if (cfgDefOptionValid(commandId, cfgDefOptLogPath))
+    if (cfgDefOptionValid(commandId, cfgOptLogPath))
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testDataPath()));
 
     // Set lock path if valid
-    if (cfgDefOptionValid(commandId, cfgDefOptLockPath))
+    if (cfgDefOptionValid(commandId, cfgOptLockPath))
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
 
     // Insert the command so it does not interfere with parameters
@@ -134,7 +139,7 @@ hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value)
 void
 hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *value)
 {
-    strLstAdd(argList, strNewFmt("--%s=%s", cfgOptionName(optionId + optionKey - 1), value));
+    strLstAdd(argList, strNewFmt("--%s=%s", cfgOptionKeyIdxName(optionId, optionKey - 1), value));
 }
 
 void
@@ -146,7 +151,7 @@ hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value)
 void
 hrnCfgArgKeyRawBool(StringList *argList, ConfigOption optionId, unsigned optionKey, bool value)
 {
-    strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgOptionName(optionId + optionKey - 1)));
+    strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgOptionKeyIdxName(optionId, optionKey - 1)));
 }
 
 void
@@ -158,7 +163,7 @@ hrnCfgArgRawNegate(StringList *argList, ConfigOption optionId)
 void
 hrnCfgArgKeyRawNegate(StringList *argList, ConfigOption optionId, unsigned optionKey)
 {
-    strLstAdd(argList, strNewFmt("--no-%s", cfgOptionName(optionId + optionKey - 1)));
+    strLstAdd(argList, strNewFmt("--no-%s", cfgOptionKeyIdxName(optionId, optionKey - 1)));
 }
 
 void
@@ -170,7 +175,7 @@ hrnCfgArgRawReset(StringList *argList, ConfigOption optionId)
 void
 hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned optionKey)
 {
-    strLstAdd(argList, strNewFmt("--reset-%s", cfgOptionName(optionId + optionKey - 1)));
+    strLstAdd(argList, strNewFmt("--reset-%s", cfgOptionKeyIdxName(optionId, optionKey - 1)));
 }
 
 /**********************************************************************************************************************************/
@@ -195,7 +200,7 @@ hrnCfgEnvRawZ(ConfigOption optionId, const char *value)
 void
 hrnCfgEnvKeyRawZ(ConfigOption optionId, unsigned optionKey, const char *value)
 {
-    setenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionName(optionId + optionKey - 1))), value, true);
+    setenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionKeyIdxName(optionId, optionKey - 1))), value, true);
 }
 
 void
@@ -207,5 +212,5 @@ hrnCfgEnvRemoveRaw(ConfigOption optionId)
 void
 hrnCfgEnvKeyRemoveRaw(ConfigOption optionId, unsigned optionKey)
 {
-    unsetenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionName(optionId + optionKey - 1))));
+    unsetenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionKeyIdxName(optionId, optionKey - 1))));
 }

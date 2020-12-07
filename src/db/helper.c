@@ -30,8 +30,9 @@ dbGetIdx(unsigned int pgIdx)
         {
             result = dbNew(
                 pgClientNew(
-                    cfgOptionStrNull(cfgOptPgSocketPath + pgIdx), cfgOptionUInt(cfgOptPgPort + pgIdx), PG_DB_POSTGRES_STR,
-                    cfgOptionStrNull(cfgOptPgUser + pgIdx), (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
+                    cfgOptionIdxStrNull(cfgOptPgSocketPath, pgIdx), cfgOptionIdxUInt(cfgOptPgPort, pgIdx),
+                    cfgOptionIdxStr(cfgOptPgDatabase, pgIdx), cfgOptionIdxStrNull(cfgOptPgUser, pgIdx),
+                    (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
                 NULL, applicationName);
         }
         else
@@ -65,62 +66,61 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
         // Loop through to look for primary and standby (if required)
         for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
         {
-            if (cfgOptionGroupIdxTest(cfgOptGrpPg, pgIdx))
-            {
-                Db *db = NULL;
-                bool standby = false;
+            Db *db = NULL;
+            bool standby = false;
 
+            TRY_BEGIN()
+            {
+                db = dbGetIdx(pgIdx);
+
+                // This needs to be nested because db can be reset to NULL on an error in the outer try but we need the pointer
+                // to be able to free it.
                 TRY_BEGIN()
                 {
-                    db = dbGetIdx(pgIdx);
-
-                    // This needs to be nested because db can be reset to NULL on an error in the outer try but we need the pointer
-                    // to be able to free it.
-                    TRY_BEGIN()
-                    {
-                        dbOpen(db);
-                        standby = dbIsStandby(db);
-                    }
-                    CATCH_ANY()
-                    {
-                        dbFree(db);
-                        RETHROW();
-                    }
-                    TRY_END();
+                    dbOpen(db);
+                    standby = dbIsStandby(db);
                 }
                 CATCH_ANY()
                 {
-                    LOG_WARN_FMT("unable to check pg-%u: [%s] %s", pgIdx + 1, errorTypeName(errorType()), errorMessage());
-                    db = NULL;
+                    dbFree(db);
+                    RETHROW();
                 }
                 TRY_END();
+            }
+            CATCH_ANY()
+            {
+                LOG_WARN_FMT(
+                    "unable to check pg-%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpPg, pgIdx), errorTypeName(errorType()),
+                    errorMessage());
+                db = NULL;
+            }
+            TRY_END();
 
-                // Was the connection successful
-                if (db != NULL)
+            // Was the connection successful
+            if (db != NULL)
+            {
+                // Is this cluster a standby
+                if (standby)
                 {
-                    // Is this cluster a standby
-                    if (standby)
+                    // If a standby has not already been found then assign it
+                    if (result.standby == NULL && !primaryOnly)
                     {
-                        // If a standby has not already been found then assign it
-                        if (result.standby == NULL && !primaryOnly)
-                        {
-                            result.standbyIdx = pgIdx;
-                            result.standby = db;
-                        }
-                        // Else close the connection since we don't need it
-                        else
-                            dbFree(db);
+                        result.standbyIdx = pgIdx;
+                        result.standby = db;
                     }
-                    // Else is a primary
+                    // Else close the connection since we don't need it
                     else
-                    {
-                        // Error if more than one primary was found
-                        if (result.primary != NULL)
-                            THROW(DbConnectError, "more than one primary cluster found");
+                        dbFree(db);
+                }
+                // Else is a primary
+                else
+                {
+                    // Error if more than one primary was found
+                    if (result.primary != NULL)
+                        THROW(DbConnectError, "more than one primary cluster found");
 
-                        result.primaryIdx = pgIdx;
-                        result.primary = db;
-                    }
+                    result.primaryIdx = pgIdx;
+                    result.primary = db;
                 }
             }
         }

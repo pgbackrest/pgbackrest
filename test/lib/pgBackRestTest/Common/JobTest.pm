@@ -263,8 +263,7 @@ sub run
                 "rm -f test.gcda && " .
                 "make -j $self->{iBuildMax} -s 2>&1 &&" .
                 # Test with valgrind when requested
-                ($self->{oTest}->{&TEST_VM} ne VM_CO6 && $self->{bValgrindUnit} &&
-                    $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
+                ($self->{bValgrindUnit} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
                     ' valgrind -q --gen-suppressions=all ' .
                     ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
                     " --leak-check=full --leak-resolution=high --error-exitcode=25" : '') .
@@ -449,7 +448,7 @@ sub run
 
                 # Create build.auto.h
                 my $strBuildAutoH =
-                    ($self->{oTest}->{&TEST_VM} ne VM_CO6 ? "#define HAVE_STATIC_ASSERT\n" : '') .
+                    "#define HAVE_STATIC_ASSERT\n" .
                     "#define HAVE_BUILTIN_TYPES_COMPATIBLE_P\n" .
                     (vmWithLz4($self->{oTest}->{&TEST_VM}) ? '#define HAVE_LIBLZ4' : '') . "\n" .
                     (vmWithZst($self->{oTest}->{&TEST_VM}) ? '#define HAVE_LIBZST' : '') . "\n";
@@ -491,7 +490,7 @@ sub run
                     (vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit} ? ' -DDEBUG_COVERAGE' : '') .
                     ($self->{bDebug} ? '' : ' -DNDEBUG') .
                     ($self->{bDebugTestTrace} && $self->{bDebug} ? ' -DDEBUG_TEST_TRACE' : '') .
-                    ($self->{oTest}->{&TEST_VM} eq VM_CO6 ? ' -DDEBUG_EXEC_TIME' : '');
+                    ($self->{oTest}->{&TEST_VM} eq VM_CO7 ? ' -DDEBUG_EXEC_TIME' : '');
 
                 # Flags used to build harness files
                 my $strHarnessFlags =

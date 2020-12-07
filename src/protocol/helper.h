@@ -54,7 +54,7 @@ bool pgIsLocal(unsigned int pgIdx);
 void pgIsLocalVerify(void);
 
 // Is the repository local?
-bool repoIsLocal(void);
+bool repoIsLocal(unsigned int repoIdx);
 
 // Error if the repository is not local
 void repoIsLocalVerify(void);

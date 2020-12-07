@@ -474,16 +474,10 @@ sub clusterStop
     $self->sqlDisconnect();
 
     # Grep for errors in postgresql.log - this is done first because we want to ignore any errors that happen during shutdown.
-    #
-    # The unsupported version error is showing up on older versions of PostgreSQL (e.g. 9.1, 9.2) on RHEL6 when setting up a standby
-    # with streaming replication. The error occurs when a client does not properly send a version number and it's not clear why it
-    # is happening here, but it does not appear to have anything to do with pgBackRest and only affects RHEL6, i.e. 9.1 and 9.2
-    # do not show this error on other distros. For now ignore the error since RHEL6 is nearly EOL.
     if (!$bIgnoreLogError && storageTest()->exists($self->pgLogFile()))
     {
         $self->executeSimple(
-            'grep -v "\(FATAL\:  57P03\: the database system is starting up"\)\|\(FATAL\:  0A000\: unsupported frontend protocol\)" ' .
-                $self->pgLogFile() . ' | grep "ERROR\|FATAL"',
+            'grep -v "FATAL\:  57P03\: the database system is starting up" ' . $self->pgLogFile() . ' | grep "ERROR\|FATAL"',
             {iExpectedExitStatus => 1});
     }
 

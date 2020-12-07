@@ -61,12 +61,6 @@ Defines for various Postgres paths and files
     STRING_DECLARE(PG_NAME_XLOG_STR);
 
 /***********************************************************************************************************************************
-Name of default PostgreSQL database used for running all queries and commands
-***********************************************************************************************************************************/
-#define PG_DB_POSTGRES                                              "postgres"
-    STRING_DECLARE(PG_DB_POSTGRES_STR);
-
-/***********************************************************************************************************************************
 Define default page size
 
 Page size can only be changed at compile time and is not known to be well-tested, so only the default page size is supported.

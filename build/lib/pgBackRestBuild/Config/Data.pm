@@ -125,8 +125,8 @@ use constant CFGOPT_OUTPUT                                          => 'output';
 
 # Command-line only local/remote options
 #-----------------------------------------------------------------------------------------------------------------------------------
+use constant CFGOPT_EXEC_ID                                         => 'exec-id';
 use constant CFGOPT_PROCESS                                         => 'process';
-use constant CFGOPT_HOST_ID                                         => 'host-id';
 use constant CFGOPT_REMOTE_TYPE                                     => 'remote-type';
 
 # Command-line only storage options
@@ -184,6 +184,9 @@ use constant CFGDEF_INDEX_REPO                                      => 1;
 
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
+
+# Set default repository
+use constant CFGOPT_REPO                                            => CFGDEF_PREFIX_REPO;
 
 # Repository General
 use constant CFGOPT_REPO_CIPHER_TYPE                                => CFGDEF_PREFIX_REPO . '-cipher-type';
@@ -281,6 +284,9 @@ use constant CFGDEF_INDEX_PG                                        => 8;
 use constant CFGDEF_PREFIX_PG                                       => 'pg';
     push @EXPORT, qw(CFGDEF_PREFIX_PG);
 
+# Set default PostgreSQL cluster
+use constant CFGOPT_PG                                              => CFGDEF_PREFIX_PG;
+
 use constant CFGOPT_PG_LOCAL                                        => CFGDEF_PREFIX_PG . '-local';
 
 use constant CFGOPT_PG_HOST                                         => CFGDEF_PREFIX_PG . '-host';
@@ -292,6 +298,7 @@ use constant CFGOPT_PG_HOST_CONFIG_PATH                             => CFGOPT_PG
 use constant CFGOPT_PG_HOST_PORT                                    => CFGOPT_PG_HOST . '-port';
 use constant CFGOPT_PG_HOST_USER                                    => CFGOPT_PG_HOST . '-user';
 
+use constant CFGOPT_PG_DATABASE                                     => CFGDEF_PREFIX_PG . '-database';
 use constant CFGOPT_PG_PATH                                         => CFGDEF_PREFIX_PG . '-path';
 use constant CFGOPT_PG_PORT                                         => CFGDEF_PREFIX_PG . '-port';
 use constant CFGOPT_PG_SOCKET_PATH                                  => CFGDEF_PREFIX_PG . '-socket-path';
@@ -995,20 +1002,11 @@ my %hConfigDefine =
 
     # Command-line only local/remote options
     #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_HOST_ID =>
+    &CFGOPT_EXEC_ID =>
     {
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_INTERNAL => true,
-        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG > CFGDEF_INDEX_REPO ? CFGDEF_INDEX_PG : CFGDEF_INDEX_REPO],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_VERIFY => {},
-        },
     },
 
     &CFGOPT_PROCESS =>
@@ -1481,6 +1479,18 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_VERIFY => {},
         }
+    },
+
+    # Repository selector
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_REPO =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_REPO],
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     # Repository options
@@ -2566,6 +2576,37 @@ my %hConfigDefine =
 
     # Stanza options
     #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_PG =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_PUSH => {},
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_CHECK =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_STANZA_CREATE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+            &CFGCMD_STANZA_UPGRADE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
+        },
+    },
+
     &CFGOPT_PG_LOCAL =>
     {
         &CFGDEF_GROUP => CFGOPTGRP_PG,
@@ -2694,6 +2735,16 @@ my %hConfigDefine =
             'db?-user' => {&CFGDEF_RESET => false},
         },
         &CFGDEF_REQUIRED => false,
+    },
+
+    &CFGOPT_PG_DATABASE =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_PG,
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'postgres',
+        &CFGDEF_COMMAND => CFGOPT_PG_PORT,
+        &CFGDEF_DEPEND => CFGOPT_PG_PORT,
     },
 
     &CFGOPT_PG_PATH =>
@@ -2913,8 +2964,19 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $rhOption->{&CFGDEF_PREFIX} = $rhGroup->{&CFGDEF_PREFIX};
     }
 
-    # If the command section is a scalar then copy the section from the referenced option
-    if (defined($hConfigDefine{$strKey}{&CFGDEF_COMMAND}) && !ref($hConfigDefine{$strKey}{&CFGDEF_COMMAND}))
+
+    # If command is not specified then the option is valid for all commands except version and help
+    if (!defined($rhOption->{&CFGDEF_COMMAND}))
+    {
+        foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
+        {
+            next if $strCommand eq CFGCMD_HELP || $strCommand eq CFGCMD_VERSION;
+
+            $rhOption->{&CFGDEF_COMMAND}{$strCommand} = {};
+        }
+    }
+    # Else if the command section is a scalar then copy the section from the referenced option
+    elsif (defined($hConfigDefine{$strKey}{&CFGDEF_COMMAND}) && !ref($hConfigDefine{$strKey}{&CFGDEF_COMMAND}))
     {
         $hConfigDefine{$strKey}{&CFGDEF_COMMAND} =
             dclone($hConfigDefine{$hConfigDefine{$strKey}{&CFGDEF_COMMAND}}{&CFGDEF_COMMAND});

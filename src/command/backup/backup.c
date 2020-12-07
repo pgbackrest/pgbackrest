@@ -238,13 +238,13 @@ backupInit(const InfoBackup *infoBackup)
             result->pgIdxStandby = dbInfo.standbyIdx;
             result->dbStandby = dbInfo.standby;
             result->storageStandby = storagePgIdx(result->pgIdxStandby);
-            result->hostStandby = cfgOptionStrNull(cfgOptPgHost + result->pgIdxStandby);
+            result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
     }
 
     // Add primary info
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
-    result->hostPrimary = cfgOptionStrNull(cfgOptPgHost + result->pgIdxPrimary);
+    result->hostPrimary = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxPrimary);
 
     // Get pg_control info from the primary
     PgControl pgControl = pgControlFromFile(result->storagePrimary);
@@ -324,11 +324,25 @@ backupTime(BackupData *backupData, bool waitRemainder)
         // Sleep the remainder of the second when requested (this is so copyStart is not subject to one second resolution issues)
         if (waitRemainder)
         {
-            sleepMSec(MSEC_PER_SEC - (timeMSec % MSEC_PER_SEC));
+            unsigned int retry = 0;
 
-            // Check time again to be sure we slept long enough
-            if (result >= (time_t)(dbTimeMSec(backupData->dbPrimary) / MSEC_PER_SEC))
-                THROW(AssertError, "invalid sleep for online backup time with wait remainder");
+            // Just to be safe we'll loop until PostgreSQL reports that we have slept long enough
+            do
+            {
+                // Error if the clock has not advanced after several attempts
+                if (retry == 3)
+                    THROW_FMT(KernelError, PG_NAME " clock has not advanced to the next second after %u tries", retry);
+
+                // Sleep remainder of current second
+                sleepMSec(((TimeMSec)(result + 1) * MSEC_PER_SEC) - timeMSec);
+
+                // Check time again to be sure we slept long enough
+                timeMSec = dbTimeMSec(backupData->dbPrimary);
+
+                // Increment retry to prevent an infinite loop
+                retry++;
+            }
+            while ((time_t)(timeMSec / MSEC_PER_SEC) <= result);
         }
     }
 

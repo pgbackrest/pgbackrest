@@ -310,6 +310,14 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptExclude,
     },
 
+    // exec-id option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "exec-id",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptExecId,
+    },
+
     // expire-auto option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -338,14 +346,6 @@ static const struct option optionList[] =
     {
         .name = "force",
         .val = PARSE_OPTION_FLAG | cfgOptForce,
-    },
-
-    // host-id option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "host-id",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | cfgOptHostId,
     },
 
     // ignore-missing option
@@ -528,6 +528,93 @@ static const struct option optionList[] =
         .name = "output",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptOutput,
+    },
+
+    // pg option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "pg",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptPg,
+    },
+    {
+        .name = "reset-pg",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPg,
+    },
+
+    // pg-database option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "pg1-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg1-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg2-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg2-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg3-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg3-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg4-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg4-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg5-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg5-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (4 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg6-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg6-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (5 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg7-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg7-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (6 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "pg8-database",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
+    },
+    {
+        .name = "reset-pg8-database",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (7 << PARSE_KEY_IDX_SHIFT) | cfgOptPgDatabase,
     },
 
     // pg-host option and deprecations
@@ -1880,6 +1967,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptRemoteType,
     },
 
+    // repo option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptRepo,
+    },
+    {
+        .name = "reset-repo",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptRepo,
+    },
+
     // repo-azure-account option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -2768,9 +2867,9 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptDelta,
     cfgOptDryRun,
     cfgOptExclude,
+    cfgOptExecId,
     cfgOptExpireAuto,
     cfgOptFilter,
-    cfgOptHostId,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
     cfgOptLinkAll,
@@ -2786,52 +2885,19 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptNeutralUmask,
     cfgOptOnline,
     cfgOptOutput,
+    cfgOptPg,
     cfgOptPgLocal,
-    cfgOptPgLocal + 1,
-    cfgOptPgLocal + 2,
-    cfgOptPgLocal + 3,
-    cfgOptPgLocal + 4,
-    cfgOptPgLocal + 5,
-    cfgOptPgLocal + 6,
-    cfgOptPgLocal + 7,
     cfgOptPgPath,
-    cfgOptPgPath + 1,
-    cfgOptPgPath + 2,
-    cfgOptPgPath + 3,
-    cfgOptPgPath + 4,
-    cfgOptPgPath + 5,
-    cfgOptPgPath + 6,
-    cfgOptPgPath + 7,
     cfgOptPgPort,
-    cfgOptPgPort + 1,
-    cfgOptPgPort + 2,
-    cfgOptPgPort + 3,
-    cfgOptPgPort + 4,
-    cfgOptPgPort + 5,
-    cfgOptPgPort + 6,
-    cfgOptPgPort + 7,
     cfgOptPgSocketPath,
-    cfgOptPgSocketPath + 1,
-    cfgOptPgSocketPath + 2,
-    cfgOptPgSocketPath + 3,
-    cfgOptPgSocketPath + 4,
-    cfgOptPgSocketPath + 5,
-    cfgOptPgSocketPath + 6,
-    cfgOptPgSocketPath + 7,
     cfgOptPgUser,
-    cfgOptPgUser + 1,
-    cfgOptPgUser + 2,
-    cfgOptPgUser + 3,
-    cfgOptPgUser + 4,
-    cfgOptPgUser + 5,
-    cfgOptPgUser + 6,
-    cfgOptPgUser + 7,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
     cfgOptRaw,
     cfgOptRecurse,
     cfgOptRemoteType,
+    cfgOptRepo,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
     cfgOptRepoLocal,
@@ -2859,62 +2925,14 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
     cfgOptForce,
+    cfgOptPgDatabase,
     cfgOptPgHost,
-    cfgOptPgHost + 1,
-    cfgOptPgHost + 2,
-    cfgOptPgHost + 3,
-    cfgOptPgHost + 4,
-    cfgOptPgHost + 5,
-    cfgOptPgHost + 6,
-    cfgOptPgHost + 7,
     cfgOptPgHostCmd,
-    cfgOptPgHostCmd + 1,
-    cfgOptPgHostCmd + 2,
-    cfgOptPgHostCmd + 3,
-    cfgOptPgHostCmd + 4,
-    cfgOptPgHostCmd + 5,
-    cfgOptPgHostCmd + 6,
-    cfgOptPgHostCmd + 7,
     cfgOptPgHostConfig,
-    cfgOptPgHostConfig + 1,
-    cfgOptPgHostConfig + 2,
-    cfgOptPgHostConfig + 3,
-    cfgOptPgHostConfig + 4,
-    cfgOptPgHostConfig + 5,
-    cfgOptPgHostConfig + 6,
-    cfgOptPgHostConfig + 7,
     cfgOptPgHostConfigIncludePath,
-    cfgOptPgHostConfigIncludePath + 1,
-    cfgOptPgHostConfigIncludePath + 2,
-    cfgOptPgHostConfigIncludePath + 3,
-    cfgOptPgHostConfigIncludePath + 4,
-    cfgOptPgHostConfigIncludePath + 5,
-    cfgOptPgHostConfigIncludePath + 6,
-    cfgOptPgHostConfigIncludePath + 7,
     cfgOptPgHostConfigPath,
-    cfgOptPgHostConfigPath + 1,
-    cfgOptPgHostConfigPath + 2,
-    cfgOptPgHostConfigPath + 3,
-    cfgOptPgHostConfigPath + 4,
-    cfgOptPgHostConfigPath + 5,
-    cfgOptPgHostConfigPath + 6,
-    cfgOptPgHostConfigPath + 7,
     cfgOptPgHostPort,
-    cfgOptPgHostPort + 1,
-    cfgOptPgHostPort + 2,
-    cfgOptPgHostPort + 3,
-    cfgOptPgHostPort + 4,
-    cfgOptPgHostPort + 5,
-    cfgOptPgHostPort + 6,
-    cfgOptPgHostPort + 7,
     cfgOptPgHostUser,
-    cfgOptPgHostUser + 1,
-    cfgOptPgHostUser + 2,
-    cfgOptPgHostUser + 3,
-    cfgOptPgHostUser + 4,
-    cfgOptPgHostUser + 5,
-    cfgOptPgHostUser + 6,
-    cfgOptPgHostUser + 7,
     cfgOptRecoveryOption,
     cfgOptRepoAzureAccount,
     cfgOptRepoAzureCaFile,

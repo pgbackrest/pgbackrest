@@ -26,6 +26,7 @@ Zero-terminated strings that are generally useful
 #define LF_Z                                                        "\n"
 #define N_Z                                                         "n"
 #define NULL_Z                                                      "null"
+#define ONE_Z                                                       "1"
 #define QUESTION_Z                                                  "?"
 #define QUOTED_Z                                                    "\""
 #define TRUE_Z                                                      "true"

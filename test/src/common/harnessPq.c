@@ -216,7 +216,8 @@ Shim for PQgetCancel()
 PGcancel *
 PQgetCancel(PGconn *conn)
 {
-    return (PGcancel *)harnessPqScriptRun(HRNPQ_GETCANCEL, NULL, (HarnessPq *)conn);
+    HarnessPq *harnessPq = harnessPqScriptRun(HRNPQ_GETCANCEL, NULL, (HarnessPq *)conn);
+    return harnessPq->resultNull ? NULL : (PGcancel *)harnessPq;
 }
 
 /***********************************************************************************************************************************

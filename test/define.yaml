@@ -365,18 +365,11 @@ unit:
           config/define.auto: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: config
-        total: 4
+      - name: parse
+        total: 5
 
         coverage:
           config/config: full
-          config/config.auto: noCode
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: parse
-        total: 4
-
-        coverage:
           config/parse: full
           config/parse.auto: noCode
 

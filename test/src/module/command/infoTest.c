@@ -223,8 +223,8 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), lockTypeBackup, 0, true), -1,
-                    "create backup/expire lock");
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    -1, "create backup/expire lock");
 
                 sleepMSec(1000);
                 lockRelease(true);
@@ -476,8 +476,8 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), lockTypeBackup, 0, true), -1,
-                    "create backup/expire lock");
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
+                    -1, "create backup/expire lock");
 
                 sleepMSec(1000);
                 lockRelease(true);
@@ -1037,7 +1037,7 @@ testRun(void)
             "        wal archive min/max (9.4-1): none present\n",
             "text - multiple stanzas, one with valid backups, archives in latest DB");
 
-        // Backup set requested
+        // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
@@ -1065,7 +1065,8 @@ testRun(void)
             "                pg_stat => ../pg_stat\n"
             "            tablespaces:\n"
             "                ts1 (1) => /tblspc/ts1\n"
-            "                ts12 (12) => /tblspc/ts12\n",
+            "                ts12 (12) => /tblspc/ts12\n"
+            "            page checksum error: base/16384/17000\n",
             "text - backup set requested");
 
         strLstAddZ(argList2, "--output=json");
@@ -1073,7 +1074,7 @@ testRun(void)
 
         TEST_ERROR(strZ(infoRender()), ConfigError, "option 'set' is currently only valid for text output");
 
-        // Backup set requested but no links
+        // Backup set requested but no links, multiple checksum errors
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
@@ -1085,12 +1086,29 @@ testRun(void)
             "[backup:target]\n"                                                                                                    \
             "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"                                                                  \
 
+        #define TEST_MANIFEST_FILE_MULTIPLE_CHECKSUM_ERRORS                                                                        \
+        "\n"                                                                                                                       \
+        "[target:file]\n"                                                                                                          \
+        "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                            \
+            ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                          \
+        "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"              \
+            ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                            \
+        "pg_data/base/16384/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"group\":false,\"size\":4"      \
+            ",\"timestamp\":1565282115}\n"                                                                                         \
+        "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":false"              \
+            ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                                  \
+        "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"         \
+            ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                       \
+        "pg_data/postgresql.conf={\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\",\"master\":true,\"size\":4457"         \
+            ",\"timestamp\":1565282114}\n"                                                                                         \
+        "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
+
         contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET_NO_LINK
             TEST_MANIFEST_DB
-            TEST_MANIFEST_FILE
+            TEST_MANIFEST_FILE_MULTIPLE_CHECKSUM_ERRORS
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
@@ -1120,10 +1138,11 @@ testRun(void)
             "            database size: 19.2MB, backup size: 8.2KB\n"
             "            repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
-            "            database list: mail (16456), postgres (12173)\n",
+            "            database list: mail (16456), postgres (12173)\n"
+            "            page checksum error: base/16384/17000, base/32768/33000\n",
             "text - backup set requested, no links");
 
-        // Backup set requested but no databases
+        // Backup set requested but no databases, no checksum error
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
@@ -1136,12 +1155,29 @@ testRun(void)
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
             "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
 
+        #define TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR                                                                               \
+        "\n"                                                                                                                       \
+        "[target:file]\n"                                                                                                          \
+        "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"master\":true"                            \
+            ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1565282114}\n"                          \
+        "pg_data/base/16384/17000={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":true"               \
+            ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                            \
+        "pg_data/base/16384/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"group\":false,\"size\":4"      \
+            ",\"timestamp\":1565282115}\n"                                                                                         \
+        "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"               \
+            ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                                  \
+        "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"         \
+            ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                       \
+        "pg_data/postgresql.conf={\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\",\"master\":true,\"size\":4457"         \
+            ",\"timestamp\":1565282114}\n"                                                                                         \
+        "pg_data/special={\"master\":true,\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
+
         contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET_NO_LINK
             TEST_MANIFEST_NO_DB
-            TEST_MANIFEST_FILE
+            TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
@@ -1172,7 +1208,7 @@ testRun(void)
             "            repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: none\n",
-            "text - backup set requested, no db");
+            "text - backup set requested, no db and no checksum error");
 
         // Stanza not found
         //--------------------------------------------------------------------------------------------------------------------------

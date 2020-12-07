@@ -37,6 +37,7 @@ VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR,           "checksum-page-error");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_DATABASE_REF_VAR,                  "database-ref");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_INFO_VAR,                          "info");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LABEL_VAR,                         "label");
@@ -342,6 +343,21 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
             kvPut(
                 varKv(backupInfo), BACKUP_KEY_TABLESPACE_VAR,
                 (varLstSize(tablespaceSection) > 0 ? varNewVarLst(tablespaceSection) : NULL));
+
+            // Get the list of files with an error in the page checksum
+            VariantList *checksumPageErrorList = varLstNew();
+
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+            {
+                const ManifestFile *file = manifestFile(manifest, fileIdx);
+
+                if (file->checksumPageError)
+                    varLstAdd(checksumPageErrorList, varNewStr(manifestPathPg(file->name)));
+            }
+
+            kvPut(
+                varKv(backupInfo), BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR,
+                (varLstSize(checksumPageErrorList) > 0 ? varNewVarLst(checksumPageErrorList) : NULL));
         }
 
         varLstAdd(backupSection, backupInfo);
@@ -462,7 +478,8 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
         {
             // Try to acquire a lock. If not possible, assume another backup or expire is already running.
-            backupLockHeld = !lockAcquire(cfgOptionStr(cfgOptLockPath), stanzaListName, lockTypeBackup, 0, false);
+            backupLockHeld = !lockAcquire(
+                cfgOptionStr(cfgOptLockPath), stanzaListName, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
 
             // Immediately release the lock acquired
             lockRelease(!backupLockHeld);
@@ -707,6 +724,16 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                     }
 
                     strCat(backupResult, LF_STR);
+                }
+
+                if (kvGet(backupInfo, BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR) != NULL)
+                {
+                    StringList *checksumPageErrorList = strLstNewVarLst(
+                        varVarLst(kvGet(backupInfo, BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR)));
+
+                    strCatFmt(
+                        backupResult, "            page checksum error: %s\n",
+                        strZ(strLstJoin(checksumPageErrorList, ", ")));
                 }
             }
         }

@@ -61,8 +61,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 2, "pg2-exe");
         harnessCfgLoad(cfgCmdCheck, argList);
 
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgHostCmd + 0), testProjectExe(), "    check pg1-host-cmd");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgHostCmd + 1), "pg2-exe", "    check pg2-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 0), testProjectExe(), "    check pg1-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 1), "pg2-exe", "    check pg2-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("db-timeout set but not protocol timeout");
@@ -73,7 +73,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100");
         harnessCfgLoad(cfgCmdCheck, argList);
 
-        cfgOptionValidSet(cfgOptProtocolTimeout, false);
+        cfgOptionInvalidate(cfgOptProtocolTimeout);
         cfgLoadUpdateOption();
 
         TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 100, "check db-timeout");
@@ -87,7 +87,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "100");
         harnessCfgLoad(cfgCmdCheck, argList);
 
-        cfgOptionValidSet(cfgOptDbTimeout, false);
+        cfgOptionInvalidate(cfgOptDbTimeout);
         cfgLoadUpdateOption();
 
         TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 100, "check protocol-timeout");
@@ -143,7 +143,7 @@ testRun(void)
         TEST_TITLE("only pg can be remote");
 
         // We'll have to cheat here and invalidate the repo-host option since there are currently no pg-only commands
-        cfgOptionValidSet(cfgOptRepoHost, false);
+        cfgOptionInvalidate(cfgOptRepoHost);
         cfgLoadUpdateOption();
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -501,6 +501,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
         TEST_RESULT_INT(lstat(strZ(strNewFmt("%s/db-backup.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_PTR_NE(cfgOptionStr(cfgOptExecId), NULL, "   exec-id is set");
         TEST_RESULT_BOOL(socketLocal.init, true, "   check socketLocal.init");
         TEST_RESULT_BOOL(socketLocal.block, false, "   check socketLocal.block");
         TEST_RESULT_BOOL(socketLocal.keepAlive, true, "   check socketLocal.keepAlive");
@@ -518,13 +519,15 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--host-id=1"));
+        hrnCfgArgRawZ(argList, cfgOptPg, "1");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
+        hrnCfgArgRawZ(argList, cfgOptExecId, "1111-fe70d611");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
         TEST_RESULT_INT(lstat(strZ(strNewFmt("%s/db-backup-local-001.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptExecId), "1111-fe70d611", "   exec-id is preserved");
 
         // Remote command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------

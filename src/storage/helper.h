@@ -41,11 +41,15 @@ const Storage *storageLocalWrite(void);
 const Storage *storagePgIdx(unsigned int pgIdx);
 const Storage *storagePgIdxWrite(unsigned int pgIdx);
 
-// PostgreSQL storage default (calculated from host-id, when set, or the first cfgOptGrpPg index)
+// PostgreSQL storage default (calculated from the pg option, when set, or the first cfgOptGrpPg index)
 const Storage *storagePg(void);
 const Storage *storagePgWrite(void);
 
-// Repository storage
+// Repository storage by cfgOptGrpRepo index
+const Storage *storageRepoIdx(unsigned int repoIdx);
+const Storage *storageRepoIdxWrite(unsigned int repoIdx);
+
+// Repository storage default (calculated from the repo option, when set, or the first cfgOptGrpPg index)
 const Storage *storageRepo(void);
 const Storage *storageRepoWrite(void);
 
