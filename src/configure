@@ -688,6 +688,7 @@ ac_user_opts='
 enable_option_checking
 enable_test
 enable_optimize
+with_configdir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1285,6 +1286,7 @@ For better control, use the options below.
 
 Fine tuning of the installation directories:
   --bindir=DIR            user executables [EPREFIX/bin]
+  --with-configdir=DIR    pgbackrest config files
 _ACEOF
 
   cat <<\_ACEOF
@@ -4197,6 +4199,21 @@ fi
 fi
 
 
+
+# Check whether --with-configdir was given.
+if test "${with_configdir+set}" = set; then :
+  withval=$with_configdir; configdir=$withval
+else
+  configdir="/etc/pgbackrest"
+fi
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define LOCALCONFDIR "${configdir}"
+_ACEOF
+
+
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
 ac_config_headers="$ac_config_headers build.auto.h"
@@ -5474,5 +5491,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
-
-# Generated from src/build/configure.ac sha1 3a5697d08a3ed37a7fa5e235d5031cadd8baa2e5

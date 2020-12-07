@@ -144,6 +144,13 @@ AC_CHECK_LIB(
             [AC_DEFINE(HAVE_LIBZST) AC_SUBST(LIBS, "${LIBS} -lzstd")])],
         [AC_MSG_ERROR([header file <zstd.h> is required])])])
 
+AC_ARG_WITH([configdir],
+  [AS_HELP_STRING([--with-configdir=DIR], [pgbackrest config files])],
+  [configdir=$withval],
+  [configdir="/etc/pgbackrest"])
+
+AC_DEFINE_UNQUOTED([LOCALCONFDIR], ["${configdir}"], [Directory for pgbackrest configuration files])
+
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CONFIG_HEADERS([build.auto.h])
