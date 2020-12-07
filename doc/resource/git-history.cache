@@ -1,7 +1,12 @@
 [
     {
-        "commit": "9517f8468d5e76ad1296e53441016d577afc896e",
-        "date": "2020-12-03 13:16:15 -0500",
+        "commit": "e116b535e6ad21248c00a6d0d948575ed06c6e38",
+        "date": "2020-12-07 09:55:00 -0500",
+        "subject": "v2.31: Minor Bug Fixes and Improvements"
+    },
+    {
+        "commit": "31becf05b7445f201250d5956e3b725dd4b9338e",
+        "date": "2020-12-04 10:59:57 -0500",
         "subject": "Add RHEL/CentOS 8 documentation.",
         "body": "Update RHEL/CentOS 7 to cover the versions that were previously covered by RHEL/CentOS 6.\n\nSince RHEL/CentOS 7/8 work the same update the documentation logic and labels to reflect this compatibility."
     },
