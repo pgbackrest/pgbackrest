@@ -41,8 +41,6 @@ sub run
 
     foreach my $rhRun
     (
-        {vm => VM1, remote => false, storage => POSIX, encrypt =>  true, compress => LZ4},
-        {vm => VM1, remote =>  true, storage =>    S3, encrypt => false, compress => BZ2},
         {vm => VM2, remote => false, storage => AZURE, encrypt =>  true, compress => BZ2},
         {vm => VM2, remote =>  true, storage => POSIX, encrypt => false, compress =>  GZ},
         {vm => VM3, remote => false, storage => POSIX, encrypt => false, compress => ZST},

@@ -1,5 +1,332 @@
 [
     {
+        "commit": "e116b535e6ad21248c00a6d0d948575ed06c6e38",
+        "date": "2020-12-07 09:55:00 -0500",
+        "subject": "v2.31: Minor Bug Fixes and Improvements"
+    },
+    {
+        "commit": "31becf05b7445f201250d5956e3b725dd4b9338e",
+        "date": "2020-12-04 10:59:57 -0500",
+        "subject": "Add RHEL/CentOS 8 documentation.",
+        "body": "Update RHEL/CentOS 7 to cover the versions that were previously covered by RHEL/CentOS 6.\n\nSince RHEL/CentOS 7/8 work the same update the documentation logic and labels to reflect this compatibility."
+    },
+    {
+        "commit": "b0ea3379651f610113cb63f0743b6245dd9d5ffe",
+        "date": "2020-12-02 22:42:50 -0500",
+        "subject": "Add pg-database option.",
+        "body": "In some rare cases there is no postgres database so this option may be used to specify an alternate database."
+    },
+    {
+        "commit": "1913ecee639e0d40e0d7bfedb898f2d881ac49f0",
+        "date": "2020-12-02 22:42:05 -0500",
+        "subject": "Fix incorrect usage of TEST_RESULT_DOUBLE().",
+        "body": "These work fine but it's better to use the correct macro."
+    },
+    {
+        "commit": "d4211d3aaf6137f0a2e635c1ac9b089771356bfd",
+        "date": "2020-12-02 22:41:14 -0500",
+        "subject": "Add retries to PostgreSQL sleep when starting a backup.",
+        "body": "Inaccuracies in sleep time or clock skew might make a single sleep insufficient to reach the next second.\n\nAdd a few retries to make the process more reliable but still avoid an infinite loop if something is seriously wrong."
+    },
+    {
+        "commit": "ec9f23d31f809902156466a0e4c96ef042d31edb",
+        "date": "2020-12-02 16:23:05 -0500",
+        "subject": "Remove CentOS 6 from tests and documentation.",
+        "body": "CentOS6 EOL'd and the mirrors were swiftly deleted, leading to failures in tests and documentation.\n\nRemove CentOS 6 for now to get builds going again with the intention to replace it in the near future with CentOS 8."
+    },
+    {
+        "commit": "ffc50719d90832d1c24ca9b56ac36f76f5bfcaa6",
+        "date": "2020-12-01 15:15:35 -0500",
+        "subject": "Improve error message when PQgetCancel() returns NULL.",
+        "body": "There is not a lot to be done in this case since it looks like PostgreSQL disconnected while the query was running, but at least improve the error message and remove the assert, which indicates a coding error."
+    },
+    {
+        "commit": "d1d25c710d736a0946d53164b814f1c914603bdd",
+        "date": "2020-11-30 18:03:24 -0500",
+        "subject": "Remove extraneous storageRepo() calls.",
+        "body": "These calls are not required since cipher info is passed explicitly. They are probably a copy-pasto from some past time when one of these functions required it."
+    },
+    {
+        "commit": "5488de8b6a77e8fcd635af707cbd604f985d1b9a",
+        "date": "2020-11-25 12:14:03 -0500",
+        "subject": "Report page checksum errors in info command text output.",
+        "body": "This feature currently only works for text output. JSON output is planned for the future."
+    },
+    {
+        "commit": "3ed7b93b90eb61d40221701e0aef1318c1ea2b2b",
+        "date": "2020-11-24 09:40:44 -0500",
+        "subject": "Conform retry in lockAcquireFile() to the common retry pattern."
+    },
+    {
+        "commit": "117f03eba15378cfa15097828041331b67d16f12",
+        "date": "2020-11-23 15:55:46 -0500",
+        "subject": "Prepare configuration module for multi-repository support.",
+        "body": "Refactor the code to allow a dynamic number of indexes for indexed options, e.g. pg-path. Our reliance on getopt_long() still limits the number of indexes we can have per group, but once this limitation is removed the rest of the code should be happy with dynamic numbers of indexes (with a reasonable maximum).\n\nAdd an option to set a default in each group. This was previously handled by the host-id option but now there is a specific option for each group, pg and repo. These remain internal until they can be fully tested with multi-repo support. They are fully tested for internal usage.\n\nRemove the ConfigDefineOption enum and use the ConfigOption enum instead. They are now equal since the indexed options (e.g. cfgOptRepoHost2) have been removed from ConfigOption.\n\nRemove the config/config test module and add required tests to the config/parse test module. Parsing is now the only way to load a config so this removes some redundancy.\n\nSplit new internal config structures and functions into a new header file, config.intern.h. More functions will need to be moved over from config.h but that will need to be done in a future commit to reduce churn.\n\nAdd repoIdx to repoIsLocal() and storageRepo*(). Multi-repository support requires that repo locality and storage be accessible by index. This allows, for example, multiple repos to be iterated in a loop. This could be done in a separate commit but doesn't seem worth it since the code is related.\n\nRemove the type parameter from storageRepoGet(). This parameter existed solely to provide coverage for the case where the storage type was invalid. A better pattern is to check that the type is S3 once all other types have been ruled out."
+    },
+    {
+        "commit": "7fda83b31e73467c881dca43cc6165e4a3ae3963",
+        "date": "2020-11-23 12:41:54 -0500",
+        "subject": "Allow multiple remote locks from the same main process.",
+        "body": "Improve locking on remote processes by introducing an exec-id that is unique to the main process and passed to all remote processes. This allows the remote processes to determine if a lock is held by a remote from the same main process. If so, the lock is allowed.\r\n\r\nThe exec-id is also useful for associating remote logs with main logs for debugging purposes."
+    },
+    {
+        "commit": "77198dce97dd70fdf59ade2886b41e9029553217",
+        "date": "2020-11-22 16:26:30 -0500",
+        "subject": "Update Vagrant box version."
+    },
+    {
+        "commit": "191b8ec18ba6a2fceb55fb280c64f1a49767b646",
+        "date": "2020-11-19 16:57:19 -0500",
+        "subject": "Create standby.signal only on PostgreSQL 12 when restore type is standby.",
+        "body": "When restore type standby is provided, the recovery.signal isn't needed and may lead to some confusion (see #1236).\r\n\r\nLately, when using pg_basebackup --write-recovery-conf, only the standby.signal file is created. This change would then align with that behaviour."
+    },
+    {
+        "commit": "9aacd3c54a82ca27d6950300a34fbad8bd1ec45c",
+        "date": "2020-11-18 18:19:49 -0500",
+        "subject": "Move retrieval of archiveResult before while loop in verifyArchive().",
+        "body": "The result structure for the archive id being processed only needs to be retrieved once so moving it outside of the WAL path list processing loop is more efficient."
+    },
+    {
+        "commit": "62d9f2396127c305be2a2463cfe98ad872709403",
+        "date": "2020-11-17 10:48:40 -0500",
+        "subject": "Rename hrnCfgEnvId*() to hrnCfgEnvKey*().",
+        "body": "The hrnCfg*() functions were renamed before commit but these got missed."
+    },
+    {
+        "commit": "dd708e6d27ac7b5917704fd07b40bb6fe2a2eee7",
+        "date": "2020-11-09 16:37:05 -0500",
+        "subject": "Fix override of user option reset.",
+        "body": "If a user reset an option such as pg-default on the command-line then an override in the code would not take effect.\n\nIgnore a reset when the code explicitly sets an option to prevent this."
+    },
+    {
+        "commit": "6acd76b60ce9bacb7180da1661745f3eaa7d6674",
+        "date": "2020-11-09 16:28:53 -0500",
+        "subject": "Fix test title in storage/remote test."
+    },
+    {
+        "commit": "63c12d25418d6252da643d50020f17cc496f0a11",
+        "date": "2020-11-09 16:26:43 -0500",
+        "subject": "Fix spacing and typos in backup/manifest modules."
+    },
+    {
+        "commit": "3f7a66fffc1062027166056b9cad2459d160c613",
+        "date": "2020-11-09 16:19:37 -0500",
+        "subject": "Remove obsolete call to storageRepo() in archivePushProtocol().",
+        "body": "This call to storageRepo() was used to fetch cipher options from a remote to determine if a repo cipher was enabled.\n\nNow the main process does this work and passes the cipher options directly to the local so there is no need to pre-load the repo storage here."
+    },
+    {
+        "commit": "cbb9b8fd2b8579ea1e9f129c2b79e4a7151a2757",
+        "date": "2020-11-09 16:16:41 -0500",
+        "subject": "Check archive push queue limit before checking repository.",
+        "body": "If the push queue limit has been exceeded then nothing will be pushed to the repo so there is no point in checking it. Worse, a failure in the check would cause drop not to run and potentially fill up the disk, exactly the case this feature was designed to prevent.\n\nThe async version already checks the push queue limit before checking the repository so now both versions have the same behavior."
+    },
+    {
+        "commit": "8cf47f82e49cb3151cd48c8430a1a38c7b3ccaa0",
+        "date": "2020-11-09 16:10:59 -0500",
+        "subject": "Log warnings in archive-push async log.",
+        "body": "These warnings were only being reported to PostgreSQL on the console. Now they are also recorded in the async log increasing the chance that they will be seen.\n\nThis also improves coverage by requiring a warning during async processing to have a test case, which has been added."
+    },
+    {
+        "commit": "d5d1ec6f6f4820808f30f4e9015bf22f2534de4e",
+        "date": "2020-11-04 11:09:05 -0500",
+        "subject": "Use a constant to check restore target action.",
+        "body": "Checking the default here was fragile. If the default were to change the code would break.\n\nThis also removes the only dependency on cfgOptionDefault() outside of the help command."
+    },
+    {
+        "commit": "021a34a55bef5370441c7a416514efebb7086177",
+        "date": "2020-10-29 17:16:15 -0400",
+        "subject": "Fix typos."
+    },
+    {
+        "commit": "f87a117b71ce0d99137b6df5405fa1fd592af4b4",
+        "date": "2020-10-28 08:59:43 -0400",
+        "subject": "Spell out three exclamation points in git-history.cache.",
+        "body": "Three exclamation points are used by convention as a marker for code that needs attention before it can be committed to integration.\n\nIf the markers are in this file they come up in every search."
+    },
+    {
+        "commit": "d25e965c475e0a36aad8e4a2df7e0d840185cded",
+        "date": "2020-10-27 13:29:58 -0400",
+        "subject": "Use harnessCfgLoad() in config/load unit tests.",
+        "body": "The tests were originally written by loading values directly into the configuration before the parser was available.\n\nUpdate to use harnessCfgLoad() to simplify the tests and make them compatible with upcoming config changes."
+    },
+    {
+        "commit": "d91e6014bd1b6ff6f68abee7944250ed16ee254c",
+        "date": "2020-10-27 13:18:25 -0400",
+        "subject": "Fix comment."
+    },
+    {
+        "commit": "abe9d90c891fe61b0b0e7d1729dc89ca10b3b2e8",
+        "date": "2020-10-27 08:34:18 -0400",
+        "subject": "Improve info command output when a stanza is specified but missing.",
+        "body": "Return a path missing error when a stanza is specified for the info command but the stanza does not exist in the repository.\r\n\r\nPreviously [] was returned, which is still the case if no stanza is specified and the repository does not exist."
+    },
+    {
+        "commit": "770b65de804fc56a3e6a00d3916958c99774880d",
+        "date": "2020-10-26 12:18:45 -0400",
+        "subject": "Improve performance of large file lists in backup/restore commands.",
+        "body": "lstRemoveIdx(list, 0) resulted in the entire list being moved down to the first position which could take a long time for big lists. This is a common pattern in backup/restore when processing file queues.\r\n\r\nInstead simply move the list pointer up when first item is removed. Then on insert check if there is space at the beginning when there is no longer space at the end and do the move then. This way if a list is built and then drained without any new inserts then no move is required."
+    },
+    {
+        "commit": "d452e9cc38001e2258cc05137508ab692d226df2",
+        "date": "2020-10-26 10:25:16 -0400",
+        "subject": "Use zero-based indexes when referring to option indexes.",
+        "body": "There were a number of places in the code where \"hostId\" was used, but hostId is just the option group index + 1 so this led to a lot of +1 and -1 to convert the id to an index and vice versa.\r\n\r\nInstead just use the zero based index wherever possible. This is pretty much everywhere except when the host-id option is read or set, or where a message is being formatted for the user.\r\n\r\nAlso fix a bug in protocolRemoteParam() where remotes spawned from the main process could get process ids that were not 0. Only the locals should spawn remotes with process id > 0. This seems to have been harmless since the process id is only a label, but it could be confusing when debugging."
+    },
+    {
+        "commit": "ae35c4f0292e410c06e71eed6c5d8565017351d1",
+        "date": "2020-10-26 07:41:08 -0400",
+        "subject": "Remove unused FUNCTION_LOG_VERIFY_WAL_RANGE* defines.",
+        "body": "The defines for FUNCTION_LOG_VERIFY_WAL_RANGE* are not used in the current verify.c and are currently not planned in the continuing development of the verify command, so they are dead code and are therefore being removed."
+    },
+    {
+        "commit": "ea49151746a2d349ccb3c25e8e41df1e88d59a06",
+        "date": "2020-10-24 13:18:02 -0400",
+        "subject": "Replace misuse of bufSize() with bufUsed().",
+        "body": "bufSize() should only be used whem checking the total size of the buffer, not how much of it is currently used.\n\nIn these cases bufUsed() and bufSize() are returning the same value but benign-looking code changes could break this assumption."
+    },
+    {
+        "commit": "80a770ed2ea8d060d8ea77dabb239cf7e861774d",
+        "date": "2020-10-24 11:16:06 -0400",
+        "subject": "Clarify intended usage of harnessCfgLoadRaw()."
+    },
+    {
+        "commit": "76cfd8ca703f4d6a71c6fe10b683209a2040368c",
+        "date": "2020-10-24 11:07:07 -0400",
+        "subject": "Allow [, #, and space as the first character in database names.",
+        "body": "iniLoad() was trimming lines which meant that a leading space would not pass checksum validation when a manifest was reloaded. Remove the trims since files we write should never contain extraneous spaces. This further diverges the format for the functions that read conf files (e.g. pgbackrest.conf) and those that read info (e.g. manifest) files.\r\n\r\nWhile we are at it also allow [ and # as initial characters. # was reserved for comments but we never put comments into info files. [ denotes a section but we can get around this by never allowing arrays as values in info files, so if a line ends in ] it must be a section. This is currently the case but enforce it by adding an assert to info/info.c."
+    },
+    {
+        "commit": "c573ef281489e274c9b59185275f9c595885f359",
+        "date": "2020-10-20 16:14:03 -0400",
+        "subject": "Add indexed option > 1 to config/exec unit test."
+    },
+    {
+        "commit": "176cf0bf609ac2fc49c411537d4aa518dccd33d9",
+        "date": "2020-10-20 14:54:28 -0400",
+        "subject": "Use harnessCfgLoadRaw() in command/command and common/exit unit tests.",
+        "body": "The tests were originally written by loading values directly into the configuration before the parser was available.\n\nUpdate to use harnessCfgLoadRaw() to simplify the tests and make them compatible with upcoming config changes.\n\nNote that some unreachable conditions were removed since they could not be reached via a parsed config, only by munging values directly into the config. cfgOptionTest(optionId) was removed because a non-default value must always be set. cfgOptionValid(cfgOptLogTimestamp) was removed because it is true for all commands except for cfgCmdNone, which is checked with an assert."
+    },
+    {
+        "commit": "156b7d48cce789cc6e435219062ceeadbbb7b494",
+        "date": "2020-10-20 12:39:23 -0400",
+        "subject": "Get target-action default from cfgOptionDefault() in restore command.",
+        "body": "cfgDefOptionDefault() worked but the default is available without having to peek into config definitions."
+    },
+    {
+        "commit": "41789d70d16a3921c68132187f08a1b8fa058cf1",
+        "date": "2020-10-20 11:24:26 -0400",
+        "subject": "Remove cfgOptionId() and replace it with cfgParseOption().",
+        "body": "cfgOptionId() did not recognize deprecated options which made the help command throw errors when they were specified on the command line. cfgParseOption() will correctly identify deprecated options.\n\ncfgParseOption() can also be used in cfgParse() to reduce code duplication when parsing info out of the option value returned by optionFind().\n\nFinally, code the option key index separately in parse.auto.c. For now they are simply added back together but future code will need them separated."
+    },
+    {
+        "commit": "6414ae9707ab637f298df1ce55fe4bcf46fbe910",
+        "date": "2020-10-19 18:17:47 -0400",
+        "subject": "Remove ConfigDefineCommand enum.",
+        "body": "This has always been equivalent to the ConfigCommand enum so it just adds complexity.\n\nIt was created for symmetry with ConfigDefineOption, which will also be removed soon."
+    },
+    {
+        "commit": "ba29e24684414c610e58374c000cb66e28315975",
+        "date": "2020-10-19 17:17:47 -0400",
+        "subject": "Fix repo/pg-local option being overwritten.",
+        "body": "This option would get overwritten when the option values were moved to index 1.\n\nSet the repo/pg-local option after options are moved to fix this."
+    },
+    {
+        "commit": "2d38d2fc824db1bb3f56899addd51ab018977d12",
+        "date": "2020-10-19 17:06:52 -0400",
+        "subject": "Reset additional options in real/all integration test.",
+        "body": "Currently indexes above 1 do not have dependencies checked, so this doesn't error.\n\nIn a future commit we will enable those checks and this will error if it is not fixed."
+    },
+    {
+        "commit": "996387ea9312459db664e59d68b94455c9c56acc",
+        "date": "2020-10-19 16:27:52 -0400",
+        "subject": "Use harnessCfgLoadRaw() in command/help unit test.",
+        "body": "This correctly set defaults from cfgLoadUpdateOption(), e.g. repo-host-cmd."
+    },
+    {
+        "commit": "303b9b17e700dca00aa12a3afe23b1f7c9741752",
+        "date": "2020-10-19 14:19:28 -0400",
+        "subject": "Remove extraneous calls to cfgOptionValid() in unit tests."
+    },
+    {
+        "commit": "7d069a2b9178498293372913b0fa287005aa93b4",
+        "date": "2020-10-19 14:03:48 -0400",
+        "subject": "Remove indexed option constants.",
+        "body": "These constants don't scale well as the index total is increased for an option.\n\nThe core code rarely uses these options and they are easily replaced with cfgOptionName().\n\nThe tests had started to make use of the constants, so provide functions that build the option name from the optionId and, optionally, the optionKey."
+    },
+    {
+        "commit": "86275c4f85668d4576c16c85c629a7f3515ade59",
+        "date": "2020-10-16 07:42:03 -0400",
+        "subject": "Expire history files.",
+        "body": "WAL timeline history files were not being expired because they were small and generally not very plentiful.\r\n\r\nHowever, in some cases large numbers of history files may be generated so it makes sense to remove useless history files to keep things tidy.\r\n\r\nThe history file for the oldest retained timeline is kept for debugging purposes even though it is not used for recovery."
+    },
+    {
+        "commit": "4b8dfd34c0a9ced0977c43c2b4159eb700eadf28",
+        "date": "2020-10-08 17:09:21 -0400",
+        "subject": "Assert when buffer used is greater than size limit.",
+        "body": "099281c5 reduced used but this could lead to surprising behavior so assert instead.\n\nCall bufUsedSet() before bufLimitSet() to avoid the assertion."
+    },
+    {
+        "commit": "401e4f1df41a40860c784f1908994c6ee51f6a51",
+        "date": "2020-10-08 16:09:38 -0400",
+        "subject": "Optimize small reads in IoRead.",
+        "body": "Instead of using memmove() to manage the internal output buffer for every small read, track the current buffer position and only move data when the small read cannot be satisfied and more data is needed."
+    },
+    {
+        "commit": "e0f09687e49805a4349933f5e244a2e88b27220b",
+        "date": "2020-10-08 10:52:19 -0400",
+        "subject": "Add option groups.",
+        "body": "Group related options together so operations (e.g. valid, test, index total) can be performed on all options in the group.\r\n\r\nPreviously, options at the top of the hierarchy of the related options were used to do these tests. This was prone to error as option relationships changed and it was not always clear which option (or options) should be used."
+    },
+    {
+        "commit": "dc8a9dab1b4e9b00a0e3b1394f519464c702cd60",
+        "date": "2020-10-08 08:37:53 -0400",
+        "subject": "Add missing assertion in lstSort()."
+    },
+    {
+        "commit": "099281c51070fce5c801f90388b8f4316cea7f64",
+        "date": "2020-10-07 18:02:05 -0400",
+        "subject": "Reduce buffer used when size limit set.",
+        "body": "If the size is reduced then the amount used should be reduced as well.\n\nThis is a bug but does not affect current use cases."
+    },
+    {
+        "commit": "39aca3269c440e635ae6ff04235628a9f9d30a79",
+        "date": "2020-10-07 16:34:13 -0400",
+        "subject": "Add bufSizeAlloc()."
+    },
+    {
+        "commit": "c8a94d9eb6bb3972071eb3a4eb8e54ece1a5b56e",
+        "date": "2020-10-07 15:17:16 -0400",
+        "subject": "Add missing assertion in lstFind()."
+    },
+    {
+        "commit": "98f6a1cffdd6eb2667a3d042aa5ec3c192129700",
+        "date": "2020-10-07 12:15:50 -0400",
+        "subject": "Remove unused cfgDefOptionPrefix() function and data.",
+        "body": "This function was made obsolete when Perl was removed in f0ef73db."
+    },
+    {
+        "commit": "434282d343c131387ffc080ec5db9aa02ba3c413",
+        "date": "2020-10-07 12:03:23 -0400",
+        "subject": "Declare cfgDefOptionAllowListValue/Total() static.",
+        "body": "These have not been used externally since Perl was removed in f0ef73db."
+    },
+    {
+        "commit": "9377d050724d334a18706b49090575f2160433f1",
+        "date": "2020-10-06 17:15:48 -0400",
+        "subject": "Add repo-azure-endpoint option.",
+        "body": "This option allows alternate endpoints (e.g. Azure Government) to be configured."
+    },
+    {
+        "commit": "3ce6b3e5058a7b1893aeb0c587fe8938956bbef5",
+        "date": "2020-10-05 13:12:48 -0400",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "3c8774fbab80a4300fa1d6935bc87036e41057dc",
+        "date": "2020-10-05 12:02:31 -0400",
+        "subject": "Begin v2.31 development."
+    },
+    {
         "commit": "9229d6c866ee6296180bfefdbce42660b9e59b98",
         "date": "2020-10-05 11:51:45 -0400",
         "subject": "v2.30: PostgreSQL 13 Support"

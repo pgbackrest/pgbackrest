@@ -77,7 +77,7 @@ Improvements:
 
 Documentation Features:
 
-* Add user guides for CentOS/RHEL 6/7.
+* Add user guide for CentOS/RHEL 7.
 ```
 
 Commit to integration with the above message and push to CI.
@@ -103,7 +103,7 @@ v2.14: Bug Fix and Improvements
 
 **Documentation Features**:
 
-- Add user guides for CentOS/RHEL 6/7.
+- Add user guide for CentOS/RHEL 7.
 ```
 
 The first line will be the release title and the rest will be the body.  The tag field should be updated with the current version so a tag is created from master. **Be sure to select the release commit explicitly rather than auto-tagging the last commit in master!**
@@ -156,7 +156,7 @@ git push origin integration
 
 These scripts are required by `src/config` and should be updated after each release, when needed. Note that these files are updated very infrequently.
 
-Check the latest version of `automake` and see if it is > `1.16.2`:
+Check the latest version of `automake` and see if it is > `1.16.3`:
 ```
 https://git.savannah.gnu.org/gitweb/?p=automake.git
 ```

@@ -203,7 +203,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            125
+#define CFG_OPTION_TOTAL                                            126
 
 /***********************************************************************************************************************************
 Command enum
@@ -291,6 +291,7 @@ typedef enum
     cfgOptOnline,
     cfgOptOutput,
     cfgOptPg,
+    cfgOptPgDatabase,
     cfgOptPgHost,
     cfgOptPgHostCmd,
     cfgOptPgHostConfig,
