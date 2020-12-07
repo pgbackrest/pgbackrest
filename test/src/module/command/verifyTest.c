@@ -3,8 +3,6 @@ Test Stanza Commands
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
-#include <stdio.h> // CSHANG remove
-
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPq.h"
@@ -1552,12 +1550,6 @@ testRun(void)
                 "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0",
                 strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull),
                 strZ(backupLabelDiff), strZ(backupLabelFullDb2))));
-                //
-        // TEST_RESULT_VOID(cmdVerify(), "valid backups");
-/* CSHANG TODO
-- backups with compression
-- encrypted - or will that be done in real/integration tests?
-*/
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

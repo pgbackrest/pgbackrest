@@ -234,7 +234,7 @@ BackupResult:
 - totalFileVerify - total number of files in the manifest for this backup that will be verified. For INCR or DIFF backups, not all of these files will be processed but all will attempt to be verified.
 - pgId - db-id of the database that was backed up - used for building the archiveId for checking the WAL
 - pgVersion - PG version of the database that was backed up - used for building the archiveId for checking the WAL
-- pgSystemId - systemId of the database that was backed up **// CSHANG DO WE NEED THIS???**
+- pgSystemId - systemId of the database that was backed up **// CSHANG DO WE NEED THIS??? Probably important for multi-repo**
 
 BackupResultList:
     List of BackupResult for all backups processed. This list will persist after all jobs are completed.
@@ -307,6 +307,9 @@ FOR each file sent for processing
     FI
 
 ```
+**// CSHANG maybe in the ELSE of IF (strEq(fileType, STORAGE_REPO_ARCHIVE_STR)) init the archiveId? strNewFmt("%s-%u", strZ(pgVersionToStr(backupResult->pgVersion)), backupResult->pgId);**
+
+**CSHANG In rendering the results, maybe only print the missing: 0, checksum invalid: 0, size invalid: 0, other: 0 is any are not 0?**
 
 ## Requirement 5. Verify whether a backup is consistent, valid and can be played through PITR
 
@@ -408,6 +411,12 @@ Considerations:
 TESTING
 1) Local and remote tests
 2) Compressed backups
+                //
+        // TEST_RESULT_VOID(cmdVerify(), "valid backups");
+/* CSHANG TODO
+- backups with compression
+- encrypted - or will that be done in real/integration tests?
+*/
 
 //***********************************************************************************************************************************
 /* CSHANG NOTES for PITR, For example:

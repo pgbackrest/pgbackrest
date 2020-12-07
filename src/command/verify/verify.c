@@ -29,8 +29,6 @@ Verify the contents of the repository.
 #include "protocol/parallel.h"
 #include "storage/helper.h"
 
-#include <stdio.h> // CSHANG Remove
-
 /***********************************************************************************************************************************
 Data Types and Structures
 ***********************************************************************************************************************************/
@@ -1525,13 +1523,13 @@ verifyProcess(unsigned int *errorTotal)
 
                             archiveIdResult = lstGet(jobData.archiveIdResultList, index);
                         }
+                        // Else get the backup result data
                         else
                         {
                             unsigned int index = lstFindIdx(jobData.backupResultList, &resultId);
                             ASSERT(index != LIST_NOT_FOUND);
 
                             backupResult = lstGet(jobData.backupResultList, index);
-// CSHANG maybe here init the archiveId? strNewFmt("%s-%u", strZ(pgVersionToStr(backupResult->pgVersion)), backupResult->pgId);
                         }
 
                         // The job was successful
