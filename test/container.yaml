@@ -13,7 +13,6 @@
 # - VM=XXX;DATE=YYYYMMDDX;BASE=pgbackrest/test:${VM?}-base;docker tag ${BASE?} ${BASE?}-${DATE?} && docker push ${BASE?}-${DATE?}
 # **********************************************************************************************************************************
 20200924A:
-  co6: 111ea274130b051c4b82c16170eed997a9dc5d20
   co7: ee58b885ad2463d60031511de0a297aa93c02068
   u18: d95d53e642fc1cea4a2b8e935ea7d9739f7d1c46
 

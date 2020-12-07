@@ -237,16 +237,16 @@ eval
             }
         }
 
-        # Generate deployment docs for RHEL/Centos 6
-        if (!defined($strVm) || $strVm eq VM_CO6)
+        # Generate deployment docs for RHEL/Centos 8
+        if (!defined($strVm) || $strVm eq VM_CO8)
         {
-            &log(INFO, "Generate RHEL/CentOS 6 documentation");
+            &log(INFO, "Generate RHEL/CentOS 8 documentation");
 
-            executeTest("${strDocExe} --deploy --key-var=os-type=centos6 --out=html", {bShowOutputAsync => true});
+            executeTest("${strDocExe} --deploy --key-var=os-type=centos8 --out=pdf", {bShowOutputAsync => true});
 
             if (!defined($strVm))
             {
-                executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos6 --out=html");
+                executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos8 --out=pdf");
             }
         }
 
@@ -266,10 +266,11 @@ eval
             executeTest(
             "${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=html --var=project-url-root=index.html");
             $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
+
             executeTest(
-                "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --out=html" .
+                "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos8 --out=html" .
                     " --var=project-url-root=index.html");
-            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
+            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos8.html");
 
             executeTest(
                 "${strDocExe} --deploy --out-preserve --cache-only --out=man --out=html --var=project-url-root=index.html");
@@ -288,8 +289,9 @@ eval
 
         executeTest("${strDocExeVersion} --key-var=os-type=centos7");
         $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
-        executeTest("${strDocExeVersion} --out-preserve --key-var=os-type=centos6");
-        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
+
+        executeTest("${strDocExeVersion} --out-preserve --key-var=os-type=centos8");
+        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos8.html");
 
         $oStorageDoc->remove("$strDocHtml/release.html");
         executeTest("${strDocExeVersion} --out-preserve --exclude=release");
@@ -307,8 +309,8 @@ eval
 
             executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=html");
             $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
-            executeTest("${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos6 --out=html");
-            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos6.html");
+            executeTest("${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos8 --out=html");
+            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos8.html");
             executeTest("${strDocExe} --deploy --out-preserve --cache-only --out=html");
 
             # Deploy to repository

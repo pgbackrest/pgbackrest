@@ -659,6 +659,14 @@ static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
     //------------------------------------------------------------------------------------------------------------------------------
     CONFIG_OPTION
     (
+        CONFIG_OPTION_NAME("pg-database")
+        CONFIG_OPTION_GROUP(true)
+        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
+    )
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    CONFIG_OPTION
+    (
         CONFIG_OPTION_NAME("pg-host")
         CONFIG_OPTION_GROUP(true)
         CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)

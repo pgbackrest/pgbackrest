@@ -244,12 +244,6 @@ sub certSetup
 
     if ($rhVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        if ($strOS eq VM_CO6)
-        {
-            $strScript .=
-                "    update-ca-trust enable && \\\n";
-        }
-
         $strScript .=
             "    cp /etc/fake-cert/pgbackrest-test-ca.crt /etc/pki/ca-trust/source/anchors && \\\n" .
             "    update-ca-trust extract";
@@ -350,7 +344,7 @@ sub containerBuild
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            if ($strOS eq VM_CO6 || $strOS eq VM_CO7)
+            if ($strOS eq VM_CO7)
             {
                 $strScript .=
                     "    yum -y install epel-release && \\\n";
@@ -361,16 +355,7 @@ sub containerBuild
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
-                "        zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2";
-
-            if ($strOS eq VM_CO6)
-            {
-                $strScript .= ' perl-Time-HiRes perl-parent perl-JSON';
-            }
-            else
-            {
-                $strScript .= ' perl-JSON-PP';
-            }
+                "        zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP";
         }
         else
         {
@@ -475,16 +460,7 @@ sub containerBuild
                 $strScript .=
                     "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG && \\\n";
 
-                if ($strOS eq VM_CO6)
-                {
-                    $strScript .=
-                        "    rpm -ivh \\\n" .
-                        "        http://yum.postgresql.org/9.1/redhat/rhel-6-x86_64/pgdg-centos91-9.1-6.noarch.rpm \\\n" .
-                        "        http://yum.postgresql.org/9.2/redhat/rhel-6-x86_64/pgdg-centos92-9.2-8.noarch.rpm \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-6-x86_64/" .
-                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
-                }
-                elsif ($strOS eq VM_CO7)
+                if ($strOS eq VM_CO7)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .

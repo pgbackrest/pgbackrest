@@ -89,10 +89,10 @@ use constant VM_ALL                                                 => 'all';
 use constant VM_NONE                                                => 'none';
     push @EXPORT, qw(VM_NONE);
 
-use constant VM_CO6                                                 => 'co6';
-    push @EXPORT, qw(VM_CO6);
 use constant VM_CO7                                                 => 'co7';
     push @EXPORT, qw(VM_CO7);
+use constant VM_CO8                                                 => 'co8';
+    push @EXPORT, qw(VM_CO8);
 use constant VM_F32                                                 => 'f32';
     push @EXPORT, qw(VM_F32);
 use constant VM_U12                                                 => 'u12';
@@ -117,8 +117,6 @@ use constant VM_HOST_DEFAULT                                        => VM_U18;
     push @EXPORT, qw(VM_HOST_DEFAULT);
 
 # VM aliases for run matrices (numbered oldest to newest)
-use constant VM1                                                    => VM_CO6;
-    push @EXPORT, qw(VM1);
 use constant VM2                                                    => VM_U12;
     push @EXPORT, qw(VM2);
 use constant VM3                                                    => VM_CO7;
@@ -127,7 +125,7 @@ use constant VM4                                                    => VM_U18;
     push @EXPORT, qw(VM4);
 
 # List of default test VMs
-use constant VM_LIST                                                => (VM2, VM1, VM3, VM4);
+use constant VM_LIST                                                => (VM2, VM3, VM4);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -150,38 +148,6 @@ my $oyVm =
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_10,
-        ],
-    },
-
-    # CentOS 6
-    &VM_CO6 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_OS => VM_OS_CENTOS,
-        &VM_IMAGE => 'centos:6',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
-
-        &VMDEF_WITH_ZST => true,
-
-        &VM_DB =>
-        [
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-            PG_VERSION_13,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_95,
             PG_VERSION_10,
         ],
     },
@@ -328,6 +294,8 @@ my $oyVm =
             PG_VERSION_83,
             PG_VERSION_84,
             PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
             PG_VERSION_93,
         ],
     },
@@ -431,6 +399,8 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,

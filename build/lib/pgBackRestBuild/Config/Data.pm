@@ -298,6 +298,7 @@ use constant CFGOPT_PG_HOST_CONFIG_PATH                             => CFGOPT_PG
 use constant CFGOPT_PG_HOST_PORT                                    => CFGOPT_PG_HOST . '-port';
 use constant CFGOPT_PG_HOST_USER                                    => CFGOPT_PG_HOST . '-user';
 
+use constant CFGOPT_PG_DATABASE                                     => CFGDEF_PREFIX_PG . '-database';
 use constant CFGOPT_PG_PATH                                         => CFGDEF_PREFIX_PG . '-path';
 use constant CFGOPT_PG_PORT                                         => CFGDEF_PREFIX_PG . '-port';
 use constant CFGOPT_PG_SOCKET_PATH                                  => CFGDEF_PREFIX_PG . '-socket-path';
@@ -2761,6 +2762,16 @@ my %hConfigDefine =
             'db?-user' => {&CFGDEF_RESET => false},
         },
         &CFGDEF_REQUIRED => false,
+    },
+
+    &CFGOPT_PG_DATABASE =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_PG,
+        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'postgres',
+        &CFGDEF_COMMAND => CFGOPT_PG_PORT,
+        &CFGDEF_DEPEND => CFGOPT_PG_PORT,
     },
 
     &CFGOPT_PG_PATH =>

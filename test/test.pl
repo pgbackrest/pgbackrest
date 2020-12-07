@@ -116,7 +116,7 @@ test.pl [options]
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
-   --vm                 docker container to build/test (u12, u14, co6, co7)
+   --vm                 docker container to build/test (e.g. co7)
    --vm-build           build Docker containers
    --vm-force           force a rebuild of Docker containers
    --vm-out             Show VM output (default false)

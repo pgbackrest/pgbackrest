@@ -178,16 +178,16 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *unsignedint = varNewUInt(787);
-        TEST_RESULT_DOUBLE(varUInt(unsignedint), 787, "uint variant");
-        TEST_RESULT_DOUBLE(varUIntForce(unsignedint), 787, "force uint to uint");
+        TEST_RESULT_UINT(varUInt(unsignedint), 787, "uint variant");
+        TEST_RESULT_UINT(varUIntForce(unsignedint), 787, "force uint to uint");
         varFree(unsignedint);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_DOUBLE(varUIntForce(varNewBool(true)), 1, "force bool to uint");
-        TEST_RESULT_DOUBLE(varUIntForce(VARINT(2147483647)), 2147483647, "force int to uint");
-        TEST_RESULT_DOUBLE(varUIntForce(VARINT64(2147483647)), 2147483647, "force int64 to uint");
-        TEST_RESULT_DOUBLE(varUIntForce(varNewStrZ("4294967295")), 4294967295, "force str to uint");
-        TEST_RESULT_DOUBLE(varUIntForce(VARUINT64(4294967295U)), 4294967295U, "force uint64 to uint");
+        TEST_RESULT_UINT(varUIntForce(varNewBool(true)), 1, "force bool to uint");
+        TEST_RESULT_UINT(varUIntForce(VARINT(2147483647)), 2147483647, "force int to uint");
+        TEST_RESULT_UINT(varUIntForce(VARINT64(2147483647)), 2147483647, "force int64 to uint");
+        TEST_RESULT_UINT(varUIntForce(varNewStrZ("4294967295")), 4294967295, "force str to uint");
+        TEST_RESULT_UINT(varUIntForce(VARUINT64(4294967295U)), 4294967295U, "force uint64 to uint");
 
         TEST_ERROR(
             varUIntForce(varNewStrZ("4294967296")), FormatError,
@@ -203,7 +203,7 @@ testRun(void)
         TEST_ERROR(varUInt(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeUInt' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_DOUBLE(varUInt(varDup(VARUINT(88976))), 88976, "dup uint");
+        TEST_RESULT_UINT(varUInt(varDup(VARUINT(88976))), 88976, "dup uint");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(varEq(VARUINT(9999), VARUINT(9999)), true, "uint, uint eq");

@@ -1036,6 +1036,30 @@
                         <example>db_owner</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg" name="Set PostgreSQL Cluster">
+                        <summary>Set PostgreSQL cluster.</summary>
+
+                        <text>Set the <postgres/> cluster for a command to operate on.
+
+                        For example, this option may be used to perform a restore to a specific <postgres/> cluster, rather than using the first configured cluster.
+
+                        Note that some commands, e.g. <cmd>backup</cmd>, are intended to operate on multiple <postgres/> clusters and will ignore this option.</text>
+
+                        <example>1</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-database" name="PostgreSQL Database">
+                        <summary><postgres/> database.</summary>
+
+                        <text>The database name used when connecting to <postgres/>. The default is usually best but some installations may not contain this database.
+
+                        Note that for legacy reasons the setting of the <id>PGDATABASE</id> environment variable will be ignored.</text>
+
+                        <example>backupdb</example>
+                    </config-key>
+
                     <!-- CONFIG - STANZA SECTION - PG-PATH KEY -->
                     <config-key id="pg-path" name="PostgreSQL Path">
                         <summary><postgres/> data directory.</summary>
