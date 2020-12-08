@@ -20,6 +20,10 @@ Functions
 // Convert char to zero-terminated string
 size_t cvtCharToZ(char value, char *buffer, size_t bufferSize);
 
+// Convert double to zero-terminated string and vice versa
+size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
+double cvtZToDouble(const char *value);
+
 // Convert int to zero-terminated string and vice versa
 size_t cvtIntToZ(int value, char *buffer, size_t bufferSize);
 int cvtZToInt(const char *value);

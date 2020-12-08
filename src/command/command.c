@@ -129,8 +129,13 @@ cmdOption(void)
                                 // Generate time value
                                 else if (cfgDefOptionType(optionId) == cfgDefOptTypeTime)
                                 {
+                                    char working[CVT_BASE10_BUFFER_SIZE];
+
+                                    cvtDoubleToZ(
+                                        (double)cfgOptionIdxInt64(optionId, optionIdx) / MSEC_PER_SEC, working, sizeof(working));
+
                                     valueList = strLstNew();
-                                    strLstAdd(valueList, strNewFmt("%" PRId64 "ms", cfgOptionIdxInt64(optionId, optionIdx)));
+                                    strLstAddZ(valueList, working);
                                 }
                                 // Else only one value
                                 else

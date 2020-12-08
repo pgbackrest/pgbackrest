@@ -207,14 +207,22 @@ parseTime(const String *value)
 
     ASSERT(value != NULL);
 
+    // Lowercase the value
+    String *valueLower = strLower(strDup(value));
+
+    // Error if invalid format
+    if (!regExpMatchOne(STRDEF("^([0-9]*\\.[0-9]+|[0-9]+(ms){0,1})$"), valueLower))
+        THROW_FMT(FormatError, "invalid format for time '%s'", strZ(value));
+
+    // Convert the value to a float
     double result = 0;
-    sscanf(strZ(value), "%lf", &result);
+    sscanf(strZ(valueLower), "%lf", &result);
 
-    if (result == 0 && strcmp(strZ(value), "0") != 0)
-        THROW_FMT(FormatError, "value '%s' is not valid", strZ(value));
+    // If units are not in ms then multiply to get milliseconds
+    if (!strEndsWithZ(valueLower, "ms"))
+        result *= 1000;
 
-    // !!! THIS BIT IS A PRETTY HACKY
-    FUNCTION_TEST_RETURN((uint64_t)(result * (strEndsWithZ(value, "ms") ? 1 : 1000)));
+    FUNCTION_TEST_RETURN((uint64_t)result);
 }
 
 /***********************************************************************************************************************************
@@ -1416,15 +1424,15 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     // represented as constants so they can be assigned directly without creating variants.
                                     if (optionDefType == cfgDefOptTypeBoolean)
                                         configOptionValue->value = strcmp(value, ONE_Z) == 0 ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
-                                    else if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize)
-                                        configOptionValue->value = varNewInt64(cvtZToInt64(value));
-                                    else if (optionDefType == cfgDefOptTypeTime)
-                                        configOptionValue->value = varNewInt64((int64_t)parseTime(STR(value)));
+                                    else if (optionDefType == cfgDefOptTypePath || optionDefType == cfgDefOptTypeString)
+                                        configOptionValue->value = varNewStrZ(value);
                                     else
                                     {
-                                        ASSERT(optionDefType == cfgDefOptTypePath || optionDefType == cfgDefOptTypeString);
+                                        ASSERT(
+                                            optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize ||
+                                            optionDefType == cfgDefOptTypeTime);
 
-                                        configOptionValue->value = varNewStrZ(value);
+                                        configOptionValue->value = varNewInt64(cvtZToInt64(value));
                                     }
                                 }
                                 MEM_CONTEXT_END();

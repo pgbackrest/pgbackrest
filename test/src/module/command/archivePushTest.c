@@ -483,7 +483,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,
-            "unable to push WAL file 'bogus' to the archive asynchronously after 1000ms");
+            "unable to push WAL file 'bogus' to the archive asynchronously after 1 second(s)");
 
         // Create pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
@@ -567,7 +567,7 @@ testRun(void)
 
                 TEST_ERROR(
                     cmdArchivePush(), ArchiveTimeoutError,
-                    "unable to push WAL file '000000010000000100000001' to the archive asynchronously after 1000ms");
+                    "unable to push WAL file '000000010000000100000001' to the archive asynchronously after 1 second(s)");
 
                 // Notify the child to release the lock
                 ioWriteLine(write, bufNew(0));

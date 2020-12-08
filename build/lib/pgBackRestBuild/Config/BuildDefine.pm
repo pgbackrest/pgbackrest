@@ -244,7 +244,10 @@ sub renderOptional
     {
         $strBuildSourceOptional .=
             (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
-            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT(\"" . $rhOptional->{&CFGDEF_DEFAULT} . "\")\n";
+            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT(\"" .
+            (defined($rhOptional->{&CFGDEF_TYPE}) && $rhOptional->{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ?
+                $rhOptional->{&CFGDEF_DEFAULT} * 1000 : $rhOptional->{&CFGDEF_DEFAULT}) .
+            "\")\n";
 
         $bSingleLine = true;
     }

@@ -75,10 +75,11 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
 Helper function for helpRender() to output values as strings
 ***********************************************************************************************************************************/
 static const String *
-helpRenderValue(const Variant *value)
+helpRenderValue(const Variant *value, ConfigDefineOptionType type)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(VARIANT, value);
+        FUNCTION_LOG_PARAM(ENUM, type);
     FUNCTION_LOG_END();
 
     const String *result = NULL;
@@ -126,6 +127,13 @@ helpRenderValue(const Variant *value)
         }
 
         result = resultTemp;
+    }
+    else if (type == cfgDefOptTypeTime)
+    {
+        char working[CVT_BASE10_BUFFER_SIZE];
+
+        cvtDoubleToZ((double)varInt64(value) / MSEC_PER_SEC, working, sizeof(working));
+        result = strNew(working);
     }
     else
         result = varStrForce(value);
@@ -259,11 +267,11 @@ helpRender(void)
                             strlen(cfgDefOptionHelpSummary(commandId, optionId)) - 1));
 
                         // Ouput current and default values if they exist
-                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
+                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgDefOptionType(optionId));
                         const String *value = NULL;
 
                         if (cfgOptionSource(optionId) != cfgSourceDefault)
-                            value = helpRenderValue(cfgOption(optionId));
+                            value = helpRenderValue(cfgOption(optionId), cfgDefOptionType(optionId));
 
                         if (value != NULL || defaultValue != NULL)
                         {
@@ -329,11 +337,11 @@ helpRender(void)
                     strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.id)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id));
+                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgDefOptionType(option.id));
                 const String *value = NULL;
 
                 if (cfgOptionSource(option.id) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOption(option.id));
+                    value = helpRenderValue(cfgOption(option.id), cfgDefOptionType(option.id));
 
                 if (value != NULL || defaultValue != NULL)
                 {

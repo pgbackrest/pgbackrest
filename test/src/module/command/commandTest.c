@@ -37,7 +37,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameter");
         harnessLogResult(
-            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async --archive-timeout=10000ms"
+            "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async --archive-timeout=10"
                 " --exec-id=1-test --pg1-path=/pg1 --stanza=test");
 
         // -------------------------------------------------------------------------------------------------------------------------

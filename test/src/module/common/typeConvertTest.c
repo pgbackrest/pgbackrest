@@ -36,6 +36,28 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("cvtDoubleToZ() and cvtZToDouble()"))
+    {
+        char buffer[STACK_TRACE_PARAM_MAX];
+
+        TEST_ERROR(cvtDoubleToZ(999.1234, buffer, 4), AssertError, "buffer overflow");
+
+        TEST_RESULT_UINT(cvtDoubleToZ(999.1234, buffer, STACK_TRACE_PARAM_MAX), 8, "convert double to string");
+        TEST_RESULT_Z(buffer, "999.1234", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDoubleToZ(999999999.123456, buffer, STACK_TRACE_PARAM_MAX), 16, "convert double to string");
+        TEST_RESULT_Z(buffer, "999999999.123456", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDoubleToZ(999.0, buffer, STACK_TRACE_PARAM_MAX), 3, "convert double to string");
+        TEST_RESULT_Z(buffer, "999", "    check buffer");
+
+        TEST_ERROR(cvtZToDouble("AAA"), FormatError, "unable to convert string 'AAA' to double");
+        TEST_RESULT_DOUBLE(cvtZToDouble("0"), 0, "convert string to double");
+        TEST_RESULT_DOUBLE(cvtZToDouble("123.123"), 123.123, "convert string to double");
+        TEST_RESULT_DOUBLE(cvtZToDouble("-999999999.123456"), -999999999.123456, "convert string to double");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cvtIntToZ() and cvtZToInt()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];

@@ -539,6 +539,24 @@ void hrnTestResultBool(int actual, int expected)
     hrnTestResultEnd();
 }
 
+void hrnTestResultDouble(double actual, double expected)
+{
+    ASSERT(harnessTestLocal.result.running);
+
+    if (actual != expected)
+    {
+        char actualZ[256];
+        char expectedZ[256];
+
+        snprintf(actualZ, sizeof(actualZ), "%f", actual);
+        snprintf(expectedZ, sizeof(expectedZ), "%f", expected);
+
+        hrnTestResultDiff(actualZ, expectedZ);
+    }
+
+    hrnTestResultEnd();
+}
+
 void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);

@@ -146,6 +146,11 @@ size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize);
 #define FUNCTION_LOG_CHARPY_FORMAT(value, buffer, bufferSize)                                                                      \
     ptrToLog(value, "char *[]", buffer, bufferSize)
 
+#define FUNCTION_LOG_DOUBLE_TYPE                                                                                                   \
+    double
+#define FUNCTION_LOG_DOUBLE_FORMAT(value, buffer, bufferSize)                                                                      \
+    cvtDoubleToZ(value, buffer, bufferSize)
+
 #define FUNCTION_LOG_INT_TYPE                                                                                                      \
     int
 #define FUNCTION_LOG_INT_FORMAT(value, buffer, bufferSize)                                                                         \

@@ -340,9 +340,14 @@ cmdArchivePush(void)
             // If the WAL segment was not pushed then error
             if (!pushed)
             {
+                char working[CVT_BASE10_BUFFER_SIZE];
+
+                cvtDoubleToZ(
+                    (double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC, working, sizeof(working));
+
                 THROW_FMT(
-                    ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %" PRIu64 "ms",
-                    strZ(archiveFile), cfgOptionUInt64(cfgOptArchiveTimeout));
+                    ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %s second(s)",
+                    strZ(archiveFile), working);
             }
 
             // Log success

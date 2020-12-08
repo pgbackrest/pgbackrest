@@ -36,7 +36,7 @@ testRun(void)
         TEST_RESULT_STR(
             strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, NULL, false, true), "|"),
             strNewFmt(
-                "--archive-async|--archive-timeout=5000ms|--no-config|--exec-id=1-test|--log-subprocess|--reset-neutral-umask"
+                "--archive-async|--archive-timeout=5|--no-config|--exec-id=1-test|--log-subprocess|--reset-neutral-umask"
                 "|--pg1-path=\"%s/db path\"|--pg2-path=/db2|--repo1-path=%s/repo|--stanza=test1|archive-get:async",
                 testPath(), testPath()),
             "exec archive-get -> archive-get:async");
@@ -44,7 +44,7 @@ testRun(void)
         TEST_RESULT_STR(
             strLstJoin(cfgExecParam(cfgCmdBackup, cfgCmdRoleDefault, NULL, false, false), "|"),
             strNewFmt(
-                "--archive-timeout=5000ms|--no-config|--exec-id=1-test|--log-subprocess|--reset-neutral-umask|--pg1-path=%s/db path"
+                "--archive-timeout=5|--no-config|--exec-id=1-test|--log-subprocess|--reset-neutral-umask|--pg1-path=%s/db path"
                 "|--pg2-path=/db2|--repo1-path=%s/repo|--stanza=test1|backup",
                 testPath(), testPath()),
             "exec archive-get -> backup");

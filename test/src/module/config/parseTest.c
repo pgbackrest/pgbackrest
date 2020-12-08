@@ -534,12 +534,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("parseTime()"))
-    {
-        TEST_RESULT_UINT(parseTime(STRDEF("0")), 0, "zero time");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("convertToByte()"))
     {
         TEST_ERROR(sizeQualifierToMultiplier('w'), AssertError, "'w' is not a valid size qualifier");
@@ -924,11 +918,11 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--protocol-timeout=.01"));
+        strLstAdd(argList, strNew("--protocol-timeout=1ms"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "'.01' is out of range for 'protocol-timeout' option");
+            "'1ms' is out of range for 'protocol-timeout' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1232,6 +1226,7 @@ testRun(void)
                     "pg1-path=/not/path/to/db\n"
                     "backup-standby=y\n"
                     "buffer-size=65536\n"
+                    "protocol-timeout=3600\n"
                     "\n"
                     "[db:backup]\n"
                     "delta=n\n"
@@ -1295,6 +1290,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptDbTimeout), 1800000, "    db-timeout is set");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 3600000, "    protocol-timeout is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgPort, 1), 5432, "    pg2-port is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt64(cfgOptPgPort, 1), 5432, "    pg2-port is set");
         TEST_RESULT_STR(cfgOptionIdxStrNull(cfgOptPgHost, 1), NULL, "    pg2-host is NULL");
@@ -1306,7 +1302,7 @@ testRun(void)
         TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHost), NULL, "    pg-host default is NULL");
         TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptLogLevelConsole)), "warn", "    log-level-console default is warn");
         TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptPgPort)), 5432, "    pg-port default is 5432");
-        TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptDbTimeout)), 1800, "    db-timeout default is 1800");
+        TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptDbTimeout)), 1800000, "    db-timeout default is 1800000");
 
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, VARSTRDEF("/default")), "    set pg-socket-path default");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "    pg1-socket-path unchanged");
