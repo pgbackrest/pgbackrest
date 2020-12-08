@@ -18,11 +18,12 @@ that reading from the middle is generally not practical. The size of the gap bet
 incurs extra cost, but depending on the field type larger gaps may require additional bytes to store the field ID delta.
 
 NULLs are not stored in a pack and are therefore not typed. A NULL is essentially just a gap in the field IDs. Fields that are
-frequently NULL are best stored at the end of an object. When using .defaultNull in write functions a NULL will be written (by
-making a gap in the IDs) if the value matches the default. When using .defaultNull in read functions the default will be returned
+frequently NULL are best stored at the end of an object. When using .defaultWrite = false in write functions a NULL will be written
+(by making a gap in the IDs) if the value matches the default. When using read functions the default will always be returned
 when the field is NULL (i.e. missing). The standard default is the C default for that type (e.g. bool = false, int = 0) but can be
-changed with the .defaultValue parameter. For example, pckWriteBoolP(write, false) will write a 0 with an ID into the pack, but pckWriteBoolP(write, false, .defaultNull = true) will not write to the pack, it will simply skip the ID. However,
-pckWriteStrP(packWrite, NULL) is not valid, instead .defaultNull=true must also be passed.
+changed with the .defaultValue parameter. For example, pckWriteBoolP(write, false, .defaultWrite = true) will write a 0 with an ID
+into the pack, but pckWriteBoolP(write, false) will not write to the pack, it will simply skip the ID. Note that
+pckWriteStrP(packWrite, NULL, .defaultWrite = true) is not valid since there is no way to explcitly write a NULL.
 
 A pack is an object by default. Objects can store fields, objects, or arrays. Objects and arrays will be referred to collectively as
 containers. Fields contain data to be stored, e.g. integers, strings, etc.
@@ -31,31 +32,32 @@ Here is a simple example of a pack:
 
 PackWrite *write = pckWriteNew(buffer);
 pckWriteU64P(write, 77);
-pckWriteBoolP(write, false, .defaultNull = true);
-pckWriteI32P(write, -1, .defaultNull = true, .defaultValue = -1);
+pckWriteBoolP(write, false, .defaultWrite = true);
+pckWriteI32P(write, -1, .defaultValue = -1);
 pckWriteStringP(write, STRDEF("sample"));
 pckWriteEndP();
 
-A string representation of this pack is `1:uint64:77,4:str:sample`. The boolean was not stored because we requested NULL on default
-and the default was false (because it was not set to anything else). The int32 field was also not stored but we set an explicit
-default value. Note that there is a gap in the ID stream, which represents the NULL values.
+A string representation of this pack is `1:uint64:77,2:bool:false,4:str:sample`. The boolean was stored even though it was the
+default because a write was explcitly requested. The int32 field was not stored because the value matched the expicitly set default.
+Note that there is a gap in the ID stream, which represents the NULL/default value.
 
 This pack can be read with:
 
 PackRead *read = pckReadNew(buffer);
 pckReadU64P(read);
-pckReadBoolP(read, .defaultNull = true);
-pckReadI32P(read, .defaultNull = true, .defaultValue = -1);
+pckReadBoolP(read);
+pckReadI32P(read, .defaultValue = -1);
 pckReadStringP(read);
 pckReadEndP();
 
-Note that defaults are not stored in the pack so any defaults that were applied when writing (by setting .defaultNull and
-optionally .defaultValue) must be applied again when reading (by setting .defaultNull and optionally .defaultValue).
+Note that defaults are not stored in the pack so any defaults that were applied when writing (by setting .defaulWrite and
+optionally .defaultValue) must be applied again when reading (by optionally setting .defaultValue).
 
-If we don't care about the NULLs, another way to read is:
+If we don't care about the NULL/default, another way to read is:
 
 PackRead *read = pckReadNew(buffer);
 pckReadU64P(read);
+pckReadBoolP(read);
 pckReadStringP(read, .id = 4);
 pckReadEndP();
 
@@ -168,7 +170,6 @@ void pckReadArrayEnd(PackRead *this);
 typedef struct PckReadBinParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
 } PckReadBinParam;
 
@@ -181,7 +182,6 @@ Buffer *pckReadBin(PackRead *this, PckReadBinParam param);
 typedef struct PckReadBoolParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
     uint32_t defaultValue;
 } PckReadBoolParam;
@@ -195,7 +195,6 @@ bool pckReadBool(PackRead *this, PckReadBoolParam param);
 typedef struct PckReadInt32Param
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
     int32_t defaultValue;
 } PckReadInt32Param;
@@ -209,7 +208,6 @@ int32_t pckReadI32(PackRead *this, PckReadInt32Param param);
 typedef struct PckReadInt64Param
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
     int64_t defaultValue;
 } PckReadInt64Param;
@@ -234,7 +232,6 @@ void pckReadObjEnd(PackRead *this);
 typedef struct PckReadPtrParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
 } PckReadPtrParam;
 
@@ -247,7 +244,6 @@ void *pckReadPtr(PackRead *this, PckReadPtrParam param);
 typedef struct PckReadStrParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
     const String *defaultValue;
 } PckReadStrParam;
@@ -261,7 +257,6 @@ String *pckReadStr(PackRead *this, PckReadStrParam param);
 typedef struct PckReadTimeParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
     time_t defaultValue;
 } PckReadTimeParam;
@@ -275,7 +270,6 @@ time_t pckReadTime(PackRead *this, PckReadTimeParam param);
 typedef struct PckReadUInt32Param
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
     uint32_t defaultValue;
 } PckReadUInt32Param;
@@ -289,7 +283,6 @@ uint32_t pckReadU32(PackRead *this, PckReadUInt32Param param);
 typedef struct PckReadUInt64Param
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
     uint64_t defaultValue;
 } PckReadUInt64Param;
@@ -334,7 +327,6 @@ PackWrite *pckWriteArrayEnd(PackWrite *this);
 typedef struct PckWriteBinParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
     unsigned int id;
 } PckWriteBinParam;
 
@@ -347,7 +339,7 @@ PackWrite *pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam pa
 typedef struct PckWriteBoolParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
+    bool defaultWrite;
     unsigned int id;
     uint32_t defaultValue;
 } PckWriteBoolParam;
@@ -361,7 +353,7 @@ PackWrite *pckWriteBool(PackWrite *this, bool value, PckWriteBoolParam param);
 typedef struct PckWriteInt32Param
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
+    bool defaultWrite;
     unsigned int id;
     int32_t defaultValue;
 } PckWriteInt32Param;
@@ -375,7 +367,7 @@ PackWrite *pckWriteI32(PackWrite *this, int32_t value, PckWriteInt32Param param)
 typedef struct PckWriteInt64Param
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
+    bool defaultWrite;
     unsigned int id;
     int64_t defaultValue;
 } PckWriteInt64Param;
@@ -406,7 +398,7 @@ PackWrite *pckWriteObjEnd(PackWrite *this);
 typedef struct PckWritePtrParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
+    bool defaultWrite;
     unsigned int id;
 } PckWritePtrParam;
 
@@ -419,7 +411,7 @@ PackWrite *pckWritePtr(PackWrite *this, const void *value, PckWritePtrParam para
 typedef struct PckWriteStrParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
+    bool defaultWrite;
     unsigned int id;
     const String *defaultValue;
 } PckWriteStrParam;
@@ -433,7 +425,7 @@ PackWrite *pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam pa
 typedef struct PckWriteTimeParam
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
+    bool defaultWrite;
     unsigned int id;
     time_t defaultValue;
 } PckWriteTimeParam;
@@ -447,7 +439,7 @@ PackWrite *pckWriteTime(PackWrite *this, time_t value, PckWriteTimeParam param);
 typedef struct PckWriteUInt32Param
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
+    bool defaultWrite;
     unsigned int id;
     uint32_t defaultValue;
 } PckWriteUInt32Param;
@@ -461,7 +453,7 @@ PackWrite *pckWriteU32(PackWrite *this, uint32_t value, PckWriteUInt32Param para
 typedef struct PckWriteUInt64Param
 {
     VAR_PARAM_HEADER;
-    bool defaultNull;
+    bool defaultWrite;
     unsigned int id;
     uint64_t defaultValue;
 } PckWriteUInt64Param;

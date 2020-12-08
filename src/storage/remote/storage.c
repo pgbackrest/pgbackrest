@@ -52,34 +52,34 @@ storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
     FUNCTION_TEST_END();
 
     // Read type and time modified
-    info->type = pckReadU32P(data->read, .defaultNull = true);
-    info->timeModified = pckReadTimeP(data->read, .defaultNull = true) + data->timeModifiedLast;
+    info->type = pckReadU32P(data->read);
+    info->timeModified = pckReadTimeP(data->read) + data->timeModifiedLast;
 
     // Read size for files
     if (info->type == storageTypeFile)
-        info->size = pckReadU64P(data->read, .defaultNull = true);
+        info->size = pckReadU64P(data->read);
 
     // Read fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
         // Read mode
-        info->mode = pckReadU32P(data->read, .defaultNull = true, .defaultValue = data->modeLast);
+        info->mode = pckReadU32P(data->read, .defaultValue = data->modeLast);
 
         // Read user id/name
-        info->userId = pckReadU32P(data->read, .defaultNull = true, .defaultValue = data->userIdLast);
+        info->userId = pckReadU32P(data->read, .defaultValue = data->userIdLast);
 
-        if (pckReadBoolP(data->read, .defaultNull = true))
+        if (pckReadBoolP(data->read))
             info->user = NULL;
         else
-            info->user = pckReadStrP(data->read, .defaultNull = data->user != NULL, .defaultValue = data->user);
+            info->user = pckReadStrP(data->read, .defaultValue = data->user);
 
         // Read group id/name
-        info->groupId = pckReadU32P(data->read, .defaultNull = true, .defaultValue = data->groupIdLast);
+        info->groupId = pckReadU32P(data->read, .defaultValue = data->groupIdLast);
 
-        if (pckReadBoolP(data->read, .defaultNull = true))
+        if (pckReadBoolP(data->read))
             info->group = NULL;
         else
-            info->group = pckReadStrP(data->read, .defaultNull = data->group != NULL, .defaultValue = data->group);
+            info->group = pckReadStrP(data->read, .defaultValue = data->group);
 
         // Read link destination
         if (info->type == storageTypeLink)

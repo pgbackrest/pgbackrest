@@ -40,13 +40,13 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteI64P(packWrite, -1, .id = 13), "write -1");
         TEST_RESULT_VOID(pckWriteI32P(packWrite, -1), "write -1");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, true), "write true");
-        TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .id = 20), "write false");
+        TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .id = 20, .defaultWrite = true), "write false");
         TEST_RESULT_VOID(pckWriteObjBeginP(packWrite, .id = 28), "write obj begin");
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, true), "write true");
-        TEST_RESULT_VOID(pckWriteBoolP(packWrite, false), "write false");
+        TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .defaultWrite = true), "write false");
         TEST_RESULT_VOID(pckWriteObjEndP(packWrite), "write obj end");
         TEST_RESULT_VOID(pckWriteArrayBeginP(packWrite, .id = 37), "write array begin");
-        TEST_RESULT_VOID(pckWriteU64P(packWrite, 0), "write 0");
+        TEST_RESULT_VOID(pckWriteU64P(packWrite, 0, .defaultWrite = true), "write 0");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 1), "write 1");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 2), "write 2");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 3), "write 3");
@@ -56,33 +56,33 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteStrP(packWrite, EMPTY_STR), "write zero-length string");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("small"), .id = 41), "write string");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("")), "write zero-length string");
-        TEST_RESULT_VOID(pckWriteStrP(packWrite, NULL, .id = 43, .defaultNull = true), "write NULL string");
-        TEST_RESULT_VOID(pckWriteStrP(packWrite, NULL, .defaultNull = true), "write NULL string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, NULL, .id = 43), "write NULL string");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, NULL), "write NULL string");
         TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("")), "write zero-length string");
-        TEST_RESULT_VOID(pckWriteU32P(packWrite, 0, .defaultNull = true), "write default 0");
-        TEST_RESULT_VOID(pckWriteU32P(packWrite, 0, .defaultNull = true, .defaultValue = 1), "write 0");
+        TEST_RESULT_VOID(pckWriteU32P(packWrite, 0), "write default 0");
+        TEST_RESULT_VOID(pckWriteU32P(packWrite, 0, .defaultValue = 1), "write 0");
         TEST_RESULT_VOID(pckWriteArrayBeginP(packWrite), "write array begin");
         TEST_RESULT_VOID(pckWriteObjBeginP(packWrite), "write obj begin");
         TEST_RESULT_VOID(pckWriteI32P(packWrite, 555), "write 555");
         TEST_RESULT_VOID(pckWriteI32P(packWrite, 777, .id = 3), "write 777");
-        TEST_RESULT_VOID(pckWriteI64P(packWrite, 0, .defaultNull = true), "write 0");
-        TEST_RESULT_VOID(pckWriteI64P(packWrite, 1, .defaultNull = true), "write 1");
-        TEST_RESULT_VOID(pckWriteU64P(packWrite, 0, .defaultNull = true), "write 0");
-        TEST_RESULT_VOID(pckWriteU64P(packWrite, 1, .defaultNull = true), "write 1");
+        TEST_RESULT_VOID(pckWriteI64P(packWrite, 0), "write 0");
+        TEST_RESULT_VOID(pckWriteI64P(packWrite, 1), "write 1");
+        TEST_RESULT_VOID(pckWriteU64P(packWrite, 0), "write 0");
+        TEST_RESULT_VOID(pckWriteU64P(packWrite, 1), "write 1");
         TEST_RESULT_VOID(pckWriteObjEndP(packWrite), "write obj end");
         TEST_RESULT_VOID(pckWriteNull(packWrite), "write null");
         TEST_RESULT_VOID(
-            pckWriteStrP(packWrite, STRDEF("A"), .defaultNull = true, .defaultValue = STRDEF("")), "write A");
-        TEST_RESULT_VOID(pckWriteTimeP(packWrite, 0, .defaultNull = true), "write null");
-        TEST_RESULT_VOID(pckWriteTimeP(packWrite, 33, .defaultNull = true), "write 33");
+            pckWriteStrP(packWrite, STRDEF("A"), .defaultValue = STRDEF("")), "write A");
+        TEST_RESULT_VOID(pckWriteTimeP(packWrite, 0), "write null");
+        TEST_RESULT_VOID(pckWriteTimeP(packWrite, 33), "write 33");
         TEST_RESULT_VOID(pckWriteTimeP(packWrite, 66, .id = 6), "write 66");
-        TEST_RESULT_VOID(pckWriteI32P(packWrite, 1, .defaultNull = true, .defaultValue = 1), "write default 1");
-        TEST_RESULT_VOID(pckWriteBoolP(packWrite, false, .defaultNull = true), "write default false");
+        TEST_RESULT_VOID(pckWriteI32P(packWrite, 1, .defaultValue = 1), "write default 1");
+        TEST_RESULT_VOID(pckWriteBoolP(packWrite, false), "write default false");
         TEST_RESULT_VOID(pckWriteArrayEndP(packWrite), "write array end");
 
         const unsigned char bin[] = {0x05, 0x04, 0x03, 0x02, 0x01, 0x00};
         TEST_RESULT_VOID(pckWriteBinP(packWrite, BUF(bin, sizeof(bin))), "write bin");
-        TEST_RESULT_VOID(pckWriteBinP(packWrite, NULL, .defaultNull = true), "write bin NULL default");
+        TEST_RESULT_VOID(pckWriteBinP(packWrite, NULL), "write bin NULL default");
         TEST_RESULT_VOID(pckWriteBinP(packWrite, bufNew(0)), "write bin zero length");
 
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "end");
@@ -197,11 +197,11 @@ testRun(void)
         TEST_ERROR(pckReadU64P(packRead, .id = 2), FormatError, "field 2 was already read");
         TEST_ERROR(pckReadU32P(packRead, .id = 7), FormatError, "field 7 is type 'u64' but expected 'u32'");
         TEST_RESULT_UINT(pckReadU64P(packRead, .id = 7), 0xFFFFFFFFFFFFFFFF, "read max u64");
-        TEST_ERROR(pckReadU64P(packRead, .id = 9), FormatError, "field 9 does not exist");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 9), true, "field 9 is null");
+        TEST_RESULT_UINT(pckReadU64P(packRead, .id = 9), 0, "field 9 default is 0");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 10), false, "field 10 is not null");
         TEST_RESULT_UINT(pckReadU64P(packRead, .id = 10), 1, "read 1");
-        TEST_RESULT_UINT(pckReadU32P(packRead, .id = 12, .defaultNull = true), 127, "read 127 (skip field 11)");
+        TEST_RESULT_UINT(pckReadU32P(packRead, .id = 12), 127, "read 127 (skip field 11)");
         TEST_RESULT_INT(pckReadI64P(packRead), -1, "read -1");
         TEST_RESULT_INT(pckReadI32P(packRead, .id = 14), -1, "read -1");
         TEST_RESULT_BOOL(pckReadBoolP(packRead, .id = 15), true, "read true");
@@ -210,18 +210,18 @@ testRun(void)
         TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in object");
         TEST_RESULT_VOID(pckReadObjBeginP(packRead, .id = 28), "read object begin");
         TEST_ERROR(pckReadArrayEndP(packRead), FormatError, "not in array");
-        TEST_RESULT_BOOL(pckReadBoolP(packRead, .defaultNull = true), true, "read true");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead), true, "read true");
         TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read false");
-        TEST_ERROR(pckReadBoolP(packRead), FormatError, "field 3 does not exist");
         TEST_RESULT_BOOL(pckReadNullP(packRead), true, "field 3 is null");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "field 3 default is false");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 4), true, "field 4 is null");
-        TEST_RESULT_BOOL(pckReadBoolP(packRead, .defaultNull = true), false, "read default false");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read default false");
         TEST_RESULT_VOID(pckReadObjEndP(packRead), "read object end");
 
         TEST_ERROR(pckReadArrayEndP(packRead), FormatError, "not in array");
         TEST_RESULT_BOOL(pckReadNext(packRead), true, "read next tag which should be an array");
         TEST_RESULT_UINT(pckReadId(packRead), 37, "check array id");
-        TEST_ERROR(pckReadU64P(packRead, .defaultNull = true), AssertError, "array at id 37 must be read");
+        // !!! TEST_ERROR(pckReadU64P(packRead), AssertError, "array at id 37 must be read");
         TEST_RESULT_VOID(pckReadArrayBeginP(packRead, .id = pckReadId(packRead)), "read array begin");
 
         TEST_ERROR(pckReadObjEndP(packRead), FormatError, "not in object");
@@ -239,34 +239,34 @@ testRun(void)
         TEST_RESULT_STR_Z(pckReadStrP(packRead, .id = 39), "enoughtoincreasebuffer", "read string (skipped prior)");
         TEST_RESULT_STR_Z(pckReadStrP(packRead, .id = 41), "small", "read string (skipped prior)");
         TEST_RESULT_STR_Z(pckReadStrP(packRead), "", "zero length (skipped prior)");
-        TEST_RESULT_STR(pckReadStrP(packRead, .id = 43, .defaultNull = true), NULL, "read NULL string");
-        TEST_RESULT_STR(pckReadStrP(packRead, .defaultNull = true), NULL, "read NULL string");
-        TEST_RESULT_STR_Z(pckReadStrP(packRead, .defaultNull = true), "", "read empty string");
+        TEST_RESULT_STR(pckReadStrP(packRead, .id = 43), NULL, "read NULL string");
+        TEST_RESULT_STR(pckReadStrP(packRead), NULL, "read NULL string");
+        TEST_RESULT_STR_Z(pckReadStrP(packRead), "", "read empty string");
 
-        TEST_RESULT_UINT(pckReadU32P(packRead, .defaultNull = true), 0, "read default 0");
+        TEST_RESULT_UINT(pckReadU32P(packRead), 0, "read default 0");
         TEST_RESULT_UINT(pckReadU32P(packRead, .id = 47), 0, "read 0");
 
         TEST_RESULT_VOID(pckReadArrayBeginP(packRead), "read array begin");
         TEST_RESULT_VOID(pckReadObjBeginP(packRead), "read object begin");
         TEST_RESULT_INT(pckReadI32P(packRead), 555, "read 0");
         TEST_RESULT_INT(pckReadI32P(packRead, .id = 3), 777, "read 0");
-        TEST_RESULT_INT(pckReadI64P(packRead, .defaultNull = true, .defaultValue = 44), 44, "read default 44");
-        TEST_RESULT_INT(pckReadI64P(packRead, .defaultNull = true, .defaultValue = 44), 1, "read 1");
-        TEST_RESULT_UINT(pckReadU64P(packRead, .defaultNull = true, .defaultValue = 55), 55, "read default 55");
-        TEST_RESULT_UINT(pckReadU64P(packRead, .defaultNull = true, .defaultValue = 55), 1, "read 1");
+        TEST_RESULT_INT(pckReadI64P(packRead, .defaultValue = 44), 44, "read default 44");
+        TEST_RESULT_INT(pckReadI64P(packRead, .defaultValue = 44), 1, "read 1");
+        TEST_RESULT_UINT(pckReadU64P(packRead, .defaultValue = 55), 55, "read default 55");
+        TEST_RESULT_UINT(pckReadU64P(packRead, .defaultValue = 55), 1, "read 1");
         TEST_RESULT_VOID(pckReadObjEndP(packRead), "read object end");
         TEST_RESULT_STR_Z(pckReadStrP(packRead, .id = 3), "A", "read A");
-        TEST_RESULT_INT(pckReadTimeP(packRead, .defaultNull = true, .defaultValue = 99), 99, "read default 99");
-        TEST_RESULT_INT(pckReadTimeP(packRead, .id = 5, .defaultNull = true, .defaultValue = 44), 33, "read 33");
-        TEST_RESULT_INT(pckReadI32P(packRead, .id = 7, .defaultNull = true, .defaultValue = 1), 1, "read default 1");
+        TEST_RESULT_INT(pckReadTimeP(packRead, .defaultValue = 99), 99, "read default 99");
+        TEST_RESULT_INT(pckReadTimeP(packRead, .id = 5, .defaultValue = 44), 33, "read 33");
+        TEST_RESULT_INT(pckReadI32P(packRead, .id = 7, .defaultValue = 1), 1, "read default 1");
         TEST_RESULT_VOID(pckReadArrayEndP(packRead), "read array end");
 
         TEST_RESULT_STR_Z(bufHex(pckReadBinP(packRead)), "050403020100", "read bin");
-        TEST_RESULT_PTR(pckReadBinP(packRead, .defaultNull = true), NULL, "read bin null");
+        TEST_RESULT_PTR(pckReadBinP(packRead), NULL, "read bin null");
         TEST_RESULT_UINT(bufSize(pckReadBinP(packRead)), 0, "read bin zero length");
 
-        TEST_ERROR(pckReadU64P(packRead, .id = 999), FormatError, "field 999 does not exist");
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 999), true, "field 999 is null");
+        TEST_RESULT_UINT(pckReadU64P(packRead, .id = 999), 0, "field 999 default is 0");
 
         TEST_RESULT_VOID(pckReadEndP(packRead), "end");
         TEST_RESULT_VOID(pckReadFree(packRead), "free");
@@ -289,12 +289,12 @@ testRun(void)
         pack = bufNew(0);
 
         TEST_ASSIGN(packWrite, pckWriteNewBuf(pack), "new write");
-        TEST_RESULT_VOID(pckWritePtrP(packWrite, NULL, .defaultNull = true), "write default pointer");
+        TEST_RESULT_VOID(pckWritePtrP(packWrite, NULL), "write default pointer");
         TEST_RESULT_VOID(pckWritePtrP(packWrite, "sample"), "write pointer");
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "write end");
 
         TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
-        TEST_RESULT_Z(pckReadPtrP(packRead, .defaultNull = true), NULL, "read default pointer");
+        TEST_RESULT_Z(pckReadPtrP(packRead), NULL, "read default pointer");
         TEST_RESULT_Z(pckReadPtrP(packRead, .id = 2), "sample", "read pointer");
 
         // -------------------------------------------------------------------------------------------------------------------------

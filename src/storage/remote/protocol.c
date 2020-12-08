@@ -121,39 +121,39 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
     ASSERT(info != NULL);
 
     // Write type and time
-    pckWriteU32P(data->write, info->type, .defaultNull = true);
-    pckWriteTimeP(data->write, info->timeModified - data->timeModifiedLast, .defaultNull = true);
+    pckWriteU32P(data->write, info->type);
+    pckWriteTimeP(data->write, info->timeModified - data->timeModifiedLast);
 
     // Write size for files
     if (info->type == storageTypeFile)
-        pckWriteU64P(data->write, info->size, .defaultNull = true);
+        pckWriteU64P(data->write, info->size);
 
     // Write fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
         // Write mode
-        pckWriteU32P(data->write, info->mode, .defaultNull = true, .defaultValue = data->modeLast);
+        pckWriteU32P(data->write, info->mode, .defaultValue = data->modeLast);
 
         // Write user id/name
-        pckWriteU32P(data->write, info->userId, .defaultNull = true, .defaultValue = data->userIdLast);
+        pckWriteU32P(data->write, info->userId, .defaultValue = data->userIdLast);
 
         if (info->user == NULL)
             pckWriteBoolP(data->write, true);
         else
         {
             pckWriteNullP(data->write);
-            pckWriteStrP(data->write, info->user, .defaultNull = data->user != NULL, .defaultValue = data->user);
+            pckWriteStrP(data->write, info->user, .defaultValue = data->user);
         }
 
         // Write group id/name
-        pckWriteU32P(data->write, info->groupId, .defaultNull = true, .defaultValue = data->groupIdLast);
+        pckWriteU32P(data->write, info->groupId, .defaultValue = data->groupIdLast);
 
         if (info->group == NULL)
             pckWriteBoolP(data->write, true);
         else
         {
             pckWriteNullP(data->write);
-            pckWriteStrP(data->write, info->group, .defaultNull = data->group != NULL, .defaultValue = data->group);
+            pckWriteStrP(data->write, info->group, .defaultValue = data->group);
         }
 
         // Write link destination
@@ -254,7 +254,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 .followLink = varBool(varLstGet(paramList, 2)));
 
             PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
-            pckWriteBoolP(write, info.exists);
+            pckWriteBoolP(write, info.exists, .defaultWrite = true);
 
             if (info.exists)
             {
@@ -278,7 +278,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 storageRemoteProtocolInfoListCallback, &data);
 
             pckWriteArrayEndP(write);
-            pckWriteBoolP(write, result);
+            pckWriteBoolP(write, result, .defaultWrite = true);
             pckWriteEndP(write);
             ioWriteFlush(protocolServerIoWrite(server));
         }
