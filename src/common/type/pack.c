@@ -1592,9 +1592,7 @@ pckWriteEnd(PackWrite *this)
 String *
 pckWriteToLog(const PackWrite *this)
 {
-    return strNewFmt(
-        "{depth: %u, idLast: %u}", this->tagStackTop == NULL ? 0 : lstSize(this->tagStack),
-        this->tagStackTop == NULL ? 0 : this->tagStackTop->idLast);
+    return strNewFmt("{depth: %u, idLast: %u}", lstSize(this->tagStack), this->tagStackTop == NULL ? 0 : this->tagStackTop->idLast);
 }
 
 /**********************************************************************************************************************************/
