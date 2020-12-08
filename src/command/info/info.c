@@ -434,7 +434,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         // Set the stanza name and cipher. Since we may not be going through the config parsing system, default the cipher to NONE.
         kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaListName));
         kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_NONE_STR));
-
+// CSHANG This comment is wrong - we are getting the list as oldest to newest
         // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
         if (info != NULL)
         {
@@ -772,16 +772,22 @@ infoRender(void)
         // Get the backup label if specified
         const String *backupLabel = cfgOptionStrNull(cfgOptSet);
 
+        if (backupLabel != NULL)
+        {
+            if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
+                THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
+
+            if (!(cfgOptionTest(cfgOptRepo)))
+                THROW(OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
+        }
+
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
 
         // If a backup set was specified, see if the manifest exists
-        if (backupLabel != NULL)
+        if (backupLabel != NULL &&
+            !storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
         {
-            if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
-                THROW(ConfigError, "option 'set' is currently only valid for text output");
-
-            if (!storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
             {
                 THROW_FMT(
                     FileMissingError, "manifest does not exist for backup '%s'\n"
