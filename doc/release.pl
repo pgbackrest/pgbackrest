@@ -268,7 +268,8 @@ eval
             $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
 
             executeTest(
-            "${strDocExe} --deploy --cache-only --key-var=os-type=centos8 --out=html --var=project-url-root=index.html");
+                "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos8 --out=html" .
+                    " --var=project-url-root=index.html");
             $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos8.html");
 
             executeTest(
@@ -289,7 +290,7 @@ eval
         executeTest("${strDocExeVersion} --key-var=os-type=centos7");
         $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
 
-        executeTest("${strDocExeVersion} --key-var=os-type=centos8");
+        executeTest("${strDocExeVersion} --out-preserve --key-var=os-type=centos8");
         $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos8.html");
 
         $oStorageDoc->remove("$strDocHtml/release.html");
@@ -308,7 +309,7 @@ eval
 
             executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=html");
             $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
-            executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos8 --out=html");
+            executeTest("${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos8 --out=html");
             $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos8.html");
             executeTest("${strDocExe} --deploy --out-preserve --cache-only --out=html");
 

@@ -11,7 +11,7 @@
 
         <!-- OS titles -->
         <variable key="os-debian-title">Debian &amp; Ubuntu</variable>
-        <variable key="os-centos-title">RHEL &amp; CentOS 7/8</variable>
+        <variable key="os-centos-title">RHEL &amp; CentOS 7-8</variable>
 
         <!-- Base PostgreSQL versions -->
         <variable key="os-debian-pg-version">12</variable>
@@ -50,7 +50,7 @@
         <variable key="user-guide-subtitle" if="{[os-type-is-centos]}">{[os-centos-title]}</variable>
 
         <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
-        <variable key="user-guide-os" if="{[os-type-is-centos]}">RHEL/CentOS 7/8</variable>
+        <variable key="user-guide-os" if="{[os-type-is-centos]}">RHEL/CentOS 7-8</variable>
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
