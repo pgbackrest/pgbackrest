@@ -118,7 +118,6 @@ typedef struct PackTypeData
     bool valueSingleBit;                                            // Can the value be stored in a single bit (e.g. bool)
     bool valueMultiBit;                                             // Can the value require multiple bits (e.g. integer)
     bool size;                                                      // Does the type require a size (e.g. string)
-    bool container;                                                 // Is this type a container (e.g. array)
     const String *const name;                                       // Type name used in error messages
 } PackTypeData;
 
@@ -131,7 +130,6 @@ static const PackTypeData packTypeData[] =
     {
         .type = pckTypeArray,
         .name = STRDEF("array"),
-        .container = true,
     },
     {
         .type = pckTypeBin,
@@ -157,7 +155,6 @@ static const PackTypeData packTypeData[] =
     {
         .type = pckTypeObj,
         .name = STRDEF("obj"),
-        .container = true,
     },
     {
         .type = pckTypePtr,
