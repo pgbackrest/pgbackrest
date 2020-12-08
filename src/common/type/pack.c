@@ -1042,7 +1042,8 @@ pckWriteNewBuf(Buffer *buffer)
 /***********************************************************************************************************************************
 Write to io or buffer
 ***********************************************************************************************************************************/
-static void pckWriteBuffer(PackWrite *this, const Buffer *buffer)
+static void
+pckWriteBuffer(PackWrite *this, const Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_WRITE, this);
