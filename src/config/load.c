@@ -76,7 +76,7 @@ cfgLoadUpdateOption(void)
 
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
-        cfgOptionUInt64(cfgOptProtocolTimeout) <= cfgOptionUInt64(cfgOptDbTimeout))
+        cfgOptionInt64(cfgOptProtocolTimeout) <= cfgOptionInt64(cfgOptDbTimeout))
     {
         // If protocol-timeout is default then increase it to be greater than db-timeout
         if (cfgOptionSource(cfgOptProtocolTimeout) == cfgSourceDefault)

@@ -3054,7 +3054,7 @@ foreach my $strKey (sort(keys(%hConfigDefine)))
         $hConfigDefine{$strKey}{&CFGDEF_INDEX_TOTAL} = 1;
     }
 
-    # All int and float options must have an allow range
+    # All int, size and time options must have an allow range
     if (($hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_INTEGER ||
          $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ||
          $hConfigDefine{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_SIZE) &&

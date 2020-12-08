@@ -4,7 +4,6 @@ Command and Option Parse
 #include "build.auto.h"
 
 #include <getopt.h>
-#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
