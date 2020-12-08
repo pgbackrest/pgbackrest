@@ -117,6 +117,9 @@ storageRemoteInfoWrite(StorageRemoteProtocolInfoListCallbackData *data, const St
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
+    ASSERT(data != NULL);
+    ASSERT(info != NULL);
+
     // Write type and time
     pckWriteU32P(data->write, info->type, .defaultNull = true);
     pckWriteTimeP(data->write, info->timeModified - data->timeModifiedLast, .defaultNull = true);
@@ -200,6 +203,9 @@ storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
         FUNCTION_LOG_PARAM_P(VOID, dataVoid);
         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
+
+    ASSERT(dataVoid != NULL);
+    ASSERT(info != NULL);
 
     StorageRemoteProtocolInfoListCallbackData *data = dataVoid;
 
