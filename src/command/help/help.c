@@ -12,6 +12,7 @@ Help Command
 #include "common/memContext.h"
 #include "config/config.h"
 #include "config/define.h"
+#include "config/parse.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -84,50 +85,50 @@ helpRenderValue(const Variant *value)
 
     if (value != NULL)
     {
-        if (varType(value) == varTypeBool)
-        {
-            if (varBool(value))
-                result = Y_STR;
-            else
-                result = N_STR;
-        }
-        else if (varType(value) == varTypeKeyValue)
-        {
-            String *resultTemp = strNew("");
-
-            const KeyValue *optionKv = varKv(value);
-            const VariantList *keyList = kvKeyList(optionKv);
-
-            for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
-            {
-                if (keyIdx != 0)
-                    strCatZ(resultTemp, ", ");
-
-                strCatFmt(
-                    resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
-            }
-
-            result = resultTemp;
-        }
-        else if (varType(value) == varTypeVariantList)
-        {
-            String *resultTemp = strNew("");
-
-            const VariantList *list = varVarLst(value);
-
-            for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
-            {
-                if (listIdx != 0)
-                    strCatZ(resultTemp, ", ");
-
-                strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
-            }
-
-            result = resultTemp;
-        }
+    if (varType(value) == varTypeBool)
+    {
+        if (varBool(value))
+            result = Y_STR;
         else
-            result = varStrForce(value);
+            result = N_STR;
+    }
+    else if (varType(value) == varTypeKeyValue)
+    {
+        String *resultTemp = strNew("");
+
+        const KeyValue *optionKv = varKv(value);
+        const VariantList *keyList = kvKeyList(optionKv);
+
+        for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+        {
+            if (keyIdx != 0)
+                strCatZ(resultTemp, ", ");
+
+            strCatFmt(
+                resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+        }
+
+        result = resultTemp;
+    }
+    else if (varType(value) == varTypeVariantList)
+    {
+        String *resultTemp = strNew("");
+
+        const VariantList *list = varVarLst(value);
+
+        for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
+        {
+            if (listIdx != 0)
+                strCatZ(resultTemp, ", ");
+
+            strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
+        }
+
+        result = resultTemp;
+    }
+    else
+        result = varStrForce(value);
     }
 
     FUNCTION_LOG_RETURN_CONST(STRING, result);
@@ -181,10 +182,7 @@ helpRender(void)
                 strCatFmt(
                     result, "    %s%*s%s\n", cfgCommandName(commandId),
                     (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
-                    strZ(
-                        helpRenderText(
-                            STR(cfgDefCommandHelpSummary(cfgCommandDefIdFromId(commandId))), commandSizeMax + 6, false,
-                            CONSOLE_WIDTH)));
+                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandId)), commandSizeMax + 6, false, CONSOLE_WIDTH)));
             }
 
             // Construct message for more help
@@ -193,7 +191,6 @@ helpRender(void)
         else
         {
             ConfigCommand commandId = cfgCommand();
-            ConfigDefineCommand commandDefId = cfgCommandDefIdFromId(commandId);
             const char *commandName = cfgCommandName(commandId);
 
             // Output command part of title
@@ -210,21 +207,21 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandDefId)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefCommandHelpDescription(commandDefId)), 0, true, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandId)), 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(STR(cfgDefCommandHelpDescription(commandId)), 0, true, CONSOLE_WIDTH)));
 
                 // Construct key/value of sections and options
                 KeyValue *optionKv = kvNew();
                 size_t optionSizeMax = 0;
 
-                for (unsigned int optionDefId = 0; optionDefId < cfgDefOptionTotal(); optionDefId++)
+                for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    if (cfgDefOptionValid(commandDefId, optionDefId) && !cfgDefOptionInternal(commandDefId, optionDefId))
+                    if (cfgDefOptionValid(commandId, optionId) && !cfgDefOptionInternal(commandId, optionId))
                     {
                         const String *section = NULL;
 
-                        if (cfgDefOptionHelpSection(optionDefId) != NULL)
-                            section = strNew(cfgDefOptionHelpSection(optionDefId));
+                        if (cfgDefOptionHelpSection(optionId) != NULL)
+                            section = strNew(cfgDefOptionHelpSection(optionId));
 
                         if (section == NULL ||
                             (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
@@ -233,10 +230,10 @@ helpRender(void)
                             section = strNew("command");
                         }
 
-                        kvAdd(optionKv, VARSTR(section), VARINT((int)optionDefId));
+                        kvAdd(optionKv, VARSTR(section), VARINT((int)optionId));
 
-                        if (strlen(cfgDefOptionName(optionDefId)) > optionSizeMax)
-                            optionSizeMax = strlen(cfgDefOptionName(optionDefId));
+                        if (strlen(cfgDefOptionName(optionId)) > optionSizeMax)
+                            optionSizeMax = strlen(cfgDefOptionName(optionId));
                     }
                 }
 
@@ -254,13 +251,12 @@ helpRender(void)
 
                     for (unsigned int optionIdx = 0; optionIdx < varLstSize(optionList); optionIdx++)
                     {
-                        ConfigDefineOption optionDefId = varInt(varLstGet(optionList, optionIdx));
-                        ConfigOption optionId = cfgOptionIdFromDefId(optionDefId, 0);
+                        ConfigOption optionId = varInt(varLstGet(optionList, optionIdx));
 
                         // Get option summary
                         String *summary = strFirstLower(strNewN(
-                            cfgDefOptionHelpSummary(commandDefId, optionDefId),
-                            strlen(cfgDefOptionHelpSummary(commandDefId, optionDefId)) - 1));
+                            cfgDefOptionHelpSummary(commandId, optionId),
+                            strlen(cfgDefOptionHelpSummary(commandId, optionId)) - 1));
 
                         // Ouput current and default values if they exist
                         const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
@@ -274,7 +270,7 @@ helpRender(void)
                             strCatZ(summary, " [");
 
                             if (value != NULL)
-                                strCatFmt(summary, "current=%s", cfgDefOptionSecure(optionDefId) ? "<redacted>" : strZ(value));
+                                strCatFmt(summary, "current=%s", cfgDefOptionSecure(optionId) ? "<redacted>" : strZ(value));
 
                             if (defaultValue != NULL)
                             {
@@ -290,7 +286,7 @@ helpRender(void)
                         // Output option help
                         strCatFmt(
                             result, "  --%s%*s%s\n",
-                            cfgDefOptionName(optionDefId), (int)(optionSizeMax - strlen(cfgDefOptionName(optionDefId)) + 2), "",
+                            cfgDefOptionName(optionId), (int)(optionSizeMax - strlen(cfgDefOptionName(optionId)) + 2), "",
                             strZ(helpRenderText(summary, optionSizeMax + 6, false, CONSOLE_WIDTH)));
                     }
                 }
@@ -307,20 +303,20 @@ helpRender(void)
                     THROW(ParamInvalidError, "only one option allowed for option help");
 
                 // Ensure the option is valid
-                const char *optionName = strZ(strLstGet(cfgCommandParam(), 0));
-                ConfigOption optionId = cfgOptionId(optionName);
+                const String *optionName = strLstGet(cfgCommandParam(), 0);
+                CfgParseOptionResult option = cfgParseOption(optionName);
 
-                if (cfgOptionId(optionName) == -1)
+                if (!option.found)
                 {
-                    if (cfgDefOptionId(optionName) != -1)
-                        optionId = cfgOptionIdFromDefId(cfgDefOptionId(optionName), 0);
+                    int optionId = cfgDefOptionId(strZ(optionName));
+
+                    if (optionId == -1)
+                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
                     else
-                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", optionName, commandName);
+                        option.id = (unsigned int)optionId;
                 }
 
                 // Output option summary and description
-                ConfigDefineOption optionDefId = cfgOptionDefIdFromId(optionId);
-
                 strCatFmt(
                     result,
                     " - '%s' option help\n"
@@ -328,31 +324,31 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    optionName,
-                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandDefId, optionDefId)), 0, true, CONSOLE_WIDTH)));
+                    cfgDefOptionName(option.id),
+                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, option.id)), 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.id)), 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId));
+                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id));
                 const String *value = NULL;
 
-                if (cfgOptionSource(optionId) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOption(optionId));
+                if (cfgOptionSource(option.id) != cfgSourceDefault)
+                    value = helpRenderValue(cfgOption(option.id));
 
                 if (value != NULL || defaultValue != NULL)
                 {
                     strCat(result, LF_STR);
 
                     if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(optionDefId) ? "<redacted>" : strZ(value));
+                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(option.id) ? "<redacted>" : strZ(value));
 
                     if (defaultValue != NULL)
                         strCatFmt(result, "default: %s\n", strZ(defaultValue));
                 }
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
-                if (cfgDefOptionHelpNameAlt(optionDefId))
-                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(optionDefId, 0));
+                if (cfgDefOptionHelpNameAlt(option.id))
+                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(option.id, 0));
             }
         }
 

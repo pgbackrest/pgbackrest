@@ -195,26 +195,6 @@ src/build/aclocal.m4:
   class: build
   type: make
 
-src/build/autom4te.cache/output.0:
-  class: build
-  type: make
-
-src/build/autom4te.cache/output.1:
-  class: build
-  type: make
-
-src/build/autom4te.cache/requests:
-  class: build
-  type: make
-
-src/build/autom4te.cache/traces.0:
-  class: build
-  type: make
-
-src/build/autom4te.cache/traces.1:
-  class: build
-  type: make
-
 src/build/config.guess:
   class: build
   type: make
@@ -1179,6 +1159,10 @@ src/config/config.h:
   class: core
   type: c/h
 
+src/config/config.intern.h:
+  class: core
+  type: c/h
+
 src/config/define.auto.c:
   class: core/auto
   type: c
@@ -2096,10 +2080,6 @@ test/src/module/common/userTest.c:
   type: c
 
 test/src/module/common/waitTest.c:
-  class: test/module
-  type: c
-
-test/src/module/config/configTest.c:
   class: test/module
   type: c
 

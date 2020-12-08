@@ -19,7 +19,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadLogSetting()"))
     {
-        cfgInit();
+        harnessCfgLoad(cfgCmdVersion, strLstNew());
 
         TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings all defaults");
 
@@ -32,102 +32,129 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadUpdateOption()"))
     {
-        String *exe = strNew("/path/to/pgbackrest");
-        String *exeOther = strNew("/other/path/to/pgbackrest");
+        TEST_TITLE("repo-host-cmd is defaulted when null");
 
-        cfgInit();
-        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
-        cfgExeSet(exe);
-
-        cfgOptionValidSet(cfgOptRepoHost, true);
-        cfgOptionValidSet(cfgOptRepoHostCmd, true);
-        cfgOptionValidSet(cfgOptPgHost, true);
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "hosts are not set so don't update commands");
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        harnessCfgLoad(cfgCmdCheck, argList);
 
         cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exe, "    check repo1-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoHostCmd), testProjectExe(), "    check repo1-host-cmd");
 
-        cfgOptionSet(cfgOptRepoHostCmd, cfgSourceParam, varNewStr(exeOther));
+        cfgOptionSet(cfgOptRepoHostCmd, cfgSourceParam, VARSTRDEF("/other"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptRepoHostCmd), exeOther, "    check repo1-host-cmd");
-
-        cfgOptionSet(cfgOptRepoHost, cfgSourceParam, NULL);
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoHostCmd), "/other", "    check repo1-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgOptionValidSet(cfgOptPgHostCmd, true);
-        cfgOptionSet(cfgOptPgHost, cfgSourceParam, varNewStrZ("pg1-host"));
+        TEST_TITLE("pg-host-cmd is defaulted when null");
 
-        cfgOptionValidSet(cfgOptPgHost + 1, true);
-        cfgOptionSet(cfgOptPgHost + 1, cfgSourceParam, varNewStrZ("pg2-host"));
-        cfgOptionValidSet(cfgOptPgHostCmd + 1, true);
-        cfgOptionSet(cfgOptPgHostCmd + 1, cfgSourceParam, varNewStr(exeOther));
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 2, "pg2-exe");
+        harnessCfgLoad(cfgCmdCheck, argList);
 
-        cfgOptionValidSet(cfgOptPgHostCmd + 2, true);
-
-        cfgOptionValidSet(cfgOptPgHost + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1, true);
-        cfgOptionSet(cfgOptPgHost + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1, cfgSourceParam, varNewStrZ("pgX-host"));
-        cfgOptionValidSet(cfgOptPgHostCmd + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1, true);
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg remote command is updated");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd), exe, "    check pg1-host-cmd");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + 1), exeOther, "    check pg2-host-cmd is already set");
-        TEST_RESULT_STR(cfgOptionStrNull(cfgOptPgHostCmd + 2), NULL, "    check pg3-host-cmd is not set");
-        TEST_RESULT_STR(cfgOptionStr(cfgOptPgHostCmd + cfgDefOptionIndexTotal(cfgDefOptPgHost) - 1), exe, "    check pgX-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 0), testProjectExe(), "    check pg1-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 1), "pg2-exe", "    check pg2-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
+        TEST_TITLE("db-timeout set but not protocol timeout");
 
-        cfgOptionValidSet(cfgOptDbTimeout, true);
-        cfgOptionSet(cfgOptDbTimeout, cfgSourceParam, varNewDbl(100));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "pg timeout set but not protocol timeout");
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100");
+        harnessCfgLoad(cfgCmdCheck, argList);
 
-        cfgOptionValidSet(cfgOptProtocolTimeout, true);
-        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, varNewDbl(101));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "protocol timeout > pg timeout");
+        cfgOptionInvalidate(cfgOptProtocolTimeout);
+        cfgLoadUpdateOption();
 
-        cfgOptionSet(cfgOptDbTimeout, cfgSourceParam, varNewDbl(100000));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "protocol timeout set automatically");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 100030, "    check protocol timeout");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 100, "check db-timeout");
 
-        cfgOptionValidSet(cfgOptProtocolTimeout, true);
-        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(50.5));
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("protocol-timeout set but not db timeout");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "100");
+        harnessCfgLoad(cfgCmdCheck, argList);
+
+        cfgOptionInvalidate(cfgOptDbTimeout);
+        cfgLoadUpdateOption();
+
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 100, "check protocol-timeout");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("protocol-timeout set automatically");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100000");
+        harnessCfgLoad(cfgCmdCheck, argList);
+
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 100030, "check protocol-timeout");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when db-timeout and protocol-timeout set but invalid");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100000");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "50.5");
         TEST_ERROR(
-            cfgLoadUpdateOption(), OptionInvalidValueError,
+            harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError,
             "'50.5' is not valid for 'protocol-timeout' option\n"
                 "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
 
-        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(45));
-        cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(3600));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "set default pg timeout to be less than protocol timeout");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 45, "    check protocol timeout");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 15, "    check db timeout");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("very small protocol-timeout triggers db-timeout special handling");
 
-        cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, varNewDbl(11));
-        cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, varNewDbl(3600));
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "set default pg timeout to be less than test protocol timeout");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 11, "    check protocol timeout");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 5.5, "    check db timeout");
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "11");
+        harnessCfgLoad(cfgCmdCheck, argList);
+
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 11, "check protocol-timeout");
+        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 5.5, "check db-timeout");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgInit();
-        cfgCommandSet(cfgCmdBackup, cfgCmdRoleDefault);
-        cfgExeSet(exe);
+        TEST_TITLE("pg and repo cannot both be remote");
 
-        cfgOptionValidSet(cfgOptPgHost, true);
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "only repo-host is valid");
-
-        cfgOptionValidSet(cfgOptRepoHost, true);
-        cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
-        cfgOptionValidSet(cfgOptPgHost + 4, true);
-        cfgOptionSet(cfgOptPgHost + 4, cfgSourceParam, varNewStrZ("pg5-host"));
-        TEST_ERROR(cfgLoadUpdateOption(), ConfigError, "pg and repo hosts cannot both be configured as remote");
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 4, "/pg4");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 4, "pg4");
+        hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo1");
+        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), ConfigError, "pg and repo hosts cannot both be configured as remote");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        StringList *argList = strLstNew();
+        TEST_TITLE("only pg can be remote");
+
+        // We'll have to cheat here and invalidate the repo-host option since there are currently no pg-only commands
+        cfgOptionInvalidate(cfgOptRepoHost);
+        cfgLoadUpdateOption();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("only repo can be remote");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo1");
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstNew();
         strLstAdd(argList, strNew("backup"));
         strLstAdd(argList, strNew("process-max"));
 
@@ -237,7 +264,7 @@ testRun(void)
         // Invalid bucket name with verification enabled fails
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
@@ -254,7 +281,7 @@ testRun(void)
         // Invalid bucket name with verification disabled succeeds
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
@@ -268,7 +295,7 @@ testRun(void)
         // Valid bucket name
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--repo1-type=s3"));
         strLstAdd(argList, strNew("--repo1-s3-bucket=cool-bucket"));
         strLstAdd(argList, strNew("--repo1-s3-region=region"));
@@ -390,7 +417,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--log-level-console=off"));
         strLstAdd(argList, strNew("--log-level-stderr=off"));
         strLstAdd(argList, strNew("--log-level-file=off"));
@@ -407,7 +434,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAdd(argList, strNew("--no-neutral-umask"));
         strLstAdd(argList, strNew("--log-level-console=off"));
         strLstAdd(argList, strNew("--log-level-stderr=off"));
@@ -474,6 +501,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
         TEST_RESULT_INT(lstat(strZ(strNewFmt("%s/db-backup.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_PTR_NE(cfgOptionStr(cfgOptExecId), NULL, "   exec-id is set");
         TEST_RESULT_BOOL(socketLocal.init, true, "   check socketLocal.init");
         TEST_RESULT_BOOL(socketLocal.block, false, "   check socketLocal.block");
         TEST_RESULT_BOOL(socketLocal.keepAlive, true, "   check socketLocal.keepAlive");
@@ -489,15 +517,17 @@ testRun(void)
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--host-id=1"));
+        hrnCfgArgRawZ(argList, cfgOptPg, "1");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
+        hrnCfgArgRawZ(argList, cfgOptExecId, "1111-fe70d611");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
         TEST_RESULT_INT(lstat(strZ(strNewFmt("%s/db-backup-local-001.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptExecId), "1111-fe70d611", "   exec-id is preserved");
 
         // Remote command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
@@ -520,7 +550,7 @@ testRun(void)
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
         strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
@@ -558,7 +588,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testPath()));
         strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");

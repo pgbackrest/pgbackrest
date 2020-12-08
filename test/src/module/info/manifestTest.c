@@ -334,7 +334,6 @@ testRun(void)
 
         // Set up for manifestNewBuild tests
         // -------------------------------------------------------------------------------------------------------------------------
-
         // Temp relations to ignore
         storagePutP(storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_BASE "/1/t1_1"), .modeFile = 0400,
            .timeModified = 1565282113), NULL);
@@ -1114,7 +1113,6 @@ testRun(void)
                 TEST_MANIFEST_PATH_DEFAULT))),
             "check manifest");
 
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to pg_data");
 
@@ -1714,8 +1712,10 @@ testRun(void)
         #define TEST_MANIFEST_DB                                                                                                   \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
+            " mail\t={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                              \
+            "#={\"db-id\":16453,\"db-last-system-id\":12168}\n"                                                                    \
             "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"                                                                    \
-            "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                                 \
+            "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"                                                                    \
             "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
             "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
             "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
@@ -1813,8 +1813,10 @@ testRun(void)
                 TEST_MANIFEST_TARGET
                 "\n"
                 "[db]\n"
+                " mail\t={\"db-id\":16456,\"db-last-system-id\":12168}\n"
+                "#={\"db-id\":16453,\"db-last-system-id\":12168}\n"
                 "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
-                "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"
+                "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"
                 "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
                 TEST_MANIFEST_FILE
                 TEST_MANIFEST_FILE_DEFAULT

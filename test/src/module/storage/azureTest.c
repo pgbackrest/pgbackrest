@@ -182,15 +182,15 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=" STORAGE_AZURE_TYPE);
-        strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
-        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
-        setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SHARED, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         Storage *storage = NULL;
-        TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_AZURE_TYPE), false), "get repo storage");
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
         TEST_RESULT_STR(((StorageAzure *)storage->driver)->account, TEST_ACCOUNT_STR, "    check account");
         TEST_RESULT_STR(((StorageAzure *)storage->driver)->container, TEST_CONTAINER_STR, "    check container");
@@ -288,18 +288,18 @@ testRun(void)
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-                strLstAddZ(argList, "--" CFGOPT_REPO1_TYPE "=" STORAGE_AZURE_TYPE);
-                strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/");
-                strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_CONTAINER "=" TEST_CONTAINER);
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_HOST "=%s", strZ(hrnServerHost())));
-                strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_AZURE_PORT "=%u", hrnServerPort(0)));
-                strLstAdd(argList, strNewFmt("--%s" CFGOPT_REPO1_AZURE_VERIFY_TLS, testContainer() ? "" : "no-"));
-                setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_ACCOUNT, TEST_ACCOUNT, true);
-                setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SHARED, true);
+                hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+                hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
+                hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+                hrnCfgArgRaw(argList, cfgOptRepoAzureHost, hrnServerHost());
+                hrnCfgArgRawFmt(argList, cfgOptRepoAzurePort, "%u", hrnServerPort(0));
+                hrnCfgArgRawBool(argList, cfgOptRepoAzureVerifyTls, testContainer());
+                hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+                hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *storage = NULL;
-                TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_AZURE_TYPE), true), "get repo storage");
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
                 driver = (StorageAzure *)storage->driver;
                 TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
@@ -727,11 +727,11 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                strLstAddZ(argList, "--" CFGOPT_REPO1_AZURE_KEY_TYPE "=" STORAGE_AZURE_KEY_TYPE_SAS);
-                setenv("PGBACKREST_" CFGOPT_REPO1_AZURE_KEY, TEST_KEY_SAS, true);
+                hrnCfgArgRawZ(argList, cfgOptRepoAzureKeyType, STORAGE_AZURE_KEY_TYPE_SAS);
+                hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SAS);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
-                TEST_ASSIGN(storage, storageRepoGet(strNew(STORAGE_AZURE_TYPE), true), "get repo storage");
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
                 driver = (StorageAzure *)storage->driver;
                 TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");

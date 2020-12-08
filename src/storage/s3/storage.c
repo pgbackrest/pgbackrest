@@ -804,7 +804,7 @@ storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *
         const Buffer *response = httpResponseContent(storageS3ResponseP(request));
 
         // Nothing is returned when there are no errors
-        if (bufSize(response) > 0)
+        if (bufUsed(response) > 0)
         {
             XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
 

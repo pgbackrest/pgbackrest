@@ -202,7 +202,9 @@ cmdArchiveGet(void)
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent forking if
                 // the async process was launched by another process.
                 if (!forked && (!found || !queueFull)  &&
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 0, false))
+                    lockAcquire(
+                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0,
+                        false))
                 {
                     // Get control info
                     PgControl pgControl = pgControlFromFile(storagePg());
@@ -339,7 +341,7 @@ cmdArchiveGetAsync(void)
                 (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, archiveGetAsyncCallback, &jobData);
 
             for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
-                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 1, processIdx));
+                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
 
             // Process jobs
             do

@@ -24,7 +24,7 @@ testRun(void)
         // Load configuration so lock path is set
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_RESULT_STR_Z(
@@ -265,7 +265,8 @@ testRun(void)
                 ioWriteOpen(write);
 
                 TEST_RESULT_BOOL(
-                    lockAcquire(lockPath, cfgOptionStr(cfgOptStanza), 0, 30000, true), true,"    child process acquires lock");
+                    lockAcquire(lockPath, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), 0, 30000, true),
+                    true,"    child process acquires lock");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew(""));

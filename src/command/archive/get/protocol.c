@@ -29,9 +29,6 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
 
     ASSERT(command != NULL);
 
-    // Get the repo storage in case it is remote and encryption settings need to be pulled down
-    storageRepo();
-
     // Attempt to satisfy the request -- we may get requests that are meant for other handlers
     bool found = true;
 

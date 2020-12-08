@@ -299,7 +299,7 @@ backrest-checksum="[CHECKSUM]"
 Nothing to expire
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=1 --repo1-retention-diff=1 --repo1-retention-archive-type=full --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
 P00 DETAIL: archive retention on backup [BACKUP-FULL-1], archiveId = 9.2-1, start = 000000010000000000000000
 P00 DETAIL: no archive to remove, archiveId = 9.2-1
 P00   INFO: expire command end: completed successfully
@@ -902,7 +902,7 @@ backrest-checksum="[CHECKSUM]"
 Expire oldest full backup, archive expire falls on segment major boundary
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=1 --repo1-retention-diff=1 --repo1-retention-archive-type=full --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-1], [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-INCR-1]
 P00   INFO: remove expired backup [BACKUP-FULL-1]
@@ -1268,7 +1268,7 @@ backrest-checksum="[CHECKSUM]"
 Expire oldest full backup
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=1 --repo1-retention-diff=1 --repo1-retention-archive-type=full --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
 P00   INFO: expire diff backup [BACKUP-DIFF-1]
 P00   INFO: remove expired backup [BACKUP-DIFF-1]
 P00 DETAIL: archive retention on backup [BACKUP-FULL-2], archiveId = 9.2-1, start = 000000010000000100000000
@@ -1921,7 +1921,7 @@ backrest-checksum="[CHECKSUM]"
 Expire oldest diff backup, archive expire does not fall on major segment boundary
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=1 --repo1-retention-diff=1 --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-DIFF-2]
 P00   INFO: remove expired backup [BACKUP-DIFF-2]
 P00   INFO: remove expired backup [BACKUP-FULL-2]
@@ -2043,7 +2043,7 @@ backrest-checksum="[CHECKSUM]"
 Expire oldest diff backup (cascade to incr)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=1 --repo1-retention-diff=1 --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
 P00   INFO: expire diff backup set: [BACKUP-DIFF-3], [BACKUP-INCR-2]
 P00   INFO: remove expired backup [BACKUP-INCR-2]
 P00   INFO: remove expired backup [BACKUP-DIFF-3]
@@ -2156,7 +2156,7 @@ backrest-checksum="[CHECKSUM]"
 Expire archive based on newest incr backup
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=1 --repo1-retention-diff=1 --repo1-retention-archive-type=incr --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=incr --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=incr --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
 P00 DETAIL: archive retention on backup [BACKUP-FULL-3], archiveId = 9.2-1, start = 000000010000000200000010, stop = 000000010000000200000012
 P00 DETAIL: archive retention on backup [BACKUP-DIFF-4], archiveId = 9.2-1, start = 00000001000000020000001E, stop = 000000010000000200000020
 P00 DETAIL: archive retention on backup [BACKUP-INCR-3], archiveId = 9.2-1, start = 000000010000000200000024
@@ -2295,7 +2295,7 @@ backrest-checksum="[CHECKSUM]"
 Expire diff treating full as diff
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=2 --repo1-retention-diff=1 --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --repo1-retention-diff=1 --repo1-retention-full=2 --stanza=db
 P00   INFO: expire full backup set: [BACKUP-FULL-3], [BACKUP-DIFF-4], [BACKUP-INCR-3]
 P00   INFO: expire diff backup [BACKUP-DIFF-5]
 P00   INFO: remove expired backup [BACKUP-DIFF-5]
@@ -2430,7 +2430,7 @@ backrest-checksum="[CHECKSUM]"
 Expire diff with repo-retention-archive with warning repo-retention-diff not set
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-archive-type=diff --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=diff --stanza=db
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'
@@ -2588,7 +2588,7 @@ backrest-checksum="[CHECKSUM]"
 Expire full with repo-retention-archive with warning repo-retention-full not set
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-archive-type=full --repo1-retention-archive=1 expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive=1 --repo1-retention-archive-type=full --stanza=db
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00 DETAIL: archive retention on backup [BACKUP-FULL-4], archiveId = 9.2-1, start = 00000001000000020000002A, stop = 00000001000000020000002C
@@ -2756,7 +2756,7 @@ backrest-checksum="[CHECKSUM]"
 Expire no archive with warning since repo-retention-archive not set for INCR
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-full=1 --repo1-retention-diff=1 --repo1-retention-archive-type=incr expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=incr --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=incr --repo1-retention-diff=1 --repo1-retention-full=1 --stanza=db
 P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=incr' but option 'repo1-retention-archive' is not set
 P00   INFO: expire full backup [BACKUP-FULL-4]
 P00   INFO: expire full backup [BACKUP-FULL-5]
@@ -2935,7 +2935,7 @@ backrest-checksum="[CHECKSUM]"
 Expire no archive with warning since neither repo-retention-archive nor repo-retention-diff is set
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config="[TEST_PATH]/db-primary/pgbackrest.conf" --stanza=db --log-level-console=detail --repo1-retention-archive-type=diff expire
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=diff --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-archive-type=diff --stanza=db
 P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out of space
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option 'repo1-retention-archive' nor option 'repo1-retention-diff' is set

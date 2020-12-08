@@ -1604,7 +1604,7 @@ testRun(void)
                 RECOVERY_SETTING_HEADER
                 "restore_command = 'my_restore_command'\n",
             "check postgresql.auto.conf");
-        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
+        TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), false, "recovery.signal exists");
         TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), true, "standby.signal missing");
 
         TEST_RESULT_LOG("P00   INFO: write updated {[path]}/pg/postgresql.auto.conf");
@@ -1945,8 +1945,8 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_REPO1_PATH "=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s", strZ(pgPath)));
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         strLstAddZ(argList, "--" CFGOPT_TYPE "=" RECOVERY_TYPE_PRESERVE);
         strLstAddZ(argList, "--" CFGOPT_SET "=20161219-212741F");
         strLstAddZ(argList, "--" CFGOPT_FORCE);

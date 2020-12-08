@@ -249,7 +249,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--archive-async");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/unused");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
@@ -334,9 +334,9 @@ testRun(void)
         TEST_TITLE("command must be run on the pg host");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=host");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgHost, "host");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         strLstAddZ(argList, "--" CFGOPT_SPOOL_PATH "=/spool");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
@@ -502,9 +502,9 @@ testRun(void)
         TEST_TITLE("command must be run on the pg host");
 
         StringList *argList = strLstNew();
-        strLstAddZ(argList, "--" CFGOPT_PG1_HOST "=host");
-        strLstAddZ(argList, "--" CFGOPT_PG1_PATH "=/pg");
-        strLstAddZ(argList, "--" CFGOPT_REPO1_PATH "=/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgHost, "host");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
         strLstAddZ(argList, "000000010000000100000001");
         strLstAddZ(argList, "pg_wal/000000010000000100000001");
@@ -520,7 +520,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAdd(argList, strNewFmt("--log-level-file=debug"));
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--" CFGOPT_PG1_PATH "=%s/db", testPath()));
+        hrnCfgArgRawFmt(argList, cfgOptPgPath, "%s/db", testPath());
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -712,7 +712,9 @@ testRun(void)
         // Make sure the process times out when it can't get a lock
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgLockType(), 30000, true), "acquire lock");
+            lockAcquire(
+                cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("999-dededede"), cfgLockType(), 30000, true),
+            "acquire lock");
         TEST_RESULT_VOID(lockClear(true), "clear lock");
 
         HARNESS_FORK_BEGIN()

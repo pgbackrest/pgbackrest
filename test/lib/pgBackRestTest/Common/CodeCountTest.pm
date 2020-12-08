@@ -41,7 +41,7 @@ sub codeCountScan
         # Only interested in files
         next if $hManifest->{$strFile}{type} ne 'f';
 
-        # Only exclude these directories/files entirely
+        # Exclude these directories/files entirely
         next if ($strFile =~ '^\.' ||
                  $strFile =~ '\.DS_Store$' ||
                  $strFile =~ '\.gitignore$' ||
@@ -55,6 +55,7 @@ sub codeCountScan
                  $strFile =~ '\.eps$' ||
                  $strFile =~ '\.cache$' ||
                  $strFile =~ '^doc/site/' ||
+                 $strFile =~ '^src/build/autom4te.cache/' ||
                  $strFile eq 'test/Vagrantfile' ||
                  $strFile =~ '^test/\.vagrant/' ||
                  $strFile =~ '^test/certificate/' ||
