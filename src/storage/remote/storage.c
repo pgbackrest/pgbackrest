@@ -202,7 +202,7 @@ storageRemoteInfoList(
         {
             pckReadArrayBeginP(read);
 
-            while (pckReadNext(read))
+            while (!pckReadNullP(read))
             {
                 pckReadObjBeginP(read);
 

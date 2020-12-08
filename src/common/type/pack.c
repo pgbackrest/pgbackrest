@@ -348,23 +348,28 @@ pckReadUInt64Internal(PackRead *this)
     uint64_t result = 0;
     uint8_t byte;
 
+    // Convert bytes from varint-128 encoding to a uint64
     for (unsigned int bufferIdx = 0; bufferIdx < PACK_UINT64_SIZE_MAX; bufferIdx++)
     {
+        // Get the next encoded byte
         pckReadBuffer(this, 1);
         byte = this->bufferPtr[this->bufferPos];
 
+        // Shift the lower order 7 encoded bits into the uint64 in reverse order
         result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
 
+        // Increment buffer position to indicate that the byte has been processed
+        this->bufferPos++;
+
+        // Done if the high order bit is not set to indicate more data
         if (byte < 0x80)
             break;
-
-        this->bufferPos++;
     }
 
+    // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
+    // corrupton in the data stream.
     if (byte >= 0x80)
         THROW(FormatError, "unterminated base-128 integer");
-
-    this->bufferPos++;
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -391,7 +396,7 @@ pckReadTagNext(PackRead *this)
     // If the current container is complete (e.g. object)
     if (tag == 0)
     {
-        this->tagNextId = 0xFFFFFFFF;
+        this->tagNextId = UINT_MAX;
     }
     // Else a regular tag
     else
@@ -622,12 +627,14 @@ pckReadDefaultNull(PackRead *this, unsigned int *id)
     ASSERT(this != NULL);
     ASSERT(id != NULL);
 
+    // If the field is NULL then set idLast (to avoid rechecking the same id on the next call) and return true
     if (pckReadNullInternal(this, id))
     {
         this->tagStackTop->idLast = *id;
         FUNCTION_TEST_RETURN(true);
     }
 
+    // The field is not NULL
     FUNCTION_TEST_RETURN(false);
 }
 
@@ -655,7 +662,10 @@ pckReadArrayBegin(PackRead *this, PackIdParam param)
 
     ASSERT(this != NULL);
 
+    // Read array begin
     pckReadTag(this, &param.id, pckTypeArray, false);
+
+    // Add array to the tag stack so IDs can be tracked separately from the parent container
     this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeArray});
 
     FUNCTION_TEST_RETURN_VOID();
@@ -674,7 +684,7 @@ pckReadArrayEnd(PackRead *this)
         THROW(FormatError, "not in array");
 
     // Make sure we are at the end of the array
-    unsigned int id = 0xFFFFFFFF - 1;
+    unsigned int id = UINT_MAX - 1;
     pckReadTag(this, &id, pckTypeUnknown, true);
 
     // Pop array off the stack
@@ -703,10 +713,13 @@ pckReadBin(PackRead *this, PckReadBinParam param)
 
     Buffer *result = NULL;
 
+    // If buffer size > 0
     if (pckReadTag(this, &param.id, pckTypeBin, false))
     {
+        // Get the buffer size
         result = bufNew((size_t)pckReadUInt64Internal(this));
 
+        // Read the buffer out in chunks
         while (bufUsed(result) < bufSize(result))
         {
             size_t size = pckReadBuffer(this, bufRemains(result));
@@ -714,6 +727,7 @@ pckReadBin(PackRead *this, PckReadBinParam param)
             this->bufferPos += size;
         }
     }
+    // Else return a zero-sized buffer
     else
         result = bufNew(0);
 
@@ -785,7 +799,10 @@ pckReadObjBegin(PackRead *this, PackIdParam param)
 
     ASSERT(this != NULL);
 
+    // Read object begin
     pckReadTag(this, &param.id, pckTypeObj, false);
+
+    // Add object to the tag stack so IDs can be tracked separately from the parent container
     this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj});
 
     FUNCTION_TEST_RETURN_VOID();
@@ -804,7 +821,7 @@ pckReadObjEnd(PackRead *this)
         THROW(FormatError, "not in object");
 
     // Make sure we are at the end of the object
-    unsigned id = 0xFFFFFFFF - 1;
+    unsigned id = UINT_MAX - 1;
     pckReadTag(this, &id, pckTypeUnknown, true);
 
     // Pop object off the stack
@@ -851,9 +868,13 @@ pckReadStr(PackRead *this, PckReadStrParam param)
 
     String *result = NULL;
 
+    // If string size > 0
     if (pckReadTag(this, &param.id, pckTypeStr, false))
     {
+        // Read the string size
         size_t sizeExpected = (size_t)pckReadUInt64Internal(this);
+
+        // Read the string out in chunks
         result = strNew("");
 
         while (strSize(result) != sizeExpected)
@@ -863,6 +884,7 @@ pckReadStr(PackRead *this, PckReadStrParam param)
             this->bufferPos += sizeRead;
         }
     }
+    // Else return an empty string
     else
         result = strNew("");
 
@@ -933,10 +955,11 @@ pckReadEnd(PackRead *this)
 
     ASSERT(this != NULL);
 
+    // Read object end markers
     while (lstSize(this->tagStack) > 0)
     {
         // Make sure we are at the end of the container
-        unsigned int id = 0xFFFFFFFF - 1;
+        unsigned int id = UINT_MAX - 1;
         pckReadTag(this, &id, pckTypeUnknown, true);
 
         // Remove from stack
@@ -1086,15 +1109,23 @@ pckWriteUInt64Internal(PackWrite *this, uint64_t value)
     unsigned char buffer[PACK_UINT64_SIZE_MAX];
     size_t size = 0;
 
+    // Convert uint64 to varint-128 encloding. Keep writing out bytes while the remaining value is greater than 7 bits.
     while (value >= 0x80)
     {
+        // Encode the lower order 7 bits, adding the continuation bit to indicate there is more data
         buffer[size] = (unsigned char)value | 0x80;
+
+        // Shift the value to remove bits that have been encoded
         value >>= 7;
+
+        // Keep track of size so we know how many bytes to write out
         size++;
     }
 
+    // Encode the last 7 bits of value
     buffer[size] = (unsigned char)value;
 
+    // Write encoded bytes to the buffer
     pckWriteBuffer(this, BUF(buffer, size + 1));
 
     FUNCTION_TEST_RETURN_VOID();
@@ -1227,12 +1258,14 @@ pckWriteDefaultNull(PackWrite *this, bool defaultWrite, bool defaultEqual)
 
     ASSERT(this != NULL);
 
+    // Write a NULL if not forcing the default to be written and the value passed equals the default
     if (!defaultWrite && defaultEqual)
     {
         this->tagStackTop->nullTotal++;
         FUNCTION_TEST_RETURN(true);
     }
 
+    // Let the caller know that it should write the value
     FUNCTION_TEST_RETURN(false);
 }
 
@@ -1260,7 +1293,10 @@ pckWriteArrayBegin(PackWrite *this, PackIdParam param)
 
     ASSERT(this != NULL);
 
+    // Write the array tag
     pckWriteTag(this, pckTypeArray, param.id, 0);
+
+    // Add array to the tag stack so IDs can be tracked separately from the parent container
     this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeArray});
 
     FUNCTION_TEST_RETURN(this);
@@ -1277,7 +1313,10 @@ pckWriteArrayEnd(PackWrite *this)
     ASSERT(lstSize(this->tagStack) != 1);
     ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->type == pckTypeArray);
 
+    // Write end of array tag
     pckWriteUInt64Internal(this, 0);
+
+    // Pop array off the stack to revert to ID tracking for the prior container
     lstRemoveLast(this->tagStack);
     this->tagStackTop = lstGetLast(this->tagStack);
 
@@ -1300,8 +1339,10 @@ pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param)
     {
         ASSERT(value != NULL);
 
+        // Write buffer size if > 0
         pckWriteTag(this, pckTypeBin, param.id, bufUsed(value) > 0);
 
+        // Write buffer data if size > 0
         if (bufUsed(value) > 0)
         {
             pckWriteUInt64Internal(this, bufUsed(value));
@@ -1383,7 +1424,10 @@ pckWriteObjBegin(PackWrite *this, PackIdParam param)
 
     ASSERT(this != NULL);
 
+    // Write the object tag
     pckWriteTag(this, pckTypeObj, param.id, 0);
+
+    // Add object to the tag stack so IDs can be tracked separately from the parent container
     this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj});
 
     FUNCTION_TEST_RETURN(this);
@@ -1400,7 +1444,10 @@ pckWriteObjEnd(PackWrite *this)
     ASSERT(lstSize(this->tagStack) != 1);
     ASSERT(((PackTagStack *)lstGetLast(this->tagStack))->type == pckTypeObj);
 
+    // Write end of object tag
     pckWriteUInt64Internal(this, 0);
+
+    // Pop object off the stack to revert to ID tracking for the prior container
     lstRemoveLast(this->tagStack);
     this->tagStackTop = lstGetLast(this->tagStack);
 
@@ -1442,8 +1489,10 @@ pckWriteStr(PackWrite *this, const String *value, PckWriteStrParam param)
     {
         ASSERT(value != NULL);
 
+        // Write string size if > 0
         pckWriteTag(this, pckTypeStr, param.id, strSize(value) > 0);
 
+        // Write string data if size > 0
         if (strSize(value) > 0)
         {
             pckWriteUInt64Internal(this, strSize(value));

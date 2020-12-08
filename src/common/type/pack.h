@@ -140,13 +140,14 @@ typedef struct PackIdParam
     unsigned int id;
 } PackIdParam;
 
-// Read next field
+// Read next field. This is useful when the type of the next field is unknown, i.e. a completely dynamic data structure, or for
+// debugging. If you just need to know if the field exists or not, then use pckReadNullP().
 bool pckReadNext(PackRead *this);
 
-// Current field id
+// Current field id. Set after a call to pckReadNext().
 unsigned int pckReadId(PackRead *this);
 
-// Current field type
+// Current field type. Set after a call to pckReadNext().
 PackType pckReadType(PackRead *this);
 
 // Is the field NULL?
