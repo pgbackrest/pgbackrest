@@ -129,12 +129,7 @@ helpRenderValue(const Variant *value, ConfigDefineOptionType type)
         result = resultTemp;
     }
     else if (type == cfgDefOptTypeTime)
-    {
-        char working[CVT_BASE10_BUFFER_SIZE];
-
-        cvtDoubleToZ((double)varInt64(value) / MSEC_PER_SEC, working, sizeof(working));
-        result = strNew(working);
-    }
+        result = cvtDoubleToStr((double)varInt64(value) / MSEC_PER_SEC);
     else
         result = varStrForce(value);
     }

@@ -196,36 +196,6 @@ cfgParseOption(const String *optionName)
 }
 
 /***********************************************************************************************************************************
-Parse time option
-***********************************************************************************************************************************/
-static uint64_t
-parseTime(const String *value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, value);
-    FUNCTION_TEST_END();
-
-    ASSERT(value != NULL);
-
-    // Lowercase the value
-    String *valueLower = strLower(strDup(value));
-
-    // Error if invalid format
-    if (!regExpMatchOne(STRDEF("^([0-9]*\\.[0-9]+|[0-9]+(ms){0,1})$"), valueLower))
-        THROW_FMT(FormatError, "invalid format for time '%s'", strZ(value));
-
-    // Convert the value to a float
-    double result = 0;
-    sscanf(strZ(valueLower), "%lf", &result);
-
-    // If units are not in ms then multiply to get milliseconds
-    if (!strEndsWithZ(valueLower, "ms"))
-        result *= 1000;
-
-    FUNCTION_TEST_RETURN((uint64_t)result);
-}
-
-/***********************************************************************************************************************************
 Generate multiplier based on character
 ***********************************************************************************************************************************/
 static uint64_t
@@ -1330,7 +1300,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                                             MEM_CONTEXT_BEGIN(config->memContext)
                                             {
-                                                configOptionValue->value = varNewInt64((int64_t)parseTime(value));
+                                                configOptionValue->value = varNewInt64(
+                                                    (int64_t)(cvtZToDouble(strZ(value)) * MSEC_PER_SEC));
                                             }
                                             MEM_CONTEXT_END();
 

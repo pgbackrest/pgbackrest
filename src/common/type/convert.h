@@ -8,6 +8,8 @@ Convert Base Data Types
 #include <stdbool.h>
 #include <sys/types.h>
 
+#include "common/type/string.h"
+
 /***********************************************************************************************************************************
 Required buffer sizes
 ***********************************************************************************************************************************/
@@ -20,8 +22,9 @@ Functions
 // Convert char to zero-terminated string
 size_t cvtCharToZ(char value, char *buffer, size_t bufferSize);
 
-// Convert double to zero-terminated string and vice versa
+// Convert double to zero-terminated string (or String) and vice versa
 size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
+String *cvtDoubleToStr(double value);
 double cvtZToDouble(const char *value);
 
 // Convert int to zero-terminated string and vice versa

@@ -918,11 +918,11 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--protocol-timeout=1ms"));
+        strLstAdd(argList, strNew("--protocol-timeout=.01"));
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_ERROR(
             configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "'1ms' is out of range for 'protocol-timeout' option");
+            "'.01' is out of range for 'protocol-timeout' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();

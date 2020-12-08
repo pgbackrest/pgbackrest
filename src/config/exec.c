@@ -111,12 +111,8 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                         }
                         else if (cfgDefOptionType(optionId) == cfgDefOptTypeTime)
                         {
-                            char working[CVT_BASE10_BUFFER_SIZE];
-
-                            cvtDoubleToZ((double)varInt64(value) / MSEC_PER_SEC, working, sizeof(working));
-
                             valueList = strLstNew();
-                            strLstAddZ(valueList, working);
+                            strLstAdd(valueList, cvtDoubleToStr((double)varInt64(value) / MSEC_PER_SEC));
                         }
                         // Else only one value
                         else
