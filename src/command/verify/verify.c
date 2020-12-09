@@ -87,8 +87,8 @@ typedef enum
 {
     backupValid,                                                    // Default: All files in backup label repo passed verification
     backupInvalid,                                                  // One of more files in backup label repo failed verification
-    backupMissingManifest,
-    backupInProgress,
+    backupMissingManifest,                                          // Backup manifest missing (backup may have expired)
+    backupInProgress,                                               // Backup appeared to be in progress (so was skipped)
 } VerifyBackupResultStatus;
 
 typedef struct VerifyBackupResult
@@ -104,7 +104,7 @@ typedef struct VerifyBackupResult
     unsigned int pgVersion;                                         // PG version will be used with PG id to find WAL in the repo
     String *archiveStart;                                           // First WAL segment in the backup
     String *archiveStop;                                            // Last WAL segment in the backup
-    List *invalidFileList;
+    List *invalidFileList;                                          // List of invalid files found in the backup
 } VerifyBackupResult;
 
 // Job data stucture for processing and results collection
@@ -468,7 +468,7 @@ verifyManifestFile(
                 manifestMove(result, memContextPrior());
         }
 
-        // If the result is NULL and the backup status has not yet been set, then it is unusable
+        // If the result is NULL and the backup status has not yet been set, then the backup is unusable (invalid)
         if (result == NULL && backupResult->status == backupValid)
         {
             backupResult->status = backupInvalid;
@@ -905,6 +905,7 @@ verifyBackup(void *data)
 
         VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
 
+        // Process any files in the manifest
         if (jobData->manifestFileIdx < manifestFileTotal(jobData->manifest))
         {
             do
@@ -913,7 +914,7 @@ verifyBackup(void *data)
 
                 String *filePathName = NULL;
 
-                // Track file verified in order to determine when the processing of the backup is complete
+                // Track the files verified in order to determine when the processing of the backup is complete
                 backupResult->totalFileVerify++;
 
                 // Check if the file is referenced in a prior backup
@@ -1011,7 +1012,7 @@ verifyBackup(void *data)
         }
         else
         {
-            // Nothing to process so report an error, free the manifest, set the state/status and remove the backup from the
+            // Nothing to process so report an error, free the manifest, set the status and remove the backup from the
             // processing list
             LOG_ERROR_FMT(
                 errorTypeCode(&FileInvalidError),
@@ -1066,7 +1067,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
         if (jobData->backupProcessing)
         {
-            // Process the last result if there is one to process before beginning backup verification
+            // Only begin backup verification if there the last result was processed
             if (result == NULL)
                 result = protocolParallelJobMove(verifyBackup(data), memContextPrior());
         }
@@ -1260,6 +1261,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
 
     String *result = strNew("Results:");
 
+    // Render archive results
     if (lstSize(archiveIdResultList) == 0)
         strCatZ(result, "\n  archiveId: none found");
     else
@@ -1313,6 +1315,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
         }
     }
 
+    // Render backup results
     if (lstSize(backupResultList) == 0)
         strCatZ(result, "\n  backup: none found");
     else
@@ -1537,7 +1540,7 @@ verifyProcess(unsigned int *errorTotal)
                         {
                             const VerifyResult verifyResult = (VerifyResult)varUIntForce(protocolParallelJobResult(job));
 
-                            // If this is an archive file
+                            // Update the result set for the type of file being processed
                             if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
                             {
                                 if (verifyResult == verifyOk)
@@ -1547,7 +1550,7 @@ verifyProcess(unsigned int *errorTotal)
                                     jobData.jobErrorTotal += verifyLogInvalidResult(
                                         fileType, verifyResult, processId, filePathName);
 
-                                    // Add invalid file with reason from result of verifyFile to range list
+                                    // Add invalid file to the WAL range
                                     verifyAddInvalidWalFile(
                                         archiveIdResult->walRangeList, verifyResult, filePathName,
                                         strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
@@ -1577,9 +1580,10 @@ verifyProcess(unsigned int *errorTotal)
 
                             jobData.jobErrorTotal++;
 
+                            // Add invalid file with "OtherError" reason to invalid file list
                             if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
                             {
-                                // Add invalid file with "OtherError" reason to range list
+                                // Add invalid file to the WAL range
                                 verifyAddInvalidWalFile(
                                     archiveIdResult->walRangeList, verifyOtherError, filePathName,
                                     strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
