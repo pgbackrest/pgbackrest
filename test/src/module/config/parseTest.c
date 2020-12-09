@@ -536,84 +536,14 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("convertToByte()"))
     {
-        double valueDbl = 0;
-        String *value = strNew("10.0");
-
         TEST_ERROR(sizeQualifierToMultiplier('w'), AssertError, "'w' is not a valid size qualifier");
-        TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10.0' is not valid");
-        strTrunc(value, strChr(value, '.'));
-        strCatZ(value, "K2");
-        TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10K2' is not valid");
-        strTrunc(value, strChr(value, '1'));
-        strCatZ(value, "ab");
-        TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value 'ab' is not valid");
-
-        strTrunc(value, strChr(value, 'a'));
-        strCatZ(value, "10");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl no character identifier - straight to bytes");
-        TEST_RESULT_STR_Z(value, "10", "value no character identifier - straight to bytes");
-
-        strCatZ(value, "B");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl B to bytes");
-        TEST_RESULT_STR_Z(value, "10", "value B to bytes");
-
-        strCatZ(value, "Kb");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl KB to bytes");
-        TEST_RESULT_STR_Z(value, "10240", "value KB to bytes");
-
-        strTrunc(value, strChr(value, '2'));
-        strCatZ(value, "k");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl k to bytes");
-        TEST_RESULT_STR_Z(value, "10240", "value k to bytes");
-
-        strCatZ(value, "pB");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 11529215046068469760U, "valueDbl Pb to bytes");
-        TEST_RESULT_STR_Z(value, "11529215046068469760", "value Pb to bytes");
-
-        strTrunc(value, strChr(value, '5'));
-        strCatZ(value, "GB");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl GB to bytes");
-        TEST_RESULT_STR_Z(value, "11811160064", "value GB to bytes");
-
-        strTrunc(value, strChr(value, '8'));
-        strCatZ(value, "g");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl g to bytes");
-        TEST_RESULT_STR_Z(value, "11811160064", "value g to bytes");
-
-        strTrunc(value, strChr(value, '8'));
-        strCatZ(value, "T");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 12094627905536U, "valueDbl T to bytes");
-        TEST_RESULT_STR_Z(value, "12094627905536", "value T to bytes");
-
-        strTrunc(value, strChr(value, '0'));
-        strCatZ(value, "tb");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 13194139533312U, "valueDbl tb to bytes");
-        TEST_RESULT_STR_Z(value, "13194139533312", "value tb to bytes");
-
-        strTrunc(value, strChr(value, '3'));
-        strCatZ(value, "0m");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10485760, "valueDbl m to bytes");
-        TEST_RESULT_STR_Z(value, "10485760", "value m to bytes");
-
-        strCatZ(value, "mb");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10995116277760U, "valueDbl mb to bytes");
-        TEST_RESULT_STR_Z(value, "10995116277760", "value mb to bytes");
-
-        strTrunc(value, strChr(value, '0'));
-        strCatZ(value, "99999999999999999999p");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_STR_Z(value, "225179981368524800000000000000000000", "value really large  to bytes");
+        TEST_RESULT_UINT(convertToByte(STRDEF("10B")), 10, "10B");
+        TEST_RESULT_UINT(convertToByte(STRDEF("1k")), 1024, "1k");
+        TEST_RESULT_UINT(convertToByte(STRDEF("5G")), (uint64_t)5 * 1024 * 1024 * 1024, "5G");
+        TEST_RESULT_UINT(convertToByte(STRDEF("3Tb")), (uint64_t)3 * 1024 * 1024 * 1024 * 1024, "3Tb");
+        TEST_RESULT_UINT(convertToByte(STRDEF("11")), 11, "11 - no qualifier, default bytes");
+        TEST_RESULT_UINT(convertToByte(STRDEF("4pB")), 4503599627370496, "4pB");
+        TEST_RESULT_UINT(convertToByte(STRDEF("15MB")), (uint64_t)15 * 1024 * 1024, "15MB");
     }
 
     // *****************************************************************************************************************************
@@ -763,9 +693,9 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--manifest-save-threshold=199999999999999999999p"));
+        strLstAdd(argList, strNew("--manifest-save-threshold=9999999999999999999p"));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "'225179981368524800000000000000000000' is out of range for 'manifest-save-threshold' option");
+            "'9999999999999999999p' is out of range for 'manifest-save-threshold' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1299,6 +1229,7 @@ testRun(void)
                     "pg1-path=/not/path/to/db\n"
                     "backup-standby=y\n"
                     "buffer-size=65536\n"
+                    "protocol-timeout=3600\n"
                     "\n"
                     "[db:backup]\n"
                     "delta=n\n"
@@ -1361,7 +1292,8 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 1800, "    db-timeout is set");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptDbTimeout), 1800000, "    db-timeout is set");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 3600000, "    protocol-timeout is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgPort, 1), 5432, "    pg2-port is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt64(cfgOptPgPort, 1), 5432, "    pg2-port is set");
         TEST_RESULT_STR(cfgOptionIdxStrNull(cfgOptPgHost, 1), NULL, "    pg2-host is NULL");
@@ -1373,15 +1305,15 @@ testRun(void)
         TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHost), NULL, "    pg-host default is NULL");
         TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptLogLevelConsole)), "warn", "    log-level-console default is warn");
         TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptPgPort)), 5432, "    pg-port default is 5432");
-        TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptDbTimeout)), 1800, "    db-timeout default is 1800");
+        TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptDbTimeout)), 1800000, "    db-timeout default is 1800000");
 
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, VARSTRDEF("/default")), "    set pg-socket-path default");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "    pg1-socket-path unchanged");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 1), "/default", "    pg2-socket-path is new default");
 
-        TEST_ERROR(cfgOptionDefaultValue(cfgOptDbInclude), AssertError, "default value not available for option type 4");
+        TEST_ERROR(cfgOptionDefaultValue(cfgOptDbInclude), AssertError, "default value not available for option type 3");
         TEST_ERROR(cfgOptionLst(cfgOptDbInclude), AssertError, "option 'db-include' is not valid for the current command");
-        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg2-path' is type 5 but 4 was requested");
+        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg2-path' is type 4 but 3 was requested");
 
         TEST_RESULT_VOID(cfgOptionInvalidate(cfgOptPgPath), "    invalidate pg-path");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), false, "    pg-path no longer valid");
@@ -1539,17 +1471,17 @@ testRun(void)
         TEST_RESULT_VOID(cfgOptionSet(cfgOptForce, cfgSourceParam, VARBOOL(false)), "set force false");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "check force");
 
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT(1)), "set protocol-timeout to 1");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 1, "check protocol-timeout");
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARDBL(2.2)), "set protocol-timeout to 2.2");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 2.2, "check protocol-timeout");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT64(1000)), "set protocol-timeout to 1");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 1000, "check protocol-timeout");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT64(2200)), "set protocol-timeout to 2.2");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 2200, "check protocol-timeout");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProcessMax, cfgSourceParam, VARINT(50)), "set process-max to 50");
         TEST_RESULT_INT(cfgOptionInt(cfgOptProcessMax), 50, "check process-max");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProcessMax, cfgSourceParam, VARINT64(51)), "set process-max to 51");
         TEST_RESULT_INT(cfgOptionInt(cfgOptProcessMax), 51, "check process-max");
 
-        TEST_ERROR(cfgOptionSet(cfgOptDbInclude, cfgSourceParam, VARINT(1)), AssertError, "set not available for option type 4");
+        TEST_ERROR(cfgOptionSet(cfgOptDbInclude, cfgSourceParam, VARINT(1)), AssertError, "set not available for option type 3");
 
         TEST_ERROR(
             cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, VARINT(1)), AssertError,

@@ -215,7 +215,7 @@ Note that `CFGDEF_SECTION` is not present thereby making this a command-line onl
 
 - `CFGOPT_ONLINE` - the name of the option as defined in **Section 1**
 
-- `CFGDEF_TYPE` - the type of the option. Valid types are: `CFGDEF_TYPE_BOOLEAN`, `CFGDEF_TYPE_FLOAT`, `CFGDEF_TYPE_HASH`, `CFGDEF_TYPE_INTEGER`, `CFGDEF_TYPE_LIST`, `CFGDEF_TYPE_PATH`, `CFGDEF_TYPE_SIZE`, and `CFGDEF_TYPE_STRING`
+- `CFGDEF_TYPE` - the type of the option. Valid types are: `CFGDEF_TYPE_BOOLEAN`, `CFGDEF_TYPE_HASH`, `CFGDEF_TYPE_INTEGER`, `CFGDEF_TYPE_LIST`, `CFGDEF_TYPE_PATH`, `CFGDEF_TYPE_SIZE`, `CFGDEF_TYPE_STRING`, and `CFGDEF_TYPE_TIME`
 
 
 - `CFGDEF_NEGATE` - being a command-line only boolean option, this rule would automatically default to false so it must be defined if the option is negatable. Ask yourself if negation makes sense, for example, would a --dry-run option make sense as --no-dry-run? If the answer is no, then this rule can be omitted as it would automatically default to false. Any boolean option that cannot be negatable, must be a command-line only and not a configuration file option as all configuration boolean options must be negatable.

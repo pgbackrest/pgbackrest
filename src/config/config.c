@@ -564,14 +564,9 @@ cfgOptionDefaultValue(ConfigOption optionId)
             break;
         }
 
-        case cfgDefOptTypeFloat:
-        {
-            result = varNewDbl(varDblForce(defaultValue));
-            break;
-        }
-
         case cfgDefOptTypeInteger:
         case cfgDefOptTypeSize:
+        case cfgDefOptTypeTime:
         {
             result = varNewInt64(varInt64Force(defaultValue));
             break;
@@ -942,16 +937,6 @@ cfgOptionIdxBool(ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN(BOOL, varBool(cfgOptionIdxInternal(optionId, optionIdx, varTypeBool, false)));
 }
 
-double
-cfgOptionDbl(ConfigOption optionId)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, optionId);
-    FUNCTION_LOG_END();
-
-    FUNCTION_LOG_RETURN(DOUBLE, varDbl(cfgOptionIdxInternal(optionId, cfgOptionIdxDefault(optionId), varTypeDouble, false)));
-}
-
 int
 cfgOptionInt(ConfigOption optionId)
 {
@@ -1185,18 +1170,9 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                     break;
                 }
 
-                case cfgDefOptTypeFloat:
-                {
-                    if (varType(value) == varTypeDouble)
-                        configLocal->option[optionId].index[optionIdx].value = varDup(value);
-                    else
-                        configLocal->option[optionId].index[optionIdx].value = varNewDbl(varDblForce(value));
-
-                    break;
-                }
-
                 case cfgDefOptTypeInteger:
                 case cfgDefOptTypeSize:
+                case cfgDefOptTypeTime:
                 {
                     if (varType(value) == varTypeInt64)
                         configLocal->option[optionId].index[optionIdx].value = varDup(value);

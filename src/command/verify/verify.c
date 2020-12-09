@@ -977,7 +977,7 @@ verifyProcess(unsigned int *errorTotal)
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
-                    (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, verifyJobCallback, &jobData);
+                    cfgOptionUInt64(cfgOptProtocolTimeout) / 2, verifyJobCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));

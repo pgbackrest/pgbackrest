@@ -26,9 +26,9 @@ cmdRemote(int fdRead, int fdWrite)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-%u", cfgOptionUInt(cfgOptProcess));
-        IoRead *read = ioFdReadNew(name, fdRead, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
+        IoRead *read = ioFdReadNew(name, fdRead, cfgOptionUInt64(cfgOptProtocolTimeout));
         ioReadOpen(read);
-        IoWrite *write = ioFdWriteNew(name, fdWrite, (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * 1000));
+        IoWrite *write = ioFdWriteNew(name, fdWrite, cfgOptionUInt64(cfgOptProtocolTimeout));
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);

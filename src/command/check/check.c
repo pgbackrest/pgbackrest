@@ -129,7 +129,7 @@ checkPrimary(const DbGetResult dbGroup)
         dbFree(dbGroup.primary);
 
         // Wait for the WAL to appear in the repo
-        TimeMSec archiveTimeout = (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
+        TimeMSec archiveTimeout = cfgOptionUInt64(cfgOptArchiveTimeout);
         const String *walSegmentFile = walSegmentFind(storageRepo(), archiveId, walSegment, archiveTimeout);
 
         LOG_INFO_FMT(

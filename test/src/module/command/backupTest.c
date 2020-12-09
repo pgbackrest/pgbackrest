@@ -264,7 +264,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     PgControl pgControl = pgControlFromFile(storagePg());
 
     // Set archive timeout really small to save time on errors
-    cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewDbl(.1));
+    cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewInt64(100));
 
     uint64_t lsnStart = ((uint64_t)backupTimeStart & 0xFFFFFF00) << 28;
     uint64_t lsnStop =

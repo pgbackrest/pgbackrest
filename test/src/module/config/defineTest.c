@@ -44,11 +44,10 @@ testRun(void)
         TEST_RESULT_BOOL(cfgDefOptionAllowRange(cfgCmdBackup, cfgOptCompressLevel), true, "range allowed");
         TEST_RESULT_BOOL(cfgDefOptionAllowRange(cfgCmdBackup, cfgOptRepoHost), false, "range not allowed");
 
-        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgCmdBackup, cfgOptDbTimeout), 0.1, "range min");
-        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMax(cfgCmdBackup, cfgOptCompressLevel), 9, "range max");
-        TEST_RESULT_DOUBLE(cfgDefOptionAllowRangeMin(cfgCmdArchivePush, cfgOptArchivePushQueueMax), 0, "range min");
-        TEST_RESULT_DOUBLE(
-            cfgDefOptionAllowRangeMax(cfgCmdArchivePush, cfgOptArchivePushQueueMax), 4503599627370496, "range max");
+        TEST_RESULT_INT(cfgDefOptionAllowRangeMin(cfgCmdBackup, cfgOptDbTimeout), 100, "range min");
+        TEST_RESULT_INT(cfgDefOptionAllowRangeMax(cfgCmdBackup, cfgOptCompressLevel), 9, "range max");
+        TEST_RESULT_INT(cfgDefOptionAllowRangeMin(cfgCmdArchivePush, cfgOptArchivePushQueueMax), 0, "range min");
+        TEST_RESULT_INT(cfgDefOptionAllowRangeMax(cfgCmdArchivePush, cfgOptArchivePushQueueMax), 4503599627370496, "range max");
 
         TEST_ERROR(
             cfgDefOptionDefault(cfgDefCommandTotal(), cfgOptCompressLevel), AssertError,
