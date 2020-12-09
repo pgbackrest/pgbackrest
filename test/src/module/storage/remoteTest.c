@@ -10,7 +10,6 @@ Test Remote Storage
 #include "postgres/interface.h"
 
 #include "common/harnessConfig.h"
-#include "common/harnessPack.h"
 #include "common/harnessStorage.h"
 #include "common/harnessTest.h"
 
@@ -186,74 +185,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("protocol output that is not tested elsewhere (detail)");
 
-        Buffer *packCheck = bufNew(0);
-        PackWrite *packWriteCheck = pckWriteNewBuf(packCheck);
-        StorageRemoteProtocolInfoListCallbackData callbackData = {.write = packWriteCheck, .memContext = memContextCurrent()};
+        info = (StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")};
+        TEST_RESULT_VOID(storageRemoteInfoWrite(server, &info), "write link info");
 
-        pckWriteObjBeginP(packWriteCheck);
-        TEST_RESULT_VOID(
-            storageRemoteInfoWrite(
-                &callbackData,
-                &(StorageInfo){
-                    .level = storageInfoLevelDetail, .type = storageTypeFile, .timeModified = 1, .size = 5, .mode = 0750,
-                    .userId = 7, .user = STRDEF("user"), .groupId = 9, .group = STRDEF("group")}),
-            "write file info");
-        pckWriteObjEndP(packWriteCheck);
+        ioWriteFlush(serverWriteIo);
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), ".2\n.0\n.0\n.null\n.0\n.null\n.0\n.\"../\"\n", "check result");
 
-        pckWriteObjBeginP(packWriteCheck);
-        TEST_RESULT_VOID(
-            storageRemoteInfoWrite(
-                &callbackData,
-                &(StorageInfo){
-                    .level = storageInfoLevelDetail, .type = storageTypeFile, .timeModified = 1, .size = 0, .mode = 0750,
-                    .userId = 7, .user = STRDEF("user"), .groupId = 9, .group = STRDEF("group")}),
-            "write file info");
-        pckWriteObjEndP(packWriteCheck);
-
-        pckWriteObjBeginP(packWriteCheck);
-        TEST_RESULT_VOID(
-            storageRemoteInfoWrite(
-                &callbackData,
-                &(StorageInfo){.level = storageInfoLevelDetail, .type = storageTypeLink, .linkDestination = STRDEF("../")}),
-            "write link info");
-        pckWriteObjEndP(packWriteCheck);
-
-        pckWriteEndP(packWriteCheck);
-
-        TEST_RESULT_STR_Z(
-            hrnPackBufToStr(packCheck),
-            "1:obj:{2:time:1, 3:u64:5, 4:u32:488, 5:u32:7, 7:str:user, 8:u32:9, 10:str:group}"
-            ", 2:obj:{}"
-            ", 3:obj:{1:u32:2, 2:time:-1, 3:u32:0, 4:u32:0, 5:bool:true, 6:u32:0, 7:bool:true, 8:str:../}",
-            "check result");
-
-        StorageRemoteInfoParseData parseData = {.read = pckReadNewBuf(packCheck)};
-        HarnessStorageInfoListCallbackData infoListCallbackData = {.content = strNew("")};
-
-        info = (StorageInfo){.level = storageInfoLevelDetail};
-        pckReadObjBeginP(parseData.read);
-        storageRemoteInfoParse(&parseData, &info);
-        pckReadObjEndP(parseData.read);
-        hrnStorageInfoListCallback(&infoListCallbackData, &info);
-
-        info = (StorageInfo){.level = storageInfoLevelDetail};
-        pckReadObjBeginP(parseData.read);
-        storageRemoteInfoParse(&parseData, &info);
-        pckReadObjEndP(parseData.read);
-        hrnStorageInfoListCallback(&infoListCallbackData, &info);
-
-        info = (StorageInfo){.level = storageInfoLevelDetail};
-        pckReadObjBeginP(parseData.read);
-        storageRemoteInfoParse(&parseData, &info);
-        pckReadObjEndP(parseData.read);
-        hrnStorageInfoListCallback(&infoListCallbackData, &info);
-
-        TEST_RESULT_STR_Z(
-            infoListCallbackData.content,
-            "null {file, s=5, m=0750, t=1, u=user, g=group}\n"
-            "null {file, s=0, m=0750, t=1, u=user, g=group}\n"
-            "null {link, d=../, u=0, g=0}\n",
-            "check result");
+        bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check protocol function directly with missing path/file");
@@ -264,7 +202,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:false", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -281,7 +219,13 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 2:obj:{2:time:1555160001, 3:u64:6}", "check result");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
+            hrnReplaceKey(
+                "{\"out\":true}\n"
+                ".0\n.1555160001\n.6\n"
+                "{}\n"),
+            "check result");
 
         bufUsedSet(serverWrite, 0);
 
@@ -295,11 +239,11 @@ testRun(void)
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
         TEST_RESULT_STR_Z(
-            hrnPackBufToStr(serverWrite),
+            strNewBuf(serverWrite),
             hrnReplaceKey(
-                "1:bool:true"
-                ", 2:obj:{2:time:1555160001, 3:u64:6, 4:u32:416, 5:u32:{[user-id]}, 7:str:{[user]}, 8:u32:{[group-id]}"
-                    ", 10:str:{[group]}}"),
+                "{\"out\":true}\n"
+                ".0\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
+                "{}\n"),
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -355,15 +299,12 @@ testRun(void)
 
         TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
         TEST_RESULT_STR_Z(
-            hrnPackBufToStr(serverWrite),
+            strNewBuf(serverWrite),
             hrnReplaceKey(
-                "1:array:"
-                "["
-                    "1:obj:{1:str:., 2:u32:1, 3:time:1555160000, 4:u32:488, 5:u32:{[user-id]}, 7:str:{[user]}, 8:u32:{[group-id]}"
-                        ", 10:str:{[group]}}"
-                    ", 2:obj:{1:str:test, 3:time:1, 4:u64:6, 5:u32:416}"
-                "]"
-                ", 2:bool:true"),
+                ".\".\"\n.1\n.1555160000\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n"
+                ".\"test\"\n.0\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
+                ".\n"
+                "{\"out\":true}\n"),
             "check result");
 
         bufUsedSet(serverWrite, 0);
