@@ -195,16 +195,16 @@ cfgParseOption(const String *optionName)
 }
 
 /***********************************************************************************************************************************
-Convert the value passed into bytes and update valueDbl for range checking
+Generate multiplier based on character
 ***********************************************************************************************************************************/
-static double
+static uint64_t
 sizeQualifierToMultiplier(char qualifier)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CHAR, qualifier);
     FUNCTION_TEST_END();
 
-    double result;
+    uint64_t result;
 
     switch (qualifier)
     {
@@ -251,25 +251,24 @@ sizeQualifierToMultiplier(char qualifier)
     FUNCTION_TEST_RETURN(result);
 }
 
-static void
-convertToByte(String **value, double *valueDbl)
+static uint64_t
+convertToByte(const String *value)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_P(STRING, value);
-        FUNCTION_LOG_PARAM_P(DOUBLE, valueDbl);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
 
-    ASSERT(valueDbl != NULL);
+    ASSERT(value != NULL);
 
-    // Make a copy of the value so it is not updated until we know the conversion will succeed
-    String *result = strLower(strDup(*value));
+    // Lowercase the value
+    String *valueLower = strLower(strDup(value));
 
     // Match the value against possible values
-    if (regExpMatchOne(STRDEF("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), result))
+    if (regExpMatchOne(STRDEF("^[0-9]+(kb|k|mb|m|gb|g|tb|t|pb|p|b)*$"), valueLower))
     {
         // Get the character array and size
-        const char *strArray = strZ(result);
-        size_t size = strSize(result);
+        const char *strArray = strZ(valueLower);
+        size_t size = strSize(valueLower);
         int chrPos = -1;
 
         // If there is a 'b' on the end, then see if the previous character is a number
@@ -287,7 +286,7 @@ convertToByte(String **value, double *valueDbl)
         else if (strArray[size - 1] > '9')
             chrPos = (int)(size - 1);
 
-        double multiplier = 1;
+        uint64_t multiplier = 1;
 
         // If a letter was found calculate multiplier, else do nothing since assumed value is already in bytes
         if (chrPos != -1)
@@ -295,21 +294,14 @@ convertToByte(String **value, double *valueDbl)
             multiplier = sizeQualifierToMultiplier(strArray[chrPos]);
 
             // Remove any letters
-            strTrunc(result, chrPos);
+            strTrunc(valueLower, chrPos);
         }
 
         // Convert string to bytes
-        double newDbl = varDblForce(VARSTR(result)) * multiplier;
-        result = varStrForce(VARDBL(newDbl));
-
-        // If nothing has blown up then safe to overwrite the original values
-        *valueDbl = newDbl;
-        *value = result;
+        FUNCTION_TEST_RETURN(cvtZToUInt64(strZ(valueLower)) * multiplier);
     }
     else
-        THROW_FMT(FormatError, "value '%s' is not valid", strZ(*value));
-
-    FUNCTION_LOG_RETURN_VOID();
+        THROW_FMT(FormatError, "value '%s' is not valid", strZ(value));
 }
 
 /***********************************************************************************************************************************
@@ -1269,12 +1261,13 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             else
                             {
                                 String *value = strLstGet(parseOptionValue->valueList, 0);
+                                const String *valueAllow = value;
 
                                 // If a numeric type check that the value is valid
-                                if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeFloat ||
-                                    optionDefType == cfgDefOptTypeSize)
+                                if (optionDefType == cfgDefOptTypeInteger ||  optionDefType == cfgDefOptTypeSize ||
+                                    optionDefType == cfgDefOptTypeTime)
                                 {
-                                    double valueDbl = 0;
+                                    int64_t valueInt64 = 0;
 
                                     // Check that the value can be converted
                                     TRY_BEGIN()
@@ -1287,27 +1280,31 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                             }
                                             MEM_CONTEXT_END();
 
-                                            valueDbl = (double)varInt64(configOptionValue->value);
+                                            valueInt64 = varInt64(configOptionValue->value);
                                         }
                                         else if (optionDefType == cfgDefOptTypeSize)
                                         {
-                                            convertToByte(&value, &valueDbl);
-
                                             MEM_CONTEXT_BEGIN(config->memContext)
                                             {
-                                                configOptionValue->value = varNewInt64((int64_t)valueDbl);
+                                                configOptionValue->value = varNewInt64((int64_t)convertToByte(value));
                                             }
                                             MEM_CONTEXT_END();
+
+                                            valueInt64 = varInt64(configOptionValue->value);
+                                            valueAllow = varStrForce(configOptionValue->value);
                                         }
                                         else
                                         {
+                                            ASSERT(optionDefType == cfgDefOptTypeTime);
+
                                             MEM_CONTEXT_BEGIN(config->memContext)
                                             {
-                                                configOptionValue->value = varNewDbl(cvtZToDouble(strZ(value)));
+                                                configOptionValue->value = varNewInt64(
+                                                    (int64_t)(cvtZToDouble(strZ(value)) * MSEC_PER_SEC));
                                             }
                                             MEM_CONTEXT_END();
 
-                                            valueDbl = varDbl(configOptionValue->value);
+                                            valueInt64 = varInt64(configOptionValue->value);
                                         }
                                     }
                                     CATCH_ANY()
@@ -1320,8 +1317,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                                     // Check value range
                                     if (cfgDefOptionAllowRange(config->command, optionId) &&
-                                        (valueDbl < cfgDefOptionAllowRangeMin(config->command, optionId) ||
-                                         valueDbl > cfgDefOptionAllowRangeMax(config->command, optionId)))
+                                        (valueInt64 < cfgDefOptionAllowRangeMin(config->command, optionId) ||
+                                         valueInt64 > cfgDefOptionAllowRangeMax(config->command, optionId)))
                                     {
                                         THROW_FMT(
                                             OptionInvalidValueError, "'%s' is out of range for '%s' option", strZ(value),
@@ -1371,7 +1368,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                                 // If the option has an allow list then check it
                                 if (cfgDefOptionAllowList(config->command, optionId) &&
-                                    !cfgDefOptionAllowListValueValid(config->command, optionId, strZ(value)))
+                                    !cfgDefOptionAllowListValueValid(config->command, optionId, strZ(valueAllow)))
                                 {
                                     THROW_FMT(
                                         OptionInvalidValueError, "'%s' is not allowed for '%s' option", strZ(value),
@@ -1397,15 +1394,15 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     // represented as constants so they can be assigned directly without creating variants.
                                     if (optionDefType == cfgDefOptTypeBoolean)
                                         configOptionValue->value = strcmp(value, ONE_Z) == 0 ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
-                                    else if (optionDefType == cfgDefOptTypeFloat)
-                                        configOptionValue->value = varNewDbl(cvtZToDouble(value));
-                                    else if (optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize)
-                                        configOptionValue->value = varNewInt64(cvtZToInt64(value));
+                                    else if (optionDefType == cfgDefOptTypePath || optionDefType == cfgDefOptTypeString)
+                                        configOptionValue->value = varNewStrZ(value);
                                     else
                                     {
-                                        ASSERT(optionDefType == cfgDefOptTypePath || optionDefType == cfgDefOptTypeString);
+                                        ASSERT(
+                                            optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize ||
+                                            optionDefType == cfgDefOptTypeTime);
 
-                                        configOptionValue->value = varNewStrZ(value);
+                                        configOptionValue->value = varNewInt64(cvtZToInt64(value));
                                     }
                                 }
                                 MEM_CONTEXT_END();

@@ -71,11 +71,11 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("helpRenderValue()"))
     {
-        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(true)), "y", "boolean y");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(false)), "n", "boolean n");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewStrZ("test-string")), "test-string", "string");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewDbl(1.234)), "1.234", "double");
-        TEST_RESULT_STR_Z(helpRenderValue(varNewInt(1234)), "1234", "int");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(true), cfgDefOptTypeBoolean), "y", "boolean y");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewBool(false), cfgDefOptTypeBoolean), "n", "boolean n");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewStrZ("test-string"), cfgDefOptTypeString), "test-string", "string");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewInt64(1234), cfgDefOptTypeInteger), "1234", "int");
+        TEST_RESULT_STR_Z(helpRenderValue(varNewInt64(1234000), cfgDefOptTypeTime), "1234", "time");
     }
 
     // *****************************************************************************************************************************

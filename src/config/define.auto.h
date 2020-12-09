@@ -12,13 +12,13 @@ Option type define enum
 typedef enum
 {
     cfgDefOptTypeBoolean,
-    cfgDefOptTypeFloat,
     cfgDefOptTypeHash,
     cfgDefOptTypeInteger,
     cfgDefOptTypeList,
     cfgDefOptTypePath,
     cfgDefOptTypeSize,
     cfgDefOptTypeString,
+    cfgDefOptTypeTime,
 } ConfigDefineOptionType;
 
 #endif

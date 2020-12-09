@@ -76,23 +76,26 @@ cfgLoadUpdateOption(void)
 
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
-        cfgOptionDbl(cfgOptProtocolTimeout) <= cfgOptionDbl(cfgOptDbTimeout))
+        cfgOptionInt64(cfgOptProtocolTimeout) <= cfgOptionInt64(cfgOptDbTimeout))
     {
         // If protocol-timeout is default then increase it to be greater than db-timeout
         if (cfgOptionSource(cfgOptProtocolTimeout) == cfgSourceDefault)
-            cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptDbTimeout) + 30));
+        {
+            cfgOptionSet(
+                cfgOptProtocolTimeout, cfgSourceDefault, VARINT64(cfgOptionInt64(cfgOptDbTimeout) + (int64_t)(30 * MSEC_PER_SEC)));
+        }
         else if (cfgOptionSource(cfgOptDbTimeout) == cfgSourceDefault)
         {
-            double dbTimeout = cfgOptionDbl(cfgOptProtocolTimeout) - 30;
+            int64_t dbTimeout = cfgOptionInt64(cfgOptProtocolTimeout) - (int64_t)(30 * MSEC_PER_SEC);
 
             // Normally the protocol time will be greater than 45 seconds so db timeout can be at least 15 seconds
-            if (dbTimeout >= 15)
+            if (dbTimeout >= (int64_t)(15 * MSEC_PER_SEC))
             {
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(dbTimeout));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARINT64(dbTimeout));
             }
             // But in some test cases the protocol timeout will be very small so make db timeout half of protocol timeout
             else
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptProtocolTimeout) / 2));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARINT64(cfgOptionInt64(cfgOptProtocolTimeout) / 2));
         }
         else
         {
@@ -355,7 +358,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
 
             // Set IO timeout
             if (cfgOptionValid(cfgOptIoTimeout))
-                ioTimeoutMsSet((TimeMSec)(cfgOptionDbl(cfgOptIoTimeout) * MSEC_PER_SEC));
+                ioTimeoutMsSet(cfgOptionUInt64(cfgOptIoTimeout));
 
             // Open the log file if this command logs to a file
             cfgLoadLogFile();

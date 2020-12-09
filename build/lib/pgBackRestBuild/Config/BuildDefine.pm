@@ -222,9 +222,12 @@ sub renderOptional
     {
         my @fyRange = @{$rhOptional->{&CFGDEF_ALLOW_RANGE}};
 
-        $strBuildSourceOptional .=
+        my $iMultiplier = $rhOptional->{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ? 1000 : 1;
+
+        $strBuildSourceOptional =
             (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
-            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(" . $fyRange[0] . ', ' . $fyRange[1] . ")\n";
+            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(" . ($fyRange[0] * $iMultiplier) . ', ' .
+            ($fyRange[1] * $iMultiplier) . ")\n";
 
         $bSingleLine = true;
     }
@@ -241,7 +244,10 @@ sub renderOptional
     {
         $strBuildSourceOptional .=
             (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
-            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT(\"" . $rhOptional->{&CFGDEF_DEFAULT} . "\")\n";
+            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_DEFAULT(\"" .
+            (defined($rhOptional->{&CFGDEF_TYPE}) && $rhOptional->{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ?
+                $rhOptional->{&CFGDEF_DEFAULT} * 1000 : $rhOptional->{&CFGDEF_DEFAULT}) .
+            "\")\n";
 
         $bSingleLine = true;
     }

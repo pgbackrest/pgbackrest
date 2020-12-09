@@ -122,7 +122,6 @@ const Variant *cfgOption(ConfigOption optionId);
 const Variant *cfgOptionIdx(ConfigOption optionId, unsigned int optionIdx);
 bool cfgOptionBool(ConfigOption optionId);
 bool cfgOptionIdxBool(ConfigOption optionId, unsigned int optionIdx);
-double cfgOptionDbl(ConfigOption optionId);
 int cfgOptionInt(ConfigOption optionId);
 int cfgOptionIdxInt(ConfigOption optionId, unsigned int optionIdx);
 int64_t cfgOptionInt64(ConfigOption optionId);

@@ -42,8 +42,8 @@ bool cfgDefOptionAllowListValueValid(ConfigCommand commandId, ConfigOption optio
 
 // Allow range
 bool cfgDefOptionAllowRange(ConfigCommand commandId, ConfigOption optionId);
-double cfgDefOptionAllowRangeMax(ConfigCommand commandId, ConfigOption optionId);
-double cfgDefOptionAllowRangeMin(ConfigCommand commandId, ConfigOption optionId);
+int64_t cfgDefOptionAllowRangeMax(ConfigCommand commandId, ConfigOption optionId);
+int64_t cfgDefOptionAllowRangeMin(ConfigCommand commandId, ConfigOption optionId);
 
 // Default value for the option
 const char *cfgDefOptionDefault(ConfigCommand commandId, ConfigOption optionId);
