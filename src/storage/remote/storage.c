@@ -8,6 +8,7 @@ Remote Storage
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
+#include "common/type/pack.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
 #include "storage/remote/storage.intern.h"
@@ -30,31 +31,77 @@ struct StorageRemote
 };
 
 /**********************************************************************************************************************************/
+typedef struct StorageRemoteInfoParseData
+{
+    PackRead *read;                                                 // Pack to read from protocol
+    time_t timeModifiedLast;                                        // timeModified from last call
+    mode_t modeLast;                                                // mode from last call
+    uid_t userIdLast;                                               // userId from last call
+    gid_t groupIdLast;                                              // groupId from last call
+    String *user;                                                   // user from last call
+    String *group;                                                  // group from last call
+} StorageRemoteInfoParseData;
+
 // Helper to parse storage info from the protocol output
 static void
-storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
+storageRemoteInfoParse(StorageRemoteInfoParseData *data, StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, client);
+        FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    info->type = jsonToUInt(protocolClientReadLine(client));
-    info->timeModified = (time_t)jsonToUInt64(protocolClientReadLine(client));
+    // Read type and time modified
+    info->type = pckReadU32P(data->read);
+    info->timeModified = pckReadTimeP(data->read) + data->timeModifiedLast;
 
+    // Read size for files
     if (info->type == storageTypeFile)
-        info->size = jsonToUInt64(protocolClientReadLine(client));
+        info->size = pckReadU64P(data->read);
 
+    // Read fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
-        info->userId = jsonToUInt(protocolClientReadLine(client));
-        info->user = jsonToStr(protocolClientReadLine(client));
-        info->groupId = jsonToUInt(protocolClientReadLine(client));
-        info->group = jsonToStr(protocolClientReadLine(client));
-        info->mode = jsonToUInt(protocolClientReadLine(client));
+        // Read mode
+        info->mode = pckReadU32P(data->read, .defaultValue = data->modeLast);
 
+        // Read user id/name
+        info->userId = pckReadU32P(data->read, .defaultValue = data->userIdLast);
+
+        if (pckReadBoolP(data->read))
+            info->user = NULL;
+        else
+            info->user = pckReadStrP(data->read, .defaultValue = data->user);
+
+        // Read group id/name
+        info->groupId = pckReadU32P(data->read, .defaultValue = data->groupIdLast);
+
+        if (pckReadBoolP(data->read))
+            info->group = NULL;
+        else
+            info->group = pckReadStrP(data->read, .defaultValue = data->group);
+
+        // Read link destination
         if (info->type == storageTypeLink)
-            info->linkDestination = jsonToStr(protocolClientReadLine(client));
+            info->linkDestination = pckReadStrP(data->read);
+    }
+
+    // Store defaults to use for the next call
+    data->timeModifiedLast = info->timeModified;
+    data->modeLast = info->mode;
+    data->userIdLast = info->userId;
+    data->groupIdLast = info->groupId;
+
+    if (!strEq(info->user, data->user) && info->user != NULL)
+    {
+        strFree(data->user);
+        data->user = strDup(info->user);
+    }
+
+    if (!strEq(info->group, data->group) && info->group != NULL)
+    {
+        strFree(data->group);
+        data->group = strDup(info->group);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -83,15 +130,19 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
         protocolCommandParamAdd(command, VARUINT(level));
         protocolCommandParamAdd(command, VARBOOL(param.followLink));
 
-        result.exists = varBool(protocolClientExecute(this->client, command, true));
+        // Send command
+        protocolClientWriteCommand(this->client, command);
+
+        // Read info from protocol
+        PackRead *read = pckReadNew(protocolClientIoRead(this->client));
+
+        result.exists = pckReadBoolP(read);
 
         if (result.exists)
         {
-            // Read info from protocol
-            storageRemoteInfoParse(this->client, &result);
-
-            // Acknowledge command completed
-            protocolClientReadOutput(this->client, false);
+            pckReadObjBeginP(read);
+            storageRemoteInfoParse(&(StorageRemoteInfoParseData){.read = read}, &result);
+            pckReadObjEndP(read);
 
             // Duplicate strings into the prior context
             MEM_CONTEXT_PRIOR_BEGIN()
@@ -103,6 +154,8 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
             }
             MEM_CONTEXT_PRIOR_END();
         }
+
+        pckReadEndP(read);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -141,30 +194,37 @@ storageRemoteInfoList(
         // Send command
         protocolClientWriteCommand(this->client, command);
 
-        // Read list.  The list ends when there is a blank line -- this is safe even for file systems that allow blank filenames
-        // since the filename is json-encoded so will always include quotes.
+        // Read list
+        PackRead *read = pckReadNew(protocolClientIoRead(this->client));
+        StorageRemoteInfoParseData parseData = {.read = read};
+
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
-            const String *name = protocolClientReadLine(this->client);
+            pckReadArrayBeginP(read);
 
-            while (strSize(name) != 0)
+            while (!pckReadNullP(read))
             {
-                StorageInfo info = {.exists = true, .level = level, .name = jsonToStr(name)};
+                pckReadObjBeginP(read);
 
-                storageRemoteInfoParse(this->client, &info);
+                StorageInfo info = {.exists = true, .level = level, .name = pckReadStrP(read)};
+
+                storageRemoteInfoParse(&parseData, &info);
                 callback(callbackData, &info);
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
                 MEM_CONTEXT_TEMP_RESET(1000);
 
-                // Read the next item
-                name = protocolClientReadLine(this->client);
+                pckReadObjEndP(read);
             }
+
+            pckReadArrayEndP(read);
         }
         MEM_CONTEXT_TEMP_END();
 
-        // Acknowledge command completed
-        result = varBool(protocolClientReadOutput(this->client, true));
+        // Get result
+        result = pckReadBoolP(read);
+
+        pckReadEndP(read);
     }
     MEM_CONTEXT_TEMP_END();
 
