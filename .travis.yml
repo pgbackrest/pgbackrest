@@ -24,7 +24,6 @@ jobs:
       services:
 
     - arch: s390x
-      dist: bionic
       env:
         - PGB_CI="test --vm=none --param=no-coverage --param=module=command --param=module=storage"
       services:
