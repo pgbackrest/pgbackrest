@@ -861,7 +861,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user '{[user]}' in backup manifest mapped to current user\n"
-            "P00   WARN: unknown group '{[user]}' in backup manifest mapped to current group");
+            "P00   WARN: unknown group '{[group]}' in backup manifest mapped to current group");
 
         userInitInternal();
 
@@ -909,7 +909,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
-        TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '{[user]}'");
+        TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '{[group]}'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is root and group is bad");

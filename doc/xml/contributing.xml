@@ -98,6 +98,13 @@
                     usermod -aG docker `whoami`
                 </exe-cmd>
             </execute>
+
+            <!-- Hack permissions on the docker socket so the local user can run commands -->
+            <execute user="root" show="n">
+                <exe-cmd>
+                    chmod 666 /var/run/docker.sock
+                </exe-cmd>
+            </execute>
         </execute-list>
 
         <p>This clone of the <backrest/> repository is sufficient for experimentation.  For development, create a fork and clone that instead.</p>
