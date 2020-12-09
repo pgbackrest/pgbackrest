@@ -385,6 +385,95 @@ FOR EACH STANZA
                 [archive-id=12-2, repoIdx=1, db-id=2, system-id=6902042121635098774, version=12, minWAL=000000030000000000000008, maxWAL=000000030000000000000008]
 
 
+Per David: Read all the backup.info files in first - yes they will all be in memory at the same time (or the important parts of them will). See archive/push.c (although the structure would be inside the temp memory block so it gets freed up) for allocating the memory in advance and then manipulating the array of memory objects as needed.
+
+    On Dec 7, 2020, at 4:42 PM, Cynthia Shang <cynthia.shang@crunchydata.com> wrote:
+
+So the fundamental problem we're solving is getting a sorted list of all the backups over all repos for a stanza. The criteria for the method you suggested was: 1) There are a fixed number of items, 2) The number of items is known in advance, and 3) nothing will need to be removed from the list.
+
+The problems I see are:
+
+1) The number of repos is known at the start but whether the stanza actually exists in each repo is not. It SHOULD be on all repos, but that is not guaranteed. But I could allocate just the repo and stanza status sections at this point so that's be OK, but I don't really care about sorting the repo/stanza status sections so the method suggested doesn't help really at this point.
+
+You don’t need to use all the allocated positions or you could have an indicator to show if the index is used.
+
+2) In order to allocate memory for the number of backups over all repos, the backup.info file would have to be read and the total number of backups in the [backup:current] section collected from each first before we would know the total number of backups "in advance" in order to allocate the proper amount of memory for the list - this seems inefficient since we'd then have to have all the backup.info files in memory to collect the total, then allocate the memory for the list (so now we have the backup.info for all the repos in memory AND we have to then allocate memory for a list to sort them into) - or read, get the total, free it, read the next repo's backup.info, get the total, free it, then we'd be able to allocate the memory but then we'd have to go back and read them all again to get the actual data.
+
+I wasn’t suggesting allocating an array for the backups. With a merge join you can insert them directly into the info KeyValue as they come out of the merge.
+
+Maybe I'm missing something here, but it seems that since the InfoBackupData structure has the backupLabel first  (// backupLabel must be first to allow for built-in list sorting) then we could create a list of InfoBackupData to process, adding to it for each repo that we read the backup.info from, then sorting the InfoBackupData after all repos have been run through.
+
+I don’t think this will be so simple because you’ll also need to repo key and this will need to get sorted at the time, so you end up with a struct like:
+
+Struct {
+	backupInfo;
+	repoId;
+}
+
+And the string would not be first so you’ll need to dup it as the first field or create a new sort routine, like:
+
+Struct {
+	backupLabel;
+	backupInfo;
+	repoId;
+}
+
+I think it makes sense to just code it as you think best. I believe that a merge join makes sense here but I don’t think it’s a huge deal either way.
+
+
+
+        typedef struct StanzaRepo
+        {
+            String *name;
+            List *repoList;
+        } StanzaRepo;
+
+        typedef struct RepoData   /// CSHANG Maybe also get repoKey? But how?
+        {
+            InfoBackup *infoBackup;
+            InfoArchive *infoArchive;
+        } RepoData;
+
+        List *stanzaRepoList = lstNewP(sizeof(Stanza), .comparator =  lstComparatorStr);
+
+
+            for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
+            {
+                String *stanzaName = strLstGet(stanzaList, stanzaIdx);
+
+                // If the stanza is already in the list,
+                if (lstFind(stanzaRepoList, &stanzaName) == NULL)
+                {
+                    MEM_CONTEXT_BEGIN(lstMemContext(stanzaRepoList))
+                    {
+                        StanzaRepo stanzaAdd =
+                        {
+                            .name = strDup(stanzaName),
+                            .repoList = memNew(repoIdxMax * sizeof(RepoData)),
+                        };
+
+                        lstAdd(stanzaRepoList, &stanzaAdd);
+                    }
+                    MEM_CONTEXT_END();
+
+
+// CSHANG At this point, if storageRepo == NULL we could be dealing with multiple repos
+List *stanzaList
+then stanzaList points to a structure with:
+stanzaName
+List *repoList
+then repoList points to a structure with:
+infoBackup
+infoArchive
+repoKey?
+
+
+List *backup and backup points to a structure that is:
+backupLabel
+repoIdx
+
+Sort the list
+-------------------------------------------------------
 [
   {
     archive: [

@@ -370,12 +370,15 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
 Set the stanza data for each stanza found in the repo.
 ***********************************************************************************************************************************/
 static VariantList *
-stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backupLabel)
+stanzaInfoList(
+    const String *stanza, StringList *stanzaList, const String *backupLabel, unsigned int repoIdx, unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
         FUNCTION_TEST_PARAM(STRING_LIST, stanzaList);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+        FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
 
     ASSERT(stanzaList != NULL);
@@ -405,6 +408,12 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         VariantList *backupSection = varLstNew();
         VariantList *archiveSection = varLstNew();
         InfoBackup *info = NULL;
+
+// CSHANG repoBogus just to get it to compile
+        Variant *repoBogus = varNewKv(kvNew());
+        kvPut(varKv(repoBogus), VARSTRDEF("repoIdx"), VARUINT(repoIdx));
+        kvPut(varKv(repoBogus), VARSTRDEF("repoIdxMax"), VARUINT(repoIdxMax));
+
 
         // Catch certain errors
         TRY_BEGIN()
@@ -769,6 +778,9 @@ infoRender(void)
         // Get stanza if specified
         const String *stanza = cfgOptionStrNull(cfgOptStanza);
 
+        // List of stanzas on disk
+        StringList *stanzaList = strLstNew();
+
         // Get the backup label if specified
         const String *backupLabel = cfgOptionStrNull(cfgOptSet);
 
@@ -781,28 +793,52 @@ infoRender(void)
                 THROW(OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
         }
 
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
+        // Initialize the repo index
+        unsigned int repoIdx = 0;
+        unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
 
-        // If a backup set was specified, see if the manifest exists
-        if (backupLabel != NULL &&
-            !storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
+        // If the repo was specified then set index and max to loop only once
+        if (cfgOptionTest(cfgOptRepo))
         {
+            repoIdx = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
+            repoIdxMax = repoIdx + 1;
+        }
+
+        for (; repoIdx < repoIdxMax; repoIdx++)
+        {
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
+            const Storage *storageRepo = storageRepoIdx(repoIdx);
+
+            // If a backup set was specified, see if the manifest exists
+            if (backupLabel != NULL)
             {
-                THROW_FMT(
-                    FileMissingError, "manifest does not exist for backup '%s'\n"
-                    "HINT: is the backup listed when running the info command with --stanza option only?", strZ(backupLabel));
+
+                if (!storageExistsP(storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
+                {
+                    THROW_FMT(
+                        FileMissingError, "manifest does not exist for backup '%s'\n"
+                        "HINT: is the backup listed when running the info command with --stanza option only?", strZ(backupLabel));
+                }
+            }
+
+            // Get a list of stanzas in the backup directory
+            StringList *stanzaNameList = storageListP(storageRepo, STORAGE_PATH_BACKUP_STR);
+
+            // Add to the stanza list over all repos if a stanza is not already there
+            for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaNameList); stanzaIdx++)
+            {
+                String *stanzaName = strLstGet(stanzaNameList, stanzaIdx);
+
+                strLstAddIfMissing(stanzaList, stanzaName);
             }
         }
 
-        // Get a list of stanzas in the backup directory.
-        StringList *stanzaList = storageListP(storageRepo(), STORAGE_PATH_BACKUP_STR);
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 
         // If the backup storage exists, then search for and process any stanzas
         if (strLstSize(stanzaList) > 0 || stanza != NULL)
-            infoList = stanzaInfoList(stanza, stanzaList, backupLabel);
+            infoList = stanzaInfoList(stanza, stanzaList, backupLabel, repoIdx, repoIdxMax);
 
         // Format text output
         if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))

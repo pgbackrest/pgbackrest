@@ -1057,6 +1057,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
+        strLstAddZ(argList2, "--repo=1");  // CSHANG added temporarily (although may be permanent)
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
@@ -1094,6 +1095,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
+        strLstAddZ(argList2, "--repo=1");  // CSHANG added temporarily (although may be permanent)
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_TARGET_NO_LINK                                                                                       \
@@ -1162,6 +1164,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
+        strLstAddZ(argList2, "--repo=1");  // CSHANG added temporarily (although may be permanent)
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_NO_DB                                                                                                \
@@ -1419,6 +1422,7 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--stanza=stanza1");
+        strLstAddZ(argList, "--repo=1");  // CSHANG added temporarily (although may be permanent)
         harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ERROR_FMT(
