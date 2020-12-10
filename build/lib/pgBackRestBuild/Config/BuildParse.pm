@@ -140,10 +140,10 @@ sub buildConfigParse
                 "        (\n" .
                 $strBuildSourceSub .
                 "        )\n";
-
-            $strBuildSource .=
-                "    )\n";
         }
+
+        $strBuildSource .=
+            "    )\n";
     }
 
     $strBuildSource .=

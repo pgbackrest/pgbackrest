@@ -565,10 +565,6 @@ my $rhCommandDefine =
     {
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_BACKUP,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_HELP =>
@@ -659,18 +655,30 @@ my $rhCommandDefine =
     {
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ALL,
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGCMD_STANZA_DELETE =>
     {
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ALL,
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGCMD_STANZA_UPGRADE =>
     {
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ALL,
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGCMD_START =>
