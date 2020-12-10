@@ -188,7 +188,6 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPg, "7");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
         strLstAddZ(argList, "--process=0");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -246,7 +245,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strLstJoin(protocolLocalParam(protocolStorageTypePg, 0, 1), "|"),
             "--exec-id=1-test|--log-level-console=off|--log-level-file=info|--log-level-stderr=error|--log-subprocess|--pg=1"
-                "|--pg1-path=/pg|--process=1|--remote-type=pg|--repo1-retention-full=1|--stanza=test1|backup:local",
+                "|--pg1-path=/pg|--process=1|--remote-type=pg|--stanza=test1|backup:local",
             "local pg protocol params");
     }
 
@@ -324,7 +323,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--pg1-path=/path/to/1");
         strLstAddZ(argList, "--pg1-host=pg1-host");
-        strLstAddZ(argList, "--repo1-retention-full=1");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "backup");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -347,7 +346,6 @@ testRun(void)
         strLstAddZ(argList, "--pg2-path=/path/to/2");
         strLstAddZ(argList, "--pg2-host=pg2-host");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -370,7 +368,6 @@ testRun(void)
         strLstAddZ(argList, "--pg3-socket-path=/socket3");
         strLstAddZ(argList, "--pg3-port=3333");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 

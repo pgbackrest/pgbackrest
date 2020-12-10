@@ -342,42 +342,29 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
 
     // Update/remove repo/pg options that are sent to the remote
-    const String *repoHostPrefix = STR(cfgParseOptionName(cfgOptRepoHost));
-    const String *pgHostPrefix = STR(cfgParseOptionName(cfgOptPgHost));
-
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
         // Skip options that are not part of a group
         if (!cfgOptionGroup(optionId))
             continue;
 
-        const String *optionDefName = STR(cfgParseOptionName(optionId));
-        unsigned int groupId = cfgOptionGroupId(optionId);
         bool remove = false;
         bool skipHostZero = false;
 
-        // Remove repo host options that are not needed on the remote. The remote is not expecting to see host settings so it could
-        // get confused about the locality of the repo, i.e. local or remote. Also remove repo options when the remote type is pg
-        // since they won't be used.
-        if (groupId == cfgOptGrpRepo)
+        // Remove repo options when the remote type is pg since they won't be used
+        if (cfgOptionGroupId(optionId) == cfgOptGrpRepo)
         {
-            remove = protocolStorageType == protocolStorageTypePg || strBeginsWith(optionDefName, repoHostPrefix);
+            remove = protocolStorageType == protocolStorageTypePg;
         }
         // Remove pg host options that are not needed on the remote
         else
         {
-            ASSERT(groupId == cfgOptGrpPg);
+            ASSERT(cfgOptionGroupId(optionId) == cfgOptGrpPg);
 
             // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
             if (protocolStorageType == protocolStorageTypeRepo)
             {
                 remove = !cfgDefOptionRequired(cfgCommand(), optionId) || cfgDefOptionDefault(cfgCommand(), optionId) != NULL;
-            }
-            // The remote is not expecting to see host settings so it could get confused about the locality of pg, i.e. local or
-            // remote.
-            else if (strBeginsWith(optionDefName, pgHostPrefix))
-            {
-                remove = true;
             }
             // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
             else
