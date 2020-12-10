@@ -123,14 +123,11 @@ sub buildConfigParse
             {
                 my $strCommandEnum = buildConfigCommandEnum($strCommand);
 
-                foreach my $strCommandRole (CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
+                foreach my $strCommandRole (sort(keys(%{$rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}})))
                 {
-                    if (defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{$strCommandRole}))
-                    {
-                        $strBuildSourceSub .=
-                            "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, " .
-                            bldEnum('cfgCmdRole', $strCommandRole) . ")\n";
-                    }
+                    $strBuildSourceSub .=
+                        "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, " .
+                        bldEnum('cfgCmdRole', $strCommandRole) . ")\n";
                 }
             }
         }
