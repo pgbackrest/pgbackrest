@@ -98,8 +98,11 @@ sub buildConfigParse
         {
             if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
             {
-                $strBuildSourceSub .=
-                    "            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(" . buildConfigCommandEnum($strCommand) . ")\n";
+                if (!defined($rhOption->{&CFGDEF_COMMAND_ROLE_EXCLUDE}{&CFGCMD_ROLE_DEFAULT}))
+                {
+                    $strBuildSourceSub .=
+                        "            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(" . buildConfigCommandEnum($strCommand) . ")\n";
+                }
             }
         }
 
@@ -125,9 +128,12 @@ sub buildConfigParse
 
                 foreach my $strCommandRole (sort(keys(%{$rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}})))
                 {
-                    $strBuildSourceSub .=
-                        "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, " .
-                        bldEnum('cfgCmdRole', $strCommandRole) . ")\n";
+                    if (!defined($rhOption->{&CFGDEF_COMMAND_ROLE_EXCLUDE}{$strCommandRole}))
+                    {
+                        $strBuildSourceSub .=
+                            "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, " .
+                            bldEnum('cfgCmdRole', $strCommandRole) . ")\n";
+                    }
                 }
             }
         }
@@ -140,10 +146,10 @@ sub buildConfigParse
                 "        (\n" .
                 $strBuildSourceSub .
                 "        )\n";
-
-            $strBuildSource .=
-                "    )\n";
         }
+
+        $strBuildSource .=
+            "    )\n";
     }
 
     $strBuildSource .=

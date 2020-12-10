@@ -102,6 +102,8 @@ use constant CFGCMD_VERSION                                         => 'version'
 ####################################################################################################################################
 # Command role constants - roles allowed for each command
 ####################################################################################################################################
+use constant CFGCMD_ROLE_DEFAULT                                    => 'default';
+    push @EXPORT, qw(CFGCMD_ROLE_DEFAULT);
 use constant CFGCMD_ROLE_ASYNC                                      => 'async';
     push @EXPORT, qw(CFGCMD_ROLE_ASYNC);
 use constant CFGCMD_ROLE_LOCAL                                      => 'local';
@@ -471,6 +473,8 @@ use constant CFGDEF_COMMAND                                         => 'command'
     push @EXPORT, qw(CFGDEF_COMMAND);
 use constant CFGDEF_COMMAND_ROLE                                    => 'command-role';
     push @EXPORT, qw(CFGDEF_COMMAND_ROLE);
+use constant CFGDEF_COMMAND_ROLE_EXCLUDE                            => 'command-role-exclude';
+    push @EXPORT, qw(CFGDEF_COMMAND_ROLE_EXCLUDE);
 use constant CFGDEF_REQUIRED                                        => 'required';
     push @EXPORT, qw(CFGDEF_REQUIRED);
 use constant CFGDEF_RESET                                           => 'reset';
@@ -565,10 +569,6 @@ my $rhCommandDefine =
     {
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_BACKUP,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_HELP =>
@@ -818,6 +818,12 @@ my %hConfigDefine =
             {
                 &CFGDEF_DEFAULT => false
             }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
         }
     },
 
@@ -831,7 +837,13 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_SET =>
@@ -860,6 +872,12 @@ my %hConfigDefine =
                 &CFGDEF_REQUIRED => false,
                 &CFGDEF_INTERNAL => true,
             },
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
         }
     },
 
@@ -932,6 +950,12 @@ my %hConfigDefine =
                 },
             },
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        }
     },
 
     &CFGOPT_TARGET_EXCLUSIVE =>
@@ -953,6 +977,12 @@ my %hConfigDefine =
                 },
             },
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        }
     },
 
     &CFGOPT_TARGET_ACTION =>
@@ -984,6 +1014,12 @@ my %hConfigDefine =
                 },
             },
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        }
     },
 
     &CFGOPT_TARGET_TIMELINE =>
@@ -1008,6 +1044,12 @@ my %hConfigDefine =
                 },
             },
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        }
     },
 
     &CFGOPT_TYPE =>
@@ -1041,6 +1083,12 @@ my %hConfigDefine =
                     &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                 ]
             }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
         }
     },
 
@@ -1068,6 +1116,12 @@ my %hConfigDefine =
                     &CFGOPTVAL_OUTPUT_JSON,
                 ]
             }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
         }
     },
 
@@ -1078,6 +1132,11 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_INTERNAL => true,
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+            &CFGCMD_ROLE_ASYNC => {},
+        },
     },
 
     &CFGOPT_PROCESS =>
@@ -1103,6 +1162,10 @@ my %hConfigDefine =
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_VERIFY => {},
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE => {
+            &CFGCMD_ROLE_DEFAULT => {},
+            &CFGCMD_ROLE_ASYNC => {},
         },
     },
 
@@ -1134,6 +1197,11 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_VERIFY => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+            &CFGCMD_ROLE_ASYNC => {},
+        }
     },
 
     # Command-line only storage options
@@ -1147,7 +1215,13 @@ my %hConfigDefine =
         {
             &CFGCMD_REPO_GET => {},
             &CFGCMD_REPO_PUT => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_FILTER =>
@@ -1157,7 +1231,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_REPO_LS => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_IGNORE_MISSING =>
@@ -1167,7 +1247,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_REPO_GET => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_RAW =>
@@ -1178,7 +1264,13 @@ my %hConfigDefine =
         {
             &CFGCMD_REPO_GET => {},
             &CFGCMD_REPO_PUT => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_RECURSE =>
@@ -1189,7 +1281,13 @@ my %hConfigDefine =
         {
             &CFGCMD_REPO_LS => {},
             &CFGCMD_REPO_RM => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_SORT =>
@@ -1205,7 +1303,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_REPO_LS => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     # General options
@@ -1222,6 +1326,12 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
         },
     },
 
@@ -1349,6 +1459,12 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption().
@@ -1361,7 +1477,13 @@ my %hConfigDefine =
         {
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_COMPRESS_TYPE =>
@@ -1378,6 +1500,12 @@ my %hConfigDefine =
             'zst',
         ],
         &CFGDEF_COMMAND => CFGOPT_COMPRESS,
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_COMPRESS_LEVEL =>
@@ -1387,6 +1515,12 @@ my %hConfigDefine =
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN, CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX],
         &CFGDEF_COMMAND => CFGOPT_COMPRESS,
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_COMPRESS_LEVEL_NETWORK =>
@@ -1410,7 +1544,13 @@ my %hConfigDefine =
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_VERIFY => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_NEUTRAL_UMASK =>
@@ -1465,6 +1605,10 @@ my %hConfigDefine =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
             &CFGCMD_VERIFY => {},
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
         },
     },
 
@@ -1617,6 +1761,12 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_REPO_LOCAL =>
@@ -1680,6 +1830,10 @@ my %hConfigDefine =
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_LOCAL,
             &CFGDEF_DEPEND_LIST => [false],
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_REPO_HOST_CMD =>
@@ -1708,6 +1862,10 @@ my %hConfigDefine =
             &CFGCMD_STOP => {},
             &CFGCMD_VERIFY => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
+        },
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
@@ -1725,6 +1883,10 @@ my %hConfigDefine =
             'backup-config' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_HOST_CMD,
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
+        },
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
@@ -1757,6 +1919,10 @@ my %hConfigDefine =
             'backup-ssh-port' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_HOST_CMD,
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
+        },
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_HOST
@@ -1774,6 +1940,10 @@ my %hConfigDefine =
             'backup-user' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_HOST_CMD,
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
+        },
         &CFGDEF_REQUIRED => false,
         &CFGDEF_DEPEND =>
         {
@@ -1809,7 +1979,13 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_REPO_RETENTION_ARCHIVE_TYPE =>
@@ -1822,6 +1998,12 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
         },
         &CFGDEF_NAME_ALT =>
         {
@@ -1850,7 +2032,13 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_REPO_RETENTION_FULL =>
@@ -1865,6 +2053,12 @@ my %hConfigDefine =
             'retention-full' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_RETENTION_FULL_TYPE,
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_REPO_RETENTION_FULL_TYPE =>
@@ -1882,7 +2076,13 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_EXPIRE => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_REPO_AZURE_ACCOUNT =>
@@ -2223,6 +2423,11 @@ my %hConfigDefine =
                 },
             },
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_PROCESS_MAX =>
@@ -2238,7 +2443,13 @@ my %hConfigDefine =
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_VERIFY => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     # Logging options
@@ -2386,7 +2597,12 @@ my %hConfigDefine =
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_ARCHIVE_PUSH_QUEUE_MAX =>
@@ -2403,6 +2619,11 @@ my %hConfigDefine =
         {
             &CFGCMD_ARCHIVE_PUSH => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_ARCHIVE_GET_QUEUE_MAX =>
@@ -2414,6 +2635,11 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET => {},
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
         },
     },
 
@@ -2436,6 +2662,12 @@ my %hConfigDefine =
             },
             &CFGCMD_CHECK => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_ARCHIVE_COPY =>
@@ -2453,7 +2685,13 @@ my %hConfigDefine =
                     &CFGDEF_DEPEND_LIST => [true],
                 }
             }
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_BACKUP_STANDBY =>
@@ -2468,6 +2706,12 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_UPGRADE => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_CHECKSUM_PAGE =>
@@ -2478,7 +2722,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_EXCLUDE =>
@@ -2490,6 +2740,12 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_EXPIRE_AUTO =>
@@ -2500,7 +2756,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_MANIFEST_SAVE_THRESHOLD =>
@@ -2512,7 +2774,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_RESUME =>
@@ -2523,7 +2791,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_START_FAST =>
@@ -2534,7 +2808,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_STOP_AUTO =>
@@ -2545,7 +2825,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_BACKUP => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     # Restore options
@@ -2564,6 +2850,12 @@ my %hConfigDefine =
             'off',
             'preserve',
         ],
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_DB_INCLUDE =>
@@ -2575,6 +2867,12 @@ my %hConfigDefine =
         {
             &CFGCMD_RESTORE => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_LINK_ALL =>
@@ -2585,7 +2883,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_LINK_MAP =>
@@ -2597,6 +2901,12 @@ my %hConfigDefine =
         {
             &CFGCMD_RESTORE => {},
         },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_TABLESPACE_MAP_ALL =>
@@ -2607,7 +2917,13 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE => {},
-        }
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_TABLESPACE_MAP =>
@@ -2618,6 +2934,12 @@ my %hConfigDefine =
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_RESTORE => {},
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
         },
     },
 
@@ -2642,6 +2964,12 @@ my %hConfigDefine =
                 &CFGOPTVAL_RESTORE_TYPE_STANDBY,
                 &CFGOPTVAL_RESTORE_TYPE_XID,
             ],
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
         },
     },
 
@@ -2722,6 +3050,10 @@ my %hConfigDefine =
             'db?-host' => {&CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_PG_LOCAL,
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
+        },
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_PG_LOCAL,
@@ -2750,6 +3082,10 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_REMOTE => {},
         },
         &CFGDEF_DEPEND =>
         {
