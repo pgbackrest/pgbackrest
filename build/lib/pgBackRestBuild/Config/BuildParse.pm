@@ -73,6 +73,7 @@ sub buildConfigParse
     # Build option parse list
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhConfigDefine = cfgDefine();
+    my $rhCommandDefine = cfgDefineCommand();
 
     my $strBuildSource =
         "static const ParseRuleOption parseRuleOption[] =\n" .
@@ -91,29 +92,30 @@ sub buildConfigParse
 
         # Build command role default list
         #---------------------------------------------------------------------------------------------------------------------------
-        $strBuildSource .=
-            "\n" .
-            "        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST\n" .
-            "        (\n";
+        my $strBuildSourceSub = "";
 
         foreach my $strCommand (cfgDefineCommandList())
         {
             if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
             {
-                $strBuildSource .=
+                $strBuildSourceSub .=
                     "            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(" . buildConfigCommandEnum($strCommand) . ")\n";
             }
         }
 
-        $strBuildSource .=
-            "        )\n";
+        if ($strBuildSourceSub ne "")
+        {
+            $strBuildSource .=
+                "\n" .
+                "        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST\n" .
+                "        (\n" .
+                $strBuildSourceSub .
+                "        )\n";
+        }
 
-        # Build command role all list
+        # Build command role other list
         #---------------------------------------------------------------------------------------------------------------------------
-        $strBuildSource .=
-            "\n" .
-            "        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST\n" .
-            "        (\n";
+        $strBuildSourceSub = "";
 
         foreach my $strCommand (cfgDefineCommandList())
         {
@@ -121,18 +123,30 @@ sub buildConfigParse
             {
                 my $strCommandEnum = buildConfigCommandEnum($strCommand);
 
-                $strBuildSource .=
-                    "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, cfgCmdRoleAsync)\n" .
-                    "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, cfgCmdRoleLocal)\n" .
-                    "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, cfgCmdRoleRemote)\n";
+                foreach my $strCommandRole (CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
+                {
+                    if (defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{$strCommandRole}))
+                    {
+                        $strBuildSourceSub .=
+                            "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, " .
+                            bldEnum('cfgCmdRole', $strCommandRole) . ")\n";
+                    }
+                }
             }
         }
 
-        $strBuildSource .=
-            "        )\n";
+        if ($strBuildSourceSub ne "")
+        {
+            $strBuildSource .=
+                "\n" .
+                "        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST\n" .
+                "        (\n" .
+                $strBuildSourceSub .
+                "        )\n";
 
-        $strBuildSource .=
-            "    )\n";
+            $strBuildSource .=
+                "    )\n";
+        }
     }
 
     $strBuildSource .=
