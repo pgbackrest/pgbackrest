@@ -1202,6 +1202,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         ConfigOption dependOptionId = cfgDefOptionDependOption(config->command, optionId);
                         ConfigDefineOptionType dependOptionDefType = cfgDefOptionType(dependOptionId);
 
+                        ASSERT(config->option[dependOptionId].index != NULL);
+
                         // Get the depend option value
                         const Variant *dependValue = config->option[dependOptionId].index[optionListIdx].value;
 
