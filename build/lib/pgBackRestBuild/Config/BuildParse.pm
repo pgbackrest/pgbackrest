@@ -101,7 +101,7 @@ sub buildConfigParse
             if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
             {
                 $strBuildSource .=
-                    "            PARSE_RULE_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
+                    "            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(" . buildConfigCommandEnum($strCommand) . ")\n";
             }
         }
 
@@ -112,15 +112,19 @@ sub buildConfigParse
         #---------------------------------------------------------------------------------------------------------------------------
         $strBuildSource .=
             "\n" .
-            "        PARSE_RULE_OPTION_COMMAND_ROLE_ALL_LIST\n" .
+            "        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST\n" .
             "        (\n";
 
         foreach my $strCommand (cfgDefineCommandList())
         {
             if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
             {
+                my $strCommandEnum = buildConfigCommandEnum($strCommand);
+
                 $strBuildSource .=
-                    "            PARSE_RULE_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
+                    "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, cfgCmdRoleAsync)\n" .
+                    "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, cfgCmdRoleLocal)\n" .
+                    "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, cfgCmdRoleRemote)\n";
             }
         }
 

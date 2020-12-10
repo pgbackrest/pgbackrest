@@ -81,18 +81,21 @@ Define how an option is parsed and interacts with other options
 #define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST(...)                                                                           \
     .commandRoleDefault = 0 __VA_ARGS__,
 
-#define PARSE_RULE_OPTION_COMMAND_ROLE_ALL_LIST(...)                                                                               \
-    .commandRoleAll = 0 __VA_ARGS__,
-
-#define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
+#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(commandParam)                                                                       \
     | (1 << commandParam)
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST(...)                                                                             \
+    .commandRoleOther = 0 __VA_ARGS__,
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(commandParam, commandRoleParam)                                                       \
+    | ((uint64_t)1 << ((CFG_COMMAND_TOTAL * (commandRoleParam - 1)) + commandParam))
 
 typedef struct ParseRuleOption
 {
     const char *name;                                               // Option name
 
-    uint64_t commandRoleDefault:CFG_COMMAND_TOTAL;                  // Is this option valid for the default command role?
-    uint64_t commandRoleAll:CFG_COMMAND_TOTAL;                      // Is this option valid for all command roles?
+    uint64_t commandRoleDefault:CFG_COMMAND_TOTAL;                  // Option valid for the default command role?
+    uint64_t commandRoleOther;                                      // Option valid for other (not default) command roles?
 } ParseRuleOption;
 
 /***********************************************************************************************************************************
@@ -265,10 +268,11 @@ cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, Co
     ASSERT(commandId < CFG_COMMAND_TOTAL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    if (commandRoleId == cfgCmdRoleDefault && parseRuleOption[optionId].commandRoleDefault & (1 << commandId))
-        FUNCTION_TEST_RETURN(true);
+    if (commandRoleId == cfgCmdRoleDefault)
+        FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandRoleDefault & (1 << commandId));
 
-    FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandRoleAll & (1 << commandId));
+    FUNCTION_TEST_RETURN(
+        parseRuleOption[optionId].commandRoleOther & ((uint64_t)1 << ((CFG_COMMAND_TOTAL * (commandRoleId - 1)) + commandId)));
 }
 
 /***********************************************************************************************************************************
