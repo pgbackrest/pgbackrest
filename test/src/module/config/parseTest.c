@@ -46,9 +46,10 @@ testRun(void)
 
         TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
 
-        TEST_TITLE("invalid option name");
+        TEST_TITLE("parse option name to id");
 
-        TEST_RESULT_INT(cfgParseOptionId(BOGUS_STR), -1, "invalid define id");
+        TEST_RESULT_INT(cfgParseOptionId(BOGUS_STR), -1, "invalid option");
+        TEST_RESULT_INT(cfgParseOptionId(CFGOPT_STANZA), cfgOptStanza, "valid option");
     }
 
     // config and config-include-path options
