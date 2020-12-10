@@ -24,8 +24,10 @@ static const ParseRuleOption parseRuleOption[] =
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchiveGet, cfgCmdRoleAsync)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchiveGet, cfgCmdRoleLocal)
+            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchiveGet, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleAsync)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
+            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleRemote)
         )
     )
 

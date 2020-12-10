@@ -2599,10 +2599,6 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
         },
-        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGOPT_ARCHIVE_PUSH_QUEUE_MAX =>
