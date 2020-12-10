@@ -25,4 +25,13 @@ typedef struct CfgParseOptionResult
 
 CfgParseOptionResult cfgParseOption(const String *optionName);
 
+// Option id from name
+int cfgParseOptionId(const char *optionName);
+
+// Option name from id
+const char *cfgParseOptionName(ConfigOption optionId);
+
+// Is the option valid for the command/role?
+bool cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId);
+
 #endif

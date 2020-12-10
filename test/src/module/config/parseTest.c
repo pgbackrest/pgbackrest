@@ -45,6 +45,10 @@ testRun(void)
         TEST_TITLE("config command defaults to none before cfgInit()");
 
         TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
+
+        TEST_TITLE("invalid option name");
+
+        TEST_RESULT_INT(cfgParseOptionId(BOGUS_STR), -1, "invalid define id");
     }
 
     // config and config-include-path options

@@ -67,9 +67,6 @@ unsigned int cfgDefOptionHelpNameAltValueTotal(ConfigOption optionId);
 // Option help section
 const char *cfgDefOptionHelpSection(ConfigOption optionId);
 
-// Option id by name
-int cfgDefOptionId(const char *optionName);
-
 // Total indexed values for option
 unsigned int cfgDefOptionIndexTotal(ConfigOption optionId);
 
@@ -78,9 +75,6 @@ bool cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId);
 
 // Does the option accept multiple values?
 bool cfgDefOptionMulti(ConfigOption optionId);
-
-// Name of the option
-const char *cfgDefOptionName(ConfigOption optionId);
 
 // Is the option required
 bool cfgDefOptionRequired(ConfigCommand commandId, ConfigOption optionId);
@@ -96,8 +90,5 @@ unsigned int cfgDefOptionTotal(void);
 
 // Get option data type
 int cfgDefOptionType(ConfigOption optionId);
-
-// Is the option valid for the command?
-bool cfgDefOptionValid(ConfigCommand commandId, ConfigOption optionId);
 
 #endif

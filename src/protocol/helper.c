@@ -12,6 +12,7 @@ Protocol Helper
 #include "config/config.intern.h"
 #include "config/define.h"
 #include "config/exec.h"
+#include "config/parse.h"
 #include "config/protocol.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
@@ -341,8 +342,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
 
     // Update/remove repo/pg options that are sent to the remote
-    const String *repoHostPrefix = STR(cfgDefOptionName(cfgOptRepoHost));
-    const String *pgHostPrefix = STR(cfgDefOptionName(cfgOptPgHost));
+    const String *repoHostPrefix = STR(cfgParseOptionName(cfgOptRepoHost));
+    const String *pgHostPrefix = STR(cfgParseOptionName(cfgOptPgHost));
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
     {
@@ -350,7 +351,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         if (!cfgOptionGroup(optionId))
             continue;
 
-        const String *optionDefName = STR(cfgDefOptionName(optionId));
+        const String *optionDefName = STR(cfgParseOptionName(optionId));
         unsigned int groupId = cfgOptionGroupId(optionId);
         bool remove = false;
         bool skipHostZero = false;

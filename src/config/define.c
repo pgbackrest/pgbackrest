@@ -48,14 +48,12 @@ Define how an option is parsed and interacts with other options.
 ***********************************************************************************************************************************/
 typedef struct ConfigDefineOptionData
 {
-    const char *name;                                               // Option name
     unsigned int type:3;                                            // Option type (e.g. string, int, boolean, etc.)
     unsigned int internal:1;                                        // Is the option only used internally?
     unsigned int indexTotal:4;                                      // 0 normally, > 0 if indexed option (e.g. pg1-*)
     unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
     bool required:1;                                                // Is the option required?
     bool secure:1;                                                  // Does the option need to be redacted on logs and cmd-line?
-    unsigned int commandValid:20;                                   // Bitmap for commands that the option is valid for
 
     const char *helpSection;                                        // Classify the option
     const char *helpSummary;                                        // Brief summary of the option
@@ -72,8 +70,7 @@ typedef struct ConfigDefineOptionData
 #define CFGDEFDATA_OPTION(...)                                                                                                     \
     {__VA_ARGS__},
 
-#define CFGDEFDATA_OPTION_NAME(nameParam)                                                                                          \
-    .name = nameParam,
+#define CFGDEFDATA_OPTION_NAME(nameParam)
 #define CFGDEFDATA_OPTION_INDEX_TOTAL(indexTotalParam)                                                                             \
     .indexTotal = indexTotalParam,
 #define CFGDEFDATA_OPTION_INTERNAL(internalParam)                                                                                  \
@@ -118,12 +115,6 @@ typedef enum
 
 #define CFGDATA_OPTION_OPTIONAL_PUSH(type, size, data)                                                                             \
     (const void *)((uint32_t)type << 24 | (uint32_t)size << 16 | (uint32_t)data)
-
-#define CFGDEFDATA_OPTION_COMMAND_LIST(...)                                                                                        \
-    .commandValid = 0 __VA_ARGS__,
-
-#define CFGDEFDATA_OPTION_COMMAND(commandParam)                                                                                    \
-    | (1 << commandParam)
 
 #define CFGDEFDATA_OPTION_OPTIONAL_LIST(...)                                                                                       \
     .data = (const void *[]){__VA_ARGS__ NULL},
@@ -640,25 +631,6 @@ cfgDefOptionHelpSummary(ConfigCommand commandId, ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-int
-cfgDefOptionId(const char *optionName)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, optionName);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionName != NULL);
-
-    int result = -1;
-
-    for (ConfigOption optionId = 0; optionId < cfgDefOptionTotal(); optionId++)
-        if (strcmp(optionName, configDefineOptionData[optionId].name) == 0)
-            result = optionId;
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
 unsigned int
 cfgDefOptionIndexTotal(ConfigOption optionId)
 {
@@ -706,19 +678,6 @@ cfgDefOptionMulti(ConfigOption optionId)
     FUNCTION_TEST_RETURN(
         configDefineOptionData[optionId].type == cfgDefOptTypeHash ||
             configDefineOptionData[optionId].type == cfgDefOptTypeList);
-}
-
-/**********************************************************************************************************************************/
-const char *
-cfgDefOptionName(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    FUNCTION_TEST_RETURN(configDefineOptionData[optionId].name);
 }
 
 /**********************************************************************************************************************************/
@@ -780,19 +739,4 @@ cfgDefOptionType(ConfigOption optionId)
     ASSERT(optionId < cfgDefOptionTotal());
 
     FUNCTION_TEST_RETURN(configDefineOptionData[optionId].type);
-}
-
-/**********************************************************************************************************************************/
-bool
-cfgDefOptionValid(ConfigCommand commandId, ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    FUNCTION_TEST_RETURN(configDefineOptionData[optionId].commandValid & (1 << commandId));
 }

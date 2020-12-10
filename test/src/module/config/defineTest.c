@@ -16,11 +16,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("check known values"))
     {
-        TEST_RESULT_Z(cfgDefOptionName(cfgOptConfig), "config", "option name");
-
-        TEST_RESULT_INT(cfgDefOptionId("repo-host"), cfgOptRepoHost, "define id");
-        TEST_RESULT_INT(cfgDefOptionId(BOGUS_STR), -1, "invalid define id");
-
         TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgCmdBackup, cfgOptLogLevelConsole), true, "allow list valid");
         TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgCmdBackup, cfgOptPgHost), false, "allow list not valid");
         TEST_RESULT_BOOL(cfgDefOptionAllowList(cfgCmdBackup, cfgOptType), true, "command allow list valid");
@@ -103,12 +98,6 @@ testRun(void)
 
         TEST_RESULT_INT(cfgDefOptionType(cfgOptType), cfgDefOptTypeString, "string type");
         TEST_RESULT_INT(cfgDefOptionType(cfgOptDelta), cfgDefOptTypeBoolean, "boolean type");
-
-        TEST_ERROR(
-            cfgDefOptionValid(cfgCmdInfo, cfgDefOptionTotal()), AssertError,
-            "assertion 'optionId < cfgDefOptionTotal()' failed");
-        TEST_RESULT_BOOL(cfgDefOptionValid(cfgCmdBackup, cfgOptType), true, "option valid");
-        TEST_RESULT_BOOL(cfgDefOptionValid(cfgCmdInfo, cfgOptType), false, "option not valid");
     }
 
     // *****************************************************************************************************************************

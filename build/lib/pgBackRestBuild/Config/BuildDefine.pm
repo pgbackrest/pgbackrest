@@ -469,23 +469,6 @@ sub buildConfigDefine
                 "        )\n";
         }
 
-        $strBuildSource .=
-            "\n" .
-            "        CFGDEFDATA_OPTION_COMMAND_LIST\n" .
-            "        (\n";
-
-        foreach my $strCommand (cfgDefineCommandList())
-        {
-            if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
-            {
-                $strBuildSource .=
-                    "            CFGDEFDATA_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
-            }
-        }
-
-        $strBuildSource .=
-            "        )\n";
-
         # Render optional data
         my $strBuildSourceOptional = renderOptional($rhOption, false, $hOptionHelp, $oManifest, $oDocRender);
 

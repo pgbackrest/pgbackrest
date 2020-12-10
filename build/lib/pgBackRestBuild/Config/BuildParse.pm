@@ -28,7 +28,8 @@ use pgBackRestBuild::Config::Data;
 use constant BLDLCL_FILE_DEFINE                                     => 'parse';
 
 use constant BLDLCL_DATA_OPTION                                     => '01-dataOption';
-use constant BLDLCL_DATA_OPTION_RESOLVE                             => '01-dataOptionResolve';
+use constant BLDLCL_DATA_OPTION_GETOPT                              => '02-dataOptionGetOpt';
+use constant BLDLCL_DATA_OPTION_RESOLVE                             => '03-dataOptionResolve';
 
 ####################################################################################################################################
 # Definitions for constants and data to build
@@ -50,6 +51,11 @@ my $rhBuild =
                     &BLD_SUMMARY => 'Option parse data',
                 },
 
+                &BLDLCL_DATA_OPTION_GETOPT =>
+                {
+                    &BLD_SUMMARY => 'Option data for getopt_long()',
+                },
+
                 &BLDLCL_DATA_OPTION_RESOLVE =>
                 {
                     &BLD_SUMMARY => 'Order for option parse resolution',
@@ -69,6 +75,70 @@ sub buildConfigParse
     my $rhConfigDefine = cfgDefine();
 
     my $strBuildSource =
+        "static const ParseRuleOption parseRuleOption[] =\n" .
+        "{";
+
+    foreach my $strOption (sort(keys(%{$rhConfigDefine})))
+    {
+        my $rhOption = $rhConfigDefine->{$strOption};
+
+        $strBuildSource .=
+            "\n" .
+            "    // " . (qw{-} x 125) . "\n" .
+            "    PARSE_RULE_OPTION\n" .
+            "    (\n" .
+            "        PARSE_RULE_OPTION_NAME(\"${strOption}\")\n";
+
+        # Build command role default list
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strBuildSource .=
+            "\n" .
+            "        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST\n" .
+            "        (\n";
+
+        foreach my $strCommand (cfgDefineCommandList())
+        {
+            if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
+            {
+                $strBuildSource .=
+                    "            PARSE_RULE_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
+            }
+        }
+
+        $strBuildSource .=
+            "        )\n";
+
+        # Build command role all list
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strBuildSource .=
+            "\n" .
+            "        PARSE_RULE_OPTION_COMMAND_ROLE_ALL_LIST\n" .
+            "        (\n";
+
+        foreach my $strCommand (cfgDefineCommandList())
+        {
+            if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
+            {
+                $strBuildSource .=
+                    "            PARSE_RULE_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
+            }
+        }
+
+        $strBuildSource .=
+            "        )\n";
+
+        $strBuildSource .=
+            "    )\n";
+    }
+
+    $strBuildSource .=
+        "};\n";
+
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION}{&BLD_SOURCE} = $strBuildSource;
+
+    # Build option list for getopt_long()
+    #-------------------------------------------------------------------------------------------------------------------------------
+    $strBuildSource =
         "static const struct option optionList[] =\n" .
         "{";
 
@@ -186,7 +256,7 @@ sub buildConfigParse
         "    }\n" .
         "};\n";
 
-    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION}{&BLD_SOURCE} = $strBuildSource;
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION_GETOPT}{&BLD_SOURCE} = $strBuildSource;
 
     # Build option resolve order list.  This allows the option validation in C to take place in a single pass.
     #

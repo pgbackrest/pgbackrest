@@ -328,12 +328,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "spool-path, archive-get-queue-max, and archive-push-queue-max options for more information."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -360,12 +354,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "to leave this as the default unless you are using another method for archiving.\n"
             "\n"
             "This option must be enabled if archive-copy is enabled."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -411,11 +399,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "The archive-check option must be enabled if archive-copy is enabled."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -455,11 +438,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 4503599627370496)
@@ -493,11 +471,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "* preserve - preserve current archive_mode setting.\n"
             "\n"
             "NOTE: This option is not available on PostgreSQL < 12."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -545,11 +518,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 4503599627370496)
@@ -578,14 +546,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "archived."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(100, 86400000)
@@ -611,14 +571,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "Enable backup from standby to reduce load on the primary cluster. This option requires that both the primary and "
                 "standby hosts be configured."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -651,26 +603,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "Allowed values, in bytes, are 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, and "
                 "16777216."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -716,11 +648,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Failures in checksum validation will not abort a backup. Rather, warnings will be emitted in the log (and to the "
                 "console with default settings) and the list of invalid pages will be stored in the backup manifest."
         )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -734,12 +661,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -759,28 +680,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Use a specific SSH client when an alternate is desired or the ssh executable is not in $PATH."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -810,12 +709,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "This option is now deprecated. The compress-type option should be used instead."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
@@ -839,12 +732,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Sets the level to be used for file compression when compress-type does not equal none or compress=y (deprecated)."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -873,23 +760,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "repository. Compression is used to reduce network traffic but can be disabled by setting "
                 "compress-level-network=0. When compress-type does not equal none the compress-level-network setting is ignored "
                 "and compress-level is used instead so that the file is only compressed once. SSH compression is always disabled."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -922,12 +792,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "* gz - gzip compression format\n"
             "* lz4 - lz4 compression format (not available on all platforms)\n"
             "* zst - Zstandard compression format (not available on all platforms)"
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -964,28 +828,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Use this option to specify a different configuration file than the default."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
@@ -1010,28 +852,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "Configuration files existing in the specified location with extension .conf will be concatenated with the pgBackRest "
                 "configuration file, resulting in one configuration file."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1063,28 +883,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "/conf/pgbackrest/pgbackrest.conf and the --config-include-path default being set to /conf/pgbackrest/conf.d."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest")
@@ -1114,11 +912,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "The --db-include option can be passed multiple times to specify more than one database to include."
         )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1142,22 +935,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "be kept high unless you know that these functions will return quickly (i.e. if you have set startfast=y and you "
                 "know that the database cluster will not generate many WAL segments during the backup). \n"
             "NOTE: The db-timeout option must be less than the protocol-timeout option."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1189,12 +966,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "During a backup, this option will use checksums instead of the timestamps to determine if files will be copied."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -1219,11 +990,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "The --dry-run option is a command-line only option and can be passed when it is desirable to determine what "
                 "modifications will be made by the command without the command actually making any modifications."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1268,11 +1034,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "Multiple exclusions may be specified on the command-line or in a configuration file."
         )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1286,28 +1047,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1331,11 +1070,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "need to be run regularly to prevent this from happening."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
@@ -1353,11 +1087,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -1385,15 +1114,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -1489,11 +1209,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -1533,26 +1248,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "made, even if it is only a single byte."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(100, 3600000)
@@ -1582,11 +1277,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "backup was performed."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -1612,11 +1302,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Allows the destination file or path of a symlink to be changed on restore. This is useful for restoring to systems "
                 "that have a different storage layout than the original system where the backup was generated."
         )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1637,21 +1322,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "The lock path provides a location for pgBackRest to create lock files to prevent conflicting operations from being "
                 "run concurrently."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1685,28 +1355,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "* detail - Log detail, info, warnings, and errors\n"
             "* debug - Log debug, detail, info, warnings, and errors\n"
             "* trace - Log trace (very verbose debugging), debug, info, warnings, and errors"
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1751,28 +1399,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "* detail - Log detail, info, warnings, and errors\n"
             "* debug - Log debug, detail, info, warnings, and errors\n"
             "* trace - Log trace (very verbose debugging), debug, info, warnings, and errors"
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1822,28 +1448,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "* trace - Log trace (very verbose debugging), debug, info, warnings, and errors"
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
@@ -1881,28 +1485,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "is required."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/var/log/pgbackrest")
@@ -1926,28 +1508,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Enable file logging for any subprocesses created by this process using the log level specified by log-level-file."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1974,28 +1534,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "Enables the timestamp in console and file logging. This option is disabled in special situations such as generating "
                 "documentation."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2025,11 +1563,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "or manifest-save-threshold, whichever is greater.\n"
             "\n"
             "Size can be entered in bytes (default) or KB, MB, GB, TB, or PB where the multiplier is a power of 1024."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2063,27 +1596,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "command line."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
@@ -2101,13 +1613,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -2164,12 +1669,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -2231,17 +1730,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 8)
@@ -2298,15 +1786,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Note that for legacy reasons the setting of the PGDATABASE environment variable will be ignored."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgPath)
@@ -2331,21 +1810,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Used for backups where the PostgreSQL host is different from the repository host."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2401,18 +1865,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "host exe path will be set the same as the local exe path."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
@@ -2438,18 +1890,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "Sets the location of the configuration file on the PostgreSQL host. This is only required if the PostgreSQL host "
                 "configuration file is in a different location than the local configuration file."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2480,18 +1920,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "host configuration include path is in a different location than the local configuration include path."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
@@ -2519,18 +1947,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "configuration path is in a different location than the local configuration path."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
@@ -2555,18 +1971,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Use this option to specify a non-default port for the PostgreSQL host protocol. Currently only SSH is supported"
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2597,18 +2001,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "correctly the user should be the PostgreSQL database cluster owner which is generally postgres, the default."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
@@ -2628,21 +2020,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -2695,18 +2072,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "current."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-path")
@@ -2740,15 +2105,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "default port."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
@@ -2779,15 +2135,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "explicitly modified with the unix_socket_directory setting in postgresql.conf."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
@@ -2816,15 +2163,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "user or PGUSER."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgPath)
@@ -2842,25 +2180,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -2886,15 +2205,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "Each process will perform compression and transfer to make the command run faster, but don't set process-max so high "
                 "that it impacts database performance."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2925,25 +2235,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "NOTE: The protocol-timeout option must be greater than the db-timeout option."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(100, 604800000)
@@ -2968,12 +2259,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Do not transform (i.e, encrypt, decompress, etc.) data for the current command."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3009,11 +2294,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "recovery.conf before manually restarting."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -3040,12 +2320,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -3087,25 +2361,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
@@ -3127,28 +2382,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -3173,28 +2406,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Azure account used to store the repository."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3226,28 +2437,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Use a CA file other than the system default."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -3275,28 +2464,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Use a CA path other than the system default."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3331,28 +2498,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "a prefix, such as /repo, so logs and other Azure-generated content can also be stored in the container."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -3380,28 +2525,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3435,28 +2558,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Connect to a host other than the default. This is typically used for testing."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -3484,28 +2585,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "A shared key or shared access signature depending on the repo-azure-key-type option."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3538,28 +2617,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "* shared - Shared key\n"
             "* sas - Shared access signature"
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3599,28 +2656,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Port to use when connecting to the default server (or host if specified). This is typically used for testing."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 65535)
@@ -3654,28 +2689,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "a certificate has been self-signed."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -3705,28 +2718,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Passphrase used to encrypt/decrypt files of the repository."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3763,28 +2754,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Note that encryption is always performed client-side even if the repository type (e.g. S3) supports encryption."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
@@ -3818,11 +2787,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "hard-linked can affect all the backups in the set."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -3849,28 +2813,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Make sure that trusted SSH authentication is configured between the PostgreSQL host and the repository host.\n"
             "\n"
             "When backing up and archiving to a locally mounted filesystem this setting is not required."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3940,23 +2882,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "repository host exe path will be set the same as the local exe path."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
@@ -3982,23 +2907,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             "Sets the location of the configuration file on the repository host. This is only required if the repository host "
                 "configuration file is in a different location than the local configuration file."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4029,23 +2937,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "host configuration include path is in a different location than the local configuration include path."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
@@ -4073,23 +2964,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "configuration path is in a different location than the local configuration path."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
@@ -4114,23 +2988,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Use this option to specify a non-default port for the repository host protocol. Currently only SSH is supported"
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4163,23 +3020,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "contents accidentally."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
@@ -4199,28 +3039,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -4287,28 +3105,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "over time as your database evolves."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/var/lib/pgbackrest")
@@ -4346,12 +3142,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "recommended."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
@@ -4382,12 +3172,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "for the number of full, differential, and incremental backups defined by repo-retention-archive. It is "
                 "recommended that this setting not be changed from the default which will only expire WAL in conjunction with "
                 "expiring full backups."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4424,12 +3208,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "When not defined all differential backups will be kept until the full backups they depend on expire."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
@@ -4456,12 +3234,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "When a full backup expires, all differential and incremental backups associated with the full backup will also "
                 "expire. When the option is not defined a warning will be issued. If indefinite retention is desired then set the "
                 "option to the max value."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4495,12 +3267,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "would violate the 30 day retention policy of having at least one backup 30 days old before an older one can be "
                 "expired. Archived WAL older than the oldest full backup remaining will be automatically expired unless "
                 "repo-retention-archive-type and repo-retention-archive are explicitly set."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4537,28 +3303,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "prefix, such as /repo, so logs and other AWS generated content can also be stored in the bucket."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -4586,28 +3330,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "Use a CA file other than the system default."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4639,28 +3361,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Use a CA path other than the system default."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -4688,28 +3388,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "The AWS end point should be valid for the selected region."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4741,28 +3419,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Connect to a host other than the end point. This is typically used for testing."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -4792,28 +3448,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "AWS key used to access this bucket."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -4841,28 +3475,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "AWS secret key used to access this bucket."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4895,28 +3507,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "* shared - Shared keys\n"
             "* auto - Automatically retrieve temporary credentials"
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4956,28 +3546,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Port to use when connecting to the endpoint (or host if specified)."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 65535)
@@ -5010,28 +3578,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "The AWS region where the bucket was created."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -5061,28 +3607,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "AWS role used to retrieve temporary credentials when repo-s3-key-type=auto."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -5110,28 +3634,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
         (
             "AWS security token used with temporary credentials."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -5164,28 +3666,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "* host - Connect to bucket.endpoint host.\n"
             "* path - Connect to endpoint host and prepend bucket to URIs."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -5226,28 +3706,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "certificate has been self-signed."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND_LIST
@@ -5285,28 +3743,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "* s3 - AWS Simple Storage Service"
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
@@ -5342,11 +3778,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "disable in environments that do not require the feature."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
@@ -5364,26 +3795,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -5410,26 +3821,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "Enables keep-alive messages on socket connections."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
@@ -5447,14 +3838,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -5530,11 +3913,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
@@ -5597,12 +3975,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "or CIFS."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/var/spool/pgbackrest")
@@ -5655,28 +4027,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "the cluster. Because the stanza name will be used for the primary and all replicas it is more appropriate to "
                 "choose a name that describes the actual function of the cluster, such as app or dw, rather than the local cluster "
                 "name, such as main or prod."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStart)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStop)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -5761,11 +4111,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "This feature only works in PostgreSQL >= 8.4."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -5801,11 +4146,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "call pg_start_backup() so are not exclusive."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -5835,11 +4175,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "impunity. However, moving a tablespace to the data_directory is not recommended and may cause problems. For more "
                 "information on moving tablespaces http://www.databasesoup.com/2013/11/moving-tablespaces.html is a good resource."
         )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -5865,11 +4200,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "\n"
             "The path specified will be the parent path used to create all the tablespaces in the backup."
         )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -5883,11 +4213,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -5923,11 +4248,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -5981,11 +4301,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
@@ -6024,11 +4339,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -6078,26 +4388,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "This option is available on systems that support the TCP_KEEPCNT socket option."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 32)
@@ -6129,26 +4419,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 "keep-alive message.\n"
             "\n"
             "This option is available on systems that support the TCP_KEEPIDLE socket option."
-        )
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
         )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -6184,26 +4454,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             "This option is available on systems that support the TCP_KEEPINTVL socket option."
         )
 
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchiveGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdArchivePush)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdCheck)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdExpire)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdInfo)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoGet)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoLs)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoPut)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRepoRm)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaCreate)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaDelete)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdVerify)
-        )
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 900)
@@ -6226,12 +4476,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
-
-        CFGDEFDATA_OPTION_COMMAND_LIST
-        (
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdBackup)
-            CFGDEFDATA_OPTION_COMMAND(cfgCmdRestore)
-        )
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (

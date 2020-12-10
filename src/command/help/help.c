@@ -219,7 +219,7 @@ helpRender(void)
 
                 for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    if (cfgDefOptionValid(commandId, optionId) && !cfgDefOptionInternal(commandId, optionId))
+                    if (cfgParseOptionValid(commandId, cfgCmdRoleDefault, optionId) && !cfgDefOptionInternal(commandId, optionId))
                     {
                         const String *section = NULL;
 
@@ -235,8 +235,8 @@ helpRender(void)
 
                         kvAdd(optionKv, VARSTR(section), VARINT((int)optionId));
 
-                        if (strlen(cfgDefOptionName(optionId)) > optionSizeMax)
-                            optionSizeMax = strlen(cfgDefOptionName(optionId));
+                        if (strlen(cfgParseOptionName(optionId)) > optionSizeMax)
+                            optionSizeMax = strlen(cfgParseOptionName(optionId));
                     }
                 }
 
@@ -289,7 +289,7 @@ helpRender(void)
                         // Output option help
                         strCatFmt(
                             result, "  --%s%*s%s\n",
-                            cfgDefOptionName(optionId), (int)(optionSizeMax - strlen(cfgDefOptionName(optionId)) + 2), "",
+                            cfgParseOptionName(optionId), (int)(optionSizeMax - strlen(cfgParseOptionName(optionId)) + 2), "",
                             strZ(helpRenderText(summary, optionSizeMax + 6, false, CONSOLE_WIDTH)));
                     }
                 }
@@ -311,7 +311,7 @@ helpRender(void)
 
                 if (!option.found)
                 {
-                    int optionId = cfgDefOptionId(strZ(optionName));
+                    int optionId = cfgParseOptionId(strZ(optionName));
 
                     if (optionId == -1)
                         THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
@@ -327,7 +327,7 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    cfgDefOptionName(option.id),
+                    cfgParseOptionName(option.id),
                     strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, option.id)), 0, true, CONSOLE_WIDTH)),
                     strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.id)), 0, true, CONSOLE_WIDTH)));
 

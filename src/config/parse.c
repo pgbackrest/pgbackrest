@@ -70,6 +70,32 @@ Parse option flags
 #define PARSE_KEY_IDX_MASK                                          0xFF
 
 /***********************************************************************************************************************************
+Define how an option is parsed and interacts with other options
+***********************************************************************************************************************************/
+#define PARSE_RULE_OPTION(...)                                                                                                     \
+    {__VA_ARGS__},
+
+#define PARSE_RULE_OPTION_NAME(nameParam)                                                                                          \
+    .name = nameParam,
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST(...)                                                                           \
+    .commandRoleDefault = 0 __VA_ARGS__,
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_ALL_LIST(...)                                                                               \
+    .commandRoleAll = 0 __VA_ARGS__,
+
+#define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
+    | (1 << commandParam)
+
+typedef struct ParseRuleOption
+{
+    const char *name;                                               // Option name
+
+    uint64_t commandRoleDefault:CFG_COMMAND_TOTAL;                  // Is this option valid for the default command role?
+    uint64_t commandRoleAll:CFG_COMMAND_TOTAL;                      // Is this option valid for all command roles?
+} ParseRuleOption;
+
+/***********************************************************************************************************************************
 Include automatically generated data structure for getopt_long()
 ***********************************************************************************************************************************/
 #include "config/parse.auto.c"
@@ -192,6 +218,57 @@ cfgParseOption(const String *optionName)
         FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findIdx].val));
 
     FUNCTION_TEST_RETURN((CfgParseOptionResult){0});
+}
+
+/**********************************************************************************************************************************/
+int
+cfgParseOptionId(const char *optionName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, optionName);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionName != NULL);
+
+    int result = -1;
+
+    for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
+        if (strcmp(optionName, parseRuleOption[optionId].name) == 0)
+            result = optionId;
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+const char *
+cfgParseOptionName(ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    FUNCTION_TEST_RETURN(parseRuleOption[optionId].name);
+}
+
+/**********************************************************************************************************************************/
+bool
+cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    if (commandRoleId == cfgCmdRoleDefault && parseRuleOption[optionId].commandRoleDefault & (1 << commandId))
+        FUNCTION_TEST_RETURN(true);
+
+    FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandRoleAll & (1 << commandId));
 }
 
 /***********************************************************************************************************************************
@@ -784,7 +861,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     }
 
                     // Continue if the option is not valid for this command
-                    if (!cfgDefOptionValid(config->command, option.id))
+                    if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
                         continue;
 
                     if (strSize(value) == 0)
@@ -905,7 +982,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             kvPut(optionFound, optionFoundKey, VARSTR(key));
 
                         // Continue if the option is not valid for this command
-                        if (!cfgDefOptionValid(config->command, option.id))
+                        if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
                         {
                             // Warn if it is in a command section
                             if (sectionIdx % 2 == 0)
@@ -988,7 +1065,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
             {
                 // Is the option valid for this command?
-                if (cfgDefOptionValid(config->command, optionId))
+                if (cfgParseOptionValid(config->command, config->commandRole, optionId))
                 {
                     config->option[optionId].valid = true;
                 }
@@ -998,7 +1075,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     if (parseOptionList[optionId].indexList != NULL)
                     {
                         THROW_FMT(
-                            OptionInvalidError, "option '%s' not valid for command '%s'", cfgDefOptionName(optionId),
+                            OptionInvalidError, "option '%s' not valid for command '%s'", cfgParseOptionName(optionId),
                             cfgCommandName(config->command));
                     }
 
