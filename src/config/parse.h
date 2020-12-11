@@ -31,7 +31,7 @@ int cfgParseOptionId(const char *optionName);
 // Option name from id
 const char *cfgParseOptionName(ConfigOption optionId);
 
-// Is the option valid for the command/role?
-bool cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId);
+// Is the option valid for the command?
+bool cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId);
 
 #endif

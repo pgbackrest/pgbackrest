@@ -72,31 +72,24 @@ Parse option flags
 /***********************************************************************************************************************************
 Define how an option is parsed and interacts with other options
 ***********************************************************************************************************************************/
+typedef struct ParseRuleOption
+{
+    const char *name;                                               // Option name
+    uint64_t commandValid:CFG_COMMAND_TOTAL;                        // Option valid for the command?
+} ParseRuleOption;
+
+// Macros used to define parse rules in parse.auto.c in a format that diffs well
 #define PARSE_RULE_OPTION(...)                                                                                                     \
     {__VA_ARGS__},
 
 #define PARSE_RULE_OPTION_NAME(nameParam)                                                                                          \
     .name = nameParam,
 
-#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST(...)                                                                           \
-    .commandRoleDefault = 0 __VA_ARGS__,
+#define PARSE_RULE_OPTION_COMMAND_LIST(...)                                                                                        \
+    .commandValid = 0 __VA_ARGS__,
 
-#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(commandParam)                                                                       \
+#define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
     | (1 << commandParam)
-
-#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST(...)                                                                             \
-    .commandRoleOther = 0 __VA_ARGS__,
-
-#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(commandParam, commandRoleParam)                                                       \
-    | ((uint64_t)1 << ((CFG_COMMAND_TOTAL * (commandRoleParam - 1)) + commandParam))
-
-typedef struct ParseRuleOption
-{
-    const char *name;                                               // Option name
-
-    uint64_t commandRoleDefault:CFG_COMMAND_TOTAL;                  // Option valid for the default command role?
-    uint64_t commandRoleOther;                                      // Option valid for other (not default) command roles?
-} ParseRuleOption;
 
 /***********************************************************************************************************************************
 Include automatically generated data structure for getopt_long()
@@ -257,22 +250,17 @@ cfgParseOptionName(ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 bool
-cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId)
+cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
     ASSERT(commandId < CFG_COMMAND_TOTAL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    if (commandRoleId == cfgCmdRoleDefault)
-        FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandRoleDefault & (1 << commandId));
-
-    FUNCTION_TEST_RETURN(
-        parseRuleOption[optionId].commandRoleOther & ((uint64_t)1 << ((CFG_COMMAND_TOTAL * (commandRoleId - 1)) + commandId)));
+    FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandValid & (1 << commandId));
 }
 
 /***********************************************************************************************************************************
@@ -865,7 +853,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     }
 
                     // Continue if the option is not valid for this command
-                    if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
+                    if (!cfgParseOptionValid(config->command, option.id))
                         continue;
 
                     if (strSize(value) == 0)
@@ -986,7 +974,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             kvPut(optionFound, optionFoundKey, VARSTR(key));
 
                         // Continue if the option is not valid for this command
-                        if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
+                        if (!cfgParseOptionValid(config->command, option.id))
                         {
                             // Warn if it is in a command section
                             if (sectionIdx % 2 == 0)
@@ -1069,7 +1057,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
             {
                 // Is the option valid for this command?
-                if (cfgParseOptionValid(config->command, config->commandRole, optionId))
+                if (cfgParseOptionValid(config->command, optionId))
                 {
                     config->option[optionId].valid = true;
                 }

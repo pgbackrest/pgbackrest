@@ -219,7 +219,7 @@ helpRender(void)
 
                 for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    if (cfgParseOptionValid(commandId, cfgCmdRoleDefault, optionId) && !cfgDefOptionInternal(commandId, optionId))
+                    if (cfgParseOptionValid(commandId, optionId) && !cfgDefOptionInternal(commandId, optionId))
                     {
                         const String *section = NULL;
 

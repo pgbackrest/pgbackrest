@@ -77,7 +77,7 @@ cmdOption(void)
                     // Skip the option if not valid for this command.  Generally only one command runs at a time, but sometimes
                     // commands are chained together (e.g. backup and expire) and the second command may not use all the options of
                     // the first command.  Displaying them is harmless but might cause confusion.
-                    if (!cfgOptionValid(optionId) || !cfgParseOptionValid(cfgCommand(), cfgCommandRole(), optionId))
+                    if (!cfgOptionValid(optionId) || !cfgParseOptionValid(cfgCommand(), optionId))
                         continue;
 
                     // Loop through option indexes

@@ -59,11 +59,11 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
     StringList *argList = strLstDup(argListParam);
 
     // Set log path if valid
-    if (cfgParseOptionValid(commandId, commandRoleId, cfgOptLogPath))
+    if (cfgParseOptionValid(commandId, cfgOptLogPath))
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testDataPath()));
 
     // Set lock path if valid
-    if (cfgParseOptionValid(commandId, commandRoleId, cfgOptLockPath))
+    if (cfgParseOptionValid(commandId, cfgOptLockPath))
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
 
     // Insert the command so it does not interfere with parameters
