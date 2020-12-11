@@ -371,11 +371,11 @@ Set the stanza data for each stanza found in the repo.
 ***********************************************************************************************************************************/
 static VariantList *
 stanzaInfoList(
-    const String *stanza, StringList *stanzaList, const String *backupLabel, unsigned int repoIdx, unsigned int repoIdxMax)
+    const String *stanza, List *stanzaRepoList, const String *backupLabel, unsigned int repoIdx, unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
-        FUNCTION_TEST_PARAM(STRING_LIST, stanzaList);
+        FUNCTION_TEST_PARAM(LIST, stanzaRepoList);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
         FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
@@ -387,21 +387,12 @@ stanzaInfoList(
     bool stanzaFound = false;
 
     // Sort the list
-    stanzaList = strLstSort(stanzaList, sortOrderAsc);
+    stanzaRepoList = lstSort(stanzaRepoList, sortOrderAsc);
 
-    for (unsigned int idx = 0; idx < strLstSize(stanzaList); idx++)
+    for (unsigned int idx = 0; idx < lstSize(stanzaRepoList); idx++)
     {
-        String *stanzaListName = strLstGet(stanzaList, idx);
-
-        // If a specific stanza has been requested and this is not it, then continue to the next in the list else indicate found
-        if (stanza != NULL)
-        {
-            if (!strEq(stanza, stanzaListName))
-                continue;
-            else
-                stanzaFound = true;
-        }
-
+        InfoStanzaRepo *stanzaData = lstGet(stanzaRepoList, idx);
+// CSHANG TODO Figuew out how to process
         // Create the stanzaInfo and section variables
         Variant *stanzaInfo = varNewKv(kvNew());
         VariantList *dbSection = varLstNew();
@@ -763,6 +754,20 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
     FUNCTION_TEST_RETURN_VOID();
 }
 
+typedef struct InfoRepoData
+{
+    unsigned int key;                                               // User-entered index key - 0 when this repo is not valid
+    cipherType cipher;
+    bool found;
+} InfoRepoData;
+
+typedef struct InfoStanzaRepo
+{
+    String *name;
+    unsigned int repoKey;                                           // Indicates a repo was specified (i.e. others can be ignored)
+    RepoData *repoList;
+} InfoStanzaRepo;
+
 /***********************************************************************************************************************************
 Render the information for the stanza based on the command parameters.
 ***********************************************************************************************************************************/
@@ -779,7 +784,8 @@ infoRender(void)
         const String *stanza = cfgOptionStrNull(cfgOptStanza);
 
         // List of stanzas on disk
-        StringList *stanzaList = strLstNew();
+        // StringList *stanzaList = strLstNew(); // CSHANG Remove
+        List *stanzaRepoList = lstNewP(sizeof(InfoStanzaRepo));
 
         // Get the backup label if specified
         const String *backupLabel = cfgOptionStrNull(cfgOptSet);
@@ -797,11 +803,28 @@ infoRender(void)
         unsigned int repoIdx = 0;
         unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
 
-        // If the repo was specified then set index and max to loop only once
+        // If the repo was specified then set index to the array location and max to loop only once
         if (cfgOptionTest(cfgOptRepo))
         {
             repoIdx = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
             repoIdxMax = repoIdx + 1;
+        }
+
+        // If a specific stanza has been requested, thena dd it to the stanza list
+        if (stanza != NULL)
+        { // CSHANG May need to change this comment
+            // Initialize the stanza and repo data - note there may be more repos in the repo list then we will check so that the
+            // array can be accessed directly by the repo array index. For example, the user requested --repo=3 and the internal
+            // configuration has index 0=repo1, 1=repo2, 2=repo3, then here repoList[0].key and repoList[1].key will remain
+            // initialized at 0 indicating these should be ignored when processing since the key cannot be 0.
+            InfoStanzaRepo stanzaRepo =
+            {
+                .name = stanza,
+                .repoKey = cfgOptionTest(cfgOptRepo) ? cfgOption(cfgOptRepo) : 0,
+                .repoList = memNew(repoIdxMax * sizeof(InfoRepoData)),
+            };
+
+            lstAdd(stanzaRepoList, &stanzaRepo);
         }
 
         for (; repoIdx < repoIdxMax; repoIdx++)
@@ -824,12 +847,46 @@ infoRender(void)
             // Get a list of stanzas in the backup directory
             StringList *stanzaNameList = storageListP(storageRepo, STORAGE_PATH_BACKUP_STR);
 
-            // Add to the stanza list over all repos if a stanza is not already there
             for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaNameList); stanzaIdx++)
             {
                 String *stanzaName = strLstGet(stanzaNameList, stanzaIdx);
 
-                strLstAddIfMissing(stanzaList, stanzaName);
+                InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
+                ASSERT(stanza == NULL || stanza != NULL && stanzaRepo != NULL);
+
+                // If the stanza was already added to the array, then set the repo key and cipher and indicate it was found
+                // on this repo
+                if (stanzaRepo != NULL)
+                {
+                    stanzaRepo->repoList[repoIdx].key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx);
+                    stanzaRepo->repoList[repoIdx].cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+                    stanzaRepo.repoList[repoIdx].found = true;
+
+                    // If a stanza was requested and this is it, then exit the stanza loop
+                    if (strEq(stanza, stanzaListName))
+                        break;
+                }
+                // Else if the stanza has not yet been added to the list
+                else
+                {
+                    // If a specific stanza was not requested, then initalize/add this stanza to the stanza list and set that it was
+                    // found on this repo
+                    if (stanza == NULL)
+                    {
+                        InfoStanzaRepo stanzaRepoAdd =
+                        {
+                            .name = stanza,
+                            .repoKey = cfgOptionTest(cfgOptRepo) ? cfgOption(cfgOptRepo) : 0,
+                            .repoList = memNew(repoIdxMax * sizeof(InfoRepoData)),
+                        };
+
+                        stanzaRepoAdd.repoList[repoIdx].key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx);
+                        stanzaRepoAdd.repoList[repoIdx].cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+                        stanzaRepoAdd.repoList[repoIdx].found = true;
+
+                        lstAdd(stanzaRepoList, &stanzaRepo);
+                    }
+                }
             }
         }
 
@@ -837,8 +894,8 @@ infoRender(void)
         String *resultStr = strNew("");
 
         // If the backup storage exists, then search for and process any stanzas
-        if (strLstSize(stanzaList) > 0 || stanza != NULL)
-            infoList = stanzaInfoList(stanza, stanzaList, backupLabel, repoIdx, repoIdxMax);
+        if (strLstSize(stanzaRepoList) > 0 || stanza != NULL)
+            infoList = stanzaInfoList(stanza, stanzaRepoList, backupLabel, repoIdx, repoIdxMax);
 
         // Format text output
         if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
