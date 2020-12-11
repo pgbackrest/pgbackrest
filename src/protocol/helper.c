@@ -480,12 +480,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            // The number of remotes allowed is the greater of allowed repo or pg configs + 1 (0 is reserved for connections from
-            // the main process).  Since these are static and only one will be true it presents a problem for coverage.  We think
-            // that pg remotes will always be greater but we'll protect that assumption with an assertion.
-            ASSERT(cfgDefOptionIndexTotal(cfgOptPgPath) >= cfgDefOptionIndexTotal(cfgOptRepoPath));
-
-            protocolHelper.clientRemoteSize = cfgDefOptionIndexTotal(cfgOptPgPath) + 1;
+            protocolHelper.clientRemoteSize = cfgOptionGroupIdxTotal(isRepo ? cfgOptGrpRepo : cfgOptGrpPg) + 1;
             protocolHelper.clientRemote = memNew(protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
 
             for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)

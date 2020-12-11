@@ -49,8 +49,6 @@ Define how an option is parsed and interacts with other options.
 typedef struct ConfigDefineOptionData
 {
     unsigned int internal:1;                                        // Is the option only used internally?
-    unsigned int indexTotal:4;                                      // 0 normally, > 0 if indexed option (e.g. pg1-*)
-    unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
     bool required:1;                                                // Is the option required?
     bool secure:1;                                                  // Does the option need to be redacted on logs and cmd-line?
 
@@ -70,14 +68,10 @@ typedef struct ConfigDefineOptionData
     {__VA_ARGS__},
 
 #define CFGDEFDATA_OPTION_NAME(nameParam)
-#define CFGDEFDATA_OPTION_INDEX_TOTAL(indexTotalParam)                                                                             \
-    .indexTotal = indexTotalParam,
 #define CFGDEFDATA_OPTION_INTERNAL(internalParam)                                                                                  \
     .internal = internalParam,
 #define CFGDEFDATA_OPTION_REQUIRED(requiredParam)                                                                                  \
     .required = requiredParam,
-#define CFGDEFDATA_OPTION_SECTION(sectionParam)                                                                                    \
-    .section = sectionParam,
 #define CFGDEFDATA_OPTION_SECURE(secureParam)                                                                                      \
     .secure = secureParam,
 
@@ -628,19 +622,6 @@ cfgDefOptionHelpSummary(ConfigCommand commandId, ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
-cfgDefOptionIndexTotal(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    FUNCTION_TEST_RETURN(configDefineOptionData[optionId].indexTotal);
-}
-
-/**********************************************************************************************************************************/
 bool
 cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId)
 {
@@ -695,17 +676,4 @@ cfgDefOptionRequired(ConfigCommand commandId, ConfigOption optionId)
         result = (bool)dataDef;
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-ConfigDefSection
-cfgDefOptionSection(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    FUNCTION_TEST_RETURN(configDefineOptionData[optionId].section);
 }

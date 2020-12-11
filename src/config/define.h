@@ -6,16 +6,6 @@ Command and Option Configuration Definition
 
 #include <sys/types.h>
 
-/***********************************************************************************************************************************
-Section enum - defines which sections of the config an option can appear in
-***********************************************************************************************************************************/
-typedef enum
-{
-    cfgDefSectionCommandLine,                                       // command-line only
-    cfgDefSectionGlobal,                                            // command-line or in any config section
-    cfgDefSectionStanza,                                            // command-line or in any config stanza section
-} ConfigDefSection;
-
 #include "common/type/string.h"
 #include "config/config.auto.h"
 
@@ -63,17 +53,11 @@ unsigned int cfgDefOptionHelpNameAltValueTotal(ConfigOption optionId);
 // Option help section
 const char *cfgDefOptionHelpSection(ConfigOption optionId);
 
-// Total indexed values for option
-unsigned int cfgDefOptionIndexTotal(ConfigOption optionId);
-
 // Is the option for internal use only?
 bool cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId);
 
 // Is the option required
 bool cfgDefOptionRequired(ConfigCommand commandId, ConfigOption optionId);
-
-// Get option section
-ConfigDefSection cfgDefOptionSection(ConfigOption optionId);
 
 // Does the option need to be protected from showing up in logs, command lines, etc?
 bool cfgDefOptionSecure(ConfigOption optionId);

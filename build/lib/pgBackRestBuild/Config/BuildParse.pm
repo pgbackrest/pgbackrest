@@ -151,7 +151,10 @@ sub buildConfigParse
             "    PARSE_RULE_OPTION\n" .
             "    (\n" .
             "        PARSE_RULE_OPTION_NAME(\"${strOption}\"),\n" .
-            "        PARSE_RULE_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . "),\n";
+            "        PARSE_RULE_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . "),\n" .
+            "        PARSE_RULE_OPTION_SECTION(cfgSection" .
+                (defined($rhOption->{&CFGDEF_SECTION}) ? ucfirst($rhOption->{&CFGDEF_SECTION}) : 'CommandLine') .
+                "),\n";
 
         if ($rhOption->{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH || $rhOption->{&CFGDEF_TYPE} eq CFGDEF_TYPE_LIST)
         {

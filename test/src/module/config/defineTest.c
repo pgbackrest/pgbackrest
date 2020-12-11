@@ -72,22 +72,12 @@ testRun(void)
         TEST_RESULT_BOOL(
             cfgDefOptionDependValueValid(cfgCmdRestore, cfgOptTarget, BOGUS_STR), false, "depend option value not valid");
 
-        TEST_ERROR(
-            cfgDefOptionIndexTotal(cfgDefOptionTotal()), AssertError,
-            "assertion 'optionId < cfgDefOptionTotal()' failed");
-        TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgOptPgPath), 8, "index total > 1");
-        TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgOptRepoPath), 1, "index total == 1");
-
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptSet), false, "option set is not internal");
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptPgHost), true, "option pg-host is internal");
 
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdBackup, cfgOptConfig), true, "option required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdRestore, cfgOptRepoHost), false, "option not required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdInfo, cfgOptStanza), false, "command option not required");
-
-        TEST_RESULT_INT(cfgDefOptionSection(cfgOptRepoS3Key), cfgDefSectionGlobal, "global section");
-        TEST_RESULT_INT(cfgDefOptionSection(cfgOptPgPath), cfgDefSectionStanza, "stanza section");
-        TEST_RESULT_INT(cfgDefOptionSection(cfgOptType), cfgDefSectionCommandLine, "command line only");
 
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgOptRepoS3Key), true, "option secure");
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgOptRepoHost), false, "option not secure");

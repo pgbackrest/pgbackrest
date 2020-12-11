@@ -32,6 +32,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("archive-async"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -45,6 +46,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("archive-check"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -58,6 +60,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("archive-copy"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -70,6 +73,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("archive-get-queue-max"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -82,6 +86,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("archive-mode"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -94,6 +99,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("archive-push-queue-max"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -106,6 +112,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("archive-timeout"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -121,6 +128,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("backup-standby"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -136,6 +144,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("buffer-size"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -163,6 +172,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("checksum-page"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -175,6 +185,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("cipher-pass"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -188,6 +199,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("cmd-ssh"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -217,6 +229,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("compress"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -230,6 +243,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("compress-level"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -243,6 +257,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("compress-level-network"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -267,6 +282,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("compress-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -280,6 +296,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("config"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -309,6 +326,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("config-include-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -338,6 +356,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("config-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -367,6 +386,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("db-include"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeList),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
         PARSE_RULE_OPTION_COMMAND_LIST
@@ -380,6 +400,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("db-timeout"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -403,6 +424,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("delta"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -416,6 +438,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("dry-run"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -428,6 +451,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("exclude"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeList),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
         PARSE_RULE_OPTION_COMMAND_LIST
@@ -441,6 +465,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("exec-id"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -470,6 +495,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("expire-auto"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -482,6 +508,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("filter"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -494,6 +521,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("force"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -510,6 +538,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("ignore-missing"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -522,6 +551,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("io-timeout"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -549,6 +579,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("link-all"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -561,6 +592,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("link-map"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
         PARSE_RULE_OPTION_COMMAND_LIST
@@ -574,6 +606,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("lock-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -596,6 +629,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("log-level-console"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -625,6 +659,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("log-level-file"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -654,6 +689,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("log-level-stderr"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -683,6 +719,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("log-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -712,6 +749,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("log-subprocess"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -741,6 +779,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("log-timestamp"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -770,6 +809,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("manifest-save-threshold"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -782,6 +822,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("neutral-umask"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -810,6 +851,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("online"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -824,6 +866,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("output"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -837,6 +880,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -855,6 +899,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-database"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -873,6 +918,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-host"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -897,6 +943,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-cmd"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -918,6 +965,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-config"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -939,6 +987,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-config-include-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -960,6 +1009,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-config-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -981,6 +1031,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-port"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -1002,6 +1053,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-host-user"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -1023,6 +1075,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-local"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -1047,6 +1100,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -1068,6 +1122,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-port"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -1086,6 +1141,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-socket-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -1104,6 +1160,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("pg-user"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
@@ -1122,6 +1179,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("process"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -1148,6 +1206,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("process-max"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -1164,6 +1223,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("protocol-timeout"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -1190,6 +1250,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("raw"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -1203,6 +1264,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("recovery-option"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
         PARSE_RULE_OPTION_COMMAND_LIST
@@ -1216,6 +1278,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("recurse"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -1229,6 +1292,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("remote-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -1255,6 +1319,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -1284,6 +1349,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-account"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1315,6 +1381,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-ca-file"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1346,6 +1413,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-ca-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1377,6 +1445,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-container"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1408,6 +1477,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-endpoint"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1439,6 +1509,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-host"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1470,6 +1541,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-key"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1501,6 +1573,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-key-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1532,6 +1605,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-port"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1563,6 +1637,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-azure-verify-tls"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1594,6 +1669,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-cipher-pass"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1625,6 +1701,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-cipher-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1656,6 +1733,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-hardlink"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1670,6 +1748,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-host"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1701,6 +1780,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-cmd"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1727,6 +1807,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-config"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1753,6 +1834,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-config-include-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1779,6 +1861,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-config-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1805,6 +1888,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-port"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1831,6 +1915,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-host-user"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1857,6 +1942,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-local"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1888,6 +1974,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1919,6 +2006,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-archive"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1934,6 +2022,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-archive-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1949,6 +2038,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-diff"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1964,6 +2054,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-full"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1979,6 +2070,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-retention-full-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1994,6 +2086,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-bucket"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2025,6 +2118,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-ca-file"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2056,6 +2150,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-ca-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2087,6 +2182,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-endpoint"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2118,6 +2214,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-host"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2149,6 +2246,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-key"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2180,6 +2278,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-key-secret"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2211,6 +2310,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-key-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2242,6 +2342,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-port"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2273,6 +2374,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-region"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2304,6 +2406,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-role"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2335,6 +2438,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-token"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2366,6 +2470,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-uri-style"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2397,6 +2502,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-s3-verify-tls"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2428,6 +2534,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("repo-type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2459,6 +2566,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("resume"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2471,6 +2579,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("sck-block"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2498,6 +2607,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("sck-keep-alive"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2525,6 +2635,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("set"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2540,6 +2651,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("sort"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2552,6 +2664,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("spool-path"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2565,6 +2678,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("stanza"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2594,6 +2708,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("start-fast"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2606,6 +2721,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("stop-auto"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2618,6 +2734,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("tablespace-map"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
         PARSE_RULE_OPTION_COMMAND_LIST
@@ -2631,6 +2748,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("tablespace-map-all"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2643,6 +2761,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("target"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2655,6 +2774,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("target-action"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2667,6 +2787,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("target-exclusive"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2679,6 +2800,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("target-timeline"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2691,6 +2813,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("tcp-keep-alive-count"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2718,6 +2841,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("tcp-keep-alive-idle"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2745,6 +2869,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("tcp-keep-alive-interval"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (
@@ -2772,6 +2897,7 @@ static const ParseRuleOption parseRuleOption[] =
     (
         PARSE_RULE_OPTION_NAME("type"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_LIST
         (

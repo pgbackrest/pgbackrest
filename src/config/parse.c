@@ -21,6 +21,16 @@ Command and Option Parse
 #include "version.h"
 
 /***********************************************************************************************************************************
+Section enum - defines which sections of the config an option can appear in
+***********************************************************************************************************************************/
+typedef enum
+{
+    cfgSectionCommandLine,                                          // Command-line only
+    cfgSectionGlobal,                                               // Command-line or in any config section
+    cfgSectionStanza,                                               // Command-line or in any config stanza section
+} ConfigSection;
+
+/***********************************************************************************************************************************
 Standard config file name and old default path and name
 ***********************************************************************************************************************************/
 #define PGBACKREST_CONFIG_FILE                                      PROJECT_BIN ".conf"
@@ -91,6 +101,7 @@ typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
     unsigned int type:3;                                            // e.g. string, int, boolean
+    unsigned int section:2;                                         // e.g. global, stanza, cmd-line
     bool multi:1;                                                   // Can be specified multiple times?
     bool group:1;                                                   // In a group?
     unsigned int groupId:1;                                         // Id if in a group
@@ -106,6 +117,9 @@ typedef struct ParseRuleOption
 
 #define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
     .type = typeParam
+
+#define PARSE_RULE_OPTION_SECTION(sectionParam)                                                                                    \
+    .section = sectionParam
 
 #define PARSE_RULE_OPTION_MULTI(typeMulti)                                                                                         \
     .multi = typeMulti
@@ -1024,7 +1038,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
 
                         // Warn if this option should be command-line only
-                        if (cfgDefOptionSection(option.id) == cfgDefSectionCommandLine)
+                        if (parseRuleOption[option.id].section == cfgSectionCommandLine)
                         {
                             LOG_WARN_FMT("configuration file contains command-line only option '%s'", strZ(key));
                             continue;
@@ -1059,7 +1073,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
 
                         // Continue if stanza option is in a global section
-                        if (cfgDefOptionSection(option.id) == cfgDefSectionStanza && strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
+                        if (parseRuleOption[option.id].section == cfgSectionStanza &&
+                            strBeginsWithZ(section, CFGDEF_SECTION_GLOBAL))
                         {
                             LOG_WARN_FMT(
                                 "configuration file contains stanza-only option '%s' in global section '%s'", strZ(key),
@@ -1564,7 +1579,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             {
                                 const char *hint = "";
 
-                                if (cfgDefOptionSection(optionId) == cfgDefSectionStanza)
+                                if (parseRuleOption[optionId].section == cfgSectionStanza)
                                     hint = "\nHINT: does this stanza exist?";
 
                                 THROW_FMT(

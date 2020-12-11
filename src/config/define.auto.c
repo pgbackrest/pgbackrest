@@ -311,10 +311,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("archive-async")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
@@ -338,10 +336,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("archive-check")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -376,10 +372,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("archive-copy")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -418,10 +412,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("archive-get-queue-max")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
@@ -446,10 +438,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("archive-mode")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -485,10 +475,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("archive-push-queue-max")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
@@ -524,10 +512,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("archive-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
@@ -551,10 +537,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("backup-standby")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -576,10 +560,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("buffer-size")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -622,10 +604,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("checksum-page")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -645,10 +625,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("cipher-pass")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
     )
 
@@ -657,10 +635,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("cmd-ssh")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -681,10 +657,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("compress")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -707,10 +681,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("compress-level")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -731,10 +703,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("compress-level-network")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -759,10 +729,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("compress-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -798,10 +766,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("config")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -822,10 +788,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("config-include-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -847,10 +811,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("config-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -875,10 +837,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("db-include")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -899,10 +859,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("db-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -928,10 +886,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("delta")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -955,10 +911,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("dry-run")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -980,10 +934,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("exclude")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -1017,10 +969,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("exec-id")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
     )
 
@@ -1029,10 +979,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("expire-auto")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -1055,10 +1003,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("filter")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1081,10 +1027,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("force")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1174,10 +1118,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("ignore-missing")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1202,10 +1144,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("io-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1230,10 +1170,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("link-all")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -1257,10 +1195,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("link-map")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -1277,10 +1213,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("lock-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1302,10 +1236,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("log-level-console")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1345,10 +1277,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("log-level-file")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1388,10 +1318,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("log-level-stderr")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1434,10 +1362,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("log-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1459,10 +1385,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("log-subprocess")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1483,10 +1407,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("log-timestamp")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1508,10 +1430,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("manifest-save-threshold")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -1537,10 +1457,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("neutral-umask")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1566,10 +1484,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("online")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1621,10 +1537,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("output")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1680,10 +1594,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -1725,10 +1637,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-database")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -1753,10 +1663,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-host")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -1804,10 +1712,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-host-cmd")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -1830,10 +1736,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-host-config")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -1857,10 +1761,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-host-config-include-path")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -1883,10 +1785,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-host-config-path")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -1909,10 +1809,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-host-port")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -1935,10 +1833,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-host-user")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -1962,10 +1858,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-local")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2000,10 +1894,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2036,10 +1928,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-port")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2064,10 +1954,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-socket-path")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2092,10 +1980,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("pg-user")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2117,10 +2003,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("process")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2134,10 +2018,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("process-max")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -2160,10 +2042,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("protocol-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -2187,10 +2067,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("raw")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -2211,10 +2089,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("recovery-option")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -2252,10 +2128,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("recurse")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2291,10 +2165,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("remote-type")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2312,10 +2184,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -2329,10 +2199,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-account")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2357,10 +2225,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-ca-file")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2385,10 +2251,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-ca-path")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2413,10 +2277,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-container")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2444,10 +2306,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-endpoint")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2474,10 +2334,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-host")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2502,10 +2360,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-key")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2530,10 +2386,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-key-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2569,10 +2423,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-port")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2600,10 +2452,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-azure-verify-tls")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2631,10 +2481,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-cipher-pass")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2659,10 +2507,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-cipher-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2694,10 +2540,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-hardlink")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2721,10 +2565,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-host")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2788,10 +2630,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-host-cmd")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2814,10 +2654,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-host-config")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2841,10 +2679,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-host-config-include-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2867,10 +2703,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-host-config-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2893,10 +2727,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-host-port")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2919,10 +2751,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-host-user")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -2948,10 +2778,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-local")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3000,10 +2828,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3029,10 +2855,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-retention-archive")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3066,10 +2890,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-retention-archive-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3104,10 +2926,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-retention-diff")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3130,10 +2950,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-retention-full")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3157,10 +2975,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-retention-full-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3194,10 +3010,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-bucket")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3225,10 +3039,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-ca-file")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3253,10 +3065,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-ca-path")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3281,10 +3091,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-endpoint")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3309,10 +3117,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-host")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3337,10 +3143,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-key")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3365,10 +3169,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-key-secret")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3393,10 +3195,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-key-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3432,10 +3232,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-port")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3463,10 +3261,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-region")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3491,10 +3287,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-role")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3519,10 +3313,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-token")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3547,10 +3339,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-uri-style")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3586,10 +3376,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-s3-verify-tls")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3618,10 +3406,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("repo-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3655,10 +3441,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("resume")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -3681,10 +3465,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("sck-block")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3698,10 +3480,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("sck-keep-alive")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -3722,10 +3502,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("set")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3795,10 +3573,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("sort")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -3834,10 +3610,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("spool-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -3895,10 +3669,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("stanza")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -3980,10 +3752,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("start-fast")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -4007,10 +3777,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("stop-auto")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -4041,10 +3809,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("tablespace-map")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -4065,10 +3831,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("tablespace-map-all")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -4089,10 +3853,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("target")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4123,10 +3885,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("target-action")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4174,10 +3934,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("target-exclusive")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4212,10 +3970,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("target-timeline")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
@@ -4250,10 +4006,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("tcp-keep-alive-count")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -4281,10 +4035,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("tcp-keep-alive-idle")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -4313,10 +4065,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("tcp-keep-alive-interval")
         CFGDEFDATA_OPTION_REQUIRED(false)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -4345,10 +4095,8 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
     (
         CFGDEFDATA_OPTION_NAME("type")
         CFGDEFDATA_OPTION_REQUIRED(true)
-        CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
