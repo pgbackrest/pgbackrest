@@ -27,9 +27,10 @@ use pgBackRestBuild::Config::Data;
 ####################################################################################################################################
 use constant BLDLCL_FILE_DEFINE                                     => 'parse';
 
-use constant BLDLCL_DATA_OPTION                                     => '01-dataOption';
-use constant BLDLCL_DATA_OPTION_GETOPT                              => '02-dataOptionGetOpt';
-use constant BLDLCL_DATA_OPTION_RESOLVE                             => '03-dataOptionResolve';
+use constant BLDLCL_DATA_OPTION_GROUP                               => '01-optionGroup';
+use constant BLDLCL_DATA_OPTION                                     => '02-dataOption';
+use constant BLDLCL_DATA_OPTION_GETOPT                              => '03-dataOptionGetOpt';
+use constant BLDLCL_DATA_OPTION_RESOLVE                             => '04-dataOptionResolve';
 
 ####################################################################################################################################
 # Definitions for constants and data to build
@@ -46,6 +47,11 @@ my $rhBuild =
 
             &BLD_DATA =>
             {
+                &BLDLCL_DATA_OPTION_GROUP =>
+                {
+                    &BLD_SUMMARY => 'Option group parse data',
+                },
+
                 &BLDLCL_DATA_OPTION =>
                 {
                     &BLD_SUMMARY => 'Option parse data',
@@ -70,12 +76,36 @@ my $rhBuild =
 ####################################################################################################################################
 sub buildConfigParse
 {
+    # Build option group constants and data
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $rhOptionGroupDefine = cfgDefineOptionGroup();
+
+    my $strBuildSource =
+        "static const ParseRuleGroup parseRuleGroup[] = \n" .
+        "{";
+
+    foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
+    {
+        $strBuildSource .=
+            "\n" .
+            "    //" . (qw{-} x 126) . "\n" .
+            "    PARSE_RULE_GROUP\n" .
+            "    (\n" .
+            "        PARSE_RULE_GROUP_NAME(\"" . $strGroup . "\"),\n" .
+            "    ),\n";
+    }
+
+    $strBuildSource .=
+        "};\n";
+
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION_GROUP}{&BLD_SOURCE} = $strBuildSource;
+
     # Build option parse list
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhConfigDefine = cfgDefine();
     my $rhCommandDefine = cfgDefineCommand();
 
-    my $strBuildSource =
+    $strBuildSource =
         "static const ParseRuleOption parseRuleOption[] =\n" .
         "{";
 
@@ -88,7 +118,16 @@ sub buildConfigParse
             "    // " . (qw{-} x 125) . "\n" .
             "    PARSE_RULE_OPTION\n" .
             "    (\n" .
-            "        PARSE_RULE_OPTION_NAME(\"${strOption}\")\n";
+            "        PARSE_RULE_OPTION_NAME(\"${strOption}\"),\n";
+
+        # Build group info
+        #---------------------------------------------------------------------------------------------------------------------------
+        if ($rhOption->{&CFGDEF_GROUP})
+        {
+            $strBuildSource .=
+                "        PARSE_RULE_OPTION_GROUP(true),\n" .
+                "        PARSE_RULE_OPTION_GROUP_ID(" . buildConfigOptionGroupEnum($rhOption->{&CFGDEF_GROUP}) . "),\n";
+        }
 
         # Build command role default list
         #---------------------------------------------------------------------------------------------------------------------------
@@ -110,11 +149,11 @@ sub buildConfigParse
                 "        PARSE_RULE_OPTION_COMMAND_LIST\n" .
                 "        (\n" .
                 $strBuildSourceSub .
-                "        )\n";
+                "        ),\n";
         }
 
         $strBuildSource .=
-            "    )\n";
+            "    ),\n";
     }
 
     $strBuildSource .=

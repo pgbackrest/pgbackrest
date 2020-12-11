@@ -411,7 +411,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     kvPut(
         optionReplace,
         protocolStorageType == protocolStorageTypeRepo ?
-            VARSTRZ(cfgOptionIdxName(cfgOptRepoLocal, hostIdx)) : VARSTRZ(cfgOptionKeyIdxName(cfgOptPgLocal, 0)),
+            VARSTRZ(cfgOptionIdxName(cfgOptRepoLocal, hostIdx)) : VARSTRZ(cfgParseOptionKeyIdxName(cfgOptPgLocal, 0)),
         BOOL_TRUE_VAR);
 
     // Set default to make it explicit which host will be used on the remote

@@ -1247,7 +1247,7 @@ testRun(void)
                     "%s=/path/to/db2\n"
                     "pg3-host=ignore\n"
                     "recovery-option=c=d\n",
-                    cfgOptionKeyIdxName(cfgOptPgHost, 1), cfgOptionKeyIdxName(cfgOptPgPath, 1))));
+                    cfgParseOptionKeyIdxName(cfgOptPgHost, 1), cfgParseOptionKeyIdxName(cfgOptPgPath, 1))));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         harnessLogResult(

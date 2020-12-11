@@ -53,37 +53,6 @@ typedef struct ConfigCommandData
     .parameterAllowed = parameterAllowedParam,
 
 /***********************************************************************************************************************************
-Option group data
-***********************************************************************************************************************************/
-typedef struct ConfigOptionGroupData
-{
-    const char *name;                                               // All options in the group must be prefixed with this name
-} ConfigOptionGroupData;
-
-/***********************************************************************************************************************************
-Map options names and indexes to option definitions
-***********************************************************************************************************************************/
-typedef struct ConfigOptionData
-{
-    const char *name;                                               // Option name
-    bool group:1;                                                   // Is the option in a group?
-    unsigned int groupId:1;                                         // Group id if option is in a group
-} ConfigOptionData;
-
-#define CONFIG_OPTION_LIST(...)                                                                                                    \
-    {__VA_ARGS__};
-
-#define CONFIG_OPTION(...)                                                                                                         \
-    {__VA_ARGS__},
-
-#define CONFIG_OPTION_NAME(nameParam)                                                                                              \
-    .name = nameParam,
-#define CONFIG_OPTION_GROUP(groupParam)                                                                                            \
-    .group = groupParam,
-#define CONFIG_OPTION_GROUP_ID(groupIdParam)                                                                                       \
-    .groupId = groupIdParam,
-
-/***********************************************************************************************************************************
 Include the automatically generated configuration data
 ***********************************************************************************************************************************/
 #include "config/config.auto.c"
@@ -404,9 +373,10 @@ cfgOptionGroup(ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
+    ASSERT(configLocal != NULL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(configOptionData[optionId].group);
+    FUNCTION_TEST_RETURN(configLocal->option[optionId].group);
 }
 
 /**********************************************************************************************************************************/
@@ -417,10 +387,11 @@ cfgOptionGroupId(ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
+    ASSERT(configLocal != NULL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(configOptionData[optionId].group);
+    ASSERT(configLocal->option[optionId].group);
 
-    FUNCTION_TEST_RETURN(configOptionData[optionId].groupId);
+    FUNCTION_TEST_RETURN(configLocal->option[optionId].groupId);
 }
 
 /**********************************************************************************************************************************/
@@ -481,7 +452,7 @@ cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key)
 
         // Error when the key is not found
         if (result == cfgOptionGroupIdxTotal(groupId))
-            THROW_FMT(AssertError, "key '%u' is not valid for '%s' option", key, configOptionData[optionId].name);
+            THROW_FMT(AssertError, "key '%u' is not valid for '%s' option", key, configLocal->option[optionId].name);
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -527,7 +498,7 @@ cfgOptionIdxDefault(ConfigOption optionId)
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
     FUNCTION_TEST_RETURN(
-        configOptionData[optionId].group ? configLocal->optionGroup[configOptionData[optionId].groupId].indexDefault : 0);
+        configLocal->option[optionId].group ? configLocal->optionGroup[configLocal->option[optionId].groupId].indexDefault : 0);
 }
 
 /**********************************************************************************************************************************/
@@ -542,7 +513,7 @@ cfgOptionIdxTotal(ConfigOption optionId)
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
     FUNCTION_TEST_RETURN(
-        configOptionData[optionId].group ? configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal : 1);
+        configLocal->option[optionId].group ? configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal : 1);
 }
 
 /**********************************************************************************************************************************/
@@ -662,8 +633,9 @@ cfgOptionIdxHostPort(ConfigOption optionId, unsigned int optionIdx, unsigned int
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configOptionData[optionId].group && optionIdx == 0) ||
-        (configOptionData[optionId].group && optionIdx < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
     ASSERT(port != NULL);
 
     String *result = NULL;
@@ -744,33 +716,6 @@ cfgOptionName(ConfigOption optionId)
 }
 
 const char *
-cfgOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-        FUNCTION_TEST_PARAM(UINT, keyIdx);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT((!configOptionData[optionId].group && keyIdx == 0) || configOptionData[optionId].group);
-
-    // If the option is in a group then construct the name
-    if (configOptionData[optionId].group)
-    {
-        // This is somewhat less than ideal since memory is being allocated with each call, rather than caching prior results. In
-        // practice the number of allocations should be quite small so we'll ignore this for now.
-        String *name = strNewFmt(
-            "%s%u%s", configOptionGroupData[configOptionData[optionId].groupId].name, keyIdx + 1,
-            configOptionData[optionId].name + strlen(configOptionGroupData[configOptionData[optionId].groupId].name));
-
-        FUNCTION_TEST_RETURN(strZ(name));
-    }
-
-    // Else return the stored name
-    FUNCTION_TEST_RETURN(configOptionData[optionId].name);
-}
-
-const char *
 cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -781,16 +726,23 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configOptionData[optionId].group && optionIdx == 0) ||
-        (configOptionData[optionId].group && optionIdx < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
-    if (configOptionData[optionId].group)
+    if (configLocal->option[optionId].group)
     {
-        FUNCTION_TEST_RETURN(
-            cfgOptionKeyIdxName(optionId, configLocal->optionGroup[configOptionData[optionId].groupId].indexMap[optionIdx]));
+        // This is somewhat less than ideal since memory is being allocated with each call, rather than caching prior results. In
+        // practice the number of allocations should be quite small so we'll ignore this for now.
+        String *name = strNewFmt(
+            "%s%u%s", configLocal->optionGroup[configLocal->option[optionId].groupId].name,
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexMap[optionIdx] + 1,
+            configLocal->option[optionId].name + strlen(configLocal->optionGroup[configLocal->option[optionId].groupId].name));
+
+        FUNCTION_TEST_RETURN(strZ(name));
     }
 
-    FUNCTION_TEST_RETURN(configOptionData[optionId].name);
+    FUNCTION_TEST_RETURN(configLocal->option[optionId].name);
 }
 
 /**********************************************************************************************************************************/
@@ -815,8 +767,9 @@ cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx)
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configOptionData[optionId].group && optionIdx == 0) ||
-        (configOptionData[optionId].group && optionIdx < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
     FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].negate);
 }
@@ -843,8 +796,9 @@ cfgOptionIdxReset(ConfigOption optionId, unsigned int optionIdx)
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configOptionData[optionId].group && optionIdx == 0) ||
-        (configOptionData[optionId].group && optionIdx < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
     FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].reset);
 }
@@ -864,8 +818,9 @@ cfgOptionIdxInternal(ConfigOption optionId, unsigned int optionIdx, VariantType 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configOptionData[optionId].group && optionIdx == 0) ||
-        (configOptionData[optionId].group && optionIdx < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
     // Check that the option is valid for the current command
     if (!cfgOptionValid(optionId))
@@ -910,8 +865,9 @@ cfgOptionIdx(ConfigOption optionId, unsigned int optionIdx)
 
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configOptionData[optionId].group && optionIdx == 0) ||
-        (configOptionData[optionId].group && optionIdx < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
     FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].value);
 }
@@ -1147,8 +1103,9 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configOptionData[optionId].group && optionIdx == 0) ||
-        (configOptionData[optionId].group && optionIdx < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
     MEM_CONTEXT_BEGIN(configLocal->memContext)
     {
@@ -1230,8 +1187,9 @@ cfgOptionIdxSource(ConfigOption optionId, unsigned int optionIdx)
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configOptionData[optionId].group && optionIdx == 0) ||
-        (configOptionData[optionId].group && optionIdx < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
     FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].source);
 }
@@ -1258,8 +1216,9 @@ cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx)
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configOptionData[optionId].group && optionIdx == 0) ||
-        (configOptionData[optionId].group && optionIdx < configLocal->optionGroup[configOptionData[optionId].groupId].indexTotal));
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
 
     FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configLocal->option[optionId].index[optionIdx].value != NULL);
 }

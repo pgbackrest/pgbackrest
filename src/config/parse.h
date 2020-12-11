@@ -31,6 +31,9 @@ int cfgParseOptionId(const char *optionName);
 // Option name from id
 const char *cfgParseOptionName(ConfigOption optionId);
 
+// Option name from id and key
+const char *cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
+
 // Is the option valid for the command?
 bool cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId);
 

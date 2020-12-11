@@ -70,23 +70,46 @@ Parse option flags
 #define PARSE_KEY_IDX_MASK                                          0xFF
 
 /***********************************************************************************************************************************
+Define how an group is parsed
+***********************************************************************************************************************************/
+typedef struct ParseRuleGroup
+{
+    const char *name;                                               // All options in the group must be prefixed with this name
+} ParseRuleGroup;
+
+// Macros used to define parse rules in parse.auto.c in a format that diffs well
+#define PARSE_RULE_GROUP(...)                                                                                                      \
+    {__VA_ARGS__}
+
+#define PARSE_RULE_GROUP_NAME(nameParam)                                                                                           \
+    .name = nameParam
+
+/***********************************************************************************************************************************
 Define how an option is parsed and interacts with other options
 ***********************************************************************************************************************************/
 typedef struct ParseRuleOption
 {
-    const char *name;                                               // Option name
-    uint64_t commandValid:CFG_COMMAND_TOTAL;                        // Option valid for the command?
+    const char *name;                                               // Name
+    bool group:1;                                                   // In a group?
+    unsigned int groupId:1;                                         // Id if in a group
+    uint64_t commandValid:CFG_COMMAND_TOTAL;                        // Valid for the command?
 } ParseRuleOption;
 
 // Macros used to define parse rules in parse.auto.c in a format that diffs well
 #define PARSE_RULE_OPTION(...)                                                                                                     \
-    {__VA_ARGS__},
+    {__VA_ARGS__}
 
 #define PARSE_RULE_OPTION_NAME(nameParam)                                                                                          \
-    .name = nameParam,
+    .name = nameParam
+
+#define PARSE_RULE_OPTION_GROUP(groupParam)                                                                                        \
+    .group = groupParam
+
+#define PARSE_RULE_OPTION_GROUP_ID(groupIdParam)                                                                                   \
+    .groupId = groupIdParam
 
 #define PARSE_RULE_OPTION_COMMAND_LIST(...)                                                                                        \
-    .commandValid = 0 __VA_ARGS__,
+    .commandValid = 0 __VA_ARGS__
 
 #define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
     | (1 << commandParam)
@@ -133,7 +156,7 @@ parseOptionIdxValue(ParseOption *optionList, unsigned int optionId, unsigned int
     if (optionKeyIdx >= optionList[optionId].indexListTotal)
     {
         // If the option is in a group
-        if (cfgOptionGroup(optionId))
+        if (parseRuleOption[optionId].group)
         {
             unsigned int optionOffset = 0;
 
@@ -261,6 +284,32 @@ cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId)
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
     FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandValid & (1 << commandId));
+}
+
+/**********************************************************************************************************************************/
+const char *
+cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, keyIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT((!parseRuleOption[optionId].group && keyIdx == 0) || parseRuleOption[optionId].group);
+
+    // If the option is in a group then construct the name
+    if (parseRuleOption[optionId].group)
+    {
+        String *name = strNewFmt(
+            "%s%u%s", parseRuleGroup[parseRuleOption[optionId].groupId].name, keyIdx + 1,
+            parseRuleOption[optionId].name + strlen(parseRuleGroup[parseRuleOption[optionId].groupId].name));
+
+        FUNCTION_TEST_RETURN(strZ(name));
+    }
+
+    // Else return the stored name
+    FUNCTION_TEST_RETURN(parseRuleOption[optionId].name);
 }
 
 /***********************************************************************************************************************************
@@ -697,7 +746,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             "option '%s' is not allowed on the command-line\n"
                             "HINT: this option could expose secrets in the process list.\n"
                             "HINT: specify the option in a configuration file or an environment variable instead.",
-                            cfgOptionKeyIdxName(option.id, option.keyIdx));
+                            cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                     }
 
                     // If the option has not been found yet then set it
@@ -728,7 +777,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' is negated multiple times",
-                                cfgOptionKeyIdxName(option.id, option.keyIdx));
+                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                         }
 
                         // Make sure option is not reset more than once.  Same justification as negate.
@@ -736,7 +785,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' is reset multiple times",
-                                cfgOptionKeyIdxName(option.id, option.keyIdx));
+                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                         }
 
                         // Don't allow an option to be both negated and reset
@@ -744,7 +793,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' cannot be negated and reset",
-                                cfgOptionKeyIdxName(option.id, option.keyIdx));
+                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                         }
 
                         // Don't allow an option to be both set and negated
@@ -752,7 +801,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' cannot be set and negated",
-                                cfgOptionKeyIdxName(option.id, option.keyIdx));
+                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                         }
 
                         // Don't allow an option to be both set and reset
@@ -760,7 +809,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' cannot be set and reset",
-                                cfgOptionKeyIdxName(option.id, option.keyIdx));
+                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                         }
 
                         // Add the argument
@@ -773,7 +822,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' cannot be set multiple times",
-                                cfgOptionKeyIdxName(option.id, option.keyIdx));
+                                cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                         }
                     }
 
@@ -1014,7 +1063,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             {
                                 THROW_FMT(
                                     OptionInvalidError, "option '%s' cannot be set multiple times",
-                                    cfgOptionKeyIdxName(option.id, option.keyIdx));
+                                    cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                             }
 
                             optionValue->valueList = iniGetList(ini, section, key);
@@ -1056,10 +1105,15 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
             for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
             {
+                // Always assign name since it may be needed for error messages
+                config->option[optionId].name = parseRuleOption[optionId].name;
+
                 // Is the option valid for this command?
                 if (cfgParseOptionValid(config->command, optionId))
                 {
                     config->option[optionId].valid = true;
+                    config->option[optionId].group = parseRuleOption[optionId].group;
+                    config->option[optionId].groupId = parseRuleOption[optionId].groupId;
                 }
                 else
                 {
@@ -1076,9 +1130,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 }
 
                 // If the option is in a group
-                if (cfgOptionGroup(optionId))
+                if (parseRuleOption[optionId].group)
                 {
-                    unsigned int groupId = cfgOptionGroupId(optionId);
+                    unsigned int groupId = parseRuleOption[optionId].groupId;
 
                     config->optionGroup[groupId].valid = true;
 
@@ -1102,6 +1156,9 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             // Write the indexes into the group in order
             for (unsigned int groupId = 0; groupId < CFG_OPTION_GROUP_TOTAL; groupId++)
             {
+                // Set group name
+                config->optionGroup[groupId].name = parseRuleGroup[groupId].name;
+
                 // Skip the group if it is not valid
                 if (!config->optionGroup[groupId].valid)
                     continue;
@@ -1149,8 +1206,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     continue;
 
                 // Determine the option index total. For options that are not indexed the index total is 1.
-                bool optionGroup = cfgOptionGroup(optionId);
-                unsigned int optionGroupId = optionGroup ? cfgOptionGroupId(optionId) : UINT_MAX;
+                bool optionGroup = parseRuleOption[optionId].group;
+                unsigned int optionGroupId = optionGroup ? parseRuleOption[optionId].groupId : UINT_MAX;
                 unsigned int optionListIndexTotal = optionGroup ? config->optionGroup[optionGroupId].indexTotal : 1;
 
                 MEM_CONTEXT_BEGIN(config->memContext)
@@ -1180,7 +1237,11 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         !parseOptionValue->reset;
 
                     // Initialize option value and set negate and reset flag
-                    *configOptionValue = (ConfigOptionValue){.negate = parseOptionValue->negate, .reset = parseOptionValue->reset};
+                    *configOptionValue = (ConfigOptionValue)
+                    {
+                        .negate = parseOptionValue->negate,
+                        .reset = parseOptionValue->reset
+                    };
 
                     // Check option dependencies
                     bool dependResolved = true;
@@ -1215,7 +1276,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             {
                                 THROW_FMT(
                                     OptionInvalidError, "option '%s' not valid without option '%s'",
-                                    cfgOptionKeyIdxName(optionId, optionKeyIdx), cfgOptionKeyIdxName(dependOptionId, optionKeyIdx));
+                                    cfgParseOptionKeyIdxName(optionId, optionKeyIdx),
+                                    cfgParseOptionKeyIdxName(dependOptionId, optionKeyIdx));
                             }
                         }
                         // If a depend list exists, make sure the value is in the list
@@ -1230,7 +1292,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             if (!dependResolved && optionSet && parseOptionValue->source == cfgSourceParam)
                             {
                                 // Get the depend option name
-                                const String *dependOptionName = STR(cfgOptionKeyIdxName(dependOptionId, optionKeyIdx));
+                                const String *dependOptionName = STR(cfgParseOptionKeyIdxName(dependOptionId, optionKeyIdx));
 
                                 // Build the list of possible depend values
                                 StringList *dependValueList = strLstNew();
@@ -1247,12 +1309,13 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         if (strcmp(dependValue, ZERO_Z) == 0)
                                         {
                                             dependOptionName =
-                                                strNewFmt("no-%s", cfgOptionKeyIdxName(dependOptionId, optionKeyIdx));
+                                                strNewFmt("no-%s", cfgParseOptionKeyIdxName(dependOptionId, optionKeyIdx));
                                         }
                                     }
                                     else
                                     {
-                                        ASSERT(dependOptionDefType == cfgDefOptTypePath || dependOptionDefType == cfgDefOptTypeString);
+                                        ASSERT(
+                                            dependOptionDefType == cfgDefOptTypePath || dependOptionDefType == cfgDefOptTypeString);
                                         strLstAdd(dependValueList, strNewFmt("'%s'", dependValue));
                                     }
                                 }
@@ -1271,7 +1334,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     strZ(
                                         strNewFmt(
                                             "option '%s' not valid without option '%s'%s",
-                                            cfgOptionKeyIdxName(optionId, optionKeyIdx), strZ(dependOptionName),
+                                            cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(dependOptionName),
                                             strZ(errorValue))));
                             }
                         }
@@ -1311,7 +1374,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         THROW_FMT(
                                             OptionInvalidError, "key/value '%s' not valid for '%s' option",
                                             strZ(strLstGet(parseOptionValue->valueList, listIdx)),
-                                            cfgOptionKeyIdxName(optionId, optionKeyIdx));
+                                            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
 
                                     kvPut(keyValue, VARSTR(strNewN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
@@ -1380,7 +1443,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     {
                                         THROW_FMT(
                                             OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(value),
-                                            cfgOptionKeyIdxName(optionId, optionKeyIdx));
+                                            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
                                     TRY_END();
 
@@ -1391,7 +1454,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     {
                                         THROW_FMT(
                                             OptionInvalidValueError, "'%s' is out of range for '%s' option", strZ(value),
-                                            cfgOptionKeyIdxName(optionId, optionKeyIdx));
+                                            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
                                 }
                                 // Else if path make sure it is valid
@@ -1402,7 +1465,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     {
                                         THROW_FMT(
                                             OptionInvalidValueError, "'%s' must be >= 1 character for '%s' option", strZ(value),
-                                            cfgOptionKeyIdxName(optionId, optionKeyIdx));
+                                            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
 
                                     if (optionDefType == cfgDefOptTypePath)
@@ -1412,7 +1475,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         {
                                             THROW_FMT(
                                                 OptionInvalidValueError, "'%s' must begin with / for '%s' option", strZ(value),
-                                                cfgOptionKeyIdxName(optionId, optionKeyIdx));
+                                                cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                         }
 
                                         // Make sure there are no occurrences of //
@@ -1420,7 +1483,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         {
                                             THROW_FMT(
                                                 OptionInvalidValueError, "'%s' cannot contain // for '%s' option", strZ(value),
-                                                cfgOptionKeyIdxName(optionId, optionKeyIdx));
+                                                cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                         }
 
                                         // If the path ends with a / we'll strip it off (unless the value is just /)
@@ -1441,7 +1504,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                 {
                                     THROW_FMT(
                                         OptionInvalidValueError, "'%s' is not allowed for '%s' option", strZ(value),
-                                        cfgOptionKeyIdxName(optionId, optionKeyIdx));
+                                        cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                 }
                             }
                         }
@@ -1486,7 +1549,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                                 THROW_FMT(
                                     OptionRequiredError, "%s command requires option: %s%s", cfgCommandName(config->command),
-                                    cfgOptionKeyIdxName(optionId, optionKeyIdx), hint);
+                                    cfgParseOptionKeyIdxName(optionId, optionKeyIdx), hint);
                             }
                         }
                     }

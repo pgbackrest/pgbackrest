@@ -139,7 +139,7 @@ hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value)
 void
 hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *value)
 {
-    strLstAdd(argList, strNewFmt("--%s=%s", cfgOptionKeyIdxName(optionId, optionKey - 1), value));
+    strLstAdd(argList, strNewFmt("--%s=%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1), value));
 }
 
 void
@@ -151,7 +151,7 @@ hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value)
 void
 hrnCfgArgKeyRawBool(StringList *argList, ConfigOption optionId, unsigned optionKey, bool value)
 {
-    strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgOptionKeyIdxName(optionId, optionKey - 1)));
+    strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgParseOptionKeyIdxName(optionId, optionKey - 1)));
 }
 
 void
@@ -163,7 +163,7 @@ hrnCfgArgRawNegate(StringList *argList, ConfigOption optionId)
 void
 hrnCfgArgKeyRawNegate(StringList *argList, ConfigOption optionId, unsigned optionKey)
 {
-    strLstAdd(argList, strNewFmt("--no-%s", cfgOptionKeyIdxName(optionId, optionKey - 1)));
+    strLstAdd(argList, strNewFmt("--no-%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1)));
 }
 
 void
@@ -175,7 +175,7 @@ hrnCfgArgRawReset(StringList *argList, ConfigOption optionId)
 void
 hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned optionKey)
 {
-    strLstAdd(argList, strNewFmt("--reset-%s", cfgOptionKeyIdxName(optionId, optionKey - 1)));
+    strLstAdd(argList, strNewFmt("--reset-%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1)));
 }
 
 /**********************************************************************************************************************************/
@@ -200,7 +200,7 @@ hrnCfgEnvRawZ(ConfigOption optionId, const char *value)
 void
 hrnCfgEnvKeyRawZ(ConfigOption optionId, unsigned optionKey, const char *value)
 {
-    setenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionKeyIdxName(optionId, optionKey - 1))), value, true);
+    setenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))), value, true);
 }
 
 void
@@ -212,5 +212,5 @@ hrnCfgEnvRemoveRaw(ConfigOption optionId)
 void
 hrnCfgEnvKeyRemoveRaw(ConfigOption optionId, unsigned optionKey)
 {
-    unsetenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgOptionKeyIdxName(optionId, optionKey - 1))));
+    unsetenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))));
 }
