@@ -10,6 +10,7 @@ Command and Option Configuration
 #include "common/memContext.h"
 #include "config/config.intern.h"
 #include "config/define.h"
+#include "config/parse.h"
 
 /***********************************************************************************************************************************
 Map command names to ids and vice versa
@@ -527,29 +528,29 @@ cfgOptionDefaultValue(ConfigOption optionId)
     Variant *result;
     Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommand(), optionId));
 
-    switch (cfgDefOptionType(optionId))
+    switch (cfgParseOptionType(optionId))
     {
-        case cfgDefOptTypeBoolean:
+        case cfgOptTypeBoolean:
         {
             result = varNewBool(varBoolForce(defaultValue));
             break;
         }
 
-        case cfgDefOptTypeInteger:
-        case cfgDefOptTypeSize:
-        case cfgDefOptTypeTime:
+        case cfgOptTypeInteger:
+        case cfgOptTypeSize:
+        case cfgOptTypeTime:
         {
             result = varNewInt64(varInt64Force(defaultValue));
             break;
         }
 
-        case cfgDefOptTypePath:
-        case cfgDefOptTypeString:
+        case cfgOptTypePath:
+        case cfgOptTypeString:
             result = varDup(defaultValue);
             break;
 
         default:
-            THROW_FMT(AssertError, "default value not available for option type %d", cfgDefOptionType(optionId));
+            THROW_FMT(AssertError, "default value not available for option type %d", cfgParseOptionType(optionId));
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -1115,9 +1116,9 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
         // Only set value if it is not null
         if (value != NULL)
         {
-            switch (cfgDefOptionType(optionId))
+            switch (cfgParseOptionType(optionId))
             {
-                case cfgDefOptTypeBoolean:
+                case cfgOptTypeBoolean:
                 {
                     if (varType(value) == varTypeBool)
                         configLocal->option[optionId].index[optionIdx].value = varDup(value);
@@ -1127,9 +1128,9 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                     break;
                 }
 
-                case cfgDefOptTypeInteger:
-                case cfgDefOptTypeSize:
-                case cfgDefOptTypeTime:
+                case cfgOptTypeInteger:
+                case cfgOptTypeSize:
+                case cfgOptTypeTime:
                 {
                     if (varType(value) == varTypeInt64)
                         configLocal->option[optionId].index[optionIdx].value = varDup(value);
@@ -1139,8 +1140,8 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                     break;
                 }
 
-                case cfgDefOptTypePath:
-                case cfgDefOptTypeString:
+                case cfgOptTypePath:
+                case cfgOptTypeString:
                 {
                     if (varType(value) == varTypeString)
                         configLocal->option[optionId].index[optionIdx].value = varDup(value);
@@ -1154,7 +1155,7 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                 }
 
                 default:
-                    THROW_FMT(AssertError, "set not available for option type %d", cfgDefOptionType(optionId));
+                    THROW_FMT(AssertError, "set not available for option type %d", cfgParseOptionType(optionId));
             }
         }
         else

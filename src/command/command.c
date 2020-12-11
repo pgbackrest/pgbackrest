@@ -98,7 +98,7 @@ cmdOption(void)
                             if (cfgDefOptionSecure(optionId))
                                 strCatFmt(cmdOptionStr, " --%s=<redacted>", cfgOptionIdxName(optionId, optionIdx));
                             // Output boolean option
-                            else if (cfgDefOptionType(optionId) == cfgDefOptTypeBoolean)
+                            else if (cfgParseOptionType(optionId) == cfgOptTypeBoolean)
                                 strCatFmt(cmdOptionStr, " --%s", cfgOptionIdxName(optionId, optionIdx));
                             // Output other options
                             else
@@ -106,7 +106,7 @@ cmdOption(void)
                                 StringList *valueList = NULL;
 
                                 // Generate the values of hash options
-                                if (cfgDefOptionType(optionId) == cfgDefOptTypeHash)
+                                if (cfgParseOptionType(optionId) == cfgOptTypeHash)
                                 {
                                     valueList = strLstNew();
 
@@ -123,12 +123,12 @@ cmdOption(void)
                                     }
                                 }
                                 // Generate values for list options
-                                else if (cfgDefOptionType(optionId) == cfgDefOptTypeList)
+                                else if (cfgParseOptionType(optionId) == cfgOptTypeList)
                                 {
                                     valueList = strLstNewVarLst(cfgOptionIdxLst(optionId, optionIdx));
                                 }
                                 // Generate time value
-                                else if (cfgDefOptionType(optionId) == cfgDefOptTypeTime)
+                                else if (cfgParseOptionType(optionId) == cfgOptTypeTime)
                                 {
                                     valueList = strLstNew();
                                     strLstAdd(

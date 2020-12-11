@@ -5,6 +5,7 @@ Parse Configuration
 #define CONFIG_PARSE_H
 
 #include "config/config.h"
+#include "config/parse.auto.h"
 
 /***********************************************************************************************************************************
 Functions
@@ -33,6 +34,9 @@ const char *cfgParseOptionName(ConfigOption optionId);
 
 // Option name from id and key
 const char *cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
+
+// Option data type
+ConfigOptionType cfgParseOptionType(ConfigOption optionId);
 
 // Is the option valid for the command?
 bool cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId);

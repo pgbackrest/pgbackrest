@@ -90,6 +90,8 @@ Define how an option is parsed and interacts with other options
 typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
+    unsigned int type:3;                                            // e.g. string, int, boolean
+    bool multi:1;                                                   // Can be specified multiple times?
     bool group:1;                                                   // In a group?
     unsigned int groupId:1;                                         // Id if in a group
     uint64_t commandValid:CFG_COMMAND_TOTAL;                        // Valid for the command?
@@ -101,6 +103,12 @@ typedef struct ParseRuleOption
 
 #define PARSE_RULE_OPTION_NAME(nameParam)                                                                                          \
     .name = nameParam
+
+#define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
+    .type = typeParam
+
+#define PARSE_RULE_OPTION_MULTI(typeMulti)                                                                                         \
+    .multi = typeMulti
 
 #define PARSE_RULE_OPTION_GROUP(groupParam)                                                                                        \
     .group = groupParam
@@ -272,21 +280,6 @@ cfgParseOptionName(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-bool
-cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < CFG_COMMAND_TOTAL);
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-
-    FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandValid & (1 << commandId));
-}
-
-/**********************************************************************************************************************************/
 const char *
 cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
 {
@@ -310,6 +303,34 @@ cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
 
     // Else return the stored name
     FUNCTION_TEST_RETURN(parseRuleOption[optionId].name);
+}
+
+/**********************************************************************************************************************************/
+ConfigOptionType
+cfgParseOptionType(ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    FUNCTION_TEST_RETURN(parseRuleOption[optionId].type);
+}
+
+/**********************************************************************************************************************************/
+bool
+cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandValid & (1 << commandId));
 }
 
 /***********************************************************************************************************************************
@@ -813,7 +834,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         }
 
                         // Add the argument
-                        if (optionList[optionListIdx].has_arg == required_argument && cfgDefOptionMulti(option.id))
+                        if (optionList[optionListIdx].has_arg == required_argument && parseRuleOption[option.id].multi)
                         {
                             strLstAdd(optionValue->valueList, strNew(optarg));
                         }
@@ -918,7 +939,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     optionValue->source = cfgSourceConfig;
 
                     // Convert boolean to string
-                    if (cfgDefOptionType(option.id) == cfgDefOptTypeBoolean)
+                    if (cfgParseOptionType(option.id) == cfgOptTypeBoolean)
                     {
                         if (strEqZ(value, "n"))
                             optionValue->negate = true;
@@ -926,7 +947,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strZ(key));
                     }
                     // Else split list/hash into separate values
-                    else if (cfgDefOptionMulti(option.id))
+                    else if (parseRuleOption[option.id].multi)
                     {
                         optionValue->valueList = strLstNewSplitZ(value, ":");
                     }
@@ -1059,7 +1080,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (iniSectionKeyIsList(ini, section, key))
                         {
                             // Error if the option cannot be specified multiple times
-                            if (!cfgDefOptionMulti(option.id))
+                            if (!parseRuleOption[option.id].multi)
                             {
                                 THROW_FMT(
                                     OptionInvalidError, "option '%s' cannot be set multiple times",
@@ -1080,7 +1101,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     strZ(key));
                             }
 
-                            if (cfgDefOptionType(option.id) == cfgDefOptTypeBoolean)
+                            if (cfgParseOptionType(option.id) == cfgOptTypeBoolean)
                             {
                                 if (strEqZ(value, "n"))
                                     optionValue->negate = true;
@@ -1217,7 +1238,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 MEM_CONTEXT_END();
 
                 // Loop through the option indexes
-                ConfigDefineOptionType optionDefType = cfgDefOptionType(optionId);
+                ConfigOptionType optionType = cfgParseOptionType(optionId);
 
                 for (unsigned int optionListIdx = 0; optionListIdx < optionListIndexTotal; optionListIdx++)
                 {
@@ -1233,7 +1254,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                     // Is the value set for this option?
                     bool optionSet =
-                        parseOptionValue->found && (optionDefType == cfgDefOptTypeBoolean || !parseOptionValue->negate) &&
+                        parseOptionValue->found && (optionType == cfgOptTypeBoolean || !parseOptionValue->negate) &&
                         !parseOptionValue->reset;
 
                     // Initialize option value and set negate and reset flag
@@ -1249,14 +1270,14 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     if (cfgDefOptionDepend(config->command, optionId))
                     {
                         ConfigOption dependOptionId = cfgDefOptionDependOption(config->command, optionId);
-                        ConfigDefineOptionType dependOptionDefType = cfgDefOptionType(dependOptionId);
+                        ConfigOptionType dependOptionType = cfgParseOptionType(dependOptionId);
 
                         // Get the depend option value
                         const Variant *dependValue = config->option[dependOptionId].index[optionListIdx].value;
 
                         if (dependValue != NULL)
                         {
-                            if (dependOptionDefType == cfgDefOptTypeBoolean)
+                            if (dependOptionType == cfgOptTypeBoolean)
                             {
                                 if (varBool(dependValue))
                                     dependValue = OPTION_VALUE_1;
@@ -1303,7 +1324,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     const char *dependValue = cfgDefOptionDependValue(config->command, optionId, listIdx);
 
                                     // Build list based on depend option type
-                                    if (dependOptionDefType == cfgDefOptTypeBoolean)
+                                    if (dependOptionType == cfgOptTypeBoolean)
                                     {
                                         // Boolean outputs depend option name as no-* when false
                                         if (strcmp(dependValue, ZERO_Z) == 0)
@@ -1314,8 +1335,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     }
                                     else
                                     {
-                                        ASSERT(
-                                            dependOptionDefType == cfgDefOptTypePath || dependOptionDefType == cfgDefOptTypeString);
+                                        ASSERT(dependOptionType == cfgOptTypePath || dependOptionType == cfgOptTypeString);
                                         strLstAdd(dependValueList, strNewFmt("'%s'", dependValue));
                                     }
                                 }
@@ -1348,11 +1368,11 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         {
                             configOptionValue->source = parseOptionValue->source;
 
-                            if (optionDefType == cfgDefOptTypeBoolean)
+                            if (optionType == cfgOptTypeBoolean)
                             {
                                 configOptionValue->value = !parseOptionValue->negate ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
                             }
-                            else if (optionDefType == cfgDefOptTypeHash)
+                            else if (optionType == cfgOptTypeHash)
                             {
                                 Variant *value = NULL;
 
@@ -1382,7 +1402,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                                 configOptionValue->value = value;
                             }
-                            else if (optionDefType == cfgDefOptTypeList)
+                            else if (optionType == cfgOptTypeList)
                             {
                                 MEM_CONTEXT_BEGIN(config->memContext)
                                 {
@@ -1396,15 +1416,15 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                 const String *valueAllow = value;
 
                                 // If a numeric type check that the value is valid
-                                if (optionDefType == cfgDefOptTypeInteger ||  optionDefType == cfgDefOptTypeSize ||
-                                    optionDefType == cfgDefOptTypeTime)
+                                if (optionType == cfgOptTypeInteger ||  optionType == cfgOptTypeSize ||
+                                    optionType == cfgOptTypeTime)
                                 {
                                     int64_t valueInt64 = 0;
 
                                     // Check that the value can be converted
                                     TRY_BEGIN()
                                     {
-                                        if (optionDefType == cfgDefOptTypeInteger)
+                                        if (optionType == cfgOptTypeInteger)
                                         {
                                             MEM_CONTEXT_BEGIN(config->memContext)
                                             {
@@ -1414,7 +1434,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
 
                                             valueInt64 = varInt64(configOptionValue->value);
                                         }
-                                        else if (optionDefType == cfgDefOptTypeSize)
+                                        else if (optionType == cfgOptTypeSize)
                                         {
                                             MEM_CONTEXT_BEGIN(config->memContext)
                                             {
@@ -1427,7 +1447,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         }
                                         else
                                         {
-                                            ASSERT(optionDefType == cfgDefOptTypeTime);
+                                            ASSERT(optionType == cfgOptTypeTime);
 
                                             MEM_CONTEXT_BEGIN(config->memContext)
                                             {
@@ -1468,7 +1488,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
 
-                                    if (optionDefType == cfgDefOptTypePath)
+                                    if (optionType == cfgOptTypePath)
                                     {
                                         // Make sure it starts with /
                                         if (!strBeginsWithZ(value, "/"))
@@ -1524,15 +1544,15 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                     // This would typically be a switch but since not all cases are covered it would require a
                                     // separate function which does not seem worth it. The eventual plan is to have all the defaults
                                     // represented as constants so they can be assigned directly without creating variants.
-                                    if (optionDefType == cfgDefOptTypeBoolean)
+                                    if (optionType == cfgOptTypeBoolean)
                                         configOptionValue->value = strcmp(value, ONE_Z) == 0 ? BOOL_TRUE_VAR : BOOL_FALSE_VAR;
-                                    else if (optionDefType == cfgDefOptTypePath || optionDefType == cfgDefOptTypeString)
+                                    else if (optionType == cfgOptTypePath || optionType == cfgOptTypeString)
                                         configOptionValue->value = varNewStrZ(value);
                                     else
                                     {
                                         ASSERT(
-                                            optionDefType == cfgDefOptTypeInteger || optionDefType == cfgDefOptTypeSize ||
-                                            optionDefType == cfgDefOptTypeTime);
+                                            optionType == cfgOptTypeInteger || optionType == cfgOptTypeSize ||
+                                            optionType == cfgOptTypeTime);
 
                                         configOptionValue->value = varNewInt64(cvtZToInt64(value));
                                     }

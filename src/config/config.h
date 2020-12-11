@@ -10,7 +10,6 @@ config/parse.c sets the command and options and determines which options are val
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/type/stringList.h"
-
 #include "config/config.auto.h"
 
 /***********************************************************************************************************************************

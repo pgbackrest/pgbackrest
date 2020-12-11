@@ -27,6 +27,8 @@ use pgBackRestBuild::Config::Data;
 ####################################################################################################################################
 use constant BLDLCL_FILE_DEFINE                                     => 'parse';
 
+use constant BLDLCL_ENUM_OPTION_TYPE                                => '01-enumOptionType';
+
 use constant BLDLCL_DATA_OPTION_GROUP                               => '01-optionGroup';
 use constant BLDLCL_DATA_OPTION                                     => '02-dataOption';
 use constant BLDLCL_DATA_OPTION_GETOPT                              => '03-dataOptionGetOpt';
@@ -35,7 +37,7 @@ use constant BLDLCL_DATA_OPTION_RESOLVE                             => '04-dataO
 ####################################################################################################################################
 # Definitions for constants and data to build
 ####################################################################################################################################
-my $strSummary = 'Option Parse Definition';
+my $strSummary = 'Config Parse Rules';
 
 my $rhBuild =
 {
@@ -44,6 +46,15 @@ my $rhBuild =
         &BLDLCL_FILE_DEFINE =>
         {
             &BLD_SUMMARY => $strSummary,
+
+            &BLD_ENUM =>
+            {
+                &BLDLCL_ENUM_OPTION_TYPE =>
+                {
+                    &BLD_SUMMARY => 'Option type',
+                    &BLD_NAME => 'ConfigOptionType',
+                },
+            },
 
             &BLD_DATA =>
             {
@@ -72,10 +83,31 @@ my $rhBuild =
 };
 
 ####################################################################################################################################
+# Generate enum names
+####################################################################################################################################
+sub buildConfigDefineOptionTypeEnum
+{
+    return bldEnum('cfgOptType', shift);
+}
+
+push @EXPORT, qw(buildConfigDefineOptionTypeEnum);
+
+####################################################################################################################################
 # Build configuration constants and data
 ####################################################################################################################################
 sub buildConfigParse
 {
+    # Build option type enum
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_ENUM}{&BLDLCL_ENUM_OPTION_TYPE};
+
+    foreach my $strOptionType (cfgDefineOptionTypeList())
+    {
+        # Build C enum
+        my $strOptionTypeEnum = buildConfigDefineOptionTypeEnum($strOptionType);
+        push(@{$rhEnum->{&BLD_LIST}}, $strOptionTypeEnum);
+    };
+
     # Build option group constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhOptionGroupDefine = cfgDefineOptionGroup();
@@ -118,7 +150,14 @@ sub buildConfigParse
             "    // " . (qw{-} x 125) . "\n" .
             "    PARSE_RULE_OPTION\n" .
             "    (\n" .
-            "        PARSE_RULE_OPTION_NAME(\"${strOption}\"),\n";
+            "        PARSE_RULE_OPTION_NAME(\"${strOption}\"),\n" .
+            "        PARSE_RULE_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . "),\n";
+
+        if ($rhOption->{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH || $rhOption->{&CFGDEF_TYPE} eq CFGDEF_TYPE_LIST)
+        {
+            $strBuildSource .=
+                "        PARSE_RULE_OPTION_MULTI(true),\n";
+        }
 
         # Build group info
         #---------------------------------------------------------------------------------------------------------------------------

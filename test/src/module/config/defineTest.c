@@ -81,10 +81,6 @@ testRun(void)
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptSet), false, "option set is not internal");
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptPgHost), true, "option pg-host is internal");
 
-        TEST_RESULT_BOOL(cfgDefOptionMulti(cfgOptRecoveryOption), true, "recovery-option is multi");
-        TEST_RESULT_BOOL(cfgDefOptionMulti(cfgOptDbInclude), true, "db-include is multi");
-        TEST_RESULT_BOOL(cfgDefOptionMulti(cfgOptStartFast), false, "start-fast is not multi");
-
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdBackup, cfgOptConfig), true, "option required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdRestore, cfgOptRepoHost), false, "option not required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdInfo, cfgOptStanza), false, "command option not required");
@@ -95,9 +91,6 @@ testRun(void)
 
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgOptRepoS3Key), true, "option secure");
         TEST_RESULT_BOOL(cfgDefOptionSecure(cfgOptRepoHost), false, "option not secure");
-
-        TEST_RESULT_INT(cfgDefOptionType(cfgOptType), cfgDefOptTypeString, "string type");
-        TEST_RESULT_INT(cfgDefOptionType(cfgOptDelta), cfgDefOptTypeBoolean, "boolean type");
     }
 
     // *****************************************************************************************************************************

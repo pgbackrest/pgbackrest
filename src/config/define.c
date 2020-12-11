@@ -48,7 +48,6 @@ Define how an option is parsed and interacts with other options.
 ***********************************************************************************************************************************/
 typedef struct ConfigDefineOptionData
 {
-    unsigned int type:3;                                            // Option type (e.g. string, int, boolean, etc.)
     unsigned int internal:1;                                        // Is the option only used internally?
     unsigned int indexTotal:4;                                      // 0 normally, > 0 if indexed option (e.g. pg1-*)
     unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
@@ -81,8 +80,6 @@ typedef struct ConfigDefineOptionData
     .section = sectionParam,
 #define CFGDEFDATA_OPTION_SECURE(secureParam)                                                                                      \
     .secure = secureParam,
-#define CFGDEFDATA_OPTION_TYPE(typeParam)                                                                                          \
-    .type = typeParam,
 
 #define CFGDEFDATA_OPTION_HELP_SECTION(helpSectionParam)                                                                           \
     .helpSection = helpSectionParam,
@@ -667,21 +664,6 @@ cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 bool
-cfgDefOptionMulti(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    FUNCTION_TEST_RETURN(
-        configDefineOptionData[optionId].type == cfgDefOptTypeHash ||
-            configDefineOptionData[optionId].type == cfgDefOptTypeList);
-}
-
-/**********************************************************************************************************************************/
-bool
 cfgDefOptionSecure(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -726,17 +708,4 @@ cfgDefOptionSection(ConfigOption optionId)
     ASSERT(optionId < cfgDefOptionTotal());
 
     FUNCTION_TEST_RETURN(configDefineOptionData[optionId].section);
-}
-
-/**********************************************************************************************************************************/
-int
-cfgDefOptionType(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    FUNCTION_TEST_RETURN(configDefineOptionData[optionId].type);
 }

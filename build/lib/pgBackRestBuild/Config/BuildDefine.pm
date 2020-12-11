@@ -32,8 +32,6 @@ use constant BLDLCL_FILE_DEFINE                                     => 'define';
 use constant BLDLCL_DATA_COMMAND                                    => '01-dataCommand';
 use constant BLDLCL_DATA_OPTION                                     => '02-dataOption';
 
-use constant BLDLCL_ENUM_OPTION_TYPE                                => '02-enumOptionType';
-
 ####################################################################################################################################
 # Definitions for constants and data to build
 ####################################################################################################################################
@@ -46,15 +44,6 @@ my $rhBuild =
         &BLDLCL_FILE_DEFINE =>
         {
             &BLD_SUMMARY => $strSummary,
-
-            &BLD_ENUM =>
-            {
-                &BLDLCL_ENUM_OPTION_TYPE =>
-                {
-                    &BLD_SUMMARY => 'Option type define',
-                    &BLD_NAME => 'ConfigDefineOptionType',
-                },
-            },
 
             &BLD_DATA =>
             {
@@ -71,16 +60,6 @@ my $rhBuild =
         },
     },
 };
-
-####################################################################################################################################
-# Generate enum names
-####################################################################################################################################
-sub buildConfigDefineOptionTypeEnum
-{
-    return bldEnum('cfgDefOptType', shift);
-}
-
-push @EXPORT, qw(buildConfigDefineOptionTypeEnum);
 
 ####################################################################################################################################
 # Helper function to format help text
@@ -384,17 +363,6 @@ sub buildConfigDefine
 
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_COMMAND}{&BLD_SOURCE} = $strBuildSource;
 
-    # Build option type constants
-    #-------------------------------------------------------------------------------------------------------------------------------
-    my $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_ENUM}{&BLDLCL_ENUM_OPTION_TYPE};
-
-    foreach my $strOptionType (cfgDefineOptionTypeList())
-    {
-        # Build C enum
-        my $strOptionTypeEnum = buildConfigDefineOptionTypeEnum($strOptionType);
-        push(@{$rhEnum->{&BLD_LIST}}, $strOptionTypeEnum);
-    };
-
     # Build option constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhConfigDefine = cfgDefine();
@@ -427,7 +395,6 @@ sub buildConfigDefine
             "        CFGDEFDATA_OPTION_SECTION(cfgDefSection" .
                 (defined($rhOption->{&CFGDEF_SECTION}) ? ucfirst($rhOption->{&CFGDEF_SECTION}) : 'CommandLine') .
                 ")\n" .
-            "        CFGDEFDATA_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . ")\n" .
             "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
             "\n" .
             "        CFGDEFDATA_OPTION_INDEX_TOTAL(" . $rhOption->{&CFGDEF_INDEX_TOTAL} . ")\n" .

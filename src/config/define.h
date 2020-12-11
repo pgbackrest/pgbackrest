@@ -18,7 +18,6 @@ typedef enum
 
 #include "common/type/string.h"
 #include "config/config.auto.h"
-#include "config/define.auto.h"
 
 /***********************************************************************************************************************************
 Define global section name
@@ -29,9 +28,6 @@ Define global section name
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Command total
-unsigned int cfgDefCommandTotal(void);
-
 // Command help
 const char *cfgDefCommandHelpDescription(ConfigCommand commandId);
 const char *cfgDefCommandHelpSummary(ConfigCommand commandId);
@@ -73,9 +69,6 @@ unsigned int cfgDefOptionIndexTotal(ConfigOption optionId);
 // Is the option for internal use only?
 bool cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId);
 
-// Does the option accept multiple values?
-bool cfgDefOptionMulti(ConfigOption optionId);
-
 // Is the option required
 bool cfgDefOptionRequired(ConfigCommand commandId, ConfigOption optionId);
 
@@ -84,11 +77,5 @@ ConfigDefSection cfgDefOptionSection(ConfigOption optionId);
 
 // Does the option need to be protected from showing up in logs, command lines, etc?
 bool cfgDefOptionSecure(ConfigOption optionId);
-
-// Option total
-unsigned int cfgDefOptionTotal(void);
-
-// Get option data type
-int cfgDefOptionType(ConfigOption optionId);
 
 #endif
