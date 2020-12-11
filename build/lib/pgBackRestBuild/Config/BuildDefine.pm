@@ -392,9 +392,7 @@ sub buildConfigDefine
         $strBuildSource .=
             "        CFGDEFDATA_OPTION_NAME(\"${strOption}\")\n" .
             "        CFGDEFDATA_OPTION_REQUIRED(" . ($bRequired ? 'true' : 'false') . ")\n" .
-            "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
-            "\n" .
-            "        CFGDEFDATA_OPTION_SECURE(" . ($rhOption->{&CFGDEF_SECURE} ? 'true' : 'false') . ")\n";
+            "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n";
 
         if (defined($hOptionHelp))
         {

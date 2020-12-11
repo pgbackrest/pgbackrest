@@ -78,9 +78,6 @@ testRun(void)
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdBackup, cfgOptConfig), true, "option required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdRestore, cfgOptRepoHost), false, "option not required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdInfo, cfgOptStanza), false, "command option not required");
-
-        TEST_RESULT_BOOL(cfgDefOptionSecure(cfgOptRepoS3Key), true, "option secure");
-        TEST_RESULT_BOOL(cfgDefOptionSecure(cfgOptRepoHost), false, "option not secure");
     }
 
     // *****************************************************************************************************************************

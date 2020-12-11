@@ -1350,6 +1350,7 @@ static const ParseRuleOption parseRuleOption[] =
         PARSE_RULE_OPTION_NAME("repo-azure-account"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1542,6 +1543,7 @@ static const ParseRuleOption parseRuleOption[] =
         PARSE_RULE_OPTION_NAME("repo-azure-key"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -1670,6 +1672,7 @@ static const ParseRuleOption parseRuleOption[] =
         PARSE_RULE_OPTION_NAME("repo-cipher-pass"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2247,6 +2250,7 @@ static const ParseRuleOption parseRuleOption[] =
         PARSE_RULE_OPTION_NAME("repo-s3-key"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2279,6 +2283,7 @@ static const ParseRuleOption parseRuleOption[] =
         PARSE_RULE_OPTION_NAME("repo-s3-key-secret"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
@@ -2439,6 +2444,7 @@ static const ParseRuleOption parseRuleOption[] =
         PARSE_RULE_OPTION_NAME("repo-s3-token"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 

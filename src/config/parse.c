@@ -102,6 +102,7 @@ typedef struct ParseRuleOption
     const char *name;                                               // Name
     unsigned int type:3;                                            // e.g. string, int, boolean
     unsigned int section:2;                                         // e.g. global, stanza, cmd-line
+    bool secure:1;                                                  // Needs to be redacted in logs and cmd-line?
     bool multi:1;                                                   // Can be specified multiple times?
     bool group:1;                                                   // In a group?
     unsigned int groupId:1;                                         // Id if in a group
@@ -120,6 +121,9 @@ typedef struct ParseRuleOption
 
 #define PARSE_RULE_OPTION_SECTION(sectionParam)                                                                                    \
     .section = sectionParam
+
+#define PARSE_RULE_OPTION_SECURE(secureParam)                                                                                      \
+    .secure = secureParam
 
 #define PARSE_RULE_OPTION_MULTI(typeMulti)                                                                                         \
     .multi = typeMulti
@@ -317,6 +321,19 @@ cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
 
     // Else return the stored name
     FUNCTION_TEST_RETURN(parseRuleOption[optionId].name);
+}
+
+/**********************************************************************************************************************************/
+bool
+cfgParseOptionSecure(ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    FUNCTION_TEST_RETURN(parseRuleOption[optionId].secure);
 }
 
 /**********************************************************************************************************************************/
@@ -774,7 +791,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     ASSERT(option.id < CFG_OPTION_TOTAL);
 
                     // Error if this option is secure and cannot be passed on the command line
-                    if (cfgDefOptionSecure(option.id))
+                    if (cfgParseOptionSecure(option.id))
                     {
                         THROW_FMT(
                             OptionInvalidError,

@@ -59,7 +59,4 @@ bool cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId);
 // Is the option required
 bool cfgDefOptionRequired(ConfigCommand commandId, ConfigOption optionId);
 
-// Does the option need to be protected from showing up in logs, command lines, etc?
-bool cfgDefOptionSecure(ConfigOption optionId);
-
 #endif

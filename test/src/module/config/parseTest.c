@@ -38,6 +38,14 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // *****************************************************************************************************************************
+    if (testBegin("size"))
+    {
+        TEST_TITLE("check size of parse structures");
+
+        TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 16 : 8, "ParseRuleOption size");
+    }
+
     // Config functions that are not tested with parse
     // *****************************************************************************************************************************
     if (testBegin("cfg*()"))

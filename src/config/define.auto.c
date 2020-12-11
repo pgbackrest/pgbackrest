@@ -313,8 +313,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Push/get WAL segments asynchronously.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -337,8 +335,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("archive-check")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Check that WAL segments are in the archive before backup completes.")
@@ -373,8 +369,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("archive-copy")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Copy WAL segments needed for consistency to the backup.")
@@ -414,8 +408,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Maximum size of the pgBackRest archive-get queue.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -439,8 +431,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("archive-mode")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Preserve or disable archiving on restored cluster.")
@@ -477,8 +467,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Maximum size of the PostgreSQL archive queue.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -514,8 +502,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Archive timeout.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -539,8 +525,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Backup from the standby cluster.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -561,8 +545,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("buffer-size")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Buffer size for file operations.")
@@ -606,8 +588,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Validate data page checksums.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -626,8 +606,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("cipher-pass")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(true)
-
-        CFGDEFDATA_OPTION_SECURE(false)
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -636,8 +614,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("cmd-ssh")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Path to ssh client executable.")
@@ -658,8 +634,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("compress")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Use file compression.")
@@ -683,8 +657,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("File compression level.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -704,8 +676,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("compress-level-network")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Network compression level.")
@@ -730,8 +700,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("compress-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("File compression type.")
@@ -768,8 +736,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest configuration file.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -789,8 +755,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("config-include-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Path to additional pgBackRest configuration files.")
@@ -812,8 +776,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("config-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Base path of pgBackRest configuration files.")
@@ -839,8 +801,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Restore only specified databases.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -860,8 +820,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("db-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Database query timeout.")
@@ -888,8 +846,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Restore or backup using checksums.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -913,8 +869,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Execute a dry-run for the command.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -935,8 +889,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("exclude")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Exclude paths/files from the backup.")
@@ -970,8 +922,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("exec-id")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(true)
-
-        CFGDEFDATA_OPTION_SECURE(false)
     )
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -980,8 +930,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("expire-auto")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Automatically run the expire command after a successful backup.")
@@ -1005,8 +953,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
@@ -1028,8 +974,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("force")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -1120,8 +1064,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -1145,8 +1087,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("io-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("I/O timeout.")
@@ -1172,8 +1112,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Restore all symlinks.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1197,8 +1135,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Modify the destination of a symlink.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1214,8 +1150,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("lock-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Path where lock files are stored.")
@@ -1237,8 +1171,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("log-level-console")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Level for console logging.")
@@ -1279,8 +1211,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("log")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Level for file logging.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1319,8 +1249,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("log-level-stderr")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Level for stderr logging.")
@@ -1364,8 +1292,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("log")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Path where log files are stored.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1387,8 +1313,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("log")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Enable logging in subprocesses.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1408,8 +1332,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("log-timestamp")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Enable timestamp in logging.")
@@ -1431,8 +1353,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("manifest-save-threshold")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Manifest save threshold during backup.")
@@ -1459,8 +1379,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Use a neutral umask.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1485,8 +1403,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("online")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -1538,8 +1454,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("output")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -1596,8 +1510,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 8)
@@ -1639,8 +1551,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL database.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1664,8 +1574,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("pg-host")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL host for operating remotely via SSH.")
@@ -1714,8 +1622,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest exe path on the PostgreSQL host.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1737,8 +1643,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("pg-host-config")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest database host configuration file.")
@@ -1763,8 +1667,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest database host configuration include path.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1786,8 +1688,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("pg-host-config-path")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest database host configuration path.")
@@ -1811,8 +1711,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL host port when pg-host is set.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1834,8 +1732,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("pg-host-user")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL host logon user when pg-host is set.")
@@ -1859,8 +1755,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("pg-local")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(true)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -1896,8 +1790,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL data directory.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1930,8 +1822,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL port.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -1955,8 +1845,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("pg-socket-path")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL unix socket path.")
@@ -1982,8 +1870,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
         CFGDEFDATA_OPTION_HELP_SUMMARY("PostgreSQL database user.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2005,8 +1891,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 1024)
@@ -2019,8 +1903,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("process-max")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Max processes to use for compress/transfer.")
@@ -2043,8 +1925,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("protocol-timeout")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Protocol timeout.")
@@ -2069,8 +1949,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Do not transform data.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2090,8 +1968,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("recovery-option")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Set an option in recovery.conf.")
@@ -2130,8 +2006,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -2167,8 +2041,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
@@ -2186,8 +2058,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 1)
@@ -2200,8 +2070,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-azure-account")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository account.")
@@ -2227,8 +2095,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository TLS CA file.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2253,8 +2119,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository TLS CA path.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2278,8 +2142,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-azure-container")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository container.")
@@ -2308,8 +2170,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository endpoint.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2336,8 +2196,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository host.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2362,8 +2220,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(true)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository key.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2387,8 +2243,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-azure-key-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository key type.")
@@ -2425,8 +2279,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository server port.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2453,8 +2305,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-azure-verify-tls")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Azure repository server certificate verify.")
@@ -2483,8 +2333,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(true)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Repository cipher passphrase.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2508,8 +2356,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-cipher-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Cipher used to encrypt the repository.")
@@ -2542,8 +2388,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Hardlink files between backups in the repository.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2566,8 +2410,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-host")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Repository host when operating remotely via SSH.")
@@ -2632,8 +2474,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest exe path on the repository host.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2655,8 +2495,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-host-config")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest repository host configuration file.")
@@ -2681,8 +2519,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest repository host configuration include path.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2704,8 +2540,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-host-config-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("pgBackRest repository host configuration path.")
@@ -2729,8 +2563,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Repository host port when repo-host is set.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2752,8 +2584,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-host-user")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Repository host user when repo-host is set.")
@@ -2779,8 +2609,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-local")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(true)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -2830,8 +2658,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Path where backups and archive are stored.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2856,8 +2682,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-retention-archive")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Number of backups worth of continuous WAL to retain.")
@@ -2891,8 +2715,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-retention-archive-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Backup type for WAL retention.")
@@ -2928,8 +2750,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Number of differential backups to retain.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -2951,8 +2771,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-retention-full")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Full backup retention count/time.")
@@ -2976,8 +2794,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-retention-full-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Retention type for full backups.")
@@ -3012,8 +2828,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository bucket.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3041,8 +2855,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 SSL CA File.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3066,8 +2878,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-s3-ca-path")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 SSL CA Path.")
@@ -3093,8 +2903,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository endpoint.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3118,8 +2926,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-s3-host")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository host.")
@@ -3145,8 +2951,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(true)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository access key.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3171,8 +2975,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(true)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository secret access key.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3196,8 +2998,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-s3-key-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository key type.")
@@ -3234,8 +3034,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository port.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3263,8 +3061,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository region.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3288,8 +3084,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-s3-role")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository role.")
@@ -3315,8 +3109,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(true)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 repository security token.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3340,8 +3132,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-s3-uri-style")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("S3 URI Style.")
@@ -3378,8 +3168,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Verify S3 server certificate.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3407,8 +3195,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("repo-type")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Type of storage used for the repository.")
@@ -3443,8 +3229,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Allow resume of failed backup.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3467,8 +3251,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
@@ -3481,8 +3263,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("sck-keep-alive")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Keep-alive enable.")
@@ -3503,8 +3283,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("set")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -3575,8 +3353,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_LIST
@@ -3611,8 +3387,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("spool-path")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Path where transient data is stored.")
@@ -3670,8 +3444,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("stanza")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Defines the stanza.")
@@ -3754,8 +3526,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Force a checkpoint to start backup quickly.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3778,8 +3548,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("stop-auto")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Stop prior failed backup on new backup.")
@@ -3811,8 +3579,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Restore a tablespace into the specified directory.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3833,8 +3599,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Restore all tablespaces into the specified directory.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -3854,8 +3618,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("target")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -3886,8 +3648,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("target-action")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -3936,8 +3696,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
@@ -3971,8 +3729,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("target-timeline")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
@@ -4008,8 +3764,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Keep-alive count.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -4036,8 +3790,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("tcp-keep-alive-idle")
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Keep-alive idle time.")
@@ -4067,8 +3819,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_SECURE(false)
-
         CFGDEFDATA_OPTION_HELP_SECTION("general")
         CFGDEFDATA_OPTION_HELP_SUMMARY("Keep-alive interval time.")
         CFGDEFDATA_OPTION_HELP_DESCRIPTION
@@ -4096,8 +3846,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_NAME("type")
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_INTERNAL(false)
-
-        CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (

@@ -95,7 +95,7 @@ cmdOption(void)
                         else if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
                         {
                             // Don't show redacted options
-                            if (cfgDefOptionSecure(optionId))
+                            if (cfgParseOptionSecure(optionId))
                                 strCatFmt(cmdOptionStr, " --%s=<redacted>", cfgOptionIdxName(optionId, optionIdx));
                             // Output boolean option
                             else if (cfgParseOptionType(optionId) == cfgOptTypeBoolean)

@@ -156,6 +156,12 @@ sub buildConfigParse
                 (defined($rhOption->{&CFGDEF_SECTION}) ? ucfirst($rhOption->{&CFGDEF_SECTION}) : 'CommandLine') .
                 "),\n";
 
+        if ($rhOption->{&CFGDEF_SECURE})
+        {
+            $strBuildSource .=
+                "        PARSE_RULE_OPTION_SECURE(true),\n";
+        }
+
         if ($rhOption->{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH || $rhOption->{&CFGDEF_TYPE} eq CFGDEF_TYPE_LIST)
         {
             $strBuildSource .=

@@ -273,7 +273,7 @@ helpRender(void)
                             strCatZ(summary, " [");
 
                             if (value != NULL)
-                                strCatFmt(summary, "current=%s", cfgDefOptionSecure(optionId) ? "<redacted>" : strZ(value));
+                                strCatFmt(summary, "current=%s", cfgParseOptionSecure(optionId) ? "<redacted>" : strZ(value));
 
                             if (defaultValue != NULL)
                             {
@@ -343,7 +343,7 @@ helpRender(void)
                     strCat(result, LF_STR);
 
                     if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(option.id) ? "<redacted>" : strZ(value));
+                        strCatFmt(result, "current: %s\n", cfgParseOptionSecure(option.id) ? "<redacted>" : strZ(value));
 
                     if (defaultValue != NULL)
                         strCatFmt(result, "default: %s\n", strZ(defaultValue));

@@ -35,6 +35,9 @@ const char *cfgParseOptionName(ConfigOption optionId);
 // Option name from id and key
 const char *cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
 
+// Does the option need to be protected from showing up in logs, command lines, etc?
+bool cfgParseOptionSecure(ConfigOption optionId);
+
 // Option data type
 ConfigOptionType cfgParseOptionType(ConfigOption optionId);
 
