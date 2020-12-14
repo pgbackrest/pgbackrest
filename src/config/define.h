@@ -70,9 +70,6 @@ const char *cfgDefOptionHelpSection(ConfigOption optionId);
 // Option id by name
 int cfgDefOptionId(const char *optionName);
 
-// Total indexed values for option
-unsigned int cfgDefOptionIndexTotal(ConfigOption optionId);
-
 // Is the option for internal use only?
 bool cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId);
 

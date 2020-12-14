@@ -430,7 +430,6 @@ sub buildConfigDefine
             "        CFGDEFDATA_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . ")\n" .
             "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
             "\n" .
-            "        CFGDEFDATA_OPTION_INDEX_TOTAL(" . $rhOption->{&CFGDEF_INDEX_TOTAL} . ")\n" .
             "        CFGDEFDATA_OPTION_SECURE(" . ($rhOption->{&CFGDEF_SECURE} ? 'true' : 'false') . ")\n";
 
         if (defined($hOptionHelp))

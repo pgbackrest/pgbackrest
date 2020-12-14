@@ -51,7 +51,6 @@ typedef struct ConfigDefineOptionData
     const char *name;                                               // Option name
     unsigned int type:3;                                            // Option type (e.g. string, int, boolean, etc.)
     unsigned int internal:1;                                        // Is the option only used internally?
-    unsigned int indexTotal:4;                                      // 0 normally, > 0 if indexed option (e.g. pg1-*)
     unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
     bool required:1;                                                // Is the option required?
     bool secure:1;                                                  // Does the option need to be redacted on logs and cmd-line?
@@ -74,8 +73,6 @@ typedef struct ConfigDefineOptionData
 
 #define CFGDEFDATA_OPTION_NAME(nameParam)                                                                                          \
     .name = nameParam,
-#define CFGDEFDATA_OPTION_INDEX_TOTAL(indexTotalParam)                                                                             \
-    .indexTotal = indexTotalParam,
 #define CFGDEFDATA_OPTION_INTERNAL(internalParam)                                                                                  \
     .internal = internalParam,
 #define CFGDEFDATA_OPTION_REQUIRED(requiredParam)                                                                                  \
@@ -656,19 +653,6 @@ cfgDefOptionId(const char *optionName)
             result = optionId;
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-cfgDefOptionIndexTotal(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    FUNCTION_TEST_RETURN(configDefineOptionData[optionId].indexTotal);
 }
 
 /**********************************************************************************************************************************/

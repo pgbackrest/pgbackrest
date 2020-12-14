@@ -315,7 +315,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
@@ -349,7 +348,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -394,7 +392,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -442,7 +439,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeSize)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
@@ -476,7 +472,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -521,7 +516,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeSize)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
@@ -566,7 +560,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("archive")
@@ -602,7 +595,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -636,7 +628,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeSize)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -703,7 +694,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -732,7 +722,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -751,7 +740,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -798,7 +786,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -831,7 +818,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -862,7 +848,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -908,7 +893,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -954,7 +938,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1001,7 +984,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1049,7 +1031,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1100,7 +1081,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeList)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -1130,7 +1110,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1176,7 +1155,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1210,7 +1188,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1241,7 +1218,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeList)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -1284,7 +1260,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1319,7 +1294,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -1351,7 +1325,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1383,7 +1356,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1486,7 +1458,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -1520,7 +1491,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1569,7 +1539,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -1602,7 +1571,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeHash)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -1628,7 +1596,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -1669,7 +1636,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1735,7 +1701,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1801,7 +1766,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1870,7 +1834,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1918,7 +1881,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -1965,7 +1927,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("log")
@@ -2013,7 +1974,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeSize)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -2048,7 +2008,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -2099,7 +2058,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2162,7 +2120,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2228,7 +2185,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2285,7 +2241,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2323,7 +2278,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2390,7 +2344,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2429,7 +2382,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2469,7 +2421,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2508,7 +2459,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2547,7 +2497,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2586,7 +2535,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2626,7 +2574,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2680,7 +2627,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2729,7 +2675,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2767,7 +2712,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2805,7 +2749,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(8)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("stanza")
@@ -2840,7 +2783,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -2877,7 +2819,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -2913,7 +2854,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -2960,7 +2900,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -2991,7 +2930,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeHash)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -3038,7 +2976,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3084,7 +3021,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3125,7 +3061,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -3165,7 +3100,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3216,7 +3150,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3267,7 +3200,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3318,7 +3250,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3372,7 +3303,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3425,7 +3355,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3476,7 +3405,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3527,7 +3455,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3589,7 +3516,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3643,7 +3569,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3697,7 +3622,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3748,7 +3672,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3806,7 +3729,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3839,7 +3761,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3929,7 +3850,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -3973,7 +3893,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4018,7 +3937,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4062,7 +3980,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4106,7 +4023,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4150,7 +4066,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4197,7 +4112,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -4272,7 +4186,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4324,7 +4237,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4368,7 +4280,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4413,7 +4324,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4446,7 +4356,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4480,7 +4389,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4524,7 +4432,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4578,7 +4485,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4629,7 +4535,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4680,7 +4585,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4731,7 +4635,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4782,7 +4685,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4833,7 +4735,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4884,7 +4785,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -4946,7 +4846,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -5000,7 +4899,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -5051,7 +4949,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -5102,7 +4999,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(true)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -5153,7 +5049,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -5215,7 +5110,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -5270,7 +5164,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("repository")
@@ -5330,7 +5223,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -5362,7 +5254,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(true)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -5400,7 +5291,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -5445,7 +5335,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -5527,7 +5416,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -5572,7 +5460,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -5640,7 +5527,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -5748,7 +5634,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -5781,7 +5666,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("backup")
@@ -5821,7 +5705,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeHash)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -5851,7 +5734,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("restore")
@@ -5881,7 +5763,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -5921,7 +5802,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -5978,7 +5858,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -6022,7 +5901,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST
@@ -6066,7 +5944,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -6118,7 +5995,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -6171,7 +6047,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_HELP_SECTION("general")
@@ -6224,7 +6099,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
         CFGDEFDATA_OPTION_INTERNAL(false)
 
-        CFGDEFDATA_OPTION_INDEX_TOTAL(1)
         CFGDEFDATA_OPTION_SECURE(false)
 
         CFGDEFDATA_OPTION_COMMAND_LIST

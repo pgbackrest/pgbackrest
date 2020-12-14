@@ -77,12 +77,6 @@ testRun(void)
         TEST_RESULT_BOOL(
             cfgDefOptionDependValueValid(cfgCmdRestore, cfgOptTarget, BOGUS_STR), false, "depend option value not valid");
 
-        TEST_ERROR(
-            cfgDefOptionIndexTotal(cfgDefOptionTotal()), AssertError,
-            "assertion 'optionId < cfgDefOptionTotal()' failed");
-        TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgOptPgPath), 8, "index total > 1");
-        TEST_RESULT_INT(cfgDefOptionIndexTotal(cfgOptRepoPath), 1, "index total == 1");
-
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptSet), false, "option set is not internal");
         TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptPgHost), true, "option pg-host is internal");
 
