@@ -100,16 +100,6 @@ use constant CFGCMD_VERIFY                                          => 'verify';
 use constant CFGCMD_VERSION                                         => 'version';
 
 ####################################################################################################################################
-# Command role constants - roles allowed for each command
-####################################################################################################################################
-use constant CFGCMD_ROLE_ASYNC                                      => 'async';
-    push @EXPORT, qw(CFGCMD_ROLE_ASYNC);
-use constant CFGCMD_ROLE_LOCAL                                      => 'local';
-    push @EXPORT, qw(CFGCMD_ROLE_LOCAL);
-use constant CFGCMD_ROLE_REMOTE                                     => 'remote';
-    push @EXPORT, qw(CFGCMD_ROLE_REMOTE);
-
-####################################################################################################################################
 # Option constants - options that are allowed for commands
 ####################################################################################################################################
 
@@ -469,8 +459,6 @@ use constant CFGDEF_PREFIX                                          => 'prefix';
     push @EXPORT, qw(CFGDEF_PREFIX);
 use constant CFGDEF_COMMAND                                         => 'command';
     push @EXPORT, qw(CFGDEF_COMMAND);
-use constant CFGDEF_COMMAND_ROLE                                    => 'command-role';
-    push @EXPORT, qw(CFGDEF_COMMAND_ROLE);
 use constant CFGDEF_REQUIRED                                        => 'required';
     push @EXPORT, qw(CFGDEF_REQUIRED);
 use constant CFGDEF_RESET                                           => 'reset';
@@ -518,12 +506,6 @@ my $rhCommandDefine =
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
         &CFGDEF_PARAMETER_ALLOWED => true,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_ASYNC => {},
-            &CFGCMD_ROLE_LOCAL => {},
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_ARCHIVE_PUSH =>
@@ -532,12 +514,6 @@ my $rhCommandDefine =
         &CFGDEF_LOCK_REMOTE_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
         &CFGDEF_PARAMETER_ALLOWED => true,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_ASYNC => {},
-            &CFGCMD_ROLE_LOCAL => {},
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_BACKUP =>
@@ -545,20 +521,11 @@ my $rhCommandDefine =
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_REMOTE_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_BACKUP,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_LOCAL => {},
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_CHECK =>
     {
         &CFGDEF_LOG_FILE => false,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_EXPIRE =>
@@ -578,20 +545,12 @@ my $rhCommandDefine =
     {
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_REPO_CREATE =>
     {
         &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_FILE => false,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_REPO_GET =>
@@ -600,10 +559,6 @@ my $rhCommandDefine =
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
         &CFGDEF_PARAMETER_ALLOWED => true,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_REPO_LS =>
@@ -612,10 +567,6 @@ my $rhCommandDefine =
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
         &CFGDEF_PARAMETER_ALLOWED => true,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_REPO_PUT =>
@@ -624,10 +575,6 @@ my $rhCommandDefine =
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
         &CFGDEF_PARAMETER_ALLOWED => true,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_REPO_RM =>
@@ -636,49 +583,28 @@ my $rhCommandDefine =
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
         &CFGDEF_PARAMETER_ALLOWED => true,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_RESTORE =>
     {
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_LOCAL => {},
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_STANZA_CREATE =>
     {
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ALL,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_STANZA_DELETE =>
     {
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ALL,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_STANZA_UPGRADE =>
     {
         &CFGDEF_LOCK_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ALL,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_START =>
@@ -692,11 +618,6 @@ my $rhCommandDefine =
     &CFGCMD_VERIFY =>
     {
         &CFGDEF_INTERNAL => true,
-        &CFGDEF_COMMAND_ROLE =>
-        {
-            &CFGCMD_ROLE_LOCAL => {},
-            &CFGCMD_ROLE_REMOTE => {},
-        },
     },
 
     &CFGCMD_VERSION =>
