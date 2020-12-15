@@ -10,10 +10,13 @@ Help Command
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/memContext.h"
+#include "common/type/pack.h"
 #include "config/config.h"
 #include "config/define.h"
 #include "config/parse.h"
 #include "version.h"
+
+#include "help.auto.c"
 
 /***********************************************************************************************************************************
 Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
@@ -140,6 +143,13 @@ helpRenderValue(const Variant *value, ConfigDefineOptionType type)
 /***********************************************************************************************************************************
 Render help to a string
 ***********************************************************************************************************************************/
+typedef struct HelpCommandData
+{
+    bool internal;
+    const String *summary;
+    const String *description;
+} HelpCommandData;
+
 static String *
 helpRender(void)
 {
@@ -149,6 +159,21 @@ helpRender(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Unpack command data
+        PackRead *pckCommand = pckReadNewBuf(BUF(helpCommandPack, sizeof(helpCommandPack)));
+        HelpCommandData *commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL - 1);
+
+        for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL - 1; commandId++)
+        {
+            pckReadObjBeginP(pckCommand);
+
+            commandData[commandId].internal = pckReadBoolP(pckCommand);
+            commandData[commandId].summary = pckReadStrP(pckCommand);
+            commandData[commandId].description = pckReadStrP(pckCommand);
+
+            pckReadObjEndP(pckCommand);
+        }
+
         // Message for more help when it is available
         const String *more = NULL;
 
@@ -167,9 +192,9 @@ helpRender(void)
             // Find size of longest command name
             size_t commandSizeMax = 0;
 
-            for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
+            for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL - 1; commandId++)
             {
-                if (commandId == cfgCmdNone || cfgCommandInternal(commandId))
+                if (commandData[commandId].internal)
                     continue;
 
                 if (strlen(cfgCommandName(commandId)) > commandSizeMax)
@@ -177,15 +202,15 @@ helpRender(void)
             }
 
             // Output help for each command
-            for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
+            for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL - 1; commandId++)
             {
-                if (commandId == cfgCmdNone || cfgCommandInternal(commandId))
+                if (commandData[commandId].internal)
                     continue;
 
                 strCatFmt(
                     result, "    %s%*s%s\n", cfgCommandName(commandId),
                     (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
-                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandId)), commandSizeMax + 6, false, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(commandData[commandId].summary, commandSizeMax + 6, false, CONSOLE_WIDTH)));
             }
 
             // Construct message for more help
@@ -210,8 +235,8 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandId)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefCommandHelpDescription(commandId)), 0, true, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(commandData[commandId].summary, 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(commandData[commandId].description, 0, true, CONSOLE_WIDTH)));
 
                 // Construct key/value of sections and options
                 KeyValue *optionKv = kvNew();

@@ -32,10 +32,6 @@ Functions
 // Command total
 unsigned int cfgDefCommandTotal(void);
 
-// Command help
-const char *cfgDefCommandHelpDescription(ConfigCommand commandId);
-const char *cfgDefCommandHelpSummary(ConfigCommand commandId);
-
 // Option allow lists
 bool cfgDefOptionAllowList(ConfigCommand commandId, ConfigOption optionId);
 bool cfgDefOptionAllowListValueValid(ConfigCommand commandId, ConfigOption optionId, const char *value);

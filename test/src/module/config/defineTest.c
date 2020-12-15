@@ -116,12 +116,6 @@ testRun(void)
             cfgDefOptionHelpNameAltValue(cfgOptRepoHost, 1), AssertError,
             "assertion 'valueId < cfgDefOptionHelpNameAltValueTotal(optionId)' failed");
 
-        TEST_RESULT_Z(cfgDefCommandHelpSummary(cfgCmdBackup), "Backup a database cluster.", "backup command help summary");
-        TEST_RESULT_Z(
-            cfgDefCommandHelpDescription(cfgCmdBackup),
-            "pgBackRest does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.",
-            "backup command help description");
-
         TEST_RESULT_Z(cfgDefOptionHelpSection(cfgOptDelta), "general", "delta option help section");
         TEST_RESULT_Z(
             cfgDefOptionHelpSummary(cfgCmdBackup, cfgOptBufferSize), "Buffer size for file operations.",

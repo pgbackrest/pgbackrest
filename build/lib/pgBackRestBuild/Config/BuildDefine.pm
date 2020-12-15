@@ -340,42 +340,12 @@ sub buildConfigDefine
 
     foreach my $strCommand (cfgDefineCommandList())
     {
-        # Get command help
-        my $hCommandHelp = $hConfigHelp->{&CONFIG_HELP_COMMAND}{$strCommand};
-
         # Build command data
         $strBuildSource .=
             "\n" .
             "    CFGDEFDATA_COMMAND\n" .
             "    (\n" .
-            "        CFGDEFDATA_COMMAND_NAME(\"${strCommand}\")\n";
-
-        # Output help
-        if (defined($hCommandHelp))
-        {
-            $strBuildSource .=
-                "\n";
-
-            # Output command summary
-            my $strSummary = helpFormatText($oManifest, $oDocRender, $hCommandHelp->{&CONFIG_HELP_SUMMARY}, 0, 72);
-
-            if (length($strSummary) > 74)
-            {
-                confess("summary for command '${strCommand}' may not be greater than 72 characters");
-            }
-
-            $strBuildSource .=
-                "        CFGDEFDATA_COMMAND_HELP_SUMMARY(${strSummary})\n";
-
-            # Output description
-            $strBuildSource .=
-                "        CFGDEFDATA_COMMAND_HELP_DESCRIPTION\n" .
-                "        (\n" .
-                    helpFormatText($oManifest, $oDocRender, $hCommandHelp->{&CONFIG_HELP_DESCRIPTION}, 12, 119) . "\n" .
-                "        )\n";
-        }
-
-        $strBuildSource .=
+            "        CFGDEFDATA_COMMAND_NAME(\"${strCommand}\")\n" .
             "    )\n";
     };
 

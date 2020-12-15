@@ -22,9 +22,6 @@ Map command names to ids and vice versa.
 typedef struct ConfigDefineCommandData
 {
     const char *name;                                               // Command name
-
-    const char *helpSummary;                                        // Brief summary of the command
-    const char *helpDescription;                                    // Full description of the command
 } ConfigDefineCommandData;
 
 // Command macros are intended to make the command definitions easy to read and to produce good diffs.
@@ -37,11 +34,6 @@ typedef struct ConfigDefineCommandData
 
 #define CFGDEFDATA_COMMAND_NAME(nameParam)                                                                                         \
     .name = nameParam,
-
-#define CFGDEFDATA_COMMAND_HELP_SUMMARY(helpSummaryParam)                                                                          \
-    .helpSummary = helpSummaryParam,
-#define CFGDEFDATA_COMMAND_HELP_DESCRIPTION(helpDescriptionParam)                                                                  \
-    .helpDescription = helpDescriptionParam,
 
 /***********************************************************************************************************************************
 Define how an option is parsed and interacts with other options.
@@ -268,31 +260,6 @@ cfgDefOptionTotal(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(sizeof(configDefineOptionData) / sizeof(ConfigDefineOptionData));
-}
-
-/**********************************************************************************************************************************/
-const char *
-cfgDefCommandHelpDescription(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgDefCommandTotal());
-
-    FUNCTION_TEST_RETURN(configDefineCommandData[commandId].helpDescription);
-}
-
-const char *
-cfgDefCommandHelpSummary(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgDefCommandTotal());
-
-    FUNCTION_TEST_RETURN(configDefineCommandData[commandId].helpSummary);
 }
 
 /**********************************************************************************************************************************/
