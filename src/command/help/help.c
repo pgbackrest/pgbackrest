@@ -16,7 +16,10 @@ Help Command
 #include "config/parse.h"
 #include "version.h"
 
-#include "help.auto.c"
+/***********************************************************************************************************************************
+Include automatically generated help data pack
+***********************************************************************************************************************************/
+#include "command/help/help.auto.c"
 
 /***********************************************************************************************************************************
 Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
@@ -160,19 +163,19 @@ helpRender(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Unpack command data
-        PackRead *pckCommand = pckReadNewBuf(BUF(helpCommandPack, sizeof(helpCommandPack)));
+        PackRead *pckHelp = pckReadNewBuf(BUF(helpDataPack, sizeof(helpDataPack)));
         HelpCommandData *commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL - 1);
+
+        pckReadArrayBeginP(pckHelp);
 
         for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL - 1; commandId++)
         {
-            pckReadObjBeginP(pckCommand);
-
-            commandData[commandId].internal = pckReadBoolP(pckCommand);
-            commandData[commandId].summary = pckReadStrP(pckCommand);
-            commandData[commandId].description = pckReadStrP(pckCommand);
-
-            pckReadObjEndP(pckCommand);
+            commandData[commandId].internal = pckReadBoolP(pckHelp);
+            commandData[commandId].summary = pckReadStrP(pckHelp);
+            commandData[commandId].description = pckReadStrP(pckHelp);
         }
+
+        pckReadArrayEndP(pckHelp);
 
         // Message for more help when it is available
         const String *more = NULL;

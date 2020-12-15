@@ -126,11 +126,11 @@ sub packTagFormat
         }
     }
 
-    my $strResult = "${strIndent}/* ${strName} */ ${strType} << 4";
+    my $strResult = "${strIndent}${strType} << 4";
 
     if ($iBits != 0)
     {
-        $strResult .= sprintf(" | 0x%01X", $iBits);
+        $strResult .= sprintf(" | 0x%02X", $iBits);
     }
 
     $strResult .= ',';
@@ -145,47 +145,38 @@ sub packTagFormat
         $strResult .= packIntFormat($iValue);
     }
 
+    $strResult .= " // ${strName}";
+
     if (defined($xData) && length($xData) > 0)
     {
         $strResult .= "\n${strIndent}    ";
         my $iLength = length($strIndent) + 4;
         my $bLastLF = false;
+        my $bFirst = true;
 
-        for (my $iDataIdx = 0; $iDataIdx < length($xData); $iDataIdx++)
+        foreach my $iChar (unpack("W*", $xData))
         {
-            if ($bLastLF)
+            my $strOut = sprintf("0x%02X,", $iChar);
+
+            if ($bLastLF && $iChar != 0xA)
             {
                 $strResult .= "\n${strIndent}    ";
                 $iLength = length($strIndent) + 4;
-                $bLastLF = false;
+                $bFirst = true;
             }
 
-            my $cChar = substr($xData, $iDataIdx, 1);
-            my $strOut;
+            $bLastLF = $iChar == 0xA;
 
-            if ($cChar eq "\n")
-            {
-                $strOut = " '\\n',";
-                $bLastLF = true;
-            }
-            elsif ($cChar eq "'")
-            {
-                $strOut = " '\\'',";
-            }
-            else
-            {
-                $strOut = " '${cChar}',";
-            }
-
-            if ($iLength + length($strOut) > 132)
+            if ($iLength + length($strOut) + 1 > 132)
             {
                 $strResult .= "\n${strIndent}    ${strOut}";
                 $iLength = length($strIndent) + 4 + length($strOut);
             }
             else
             {
-                $strResult .= "${strOut}";
-                $iLength += length($strOut);
+                $strResult .= ($bFirst ? '' : ' ') . "${strOut}";
+                $iLength += length($strOut) + ($bFirst ? 0 : 1);
+                $bFirst = false;
             }
         }
     }
@@ -223,8 +214,16 @@ sub buildConfigHelp
     my $rhCommandDefine = cfgDefineCommand();
 
     my $strBuildSource =
-        "static const unsigned char helpCommandPack[] = \n" .
+        "static const unsigned char helpDataPack[] =\n" .
         "{";
+
+    # Build command data
+    $strBuildSource .=
+        "\n" .
+        "    // Commands\n" .
+        "    // " . (qw{-} x 125) . "\n";
+
+    $strBuildSource .= packTagFormat("Commands begin", PCK_TYPE_ARRAY, 0, undef, 4);
 
     foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     {
@@ -242,14 +241,12 @@ sub buildConfigHelp
         # Build command data
         $strBuildSource .=
             "\n" .
-            "    // ${strCommand} command\n" .
-            "    // " . (qw{-} x 125) . "\n";
-
-        $strBuildSource .= packTagFormat("begin", PCK_TYPE_OBJ, 0, undef, 4);
+            "        // ${strCommand} command\n" .
+            "        // " . (qw{-} x 121) . "\n";
 
         if ($rhCommand->{&CFGDEF_INTERNAL})
         {
-            $strBuildSource .= packTagFormat("internal", PCK_TYPE_BOOL, 0, true, 8);
+            $strBuildSource .= packTagFormat("Internal", PCK_TYPE_BOOL, 0, true, 8);
         }
         else
         {
@@ -263,172 +260,162 @@ sub buildConfigHelp
             confess("summary for command '${strCommand}' may not be greater than 72 characters");
         }
 
-        $strBuildSource .= packTagFormat("summary", PCK_TYPE_STR, $iDelta, $strSummary, 8);
+        $strBuildSource .= packTagFormat("Summary", PCK_TYPE_STR, $iDelta, $strSummary, 8);
         $iDelta = 0;
 
         $strBuildSource .= packTagFormat(
-            "description", PCK_TYPE_STR, 0,
+            "Description", PCK_TYPE_STR, 0,
             trim($oManifest->variableReplace($oDocRender->processText($rhCommandHelp->{&CONFIG_HELP_DESCRIPTION}))), 8);
-
-        $strBuildSource .= "    /* end */ 0x00,\n";
     };
 
     $strBuildSource .=
         "\n" .
-        "    /* end pack */ 0x00,\n" .
-        "};\n";
+        "    0x00, // Commands end\n";
 
-    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_COMMAND}{&BLD_SOURCE} = $strBuildSource;
-
-    # # Build option type constants
-    # #-------------------------------------------------------------------------------------------------------------------------------
-    # my $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_ENUM}{&BLDLCL_ENUM_OPTION_TYPE};
-    #
-    # foreach my $strOptionType (cfgDefineOptionTypeList())
-    # {
-    #     # Build C enum
-    #     my $strOptionTypeEnum = buildConfigDefineOptionTypeEnum($strOptionType);
-    #     push(@{$rhEnum->{&BLD_LIST}}, $strOptionTypeEnum);
-    # };
-    #
     # # Build option constants and data
     # #-------------------------------------------------------------------------------------------------------------------------------
     # my $rhConfigDefine = cfgDefine();
     #
     # $strBuildSource =
-    #     "static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST\n" .
-    #     "(";
+    #     "static const unsigned char helpOptionPack[] =\n" .
+    #     "{";
     #
     # foreach my $strOption (sort(keys(%{$rhConfigDefine})))
     # {
-    #     # Get option help
-    #     my $hOptionHelp = $hConfigHelp->{&CONFIG_HELP_OPTION}{$strOption};
-    #
     #     # Build option data
     #     my $rhOption = $rhConfigDefine->{$strOption};
     #
-    #     my $strOptionPrefix = $rhOption->{&CFGDEF_PREFIX};
-    #
+    #     # Get option help
+    #     my $rhOptionHelp = $hConfigHelp->{&CONFIG_HELP_OPTION}{$strOption};
+    # #
+    # #     my $strOptionPrefix = $rhOption->{&CFGDEF_PREFIX};
+    # #
     #     $strBuildSource .=
     #         "\n" .
-    #         "    // " . (qw{-} x 125) . "\n" .
-    #         "    CFGDEFDATA_OPTION\n" .
-    #         "    (\n";
+    #         "    // ${strOption} option\n" .
+    #         "    // " . (qw{-} x 125) . "\n";
     #
-    #     my $bRequired = $rhOption->{&CFGDEF_REQUIRED};
-    #
-    #     $strBuildSource .=
-    #         "        CFGDEFDATA_OPTION_NAME(\"${strOption}\")\n" .
-    #         "        CFGDEFDATA_OPTION_REQUIRED(" . ($bRequired ? 'true' : 'false') . ")\n" .
-    #         "        CFGDEFDATA_OPTION_SECTION(cfgDefSection" .
-    #             (defined($rhOption->{&CFGDEF_SECTION}) ? ucfirst($rhOption->{&CFGDEF_SECTION}) : 'CommandLine') .
-    #             ")\n" .
-    #         "        CFGDEFDATA_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . ")\n" .
-    #         "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
-    #         "\n" .
-    #         "        CFGDEFDATA_OPTION_SECURE(" . ($rhOption->{&CFGDEF_SECURE} ? 'true' : 'false') . ")\n";
-    #
-    #     if (defined($hOptionHelp))
-    #     {
-    #         $strBuildSource .=
-    #             "\n";
-    #
-    #         # Output section
-    #         my $strSection =
-    #             defined($hOptionHelp->{&CONFIG_HELP_SECTION}) ? $hOptionHelp->{&CONFIG_HELP_SECTION} : 'general';
-    #
-    #         if (length($strSection) > 72)
-    #         {
-    #             confess("section for option '${strOption}' may not be greater than 72 characters");
-    #         }
-    #
-    #         $strBuildSource .=
-    #             "        CFGDEFDATA_OPTION_HELP_SECTION(\"${strSection}\")\n";
-    #
-    #         # Output summary
-    #         my $strSummary = helpFormatText($oManifest, $oDocRender, $hOptionHelp->{&CONFIG_HELP_SUMMARY}, 0, 72);
-    #
-    #         if (length($strSummary) > 74)
-    #         {
-    #             confess("summary for option '${strOption}' may not be greater than 72 characters");
-    #         }
-    #
-    #         $strBuildSource .=
-    #             "        CFGDEFDATA_OPTION_HELP_SUMMARY(${strSummary})\n";
-    #
-    #         # Output description
-    #         $strBuildSource .=
-    #             "        CFGDEFDATA_OPTION_HELP_DESCRIPTION\n" .
-    #             "        (\n" .
-    #                 helpFormatText($oManifest, $oDocRender, $hOptionHelp->{&CONFIG_HELP_DESCRIPTION}, 12, 119) . "\n" .
-    #             "        )\n";
-    #     }
-    #
-    #     $strBuildSource .=
-    #         "\n" .
-    #         "        CFGDEFDATA_OPTION_COMMAND_LIST\n" .
-    #         "        (\n";
-    #
-    #     foreach my $strCommand (cfgDefineCommandList())
-    #     {
-    #         if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
-    #         {
-    #             $strBuildSource .=
-    #                 "            CFGDEFDATA_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
-    #         }
-    #     }
-    #
-    #     $strBuildSource .=
-    #         "        )\n";
-    #
-    #     # Render optional data
-    #     my $strBuildSourceOptional = renderOptional($rhOption, false, $hOptionHelp, $oManifest, $oDocRender);
-    #
-    #     # Render command overrides
-    #     foreach my $strCommand (cfgDefineCommandList())
-    #     {
-    #         my $strBuildSourceOptionalCommand;
-    #         my $rhCommand = $rhOption->{&CFGDEF_COMMAND}{$strCommand};
-    #
-    #         if (defined($rhCommand))
-    #         {
-    #             $strBuildSourceOptionalCommand = renderOptional(
-    #                 $rhCommand, true, $hConfigHelp->{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption},
-    #                 $oManifest, $oDocRender, $strCommand, $strOption);
-    #
-    #             if (defined($strBuildSourceOptionalCommand))
-    #             {
-    #                 $strBuildSourceOptional .=
-    #                     (defined($strBuildSourceOptional) ? "\n" : '') .
-    #                     "            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE\n" .
-    #                     "            (\n" .
-    #                     "                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n" .
-    #                     "\n" .
-    #                     $strBuildSourceOptionalCommand .
-    #                     "            )\n";
-    #             }
-    #         }
-    #
-    #     };
-    #
-    #     if (defined($strBuildSourceOptional))
-    #     {
-    #         $strBuildSource .=
-    #             "\n" .
-    #             "        CFGDEFDATA_OPTION_OPTIONAL_LIST\n" .
-    #             "        (\n" .
-    #             $strBuildSourceOptional .
-    #             "        )\n";
-    #     }
-    #
-    #     $strBuildSource .=
-    #         "    )\n";
+    # #     my $bRequired = $rhOption->{&CFGDEF_REQUIRED};
+    # #
+    # #     $strBuildSource .=
+    # #         "        CFGDEFDATA_OPTION_NAME(\"${strOption}\")\n" .
+    # #         "        CFGDEFDATA_OPTION_REQUIRED(" . ($bRequired ? 'true' : 'false') . ")\n" .
+    # #         "        CFGDEFDATA_OPTION_SECTION(cfgDefSection" .
+    # #             (defined($rhOption->{&CFGDEF_SECTION}) ? ucfirst($rhOption->{&CFGDEF_SECTION}) : 'CommandLine') .
+    # #             ")\n" .
+    # #         "        CFGDEFDATA_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . ")\n" .
+    # #         "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
+    # #         "\n" .
+    # #         "        CFGDEFDATA_OPTION_SECURE(" . ($rhOption->{&CFGDEF_SECURE} ? 'true' : 'false') . ")\n";
+    # #
+    # #     if (defined($hOptionHelp))
+    # #     {
+    # #         $strBuildSource .=
+    # #             "\n";
+    # #
+    # #         # Output section
+    # #         my $strSection =
+    # #             defined($hOptionHelp->{&CONFIG_HELP_SECTION}) ? $hOptionHelp->{&CONFIG_HELP_SECTION} : 'general';
+    # #
+    # #         if (length($strSection) > 72)
+    # #         {
+    # #             confess("section for option '${strOption}' may not be greater than 72 characters");
+    # #         }
+    # #
+    # #         $strBuildSource .=
+    # #             "        CFGDEFDATA_OPTION_HELP_SECTION(\"${strSection}\")\n";
+    # #
+    # #         # Output summary
+    # #         my $strSummary = helpFormatText($oManifest, $oDocRender, $hOptionHelp->{&CONFIG_HELP_SUMMARY}, 0, 72);
+    # #
+    # #         if (length($strSummary) > 74)
+    # #         {
+    # #             confess("summary for option '${strOption}' may not be greater than 72 characters");
+    # #         }
+    # #
+    # #         $strBuildSource .=
+    # #             "        CFGDEFDATA_OPTION_HELP_SUMMARY(${strSummary})\n";
+    # #
+    # #         # Output description
+    # #         $strBuildSource .=
+    # #             "        CFGDEFDATA_OPTION_HELP_DESCRIPTION\n" .
+    # #             "        (\n" .
+    # #                 helpFormatText($oManifest, $oDocRender, $hOptionHelp->{&CONFIG_HELP_DESCRIPTION}, 12, 119) . "\n" .
+    # #             "        )\n";
+    # #     }
+    # #
+    # #     $strBuildSource .=
+    # #         "\n" .
+    # #         "        CFGDEFDATA_OPTION_COMMAND_LIST\n" .
+    # #         "        (\n";
+    # #
+    # #     foreach my $strCommand (cfgDefineCommandList())
+    # #     {
+    # #         if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
+    # #         {
+    # #             $strBuildSource .=
+    # #                 "            CFGDEFDATA_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
+    # #         }
+    # #     }
+    # #
+    # #     $strBuildSource .=
+    # #         "        )\n";
+    # #
+    # #     # Render optional data
+    # #     my $strBuildSourceOptional = renderOptional($rhOption, false, $hOptionHelp, $oManifest, $oDocRender);
+    # #
+    # #     # Render command overrides
+    # #     foreach my $strCommand (cfgDefineCommandList())
+    # #     {
+    # #         my $strBuildSourceOptionalCommand;
+    # #         my $rhCommand = $rhOption->{&CFGDEF_COMMAND}{$strCommand};
+    # #
+    # #         if (defined($rhCommand))
+    # #         {
+    # #             $strBuildSourceOptionalCommand = renderOptional(
+    # #                 $rhCommand, true, $hConfigHelp->{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption},
+    # #                 $oManifest, $oDocRender, $strCommand, $strOption);
+    # #
+    # #             if (defined($strBuildSourceOptionalCommand))
+    # #             {
+    # #                 $strBuildSourceOptional .=
+    # #                     (defined($strBuildSourceOptional) ? "\n" : '') .
+    # #                     "            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE\n" .
+    # #                     "            (\n" .
+    # #                     "                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n" .
+    # #                     "\n" .
+    # #                     $strBuildSourceOptionalCommand .
+    # #                     "            )\n";
+    # #             }
+    # #         }
+    # #
+    # #     };
+    # #
+    # #     if (defined($strBuildSourceOptional))
+    # #     {
+    # #         $strBuildSource .=
+    # #             "\n" .
+    # #             "        CFGDEFDATA_OPTION_OPTIONAL_LIST\n" .
+    # #             "        (\n" .
+    # #             $strBuildSourceOptional .
+    # #             "        )\n";
+    # #     }
+    # #
+    # #     $strBuildSource .=
+    # #         "    )\n";
     # }
     #
     # $strBuildSource .=
-    #     ")\n";
+    #     "};\n";
     #
     # $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION}{&BLD_SOURCE} = $strBuildSource;
+
+    $strBuildSource .=
+        "\n" .
+        "    0x00, // Pack end\n" .
+        "};\n";
+
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_COMMAND}{&BLD_SOURCE} = $strBuildSource;
 
     return $rhBuild;
 }
