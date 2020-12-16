@@ -146,20 +146,22 @@ helpRenderValue(const Variant *value, ConfigDefineOptionType type)
 /***********************************************************************************************************************************
 Render help to a string
 ***********************************************************************************************************************************/
+// Stored unpacked command data
 typedef struct HelpCommandData
 {
-    bool internal;
-    String *summary;
-    String *description;
+    bool internal;                                                  // Is the command internal?
+    String *summary;                                                // Short summary of the command
+    String *description;                                            // Full description of the command
 } HelpCommandData;
 
+// Stored unpacked option data
 typedef struct HelpOptionData
 {
-    bool internal;
-    String *section;
-    String *summary;
-    String *description;
-    StringList *deprecatedNames;
+    bool internal;                                                  // Is the option internal?
+    String *section;                                                // eg. general, command
+    String *summary;                                                // Short summary of the option
+    String *description;                                            // Full description of the option
+    StringList *deprecatedNames;                                    // Deprecated names for the option
 } HelpOptionData;
 
 static String *
@@ -251,6 +253,7 @@ helpRender(void)
                     .description = pckReadStrP(pckHelp),
                 };
 
+                // Unpack deprecated names
                 if (!pckReadNullP(pckHelp))
                 {
                     optionData[optionId].deprecatedNames = strLstNew();
@@ -265,14 +268,17 @@ helpRender(void)
                     ASSERT(strLstSize(optionData[optionId].deprecatedNames) == 1);
                 }
 
+                // Unpack command overrides
                 if (!pckReadNullP(pckHelp))
                 {
                     pckReadArrayBeginP(pckHelp);
 
                     while (pckReadNext(pckHelp))
                     {
+                        // Get command override id
                         ConfigCommand commandIdArray = pckReadId(pckHelp) - 1;
 
+                        // Unpack override data
                         pckReadObjBeginP(pckHelp, .id = commandIdArray + 1);
 
                         bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
@@ -281,6 +287,7 @@ helpRender(void)
 
                         pckReadObjEndP(pckHelp);
 
+                        // Only use overrides for the current command
                         if (commandId == commandIdArray)
                         {
                             optionData[optionId].internal = internal;

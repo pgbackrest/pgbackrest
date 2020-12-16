@@ -592,27 +592,11 @@ pckReadNullInternal(PackRead *this, unsigned int *id)
     ASSERT(this != NULL);
     ASSERT(id != NULL);
 
+    // Read tag at specified id
     pckReadTag(this, id, pckTypeUnknown, true);
 
-    FUNCTION_TEST_RETURN(*id < this->tagNextId);
-}
-
-/***********************************************************************************************************************************
-Helper function to determine whether a default should be returned when the field is NULL (missing)
-***********************************************************************************************************************************/
-static inline bool
-pckReadDefaultNull(PackRead *this, unsigned int *id)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM_P(UINT, id);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(id != NULL);
-
     // If the field is NULL then set idLast (to avoid rechecking the same id on the next call) and return true
-    if (pckReadNullInternal(this, id))
+    if (*id < this->tagNextId)
     {
         this->tagStackTop->idLast = *id;
         FUNCTION_TEST_RETURN(true);
@@ -632,7 +616,7 @@ pckReadNull(PackRead *this, PackIdParam param)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(pckReadDefaultNull(this, &param.id));
+    FUNCTION_TEST_RETURN(pckReadNullInternal(this, &param.id));
 }
 
 /**********************************************************************************************************************************/
@@ -705,7 +689,7 @@ pckReadBin(PackRead *this, PckReadBinParam param)
 
     ASSERT(this != NULL);
 
-    if (pckReadDefaultNull(this, &param.id))
+    if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(NULL);
 
     Buffer *result = NULL;
@@ -743,7 +727,7 @@ pckReadBool(PackRead *this, PckReadBoolParam param)
 
     ASSERT(this != NULL);
 
-    if (pckReadDefaultNull(this, &param.id))
+    if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(param.defaultValue);
 
     FUNCTION_TEST_RETURN(pckReadTag(this, &param.id, pckTypeBool, false));
@@ -761,7 +745,7 @@ pckReadI32(PackRead *this, PckReadInt32Param param)
 
     ASSERT(this != NULL);
 
-    if (pckReadDefaultNull(this, &param.id))
+    if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(param.defaultValue);
 
     FUNCTION_TEST_RETURN(cvtInt32FromZigZag((uint32_t)pckReadTag(this, &param.id, pckTypeI32, false)));
@@ -779,7 +763,7 @@ pckReadI64(PackRead *this, PckReadInt64Param param)
 
     ASSERT(this != NULL);
 
-    if (pckReadDefaultNull(this, &param.id))
+    if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(param.defaultValue);
 
     FUNCTION_TEST_RETURN(cvtInt64FromZigZag(pckReadTag(this, &param.id, pckTypeI64, false)));
@@ -842,7 +826,7 @@ pckReadPtr(PackRead *this, PckReadPtrParam param)
 
     ASSERT(this != NULL);
 
-    if (pckReadDefaultNull(this, &param.id))
+    if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(NULL);
 
     FUNCTION_TEST_RETURN((void *)(uintptr_t)pckReadTag(this, &param.id, pckTypePtr, false));
@@ -860,7 +844,7 @@ pckReadStr(PackRead *this, PckReadStrParam param)
 
     ASSERT(this != NULL);
 
-    if (pckReadDefaultNull(this, &param.id))
+    if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(strDup(param.defaultValue));
 
     String *result = NULL;
@@ -900,7 +884,7 @@ pckReadTime(PackRead *this, PckReadTimeParam param)
 
     ASSERT(this != NULL);
 
-    if (pckReadDefaultNull(this, &param.id))
+    if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(param.defaultValue);
 
     FUNCTION_TEST_RETURN((time_t)cvtInt64FromZigZag(pckReadTag(this, &param.id, pckTypeTime, false)));
@@ -918,7 +902,7 @@ pckReadU32(PackRead *this, PckReadUInt32Param param)
 
     ASSERT(this != NULL);
 
-    if (pckReadDefaultNull(this, &param.id))
+    if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(param.defaultValue);
 
     FUNCTION_TEST_RETURN((uint32_t)pckReadTag(this, &param.id, pckTypeU32, false));
@@ -936,7 +920,7 @@ pckReadU64(PackRead *this, PckReadUInt64Param param)
 
     ASSERT(this != NULL);
 
-    if (pckReadDefaultNull(this, &param.id))
+    if (pckReadNullInternal(this, &param.id))
         FUNCTION_TEST_RETURN(param.defaultValue);
 
     FUNCTION_TEST_RETURN(pckReadTag(this, &param.id, pckTypeU64, false));
