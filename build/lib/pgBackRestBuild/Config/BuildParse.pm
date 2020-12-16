@@ -339,6 +339,7 @@ sub buildConfigParse
         # Build command role default list
         # --------------------------------------------------------------------------------------------------------------------------
         my $strBuildSourceSub = "";
+        my $strDefaultList = "";
 
         foreach my $strCommand (cfgDefineCommandList())
         {
@@ -347,7 +348,9 @@ sub buildConfigParse
                 if (!defined($rhOption->{&CFGDEF_COMMAND_ROLE_EXCLUDE}{&CFGCMD_ROLE_DEFAULT}))
                 {
                     $strBuildSourceSub .=
-                        "            PARSE_RULE_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
+                        "            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(" . buildConfigCommandEnum($strCommand) . ")\n";
+
+                    $strDefaultList .= $strCommand . ',';
                 }
             }
         }
@@ -361,7 +364,6 @@ sub buildConfigParse
                 $strBuildSourceSub .
                 "        ),\n";
         }
-
 
         # Build command role other list
         #---------------------------------------------------------------------------------------------------------------------------

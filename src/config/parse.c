@@ -180,7 +180,7 @@ typedef enum
 #define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST(...)                                                                           \
     .commandDefaultValid = 0 __VA_ARGS__
 
-#define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
+#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(commandParam)                                                                       \
     | (1 << commandParam)
 
 #define PARSE_RULE_OPTION_OPTIONAL_PUSH_LIST(type, size, data, ...)                                                                \
