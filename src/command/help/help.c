@@ -236,64 +236,62 @@ helpRender(void)
             const char *commandName = cfgCommandName(commandId);
 
             // Unpack option data
-            // HelpOptionData *optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);
-            //
-            // pckReadArrayBeginP(pckHelp);
-            //
-            // for (ConfigCommand optionId = 0; optionId < CFG_OPTION_TOTAL - 1; optionId++)
-            // {
-            //     LOG_DEBUG_FMT("OPTION %s - %u", cfgDefOptionName(optionId), pckReadId(pckHelp));
-            //
-            //     optionData[optionId] = (HelpOptionData)
-            //     {
-            //         .internal = pckReadBoolP(pckHelp),
-            //         .section = pckReadStrP(pckHelp, .defaultValue = STR("general")),
-            //         .summary = pckReadStrP(pckHelp),
-            //         .description = pckReadStrP(pckHelp),
-            //     };
-            //
-            //     LOG_DEBUG_FMT("SECTION %s", strZNull(optionData[optionId].section));
-            //     LOG_DEBUG_FMT("SUMMARY %s", strZNull(optionData[optionId].summary));
-            //     LOG_DEBUG_FMT("SUMMARY %s", strZNull(optionData[optionId].description));
-            //
-            //     LOG_DEBUG_FMT("BEFORE DEP ARRAY %u", pckReadId(pckHelp));
-            //
-            //     if (!pckReadNullP(pckHelp))
-            //     {
-            //         LOG_DEBUG_FMT("READ DEP ARRAY %u", pckReadId(pckHelp));
-            //
-            //         pckReadArrayBeginP(pckHelp);
-            //
-            //         LOG_DEBUG_FMT("BEGIN DEP ARRAY %u", pckReadId(pckHelp));
-            //
-            //         while (pckReadNext(pckHelp))
-            //         {
-            //             LOG_DEBUG("READ DEP ITEM");
-            //             pckReadStrP(pckHelp);
-            //         }
-            //
-            //         pckReadArrayEndP(pckHelp);
-            //     }
-            //
-            //     LOG_DEBUG_FMT("BEFORE CMD ARRAY %u", pckReadId(pckHelp));
-            //
-            //     if (!pckReadNullP(pckHelp))
-            //     {
-            //         LOG_DEBUG("READ CMD ARRAY");
-            //
-            //         pckReadArrayBeginP(pckHelp);
-            //
-            //         while (pckReadNext(pckHelp))
-            //         {
-            //             LOG_DEBUG_FMT("READ ITEM %u", pckReadId(pckHelp));
-            //             pckReadStrP(pckHelp);
-            //         }
-            //
-            //         pckReadArrayEndP(pckHelp);
-            //     }
-            // }
-            //
-            // pckReadArrayEndP(pckHelp);
+            HelpOptionData *optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);
+
+            pckReadArrayBeginP(pckHelp);
+
+            for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
+            {
+                optionData[optionId] = (HelpOptionData)
+                {
+                    .internal = pckReadBoolP(pckHelp),
+                    .section = pckReadStrP(pckHelp, .defaultValue = STR("general")),
+                    .summary = pckReadStrP(pckHelp),
+                    .description = pckReadStrP(pckHelp),
+                };
+
+                if (!pckReadNullP(pckHelp))
+                {
+                    pckReadArrayBeginP(pckHelp);
+
+                    while (pckReadNext(pckHelp))
+                    {
+                        pckReadStrP(pckHelp);
+                    }
+
+                    pckReadArrayEndP(pckHelp);
+                }
+
+                if (!pckReadNullP(pckHelp))
+                {
+                    pckReadArrayBeginP(pckHelp);
+
+                    while (pckReadNext(pckHelp))
+                    {
+                        ConfigCommand commandIdArray = pckReadId(pckHelp) - 1;
+
+                        pckReadObjBeginP(pckHelp, .id = commandIdArray + 1);
+
+                        const bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
+                        const String *summary = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].summary);
+                        const String *description = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].description);
+
+                        pckReadObjEndP(pckHelp);
+
+                        if (commandId == commandIdArray)
+                        {
+                            optionData[optionId].internal = internal;
+                            optionData[optionId].section = NULL;
+                            optionData[optionId].summary = summary;
+                            optionData[optionId].description = description;
+                        }
+                    }
+
+                    pckReadArrayEndP(pckHelp);
+                }
+            }
+
+            pckReadArrayEndP(pckHelp);
 
             // Output command part of title
             strCatFmt(result, " - '%s' command", commandName);
@@ -320,10 +318,7 @@ helpRender(void)
                 {
                     if (cfgDefOptionValid(commandId, optionId) && !cfgDefOptionInternal(commandId, optionId))
                     {
-                        const String *section = NULL;
-
-                        if (cfgDefOptionHelpSection(optionId) != NULL)
-                            section = strNew(cfgDefOptionHelpSection(optionId));
+                        const String *section = optionData[optionId].section;
 
                         if (section == NULL ||
                             (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
@@ -356,9 +351,8 @@ helpRender(void)
                         ConfigOption optionId = varInt(varLstGet(optionList, optionIdx));
 
                         // Get option summary
-                        String *summary = strFirstLower(strNewN(
-                            cfgDefOptionHelpSummary(commandId, optionId),
-                            strlen(cfgDefOptionHelpSummary(commandId, optionId)) - 1));
+                        String *summary = strFirstLower(
+                            strNewN(strZ(optionData[optionId].summary), strSize(optionData[optionId].summary) - 1));
 
                         // Ouput current and default values if they exist
                         const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgDefOptionType(optionId));
@@ -427,8 +421,8 @@ helpRender(void)
                     "\n"
                     "%s\n",
                     cfgDefOptionName(option.id),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, option.id)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.id)), 0, true, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(optionData[option.id].summary, 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(optionData[option.id].description, 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
                 const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgDefOptionType(option.id));

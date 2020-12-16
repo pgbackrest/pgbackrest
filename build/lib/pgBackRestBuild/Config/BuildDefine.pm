@@ -283,26 +283,6 @@ sub renderOptional
         $bSingleLine = true;
     }
 
-    if ($bCommand && defined($rhOptionHelp) && defined($rhOptionHelp->{&CONFIG_HELP_SOURCE}) &&
-        $rhOptionHelp->{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_COMMAND)
-    {
-        my $strSummary = helpFormatText($oManifest, $oDocRender, $rhOptionHelp->{&CONFIG_HELP_SUMMARY}, 0, 72);
-
-        if (length($strSummary) > 74)
-        {
-            confess("summary for command '${strCommand}', option '${strOption}' may not be greater than 72 characters");
-        }
-
-        $strBuildSourceOptional .=
-            (defined($strBuildSourceOptional) ? "\n" : '') .
-            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY(${strSummary})\n" .
-            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION\n" .
-            "${strIndent}            (\n" .
-                helpFormatText($oManifest, $oDocRender, $rhOptionHelp->{&CONFIG_HELP_DESCRIPTION}, 20, 111) . "\n" .
-            "${strIndent}            )\n";
-
-    }
-
     return $strBuildSourceOptional;
 }
 
@@ -400,42 +380,6 @@ sub buildConfigDefine
             "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
             "\n" .
             "        CFGDEFDATA_OPTION_SECURE(" . ($rhOption->{&CFGDEF_SECURE} ? 'true' : 'false') . ")\n";
-
-        if (defined($hOptionHelp))
-        {
-            $strBuildSource .=
-                "\n";
-
-            # Output section
-            my $strSection =
-                defined($hOptionHelp->{&CONFIG_HELP_SECTION}) ? $hOptionHelp->{&CONFIG_HELP_SECTION} : 'general';
-
-            if (length($strSection) > 72)
-            {
-                confess("section for option '${strOption}' may not be greater than 72 characters");
-            }
-
-            $strBuildSource .=
-                "        CFGDEFDATA_OPTION_HELP_SECTION(\"${strSection}\")\n";
-
-            # Output summary
-            my $strSummary = helpFormatText($oManifest, $oDocRender, $hOptionHelp->{&CONFIG_HELP_SUMMARY}, 0, 72);
-
-            if (length($strSummary) > 74)
-            {
-                confess("summary for option '${strOption}' may not be greater than 72 characters");
-            }
-
-            $strBuildSource .=
-                "        CFGDEFDATA_OPTION_HELP_SUMMARY(${strSummary})\n";
-
-            # Output description
-            $strBuildSource .=
-                "        CFGDEFDATA_OPTION_HELP_DESCRIPTION\n" .
-                "        (\n" .
-                    helpFormatText($oManifest, $oDocRender, $hOptionHelp->{&CONFIG_HELP_DESCRIPTION}, 12, 119) . "\n" .
-                "        )\n";
-        }
 
         $strBuildSource .=
             "\n" .

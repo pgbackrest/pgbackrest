@@ -597,19 +597,6 @@ pckReadNullInternal(PackRead *this, unsigned int *id)
     FUNCTION_TEST_RETURN(*id < this->tagNextId);
 }
 
-bool
-pckReadNull(PackRead *this, PackIdParam param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(pckReadNullInternal(this, &param.id));
-}
-
 /***********************************************************************************************************************************
 Helper function to determine whether a default should be returned when the field is NULL (missing)
 ***********************************************************************************************************************************/
@@ -633,6 +620,19 @@ pckReadDefaultNull(PackRead *this, unsigned int *id)
 
     // The field is not NULL
     FUNCTION_TEST_RETURN(false);
+}
+
+bool
+pckReadNull(PackRead *this, PackIdParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(pckReadDefaultNull(this, &param.id));
 }
 
 /**********************************************************************************************************************************/

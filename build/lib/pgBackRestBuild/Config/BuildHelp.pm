@@ -302,6 +302,7 @@ sub buildConfigHelp
         if ($rhOption->{&CFGDEF_INTERNAL})
         {
             $strBuildSource .= packTagFormat("Internal", PCK_TYPE_BOOL, $iDelta, true, 8);
+            $iDelta = 0;
             $bInternal = true;
         }
         else
@@ -309,7 +310,7 @@ sub buildConfigHelp
             $iDelta++;
         }
 
-        if (!$bInternal &&  defined($rhOptionHelp))
+        if (defined($rhOptionHelp))
         {
             # Section
             my $strSection = $rhOptionHelp->{&CONFIG_HELP_SECTION};
@@ -365,8 +366,6 @@ sub buildConfigHelp
             foreach my $strDeprecatedName (@{$stryDeprecatedName})
             {
                 $strBuildSource .= packTagFormat("Deprecated name", PCK_TYPE_STR, 0, $strDeprecatedName, 12);
-                $iDelta = 0;
-
             }
 
             $strBuildSource .=
@@ -402,6 +401,7 @@ sub buildConfigHelp
                 {
                     $strBuildSourceCommand .=
                         packTagFormat("Internal", PCK_TYPE_BOOL, $iDeltaCommand, true, 16);
+                    $iDeltaCommand = 0;
                 }
                 else
                 {
@@ -424,7 +424,7 @@ sub buildConfigHelp
 
                     $strBuildSourceCommand .=
                         packTagFormat("Summary", PCK_TYPE_STR, $iDeltaCommand, $strSummary, 16);
-                    $iDelta = 0;
+                    $iDeltaCommand = 0;
 
                     # Description
                     $strBuildSourceCommand .= packTagFormat(
@@ -440,7 +440,7 @@ sub buildConfigHelp
                         $strBuildSourceCommand .
                         "            0x00, // Command ${strCommand} override end\n";
 
-                    $iLastCommandId = $iCommandId;
+                    $iLastCommandId = $iCommandId + 1;
                 }
             }
 

@@ -51,17 +51,10 @@ unsigned int cfgDefOptionDependValueTotal(ConfigCommand commandId, ConfigOption 
 bool cfgDefOptionDependValueValid(ConfigCommand commandId, ConfigOption optionId, const char *value);
 const char *cfgDefOptionDependValue(ConfigCommand commandId, ConfigOption optionId, unsigned int valueId);
 
-// Option help
-const char *cfgDefOptionHelpDescription(ConfigCommand commandId, ConfigOption optionId);
-const char *cfgDefOptionHelpSummary(ConfigCommand commandId, ConfigOption optionId);
-
 // Option help name alt
 bool cfgDefOptionHelpNameAlt(ConfigOption optionId);
 const char *cfgDefOptionHelpNameAltValue(ConfigOption optionId, unsigned int valueId);
 unsigned int cfgDefOptionHelpNameAltValueTotal(ConfigOption optionId);
-
-// Option help section
-const char *cfgDefOptionHelpSection(ConfigOption optionId);
 
 // Option id by name
 int cfgDefOptionId(const char *optionName);
