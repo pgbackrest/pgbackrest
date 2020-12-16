@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# Auto-Generate Command and Option Configuration Definition Enums, Constants and Data
+# Auto-Generate Command and Option Help Pack
 ####################################################################################################################################
 package pgBackRestBuild::Config::BuildHelp;
 
@@ -31,9 +31,9 @@ use constant BLDLCL_FILE_DEFINE                                     => 'help';
 use constant BLDLCL_DATA_COMMAND                                    => '01-command';
 
 ####################################################################################################################################
-# Definitions for constants and data to build
+# Definitions for data to build
 ####################################################################################################################################
-my $strSummary = 'Help Definition';
+my $strSummary = 'Help Definition Pack';
 
 my $rhBuild =
 {
@@ -281,7 +281,7 @@ sub buildConfigHelp
         "\n" .
         "    0x00, // Commands end\n";
 
-    # Build option constants and data
+    # Build option help
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhConfigDefine = cfgDefine();
 
