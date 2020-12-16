@@ -10,7 +10,6 @@ Protocol Helper
 #include "common/exec.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
-#include "config/define.h"
 #include "config/exec.h"
 #include "config/parse.h"
 #include "config/protocol.h"
@@ -364,7 +363,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
             // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
             if (protocolStorageType == protocolStorageTypeRepo)
             {
-                remove = !cfgDefOptionRequired(cfgCommand(), optionId) || cfgDefOptionDefault(cfgCommand(), optionId) != NULL;
+                remove = !cfgParseOptionRequired(cfgCommand(), optionId) || cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
             }
             // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
             else
@@ -398,7 +397,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     kvPut(
         optionReplace,
         protocolStorageType == protocolStorageTypeRepo ?
-            VARSTRZ(cfgOptionIdxName(cfgOptRepoLocal, hostIdx)) : VARSTRZ(cfgOptionKeyIdxName(cfgOptPgLocal, 0)),
+            VARSTRZ(cfgOptionIdxName(cfgOptRepoLocal, hostIdx)) : VARSTRZ(cfgParseOptionKeyIdxName(cfgOptPgLocal, 0)),
         BOOL_TRUE_VAR);
 
     // Set default to make it explicit which host will be used on the remote
@@ -467,12 +466,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            // The number of remotes allowed is the greater of allowed repo or pg configs + 1 (0 is reserved for connections from
-            // the main process).  Since these are static and only one will be true it presents a problem for coverage.  We think
-            // that pg remotes will always be greater but we'll protect that assumption with an assertion.
-            ASSERT(cfgDefOptionIndexTotal(cfgOptPgPath) >= cfgDefOptionIndexTotal(cfgOptRepoPath));
-
-            protocolHelper.clientRemoteSize = cfgDefOptionIndexTotal(cfgOptPgPath) + 1;
+            protocolHelper.clientRemoteSize = cfgOptionGroupIdxTotal(isRepo ? cfgOptGrpRepo : cfgOptGrpPg) + 1;
             protocolHelper.clientRemote = memNew(protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
 
             for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)

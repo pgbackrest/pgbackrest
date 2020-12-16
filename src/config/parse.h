@@ -5,6 +5,7 @@ Parse Configuration
 #define CONFIG_PARSE_H
 
 #include "config/config.h"
+#include "config/parse.auto.h"
 
 /***********************************************************************************************************************************
 Functions
@@ -25,13 +26,28 @@ typedef struct CfgParseOptionResult
 
 CfgParseOptionResult cfgParseOption(const String *optionName);
 
+// Default value for the option
+const char *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);
+
 // Option id from name
 int cfgParseOptionId(const char *optionName);
 
 // Option name from id
 const char *cfgParseOptionName(ConfigOption optionId);
 
-// Is the option valid for the command/role?
-bool cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId);
+// Option name from id and key
+const char *cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
+
+// Does the option need to be protected from showing up in logs, command lines, etc?
+bool cfgParseOptionSecure(ConfigOption optionId);
+
+// Option data type
+ConfigOptionType cfgParseOptionType(ConfigOption optionId);
+
+// Is the option required?
+bool cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId);
+
+// Is the option valid for the command?
+bool cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId);
 
 #endif
