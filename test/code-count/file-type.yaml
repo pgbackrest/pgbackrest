@@ -15,7 +15,7 @@ build/lib/pgBackRestBuild/Config/Build.pm:
   class: build
   type: perl
 
-build/lib/pgBackRestBuild/Config/BuildDefine.pm:
+build/lib/pgBackRestBuild/Config/BuildHelp.pm:
   class: build
   type: perl
 
@@ -1163,18 +1163,6 @@ src/config/config.intern.h:
   class: core
   type: c/h
 
-src/config/define.auto.c:
-  class: core/auto
-  type: c
-
-src/config/define.auto.h:
-  class: core/auto
-  type: c/h
-
-src/config/define.c:
-  class: core
-  type: c
-
 src/config/exec.c:
   class: core
   type: c
@@ -1194,6 +1182,10 @@ src/config/load.h:
 src/config/parse.auto.c:
   class: core/auto
   type: c
+
+src/config/parse.auto.h:
+  class: core/auto
+  type: c/h
 
 src/config/parse.c:
   class: core
@@ -2076,10 +2068,6 @@ test/src/module/common/userTest.c:
   type: c
 
 test/src/module/common/waitTest.c:
-  class: test/module
-  type: c
-
-test/src/module/config/defineTest.c:
   class: test/module
   type: c
 

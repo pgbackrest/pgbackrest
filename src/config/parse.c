@@ -1709,8 +1709,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         parseRuleOptionDataTypeAllowRange, config->command, optionId);
 
                                     if (allowRange.found &&
-                                        (valueInt64 < ((int64_t)allowRange.list[0] << 32 | (int64_t)allowRange.list[1]) ||
-                                         valueInt64 > ((int64_t)allowRange.list[2] << 32 | (int64_t)allowRange.list[3])))
+                                        (valueInt64 <
+                                            ((int64_t)(intptr_t)allowRange.list[0] << 32 | (int64_t)(intptr_t)allowRange.list[1]) ||
+                                         valueInt64 >
+                                            ((int64_t)(intptr_t)allowRange.list[2] << 32 | (int64_t)(intptr_t)allowRange.list[3])))
                                     {
                                         THROW_FMT(
                                             OptionInvalidValueError, "'%s' is out of range for '%s' option", strZ(value),
