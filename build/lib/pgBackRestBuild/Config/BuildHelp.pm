@@ -365,7 +365,7 @@ sub buildConfigHelp
 
             foreach my $strDeprecatedName (@{$stryDeprecatedName})
             {
-                $strBuildSource .= packTagFormat("Deprecated name", PCK_TYPE_STR, 0, $strDeprecatedName, 12);
+                $strBuildSource .= packTagFormat($strDeprecatedName, PCK_TYPE_STR, 0, $strDeprecatedName, 12);
             }
 
             $strBuildSource .=
