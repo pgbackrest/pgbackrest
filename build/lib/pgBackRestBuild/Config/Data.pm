@@ -1144,10 +1144,6 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_INTERNAL => true,
-        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
-        {
-            &CFGCMD_ROLE_DEFAULT => {},
-        },
     },
 
     &CFGOPT_PROCESS =>
