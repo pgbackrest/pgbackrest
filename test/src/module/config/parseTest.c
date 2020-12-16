@@ -1134,7 +1134,6 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "xxx", true);
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is " TEST_COMMAND_BACKUP);
-        TEST_RESULT_BOOL(cfgCommandInternal(cfgCmdBackup), false, "    backup command is not internal");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "    backup command requires lock");
         TEST_RESULT_UINT(cfgLockType(), lockTypeBackup, "    backup command requires backup lock type");
         TEST_RESULT_UINT(cfgLogLevelDefault(), logLevelInfo, "    backup defaults to log level warn");

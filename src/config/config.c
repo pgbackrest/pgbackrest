@@ -19,7 +19,6 @@ typedef struct ConfigCommandData
 {
     const char *name;
 
-    bool internal:1;
     bool lockRequired:1;
     bool lockRemoteRequired:1;
     unsigned int lockType:2;
@@ -36,8 +35,6 @@ typedef struct ConfigCommandData
 #define CONFIG_COMMAND(...)                                                                                                        \
     {__VA_ARGS__},
 
-#define CONFIG_COMMAND_INTERNAL(internalParam)                                                                                     \
-    .internal = internalParam,
 #define CONFIG_COMMAND_LOCK_REQUIRED(lockRequiredParam)                                                                            \
     .lockRequired = lockRequiredParam,
 #define CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(lockRemoteRequiredParam)                                                               \
@@ -270,19 +267,6 @@ cfgExe(void)
     FUNCTION_TEST_VOID();
     ASSERT(configLocal != NULL);
     FUNCTION_TEST_RETURN(configLocal->exe);
-}
-
-/**********************************************************************************************************************************/
-bool
-cfgCommandInternal(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN(configCommandData[commandId].internal);
 }
 
 /**********************************************************************************************************************************/
@@ -550,7 +534,7 @@ cfgOptionDefaultValue(ConfigOption optionId)
             break;
 
         default:
-            THROW_FMT(AssertError, "default value not available for option type %d", cfgParseOptionType(optionId));
+            THROW_FMT(AssertError, "default value not available for option type %u", cfgParseOptionType(optionId));
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -1155,7 +1139,7 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
                 }
 
                 default:
-                    THROW_FMT(AssertError, "set not available for option type %d", cfgParseOptionType(optionId));
+                    THROW_FMT(AssertError, "set not available for option type %u", cfgParseOptionType(optionId));
             }
         }
         else

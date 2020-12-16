@@ -22,9 +22,6 @@ Map command names to ids and vice versa.
 typedef struct ConfigDefineCommandData
 {
     const char *name;                                               // Command name
-
-    const char *helpSummary;                                        // Brief summary of the command
-    const char *helpDescription;                                    // Full description of the command
 } ConfigDefineCommandData;
 
 // Command macros are intended to make the command definitions easy to read and to produce good diffs.
@@ -38,11 +35,6 @@ typedef struct ConfigDefineCommandData
 #define CFGDEFDATA_COMMAND_NAME(nameParam)                                                                                         \
     .name = nameParam,
 
-#define CFGDEFDATA_COMMAND_HELP_SUMMARY(helpSummaryParam)                                                                          \
-    .helpSummary = helpSummaryParam,
-#define CFGDEFDATA_COMMAND_HELP_DESCRIPTION(helpDescriptionParam)                                                                  \
-    .helpDescription = helpDescriptionParam,
-
 /***********************************************************************************************************************************
 Define how an option is parsed and interacts with other options.
 ***********************************************************************************************************************************/
@@ -50,10 +42,6 @@ typedef struct ConfigDefineOptionData
 {
     unsigned int internal:1;                                        // Is the option only used internally?
     bool required:1;                                                // Is the option required?
-
-    const char *helpSection;                                        // Classify the option
-    const char *helpSummary;                                        // Brief summary of the option
-    const char *helpDescription;                                    // Full description of the option
 
     const void **data;                                              // Optional data and command overrides
 } ConfigDefineOptionData;
@@ -67,17 +55,8 @@ typedef struct ConfigDefineOptionData
     {__VA_ARGS__},
 
 #define CFGDEFDATA_OPTION_NAME(nameParam)
-#define CFGDEFDATA_OPTION_INTERNAL(internalParam)                                                                                  \
-    .internal = internalParam,
 #define CFGDEFDATA_OPTION_REQUIRED(requiredParam)                                                                                  \
     .required = requiredParam,
-
-#define CFGDEFDATA_OPTION_HELP_SECTION(helpSectionParam)                                                                           \
-    .helpSection = helpSectionParam,
-#define CFGDEFDATA_OPTION_HELP_SUMMARY(helpSummaryParam)                                                                           \
-    .helpSummary = helpSummaryParam,
-#define CFGDEFDATA_OPTION_HELP_DESCRIPTION(helpDescriptionParam)                                                                   \
-    .helpDescription = helpDescriptionParam,
 
 // Define additional types of data that can be associated with an option.  Because these types are rare they are not give dedicated
 // fields and are instead packed into an array which is read at runtime.  This may seem inefficient but they are only accessed a
@@ -91,11 +70,7 @@ typedef enum
     configDefDataTypeCommand,
     configDefDataTypeDefault,
     configDefDataTypeDepend,
-    configDefDataTypeInternal,
     configDefDataTypeRequired,
-    configDefDataTypeHelpNameAlt,
-    configDefDataTypeHelpSummary,
-    configDefDataTypeHelpDescription,
 } ConfigDefineDataType;
 
 #define CFGDATA_OPTION_OPTIONAL_PUSH_LIST(type, size, data, ...)                                                                   \
@@ -135,19 +110,8 @@ typedef enum
 #define CFGDEFDATA_OPTION_OPTIONAL_COMMAND(command)                                                                                \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeCommand, 0, command),
 
-#define CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(commandOptionInternal)                                                                 \
-    CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeInternal, 0, commandOptionInternal),
-
 #define CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(commandOptionRequired)                                                                 \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeRequired, 0, commandOptionRequired),
-
-#define CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT(...)                                                                              \
-    CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
-        configDefDataTypeHelpNameAlt, sizeof((const char *[]){__VA_ARGS__}) / sizeof(const char *), 0, __VA_ARGS__),
-#define CFGDEFDATA_OPTION_OPTIONAL_HELP_SUMMARY(helpSummaryParam)                                                                  \
-    CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypeHelpSummary, 1, 0, helpSummaryParam),
-#define CFGDEFDATA_OPTION_OPTIONAL_HELP_DESCRIPTION(helpDescriptionParam)                                                          \
-    CFGDATA_OPTION_OPTIONAL_PUSH_LIST(configDefDataTypeHelpDescription, 1, 0, helpDescriptionParam),
 
 /***********************************************************************************************************************************
 Include the automatically generated configuration data.
@@ -250,31 +214,6 @@ cfgDefOptionTotal(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(sizeof(configDefineOptionData) / sizeof(ConfigDefineOptionData));
-}
-
-/**********************************************************************************************************************************/
-const char *
-cfgDefCommandHelpDescription(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgDefCommandTotal());
-
-    FUNCTION_TEST_RETURN(configDefineCommandData[commandId].helpDescription);
-}
-
-const char *
-cfgDefCommandHelpSummary(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgDefCommandTotal());
-
-    FUNCTION_TEST_RETURN(configDefineCommandData[commandId].helpSummary);
 }
 
 /**********************************************************************************************************************************/
@@ -512,130 +451,6 @@ cfgDefOptionDependValueValid(ConfigCommand commandId, ConfigOption optionId, con
         if (strcmp(value, cfgDefOptionDependValue(commandId, optionId, valueIdx)) == 0)
             result = true;
     }
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-const char *
-cfgDefOptionHelpDescription(ConfigCommand commandId, ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeHelpDescription);
-
-    const char *result = configDefineOptionData[optionId].helpDescription;
-
-    if (dataDefFound)
-        result = (char *)dataDefList[0];
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-bool
-cfgDefOptionHelpNameAlt(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(-1, optionId, configDefDataTypeHelpNameAlt);
-
-    FUNCTION_TEST_RETURN(dataDefFound);
-}
-
-const char *
-cfgDefOptionHelpNameAltValue(ConfigOption optionId, unsigned int valueId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-        FUNCTION_TEST_PARAM(UINT, valueId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-    ASSERT(valueId < cfgDefOptionHelpNameAltValueTotal(optionId));
-
-    CONFIG_DEFINE_DATA_FIND(-1, optionId, configDefDataTypeHelpNameAlt);
-
-    FUNCTION_TEST_RETURN((char *)dataDefList[valueId]);
-}
-
-unsigned int
-cfgDefOptionHelpNameAltValueTotal(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(-1, optionId, configDefDataTypeHelpNameAlt);
-
-    FUNCTION_TEST_RETURN(dataDefListSize);
-}
-
-/**********************************************************************************************************************************/
-const char *
-cfgDefOptionHelpSection(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    FUNCTION_TEST_RETURN(configDefineOptionData[optionId].helpSection);
-}
-
-/**********************************************************************************************************************************/
-const char *
-cfgDefOptionHelpSummary(ConfigCommand commandId, ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeHelpSummary);
-
-    const char *result = configDefineOptionData[optionId].helpSummary;
-
-    if (dataDefFound)
-        result = (char *)dataDefList[0];
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-bool
-cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeInternal);
-
-    bool result = configDefineOptionData[optionId].internal;
-
-    if (dataDefFound)
-        result = (bool)dataDef;
 
     FUNCTION_TEST_RETURN(result);
 }

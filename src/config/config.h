@@ -62,9 +62,6 @@ ConfigCommand cfgCommand(void);
 // Current command role (async, local, remote)
 ConfigCommandRole cfgCommandRole(void);
 
-// Is this command internal-only?
-bool cfgCommandInternal(ConfigCommand commandId);
-
 // Get command name by id
 const char *cfgCommandName(ConfigCommand commandId);
 

@@ -18,10 +18,6 @@ Define global section name
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Command help
-const char *cfgDefCommandHelpDescription(ConfigCommand commandId);
-const char *cfgDefCommandHelpSummary(ConfigCommand commandId);
-
 // Option allow lists
 bool cfgDefOptionAllowList(ConfigCommand commandId, ConfigOption optionId);
 bool cfgDefOptionAllowListValueValid(ConfigCommand commandId, ConfigOption optionId, const char *value);
@@ -40,21 +36,6 @@ ConfigOption cfgDefOptionDependOption(ConfigCommand commandId, ConfigOption opti
 unsigned int cfgDefOptionDependValueTotal(ConfigCommand commandId, ConfigOption optionId);
 bool cfgDefOptionDependValueValid(ConfigCommand commandId, ConfigOption optionId, const char *value);
 const char *cfgDefOptionDependValue(ConfigCommand commandId, ConfigOption optionId, unsigned int valueId);
-
-// Option help
-const char *cfgDefOptionHelpDescription(ConfigCommand commandId, ConfigOption optionId);
-const char *cfgDefOptionHelpSummary(ConfigCommand commandId, ConfigOption optionId);
-
-// Option help name alt
-bool cfgDefOptionHelpNameAlt(ConfigOption optionId);
-const char *cfgDefOptionHelpNameAltValue(ConfigOption optionId, unsigned int valueId);
-unsigned int cfgDefOptionHelpNameAltValueTotal(ConfigOption optionId);
-
-// Option help section
-const char *cfgDefOptionHelpSection(ConfigOption optionId);
-
-// Is the option for internal use only?
-bool cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId);
 
 // Is the option required
 bool cfgDefOptionRequired(ConfigCommand commandId, ConfigOption optionId);
