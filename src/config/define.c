@@ -42,7 +42,6 @@ typedef struct ConfigDefineOptionData
 {
     const char *name;                                               // Option name
     unsigned int type:3;                                            // Option type (e.g. string, int, boolean, etc.)
-    unsigned int internal:1;                                        // Is the option only used internally?
     unsigned int section:2;                                         // Config section (e.g. global, stanza, cmd-line)
     bool required:1;                                                // Is the option required?
     bool secure:1;                                                  // Does the option need to be redacted on logs and cmd-line?
@@ -61,8 +60,6 @@ typedef struct ConfigDefineOptionData
 
 #define CFGDEFDATA_OPTION_NAME(nameParam)                                                                                          \
     .name = nameParam,
-#define CFGDEFDATA_OPTION_INTERNAL(internalParam)                                                                                  \
-    .internal = internalParam,
 #define CFGDEFDATA_OPTION_REQUIRED(requiredParam)                                                                                  \
     .required = requiredParam,
 #define CFGDEFDATA_OPTION_SECTION(sectionParam)                                                                                    \
@@ -84,9 +81,7 @@ typedef enum
     configDefDataTypeCommand,
     configDefDataTypeDefault,
     configDefDataTypeDepend,
-    configDefDataTypeInternal,
     configDefDataTypeRequired,
-    configDefDataTypeHelpNameAlt,
 } ConfigDefineDataType;
 
 #define CFGDATA_OPTION_OPTIONAL_PUSH_LIST(type, size, data, ...)                                                                   \
@@ -132,15 +127,8 @@ typedef enum
 #define CFGDEFDATA_OPTION_OPTIONAL_COMMAND(command)                                                                                \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeCommand, 0, command),
 
-#define CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(commandOptionInternal)                                                                 \
-    CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeInternal, 0, commandOptionInternal),
-
 #define CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(commandOptionRequired)                                                                 \
     CFGDATA_OPTION_OPTIONAL_PUSH(configDefDataTypeRequired, 0, commandOptionRequired),
-
-#define CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT(...)                                                                              \
-    CFGDATA_OPTION_OPTIONAL_PUSH_LIST(                                                                                             \
-        configDefDataTypeHelpNameAlt, sizeof((const char *[]){__VA_ARGS__}) / sizeof(const char *), 0, __VA_ARGS__),
 
 /***********************************************************************************************************************************
 Include the automatically generated configuration data.
@@ -485,51 +473,6 @@ cfgDefOptionDependValueValid(ConfigCommand commandId, ConfigOption optionId, con
 }
 
 /**********************************************************************************************************************************/
-bool
-cfgDefOptionHelpNameAlt(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(-1, optionId, configDefDataTypeHelpNameAlt);
-
-    FUNCTION_TEST_RETURN(dataDefFound);
-}
-
-const char *
-cfgDefOptionHelpNameAltValue(ConfigOption optionId, unsigned int valueId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-        FUNCTION_TEST_PARAM(UINT, valueId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-    ASSERT(valueId < cfgDefOptionHelpNameAltValueTotal(optionId));
-
-    CONFIG_DEFINE_DATA_FIND(-1, optionId, configDefDataTypeHelpNameAlt);
-
-    FUNCTION_TEST_RETURN((char *)dataDefList[valueId]);
-}
-
-unsigned int
-cfgDefOptionHelpNameAltValueTotal(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(-1, optionId, configDefDataTypeHelpNameAlt);
-
-    FUNCTION_TEST_RETURN(dataDefListSize);
-}
-
-/**********************************************************************************************************************************/
 int
 cfgDefOptionId(const char *optionName)
 {
@@ -544,28 +487,6 @@ cfgDefOptionId(const char *optionName)
     for (ConfigOption optionId = 0; optionId < cfgDefOptionTotal(); optionId++)
         if (strcmp(optionName, configDefineOptionData[optionId].name) == 0)
             result = optionId;
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-bool
-cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
-
-    CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeInternal);
-
-    bool result = configDefineOptionData[optionId].internal;
-
-    if (dataDefFound)
-        result = (bool)dataDef;
 
     FUNCTION_TEST_RETURN(result);
 }

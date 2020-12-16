@@ -77,9 +77,6 @@ testRun(void)
         TEST_RESULT_BOOL(
             cfgDefOptionDependValueValid(cfgCmdRestore, cfgOptTarget, BOGUS_STR), false, "depend option value not valid");
 
-        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptSet), false, "option set is not internal");
-        TEST_RESULT_BOOL(cfgDefOptionInternal(cfgCmdRestore, cfgOptPgHost), true, "option pg-host is internal");
-
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgOptRecoveryOption), true, "recovery-option is multi");
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgOptDbInclude), true, "db-include is multi");
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgOptStartFast), false, "start-fast is not multi");
@@ -103,37 +100,6 @@ testRun(void)
             "assertion 'optionId < cfgDefOptionTotal()' failed");
         TEST_RESULT_BOOL(cfgDefOptionValid(cfgCmdBackup, cfgOptType), true, "option valid");
         TEST_RESULT_BOOL(cfgDefOptionValid(cfgCmdInfo, cfgOptType), false, "option not valid");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("cfgDefCommandHelp*() and cfgDefOptionHelp*()"))
-    {
-        TEST_RESULT_BOOL(cfgDefOptionHelpNameAlt(cfgOptRepoHost), true, "name alt exists");
-        TEST_RESULT_BOOL(cfgDefOptionHelpNameAlt(cfgOptSet), false, "name alt not exists");
-        TEST_RESULT_INT(cfgDefOptionHelpNameAltValueTotal(cfgOptRepoHost), 1, "name alt value total");
-        TEST_RESULT_Z(cfgDefOptionHelpNameAltValue(cfgOptRepoHost, 0), "backup-host", "name alt value 0");
-        TEST_ERROR(
-            cfgDefOptionHelpNameAltValue(cfgOptRepoHost, 1), AssertError,
-            "assertion 'valueId < cfgDefOptionHelpNameAltValueTotal(optionId)' failed");
-
-        TEST_RESULT_Z(cfgDefOptionHelpSection(cfgOptDelta), "general", "delta option help section");
-        TEST_RESULT_Z(
-            cfgDefOptionHelpSummary(cfgCmdBackup, cfgOptBufferSize), "Buffer size for file operations.",
-            "backup command, delta option help summary");
-        TEST_RESULT_Z(
-            cfgDefOptionHelpSummary(cfgCmdBackup, cfgOptType), "Backup type.", "backup command, type option help summary");
-        TEST_RESULT_Z(
-            cfgDefOptionHelpDescription(cfgCmdBackup, cfgOptLogSubprocess),
-            "Enable file logging for any subprocesses created by this process using the log level specified by log-level-file.",
-            "backup command, log-subprocess option help description");
-        TEST_RESULT_Z(
-            cfgDefOptionHelpDescription(cfgCmdBackup, cfgOptType),
-            "The following backup types are supported:\n"
-            "\n"
-            "* full - all database cluster files will be copied and there will be no dependencies on previous backups.\n"
-            "* incr - incremental from the last successful backup.\n"
-            "* diff - like an incremental backup but always based on the last full backup.",
-            "backup command, type option help description");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

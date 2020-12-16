@@ -122,7 +122,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -145,7 +144,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -179,7 +177,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -212,7 +209,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeSize)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -235,7 +231,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -263,7 +258,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeSize)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -275,7 +269,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 4503599627370496)
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("archive-queue-max")
         )
     )
 
@@ -286,7 +279,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -312,7 +304,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -337,7 +328,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeSize)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -389,7 +379,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -406,7 +395,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -424,7 +412,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -463,7 +450,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -486,7 +472,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -509,7 +494,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -544,7 +528,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -576,7 +559,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -615,7 +597,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -654,7 +635,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -693,7 +673,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeList)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -710,7 +689,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -744,7 +722,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -767,7 +744,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -789,7 +765,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeList)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -806,7 +781,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -840,7 +814,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -862,7 +835,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -879,7 +851,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -919,7 +890,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaCreate)
 
                 CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
@@ -945,7 +915,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -967,7 +936,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1005,7 +973,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1027,7 +994,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeHash)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1044,7 +1010,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1076,7 +1041,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1126,7 +1090,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1176,7 +1139,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1226,7 +1188,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1265,7 +1226,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1304,7 +1264,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1343,7 +1302,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeSize)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1366,7 +1324,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1404,7 +1361,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1428,7 +1384,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1475,7 +1430,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1493,34 +1447,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 8)
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdBackup)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdCheck)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaCreate)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaUpgrade)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
         )
     )
 
@@ -1531,7 +1457,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1558,7 +1483,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1584,29 +1508,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgOptPgLocal,
                 "0"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-host")
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdArchiveGet)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdArchivePush)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdRestore)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
         )
     )
 
@@ -1617,7 +1518,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1636,7 +1536,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-cmd")
         )
     )
 
@@ -1647,7 +1546,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1667,7 +1565,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-config")
         )
     )
 
@@ -1678,7 +1575,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1708,7 +1604,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1738,7 +1633,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1758,7 +1652,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-ssh-port")
         )
     )
 
@@ -1769,7 +1662,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1789,7 +1681,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("postgres")
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-user")
         )
     )
 
@@ -1800,7 +1691,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1822,27 +1712,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdArchiveGet)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdArchivePush)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdRestore)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
         )
     )
 
@@ -1853,7 +1722,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1871,8 +1739,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
 
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-path")
-
             CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdArchivePush)
@@ -1889,7 +1755,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1907,7 +1772,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgPath)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("5432")
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-port")
         )
     )
 
@@ -1918,7 +1782,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1935,7 +1798,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptPgPath)
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("db-socket-path")
         )
     )
 
@@ -1946,7 +1808,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionStanza)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -1972,7 +1833,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2008,7 +1868,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2035,7 +1894,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeTime)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2072,7 +1930,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2095,7 +1952,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeHash)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2126,7 +1982,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2149,7 +2004,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2189,7 +2043,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2228,7 +2081,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(true)
 
@@ -2271,7 +2123,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2314,7 +2165,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2357,7 +2207,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2400,7 +2249,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2445,7 +2293,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2488,7 +2335,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(true)
 
@@ -2531,7 +2377,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2582,7 +2427,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2628,7 +2472,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2673,7 +2516,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(true)
 
@@ -2716,7 +2558,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2761,7 +2602,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2773,7 +2613,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("hardlink")
         )
     )
 
@@ -2784,7 +2623,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2817,43 +2655,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
                 cfgOptRepoLocal,
                 "0"
             )
-
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-host")
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdBackup)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdExpire)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaCreate)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaDelete)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaUpgrade)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
         )
     )
 
@@ -2864,7 +2665,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2888,7 +2688,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-cmd")
         )
     )
 
@@ -2899,7 +2698,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2924,7 +2722,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf")
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-config")
         )
     )
 
@@ -2935,7 +2732,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -2970,7 +2766,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3005,7 +2800,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3030,7 +2824,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(0, 65535)
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-ssh-port")
         )
     )
 
@@ -3041,7 +2834,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3066,7 +2858,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost)
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("pgbackrest")
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("backup-user")
         )
     )
 
@@ -3077,7 +2868,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3106,41 +2896,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("0")
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdBackup)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdExpire)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaCreate)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaDelete)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
-
-            CFGDEFDATA_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaUpgrade)
-
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
-            )
         )
     )
 
@@ -3151,7 +2906,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3190,7 +2944,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3203,7 +2956,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-archive")
         )
     )
 
@@ -3214,7 +2966,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3234,7 +2985,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("full")
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-archive-type")
         )
     )
 
@@ -3245,7 +2995,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3258,7 +3007,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-diff")
         )
     )
 
@@ -3269,7 +3017,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3282,7 +3029,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_OPTIONAL_LIST
         (
             CFGDEFDATA_OPTION_OPTIONAL_ALLOW_RANGE(1, 9999999)
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("retention-full")
         )
     )
 
@@ -3293,7 +3039,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3322,7 +3067,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3365,7 +3109,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3408,7 +3151,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3451,7 +3193,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3494,7 +3235,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3537,7 +3277,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(true)
 
@@ -3580,7 +3319,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(true)
 
@@ -3623,7 +3361,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3674,7 +3411,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3720,7 +3456,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3763,7 +3498,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3806,7 +3540,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(true)
 
@@ -3849,7 +3582,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3900,7 +3632,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3935,7 +3666,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             )
 
             CFGDEFDATA_OPTION_OPTIONAL_DEFAULT("1")
-            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT("repo-s3-verify-ssl")
         )
     )
 
@@ -3946,7 +3676,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -3993,7 +3722,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4015,7 +3743,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(true)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4052,7 +3779,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4089,7 +3815,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4129,7 +3854,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
             (
                 CFGDEFDATA_OPTION_OPTIONAL_COMMAND(cfgCmdVerify)
 
-                CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(true)
                 CFGDEFDATA_OPTION_OPTIONAL_REQUIRED(false)
             )
         )
@@ -4142,7 +3866,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4171,7 +3894,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypePath)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4216,7 +3938,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4309,7 +4030,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4331,7 +4051,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4353,7 +4072,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeHash)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4370,7 +4088,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4387,7 +4104,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4420,7 +4136,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4463,7 +4178,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeBoolean)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4497,7 +4211,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4534,7 +4247,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4576,7 +4288,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4618,7 +4329,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(false)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionGlobal)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeInteger)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 
@@ -4660,7 +4370,6 @@ static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST
         CFGDEFDATA_OPTION_REQUIRED(true)
         CFGDEFDATA_OPTION_SECTION(cfgDefSectionCommandLine)
         CFGDEFDATA_OPTION_TYPE(cfgDefOptTypeString)
-        CFGDEFDATA_OPTION_INTERNAL(false)
 
         CFGDEFDATA_OPTION_SECURE(false)
 

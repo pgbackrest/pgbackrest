@@ -51,16 +51,8 @@ unsigned int cfgDefOptionDependValueTotal(ConfigCommand commandId, ConfigOption 
 bool cfgDefOptionDependValueValid(ConfigCommand commandId, ConfigOption optionId, const char *value);
 const char *cfgDefOptionDependValue(ConfigCommand commandId, ConfigOption optionId, unsigned int valueId);
 
-// Option help name alt
-bool cfgDefOptionHelpNameAlt(ConfigOption optionId);
-const char *cfgDefOptionHelpNameAltValue(ConfigOption optionId, unsigned int valueId);
-unsigned int cfgDefOptionHelpNameAltValueTotal(ConfigOption optionId);
-
 // Option id by name
 int cfgDefOptionId(const char *optionName);
-
-// Is the option for internal use only?
-bool cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId);
 
 // Does the option accept multiple values?
 bool cfgDefOptionMulti(ConfigOption optionId);

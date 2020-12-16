@@ -83,69 +83,6 @@ sub buildConfigDefineOptionTypeEnum
 push @EXPORT, qw(buildConfigDefineOptionTypeEnum);
 
 ####################################################################################################################################
-# Helper function to format help text
-####################################################################################################################################
-sub helpFormatText
-{
-    my $oManifest = shift;
-    my $oDocRender = shift;
-    my $oText = shift;
-    my $iIndent = shift;
-    my $iLength = shift;
-
-    # Split the string into lines for processing
-    my @stryText = split("\n", trim($oManifest->variableReplace($oDocRender->processText($oText))));
-    my $strText;
-    my $iIndex = 0;
-
-    foreach my $strLine (@stryText)
-    {
-        # Add a linefeed if this is not the first line
-        if (defined($strText))
-        {
-            $strText .= "\n";
-        }
-
-        # Escape special characters
-        $strLine =~ s/\"/\\"/g;
-
-        my $strPart;
-        my $bFirst = true;
-
-        # Split the line for output if it's too long
-        do
-        {
-            ($strPart, $strLine) = stringSplit($strLine, ' ', defined($strPart) ? $iLength - 4 : $iLength);
-
-            $strText .= ' ' x $iIndent;
-
-            if (!$bFirst)
-            {
-                $strText .= "    ";
-            }
-
-            $strText .= "\"${strPart}";
-
-            if (defined($strLine))
-            {
-                $strText .= "\"\n";
-            }
-            else
-            {
-                $strText .= ($iIndex + 1 < @stryText ? '\n' : '') . '"';
-            }
-
-            $bFirst = false;
-        }
-        while (defined($strLine));
-
-        $iIndex++;
-    }
-
-    return $strText;
-}
-
-####################################################################################################################################
 # Helper functions for building optional option data
 ####################################################################################################################################
 sub renderAllowList
@@ -248,27 +185,6 @@ sub renderOptional
             (defined($rhOptional->{&CFGDEF_TYPE}) && $rhOptional->{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ?
                 $rhOptional->{&CFGDEF_DEFAULT} * 1000 : $rhOptional->{&CFGDEF_DEFAULT}) .
             "\")\n";
-
-        $bSingleLine = true;
-    }
-
-    # Output alternate name
-    if (!$bCommand && defined($rhOptionHelp->{&CONFIG_HELP_NAME_ALT}))
-    {
-        $strBuildSourceOptional .=
-            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
-            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_HELP_NAME_ALT(" .
-                join(', ', bldQuoteList($rhOptionHelp->{&CONFIG_HELP_NAME_ALT})) . ")\n";
-
-        $bSingleLine = true;
-    }
-
-    if ($bCommand && defined($rhOptional->{&CFGDEF_INTERNAL}))
-    {
-        $strBuildSourceOptional .=
-            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
-            "${strIndent}            CFGDEFDATA_OPTION_OPTIONAL_INTERNAL(" . ($rhOptional->{&CFGDEF_INTERNAL} ? 'true' : 'false') .
-                ")\n";
 
         $bSingleLine = true;
     }
@@ -377,7 +293,6 @@ sub buildConfigDefine
                 (defined($rhOption->{&CFGDEF_SECTION}) ? ucfirst($rhOption->{&CFGDEF_SECTION}) : 'CommandLine') .
                 ")\n" .
             "        CFGDEFDATA_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . ")\n" .
-            "        CFGDEFDATA_OPTION_INTERNAL(" . ($rhOption->{&CFGDEF_INTERNAL} ? 'true' : 'false') . ")\n" .
             "\n" .
             "        CFGDEFDATA_OPTION_SECURE(" . ($rhOption->{&CFGDEF_SECURE} ? 'true' : 'false') . ")\n";
 

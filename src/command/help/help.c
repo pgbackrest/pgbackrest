@@ -149,16 +149,17 @@ Render help to a string
 typedef struct HelpCommandData
 {
     bool internal;
-    const String *summary;
-    const String *description;
+    String *summary;
+    String *description;
 } HelpCommandData;
 
 typedef struct HelpOptionData
 {
     bool internal;
-    const String *section;
-    const String *summary;
-    const String *description;
+    String *section;
+    String *summary;
+    String *description;
+    StringList *deprecatedNames;
 } HelpOptionData;
 
 static String *
@@ -252,14 +253,16 @@ helpRender(void)
 
                 if (!pckReadNullP(pckHelp))
                 {
+                    optionData[optionId].deprecatedNames = strLstNew();
+
                     pckReadArrayBeginP(pckHelp);
 
                     while (pckReadNext(pckHelp))
-                    {
-                        pckReadStrP(pckHelp);
-                    }
+                        strLstAdd(optionData[optionId].deprecatedNames, pckReadStrP(pckHelp));
 
                     pckReadArrayEndP(pckHelp);
+
+                    ASSERT(strLstSize(optionData[optionId].deprecatedNames) == 1);
                 }
 
                 if (!pckReadNullP(pckHelp))
@@ -272,9 +275,9 @@ helpRender(void)
 
                         pckReadObjBeginP(pckHelp, .id = commandIdArray + 1);
 
-                        const bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
-                        const String *summary = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].summary);
-                        const String *description = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].description);
+                        bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
+                        String *summary = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].summary);
+                        String *description = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].description);
 
                         pckReadObjEndP(pckHelp);
 
@@ -316,7 +319,7 @@ helpRender(void)
 
                 for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    if (cfgDefOptionValid(commandId, optionId) && !cfgDefOptionInternal(commandId, optionId))
+                    if (cfgDefOptionValid(commandId, optionId) && !optionData[optionId].internal)
                     {
                         const String *section = optionData[optionId].section;
 
@@ -443,8 +446,8 @@ helpRender(void)
                 }
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
-                if (cfgDefOptionHelpNameAlt(option.id))
-                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(option.id, 0));
+                if (optionData[option.id].deprecatedNames != NULL)
+                    strCatFmt(result, "\ndeprecated name: %s\n", strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
             }
         }
 
