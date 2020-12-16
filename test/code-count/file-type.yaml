@@ -1175,10 +1175,6 @@ src/config/define.c:
   class: core
   type: c
 
-src/config/define.h:
-  class: core
-  type: c/h
-
 src/config/exec.c:
   class: core
   type: c

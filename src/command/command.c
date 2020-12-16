@@ -13,7 +13,6 @@ Common Command Routines
 #include "common/time.h"
 #include "common/type/json.h"
 #include "config/config.intern.h"
-#include "config/define.h"
 #include "config/parse.h"
 #include "version.h"
 

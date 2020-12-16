@@ -10,7 +10,6 @@ Protocol Helper
 #include "common/exec.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
-#include "config/define.h"
 #include "config/exec.h"
 #include "config/parse.h"
 #include "config/protocol.h"
@@ -371,7 +370,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
             // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
             if (protocolStorageType == protocolStorageTypeRepo)
             {
-                remove = !cfgDefOptionRequired(cfgCommand(), optionId) || cfgDefOptionDefault(cfgCommand(), optionId) != NULL;
+                remove = !cfgParseOptionRequired(cfgCommand(), optionId) || cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
             }
             // The remote is not expecting to see host settings so it could get confused about the locality of pg, i.e. local or
             // remote.

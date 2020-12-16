@@ -26,6 +26,9 @@ typedef struct CfgParseOptionResult
 
 CfgParseOptionResult cfgParseOption(const String *optionName);
 
+// Default value for the option
+const char *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);
+
 // Option id from name
 int cfgParseOptionId(const char *optionName);
 
@@ -40,6 +43,9 @@ bool cfgParseOptionSecure(ConfigOption optionId);
 
 // Option data type
 ConfigOptionType cfgParseOptionType(ConfigOption optionId);
+
+// Is the option required?
+bool cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId);
 
 // Is the option valid for the command?
 bool cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId);

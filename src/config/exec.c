@@ -7,7 +7,6 @@ Exec Configuration
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "config/define.h"
 #include "config/config.intern.h"
 #include "config/exec.h"
 #include "config/parse.h"

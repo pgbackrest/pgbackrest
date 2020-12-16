@@ -11,7 +11,6 @@ Harness for Loading Test Configurations
 #include "common/harnessTest.h"
 
 #include "config/config.intern.h"
-#include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "storage/helper.h"

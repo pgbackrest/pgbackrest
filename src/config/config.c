@@ -9,7 +9,6 @@ Command and Option Configuration
 #include "common/error.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
-#include "config/define.h"
 #include "config/parse.h"
 
 /***********************************************************************************************************************************
@@ -493,7 +492,7 @@ cfgOptionDefaultValue(ConfigOption optionId)
     FUNCTION_TEST_END();
 
     Variant *result;
-    Variant *defaultValue = varNewStrZ(cfgDefOptionDefault(cfgCommand(), optionId));
+    Variant *defaultValue = varNewStrZ(cfgParseOptionDefault(cfgCommand(), optionId));
 
     switch (cfgParseOptionType(optionId))
     {
@@ -535,7 +534,7 @@ cfgOptionDefault(ConfigOption optionId)
 
     if (configLocal->option[optionId].defaultValue == NULL)
     {
-        if (cfgDefOptionDefault(cfgCommand(), optionId) != NULL)
+        if (cfgParseOptionDefault(cfgCommand(), optionId) != NULL)
         {
             MEM_CONTEXT_BEGIN(configLocal->memContext)
             {
