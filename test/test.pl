@@ -37,6 +37,7 @@ use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Build;
 use pgBackRestBuild::Config::BuildDefine;
+use pgBackRestBuild::Config::BuildHelp;
 use pgBackRestBuild::Config::BuildParse;
 use pgBackRestBuild::Error::Build;
 use pgBackRestBuild::Error::Data;
@@ -571,6 +572,12 @@ eval
                     {
                         &BLD_DATA => buildConfig(),
                         &BLD_PATH => 'config',
+                    },
+
+                    'configHelp' =>
+                    {
+                        &BLD_DATA => buildConfigHelp(),
+                        &BLD_PATH => 'command/help',
                     },
 
                     'configDefine' =>

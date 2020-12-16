@@ -19,6 +19,10 @@ build/lib/pgBackRestBuild/Config/BuildDefine.pm:
   class: build
   type: perl
 
+build/lib/pgBackRestBuild/Config/BuildHelp.pm:
+  class: build
+  type: perl
+
 build/lib/pgBackRestBuild/Config/BuildParse.pm:
   class: build
   type: perl
@@ -362,6 +366,10 @@ src/command/expire/expire.c:
 src/command/expire/expire.h:
   class: core
   type: c/h
+
+src/command/help/help.auto.c:
+  class: core/auto
+  type: c
 
 src/command/help/help.c:
   class: core

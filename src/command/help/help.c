@@ -10,10 +10,16 @@ Help Command
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/memContext.h"
+#include "common/type/pack.h"
 #include "config/config.h"
 #include "config/define.h"
 #include "config/parse.h"
 #include "version.h"
+
+/***********************************************************************************************************************************
+Include automatically generated help data pack
+***********************************************************************************************************************************/
+#include "command/help/help.auto.c"
 
 /***********************************************************************************************************************************
 Define the console width - use a fixed with of 80 since this should be safe on virtually all consoles
@@ -140,6 +146,24 @@ helpRenderValue(const Variant *value, ConfigDefineOptionType type)
 /***********************************************************************************************************************************
 Render help to a string
 ***********************************************************************************************************************************/
+// Stored unpacked command data
+typedef struct HelpCommandData
+{
+    bool internal;                                                  // Is the command internal?
+    String *summary;                                                // Short summary of the command
+    String *description;                                            // Full description of the command
+} HelpCommandData;
+
+// Stored unpacked option data
+typedef struct HelpOptionData
+{
+    bool internal;                                                  // Is the option internal?
+    String *section;                                                // eg. general, command
+    String *summary;                                                // Short summary of the option
+    String *description;                                            // Full description of the option
+    StringList *deprecatedNames;                                    // Deprecated names for the option
+} HelpOptionData;
+
 static String *
 helpRender(void)
 {
@@ -149,6 +173,24 @@ helpRender(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Unpack command data
+        PackRead *pckHelp = pckReadNewBuf(BUF(helpDataPack, sizeof(helpDataPack)));
+        HelpCommandData *commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL);
+
+        pckReadArrayBeginP(pckHelp);
+
+        for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
+        {
+            commandData[commandId] = (HelpCommandData)
+            {
+                .internal = pckReadBoolP(pckHelp),
+                .summary = pckReadStrP(pckHelp),
+                .description = pckReadStrP(pckHelp),
+            };
+        }
+
+        pckReadArrayEndP(pckHelp);
+
         // Message for more help when it is available
         const String *more = NULL;
 
@@ -169,7 +211,7 @@ helpRender(void)
 
             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
-                if (cfgCommandInternal(commandId))
+                if (commandData[commandId].internal)
                     continue;
 
                 if (strlen(cfgCommandName(commandId)) > commandSizeMax)
@@ -179,13 +221,13 @@ helpRender(void)
             // Output help for each command
             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
-                if (cfgCommandInternal(commandId))
+                if (commandData[commandId].internal)
                     continue;
 
                 strCatFmt(
                     result, "    %s%*s%s\n", cfgCommandName(commandId),
                     (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
-                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandId)), commandSizeMax + 6, false, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(commandData[commandId].summary, commandSizeMax + 6, false, CONSOLE_WIDTH)));
             }
 
             // Construct message for more help
@@ -195,6 +237,71 @@ helpRender(void)
         {
             ConfigCommand commandId = cfgCommand();
             const char *commandName = cfgCommandName(commandId);
+
+            // Unpack option data
+            HelpOptionData *optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);
+
+            pckReadArrayBeginP(pckHelp);
+
+            for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
+            {
+                optionData[optionId] = (HelpOptionData)
+                {
+                    .internal = pckReadBoolP(pckHelp),
+                    .section = pckReadStrP(pckHelp, .defaultValue = STR("general")),
+                    .summary = pckReadStrP(pckHelp),
+                    .description = pckReadStrP(pckHelp),
+                };
+
+                // Unpack deprecated names
+                if (!pckReadNullP(pckHelp))
+                {
+                    optionData[optionId].deprecatedNames = strLstNew();
+
+                    pckReadArrayBeginP(pckHelp);
+
+                    while (pckReadNext(pckHelp))
+                        strLstAdd(optionData[optionId].deprecatedNames, pckReadStrP(pckHelp));
+
+                    pckReadArrayEndP(pckHelp);
+
+                    ASSERT(strLstSize(optionData[optionId].deprecatedNames) == 1);
+                }
+
+                // Unpack command overrides
+                if (!pckReadNullP(pckHelp))
+                {
+                    pckReadArrayBeginP(pckHelp);
+
+                    while (pckReadNext(pckHelp))
+                    {
+                        // Get command override id
+                        ConfigCommand commandIdArray = pckReadId(pckHelp) - 1;
+
+                        // Unpack override data
+                        pckReadObjBeginP(pckHelp, .id = commandIdArray + 1);
+
+                        bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
+                        String *summary = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].summary);
+                        String *description = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].description);
+
+                        pckReadObjEndP(pckHelp);
+
+                        // Only use overrides for the current command
+                        if (commandId == commandIdArray)
+                        {
+                            optionData[optionId].internal = internal;
+                            optionData[optionId].section = NULL;
+                            optionData[optionId].summary = summary;
+                            optionData[optionId].description = description;
+                        }
+                    }
+
+                    pckReadArrayEndP(pckHelp);
+                }
+            }
+
+            pckReadArrayEndP(pckHelp);
 
             // Output command part of title
             strCatFmt(result, " - '%s' command", commandName);
@@ -210,8 +317,8 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    strZ(helpRenderText(STR(cfgDefCommandHelpSummary(commandId)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefCommandHelpDescription(commandId)), 0, true, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(commandData[commandId].summary, 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(commandData[commandId].description, 0, true, CONSOLE_WIDTH)));
 
                 // Construct key/value of sections and options
                 KeyValue *optionKv = kvNew();
@@ -219,12 +326,9 @@ helpRender(void)
 
                 for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    if (cfgDefOptionValid(commandId, optionId) && !cfgDefOptionInternal(commandId, optionId))
+                    if (cfgDefOptionValid(commandId, optionId) && !optionData[optionId].internal)
                     {
-                        const String *section = NULL;
-
-                        if (cfgDefOptionHelpSection(optionId) != NULL)
-                            section = strNew(cfgDefOptionHelpSection(optionId));
+                        const String *section = optionData[optionId].section;
 
                         if (section == NULL ||
                             (!strEqZ(section, "general") && !strEqZ(section, "log") && !strEqZ(section, "repository") &&
@@ -257,9 +361,8 @@ helpRender(void)
                         ConfigOption optionId = varInt(varLstGet(optionList, optionIdx));
 
                         // Get option summary
-                        String *summary = strFirstLower(strNewN(
-                            cfgDefOptionHelpSummary(commandId, optionId),
-                            strlen(cfgDefOptionHelpSummary(commandId, optionId)) - 1));
+                        String *summary = strFirstLower(
+                            strNewN(strZ(optionData[optionId].summary), strSize(optionData[optionId].summary) - 1));
 
                         // Ouput current and default values if they exist
                         const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgDefOptionType(optionId));
@@ -328,8 +431,8 @@ helpRender(void)
                     "\n"
                     "%s\n",
                     cfgDefOptionName(option.id),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpSummary(commandId, option.id)), 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(STR(cfgDefOptionHelpDescription(commandId, option.id)), 0, true, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(optionData[option.id].summary, 0, true, CONSOLE_WIDTH)),
+                    strZ(helpRenderText(optionData[option.id].description, 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
                 const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgDefOptionType(option.id));
@@ -350,8 +453,8 @@ helpRender(void)
                 }
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
-                if (cfgDefOptionHelpNameAlt(option.id))
-                    strCatFmt(result, "\ndeprecated name: %s\n", cfgDefOptionHelpNameAltValue(option.id, 0));
+                if (optionData[option.id].deprecatedNames != NULL)
+                    strCatFmt(result, "\ndeprecated name: %s\n", strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
             }
         }
 

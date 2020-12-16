@@ -32,10 +32,6 @@ Functions
 // Command total
 unsigned int cfgDefCommandTotal(void);
 
-// Command help
-const char *cfgDefCommandHelpDescription(ConfigCommand commandId);
-const char *cfgDefCommandHelpSummary(ConfigCommand commandId);
-
 // Option allow lists
 bool cfgDefOptionAllowList(ConfigCommand commandId, ConfigOption optionId);
 bool cfgDefOptionAllowListValueValid(ConfigCommand commandId, ConfigOption optionId, const char *value);
@@ -55,23 +51,8 @@ unsigned int cfgDefOptionDependValueTotal(ConfigCommand commandId, ConfigOption 
 bool cfgDefOptionDependValueValid(ConfigCommand commandId, ConfigOption optionId, const char *value);
 const char *cfgDefOptionDependValue(ConfigCommand commandId, ConfigOption optionId, unsigned int valueId);
 
-// Option help
-const char *cfgDefOptionHelpDescription(ConfigCommand commandId, ConfigOption optionId);
-const char *cfgDefOptionHelpSummary(ConfigCommand commandId, ConfigOption optionId);
-
-// Option help name alt
-bool cfgDefOptionHelpNameAlt(ConfigOption optionId);
-const char *cfgDefOptionHelpNameAltValue(ConfigOption optionId, unsigned int valueId);
-unsigned int cfgDefOptionHelpNameAltValueTotal(ConfigOption optionId);
-
-// Option help section
-const char *cfgDefOptionHelpSection(ConfigOption optionId);
-
 // Option id by name
 int cfgDefOptionId(const char *optionName);
-
-// Is the option for internal use only?
-bool cfgDefOptionInternal(ConfigCommand commandId, ConfigOption optionId);
 
 // Does the option accept multiple values?
 bool cfgDefOptionMulti(ConfigOption optionId);
