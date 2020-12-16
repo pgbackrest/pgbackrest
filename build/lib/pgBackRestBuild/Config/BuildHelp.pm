@@ -12,7 +12,6 @@ use Cwd qw(abs_path);
 use Exporter qw(import);
     our @EXPORT = qw();
 use File::Basename qw(dirname);
-use Storable qw(dclone);
 
 use pgBackRestDoc::Common::DocConfig;
 use pgBackRestDoc::Common::DocRender;
@@ -63,6 +62,8 @@ use constant PCK_TYPE_BOOL                                          => 'pckTypeB
 use constant PCK_TYPE_OBJ                                           => 'pckTypeObj';
 use constant PCK_TYPE_STR                                           => 'pckTypeStr';
 
+# Pack an unsigned 64-bit integer to base-128 varint encoding and output to hex. This is a simplified version of
+# pckWriteUInt64Internal() so see that function for more information.
 sub packIntFormat
 {
     my $iValue = shift;
@@ -81,6 +82,7 @@ sub packIntFormat
     return $strResult . sprintf(" 0x%02X,", $iValue);
 }
 
+# Write pack field tag and data. This is a cut down version of pckWriteTag() so see that function for more information.
 sub packTagFormat
 {
     my $strName = shift;
@@ -91,6 +93,7 @@ sub packTagFormat
 
     my $strIndent = ' ' x $iIndent;
 
+    # Pack delta bits and determine value for various pack. See pckWriteTag() for more detailed information.
     my $iValue = undef;
     my $iBits = undef;
 
@@ -126,6 +129,7 @@ sub packTagFormat
         }
     }
 
+    # Output pack type and bits
     my $strResult = "${strIndent}${strType} << 4";
 
     if ($iBits != 0)
@@ -135,18 +139,22 @@ sub packTagFormat
 
     $strResult .= ',';
 
+    # Output additional id delta when present
     if ($iDelta > 0)
     {
         $strResult .= packIntFormat($iDelta);
     }
 
+    # Output value when present
     if (defined($iValue))
     {
         $strResult .= packIntFormat($iValue);
     }
 
+    # Output pack name
     $strResult .= " // ${strName}";
 
+    # Output data in hex format
     if (defined($xData) && length($xData) > 0)
     {
         $strResult .= "\n${strIndent}    ";
@@ -154,10 +162,13 @@ sub packTagFormat
         my $bLastLF = false;
         my $bFirst = true;
 
+        # Loop through all chars
         foreach my $iChar (unpack("W*", $xData))
         {
+            # Encode char to hex
             my $strOut = sprintf("0x%02X,", $iChar);
 
+            # Break on linefeeds to prevent diffs within a paragraph of text from cascading through all the data
             if ($bLastLF && $iChar != 0xA)
             {
                 $strResult .= "\n${strIndent}    ";
@@ -167,11 +178,13 @@ sub packTagFormat
 
             $bLastLF = $iChar == 0xA;
 
+            # If this hex would exceed the line length then break and write on the next line
             if ($iLength + length($strOut) + 1 > 132)
             {
                 $strResult .= "\n${strIndent}    ${strOut}";
                 $iLength = length($strIndent) + 4 + length($strOut);
             }
+            # Else append the hex
             else
             {
                 $strResult .= ($bFirst ? '' : ' ') . "${strOut}";
@@ -429,14 +442,16 @@ sub buildConfigHelp
                     # Description
                     $strBuildSourceCommand .= packTagFormat(
                         "Description", PCK_TYPE_STR, $iDeltaCommand,
-                        trim($oManifest->variableReplace($oDocRender->processText($rhCommandHelp->{&CONFIG_HELP_DESCRIPTION}))), 16);
+                        trim($oManifest->variableReplace($oDocRender->processText($rhCommandHelp->{&CONFIG_HELP_DESCRIPTION}))),
+                        16);
                 }
 
                 if (defined($strBuildSourceCommand))
                 {
                     $strBuildSourceCommands .=
                         "\n" .
-                        packTagFormat("Command ${strCommand} override begin", PCK_TYPE_OBJ, $iCommandId - $iLastCommandId, undef, 12) .
+                        packTagFormat(
+                        "Command ${strCommand} override begin", PCK_TYPE_OBJ, $iCommandId - $iLastCommandId, undef, 12) .
                         $strBuildSourceCommand .
                         "            0x00, // Command ${strCommand} override end\n";
 
