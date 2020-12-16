@@ -231,12 +231,17 @@ Include automatically generated parse data
 /***********************************************************************************************************************************
 Find optional data for a command and option
 ***********************************************************************************************************************************/
+// Extract an int64 from optional data list
+#define PARSE_RULE_DATA_INT64(data, index)                                                                                         \
+    ((int64_t)(intptr_t)data.list[index] << 32 | (int64_t)(intptr_t)data.list[index + 1])
+
+// Extracted option data
 typedef struct ParseRuleOptionData
 {
-    bool found;
-    int data;
-    unsigned int listSize;
-    const void **list;
+    bool found;                                                     // Was the data found?
+    int data;                                                       // Data value
+    unsigned int listSize;                                          // Data list size
+    const void **list;                                              // Data list
 } ParseRuleOptionData;
 
 static ParseRuleOptionData
@@ -1486,11 +1491,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         !parseOptionValue->reset;
 
                     // Initialize option value and set negate and reset flag
-                    *configOptionValue = (ConfigOptionValue)
-                    {
-                        .negate = parseOptionValue->negate,
-                        .reset = parseOptionValue->reset
-                    };
+                    *configOptionValue = (ConfigOptionValue){.negate = parseOptionValue->negate, .reset = parseOptionValue->reset};
 
                     // Check option dependencies
                     bool dependResolved = true;
@@ -1709,10 +1710,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                                         parseRuleOptionDataTypeAllowRange, config->command, optionId);
 
                                     if (allowRange.found &&
-                                        (valueInt64 <
-                                            ((int64_t)(intptr_t)allowRange.list[0] << 32 | (int64_t)(intptr_t)allowRange.list[1]) ||
-                                         valueInt64 >
-                                            ((int64_t)(intptr_t)allowRange.list[2] << 32 | (int64_t)(intptr_t)allowRange.list[3])))
+                                        (valueInt64 < PARSE_RULE_DATA_INT64(allowRange, 0) ||
+                                         valueInt64 > PARSE_RULE_DATA_INT64(allowRange, 2)))
                                     {
                                         THROW_FMT(
                                             OptionInvalidValueError, "'%s' is out of range for '%s' option", strZ(value),

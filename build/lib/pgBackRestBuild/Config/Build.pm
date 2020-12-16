@@ -151,7 +151,7 @@ sub buildConfig
     my $iCommandTotal = 0;
 
     my $strBuildSource =
-        'static ConfigCommandData configCommandData[' . BLDLCL_CONSTANT_COMMAND_TOTAL . "] = CONFIG_COMMAND_LIST\n" .
+        'static const ConfigCommandData configCommandData[' . BLDLCL_CONSTANT_COMMAND_TOTAL . "] = CONFIG_COMMAND_LIST\n" .
         "(";
     my $strBuildSourceConstant = '';
 

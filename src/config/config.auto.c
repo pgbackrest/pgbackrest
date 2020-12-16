@@ -31,7 +31,7 @@ STRING_EXTERN(CFGCMD_VERSION_STR,                                   CFGCMD_VERSI
 /***********************************************************************************************************************************
 Command data
 ***********************************************************************************************************************************/
-static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_LIST
+static const ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_LIST
 (
     CONFIG_COMMAND
     (
