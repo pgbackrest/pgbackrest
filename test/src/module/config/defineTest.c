@@ -45,11 +45,11 @@ testRun(void)
         TEST_RESULT_INT(cfgDefOptionAllowRangeMax(cfgCmdArchivePush, cfgOptArchivePushQueueMax), 4503599627370496, "range max");
 
         TEST_ERROR(
-            cfgDefOptionDefault(cfgDefCommandTotal(), cfgOptCompressLevel), AssertError,
-            "assertion 'commandId < cfgDefCommandTotal()' failed");
-        TEST_ERROR(cfgDefOptionDefault(
-            cfgCmdBackup, cfgDefOptionTotal()), AssertError,
-            "assertion 'optionId < cfgDefOptionTotal()' failed");
+            cfgDefOptionDefault(CFG_COMMAND_TOTAL, cfgOptCompressLevel), AssertError,
+            "assertion 'commandId < CFG_COMMAND_TOTAL' failed");
+        TEST_ERROR(
+            cfgDefOptionDefault(cfgCmdBackup, CFG_OPTION_TOTAL), AssertError,
+            "assertion 'optionId < CFG_OPTION_TOTAL' failed");
         TEST_RESULT_Z(cfgDefOptionDefault(cfgCmdRestore, cfgOptType), "default", "command default exists");
         TEST_RESULT_Z(cfgDefOptionDefault(cfgCmdBackup, cfgOptRepoHost), NULL, "default does not exist");
 

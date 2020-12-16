@@ -183,21 +183,6 @@ cfgDefDataFind(
         type, commandId, configDefineOptionData[optionId].data, &dataDefFound, &dataDef, &dataDefList, &dataDefListSize);
 
 /**********************************************************************************************************************************/
-unsigned int
-cfgDefCommandTotal(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(CFG_COMMAND_TOTAL - 1);
-}
-
-unsigned int
-cfgDefOptionTotal(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(sizeof(configDefineOptionData) / sizeof(ConfigDefineOptionData));
-}
-
-/**********************************************************************************************************************************/
 bool
 cfgDefOptionAllowList(ConfigCommand commandId, ConfigOption optionId)
 {
@@ -206,8 +191,8 @@ cfgDefOptionAllowList(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeAllowList);
 
@@ -222,8 +207,8 @@ cfgDefOptionAllowListValueTotal(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeAllowList);
 
@@ -239,8 +224,8 @@ cfgDefOptionAllowListValue(ConfigCommand commandId, ConfigOption optionId, unsig
         FUNCTION_TEST_PARAM(UINT, valueId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(valueId < cfgDefOptionAllowListValueTotal(commandId, optionId));
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeAllowList);
@@ -258,8 +243,8 @@ cfgDefOptionAllowListValueValid(ConfigCommand commandId, ConfigOption optionId, 
         FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(value != NULL);
 
     bool result = false;
@@ -282,8 +267,8 @@ cfgDefOptionAllowRange(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeAllowRange);
 
@@ -298,8 +283,8 @@ cfgDefOptionAllowRangeMax(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeAllowRange);
 
@@ -314,8 +299,8 @@ cfgDefOptionAllowRangeMin(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeAllowRange);
 
@@ -331,8 +316,8 @@ cfgDefOptionDefault(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeDefault);
 
@@ -353,8 +338,8 @@ cfgDefOptionDepend(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeDepend);
 
@@ -369,8 +354,8 @@ cfgDefOptionDependOption(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeDepend);
 
@@ -386,8 +371,8 @@ cfgDefOptionDependValue(ConfigCommand commandId, ConfigOption optionId, unsigned
         FUNCTION_TEST_PARAM(UINT, valueId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(valueId < cfgDefOptionDependValueTotal(commandId, optionId));
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeDepend);
@@ -403,8 +388,8 @@ cfgDefOptionDependValueTotal(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeDepend);
 
@@ -421,8 +406,8 @@ cfgDefOptionDependValueValid(ConfigCommand commandId, ConfigOption optionId, con
         FUNCTION_TEST_PARAM(STRINGZ, value);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(value != NULL);
 
     bool result = false;
@@ -445,8 +430,8 @@ cfgDefOptionRequired(ConfigCommand commandId, ConfigOption optionId)
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
-    ASSERT(commandId < cfgDefCommandTotal());
-    ASSERT(optionId < cfgDefOptionTotal());
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
+    ASSERT(optionId < CFG_OPTION_TOTAL);
 
     CONFIG_DEFINE_DATA_FIND(commandId, optionId, configDefDataTypeRequired);
 
