@@ -345,7 +345,7 @@ sub buildConfigParse
             if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
             {
                 $strBuildSourceSub .=
-                    "            PARSE_RULE_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
+                    "            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(" . buildConfigCommandEnum($strCommand) . ")\n";
             }
         }
 
@@ -353,7 +353,36 @@ sub buildConfigParse
         {
             $strBuildSource .=
                 "\n" .
-                "        PARSE_RULE_OPTION_COMMAND_LIST\n" .
+                "        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST\n" .
+                "        (\n" .
+                $strBuildSourceSub .
+                "        ),\n";
+        }
+
+        # Build command role other list
+        #---------------------------------------------------------------------------------------------------------------------------
+        $strBuildSourceSub = "";
+
+        foreach my $strCommand (cfgDefineCommandList())
+        {
+            if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
+            {
+                my $strCommandEnum = buildConfigCommandEnum($strCommand);
+
+                foreach my $strCommandRole (sort(keys(%{$rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}})))
+                {
+                    $strBuildSourceSub .=
+                        "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, " .
+                        bldEnum('cfgCmdRole', $strCommandRole) . ")\n";
+                }
+            }
+        }
+
+        if ($strBuildSourceSub ne "")
+        {
+            $strBuildSource .=
+                "\n" .
+                "        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST\n" .
                 "        (\n" .
                 $strBuildSourceSub .
                 "        ),\n";
@@ -384,7 +413,6 @@ sub buildConfigParse
                         "            )\n";
                 }
             }
-
         }
 
         if (defined($strBuildSourceOptional))

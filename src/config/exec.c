@@ -35,7 +35,8 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
             // Skip the option if it is not valid for the original/specified command or if is secure. Also skip repo1-cipher-type
             // because there's no point of passing it if the other process doesn't have access to repo1-cipher-pass. There is
             // probably a better way to do this last part...
-            if (!cfgParseOptionValid(commandId, optionId) || cfgParseOptionSecure(optionId) || optionId == cfgOptRepoCipherType)
+            if (!cfgParseOptionValid(commandId, commandRoleId, optionId) || cfgParseOptionSecure(optionId) ||
+                optionId == cfgOptRepoCipherType)
             {
                 continue;
             }
