@@ -29,7 +29,8 @@ use constant BLDLCL_FILE_DEFINE                                     => 'parse';
 
 use constant BLDLCL_ENUM_OPTION_TYPE                                => '01-enumOptionType';
 
-use constant BLDLCL_DATA_OPTION_GROUP                               => '01-optionGroup';
+use constant BLDLCL_DATA_COMMAND                                    => '01-dataCommand';
+use constant BLDLCL_DATA_OPTION_GROUP                               => '01-dataOptionGroup';
 use constant BLDLCL_DATA_OPTION                                     => '02-dataOption';
 use constant BLDLCL_DATA_OPTION_GETOPT                              => '03-dataOptionGetOpt';
 use constant BLDLCL_DATA_OPTION_RESOLVE                             => '04-dataOptionResolve';
@@ -58,6 +59,11 @@ my $rhBuild =
 
             &BLD_DATA =>
             {
+                &BLDLCL_DATA_COMMAND =>
+                {
+                    &BLD_SUMMARY => 'Command parse data',
+                },
+
                 &BLDLCL_DATA_OPTION_GROUP =>
                 {
                     &BLD_SUMMARY => 'Option group parse data',
@@ -108,12 +114,35 @@ sub buildConfigParse
         push(@{$rhEnum->{&BLD_LIST}}, $strOptionTypeEnum);
     };
 
+    # Build command constants and data
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $strBuildSource =
+        "static const ParseRuleCommand parseRuleCommand[] = \n" .
+        "{";
+
+    foreach my $strCommand (cfgDefineCommandList())
+    {
+        # Build command data
+        $strBuildSource .=
+            "\n" .
+            "    //" . (qw{-} x 126) . "\n" .
+            "    PARSE_RULE_COMMAND\n" .
+            "    (\n" .
+            "        PARSE_RULE_COMMAND_NAME(\"${strCommand}\"),\n" .
+            "    ),\n";
+    };
+
+    $strBuildSource .=
+        "};\n";
+
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_COMMAND}{&BLD_SOURCE} = $strBuildSource;
+
     # Build option group constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhOptionGroupDefine = cfgDefineOptionGroup();
 
-    my $strBuildSource =
-        "static const ParseRuleGroup parseRuleGroup[] = \n" .
+    $strBuildSource =
+        "static const ParseRuleOptionGroup parseRuleOptionGroup[] = \n" .
         "{";
 
     foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
@@ -121,9 +150,9 @@ sub buildConfigParse
         $strBuildSource .=
             "\n" .
             "    //" . (qw{-} x 126) . "\n" .
-            "    PARSE_RULE_GROUP\n" .
+            "    PARSE_RULE_OPTION_GROUP\n" .
             "    (\n" .
-            "        PARSE_RULE_GROUP_NAME(\"" . $strGroup . "\"),\n" .
+            "        PARSE_RULE_OPTION_GROUP_NAME(\"" . $strGroup . "\"),\n" .
             "    ),\n";
     }
 
@@ -173,7 +202,7 @@ sub buildConfigParse
         if ($rhOption->{&CFGDEF_GROUP})
         {
             $strBuildSource .=
-                "        PARSE_RULE_OPTION_GROUP(true),\n" .
+                "        PARSE_RULE_OPTION_GROUP_MEMBER(true),\n" .
                 "        PARSE_RULE_OPTION_GROUP_ID(" . buildConfigOptionGroupEnum($rhOption->{&CFGDEF_GROUP}) . "),\n";
         }
 

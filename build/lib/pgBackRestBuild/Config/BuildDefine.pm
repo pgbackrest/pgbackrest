@@ -29,7 +29,6 @@ use pgBackRestBuild::Config::Data;
 ####################################################################################################################################
 use constant BLDLCL_FILE_DEFINE                                     => 'define';
 
-use constant BLDLCL_DATA_COMMAND                                    => '01-dataCommand';
 use constant BLDLCL_DATA_OPTION                                     => '02-dataOption';
 
 ####################################################################################################################################
@@ -47,11 +46,6 @@ my $rhBuild =
 
             &BLD_DATA =>
             {
-                &BLDLCL_DATA_COMMAND =>
-                {
-                    &BLD_SUMMARY => 'Command define data',
-                },
-
                 &BLDLCL_DATA_OPTION =>
                 {
                     &BLD_SUMMARY => 'Option define data',
@@ -183,33 +177,11 @@ sub renderOptional
 ####################################################################################################################################
 sub buildConfigDefine
 {
-    # Build command constants and data
-    #-------------------------------------------------------------------------------------------------------------------------------
-    my $strBuildSource =
-        "static ConfigDefineCommandData configDefineCommandData[] = CFGDEFDATA_COMMAND_LIST\n" .
-        "(";
-
-    foreach my $strCommand (cfgDefineCommandList())
-    {
-        # Build command data
-        $strBuildSource .=
-            "\n" .
-            "    CFGDEFDATA_COMMAND\n" .
-            "    (\n" .
-            "        CFGDEFDATA_COMMAND_NAME(\"${strCommand}\")\n" .
-            "    )\n";
-    };
-
-    $strBuildSource .=
-        ")\n";
-
-    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_COMMAND}{&BLD_SOURCE} = $strBuildSource;
-
     # Build option constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhConfigDefine = cfgDefine();
 
-    $strBuildSource =
+    my $strBuildSource =
         "static ConfigDefineOptionData configDefineOptionData[] = CFGDEFDATA_OPTION_LIST\n" .
         "(";
 

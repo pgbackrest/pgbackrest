@@ -80,18 +80,33 @@ Parse option flags
 #define PARSE_KEY_IDX_MASK                                          0xFF
 
 /***********************************************************************************************************************************
-Define how an group is parsed
+Define how a command is parsed
 ***********************************************************************************************************************************/
-typedef struct ParseRuleGroup
+typedef struct ParseRuleCommand
 {
-    const char *name;                                               // All options in the group must be prefixed with this name
-} ParseRuleGroup;
+    const char *name;                                               // Name
+} ParseRuleCommand;
 
 // Macros used to define parse rules in parse.auto.c in a format that diffs well
-#define PARSE_RULE_GROUP(...)                                                                                                      \
+#define PARSE_RULE_COMMAND(...)                                                                                                    \
     {__VA_ARGS__}
 
-#define PARSE_RULE_GROUP_NAME(nameParam)                                                                                           \
+#define PARSE_RULE_COMMAND_NAME(nameParam)                                                                                         \
+    .name = nameParam
+
+/***********************************************************************************************************************************
+Define how an option group is parsed
+***********************************************************************************************************************************/
+typedef struct ParseRuleOptionGroup
+{
+    const char *name;                                               // All options in the group must be prefixed with this name
+} ParseRuleOptionGroup;
+
+// Macros used to define parse rules in parse.auto.c in a format that diffs well
+#define PARSE_RULE_OPTION_GROUP(...)                                                                                               \
+    {__VA_ARGS__}
+
+#define PARSE_RULE_OPTION_GROUP_NAME(nameParam)                                                                                    \
     .name = nameParam
 
 /***********************************************************************************************************************************
@@ -128,7 +143,7 @@ typedef struct ParseRuleOption
 #define PARSE_RULE_OPTION_MULTI(typeMulti)                                                                                         \
     .multi = typeMulti
 
-#define PARSE_RULE_OPTION_GROUP(groupParam)                                                                                        \
+#define PARSE_RULE_OPTION_GROUP_MEMBER(groupParam)                                                                                 \
     .group = groupParam
 
 #define PARSE_RULE_OPTION_GROUP_ID(groupIdParam)                                                                                   \
@@ -313,8 +328,8 @@ cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
     if (parseRuleOption[optionId].group)
     {
         String *name = strNewFmt(
-            "%s%u%s", parseRuleGroup[parseRuleOption[optionId].groupId].name, keyIdx + 1,
-            parseRuleOption[optionId].name + strlen(parseRuleGroup[parseRuleOption[optionId].groupId].name));
+            "%s%u%s", parseRuleOptionGroup[parseRuleOption[optionId].groupId].name, keyIdx + 1,
+            parseRuleOption[optionId].name + strlen(parseRuleOptionGroup[parseRuleOption[optionId].groupId].name));
 
         FUNCTION_TEST_RETURN(strZ(name));
     }
@@ -1210,7 +1225,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             for (unsigned int groupId = 0; groupId < CFG_OPTION_GROUP_TOTAL; groupId++)
             {
                 // Set group name
-                config->optionGroup[groupId].name = parseRuleGroup[groupId].name;
+                config->optionGroup[groupId].name = parseRuleOptionGroup[groupId].name;
 
                 // Skip the group if it is not valid
                 if (!config->optionGroup[groupId].valid)

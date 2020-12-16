@@ -17,25 +17,6 @@ Define global section name
 STRING_EXTERN(CFGDEF_SECTION_GLOBAL_STR,                            CFGDEF_SECTION_GLOBAL);
 
 /***********************************************************************************************************************************
-Map command names to ids and vice versa.
-***********************************************************************************************************************************/
-typedef struct ConfigDefineCommandData
-{
-    const char *name;                                               // Command name
-} ConfigDefineCommandData;
-
-// Command macros are intended to make the command definitions easy to read and to produce good diffs.
-//----------------------------------------------------------------------------------------------------------------------------------
-#define CFGDEFDATA_COMMAND_LIST(...)                                                                                               \
-    {__VA_ARGS__};
-
-#define CFGDEFDATA_COMMAND(...)                                                                                                    \
-    {__VA_ARGS__},
-
-#define CFGDEFDATA_COMMAND_NAME(nameParam)                                                                                         \
-    .name = nameParam,
-
-/***********************************************************************************************************************************
 Define how an option is parsed and interacts with other options.
 ***********************************************************************************************************************************/
 typedef struct ConfigDefineOptionData
@@ -206,7 +187,7 @@ unsigned int
 cfgDefCommandTotal(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(sizeof(configDefineCommandData) / sizeof(ConfigDefineCommandData));
+    FUNCTION_TEST_RETURN(CFG_COMMAND_TOTAL - 1);
 }
 
 unsigned int
