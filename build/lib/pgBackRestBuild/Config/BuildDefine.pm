@@ -136,9 +136,6 @@ sub renderOptional
 {
     my $rhOptional = shift;
     my $bCommand = shift;
-    my $rhOptionHelp = shift;
-    my $oManifest = shift;
-    my $oDocRender = shift;
     my $strCommand = shift;
     my $strOption = shift;
 
@@ -207,26 +204,6 @@ sub renderOptional
 ####################################################################################################################################
 sub buildConfigDefine
 {
-    # Load help data
-    #-------------------------------------------------------------------------------------------------------------------------------
-    require pgBackRestDoc::Common::Doc;
-    require pgBackRestDoc::Common::DocManifest;
-
-    my $strDocPath = abs_path(dirname($0) . '/../doc');
-
-    my $oStorageDoc = new pgBackRestTest::Common::Storage(
-        $strDocPath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
-
-    my @stryEmpty = [];
-    my $oManifest = new pgBackRestDoc::Common::DocManifest(
-        $oStorageDoc, \@stryEmpty, \@stryEmpty, \@stryEmpty, \@stryEmpty, undef, $strDocPath, false, false);
-
-    my $oDocRender = new pgBackRestDoc::Common::DocRender('text', $oManifest, false);
-    my $oDocConfig =
-        new pgBackRestDoc::Common::DocConfig(
-            new pgBackRestDoc::Common::Doc("${strDocPath}/xml/reference.xml"), $oDocRender);
-    my $hConfigHelp = $oDocConfig->{oConfigHash};
-
     # Build command constants and data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $strBuildSource =
@@ -270,9 +247,6 @@ sub buildConfigDefine
 
     foreach my $strOption (sort(keys(%{$rhConfigDefine})))
     {
-        # Get option help
-        my $hOptionHelp = $hConfigHelp->{&CONFIG_HELP_OPTION}{$strOption};
-
         # Build option data
         my $rhOption = $rhConfigDefine->{$strOption};
 
@@ -314,7 +288,7 @@ sub buildConfigDefine
             "        )\n";
 
         # Render optional data
-        my $strBuildSourceOptional = renderOptional($rhOption, false, $hOptionHelp, $oManifest, $oDocRender);
+        my $strBuildSourceOptional = renderOptional($rhOption, false);
 
         # Render command overrides
         foreach my $strCommand (cfgDefineCommandList())
@@ -324,9 +298,7 @@ sub buildConfigDefine
 
             if (defined($rhCommand))
             {
-                $strBuildSourceOptionalCommand = renderOptional(
-                    $rhCommand, true, $hConfigHelp->{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption},
-                    $oManifest, $oDocRender, $strCommand, $strOption);
+                $strBuildSourceOptionalCommand = renderOptional($rhCommand, true, $strCommand, $strOption);
 
                 if (defined($strBuildSourceOptionalCommand))
                 {
