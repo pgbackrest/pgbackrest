@@ -194,7 +194,6 @@ sub buildConfig
 
     # Add "none" command that is used to initialize the current command before anything is parsed
     push(@{$rhEnum->{&BLD_LIST}}, buildConfigCommandEnum('none'));
-    $iCommandTotal++;
 
     $strBuildSource .=
         ")\n";
