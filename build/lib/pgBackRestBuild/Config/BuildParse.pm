@@ -114,21 +114,33 @@ sub buildConfigParse
         push(@{$rhEnum->{&BLD_LIST}}, $strOptionTypeEnum);
     };
 
-    # Build command constants and data
+    # Build command parse data
     #-------------------------------------------------------------------------------------------------------------------------------
+    my $rhCommandDefine = cfgDefineCommand();
+
     my $strBuildSource =
-        "static const ParseRuleCommand parseRuleCommand[] = \n" .
+        "static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] = \n" .
         "{";
 
-    foreach my $strCommand (cfgDefineCommandList())
+    foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     {
+        my $rhCommand = $rhCommandDefine->{$strCommand};
+
         # Build command data
         $strBuildSource .=
             "\n" .
             "    //" . (qw{-} x 126) . "\n" .
             "    PARSE_RULE_COMMAND\n" .
             "    (\n" .
-            "        PARSE_RULE_COMMAND_NAME(\"${strCommand}\"),\n" .
+            "        PARSE_RULE_COMMAND_NAME(\"${strCommand}\"),\n";
+
+        if ($rhCommand->{&CFGDEF_PARAMETER_ALLOWED})
+        {
+            $strBuildSource .=
+                "        PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),\n";
+        }
+
+        $strBuildSource .=
             "    ),\n";
     };
 
@@ -137,12 +149,12 @@ sub buildConfigParse
 
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_COMMAND}{&BLD_SOURCE} = $strBuildSource;
 
-    # Build option group constants and data
+    # Build option group parse data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhOptionGroupDefine = cfgDefineOptionGroup();
 
     $strBuildSource =
-        "static const ParseRuleOptionGroup parseRuleOptionGroup[] = \n" .
+        "static const ParseRuleOptionGroup parseRuleOptionGroup[CFG_OPTION_GROUP_TOTAL] = \n" .
         "{";
 
     foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
@@ -161,13 +173,12 @@ sub buildConfigParse
 
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION_GROUP}{&BLD_SOURCE} = $strBuildSource;
 
-    # Build option parse list
+    # Build option parse data
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhConfigDefine = cfgDefine();
-    my $rhCommandDefine = cfgDefineCommand();
 
     $strBuildSource =
-        "static const ParseRuleOption parseRuleOption[] =\n" .
+        "static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =\n" .
         "{";
 
     foreach my $strOption (sort(keys(%{$rhConfigDefine})))

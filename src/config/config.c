@@ -25,8 +25,6 @@ typedef struct ConfigCommandData
 
     bool logFile:1;
     unsigned int logLevelDefault:4;
-
-    bool parameterAllowed:1;
 } ConfigCommandData;
 
 #define CONFIG_COMMAND_LIST(...)                                                                                                   \
@@ -47,8 +45,6 @@ typedef struct ConfigCommandData
     .logLevelDefault = logLevelDefaultParam,
 #define CONFIG_COMMAND_NAME(nameParam)                                                                                             \
     .name = nameParam,
-#define CONFIG_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                    \
-    .parameterAllowed = parameterAllowedParam,
 
 /***********************************************************************************************************************************
 Include the automatically generated configuration data
@@ -335,19 +331,6 @@ cfgLogLevelDefault(void)
     ASSERT(configLocal->command != cfgCmdNone);
 
     FUNCTION_TEST_RETURN((LogLevel)configCommandData[cfgCommand()].logLevelDefault);
-}
-
-/**********************************************************************************************************************************/
-bool
-cfgCommandParameterAllowed(ConfigCommand commandId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgCmdNone);
-
-    FUNCTION_TEST_RETURN(configCommandData[commandId].parameterAllowed);
 }
 
 /**********************************************************************************************************************************/

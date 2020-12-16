@@ -86,9 +86,6 @@ LogLevel cfgLogLevelDefault(void);
 // Command parameters, if any
 const StringList *cfgCommandParam(void);
 
-// Does this command allow parameters?
-bool cfgCommandParameterAllowed(ConfigCommand commandId);
-
 /***********************************************************************************************************************************
 Option Group Functions
 ***********************************************************************************************************************************/

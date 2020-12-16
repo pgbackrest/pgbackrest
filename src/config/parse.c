@@ -85,6 +85,7 @@ Define how a command is parsed
 typedef struct ParseRuleCommand
 {
     const char *name;                                               // Name
+    bool parameterAllowed:1;                                        // Command-line parameters are allowed
 } ParseRuleCommand;
 
 // Macros used to define parse rules in parse.auto.c in a format that diffs well
@@ -93,6 +94,9 @@ typedef struct ParseRuleCommand
 
 #define PARSE_RULE_COMMAND_NAME(nameParam)                                                                                         \
     .name = nameParam
+
+#define PARSE_RULE_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                \
+    .parameterAllowed = parameterAllowedParam
 
 /***********************************************************************************************************************************
 Define how an option group is parsed
@@ -913,7 +917,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         }
 
         // Error when parameters found but the command does not allow parameters
-        if (config->paramList != NULL && !config->help && !cfgCommandParameterAllowed(config->command))
+        if (config->paramList != NULL && !config->help && !parseRuleCommand[config->command].parameterAllowed)
             THROW(ParamInvalidError, "command does not allow parameters");
 
         // Enable logging (except for local and remote commands) so config file warnings will be output

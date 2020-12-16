@@ -180,7 +180,6 @@ sub buildConfig
             "        CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(" .
                 ($rhCommand->{&CFGDEF_LOCK_REMOTE_REQUIRED} ? 'true' : 'false') . ")\n" .
             "        CONFIG_COMMAND_LOCK_TYPE(lockType" . ucfirst(lc($rhCommand->{&CFGDEF_LOCK_TYPE})) . ")\n" .
-            "        CONFIG_COMMAND_PARAMETER_ALLOWED(" . ($rhCommand->{&CFGDEF_PARAMETER_ALLOWED} ? 'true' : 'false') . ")\n" .
             "    )\n";
 
         $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_COMMAND}{&BLD_CONSTANT}
