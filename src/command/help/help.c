@@ -153,6 +153,14 @@ typedef struct HelpCommandData
     const String *description;
 } HelpCommandData;
 
+typedef struct HelpOptionData
+{
+    bool internal;
+    const String *section;
+    const String *summary;
+    const String *description;
+} HelpOptionData;
+
 static String *
 helpRender(void)
 {
@@ -170,9 +178,12 @@ helpRender(void)
 
         for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL - 1; commandId++)
         {
-            commandData[commandId].internal = pckReadBoolP(pckHelp);
-            commandData[commandId].summary = pckReadStrP(pckHelp);
-            commandData[commandId].description = pckReadStrP(pckHelp);
+            commandData[commandId] = (HelpCommandData)
+            {
+                .internal = pckReadBoolP(pckHelp),
+                .summary = pckReadStrP(pckHelp),
+                .description = pckReadStrP(pckHelp),
+            };
         }
 
         pckReadArrayEndP(pckHelp);
@@ -223,6 +234,66 @@ helpRender(void)
         {
             ConfigCommand commandId = cfgCommand();
             const char *commandName = cfgCommandName(commandId);
+
+            // Unpack option data
+            // HelpOptionData *optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);
+            //
+            // pckReadArrayBeginP(pckHelp);
+            //
+            // for (ConfigCommand optionId = 0; optionId < CFG_OPTION_TOTAL - 1; optionId++)
+            // {
+            //     LOG_DEBUG_FMT("OPTION %s - %u", cfgDefOptionName(optionId), pckReadId(pckHelp));
+            //
+            //     optionData[optionId] = (HelpOptionData)
+            //     {
+            //         .internal = pckReadBoolP(pckHelp),
+            //         .section = pckReadStrP(pckHelp, .defaultValue = STR("general")),
+            //         .summary = pckReadStrP(pckHelp),
+            //         .description = pckReadStrP(pckHelp),
+            //     };
+            //
+            //     LOG_DEBUG_FMT("SECTION %s", strZNull(optionData[optionId].section));
+            //     LOG_DEBUG_FMT("SUMMARY %s", strZNull(optionData[optionId].summary));
+            //     LOG_DEBUG_FMT("SUMMARY %s", strZNull(optionData[optionId].description));
+            //
+            //     LOG_DEBUG_FMT("BEFORE DEP ARRAY %u", pckReadId(pckHelp));
+            //
+            //     if (!pckReadNullP(pckHelp))
+            //     {
+            //         LOG_DEBUG_FMT("READ DEP ARRAY %u", pckReadId(pckHelp));
+            //
+            //         pckReadArrayBeginP(pckHelp);
+            //
+            //         LOG_DEBUG_FMT("BEGIN DEP ARRAY %u", pckReadId(pckHelp));
+            //
+            //         while (pckReadNext(pckHelp))
+            //         {
+            //             LOG_DEBUG("READ DEP ITEM");
+            //             pckReadStrP(pckHelp);
+            //         }
+            //
+            //         pckReadArrayEndP(pckHelp);
+            //     }
+            //
+            //     LOG_DEBUG_FMT("BEFORE CMD ARRAY %u", pckReadId(pckHelp));
+            //
+            //     if (!pckReadNullP(pckHelp))
+            //     {
+            //         LOG_DEBUG("READ CMD ARRAY");
+            //
+            //         pckReadArrayBeginP(pckHelp);
+            //
+            //         while (pckReadNext(pckHelp))
+            //         {
+            //             LOG_DEBUG_FMT("READ ITEM %u", pckReadId(pckHelp));
+            //             pckReadStrP(pckHelp);
+            //         }
+            //
+            //         pckReadArrayEndP(pckHelp);
+            //     }
+            // }
+            //
+            // pckReadArrayEndP(pckHelp);
 
             // Output command part of title
             strCatFmt(result, " - '%s' command", commandName);

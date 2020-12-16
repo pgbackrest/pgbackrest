@@ -263,7 +263,6 @@ sub renderOptional
         $bSingleLine = true;
     }
 
-
     if ($bCommand && defined($rhOptional->{&CFGDEF_INTERNAL}))
     {
         $strBuildSourceOptional .=
