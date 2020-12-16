@@ -43,6 +43,7 @@ typedef struct Config
     // Group options that are related together to allow valid and test checks across all options in the group
     struct
     {
+        const char *name;                                           // Name
         bool valid;                                                 // Is option group valid for the current command?
         unsigned int indexTotal;                                    // Total number of indexes with values in option group
         unsigned int indexDefault;                                  // Default index (usually 0)
@@ -52,7 +53,10 @@ typedef struct Config
     // Option data
     struct
     {
+        const char *name;                                           // Name
         bool valid;                                                 // Is option valid for current command?
+        bool group;                                                 // In a group?
+        unsigned int groupId;                                       // Id if in a group
         const Variant *defaultValue;                                // Default value
         ConfigOptionValue *index;                                   // List of indexed values (only 1 unless the option is indexed)
     } option[CFG_OPTION_TOTAL];
@@ -76,10 +80,6 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
-// Get the option name using the key index -- i.e. the key that was used during configuration - 1, e.g. to get pg2-host pass 1 to
-// keyIdx.
-const char *cfgOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
-
 // Convert the key used in the original configuration to a group index. This is used when an option key must be translated into the
 // local group index, e.g. during parsing or when getting the value of specific options from a remote.
 unsigned int cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key);

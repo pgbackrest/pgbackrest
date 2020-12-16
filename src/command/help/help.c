@@ -12,7 +12,6 @@ Help Command
 #include "common/memContext.h"
 #include "common/type/pack.h"
 #include "config/config.h"
-#include "config/define.h"
 #include "config/parse.h"
 #include "version.h"
 
@@ -81,7 +80,7 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
 Helper function for helpRender() to output values as strings
 ***********************************************************************************************************************************/
 static const String *
-helpRenderValue(const Variant *value, ConfigDefineOptionType type)
+helpRenderValue(const Variant *value, ConfigOptionType type)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(VARIANT, value);
@@ -134,7 +133,7 @@ helpRenderValue(const Variant *value, ConfigDefineOptionType type)
 
         result = resultTemp;
     }
-    else if (type == cfgDefOptTypeTime)
+    else if (type == cfgOptTypeTime)
         result = cvtDoubleToStr((double)varInt64(value) / MSEC_PER_SEC);
     else
         result = varStrForce(value);
@@ -326,7 +325,7 @@ helpRender(void)
 
                 for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    if (cfgDefOptionValid(commandId, optionId) && !optionData[optionId].internal)
+                    if (cfgParseOptionValid(commandId, optionId) && !optionData[optionId].internal)
                     {
                         const String *section = optionData[optionId].section;
 
@@ -339,8 +338,8 @@ helpRender(void)
 
                         kvAdd(optionKv, VARSTR(section), VARINT((int)optionId));
 
-                        if (strlen(cfgDefOptionName(optionId)) > optionSizeMax)
-                            optionSizeMax = strlen(cfgDefOptionName(optionId));
+                        if (strlen(cfgParseOptionName(optionId)) > optionSizeMax)
+                            optionSizeMax = strlen(cfgParseOptionName(optionId));
                     }
                 }
 
@@ -365,18 +364,18 @@ helpRender(void)
                             strNewN(strZ(optionData[optionId].summary), strSize(optionData[optionId].summary) - 1));
 
                         // Ouput current and default values if they exist
-                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgDefOptionType(optionId));
+                        const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgParseOptionType(optionId));
                         const String *value = NULL;
 
                         if (cfgOptionSource(optionId) != cfgSourceDefault)
-                            value = helpRenderValue(cfgOption(optionId), cfgDefOptionType(optionId));
+                            value = helpRenderValue(cfgOption(optionId), cfgParseOptionType(optionId));
 
                         if (value != NULL || defaultValue != NULL)
                         {
                             strCatZ(summary, " [");
 
                             if (value != NULL)
-                                strCatFmt(summary, "current=%s", cfgDefOptionSecure(optionId) ? "<redacted>" : strZ(value));
+                                strCatFmt(summary, "current=%s", cfgParseOptionSecure(optionId) ? "<redacted>" : strZ(value));
 
                             if (defaultValue != NULL)
                             {
@@ -392,7 +391,7 @@ helpRender(void)
                         // Output option help
                         strCatFmt(
                             result, "  --%s%*s%s\n",
-                            cfgDefOptionName(optionId), (int)(optionSizeMax - strlen(cfgDefOptionName(optionId)) + 2), "",
+                            cfgParseOptionName(optionId), (int)(optionSizeMax - strlen(cfgParseOptionName(optionId)) + 2), "",
                             strZ(helpRenderText(summary, optionSizeMax + 6, false, CONSOLE_WIDTH)));
                     }
                 }
@@ -414,7 +413,7 @@ helpRender(void)
 
                 if (!option.found)
                 {
-                    int optionId = cfgDefOptionId(strZ(optionName));
+                    int optionId = cfgParseOptionId(strZ(optionName));
 
                     if (optionId == -1)
                         THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
@@ -430,23 +429,23 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    cfgDefOptionName(option.id),
+                    cfgParseOptionName(option.id),
                     strZ(helpRenderText(optionData[option.id].summary, 0, true, CONSOLE_WIDTH)),
                     strZ(helpRenderText(optionData[option.id].description, 0, true, CONSOLE_WIDTH)));
 
                 // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgDefOptionType(option.id));
+                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
                 const String *value = NULL;
 
                 if (cfgOptionSource(option.id) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOption(option.id), cfgDefOptionType(option.id));
+                    value = helpRenderValue(cfgOption(option.id), cfgParseOptionType(option.id));
 
                 if (value != NULL || defaultValue != NULL)
                 {
                     strCat(result, LF_STR);
 
                     if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgDefOptionSecure(option.id) ? "<redacted>" : strZ(value));
+                        strCatFmt(result, "current: %s\n", cfgParseOptionSecure(option.id) ? "<redacted>" : strZ(value));
 
                     if (defaultValue != NULL)
                         strCatFmt(result, "default: %s\n", strZ(defaultValue));
