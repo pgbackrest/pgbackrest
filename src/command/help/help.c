@@ -175,11 +175,11 @@ helpRender(void)
     {
         // Unpack command data
         PackRead *pckHelp = pckReadNewBuf(BUF(helpDataPack, sizeof(helpDataPack)));
-        HelpCommandData *commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL - 1);
+        HelpCommandData *commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL);
 
         pckReadArrayBeginP(pckHelp);
 
-        for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL - 1; commandId++)
+        for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
         {
             commandData[commandId] = (HelpCommandData)
             {
@@ -209,7 +209,7 @@ helpRender(void)
             // Find size of longest command name
             size_t commandSizeMax = 0;
 
-            for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL - 1; commandId++)
+            for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
                 if (commandData[commandId].internal)
                     continue;
@@ -219,7 +219,7 @@ helpRender(void)
             }
 
             // Output help for each command
-            for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL - 1; commandId++)
+            for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
                 if (commandData[commandId].internal)
                     continue;

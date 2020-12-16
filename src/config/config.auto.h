@@ -50,7 +50,7 @@ Command constants
 #define CFGCMD_VERSION                                              "version"
     STRING_DECLARE(CFGCMD_VERSION_STR);
 
-#define CFG_COMMAND_TOTAL                                           21
+#define CFG_COMMAND_TOTAL                                           20
 
 /***********************************************************************************************************************************
 Option group constants
