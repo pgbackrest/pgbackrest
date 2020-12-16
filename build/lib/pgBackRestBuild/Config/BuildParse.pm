@@ -339,7 +339,6 @@ sub buildConfigParse
         # Build command role default list
         # --------------------------------------------------------------------------------------------------------------------------
         my $strBuildSourceSub = "";
-        my $strDefaultList = "";
 
         foreach my $strCommand (cfgDefineCommandList())
         {
@@ -349,8 +348,6 @@ sub buildConfigParse
                 {
                     $strBuildSourceSub .=
                         "            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(" . buildConfigCommandEnum($strCommand) . ")\n";
-
-                    $strDefaultList .= $strCommand . ',';
                 }
             }
         }
@@ -394,7 +391,7 @@ sub buildConfigParse
                 "        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST\n" .
                 "        (\n" .
                 $strBuildSourceSub .
-                "        )\n";
+                "        ),\n";
         }
 
         # Render optional data and command overrides

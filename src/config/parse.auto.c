@@ -182,7 +182,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleAsync)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -267,7 +267,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchiveGet, cfgCmdRoleAsync)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -317,7 +317,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleAsync)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -422,7 +422,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -513,7 +513,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -558,7 +558,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleAsync)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -600,7 +600,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -626,7 +626,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleAsync)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -697,7 +697,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -759,7 +759,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -821,7 +821,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -887,7 +887,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaCreate, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaDelete, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -958,28 +958,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
-        ),
-
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchiveGet, cfgCmdRoleAsync)
@@ -1004,7 +982,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
     ),
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1173,7 +1151,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1255,7 +1233,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaCreate, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaDelete, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1317,7 +1295,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1390,7 +1368,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1463,7 +1441,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1536,7 +1514,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1598,7 +1576,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1660,7 +1638,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1740,7 +1718,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1847,7 +1825,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaCreate, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1882,7 +1860,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaCreate, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaDelete, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1924,7 +1902,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1961,7 +1939,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -1994,7 +1972,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2028,7 +2006,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2062,7 +2040,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2096,7 +2074,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2130,7 +2108,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2180,7 +2158,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaCreate, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaDelete, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2226,7 +2204,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaCreate, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaDelete, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2266,7 +2244,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaCreate, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaDelete, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2303,7 +2281,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaCreate, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaDelete, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2339,7 +2317,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaCreate, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaDelete, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2377,7 +2355,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2406,7 +2384,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchiveGet, cfgCmdRoleAsync)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleAsync)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2466,7 +2444,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2574,7 +2552,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2640,7 +2618,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2705,7 +2683,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2773,7 +2751,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2841,7 +2819,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2909,7 +2887,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -2977,7 +2955,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3047,7 +3025,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3116,7 +3094,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3184,7 +3162,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3260,7 +3238,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3331,7 +3309,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3402,7 +3380,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3470,7 +3448,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3546,7 +3524,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdBackup, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3593,7 +3571,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3636,7 +3614,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3680,7 +3658,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3724,7 +3702,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3768,7 +3746,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3812,7 +3790,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRestore, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3877,7 +3855,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -3941,7 +3919,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4128,7 +4106,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4196,7 +4174,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4264,7 +4242,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4332,7 +4310,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4400,7 +4378,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4469,7 +4447,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4538,7 +4516,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4606,7 +4584,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4682,7 +4660,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4753,7 +4731,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4821,7 +4799,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4890,7 +4868,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -4958,7 +4936,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -5034,7 +5012,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -5104,7 +5082,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -5191,7 +5169,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -5251,7 +5229,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -5354,7 +5332,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchiveGet, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleAsync)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdArchivePush, cfgCmdRoleLocal)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -5438,7 +5416,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -5754,7 +5732,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -5819,7 +5797,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
@@ -5884,7 +5862,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdStanzaUpgrade, cfgCmdRoleRemote)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleLocal)
             PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdVerify, cfgCmdRoleRemote)
-        )
+        ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (

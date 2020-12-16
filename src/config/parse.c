@@ -131,6 +131,7 @@ typedef struct ParseRuleOption
     bool group:1;                                                   // In a group?
     unsigned int groupId:1;                                         // Id if in a group
     uint64_t commandDefaultValid:CFG_COMMAND_TOTAL;                 // Valid for the default command role?
+    uint64_t commandOtherValid:(CFG_COMMAND_TOTAL * 3);             // Valid for other command roles?
 
     const void **data;                                              // Optional data and command overrides
 } ParseRuleOption;
@@ -182,6 +183,12 @@ typedef enum
 
 #define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(commandParam)                                                                       \
     | (1 << commandParam)
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST(...)                                                                             \
+    .commandOtherValid = 0 __VA_ARGS__
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(commandParam, commandRoleParam)                                                       \
+    | ((uint64_t)1 << ((CFG_COMMAND_TOTAL * (commandRoleParam - 1)) + commandParam))
 
 #define PARSE_RULE_OPTION_OPTIONAL_PUSH_LIST(type, size, data, ...)                                                                \
     (const void *)((uint32_t)type << 24 | (uint32_t)size << 16 | (uint32_t)data), __VA_ARGS__
@@ -552,17 +559,22 @@ cfgParseOptionType(ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 bool
-cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId)
+cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
     ASSERT(commandId < CFG_COMMAND_TOTAL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandDefaultValid & (1 << commandId));
+    if (commandRoleId == cfgCmdRoleDefault)
+        FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandDefaultValid & (1 << commandId));
+
+    FUNCTION_TEST_RETURN(
+        parseRuleOption[optionId].commandOtherValid & ((uint64_t)1 << ((CFG_COMMAND_TOTAL * (commandRoleId - 1)) + commandId)));
 }
 
 /***********************************************************************************************************************************
@@ -1155,7 +1167,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     }
 
                     // Continue if the option is not valid for this command
-                    if (!cfgParseOptionValid(config->command, option.id))
+                    if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
                         continue;
 
                     if (strSize(value) == 0)
@@ -1276,7 +1288,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             kvPut(optionFound, optionFoundKey, VARSTR(key));
 
                         // Continue if the option is not valid for this command
-                        if (!cfgParseOptionValid(config->command, option.id))
+                        if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
                         {
                             // Warn if it is in a command section
                             if (sectionIdx % 2 == 0)
@@ -1363,7 +1375,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 config->option[optionId].name = parseRuleOption[optionId].name;
 
                 // Is the option valid for this command?
-                if (cfgParseOptionValid(config->command, optionId))
+                if (cfgParseOptionValid(config->command, config->commandRole, optionId))
                 {
                     config->option[optionId].valid = true;
                     config->option[optionId].group = parseRuleOption[optionId].group;

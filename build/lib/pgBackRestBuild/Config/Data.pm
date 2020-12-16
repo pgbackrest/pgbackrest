@@ -1144,6 +1144,10 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_INTERNAL => true,
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+        },
     },
 
     &CFGOPT_PROCESS =>
@@ -1170,7 +1174,8 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_VERIFY => {},
         },
-        &CFGDEF_COMMAND_ROLE_EXCLUDE => {
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
             &CFGCMD_ROLE_DEFAULT => {},
             &CFGCMD_ROLE_ASYNC => {},
         },
