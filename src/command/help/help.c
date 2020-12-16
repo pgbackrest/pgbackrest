@@ -169,7 +169,7 @@ helpRender(void)
 
             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
-                if (commandId == cfgCmdNone || cfgCommandInternal(commandId))
+                if (cfgCommandInternal(commandId))
                     continue;
 
                 if (strlen(cfgCommandName(commandId)) > commandSizeMax)
@@ -179,7 +179,7 @@ helpRender(void)
             // Output help for each command
             for (ConfigCommand commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
             {
-                if (commandId == cfgCmdNone || cfgCommandInternal(commandId))
+                if (cfgCommandInternal(commandId))
                     continue;
 
                 strCatFmt(
