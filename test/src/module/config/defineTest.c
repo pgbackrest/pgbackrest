@@ -82,6 +82,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgDefOptionMulti(cfgOptStartFast), false, "start-fast is not multi");
 
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdBackup, cfgOptConfig), true, "option required");
+        TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdBackup, cfgOptForce), true, "option required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdRestore, cfgOptRepoHost), false, "option not required");
         TEST_RESULT_BOOL(cfgDefOptionRequired(cfgCmdInfo, cfgOptStanza), false, "command option not required");
 
