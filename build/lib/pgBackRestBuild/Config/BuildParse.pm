@@ -237,7 +237,7 @@ sub buildConfigParse
     my $rhCommandDefine = cfgDefineCommand();
 
     my $strBuildSource =
-        "static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] = \n" .
+        "static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =\n" .
         "{";
 
     foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
@@ -272,7 +272,7 @@ sub buildConfigParse
     my $rhOptionGroupDefine = cfgDefineOptionGroup();
 
     $strBuildSource =
-        "static const ParseRuleOptionGroup parseRuleOptionGroup[CFG_OPTION_GROUP_TOTAL] = \n" .
+        "static const ParseRuleOptionGroup parseRuleOptionGroup[CFG_OPTION_GROUP_TOTAL] =\n" .
         "{";
 
     foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
@@ -366,19 +366,23 @@ sub buildConfigParse
         #---------------------------------------------------------------------------------------------------------------------------
         $strBuildSourceSub = "";
 
-        foreach my $strCommand (cfgDefineCommandList())
+        foreach my $strCommandRole (CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
         {
-            if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
-            {
-                my $strCommandEnum = buildConfigCommandEnum($strCommand);
+            my $bAddLF = $strBuildSourceSub ne '';
 
-                foreach my $strCommandRole (sort(keys(%{$rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}})))
+            foreach my $strCommand (cfgDefineCommandList())
+            {
+                if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
                 {
-                    if (!defined($rhOption->{&CFGDEF_COMMAND_ROLE_EXCLUDE}{$strCommandRole}))
+                    if (defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{$strCommandRole}) &&
+                        !defined($rhOption->{&CFGDEF_COMMAND_ROLE_EXCLUDE}{$strCommandRole}))
                     {
                         $strBuildSourceSub .=
-                            "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(${strCommandEnum}, " .
-                            bldEnum('cfgCmdRole', $strCommandRole) . ")\n";
+                            ($bAddLF ? "\n" : '') .
+                            "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(" . bldEnum('cfgCmdRole', $strCommandRole) . ", " .
+                            buildConfigCommandEnum($strCommand) . ")\n";
+
+                        $bAddLF = false;
                     }
                 }
             }
