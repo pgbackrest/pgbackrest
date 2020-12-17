@@ -134,7 +134,7 @@ cfgLoadUpdateOption(void)
     }
 
     // Warn when repo-retention-full is not set on a configured repo
-    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFullType))
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFullType) && cfgCommandRole() == cfgCmdRoleDefault)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
