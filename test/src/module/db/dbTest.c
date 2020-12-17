@@ -74,7 +74,6 @@ testRun(void)
                 strLstAddZ(argList, "--pg1-path=/path/to/pg");
                 strLstAddZ(argList, "--pg1-database=testdb");
                 strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
-                hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
                 strLstAddZ(argList, "--process=0");
                 harnessCfgLoadRole(cfgCmdBackup, cfgCmdRoleRemote, argList);
 
