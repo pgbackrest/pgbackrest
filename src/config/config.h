@@ -39,6 +39,8 @@ typedef enum
 #define CONFIG_COMMAND_ROLE_LOCAL                        "local"
 #define CONFIG_COMMAND_ROLE_REMOTE                       "remote"
 
+#define CFG_COMMAND_ROLE_TOTAL                           4
+
 /***********************************************************************************************************************************
 Constants
 

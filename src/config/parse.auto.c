@@ -14,6 +14,14 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("archive-get"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleAsync)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -21,24 +29,50 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("archive-push"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleAsync)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("backup"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("check"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("expire"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -46,18 +80,35 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("help"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("info"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("repo-create"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -65,6 +116,12 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("repo-get"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -72,6 +129,12 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("repo-ls"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -79,6 +142,12 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("repo-put"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -86,54 +155,107 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("repo-rm"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("restore"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stanza-create"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stanza-delete"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stanza-upgrade"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("start"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stop"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("verify"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("version"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 };
 
@@ -168,22 +290,28 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -200,10 +328,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -231,9 +359,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -261,14 +389,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -286,9 +414,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -311,14 +439,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -335,12 +463,12 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -358,12 +486,12 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -380,52 +508,58 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -457,9 +591,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
     ),
 
@@ -471,10 +605,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
         ),
     ),
 
@@ -486,38 +620,41 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -534,10 +671,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -554,15 +691,15 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -579,33 +716,36 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -623,15 +763,15 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -657,54 +797,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -721,54 +867,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -785,54 +937,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -850,9 +1008,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
     ),
 
@@ -864,43 +1022,49 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -918,10 +1082,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -938,9 +1102,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -958,9 +1122,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
     ),
 
@@ -972,54 +1136,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
     ),
 
@@ -1031,9 +1201,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1050,9 +1220,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
         ),
     ),
 
@@ -1064,13 +1234,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1126,9 +1296,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1145,52 +1315,58 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1208,9 +1384,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1228,9 +1404,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
     ),
 
@@ -1242,39 +1418,45 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1291,54 +1473,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1366,54 +1554,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1441,54 +1635,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1516,54 +1716,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1580,54 +1786,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1644,54 +1856,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1708,9 +1926,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1728,52 +1946,58 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1790,11 +2014,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1811,10 +2035,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1855,34 +2079,40 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1901,24 +2131,27 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1938,30 +2171,33 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -1984,21 +2220,21 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2017,21 +2253,21 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2051,21 +2287,21 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2085,21 +2321,21 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2119,21 +2355,21 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2153,21 +2389,21 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2187,39 +2423,45 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2238,36 +2480,42 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2291,24 +2539,27 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2329,24 +2580,27 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2366,24 +2620,27 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpPg),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2400,29 +2657,32 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2439,19 +2699,19 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2469,51 +2729,57 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2531,10 +2797,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2552,9 +2818,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2580,10 +2846,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2600,29 +2866,32 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2643,54 +2912,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2710,54 +2985,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2780,54 +3061,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2850,54 +3137,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2920,54 +3213,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -2990,54 +3289,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3062,54 +3367,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3133,54 +3444,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3203,54 +3520,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3281,54 +3604,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3354,54 +3683,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3427,54 +3762,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3497,54 +3838,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3569,9 +3916,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3590,38 +3937,41 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3644,32 +3994,35 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3688,32 +4041,35 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3733,32 +4089,35 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3778,32 +4137,35 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3823,32 +4185,35 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3868,32 +4233,35 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3913,54 +4281,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -3979,54 +4353,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4045,10 +4425,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4067,10 +4447,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4096,10 +4476,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4118,10 +4498,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4140,10 +4520,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4168,54 +4548,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4238,54 +4624,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4308,54 +4700,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4378,54 +4776,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4448,54 +4852,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4519,54 +4929,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4590,54 +5006,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4660,54 +5082,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4738,54 +5166,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4811,54 +5245,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4881,54 +5321,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -4952,54 +5398,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5022,54 +5474,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5100,54 +5558,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5172,54 +5636,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5244,9 +5714,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5263,52 +5733,58 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5325,52 +5801,58 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5387,12 +5869,12 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5436,9 +5918,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5462,19 +5944,22 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5513,54 +5998,60 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStart)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStop)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStart)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStop)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5631,9 +6122,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5650,9 +6141,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5670,9 +6161,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
         PARSE_RULE_OPTION_MULTI(true),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
     ),
 
@@ -5684,9 +6175,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
     ),
 
@@ -5698,9 +6189,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5728,9 +6219,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5768,9 +6259,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5799,9 +6290,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5833,52 +6324,58 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5900,52 +6397,58 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -5967,52 +6470,58 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdVerify)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleAsync, cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleLocal, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
 
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(cfgCmdRoleRemote, cfgCmdVerify)
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -6034,10 +6543,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST

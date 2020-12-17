@@ -2599,7 +2599,7 @@ my %hConfigDefine =
         {
             &CFGCMD_ARCHIVE_GET => {},
             &CFGCMD_ARCHIVE_PUSH => {},
-        },
+        }
     },
 
     &CFGOPT_ARCHIVE_PUSH_QUEUE_MAX =>
@@ -3297,6 +3297,12 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_PARAMETER_ALLOWED}))
     {
         $rhCommandDefine->{$strCommand}{&CFGDEF_PARAMETER_ALLOWED} = false;
+    }
+
+    # All commands have the default role
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT} = {};
     }
 }
 
