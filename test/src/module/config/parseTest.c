@@ -43,7 +43,7 @@ testRun(void)
     {
         TEST_TITLE("check size of parse structures");
 
-        TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 40 : 20, "ParseRuleOption size");
+        TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 40 : 28, "ParseRuleOption size");
     }
 
     // Config functions that are not tested with parse
