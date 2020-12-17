@@ -19,11 +19,11 @@ STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_GET_STR,                     PROTOCOL_COM
 
 /**********************************************************************************************************************************/
 bool
-archiveGetProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+archiveGetProtocol(const String *command, PackRead *param, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
@@ -36,7 +36,9 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
     {
         if (strEq(command, PROTOCOL_COMMAND_ARCHIVE_GET_STR))
         {
-            const String *walSegment = varStr(varLstGet(paramList, 0));
+            const String *walSegment = pckReadStrP(param);
+
+            !!! THROW_FMT(AssertError, "WAL SEGMENT PASSED IS %s", strZNull(walSegment));
 
             protocolServerResponse(
                 server,

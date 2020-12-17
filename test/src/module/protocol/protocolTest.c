@@ -12,6 +12,7 @@ Test Protocol
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessPack.h"
 
 /***********************************************************************************************************************************
 Test protocol request handler
@@ -19,11 +20,11 @@ Test protocol request handler
 static unsigned int testServerProtocolErrorTotal = 0;
 
 static bool
-testServerProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+testServerProtocol(const String *command, PackRead *param, ProtocolServer *server)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRING, command);
-        FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
         FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
@@ -384,34 +385,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("ProtocolCommand"))
-    {
-        ProtocolCommand *command = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            TEST_ASSIGN(command, protocolCommandNew(strNew("command1")), "create command");
-            TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param1"))), command, "add param");
-            TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param2"))), command, "add param");
-
-            TEST_RESULT_PTR(protocolCommandMove(command, memContextPrior()), command, "move protocol command");
-            TEST_RESULT_PTR(protocolCommandMove(NULL, memContextPrior()), NULL, "move null protocol command");
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: command1}", "check log");
-        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "check json");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(command, protocolCommandNew(strNew("command2")), "create command");
-        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: command2}", "check log");
-        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"command2\"}", "check json");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(protocolCommandFree(command), "free command");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("ProtocolClient"))
     {
         HARNESS_FORK_BEGIN()
@@ -441,52 +414,53 @@ testRun(void)
                 ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:noop", "noop");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
                 // Throw errors
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with error text");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:noop", "noop with error text");
                 ioWriteStrLine(write, strNew("{\"err\":25,\"out\":\"sample error message\",\"errStack\":\"stack data\"}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with no error text");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:noop", "noop with no error text");
                 ioWriteStrLine(write, strNew("{\"err\":255}"));
                 ioWriteFlush(write);
 
                 // No output expected
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with parameters returned");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:noop", "noop with parameters returned");
                 ioWriteStrLine(write, strNew("{\"out\":[\"bogus\"]}"));
                 ioWriteFlush(write);
 
                 // Send output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"test\"}", "test command");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:test", "test command");
                 ioWriteStrLine(write, strNew(".OUTPUT"));
                 ioWriteStrLine(write, strNew("{\"out\":[\"value1\",\"value2\"]}"));
                 ioWriteFlush(write);
 
                 // invalid line
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"invalid-line\"}", "invalid line command");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:invalid-line", "invalid line command");
                 ioWrite(write, LF_BUF);
                 ioWriteFlush(write);
 
                 // error instead of output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"error-instead-of-output\"}", "error instead of output command");
+                TEST_RESULT_STR_Z(
+                    hrnPackToStr(pckReadNew(read)), "1:str:error-instead-of-output", "error instead of output command");
                 ioWriteStrLine(write, strNew("{\"err\":255}"));
                 ioWriteFlush(write);
 
                 // unexpected output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"unexpected-output\"}", "unexpected output");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:unexpected-output", "unexpected output");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
                 // invalid prefix
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"invalid-prefix\"}", "invalid prefix");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:invalid-prefix", "invalid prefix");
                 ioWriteStrLine(write, strNew("~line"));
                 ioWriteFlush(write);
 
                 // Wait for exit
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"exit\"}", "exit command");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:exit", "exit command");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -612,52 +586,71 @@ testRun(void)
                     "check greeting");
 
                 // Noop
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"noop\"}")), "write noop");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush noop");
+                ProtocolCommand *command = protocolCommandNew(STRDEF("noop"));
+                pckWriteEndP(protocolCommandParam(command));
+
+                TEST_RESULT_VOID(protocolCommandWrite(command, write), "write noop");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{}", "noop result");
+
+                TEST_RESULT_VOID(protocolCommandFree(command), "free protocol");
 
                 // Invalid command
                 KeyValue *result = NULL;
 
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"bogus\"}")), "write bogus");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush bogus");
+                command = protocolCommandNew(STRDEF("bogus"));
+                pckWriteEndP(protocolCommandParam(command));
+
+                TEST_RESULT_VOID(protocolCommandWrite(command, write), "write bogus");
                 TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
                 TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 39, "    check code");
                 TEST_RESULT_STR_Z(varStr(kvGet(result, VARSTRDEF("out"))), "invalid command 'bogus'", "    check message");
                 TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Simple request
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"request-simple\"}")), "write simple request");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
+                command = protocolCommandNew(STRDEF("request-simple"));
+                pckWriteEndP(protocolCommandParam(command));
+
+                TEST_RESULT_VOID(protocolCommandWrite(command, write), "write simple request");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "simple request result");
 
                 // Throw an assert error which will include a stack trace
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"assert\"}")), "write assert");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush assert error");
+                command = protocolCommandNew(STRDEF("assert"));
+                pckWriteEndP(protocolCommandParam(command));
+
+                TEST_RESULT_VOID(protocolCommandWrite(command, write), "write assert");
                 TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
                 TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 25, "    check code");
                 TEST_RESULT_STR_Z(varStr(kvGet(result, VARSTRDEF("out"))), "test assert", "    check message");
                 TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Complex request -- after process loop has been restarted
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"request-complex\"}")), "write complex request");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush complex request");
+                command = protocolCommandNew(STRDEF("request-complex"));
+                pckWriteEndP(protocolCommandParam(command));
+
+                TEST_RESULT_VOID(protocolCommandWrite(command, write), "write complex request");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":false}", "complex request result");
                 TEST_RESULT_STR_Z(ioReadLine(read), ".LINEOFTEXT", "complex request result");
                 TEST_RESULT_STR_Z(ioReadLine(read), ".", "complex request result");
 
                 // Exit
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
+                command = protocolCommandNew(STRDEF("exit"));
+                pckWriteEndP(protocolCommandParam(command));
+
+                TEST_RESULT_VOID(protocolCommandWrite(command, write), "write exit");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
 
                 // Retry errors until success
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"error-until-0\"}")), "write error-until-0");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush error-until-0");
+                command = protocolCommandNew(STRDEF("error-until-0"));
+                pckWriteEndP(protocolCommandParam(command));
+
+                TEST_RESULT_VOID(protocolCommandWrite(command, write), "write error-until-0");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "error-until-0 result");
 
                 // Exit
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
-                TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
+                command = protocolCommandNew(STRDEF("exit"));
+                pckWriteEndP(protocolCommandParam(command));
+
+                TEST_RESULT_VOID(protocolCommandWrite(command, write), "write exit");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -749,17 +742,17 @@ testRun(void)
                 ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:noop", "noop");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "command1");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:command1, 2:str:param1, 3:str:param2", "command1");
                 sleepMSec(4000);
                 ioWriteStrLine(write, strNew("{\"out\":1}"));
                 ioWriteFlush(write);
 
                 // Wait for exit
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"exit\"}", "exit command");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:exit", "exit command");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -775,22 +768,22 @@ testRun(void)
                 ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:noop", "noop");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"command2\",\"param\":[\"param1\"]}", "command2");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:command2, 2:str:param1", "command2");
                 sleepMSec(1000);
                 ioWriteStrLine(write, strNew("{\"out\":2}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"command3\",\"param\":[\"param1\"]}", "command3");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:command3, 2:str:param1", "command3");
 
                 ioWriteStrLine(write, strNew("{\"err\":39,\"out\":\"very serious error\"}"));
                 ioWriteFlush(write);
 
                 // Wait for exit
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"exit\"}", "exit command");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:exit", "exit command");
             }
             HARNESS_FORK_CHILD_END();
 
@@ -838,18 +831,21 @@ testRun(void)
 
                 // Add jobs
                 ProtocolCommand *command = protocolCommandNew(strNew("command1"));
-                protocolCommandParamAdd(command, varNewStr(strNew("param1")));
-                protocolCommandParamAdd(command, varNewStr(strNew("param2")));
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param2"));
+
                 ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(strNew("job1")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNew(strNew("command2"));
-                protocolCommandParamAdd(command, varNewStr(strNew("param1")));
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+
                 job = protocolParallelJobNew(varNewStr(strNew("job2")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNew(strNew("command3"));
-                protocolCommandParamAdd(command, varNewStr(strNew("param1")));
+                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+
                 job = protocolParallelJobNew(varNewStr(strNew("job3")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 

@@ -18,11 +18,11 @@ STRING_EXTERN(PROTOCOL_COMMAND_CONFIG_OPTION_STR,                   PROTOCOL_COM
 
 /**********************************************************************************************************************************/
 bool
-configProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+configProtocol(const String *command, PackRead *param, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
@@ -37,9 +37,9 @@ configProtocol(const String *command, const VariantList *paramList, ProtocolServ
         {
             VariantList *optionList = varLstNew();
 
-            for (unsigned int optionIdx = 0; optionIdx < varLstSize(paramList); optionIdx++)
+            while (pckReadNext(param))
             {
-                CfgParseOptionResult option = cfgParseOption(varStr(varLstGet(paramList, optionIdx)));
+                CfgParseOptionResult option = cfgParseOption(pckReadStrP(param));
                 CHECK(option.found);
 
                 varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
@@ -69,9 +69,10 @@ configProtocolOption(ProtocolClient *client, const VariantList *paramList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG_OPTION_STR);
+        PackWrite *param = protocolCommandParam(command);
 
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
-            protocolCommandParamAdd(command, varLstGet(paramList, paramIdx));
+            pckWriteStrP(param, varStr(varLstGet(paramList, paramIdx)));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

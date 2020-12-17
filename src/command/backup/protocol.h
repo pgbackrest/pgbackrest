@@ -18,6 +18,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool backupProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+bool backupProtocol(const String *command, PackRead *param, ProtocolServer *server);
 
 #endif

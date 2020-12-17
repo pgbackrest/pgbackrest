@@ -19,11 +19,11 @@ STRING_EXTERN(PROTOCOL_COMMAND_RESTORE_FILE_STR,                    PROTOCOL_COM
 
 /**********************************************************************************************************************************/
 bool
-restoreProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+restoreProtocol(const String *command, PackRead *param, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
@@ -40,13 +40,10 @@ restoreProtocol(const String *command, const VariantList *paramList, ProtocolSer
                 server,
                 VARBOOL(
                     restoreFile(
-                        varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1)),
-                        (CompressType)varUIntForce(varLstGet(paramList, 2)), varStr(varLstGet(paramList, 3)),
-                        varStr(varLstGet(paramList, 4)), varBoolForce(varLstGet(paramList, 5)), varUInt64(varLstGet(paramList, 6)),
-                        (time_t)varInt64Force(varLstGet(paramList, 7)), cvtZToUIntBase(strZ(varStr(varLstGet(paramList, 8))), 8),
-                        varStr(varLstGet(paramList, 9)), varStr(varLstGet(paramList, 10)),
-                        (time_t)varInt64Force(varLstGet(paramList, 11)), varBoolForce(varLstGet(paramList, 12)),
-                        varBoolForce(varLstGet(paramList, 13)), varStr(varLstGet(paramList, 14)))));
+                        pckReadStrP(param), pckReadStrP(param), (CompressType)pckReadU32P(param), pckReadStrP(param),
+                        pckReadStrP(param), pckReadBoolP(param), pckReadU64P(param), pckReadTimeP(param), pckReadU32P(param),
+                        pckReadStrP(param), pckReadStrP(param), pckReadTimeP(param), pckReadBoolP(param), pckReadBoolP(param),
+                        pckReadStrP(param))));
         }
         else
             found = false;

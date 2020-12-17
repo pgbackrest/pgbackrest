@@ -19,11 +19,11 @@ STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR,                     PROTOCOL_CO
 
 /**********************************************************************************************************************************/
 bool
-archivePushProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+archivePushProtocol(const String *command, PackRead *param, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
@@ -40,10 +40,8 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
                 server,
                 VARSTR(
                     archivePushFile(
-                        varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1)),
-                        varUIntForce(varLstGet(paramList, 2)), varUInt64(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
-                        (CipherType)varUIntForce(varLstGet(paramList, 5)), varStr(varLstGet(paramList, 6)),
-                        (CompressType)varUIntForce(varLstGet(paramList, 7)), varIntForce(varLstGet(paramList, 8)))));
+                        pckReadStrP(param), pckReadStrP(param), pckReadU32P(param), pckReadU64P(param), pckReadStrP(param),
+                        (CipherType)pckReadU32P(param), pckReadStrP(param), (CompressType)pckReadU32P(param), pckReadI32P(param))));
         }
         else
             found = false;

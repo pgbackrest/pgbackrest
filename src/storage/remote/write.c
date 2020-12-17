@@ -8,6 +8,7 @@ Remote Storage File write
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/write.h"
@@ -72,17 +73,19 @@ storageWriteRemoteOpen(THIS_VOID)
             ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilter(compressTypeGz));
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
-        protocolCommandParamAdd(command, VARSTR(this->interface.name));
-        protocolCommandParamAdd(command, VARUINT(this->interface.modeFile));
-        protocolCommandParamAdd(command, VARUINT(this->interface.modePath));
-        protocolCommandParamAdd(command, VARSTR(this->interface.user));
-        protocolCommandParamAdd(command, VARSTR(this->interface.group));
-        protocolCommandParamAdd(command, VARINT64(this->interface.timeModified));
-        protocolCommandParamAdd(command, VARBOOL(this->interface.createPath));
-        protocolCommandParamAdd(command, VARBOOL(this->interface.syncFile));
-        protocolCommandParamAdd(command, VARBOOL(this->interface.syncPath));
-        protocolCommandParamAdd(command, VARBOOL(this->interface.atomic));
-        protocolCommandParamAdd(command, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
+        PackWrite *param = protocolCommandParam(command);
+
+        pckWriteStrP(param, this->interface.name);
+        pckWriteU32P(param, this->interface.modeFile);
+        pckWriteU32P(param, this->interface.modePath);
+        pckWriteStrP(param, this->interface.user);
+        pckWriteStrP(param, this->interface.group);
+        pckWriteTimeP(param, this->interface.timeModified);
+        pckWriteBoolP(param, this->interface.createPath);
+        pckWriteBoolP(param, this->interface.syncFile);
+        pckWriteBoolP(param, this->interface.syncPath);
+        pckWriteBoolP(param, this->interface.atomic);
+        pckWriteStrP(param, jsonFromVar(ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write)))));
 
         protocolClientExecute(this->client, command, false);
 

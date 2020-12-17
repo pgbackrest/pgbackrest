@@ -142,9 +142,8 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Read command
-                KeyValue *commandKv = jsonToKv(ioReadLine(this->read));
-                const String *command = varStr(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR)));
-                VariantList *paramList = varVarLst(kvGet(commandKv, VARSTR(PROTOCOL_KEY_PARAMETER_STR)));
+                PackRead *param = pckReadNew(this->read);
+                const String *command = pckReadStrP(param);
 
                 // Process command
                 bool found = false;
@@ -168,7 +167,7 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
 
                             TRY_BEGIN()
                             {
-                                found = handler(command, paramList, this);
+                                found = handler(command, param, this);
                             }
                             CATCH_ANY()
                             {

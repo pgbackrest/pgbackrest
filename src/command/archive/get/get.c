@@ -303,7 +303,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
         jobData->walSegmentIdx++;
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
-        protocolCommandParamAdd(command, VARSTR(walSegment));
+        pckWriteStrP(protocolCommandParam(command), walSegment);
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walSegment), command));
     }

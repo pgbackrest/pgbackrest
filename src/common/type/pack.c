@@ -225,6 +225,15 @@ struct PackWrite
 
 OBJECT_DEFINE_FREE(PACK_WRITE);
 
+/***********************************************************************************************************************************
+
+***********************************************************************************************************************************/
+OBJECT_DEFINE_FREE_RESOURCE_BEGIN(PACK_READ, TEST, )
+{
+    pckReadEnd(this);
+}
+OBJECT_DEFINE_FREE_RESOURCE_END(TEST);
+
 /**********************************************************************************************************************************/
 // Helper to create common data
 static PackRead *
@@ -245,6 +254,9 @@ pckReadNewInternal(void)
         };
 
         this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj});
+
+        // Set callback to ensure pack is read completely
+        memContextCallbackSet(this->memContext, pckReadFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -1570,6 +1582,19 @@ pckWriteEnd(PackWrite *this)
         bufResize(this->buffer, bufUsed(this->buffer));
 
     FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+const Buffer *
+pckWriteBuf(const PackWrite *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(this->buffer);
 }
 
 /**********************************************************************************************************************************/

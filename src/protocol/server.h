@@ -14,11 +14,12 @@ typedef struct ProtocolServer ProtocolServer;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Protocol process handler type
 ***********************************************************************************************************************************/
-typedef bool (*ProtocolServerProcessHandler)(const String *command, const VariantList *paramList, ProtocolServer *server);
+typedef bool (*ProtocolServerProcessHandler)(const String *command, PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Constructors

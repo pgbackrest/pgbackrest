@@ -53,6 +53,9 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
         };
 
         this->command = protocolCommandMove(command, this->memContext);
+
+        // End the pack
+        pckWriteEndP(protocolCommandParam(command));
     }
     MEM_CONTEXT_NEW_END();
 

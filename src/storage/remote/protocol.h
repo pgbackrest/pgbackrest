@@ -4,8 +4,8 @@ Remote Storage Protocol Handler
 #ifndef STORAGE_REMOTE_PROTOCOL_H
 #define STORAGE_REMOTE_PROTOCOL_H
 
+#include "common/type/pack.h"
 #include "common/type/string.h"
-#include "common/type/variantList.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
@@ -39,6 +39,6 @@ Functions
 ssize_t storageRemoteProtocolBlockSize(const String *message);
 
 // Process storage protocol requests
-bool storageRemoteProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+bool storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *server);
 
 #endif

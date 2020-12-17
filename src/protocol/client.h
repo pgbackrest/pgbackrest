@@ -48,7 +48,9 @@ ProtocolClient *protocolClientNew(const String *name, const String *service, IoR
 Functions
 ***********************************************************************************************************************************/
 // Execute a protocol command and get the output
-const Variant *protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool outputRequired);
+const Variant *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool outputRequired);
+
+// Move to new parent mem context
 ProtocolClient *protocolClientMove(ProtocolClient *this, MemContext *parentNew);
 
 // Send noop to test connection or keep it alive
@@ -61,7 +63,7 @@ String *protocolClientReadLine(ProtocolClient *this);
 const Variant *protocolClientReadOutput(ProtocolClient *this, bool outputRequired);
 
 // Write the protocol command
-void protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command);
+void protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command);
 
 /***********************************************************************************************************************************
 Getters/Setters

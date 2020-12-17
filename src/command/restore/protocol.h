@@ -4,8 +4,8 @@ Restore Protocol Handler
 #ifndef COMMAND_RESTORE_PROTOCOL_H
 #define COMMAND_RESTORE_PROTOCOL_H
 
+#include "common/type/pack.h"
 #include "common/type/string.h"
-#include "common/type/variantList.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
@@ -18,6 +18,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool restoreProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+bool restoreProtocol(const String *command, PackRead *param, ProtocolServer *server);
 
 #endif

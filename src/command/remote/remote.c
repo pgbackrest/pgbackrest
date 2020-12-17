@@ -44,7 +44,7 @@ cmdRemote(int fdRead, int fdWrite)
         TRY_BEGIN()
         {
             // Read the command.  No need to parse it since we know this is the first noop.
-            ioReadLine(read);
+            pckReadEnd(pckReadNew(protocolServerIoRead(server)));
 
             // Only try the lock if this is process 0, i.e. the remote started from the main process
             if (cfgOptionUInt(cfgOptProcess) == 0)

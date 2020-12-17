@@ -219,11 +219,11 @@ storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
 
 /**********************************************************************************************************************************/
 bool
-storageRemoteProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
@@ -250,8 +250,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
         {
             StorageInfo info = storageInterfaceInfoP(
-                driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
-                .followLink = varBool(varLstGet(paramList, 2)));
+                driver, pckReadStrP(param), (StorageInfoLevel)pckReadU32P(param), .followLink = pckReadBoolP(param));
 
             PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
             pckWriteBoolP(write, info.exists, .defaultWrite = true);
@@ -274,8 +273,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             StorageRemoteProtocolInfoListCallbackData data = {.write = write, .memContext = memContextCurrent()};
 
             bool result = storageInterfaceInfoListP(
-                driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
-                storageRemoteProtocolInfoListCallback, &data);
+                driver, pckReadStrP(param), (StorageInfoLevel)pckReadU32P(param), storageRemoteProtocolInfoListCallback, &data);
 
             pckWriteArrayEndP(write);
             pckWriteBoolP(write, result, .defaultWrite = true);
@@ -286,11 +284,10 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         {
             // Create the read object
             IoRead *fileRead = storageReadIo(
-                storageInterfaceNewReadP(
-                    driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), .limit = varLstGet(paramList, 2)));
+                storageInterfaceNewReadP(driver, pckReadStrP(param), pckReadStrP(param), .limit = jsonToVar(pckReadStrP(param))));
 
             // Set filter group based on passed filters
-            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 3));
+            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), jsonToVar(pckReadStrP(param)));
 
             // Check if the file exists
             bool exists = ioReadOpen(fileRead);
@@ -332,14 +329,13 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             // Create the write object
             IoWrite *fileWrite = storageWriteIo(
                 storageInterfaceNewWriteP(
-                    driver, varStr(varLstGet(paramList, 0)), .modeFile = varUIntForce(varLstGet(paramList, 1)),
-                    .modePath = varUIntForce(varLstGet(paramList, 2)), .user = varStr(varLstGet(paramList, 3)),
-                    .group = varStr(varLstGet(paramList, 4)), .timeModified = (time_t)varUInt64Force(varLstGet(paramList, 5)),
-                    .createPath = varBool(varLstGet(paramList, 6)), .syncFile = varBool(varLstGet(paramList, 7)),
-                    .syncPath = varBool(varLstGet(paramList, 8)), .atomic = varBool(varLstGet(paramList, 9))));
+                    driver, pckReadStrP(param), .modeFile = pckReadU32P(param), .modePath = pckReadU32P(param),
+                    .user = pckReadStrP(param), .group = pckReadStrP(param), .timeModified = pckReadTimeP(param),
+                    .createPath = pckReadBoolP(param), .syncFile = pckReadBoolP(param), .syncPath = pckReadBoolP(param),
+                    .atomic = pckReadBoolP(param)));
 
             // Set filter group based on passed filters
-            storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), varLstGet(paramList, 10));
+            storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), jsonToVar(pckReadStrP(param)));
 
             // Open file
             ioWriteOpen(fileWrite);
@@ -392,26 +388,23 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR))
         {
-            storageInterfacePathCreateP(
-                driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varBool(varLstGet(paramList, 2)),
-                varUIntForce(varLstGet(paramList, 3)));
+            storageInterfacePathCreateP(driver, pckReadStrP(param), pckReadBoolP(param), pckReadBoolP(param), pckReadU32P(param));
 
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {
-            protocolServerResponse(server,
-                VARBOOL(storageInterfacePathRemoveP(driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)))));
+            protocolServerResponse(server, VARBOOL(storageInterfacePathRemoveP(driver, pckReadStrP(param), pckReadBoolP(param))));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
         {
-            storageInterfacePathSyncP(driver, varStr(varLstGet(paramList, 0)));
+            storageInterfacePathSyncP(driver, pckReadStrP(param));
 
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_REMOVE_STR))
         {
-            storageInterfaceRemoveP(driver, varStr(varLstGet(paramList, 0)), .errorOnMissing = varBool(varLstGet(paramList, 1)));
+            storageInterfaceRemoveP(driver, pckReadStrP(param), .errorOnMissing = pckReadBoolP(param));
 
             protocolServerResponse(server, NULL);
         }

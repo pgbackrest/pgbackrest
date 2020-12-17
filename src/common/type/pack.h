@@ -82,6 +82,8 @@ cumulative field ID. At the end of a container the numbering will continue from 
 #ifndef COMMON_TYPE_PACK_H
 #define COMMON_TYPE_PACK_H
 
+#include <time.h>
+
 /***********************************************************************************************************************************
 Minimum number of extra bytes to allocate for packs that are growing or are likely to grow
 ***********************************************************************************************************************************/
@@ -470,6 +472,12 @@ PackWrite *pckWriteU64(PackWrite *this, uint64_t value, PckWriteUInt64Param para
     pckWriteEnd(this)
 
 PackWrite *pckWriteEnd(PackWrite *this);
+
+/***********************************************************************************************************************************
+Write Getters/Setters
+***********************************************************************************************************************************/
+// Get buffer the pack is writing to (returns NULL if pckWriteNewBuf() was not used to construct the object)
+const Buffer *pckWriteBuf(const PackWrite *this);
 
 /***********************************************************************************************************************************
 Write Destructor

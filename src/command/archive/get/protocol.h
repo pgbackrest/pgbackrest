@@ -4,8 +4,8 @@ Archive Get Protocol Handler
 #ifndef COMMAND_ARCHIVE_GET_PROTOCOL_H
 #define COMMAND_ARCHIVE_GET_PROTOCOL_H
 
+#include "common/type/pack.h"
 #include "common/type/string.h"
-#include "common/type/variantList.h"
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
@@ -18,6 +18,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool archiveGetProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+bool archiveGetProtocol(const String *command, PackRead *param, ProtocolServer *server);
 
 #endif

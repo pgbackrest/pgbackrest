@@ -19,11 +19,11 @@ STRING_EXTERN(PROTOCOL_COMMAND_VERIFY_FILE_STR,                    PROTOCOL_COMM
 
 /**********************************************************************************************************************************/
 bool
-verifyProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+verifyProtocol(const String *command, PackRead *param, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
@@ -38,10 +38,10 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
         if (strEq(command, PROTOCOL_COMMAND_VERIFY_FILE_STR))
         {
             VerifyResult result = verifyFile(
-                varStr(varLstGet(paramList, 0)),                                                    // Full filename
-                varStr(varLstGet(paramList, 1)),                                                    // Checksum
-                varUInt64(varLstGet(paramList, 2)),                                                 // File size
-                varStr(varLstGet(paramList, 3)));                                                   // Cipher pass
+                pckReadStrP(param),                                                                 // Full filename
+                pckReadStrP(param),                                                                 // Checksum
+                pckReadU64P(param),                                                                 // File size
+                pckReadStrP(param));                                                                // Cipher pass
 
             protocolServerResponse(server, varNewInt(result));
         }

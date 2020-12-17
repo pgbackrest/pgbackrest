@@ -30,11 +30,11 @@ static struct
 
 /**********************************************************************************************************************************/
 bool
-dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+dbProtocol(const String *command, PackRead *param, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
@@ -77,10 +77,10 @@ dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *
         }
         else if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR) || strEq(command, PROTOCOL_COMMAND_DB_CLOSE_STR))
         {
-            PgClient *pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0)));
+            PgClient *pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param));
 
             if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR))
-                protocolServerResponse(server, varNewVarLst(pgClientQuery(pgClient, varStr(varLstGet(paramList, 1)))));
+                protocolServerResponse(server, varNewVarLst(pgClientQuery(pgClient, pckReadStrP(param))));
             else
             {
                 pgClientClose(pgClient);

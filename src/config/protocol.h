@@ -4,8 +4,8 @@ Configuration Protocol Handler
 #ifndef CONFIG_PROTOCOL_H
 #define CONFIG_PROTOCOL_H
 
+#include "common/type/pack.h"
 #include "common/type/string.h"
-#include "common/type/variantList.h"
 #include "protocol/client.h"
 #include "protocol/server.h"
 
@@ -19,7 +19,7 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process config protocol requests
-bool configProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+bool configProtocol(const String *command, PackRead *param, ProtocolServer *server);
 
 // Get option values from another process
 VariantList *configProtocolOption(ProtocolClient *client, const VariantList *paramList);

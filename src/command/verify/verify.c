@@ -561,10 +561,12 @@ verifyArchive(void *data)
 
                         // Set up the job
                         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
-                        protocolCommandParamAdd(command, VARSTR(filePathName));
-                        protocolCommandParamAdd(command, VARSTR(checksum));
-                        protocolCommandParamAdd(command, VARUINT64(archiveResult->pgWalInfo.size));
-                        protocolCommandParamAdd(command, VARSTR(jobData->walCipherPass));
+                        PackWrite *param = protocolCommandParam(command);
+
+                        pckWriteStrP(param, filePathName);
+                        pckWriteStrP(param, checksum);
+                        pckWriteU64P(param, archiveResult->pgWalInfo.size);
+                        pckWriteStrP(param, jobData->walCipherPass);
 
                         // Assign job to result
                         result = protocolParallelJobNew(VARSTR(filePathName), command);

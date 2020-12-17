@@ -12,6 +12,7 @@ Remote Storage Read
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/convert.h"
+#include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
@@ -70,10 +71,12 @@ storageReadRemoteOpen(THIS_VOID)
         }
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
-        protocolCommandParamAdd(command, VARSTR(this->interface.name));
-        protocolCommandParamAdd(command, VARBOOL(this->interface.ignoreMissing));
-        protocolCommandParamAdd(command, this->interface.limit);
-        protocolCommandParamAdd(command, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
+        PackWrite *param = protocolCommandParam(command);
+
+        pckWriteStrP(param, this->interface.name);
+        pckWriteBoolP(param, this->interface.ignoreMissing);
+        pckWriteStrP(param, jsonFromVar(this->interface.limit));
+        pckWriteStrP(param, jsonFromVar(ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read)))));
 
         result = varBool(protocolClientExecute(this->client, command, true));
 

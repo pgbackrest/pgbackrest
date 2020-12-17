@@ -1485,22 +1485,23 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
                 // Create backup job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE_STR);
+                PackWrite *param = protocolCommandParam(command);
 
-                protocolCommandParamAdd(command, VARSTR(manifestPathPg(file->name)));
-                protocolCommandParamAdd(
-                    command, VARBOOL(!strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))));
-                protocolCommandParamAdd(command, VARUINT64(file->size));
-                protocolCommandParamAdd(command, VARBOOL(!file->primary));
-                protocolCommandParamAdd(command, file->checksumSha1[0] != 0 ? VARSTRZ(file->checksumSha1) : NULL);
-                protocolCommandParamAdd(command, VARBOOL(file->checksumPage));
-                protocolCommandParamAdd(command, VARUINT64(jobData->lsnStart));
-                protocolCommandParamAdd(command, VARSTR(file->name));
-                protocolCommandParamAdd(command, VARBOOL(file->reference != NULL));
-                protocolCommandParamAdd(command, VARUINT(jobData->compressType));
-                protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
-                protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
-                protocolCommandParamAdd(command, VARBOOL(jobData->delta));
-                protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
+                pckWriteStrP(param, manifestPathPg(file->name));
+                pckWriteBoolP(param, !strEq(file->name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
+                pckWriteU64P(param, file->size);
+                pckWriteBoolP(param, !file->primary);
+                pckWriteStrP(param, file->checksumSha1[0] != 0 ? STR(file->checksumSha1) : NULL);
+                pckWriteBoolP(param, file->checksumPage);
+                pckWriteU64P(param, jobData->lsnStart);
+                pckWriteStrP(param, file->name);
+                pckWriteBoolP(param, file->reference != NULL);
+                pckWriteU32P(param, jobData->compressType);
+                pckWriteI32P(param, jobData->compressLevel);
+                pckWriteStrP(param, jobData->backupLabel);
+                pckWriteBoolP(param, jobData->delta);
+                pckWriteU32P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
+                pckWriteStrP(param, jobData->cipherSubPass);
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);

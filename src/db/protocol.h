@@ -4,8 +4,8 @@ Db Protocol Handler
 #ifndef DB_PROTOCOL_H
 #define DB_PROTOCOL_H
 
+#include "common/type/pack.h"
 #include "common/type/string.h"
-#include "common/type/variantList.h"
 #include "protocol/client.h"
 #include "protocol/server.h"
 
@@ -23,6 +23,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process db protocol requests
-bool dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+bool dbProtocol(const String *command, PackRead *param, ProtocolServer *server);
 
 #endif

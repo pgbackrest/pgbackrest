@@ -418,15 +418,17 @@ static ProtocolParallelJob *archivePushAsyncCallback(void *data, unsigned int cl
         jobData->walFileIdx++;
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
-        protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile))));
-        protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.archiveId));
-        protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.pgVersion));
-        protocolCommandParamAdd(command, VARUINT64(jobData->archiveInfo.pgSystemId));
-        protocolCommandParamAdd(command, VARSTR(walFile));
-        protocolCommandParamAdd(command, VARUINT(jobData->cipherType));
-        protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.archiveCipherPass));
-        protocolCommandParamAdd(command, VARUINT(jobData->compressType));
-        protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
+        PackWrite *param = protocolCommandParam(command);
+
+        pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
+        pckWriteStrP(param, jobData->archiveInfo.archiveId);
+        pckWriteU32P(param, jobData->archiveInfo.pgVersion);
+        pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
+        pckWriteStrP(param, walFile);
+        pckWriteU32P(param, jobData->cipherType);
+        pckWriteStrP(param, jobData->archiveInfo.archiveCipherPass);
+        pckWriteU32P(param, jobData->compressType);
+        pckWriteI32P(param, jobData->compressLevel);
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));
     }

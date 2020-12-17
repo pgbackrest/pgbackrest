@@ -19,11 +19,11 @@ STRING_EXTERN(PROTOCOL_COMMAND_BACKUP_FILE_STR,                     PROTOCOL_COM
 
 /**********************************************************************************************************************************/
 bool
-backupProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+backupProtocol(const String *command, PackRead *param, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
@@ -38,12 +38,9 @@ backupProtocol(const String *command, const VariantList *paramList, ProtocolServ
         {
             // Backup the file
             BackupFileResult result = backupFile(
-                varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
-                varBool(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)), varBool(varLstGet(paramList, 5)),
-                varUInt64(varLstGet(paramList, 6)), varStr(varLstGet(paramList, 7)), varBool(varLstGet(paramList, 8)),
-                (CompressType)varUIntForce(varLstGet(paramList, 9)), varIntForce(varLstGet(paramList, 10)),
-                varStr(varLstGet(paramList, 11)), varBool(varLstGet(paramList, 12)),
-                varStr(varLstGet(paramList, 13)) == NULL ? cipherTypeNone : cipherTypeAes256Cbc, varStr(varLstGet(paramList, 13)));
+                pckReadStrP(param), pckReadBoolP(param), pckReadU64P(param), pckReadBoolP(param), pckReadStrP(param),
+                pckReadBoolP(param), pckReadU64P(param), pckReadStrP(param), pckReadBoolP(param), (CompressType)pckReadU32P(param),
+                pckReadI32P(param), pckReadStrP(param), pckReadBoolP(param), (CipherType)pckReadU32P(param), pckReadStrP(param));
 
             // Return backup result
             VariantList *resultList = varLstNew();

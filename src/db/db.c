@@ -46,7 +46,7 @@ Close protocol connection.  No need to close a locally created PgClient since it
 OBJECT_DEFINE_FREE_RESOURCE_BEGIN(DB, LOG, logLevelTrace)
 {
     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE_STR);
-    protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
+    pckWriteU32P(protocolCommandParam(command), this->remoteIdx);
 
     protocolClientExecute(this->remoteClient, command, false);
 }
@@ -105,8 +105,10 @@ dbQuery(Db *this, const String *query)
     if (this->remoteClient != NULL)
     {
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY_STR);
-        protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
-        protocolCommandParamAdd(command, VARSTR(query));
+        PackWrite *param = protocolCommandParam(command);
+
+        pckWriteU32P(param, this->remoteIdx);
+        pckWriteStrP(param, query);
 
         result = varVarLst(protocolClientExecute(this->remoteClient, command, true));
     }

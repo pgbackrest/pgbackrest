@@ -225,7 +225,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
 
 /**********************************************************************************************************************************/
 void
-protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
+protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -235,9 +235,11 @@ protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
+    // End the pack
+    pckWriteEndP(protocolCommandParam(command));
+
     // Write out the command
-    ioWriteStrLine(this->write, protocolCommandJson(command));
-    ioWriteFlush(this->write);
+    protocolCommandWrite(command, this->write);
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
@@ -247,7 +249,7 @@ protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
 
 /**********************************************************************************************************************************/
 const Variant *
-protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool outputRequired)
+protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool outputRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);

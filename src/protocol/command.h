@@ -12,6 +12,7 @@ Object type
 
 typedef struct ProtocolCommand ProtocolCommand;
 
+#include "common/type/pack.h"
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
@@ -34,13 +35,10 @@ Functions
 ProtocolCommand *protocolCommandMove(ProtocolCommand *this, MemContext *parentNew);
 
 // Read the command output
-ProtocolCommand *protocolCommandParamAdd(ProtocolCommand *this, const Variant *param);
+PackWrite *protocolCommandParam(ProtocolCommand *this);
 
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Command JSON
-String *protocolCommandJson(const ProtocolCommand *this);
+// Write protocol command
+void protocolCommandWrite(const ProtocolCommand *this, IoWrite *write);
 
 /***********************************************************************************************************************************
 Destructor

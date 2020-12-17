@@ -24,7 +24,7 @@ struct ProtocolCommand
 {
     MemContext *memContext;
     const String *command;
-    Variant *parameterList;
+    PackWrite *pack;
 };
 
 OBJECT_DEFINE_MOVE(PROTOCOL_COMMAND);
@@ -50,7 +50,10 @@ protocolCommandNew(const String *command)
         {
             .memContext = memContextCurrent(),
             .command = strDup(command),
+            .pack = pckWriteNewBuf(bufNew(1024)),
         };
+
+        pckWriteStrP(this->pack, this->command);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -58,33 +61,26 @@ protocolCommandNew(const String *command)
 }
 
 /**********************************************************************************************************************************/
-ProtocolCommand *
-protocolCommandParamAdd(ProtocolCommand *this, const Variant *param)
+void
+protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
-        FUNCTION_TEST_PARAM(VARIANT, param);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(write != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        // Create parameter list if not already created
-        if (this->parameterList == NULL)
-            this->parameterList = varNewVarLst(varLstNew());
+    // Write the command and flush to be sure the command gets sent immediately
+    ioWrite(write, pckWriteBuf(this->pack));
+    ioWriteFlush(write);
 
-        // Add parameter to the list
-        varLstAdd(varVarLst(this->parameterList), varDup(param));
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-String *
-protocolCommandJson(const ProtocolCommand *this)
+PackWrite *
+protocolCommandParam(ProtocolCommand *this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PROTOCOL_COMMAND, this);
@@ -92,24 +88,7 @@ protocolCommandJson(const ProtocolCommand *this)
 
     ASSERT(this != NULL);
 
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        KeyValue *command = kvPut(kvNew(), VARSTR(PROTOCOL_KEY_COMMAND_STR), VARSTR(this->command));
-
-        if (this->parameterList != NULL)
-            kvPut(command, VARSTR(PROTOCOL_KEY_PARAMETER_STR), this->parameterList);
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = jsonFromKv(command);
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(this->pack);
 }
 
 /**********************************************************************************************************************************/
