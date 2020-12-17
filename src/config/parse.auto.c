@@ -14,6 +14,14 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("archive-get"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleAsync)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -21,24 +29,50 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("archive-push"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleAsync)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("backup"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("check"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("expire"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -46,18 +80,35 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("help"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("info"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("repo-create"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -65,6 +116,12 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("repo-get"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -72,6 +129,12 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("repo-ls"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -79,6 +142,12 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("repo-put"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
@@ -86,54 +155,107 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (
         PARSE_RULE_COMMAND_NAME("repo-rm"),
         PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("restore"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stanza-create"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stanza-delete"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stanza-upgrade"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("start"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("stop"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("verify"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleLocal)
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)
+        ),
     ),
 
     //------------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("version"),
+
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST
+        (
+            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleDefault)
+        ),
     ),
 };
 

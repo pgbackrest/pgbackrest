@@ -89,6 +89,7 @@ Define how a command is parsed
 typedef struct ParseRuleCommand
 {
     const char *name;                                               // Name
+    unsigned int commandRoleValid:CFG_COMMAND_ROLE_TOTAL;           // Valid for the command role?
     bool parameterAllowed:1;                                        // Command-line parameters are allowed
 } ParseRuleCommand;
 
@@ -98,6 +99,12 @@ typedef struct ParseRuleCommand
 
 #define PARSE_RULE_COMMAND_NAME(nameParam)                                                                                         \
     .name = nameParam
+
+#define PARSE_RULE_COMMAND_ROLE_VALID_LIST(...)                                                                                    \
+    .commandRoleValid = 0 __VA_ARGS__
+
+#define PARSE_RULE_COMMAND_ROLE(commandRoleParam)                                                                                      \
+    | (1 << commandRoleParam)
 
 #define PARSE_RULE_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                \
     .parameterAllowed = parameterAllowedParam
@@ -960,6 +967,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         // Error when command does not exist
                         if (config->command == cfgCmdNone)
                             THROW_FMT(CommandInvalidError, "invalid command '%s'", command);
+
+                        // Error when role is not valid for the command
+                        if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
+                            THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", command);
 
                         if (config->command == cfgCmdHelp)
                             config->help = true;

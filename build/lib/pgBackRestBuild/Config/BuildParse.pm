@@ -98,6 +98,11 @@ sub buildConfigDefineOptionTypeEnum
 
 push @EXPORT, qw(buildConfigDefineOptionTypeEnum);
 
+sub buildConfigCommandRoleEnum
+{
+    return bldEnum('cfgCmdRole', shift);
+}
+
 ####################################################################################################################################
 # Helper functions for building optional option data
 ####################################################################################################################################
@@ -257,6 +262,20 @@ sub buildConfigParse
             $strBuildSource .=
                 "        PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),\n";
         }
+
+        $strBuildSource .=
+            "\n" .
+            "        PARSE_RULE_COMMAND_ROLE_VALID_LIST\n" .
+            "        (\n";
+
+        foreach my $strCommandRole (sort(keys(%{$rhCommand->{&CFGDEF_COMMAND_ROLE}})))
+        {
+            $strBuildSource .=
+                "            PARSE_RULE_COMMAND_ROLE(" . buildConfigCommandRoleEnum($strCommandRole) . ")\n";
+        }
+
+        $strBuildSource .=
+            "        ),\n";
 
         $strBuildSource .=
             "    ),\n";

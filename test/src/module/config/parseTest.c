@@ -576,6 +576,17 @@ testRun(void)
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError, "invalid command 'BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid command/role combination");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_ASYNC);
+
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError,
+            "invalid command/role combination 'backup:async'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(BOGUS_STR ":" BOGUS_STR));
