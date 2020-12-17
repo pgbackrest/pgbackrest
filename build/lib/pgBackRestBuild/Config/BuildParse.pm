@@ -336,36 +336,13 @@ sub buildConfigParse
                 "        PARSE_RULE_OPTION_GROUP_ID(" . buildConfigOptionGroupEnum($rhOption->{&CFGDEF_GROUP}) . "),\n";
         }
 
-        # Build command role default list
-        # --------------------------------------------------------------------------------------------------------------------------
+        # Build command role valid lists
+        #---------------------------------------------------------------------------------------------------------------------------
         my $strBuildSourceSub = "";
 
-        foreach my $strCommand (cfgDefineCommandList())
+        foreach my $strCommandRole (CFGCMD_ROLE_DEFAULT, CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
         {
-            if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
-            {
-                $strBuildSourceSub .=
-                    "            PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(" . buildConfigCommandEnum($strCommand) . ")\n";
-            }
-        }
-
-        if ($strBuildSourceSub ne "")
-        {
-            $strBuildSource .=
-                "\n" .
-                "        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST\n" .
-                "        (\n" .
-                $strBuildSourceSub .
-                "        ),\n";
-        }
-
-        # Build command role other list
-        #---------------------------------------------------------------------------------------------------------------------------
-        $strBuildSourceSub = "";
-
-        foreach my $strCommandRole (CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
-        {
-            my $bAddLF = $strBuildSourceSub ne '';
+            $strBuildSourceSub = "";
 
             foreach my $strCommand (cfgDefineCommandList())
             {
@@ -374,24 +351,20 @@ sub buildConfigParse
                     if (defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{$strCommandRole}))
                     {
                         $strBuildSourceSub .=
-                            ($bAddLF ? "\n" : '') .
-                            "            PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(" . bldEnum('cfgCmdRole', $strCommandRole) . ", " .
-                            buildConfigCommandEnum($strCommand) . ")\n";
-
-                        $bAddLF = false;
+                            "            PARSE_RULE_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
                     }
                 }
             }
-        }
 
-        if ($strBuildSourceSub ne "")
-        {
-            $strBuildSource .=
-                "\n" .
-                "        PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST\n" .
-                "        (\n" .
-                $strBuildSourceSub .
-                "        ),\n";
+            if ($strBuildSourceSub ne "")
+            {
+                $strBuildSource .=
+                    "\n" .
+                    "        PARSE_RULE_OPTION_COMMAND_ROLE_" . uc($strCommandRole) . "_VALID_LIST\n" .
+                    "        (\n" .
+                    $strBuildSourceSub .
+                    "        ),\n";
+            }
         }
 
         # Render optional data and command overrides

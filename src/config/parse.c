@@ -130,8 +130,7 @@ typedef struct ParseRuleOption
     bool multi:1;                                                   // Can be specified multiple times?
     bool group:1;                                                   // In a group?
     unsigned int groupId:1;                                         // Id if in a group
-    uint64_t commandDefaultValid:CFG_COMMAND_TOTAL;                 // Valid for the default command role?
-    uint64_t commandOtherValid:(CFG_COMMAND_TOTAL * 3);             // Valid for other command roles?
+    uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
     const void **data;                                              // Optional data and command overrides
 } ParseRuleOption;
@@ -178,17 +177,20 @@ typedef enum
 #define PARSE_RULE_OPTION_GROUP_ID(groupIdParam)                                                                                   \
     .groupId = groupIdParam
 
-#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_LIST(...)                                                                           \
-    .commandDefaultValid = 0 __VA_ARGS__
+#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST(...)                                                                     \
+    .commandRoleValid[cfgCmdRoleDefault] = 0 __VA_ARGS__
 
-#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT(commandParam)                                                                       \
+#define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST(...)                                                                       \
+    .commandRoleValid[cfgCmdRoleAsync] = 0 __VA_ARGS__
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST(...)                                                                       \
+    .commandRoleValid[cfgCmdRoleLocal] = 0 __VA_ARGS__
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST(...)                                                                      \
+    .commandRoleValid[cfgCmdRoleRemote] = 0 __VA_ARGS__
+
+#define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
     | (1 << commandParam)
-
-#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST(...)                                                                             \
-    .commandOtherValid = 0 __VA_ARGS__
-
-#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(commandRoleParam, commandParam)                                                       \
-    | ((uint64_t)1 << ((CFG_COMMAND_TOTAL * (commandRoleParam - 1)) + commandParam))
 
 #define PARSE_RULE_OPTION_OPTIONAL_PUSH_LIST(type, size, data, ...)                                                                \
     (const void *)((uint32_t)type << 24 | (uint32_t)size << 16 | (uint32_t)data), __VA_ARGS__
@@ -570,11 +572,7 @@ cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, Co
     ASSERT(commandId < CFG_COMMAND_TOTAL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    if (commandRoleId == cfgCmdRoleDefault)
-        FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandDefaultValid & (1 << commandId));
-
-    FUNCTION_TEST_RETURN(
-        parseRuleOption[optionId].commandOtherValid & ((uint64_t)1 << ((CFG_COMMAND_TOTAL * (commandRoleId - 1)) + commandId)));
+    FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandRoleValid[commandRoleId] & ((uint32_t)1 << commandId));
 }
 
 /***********************************************************************************************************************************

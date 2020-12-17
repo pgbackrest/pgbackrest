@@ -2975,6 +2975,12 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     {
         $rhCommandDefine->{$strCommand}{&CFGDEF_PARAMETER_ALLOWED} = false;
     }
+
+    # All commands have the default role
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT} = {};
+    }
 }
 
 ####################################################################################################################################
