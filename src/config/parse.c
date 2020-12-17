@@ -187,7 +187,7 @@ typedef enum
 #define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER_LIST(...)                                                                             \
     .commandOtherValid = 0 __VA_ARGS__
 
-#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(commandParam, commandRoleParam)                                                       \
+#define PARSE_RULE_OPTION_COMMAND_ROLE_OTHER(commandRoleParam, commandParam)                                                       \
     | ((uint64_t)1 << ((CFG_COMMAND_TOTAL * (commandRoleParam - 1)) + commandParam))
 
 #define PARSE_RULE_OPTION_OPTIONAL_PUSH_LIST(type, size, data, ...)                                                                \
