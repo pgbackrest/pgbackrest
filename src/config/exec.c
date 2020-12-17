@@ -7,9 +7,9 @@ Exec Configuration
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "config/define.h"
 #include "config/config.intern.h"
 #include "config/exec.h"
+#include "config/parse.h"
 
 /**********************************************************************************************************************************/
 StringList *
@@ -35,7 +35,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
             // Skip the option if it is not valid for the original/specified command or if is secure. Also skip repo1-cipher-type
             // because there's no point of passing it if the other process doesn't have access to repo1-cipher-pass. There is
             // probably a better way to do this last part...
-            if (!cfgDefOptionValid(commandId, optionId) || cfgDefOptionSecure(optionId) || optionId == cfgOptRepoCipherType)
+            if (!cfgParseOptionValid(commandId, optionId) || cfgParseOptionSecure(optionId) || optionId == cfgOptRepoCipherType)
             {
                 continue;
             }
@@ -109,7 +109,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                         {
                             valueList = strLstNewVarLst(varVarLst(value));
                         }
-                        else if (cfgDefOptionType(optionId) == cfgDefOptTypeTime)
+                        else if (cfgParseOptionType(optionId) == cfgOptTypeTime)
                         {
                             valueList = strLstNew();
                             strLstAdd(valueList, cvtDoubleToStr((double)varInt64(value) / MSEC_PER_SEC));

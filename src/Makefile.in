@@ -117,7 +117,6 @@ SRCS = \
 	common/user.c \
 	common/wait.c \
 	config/config.c \
-	config/define.c \
 	config/exec.c \
 	config/load.c \
 	config/parse.c \
