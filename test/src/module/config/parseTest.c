@@ -38,6 +38,14 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // *****************************************************************************************************************************
+    if (testBegin("size"))
+    {
+        TEST_TITLE("check size of parse structures");
+
+        TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 24 : 12, "ParseRuleOption size");
+    }
+
     // Config functions that are not tested with parse
     // *****************************************************************************************************************************
     if (testBegin("cfg*()"))
@@ -45,6 +53,11 @@ testRun(void)
         TEST_TITLE("config command defaults to none before cfgInit()");
 
         TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
+
+        TEST_TITLE("parse option name to id");
+
+        TEST_RESULT_INT(cfgParseOptionId(BOGUS_STR), -1, "invalid option");
+        TEST_RESULT_INT(cfgParseOptionId(CFGOPT_STANZA), cfgOptStanza, "valid option");
     }
 
     // config and config-include-path options
@@ -146,9 +159,9 @@ testRun(void)
             strZ(strNewFmt("%s/global-backup.confsave", strZ(configIncludePath))));
 
         // Set up defaults
-        String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
+        String *backupCmdDefConfigValue = strNew(cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
         String *backupCmdDefConfigInclPathValue = strNew(
-            cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
+            cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
         String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
@@ -1241,7 +1254,7 @@ testRun(void)
                     "%s=/path/to/db2\n"
                     "pg3-host=ignore\n"
                     "recovery-option=c=d\n",
-                    cfgOptionKeyIdxName(cfgOptPgHost, 1), cfgOptionKeyIdxName(cfgOptPgPath, 1))));
+                    cfgParseOptionKeyIdxName(cfgOptPgHost, 1), cfgParseOptionKeyIdxName(cfgOptPgPath, 1))));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         harnessLogResult(

@@ -9,7 +9,6 @@ Storage Helper
 #include "common/io/io.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
-#include "config/define.h"
 #include "config/config.h"
 #include "protocol/helper.h"
 #include "storage/azure/storage.h"

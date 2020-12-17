@@ -10,7 +10,6 @@ config/parse.c sets the command and options and determines which options are val
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/type/stringList.h"
-
 #include "config/config.auto.h"
 
 /***********************************************************************************************************************************
@@ -86,9 +85,6 @@ LogLevel cfgLogLevelDefault(void);
 
 // Command parameters, if any
 const StringList *cfgCommandParam(void);
-
-// Does this command allow parameters?
-bool cfgCommandParameterAllowed(ConfigCommand commandId);
 
 /***********************************************************************************************************************************
 Option Group Functions
