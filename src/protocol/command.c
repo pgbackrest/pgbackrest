@@ -52,15 +52,12 @@ protocolCommandNew(const String *command)
             .command = strDup(command),
             .pack = pckWriteNewBuf(bufNew(1024)),
         };
-
-        pckWriteStrP(this->pack, this->command);
     }
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
 }
 
-/**********************************************************************************************************************************/
 void
 protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
 {
@@ -72,7 +69,17 @@ protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
     ASSERT(write != NULL);
 
     // Write the command and flush to be sure the command gets sent immediately
-    ioWrite(write, pckWriteBuf(this->pack));
+    PackWrite *commandPack = pckWriteNew(write);
+
+    pckWriteStrP(commandPack, this->command);
+
+    const Buffer *paramPack = pckWriteBuf(this->pack);
+
+    if (bufUsed(paramPack) > 1)
+        pckWriteBinP(commandPack, paramPack);
+
+    pckWriteEndP(commandPack);
+
     ioWriteFlush(write);
 
     FUNCTION_TEST_RETURN_VOID();

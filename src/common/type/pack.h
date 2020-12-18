@@ -302,6 +302,9 @@ uint64_t pckReadU64(PackRead *this, PckReadUInt64Param param);
 
 void pckReadEnd(PackRead *this);
 
+// Convert the pack to a string (only used for debugging)
+// String *pckReadToStr(PackRead *read);
+
 /***********************************************************************************************************************************
 Read Destructor
 ***********************************************************************************************************************************/

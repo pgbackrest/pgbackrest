@@ -28,6 +28,7 @@ archivePushProtocol(const String *command, PackRead *param, ProtocolServer *serv
     FUNCTION_LOG_END();
 
     ASSERT(command != NULL);
+    ASSERT(param != NULL);
 
     // Attempt to satisfy the request -- we may get requests that are meant for other handlers
     bool found = true;

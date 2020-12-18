@@ -283,14 +283,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pack/unpack pointer");
 
-        pack = bufNew(0);
-
-        TEST_ASSIGN(packWrite, pckWriteNewBuf(pack), "new write");
+        TEST_ASSIGN(packWrite, pckWriteNewBuf(bufNew(0)), "new write");
         TEST_RESULT_VOID(pckWritePtrP(packWrite, NULL), "write default pointer");
         TEST_RESULT_VOID(pckWritePtrP(packWrite, "sample"), "write pointer");
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "write end");
 
-        TEST_ASSIGN(packRead, pckReadNewBuf(pack), "new read");
+        TEST_ASSIGN(packRead, pckReadNewBuf(pckWriteBuf(packWrite)), "new read");
         TEST_RESULT_Z(pckReadPtrP(packRead), NULL, "read default pointer");
         TEST_RESULT_Z(pckReadPtrP(packRead, .id = 2), "sample", "read pointer");
 

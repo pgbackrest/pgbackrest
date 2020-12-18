@@ -142,11 +142,19 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Read command
-                PackRead *param = pckReadNew(this->read);
-                const String *command = pckReadStrP(param);
+                PackRead *commandPack = pckReadNew(this->read);
+                const String *command = pckReadStrP(commandPack);
+                const Buffer *paramBuf = pckReadBinP(commandPack);
+                pckReadEndP(commandPack);
+
+                // Create param pack
+                PackRead *paramPack = paramBuf == NULL ? NULL : pckReadNewBuf(paramBuf);
 
                 // Process command
                 bool found = false;
+
+                // if (!strEqZ(command, "noop"))
+                //     THROW_FMT(AssertError, "COMMAND IS %s", strZ(command));
 
                 for (unsigned int handlerIdx = 0; handlerIdx < lstSize(this->handlerList); handlerIdx++)
                 {
@@ -167,7 +175,7 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
 
                             TRY_BEGIN()
                             {
-                                found = handler(command, param, this);
+                                found = handler(command, paramPack, this);
                             }
                             CATCH_ANY()
                             {
@@ -190,6 +198,9 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                                     // Decrement retries remaining and retry
                                     retryRemaining--;
                                     retry = true;
+
+                                    // Reset the param pack
+                                    paramPack = paramBuf == NULL ? NULL : pckReadNewBuf(paramBuf);
 
                                     // Send keep alives to remotes. A retry means the command is taking longer than usual so make
                                     // sure the remote does not timeout.

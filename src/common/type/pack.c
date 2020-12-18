@@ -228,11 +228,11 @@ OBJECT_DEFINE_FREE(PACK_WRITE);
 /***********************************************************************************************************************************
 
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(PACK_READ, TEST, )
-{
-    pckReadEnd(this);
-}
-OBJECT_DEFINE_FREE_RESOURCE_END(TEST);
+// OBJECT_DEFINE_FREE_RESOURCE_BEGIN(PACK_READ, TEST, )
+// {
+//     pckReadEnd(this);
+// }
+// OBJECT_DEFINE_FREE_RESOURCE_END(TEST);
 
 /**********************************************************************************************************************************/
 // Helper to create common data
@@ -256,7 +256,7 @@ pckReadNewInternal(void)
         this->tagStackTop = lstAdd(this->tagStack, &(PackTagStack){.type = pckTypeObj});
 
         // Set callback to ensure pack is read completely
-        memContextCallbackSet(this->memContext, pckReadFreeResource, this);
+        // memContextCallbackSet(this->memContext, pckReadFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -963,6 +963,105 @@ pckReadEnd(PackRead *this)
 
     FUNCTION_TEST_RETURN_VOID();
 }
+
+/**********************************************************************************************************************************/
+// String *
+// pckReadToStr(PackRead *read)
+// {
+//     String *result = strNew("");
+//     bool first = true;
+//
+//     while (pckReadNext(read))
+//     {
+//         if (!first)
+//             strCatZ(result, ", ");
+//
+//         PackType type = pckReadType(read);
+//         unsigned int id = pckReadId(read);
+//
+//         strCatFmt(result, "%u:%s:", id, strZ(pckTypeToStr(type)));
+//
+//         switch (type)
+//         {
+//             case pckTypeUnknown:
+//                 THROW_FMT(AssertError, "invalid type %s", strZ(pckTypeToStr(type)));
+//
+//             case pckTypeArray:
+//             {
+//                 pckReadArrayBeginP(read, .id = id);
+//                 strCatFmt(result, "[%s]", strZ(pckReadToStr(read)));
+//                 pckReadArrayEndP(read);
+//                 break;
+//             }
+//
+//             case pckTypeBool:
+//             {
+//                 strCatZ(result, cvtBoolToConstZ(pckReadBoolP(read, .id = id)));
+//                 break;
+//             }
+//
+//             case pckTypeBin:
+//             {
+//                 strCatFmt(result, "%s", strZ(bufHex(pckReadBinP(read, .id = id))));
+//                 break;
+//             }
+//
+//             case pckTypeI32:
+//             {
+//                 strCatFmt(result, "%d", pckReadI32P(read, .id = id));
+//                 break;
+//             }
+//
+//             case pckTypeI64:
+//             {
+//                 strCatFmt(result, "%" PRId64, pckReadI64P(read, .id = id));
+//                 break;
+//             }
+//
+//             case pckTypeObj:
+//             {
+//                 pckReadObjBeginP(read, .id = id);
+//                 strCatFmt(result, "{%s}", strZ(pckReadToStr(read)));
+//                 pckReadObjEndP(read);
+//                 break;
+//             }
+//
+//             case pckTypePtr:
+//             {
+//                 strCatFmt(result, "%p", pckReadPtrP(read, .id = id));
+//                 break;
+//             }
+//
+//             case pckTypeStr:
+//             {
+//                 strCatFmt(result, "%s", strZ(pckReadStrP(read, .id = id)));
+//                 break;
+//             }
+//
+//             case pckTypeTime:
+//             {
+//                 strCatFmt(result, "%" PRId64, (int64_t)pckReadTimeP(read, .id = id));
+//                 break;
+//             }
+//
+//             case pckTypeU32:
+//             {
+//                 strCatFmt(result, "%u", pckReadU32P(read, .id = id));
+//                 break;
+//             }
+//
+//             case pckTypeU64:
+//             {
+//                 strCatFmt(result, "%" PRIu64, pckReadU64P(read, .id = id));
+//                 break;
+//             }
+//         }
+//
+//         first = false;
+//     }
+//
+//     return result;
+// }
 
 /**********************************************************************************************************************************/
 String *
