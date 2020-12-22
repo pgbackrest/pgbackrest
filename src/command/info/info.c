@@ -84,6 +84,26 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing sta
 
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR,           "backup/expire running");
 
+typedef struct InfoRepoData
+{
+    unsigned int key;                                               // User-entered repo key, 0 when stanza is not found on the repo
+    CipherType cipher;
+    int status;
+    InfoBackup *backupInfo;
+    InfoArchive *archiveInfo;
+} InfoRepoData;
+
+#define FUNCTION_LOG_INFO_STANZA_REPO_TYPE                                                                                         \
+    InfoStanzaRepo
+#define FUNCTION_LOG_INFO_STANZA_REPO_FORMAT(value, buffer, bufferSize)                                                            \
+    objToLog(&value, "InfoStanzaRepo", buffer, bufferSize)
+
+typedef struct InfoStanzaRepo
+{
+    const String *name;                                             // Name of the stanza
+    InfoRepoData *repoList;                                         // List of configured repositories
+} InfoStanzaRepo;
+
 /***********************************************************************************************************************************
 Set error status code and message for the stanza to the code and message passed.
 ***********************************************************************************************************************************/
@@ -381,7 +401,7 @@ stanzaInfoList(
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
 
-    ASSERT(stanzaList != NULL);
+    ASSERT(stanzaRepoList != NULL);
 
     VariantList *result = varLstNew();
     bool stanzaFound = false;
@@ -392,7 +412,7 @@ stanzaInfoList(
     for (unsigned int idx = 0; idx < lstSize(stanzaRepoList); idx++)
     {
         InfoStanzaRepo *stanzaData = lstGet(stanzaRepoList, idx);
-// CSHANG TODO Figuew out how to process
+// CSHANG TODO Figure out how to process
         // Create the stanzaInfo and section variables
         Variant *stanzaInfo = varNewKv(kvNew());
         VariantList *dbSection = varLstNew();
@@ -411,7 +431,7 @@ stanzaInfoList(
         {
             // Attempt to load the backup info file
             info = infoBackupLoadFile(
-                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaListName), INFO_BACKUP_FILE),
+                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaData->name), INFO_BACKUP_FILE),
                 cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
         }
         CATCH(FileMissingError)
@@ -432,7 +452,7 @@ stanzaInfoList(
         TRY_END();
 
         // Set the stanza name and cipher. Since we may not be going through the config parsing system, default the cipher to NONE.
-        kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaListName));
+        kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
         kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_NONE_STR));
 // CSHANG This comment is wrong - we are getting the list as oldest to newest
         // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
@@ -458,9 +478,9 @@ stanzaInfoList(
 
                 // Get the archive info for the DB from the archive.info file
                 InfoArchive *info = infoArchiveLoadFile(
-                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaListName), INFO_ARCHIVE_FILE),
+                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaData->name), INFO_ARCHIVE_FILE),
                     cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass));
-                archiveDbList(stanzaListName, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
+                archiveDbList(stanzaData->name, &pgData, archiveSection, info, (pgIdx == 0 ? true : false));
             }
 
             // Get data for all existing backups for this stanza
@@ -479,7 +499,7 @@ stanzaInfoList(
         {
             // Try to acquire a lock. If not possible, assume another backup or expire is already running.
             backupLockHeld = !lockAcquire(
-                cfgOptionStr(cfgOptLockPath), stanzaListName, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
+                cfgOptionStr(cfgOptLockPath), stanzaData->name, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
 
             // Immediately release the lock acquired
             lockRelease(!backupLockHeld);
@@ -754,32 +774,12 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
     FUNCTION_TEST_RETURN_VOID();
 }
 
-typedef struct InfoRepoData
-{
-    unsigned int key;                                               // User-entered repo key, 0 when stanza is not found on the repo
-    cipherType cipher;
-    int status;
-    InfoBackup *backupInfo;
-    InfoArchive *archiveInfo;
-} InfoRepoData;
-
-#define FUNCTION_LOG_INFO_STANZA_REPO_TYPE                                                                                         \
-    InfoStanzaRepo
-#define FUNCTION_LOG_INFO_STANZA_REPO_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(&value, "InfoStanzaRepo", buffer, bufferSize)
-
-typedef struct InfoStanzaRepo
-{
-    String *name;                                                   // Name of the stanza
-    RepoData *repoList;                                             // List of configured repositories
-} InfoStanzaRepo;
-
 static void
-infoUpdateStanza(Storage *storage, InfoStanzaRepo *stanzaRepo, String *stanzaName, unsigned int repoIdx)
+infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, String *stanzaName, unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, storage);
-        FUNCTION_TEST_PARAM_P(INFO_STANZA_REPO stanzaRepo);
+        FUNCTION_TEST_PARAM_P(INFO_STANZA_REPO, stanzaRepo);
         FUNCTION_TEST_PARAM(STRING, stanzaName);
         FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
@@ -917,7 +917,7 @@ infoRender(void)
                 if (!strLstExists(stanzaNameList, stanza))
                 {
                     // Get the stanza from the stanza repo list and set the status on this repo to missing
-                    InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
+                    InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanza);
                     stanzaRepo->repoList[repoIdx].status = INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH;
                     continue;
                 }
@@ -966,7 +966,7 @@ infoRender(void)
         String *resultStr = strNew("");
 
         // If the backup storage exists, then search for and process any stanzas
-        if (strLstSize(stanzaRepoList) > 0)
+        if (lstSize(stanzaRepoList) > 0)
             infoList = stanzaInfoList(stanza, stanzaRepoList, backupLabel, repoIdx, repoIdxMax);
 
         // Format text output
