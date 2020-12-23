@@ -878,6 +878,9 @@ infoRender(void)
                 .name = stanza,
                 .repoList = memNew(repoTotal * sizeof(InfoRepoData)),
             };
+// CSHANG Init the repo list but maybe can combine this later to have it all in one place...
+            for (unsigned int idx = 0; idx < repoTotal; idx++)
+                stanzaRepo.repoList[idx] = (InfoRepoData){0};
 
             lstAdd(stanzaRepoList, &stanzaRepo);
         }
@@ -948,6 +951,9 @@ printf("stanzaList To Process: %u\n", strLstSize(stanzaNameList));fflush(stdout)
                         .name = stanzaName,
                         .repoList = memNew(repoTotal * sizeof(InfoRepoData)),
                     };
+// CSHANG Init the repo list but maybe can combine this from previous to have it all in one place...
+                    for (unsigned int idx = 0; idx < repoTotal; idx++)
+                        stanzaRepo.repoList[idx] = (InfoRepoData){0};
 
                     infoUpdateStanza(storageRepo, &stanzaRepo, stanzaName, idx);
                     lstAdd(stanzaRepoList, &stanzaRepo);
@@ -958,6 +964,7 @@ printf("stanzaList To Process: %u\n", strLstSize(stanzaNameList));fflush(stdout)
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 printf("stanzaRepoList size: %u\n", lstSize(stanzaRepoList));fflush(stdout); // cshang remove
+
         // If the backup storage exists, then search for and process any stanzas
         if (lstSize(stanzaRepoList) > 0)
             infoList = stanzaInfoList(stanza, stanzaRepoList, backupLabel, repoIdx, repoIdxMax);
