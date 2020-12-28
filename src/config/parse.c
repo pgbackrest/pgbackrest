@@ -103,7 +103,7 @@ typedef struct ParseRuleCommand
 #define PARSE_RULE_COMMAND_ROLE_VALID_LIST(...)                                                                                    \
     .commandRoleValid = 0 __VA_ARGS__
 
-#define PARSE_RULE_COMMAND_ROLE(commandRoleParam)                                                                                      \
+#define PARSE_RULE_COMMAND_ROLE(commandRoleParam)                                                                                  \
     | (1 << commandRoleParam)
 
 #define PARSE_RULE_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                \
@@ -142,7 +142,7 @@ typedef struct ParseRuleOption
     const void **data;                                              // Optional data and command overrides
 } ParseRuleOption;
 
-// Define additional types of data that can be associated with an option.  Because these types are rare they are not give dedicated
+// Define additional types of data that can be associated with an option. Because these types are rare they are not given dedicated
 // fields and are instead packed into an array which is read at runtime.  This may seem inefficient but they are only accessed a
 // single time during parse so space efficiency is more important than performance.
 typedef enum
