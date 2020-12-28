@@ -89,6 +89,7 @@ Define how a command is parsed
 typedef struct ParseRuleCommand
 {
     const char *name;                                               // Name
+    unsigned int commandRoleValid:CFG_COMMAND_ROLE_TOTAL;           // Valid for the command role?
     bool parameterAllowed:1;                                        // Command-line parameters are allowed
 } ParseRuleCommand;
 
@@ -98,6 +99,12 @@ typedef struct ParseRuleCommand
 
 #define PARSE_RULE_COMMAND_NAME(nameParam)                                                                                         \
     .name = nameParam
+
+#define PARSE_RULE_COMMAND_ROLE_VALID_LIST(...)                                                                                    \
+    .commandRoleValid = 0 __VA_ARGS__
+
+#define PARSE_RULE_COMMAND_ROLE(commandRoleParam)                                                                                  \
+    | (1 << commandRoleParam)
 
 #define PARSE_RULE_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                \
     .parameterAllowed = parameterAllowedParam
@@ -130,12 +137,12 @@ typedef struct ParseRuleOption
     bool multi:1;                                                   // Can be specified multiple times?
     bool group:1;                                                   // In a group?
     unsigned int groupId:1;                                         // Id if in a group
-    uint64_t commandValid:CFG_COMMAND_TOTAL;                        // Valid for the command?
+    uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
     const void **data;                                              // Optional data and command overrides
 } ParseRuleOption;
 
-// Define additional types of data that can be associated with an option.  Because these types are rare they are not give dedicated
+// Define additional types of data that can be associated with an option. Because these types are rare they are not given dedicated
 // fields and are instead packed into an array which is read at runtime.  This may seem inefficient but they are only accessed a
 // single time during parse so space efficiency is more important than performance.
 typedef enum
@@ -177,8 +184,17 @@ typedef enum
 #define PARSE_RULE_OPTION_GROUP_ID(groupIdParam)                                                                                   \
     .groupId = groupIdParam
 
-#define PARSE_RULE_OPTION_COMMAND_LIST(...)                                                                                        \
-    .commandValid = 0 __VA_ARGS__
+#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST(...)                                                                     \
+    .commandRoleValid[cfgCmdRoleDefault] = 0 __VA_ARGS__
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST(...)                                                                       \
+    .commandRoleValid[cfgCmdRoleAsync] = 0 __VA_ARGS__
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST(...)                                                                       \
+    .commandRoleValid[cfgCmdRoleLocal] = 0 __VA_ARGS__
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST(...)                                                                      \
+    .commandRoleValid[cfgCmdRoleRemote] = 0 __VA_ARGS__
 
 #define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
     | (1 << commandParam)
@@ -552,17 +568,18 @@ cfgParseOptionType(ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 bool
-cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId)
+cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, commandId);
+        FUNCTION_TEST_PARAM(ENUM, commandRoleId);
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
     ASSERT(commandId < CFG_COMMAND_TOTAL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandValid & (1 << commandId));
+    FUNCTION_TEST_RETURN(parseRuleOption[optionId].commandRoleValid[commandRoleId] & ((uint32_t)1 << commandId));
 }
 
 /***********************************************************************************************************************************
@@ -951,6 +968,10 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (config->command == cfgCmdNone)
                             THROW_FMT(CommandInvalidError, "invalid command '%s'", command);
 
+                        // Error when role is not valid for the command
+                        if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
+                            THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", command);
+
                         if (config->command == cfgCmdHelp)
                             config->help = true;
                         else
@@ -1155,7 +1176,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     }
 
                     // Continue if the option is not valid for this command
-                    if (!cfgParseOptionValid(config->command, option.id))
+                    if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
                         continue;
 
                     if (strSize(value) == 0)
@@ -1276,7 +1297,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                             kvPut(optionFound, optionFoundKey, VARSTR(key));
 
                         // Continue if the option is not valid for this command
-                        if (!cfgParseOptionValid(config->command, option.id))
+                        if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
                         {
                             // Warn if it is in a command section
                             if (sectionIdx % 2 == 0)
@@ -1363,7 +1384,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 config->option[optionId].name = parseRuleOption[optionId].name;
 
                 // Is the option valid for this command?
-                if (cfgParseOptionValid(config->command, optionId))
+                if (cfgParseOptionValid(config->command, config->commandRole, optionId))
                 {
                     config->option[optionId].valid = true;
                     config->option[optionId].group = parseRuleOption[optionId].group;
@@ -1501,6 +1522,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                     {
                         ConfigOption dependOptionId = (ConfigOption)depend.data;
                         ConfigOptionType dependOptionType = cfgParseOptionType(dependOptionId);
+
+                        ASSERT(config->option[dependOptionId].index != NULL);
 
                         // Get the depend option value
                         const Variant *dependValue = config->option[dependOptionId].index[optionListIdx].value;

@@ -43,7 +43,7 @@ testRun(void)
     {
         TEST_TITLE("check size of parse structures");
 
-        TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 24 : 12, "ParseRuleOption size");
+        TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 40 : 28, "ParseRuleOption size");
     }
 
     // Config functions that are not tested with parse
@@ -574,6 +574,17 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(BOGUS_STR));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError, "invalid command 'BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid command/role combination");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_ASYNC);
+
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError,
+            "invalid command/role combination 'backup:async'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();

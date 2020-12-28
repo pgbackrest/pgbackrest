@@ -48,6 +48,6 @@ ConfigOptionType cfgParseOptionType(ConfigOption optionId);
 bool cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId);
 
 // Is the option valid for the command?
-bool cfgParseOptionValid(ConfigCommand commandId, ConfigOption optionId);
+bool cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId);
 
 #endif
