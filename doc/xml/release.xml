@@ -24,6 +24,17 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Allow option validity to be determined by command role."/>
+                        <commit subject="Limit option validity by command role."/>
+
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow option validity to be determined by command role.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>

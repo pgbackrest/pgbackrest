@@ -801,7 +801,7 @@ my %hConfigDefine =
        &CFGDEF_COMMAND =>
        {
          &CFGCMD_EXPIRE => {},
-        },
+      },
         &CFGDEF_COMMAND_ROLE =>
         {
             &CFGCMD_ROLE_DEFAULT => {},
