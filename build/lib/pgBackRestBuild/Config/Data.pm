@@ -16,9 +16,11 @@
 #         (B), else it will still error on the option (A).
 #
 # CFGDEF_COMMAND_ROLE:
+#     Define the command roles that a command is valid for. CFGCMD_ROLE_DEFAULT is valid for all commands and is therefore added
+#     programmatically.
 #
-# Define the command roles that a command is valid for. CFGCMD_ROLE_DEFAULT is valid for all commands and is therefore added
-# programmatically.
+# CFGDEF_COMMAND_ROLE_EXCLUDE:
+#     !!!
 #
 # CFGDEF_REQUIRED:
 #   In global section:
@@ -797,7 +799,13 @@ my %hConfigDefine =
        &CFGDEF_COMMAND =>
        {
          &CFGCMD_EXPIRE => {},
-      },
+        },
+        &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+        {
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+            &CFGCMD_ROLE_REMOTE => {},
+        },
     },
 
     &CFGOPT_FORCE =>
@@ -841,7 +849,7 @@ my %hConfigDefine =
             &CFGCMD_ROLE_ASYNC => {},
             &CFGCMD_ROLE_LOCAL => {},
             &CFGCMD_ROLE_REMOTE => {},
-        }
+        },
     },
 
     &CFGOPT_ONLINE =>
@@ -895,7 +903,7 @@ my %hConfigDefine =
             &CFGCMD_ROLE_ASYNC => {},
             &CFGCMD_ROLE_LOCAL => {},
             &CFGCMD_ROLE_REMOTE => {},
-        }
+        },
     },
 
     &CFGOPT_STANZA =>
@@ -972,7 +980,7 @@ my %hConfigDefine =
             &CFGCMD_ROLE_ASYNC => {},
             &CFGCMD_ROLE_LOCAL => {},
             &CFGCMD_ROLE_REMOTE => {},
-        }
+        },
     },
 
     &CFGOPT_TARGET_EXCLUSIVE =>
@@ -999,7 +1007,7 @@ my %hConfigDefine =
             &CFGCMD_ROLE_ASYNC => {},
             &CFGCMD_ROLE_LOCAL => {},
             &CFGCMD_ROLE_REMOTE => {},
-        }
+        },
     },
 
     &CFGOPT_TARGET_ACTION =>
@@ -1036,7 +1044,7 @@ my %hConfigDefine =
             &CFGCMD_ROLE_ASYNC => {},
             &CFGCMD_ROLE_LOCAL => {},
             &CFGCMD_ROLE_REMOTE => {},
-        }
+        },
     },
 
     &CFGOPT_TARGET_TIMELINE =>
@@ -1066,7 +1074,7 @@ my %hConfigDefine =
             &CFGCMD_ROLE_ASYNC => {},
             &CFGCMD_ROLE_LOCAL => {},
             &CFGCMD_ROLE_REMOTE => {},
-        }
+        },
     },
 
     &CFGOPT_TYPE =>
@@ -1106,7 +1114,7 @@ my %hConfigDefine =
             &CFGCMD_ROLE_ASYNC => {},
             &CFGCMD_ROLE_LOCAL => {},
             &CFGCMD_ROLE_REMOTE => {},
-        }
+        },
     },
 
     &CFGOPT_OUTPUT =>
@@ -1139,7 +1147,7 @@ my %hConfigDefine =
             &CFGCMD_ROLE_ASYNC => {},
             &CFGCMD_ROLE_LOCAL => {},
             &CFGCMD_ROLE_REMOTE => {},
-        }
+        },
     },
 
     # Command-line only local/remote options
@@ -1214,7 +1222,7 @@ my %hConfigDefine =
         {
             &CFGCMD_ROLE_DEFAULT => {},
             &CFGCMD_ROLE_ASYNC => {},
-        }
+        },
     },
 
     # Command-line only storage options
@@ -2990,20 +2998,32 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP =>
             {
-                &CFGDEF_INTERNAL => true,
+                &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
             },
             &CFGCMD_CHECK =>
             {
-                &CFGDEF_INTERNAL => true,
+                &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
             },
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE =>
             {
-                &CFGDEF_INTERNAL => true,
+                &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
             },
             &CFGCMD_STANZA_UPGRADE =>
             {
-                &CFGDEF_INTERNAL => true,
+                &CFGDEF_COMMAND_ROLE_EXCLUDE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
             },
         },
     },
