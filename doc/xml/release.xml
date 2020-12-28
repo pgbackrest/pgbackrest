@@ -25,6 +25,7 @@
 
                     <release-item>
                         <commit subject="Allow option validity to be determined by command role."/>
+                        <commit subject="Update unit tests for stricter option validity."/>
                         <commit subject="Limit option validity by command role."/>
 
                         <release-item-contributor-list>

@@ -322,7 +322,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--pg1-path=/path/to/1");
         strLstAddZ(argList, "--pg1-host=pg1-host");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "backup");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
