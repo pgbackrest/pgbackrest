@@ -38,6 +38,14 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // *****************************************************************************************************************************
+    if (testBegin("size"))
+    {
+        TEST_TITLE("check size of parse structures");
+
+        TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 40 : 28, "ParseRuleOption size");
+    }
+
     // Config functions that are not tested with parse
     // *****************************************************************************************************************************
     if (testBegin("cfg*()"))
@@ -45,6 +53,11 @@ testRun(void)
         TEST_TITLE("config command defaults to none before cfgInit()");
 
         TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
+
+        TEST_TITLE("parse option name to id");
+
+        TEST_RESULT_INT(cfgParseOptionId(BOGUS_STR), -1, "invalid option");
+        TEST_RESULT_INT(cfgParseOptionId(CFGOPT_STANZA), cfgOptStanza, "valid option");
     }
 
     // config and config-include-path options
@@ -146,9 +159,9 @@ testRun(void)
             strZ(strNewFmt("%s/global-backup.confsave", strZ(configIncludePath))));
 
         // Set up defaults
-        String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
+        String *backupCmdDefConfigValue = strNew(cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
         String *backupCmdDefConfigInclPathValue = strNew(
-            cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
+            cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
         String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
@@ -561,6 +574,17 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(BOGUS_STR));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError, "invalid command 'BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid command/role combination");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_ASYNC);
+
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError,
+            "invalid command/role combination 'backup:async'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1121,7 +1145,6 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "xxx", true);
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is " TEST_COMMAND_BACKUP);
-        TEST_RESULT_BOOL(cfgCommandInternal(cfgCmdBackup), false, "    backup command is not internal");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "    backup command requires lock");
         TEST_RESULT_UINT(cfgLockType(), lockTypeBackup, "    backup command requires backup lock type");
         TEST_RESULT_UINT(cfgLogLevelDefault(), logLevelInfo, "    backup defaults to log level warn");
@@ -1193,7 +1216,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("--no-online"));
         hrnCfgArgKeyRawBool(argList, cfgOptPgLocal, 2, true);
-        hrnCfgArgRawZ(argList, cfgOptPg, "2");
         strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew("--reset-pg3-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));
@@ -1242,7 +1264,7 @@ testRun(void)
                     "%s=/path/to/db2\n"
                     "pg3-host=ignore\n"
                     "recovery-option=c=d\n",
-                    cfgOptionKeyIdxName(cfgOptPgHost, 1), cfgOptionKeyIdxName(cfgOptPgPath, 1))));
+                    cfgParseOptionKeyIdxName(cfgOptPgHost, 1), cfgParseOptionKeyIdxName(cfgOptPgPath, 1))));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         harnessLogResult(
@@ -1260,9 +1282,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "    pg1-host was reset");
-        TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 1, "    pg2 is default");
-        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "    pg2 is index 1");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db2", "    default pg-path");
+        TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 0, "    pg1 is default");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "    pg2 is index 2");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    default pg-path");
         TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "    pg1 and pg2 are set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "    pg2-local is set");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 1), false, "    pg2-host is not set (pg2-local override)");
@@ -1298,7 +1320,7 @@ testRun(void)
         TEST_RESULT_UINT(cfgOptionIdxUInt64(cfgOptPgPort, 1), 5432, "    pg2-port is set");
         TEST_RESULT_STR(cfgOptionIdxStrNull(cfgOptPgHost, 1), NULL, "    pg2-host is NULL");
         TEST_RESULT_STR(cfgOptionStrNull(cfgOptPgHost), NULL, "    pg2-host is NULL");
-        TEST_ERROR(cfgOptionStr(cfgOptPgHost), AssertError, "option 'pg2-host' is null but non-null was requested");
+        TEST_ERROR(cfgOptionIdxStr(cfgOptPgHost, 1), AssertError, "option 'pg2-host' is null but non-null was requested");
 
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "    backup-standby default is false");
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "    backup-standby default is false (again)");
@@ -1313,7 +1335,7 @@ testRun(void)
 
         TEST_ERROR(cfgOptionDefaultValue(cfgOptDbInclude), AssertError, "default value not available for option type 3");
         TEST_ERROR(cfgOptionLst(cfgOptDbInclude), AssertError, "option 'db-include' is not valid for the current command");
-        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg2-path' is type 4 but 3 was requested");
+        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg1-path' is type 4 but 3 was requested");
 
         TEST_RESULT_VOID(cfgOptionInvalidate(cfgOptPgPath), "    invalidate pg-path");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), false, "    pg-path no longer valid");
@@ -1447,10 +1469,14 @@ testRun(void)
 
         setenv("PGBACKREST_STANZA", "db", true);
         setenv("PGBACKREST_PG1_PATH", "/path/to/db", true);
+        hrnCfgEnvKeyRawZ(cfgOptPgPath, 2, "/path/to/db2");
+        hrnCfgEnvRawZ(cfgOptPg, "2");
         setenv("PGBACKREST_RECOVERY_OPTION", "f=g:hijk=l", true);
         setenv("PGBACKREST_DB_INCLUDE", "77", true);
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
+
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db2", "default pg-path");
 
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("f")))), "g", "check recovery option");
@@ -1460,6 +1486,8 @@ testRun(void)
 
         unsetenv("PGBACKREST_STANZA");
         unsetenv("PGBACKREST_PG1_PATH");
+        hrnCfgEnvKeyRemoveRaw(cfgOptPgPath, 2);
+        hrnCfgEnvRemoveRaw(cfgOptPg);
         unsetenv("PGBACKREST_RECOVERY_OPTION");
         unsetenv("PGBACKREST_DB_INCLUDE");
 
@@ -1544,7 +1572,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
         hrnCfgArgRawZ(argList, cfgOptPg, "4");
-        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError, "key '4' is not valid for 'pg' option");
+        TEST_ERROR(
+            harnessCfgLoadRole(cfgCmdCheck, cfgCmdRoleRemote, argList), OptionInvalidValueError,
+            "key '4' is not valid for 'pg' option");
     }
 
     // *****************************************************************************************************************************

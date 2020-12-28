@@ -10,7 +10,6 @@ config/parse.c sets the command and options and determines which options are val
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/type/stringList.h"
-
 #include "config/config.auto.h"
 
 /***********************************************************************************************************************************
@@ -40,6 +39,8 @@ typedef enum
 #define CONFIG_COMMAND_ROLE_LOCAL                        "local"
 #define CONFIG_COMMAND_ROLE_REMOTE                       "remote"
 
+#define CFG_COMMAND_ROLE_TOTAL                           4
+
 /***********************************************************************************************************************************
 Constants
 
@@ -62,9 +63,6 @@ ConfigCommand cfgCommand(void);
 
 // Current command role (async, local, remote)
 ConfigCommandRole cfgCommandRole(void);
-
-// Is this command internal-only?
-bool cfgCommandInternal(ConfigCommand commandId);
 
 // Get command name by id
 const char *cfgCommandName(ConfigCommand commandId);
@@ -89,9 +87,6 @@ LogLevel cfgLogLevelDefault(void);
 
 // Command parameters, if any
 const StringList *cfgCommandParam(void);
-
-// Does this command allow parameters?
-bool cfgCommandParameterAllowed(ConfigCommand commandId);
 
 /***********************************************************************************************************************************
 Option Group Functions
