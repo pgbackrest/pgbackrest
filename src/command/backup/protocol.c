@@ -38,10 +38,26 @@ backupProtocol(const String *command, PackRead *param, ProtocolServer *server)
         if (strEq(command, PROTOCOL_COMMAND_BACKUP_FILE_STR))
         {
             // Backup the file
+            const String *pgFile = pckReadStrP(param);
+            bool pgFileIgnoreMissing = pckReadBoolP(param);
+            uint64_t pgFileSize = pckReadU64P(param);
+            bool pgFileCopyExactSize = pckReadBoolP(param);
+            const String *pgFileChecksum = pckReadStrP(param);
+            bool pgFileChecksumPage = pckReadBoolP(param);
+            uint64_t pgFileChecksumPageLsnLimit = pckReadU64P(param);
+            const String *repoFile = pckReadStrP(param);
+            bool repoFileHasReference = pckReadBoolP(param);
+            CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
+            int repoFileCompressLevel = pckReadI32P(param);
+            const String *backupLabel = pckReadStrP(param);
+            bool delta = pckReadBoolP(param);
+            CipherType cipherType = (CipherType)pckReadU32P(param);
+            const String *cipherPass = pckReadStrP(param);
+
             BackupFileResult result = backupFile(
-                pckReadStrP(param), pckReadBoolP(param), pckReadU64P(param), pckReadBoolP(param), pckReadStrP(param),
-                pckReadBoolP(param), pckReadU64P(param), pckReadStrP(param), pckReadBoolP(param), (CompressType)pckReadU32P(param),
-                pckReadI32P(param), pckReadStrP(param), pckReadBoolP(param), (CipherType)pckReadU32P(param), pckReadStrP(param));
+                pgFile, pgFileIgnoreMissing, pgFileSize, pgFileCopyExactSize, pgFileChecksum, pgFileChecksumPage,
+                pgFileChecksumPageLsnLimit, repoFile, repoFileHasReference, repoFileCompressType, repoFileCompressLevel,
+                backupLabel, delta, cipherType, cipherPass);
 
             // Return backup result
             VariantList *resultList = varLstNew();

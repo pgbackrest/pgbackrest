@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Stanza Commands
+Test Verify Command
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
@@ -658,17 +658,21 @@ testRun(void)
         ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
         bufUsedSet(serverWrite, 0);
 
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(filePathName));
-        varLstAdd(paramList, varNewStr(checksum));
-        varLstAdd(paramList, varNewUInt64(fileSize));
-        varLstAdd(paramList, varNewStrZ("pass"));
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, filePathName);
+        pckWriteStrP(paramList, checksum);
+        pckWriteU64P(paramList, fileSize);
+        pckWriteStrP(paramList, STRDEF("pass"));
+        pckWriteEndP(paramList);
 
-        TEST_RESULT_BOOL(verifyProtocol(PROTOCOL_COMMAND_VERIFY_FILE_STR, paramList, server), true, "protocol verify file");
+        TEST_RESULT_BOOL(
+            verifyProtocol(PROTOCOL_COMMAND_VERIFY_FILE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol verify file");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
         bufUsedSet(serverWrite, 0);
 
-        TEST_RESULT_BOOL(verifyProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid protocol function");
+        TEST_RESULT_BOOL(
+            verifyProtocol(strNew(BOGUS_STR), pckReadNewBuf(pckWriteBuf(paramList)), server), false, "invalid protocol function");
     }
 
     // *****************************************************************************************************************************

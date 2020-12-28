@@ -37,12 +37,22 @@ archivePushProtocol(const String *command, PackRead *param, ProtocolServer *serv
     {
         if (strEq(command, PROTOCOL_COMMAND_ARCHIVE_PUSH_STR))
         {
+            const String *walSource = pckReadStrP(param);
+            const String *archiveId = pckReadStrP(param);
+            unsigned int pgVersion = pckReadU32P(param);
+            uint64_t pgSystemId = pckReadU64P(param);
+            const String *archiveFile = pckReadStrP(param);
+            CipherType cipherType = (CipherType)pckReadU32P(param);
+            const String *cipherPass = pckReadStrP(param);
+            CompressType compressType = (CompressType)pckReadU32P(param);
+            int compressLevel = pckReadI32P(param);
+
             protocolServerResponse(
                 server,
                 VARSTR(
                     archivePushFile(
-                        pckReadStrP(param), pckReadStrP(param), pckReadU32P(param), pckReadU64P(param), pckReadStrP(param),
-                        (CipherType)pckReadU32P(param), pckReadStrP(param), (CompressType)pckReadU32P(param), pckReadI32P(param))));
+                        walSource, archiveId, pgVersion, pgSystemId, archiveFile, cipherType, cipherPass, compressType,
+                        compressLevel)));
         }
         else
             found = false;

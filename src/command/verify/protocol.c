@@ -38,11 +38,12 @@ verifyProtocol(const String *command, PackRead *param, ProtocolServer *server)
         // Process any commands received that are for this handler
         if (strEq(command, PROTOCOL_COMMAND_VERIFY_FILE_STR))
         {
-            VerifyResult result = verifyFile(
-                pckReadStrP(param),                                                                 // Full filename
-                pckReadStrP(param),                                                                 // Checksum
-                pckReadU64P(param),                                                                 // File size
-                pckReadStrP(param));                                                                // Cipher pass
+            const String *filePathName = pckReadStrP(param);
+            const String *fileChecksum = pckReadStrP(param);
+            uint64_t fileSize = pckReadU64P(param);
+            const String *cipherPass = pckReadStrP(param);
+
+            VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
 
             protocolServerResponse(server, varNewInt(result));
         }

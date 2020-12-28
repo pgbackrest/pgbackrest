@@ -369,19 +369,21 @@ testRun(void)
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath())));
-        varLstAdd(paramList, varNewStrZ("11-1"));
-        varLstAdd(paramList, varNewUInt64(PG_VERSION_11));
-        varLstAdd(paramList, varNewUInt64(0xFACEFACEFACEFACE));
-        varLstAdd(paramList, varNewStrZ("000000010000000100000002"));
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone));
-        varLstAdd(paramList, NULL);
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewInt(6));
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath()));
+        pckWriteStrP(paramList, STRDEF("11-1"));
+        pckWriteU32P(paramList, PG_VERSION_11);
+        pckWriteU64P(paramList, 0xFACEFACEFACEFACE);
+        pckWriteStrP(paramList, STRDEF("000000010000000100000002"));
+        pckWriteU32P(paramList, cipherTypeNone);
+        pckWriteStrP(paramList, NULL);
+        pckWriteU32P(paramList, compressTypeNone);
+        pckWriteI32P(paramList, 6);
+        pckWriteEndP(paramList);
 
         TEST_RESULT_BOOL(
-            archivePushProtocol(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR, paramList, server), true, "protocol archive put");
+            archivePushProtocol(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR, pckReadNewBuf(pckWriteBuf(paramList)), server),
+            true, "protocol archive put");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{\"out\":\"WAL file '000000010000000100000002' already exists in the archive with the same checksum"
@@ -392,7 +394,8 @@ testRun(void)
 
         // Check invalid protocol function
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(archivePushProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
+        TEST_RESULT_BOOL(
+            archivePushProtocol(strNew(BOGUS_STR), pckReadNewBuf(pckWriteBuf(paramList)), server), false, "invalid function");
 
         // Create a new encrypted repo to test encryption
         // -------------------------------------------------------------------------------------------------------------------------

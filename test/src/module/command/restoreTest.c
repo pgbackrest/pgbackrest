@@ -331,24 +331,27 @@ testRun(void)
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(repoFile1));
-        varLstAdd(paramList, varNewStr(repoFileReferenceFull));
-        varLstAdd(paramList, varNewUInt(compressTypeNone));
-        varLstAdd(paramList, varNewStrZ("protocol"));
-        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewUInt64(9));
-        varLstAdd(paramList, varNewUInt64(1557432100));
-        varLstAdd(paramList, varNewStrZ("0677"));
-        varLstAdd(paramList, varNewStrZ(testUser()));
-        varLstAdd(paramList, varNewStrZ(testGroup()));
-        varLstAdd(paramList, varNewUInt64(1557432200));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, NULL);
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, repoFile1);
+        pckWriteStrP(paramList, repoFileReferenceFull);
+        pckWriteU32P(paramList, compressTypeNone);
+        pckWriteStrP(paramList, STRDEF("protocol"));
+        pckWriteStrP(paramList, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
+        pckWriteBoolP(paramList, false);
+        pckWriteU64P(paramList, 9);
+        pckWriteTimeP(paramList, 1557432100);
+        pckWriteU32P(paramList, 0677);
+        pckWriteStrP(paramList, STR(testUser()));
+        pckWriteStrP(paramList, STR(testGroup()));
+        pckWriteTimeP(paramList, 1557432200);
+        pckWriteBoolP(paramList, false);
+        pckWriteBoolP(paramList, false);
+        pckWriteStrP(paramList, NULL);
+        pckWriteEndP(paramList);
 
-        TEST_RESULT_BOOL(restoreProtocol(PROTOCOL_COMMAND_RESTORE_FILE_STR, paramList, server), true, "protocol restore file");
+        TEST_RESULT_BOOL(
+            restoreProtocol(PROTOCOL_COMMAND_RESTORE_FILE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol restore file");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
@@ -362,30 +365,34 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("protocol")))), "atestfile", "    check contents");
 
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(repoFile1));
-        varLstAdd(paramList, varNewStr(repoFileReferenceFull));
-        varLstAdd(paramList, varNewUInt(compressTypeNone));
-        varLstAdd(paramList, varNewStrZ("protocol"));
-        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewUInt64(9));
-        varLstAdd(paramList, varNewUInt64(1557432100));
-        varLstAdd(paramList, varNewStrZ("0677"));
-        varLstAdd(paramList, varNewStrZ(testUser()));
-        varLstAdd(paramList, varNewStrZ(testGroup()));
-        varLstAdd(paramList, varNewUInt64(1557432200));
-        varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, NULL);
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, repoFile1);
+        pckWriteStrP(paramList, repoFileReferenceFull);
+        pckWriteU32P(paramList, compressTypeNone);
+        pckWriteStrP(paramList, STRDEF("protocol"));
+        pckWriteStrP(paramList, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
+        pckWriteBoolP(paramList, false);
+        pckWriteU64P(paramList, 9);
+        pckWriteTimeP(paramList, 1557432100);
+        pckWriteU32P(paramList, 0677);
+        pckWriteStrP(paramList, STR(testUser()));
+        pckWriteStrP(paramList, STR(testGroup()));
+        pckWriteTimeP(paramList, 1557432200);
+        pckWriteBoolP(paramList, true);
+        pckWriteBoolP(paramList, false);
+        pckWriteStrP(paramList, NULL);
+        pckWriteEndP(paramList);
 
-        TEST_RESULT_BOOL(restoreProtocol(PROTOCOL_COMMAND_RESTORE_FILE_STR, paramList, server), true, "protocol restore file");
+        TEST_RESULT_BOOL(
+            restoreProtocol(PROTOCOL_COMMAND_RESTORE_FILE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol restore file");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
         // Check invalid protocol function
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(restoreProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
+        TEST_RESULT_BOOL(
+            restoreProtocol(strNew(BOGUS_STR), pckReadNewBuf(pckWriteBuf(paramList)), server), false, "invalid function");
     }
 
     // *****************************************************************************************************************************

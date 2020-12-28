@@ -466,7 +466,6 @@ testRun(void)
     const String *backupLabel = strNew("20190718-155825F");
     const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
     BackupFileResult result = {0};
-    VariantList *paramList = varLstNew();
 
     // *****************************************************************************************************************************
     if (testBegin("segmentNumber()"))
@@ -503,23 +502,27 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         // NULL, zero param values, ignoreMissing=true
-        varLstAdd(paramList, varNewStr(missingFile));       // pgFile
-        varLstAdd(paramList, varNewBool(true));             // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileSize
-        varLstAdd(paramList, varNewBool(true));             // pgFileCopyExactSize
-        varLstAdd(paramList, NULL);                         // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(missingFile));       // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(0));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, NULL);                         // cipherSubPass
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, missingFile);                                           // pgFile
+        pckWriteBoolP(paramList, true);                                                 // pgFileIgnoreMissing
+        pckWriteU64P(paramList, 0);                                                     // pgFileSize
+        pckWriteBoolP(paramList, true);                                                 // pgFileCopyExactSize
+        pckWriteStrP(paramList, NULL);                                                  // pgFileChecksum
+        pckWriteBoolP(paramList, false);                                                // pgFileChecksumPage
+        pckWriteU64P(paramList, 0);                                                     // pgFileChecksumPageLsnLimit
+        pckWriteStrP(paramList, missingFile);                                           // repoFile
+        pckWriteBoolP(paramList, false);                                                // repoFileHasReference
+        pckWriteU32P(paramList, compressTypeNone);                                      // repoFileCompress
+        pckWriteI32P(paramList, 0);                                                     // repoFileCompressLevel
+        pckWriteStrP(paramList, backupLabel);                                           // backupLabel
+        pckWriteBoolP(paramList, false);                                                // delta
+        pckWriteU32P(paramList, cipherTypeNone);                                        // cipherType
+        pckWriteStrP(paramList, NULL);                                                  // cipherPass
+        pckWriteEndP(paramList);
 
         TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - skip");
+            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol backup file - skip");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[3,0,0,null,null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
@@ -594,24 +597,27 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         // pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(8));              // pgFileSize
-        varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
-        varLstAdd(paramList, NULL);                         // pgFileChecksum
-        varLstAdd(paramList, varNewBool(true));             // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0xFFFFFFFFFFFFFFFF)); // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, NULL);                         // cipherSubPass
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, pgFile);                                                // pgFile
+        pckWriteBoolP(paramList, false);                                                // pgFileIgnoreMissing
+        pckWriteU64P(paramList, 8);                                                     // pgFileSize
+        pckWriteBoolP(paramList, false);                                                // pgFileCopyExactSize
+        pckWriteStrP(paramList, NULL);                                                  // pgFileChecksum
+        pckWriteBoolP(paramList, true);                                                 // pgFileChecksumPage
+        pckWriteU64P(paramList, 0xFFFFFFFFFFFFFFFF);                                    // pgFileChecksumPageLsnLimit
+        pckWriteStrP(paramList, pgFile);                                                // repoFile
+        pckWriteBoolP(paramList, false);                                                // repoFileHasReference
+        pckWriteU32P(paramList, compressTypeNone);                                      // repoFileCompress
+        pckWriteI32P(paramList, 1);                                                     // repoFileCompressLevel
+        pckWriteStrP(paramList, backupLabel);                                           // backupLabel
+        pckWriteBoolP(paramList, false);                                                // delta
+        pckWriteU32P(paramList, cipherTypeNone);                                        // cipherType
+        pckWriteStrP(paramList, NULL);                                                  // cipherPass
+        pckWriteEndP(paramList);
 
         TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - pageChecksum");
+            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol backup file - pageChecksum");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{\"out\":[1,12,12,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",{\"align\":false,\"valid\":false}]}\n",
@@ -637,24 +643,27 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         // pgFileChecksum, hasReference, delta
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(12));             // pgFileSize
-        varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9"));   // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(true));             // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(true));             // delta
-        varLstAdd(paramList, NULL);                         // cipherSubPass
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, pgFile);                                                // pgFile
+        pckWriteBoolP(paramList, false);                                                // pgFileIgnoreMissing
+        pckWriteU64P(paramList, 12);                                                    // pgFileSize
+        pckWriteBoolP(paramList, false);                                                // pgFileCopyExactSize
+        pckWriteStrP(paramList, STRDEF("c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9"));    // pgFileChecksum
+        pckWriteBoolP(paramList, false);                                                // pgFileChecksumPage
+        pckWriteU64P(paramList, 0);                                                     // pgFileChecksumPageLsnLimit
+        pckWriteStrP(paramList, pgFile);                                                // repoFile
+        pckWriteBoolP(paramList, true);                                                 // repoFileHasReference
+        pckWriteU32P(paramList, compressTypeNone);                                      // repoFileCompress
+        pckWriteI32P(paramList, 1);                                                     // repoFileCompressLevel
+        pckWriteStrP(paramList, backupLabel);                                           // backupLabel
+        pckWriteBoolP(paramList, true);                                                 // delta
+        pckWriteU32P(paramList, cipherTypeNone);                                        // cipherType
+        pckWriteStrP(paramList, NULL);                                                  // cipherPass
+        pckWriteEndP(paramList);
 
         TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - noop");
+            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol backup file - noop");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite), "{\"out\":[4,12,0,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
@@ -779,24 +788,27 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         // compression
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(9));              // pgFileSize
-        varLstAdd(paramList, varNewBool(true));             // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));   // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeGz));   // repoFileCompress
-        varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, NULL);                         // cipherSubPass
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, pgFile);                                                // pgFile
+        pckWriteBoolP(paramList, false);                                                // pgFileIgnoreMissing
+        pckWriteU64P(paramList, 9);                                                     // pgFileSize
+        pckWriteBoolP(paramList, true);                                                 // pgFileCopyExactSize
+        pckWriteStrP(paramList, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));    // pgFileChecksum
+        pckWriteBoolP(paramList, false);                                                // pgFileChecksumPage
+        pckWriteU64P(paramList, 0);                                                     // pgFileChecksumPageLsnLimit
+        pckWriteStrP(paramList, pgFile);                                                // repoFile
+        pckWriteBoolP(paramList, false);                                                // repoFileHasReference
+        pckWriteU32P(paramList, compressTypeGz);                                        // repoFileCompress
+        pckWriteI32P(paramList, 3);                                                     // repoFileCompressLevel
+        pckWriteStrP(paramList, backupLabel);                                           // backupLabel
+        pckWriteBoolP(paramList, false);                                                // delta
+        pckWriteU32P(paramList, cipherTypeNone);                                        // cipherType
+        pckWriteStrP(paramList, NULL);                                                  // cipherPass
+        pckWriteEndP(paramList);
 
         TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - copy, compress");
+            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol backup file - copy, compress");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite), "{\"out\":[0,9,29,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
@@ -822,7 +834,8 @@ testRun(void)
 
         // Check invalid protocol function
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(backupProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
+        TEST_RESULT_BOOL(
+            backupProtocol(strNew(BOGUS_STR), pckReadNewBuf(pckWriteBuf(paramList)), server), false, "invalid function");
     }
 
     // *****************************************************************************************************************************
@@ -898,24 +911,27 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         // cipherType, cipherPass
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));                // pgFile
-        varLstAdd(paramList, varNewBool(false));                // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(9));                  // pgFileSize
-        varLstAdd(paramList, varNewBool(true));                 // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("1234567890123456789012345678901234567890"));   // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));                // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));                // repoFile
-        varLstAdd(paramList, varNewBool(false));                // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone));     // repoFileCompress
-        varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
-        varLstAdd(paramList, varNewBool(false));                // delta
-        varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, pgFile);                                                // pgFile
+        pckWriteBoolP(paramList, false);                                                // pgFileIgnoreMissing
+        pckWriteU64P(paramList, 9);                                                     // pgFileSize
+        pckWriteBoolP(paramList, true);                                                 // pgFileCopyExactSize
+        pckWriteStrP(paramList, STRDEF("1234567890123456789012345678901234567890"));    // pgFileChecksum
+        pckWriteBoolP(paramList, false);                                                // pgFileChecksumPage
+        pckWriteU64P(paramList, 0);                                                     // pgFileChecksumPageLsnLimit
+        pckWriteStrP(paramList, pgFile);                                                // repoFile
+        pckWriteBoolP(paramList, false);                                                // repoFileHasReference
+        pckWriteU32P(paramList, compressTypeNone);                                      // repoFileCompress
+        pckWriteI32P(paramList, 0);                                                     // repoFileCompressLevel
+        pckWriteStrP(paramList, backupLabel);                                           // backupLabel
+        pckWriteBoolP(paramList, false);                                                // delta
+        pckWriteU32P(paramList, cipherTypeAes256Cbc);                                   // cipherType
+        pckWriteStrP(paramList, STRDEF("12345678"));                                    // cipherPass
+        pckWriteEndP(paramList);
 
         TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - recopy, encrypt");
+            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol backup file - recopy, encrypt");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite), "{\"out\":[2,9,32,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
