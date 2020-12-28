@@ -89,7 +89,7 @@ typedef struct InfoRepoData
 {
     unsigned int key;                                               // User-entered repo key, 0 when stanza is not found on the repo
     CipherType cipher;
-    String *cipherPass;
+    const String *cipherPass;
     bool stanzaExists;
     int stanzaStatus;
     InfoBackup *backupInfo;
@@ -784,6 +784,7 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, String *sta
 
     InfoBackup *info = NULL;
 
+    // If the stanza exists, attempt to get the backup.info file
     if (stanzaExists)
     {
         volatile int stanzaStatus = INFO_STANZA_STATUS_CODE_OK;
@@ -794,12 +795,12 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, String *sta
             // Attempt to load the backup info file
             info = infoBackupLoadFile(
                 storage, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaName), INFO_BACKUP_FILE),
-                cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
         }
         CATCH(FileMissingError)
         {
             // If there is no backup.info then set the status to indicate missing
-            stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA; // CSHANG May not need...
+            stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA;
         }
         CATCH(CryptoError)
         {
@@ -811,21 +812,22 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, String *sta
                 errorMessage());
         }
         TRY_END();
-        stanzaRepo->repoList[repoIdx].status = stanzaStatus;
+
+        stanzaRepo->repoList[repoIdx].stanzaStatus = stanzaStatus;
+
+        // If backup.info was found, then get the archive.info file, which must exist if the backup.info exists, else throw error
+        if (info != NULL)
+        {
+            stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
+                storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaName), INFO_ARCHIVE_FILE),
+                stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+        }
     }
     else
-        stanzaRepo->repoList[repoIdx].status = INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH;
+        stanzaRepo->repoList[repoIdx].stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH;
 
     stanzaRepo->repoList[repoIdx].stanzaExists = stanzaExists;
     stanzaRepo->repoList[repoIdx].backupInfo = info;
-
-    // If the backup info was found, then get the archive info file
-    if (info != NULL)
-    {
-        stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
-            storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaName), INFO_ARCHIVE_FILE),
-            cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
-    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -915,20 +917,12 @@ printf("repoTotal %u, repoIdx %u, repoIdxMax %u\n", repoTotal, repoIdx, repoIdxM
 printf("stanzaList size: %u\n", strLstSize(stanzaNameList));fflush(stdout); // cshang remove
 
 
-            // All stanzas will be "found" if they are in the storeage list, however, if a specific stanza was requested the
-            // stanzaExists flag will be reset to false and repo status for the stanza will indicate it is missing
+            // All stanzas will be "found" if they are in the storage list
             bool stanzaExists = true;
 
             if (stanza != NULL)
             {
-                // // If the requested stanza is not found on this repo, then set the status path missing and continue to the next repo
-                // if (strLstSize(stanzaNameList) == 0 || !strLstExists(stanzaNameList, stanza))
-                // {
-                //     // Get the stanza from the stanza repo list and set the status on this repo to missing
-                //     InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanza);
-                //     stanzaRepo->repoList[idx].status = INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH;
-                //     continue;
-                // }
+                // If a specific stanza was requested and it is not on this repo, then stanzaExists flag will be reset to false
                 if (strLstSize(stanzaNameList) == 0 || !strLstExists(stanzaNameList, stanza))
                     stanzaExists = false;
 
@@ -946,8 +940,7 @@ printf("stanzaList To Process: %u\n", strLstSize(stanzaNameList));fflush(stdout)
                 // Get the stanza if it is already in the list
                 InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
 
-// CSHANG CHANGE COMMENT                // If the stanza was already added to the array, then set the cipher and repo key to indicate it was found
-                // on this repo
+                // If the stanza was already added to the array, then update this repo for the stanza
                 if (stanzaRepo != NULL)
                 {
 // CSHANG check if a stanza was specified (stanza != NULL) and if so, was it found on the repo? if not, then do nothing? stanzaMissing will remain 0 = false
@@ -965,14 +958,16 @@ printf("stanzaList To Process: %u\n", strLstSize(stanzaNameList));fflush(stdout)
                         .name = stanzaName,
                         .repoList = memNew(repoTotal * sizeof(InfoRepoData)),
                     };
-// CSHANG Init the repo list but maybe can combine this from previous to have it all in one place...
+
+                    // Initialize all the repos
                     for (unsigned int repoListIdx = 0; repoListIdx < repoTotal; repoListIdx++)
                     {
-                        stanzaRepo.repoList[repoListIdx] = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx);
-                        stanzaRepo.repoList[repoIdx].cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx));
-                        stanzaRepo.repoList[repoIdx].cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx);
+                        stanzaRepo.repoList[repoListIdx].key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx);
+                        stanzaRepo.repoList[repoListIdx].cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx));
+                        stanzaRepo.repoList[repoListIdx].cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx);
                     }
 
+                    // Update the info for this repo
                     infoUpdateStanza(storageRepo, &stanzaRepo, stanzaName, idx, stanzaExists);
                     lstAdd(stanzaRepoList, &stanzaRepo);
                 }
