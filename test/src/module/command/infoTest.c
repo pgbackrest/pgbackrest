@@ -51,6 +51,7 @@ testRun(void)
             infoRender(),
             "["
                 "{"
+                    "\"archive\":[],"
                     "\"backup\":[],"
                     "\"db\":[],"
                     "\"name\":\"stanza1\","
@@ -1209,36 +1210,6 @@ testRun(void)
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: none\n",
             "text - backup set requested, no db and no checksum error");
-
-        // Stanza not found
-        //--------------------------------------------------------------------------------------------------------------------------
-        argList2 = strLstDup(argList);
-        strLstAddZ(argList2, "--stanza=silly");
-        harnessCfgLoad(cfgCmdInfo, argList2);
-        TEST_RESULT_STR_Z(
-            infoRender(),
-            "["
-                "{"
-                     "\"backup\":[],"
-                     "\"db\":[],"
-                     "\"name\":\"silly\","
-                     "\"status\":{"
-                        "\"code\":1,"
-                        "\"lock\":{\"backup\":{\"held\":false}},"
-                        "\"message\":\"missing stanza path\""
-                    "}"
-                "}"
-            "]",
-            "json - missing stanza path");
-
-        StringList *argListText2 = strLstDup(argListText);
-        strLstAddZ(argListText2, "--stanza=silly");
-        harnessCfgLoad(cfgCmdInfo, argListText2);
-        TEST_RESULT_STR_Z(
-            infoRender(),
-            "stanza: silly\n"
-            "    status: error (missing stanza path)\n",
-            "text - missing stanza path");
 
         // Stanza found
         //--------------------------------------------------------------------------------------------------------------------------
