@@ -6,7 +6,7 @@ on:
       - integration
       - '**-ci'
       - '**-cig'
-    pull_request:
+  pull_request:
 
 jobs:
   test:

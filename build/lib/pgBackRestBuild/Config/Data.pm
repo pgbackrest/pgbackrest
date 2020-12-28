@@ -15,6 +15,11 @@
 # NOTE: If the option (A) has a dependency on another option (B) then the CFGCMD_ must also be specified in the other option
 #         (B), else it will still error on the option (A).
 #
+# CFGDEF_COMMAND_ROLE:
+#
+# Define the command roles that a command is valid for. CFGCMD_ROLE_DEFAULT is valid for all commands and is therefore added
+# programmatically.
+#
 # CFGDEF_REQUIRED:
 #   In global section:
 #       true - if the option does not have a default, then setting CFGDEF_REQUIRED in the global section means all commands
