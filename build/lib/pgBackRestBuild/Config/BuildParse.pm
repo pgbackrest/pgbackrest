@@ -367,9 +367,7 @@ sub buildConfigParse
             {
                 if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
                 {
-                    if (defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{$strCommandRole}) &&
-                        !defined($rhOption->{&CFGDEF_COMMAND_ROLE_EXCLUDE}{$strCommandRole}) &&
-                        !defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE_EXCLUDE}{$strCommandRole}))
+                    if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}{$strCommandRole}))
                     {
                         $strBuildSourceSub .=
                             "            PARSE_RULE_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
