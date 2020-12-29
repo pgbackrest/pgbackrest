@@ -203,7 +203,10 @@ pgClientQuery(PgClient *this, const String *query)
         if (busy)
         {
             PGcancel *cancel = PQgetCancel(this->connection);
-            CHECK(cancel != NULL);
+
+            // If cancel is NULL then more than likely the server process crashed or disconnected
+            if (cancel == NULL)
+                THROW_FMT(DbQueryError, "unable to cancel query '%s': connection was lost", strZ(query));
 
             TRY_BEGIN()
             {

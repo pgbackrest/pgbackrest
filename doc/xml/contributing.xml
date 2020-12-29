@@ -98,6 +98,13 @@
                     usermod -aG docker `whoami`
                 </exe-cmd>
             </execute>
+
+            <!-- Hack permissions on the docker socket so the local user can run commands -->
+            <execute user="root" show="n">
+                <exe-cmd>
+                    chmod 666 /var/run/docker.sock
+                </exe-cmd>
+            </execute>
         </execute-list>
 
         <p>This clone of the <backrest/> repository is sufficient for experimentation.  For development, create a fork and clone that instead.</p>
@@ -236,7 +243,7 @@
 
                 <list>
                     <list-item><id>CFGOPT_ONLINE</id> - the name of the option as defined in <b>Section 1</b></list-item>
-                    <list-item><id>CFGDEF_TYPE</id> - the type of the option. Valid types are: <id>CFGDEF_TYPE_BOOLEAN</id>, <id>CFGDEF_TYPE_FLOAT</id>, <id>CFGDEF_TYPE_HASH</id>, <id>CFGDEF_TYPE_INTEGER</id>, <id>CFGDEF_TYPE_LIST</id>, <id>CFGDEF_TYPE_PATH</id>, <id>CFGDEF_TYPE_SIZE</id>, and <id>CFGDEF_TYPE_STRING</id>
+                    <list-item><id>CFGDEF_TYPE</id> - the type of the option. Valid types are: <id>CFGDEF_TYPE_BOOLEAN</id>, <id>CFGDEF_TYPE_HASH</id>, <id>CFGDEF_TYPE_INTEGER</id>, <id>CFGDEF_TYPE_LIST</id>, <id>CFGDEF_TYPE_PATH</id>, <id>CFGDEF_TYPE_SIZE</id>, <id>CFGDEF_TYPE_STRING</id>, and <id>CFGDEF_TYPE_TIME</id>
                     </list-item>
                     <list-item><id>CFGDEF_NEGATE</id> - being a command-line only boolean option, this rule would automatically default to false so it must be defined if the option is negatable. Ask yourself if negation makes sense, for example, would a --dry-run option make sense as --no-dry-run? If the answer is no, then this rule can be omitted as it would automatically default to false. Any boolean option that cannot be negatable, must be a command-line only and not a configuration file option as all configuration boolean options must be negatable.</list-item>
                     <list-item><id>CFGDEF_DEFAULT</id> - sets a default for the option if the option is not provided when the command is run. The default can be global or it can be specified for a specific command in the <id>CFGDEF_COMMAND</id> section. For example, if it was desirable for the default to be false for the <id>CFGCMD_STANZA_CREATE</id> then CFGDEF_NEGATE =>  would be set to <id>true</id> in each command listed except for <id>CFGCMD_STANZA_CREATE</id> where it would be <id>false</id> and it would not be specified (as it is here) in the global section (meaning global for all commands listed).</list-item>

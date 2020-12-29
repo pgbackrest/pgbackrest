@@ -36,7 +36,7 @@ use pgBackRestDoc::ProjectInfo;
 use pgBackRestBuild::Build;
 use pgBackRestBuild::Build::Common;
 use pgBackRestBuild::Config::Build;
-use pgBackRestBuild::Config::BuildDefine;
+use pgBackRestBuild::Config::BuildHelp;
 use pgBackRestBuild::Config::BuildParse;
 use pgBackRestBuild::Error::Build;
 use pgBackRestBuild::Error::Data;
@@ -116,7 +116,7 @@ test.pl [options]
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
-   --vm                 docker container to build/test (u12, u14, co6, co7)
+   --vm                 docker container to build/test (e.g. co7)
    --vm-build           build Docker containers
    --vm-force           force a rebuild of Docker containers
    --vm-out             Show VM output (default false)
@@ -573,10 +573,10 @@ eval
                         &BLD_PATH => 'config',
                     },
 
-                    'configDefine' =>
+                    'configHelp' =>
                     {
-                        &BLD_DATA => buildConfigDefine(),
-                        &BLD_PATH => 'config',
+                        &BLD_DATA => buildConfigHelp(),
+                        &BLD_PATH => 'command/help',
                     },
 
                     'configParse' =>

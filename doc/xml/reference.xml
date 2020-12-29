@@ -1036,6 +1036,17 @@
                         <example>db_owner</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-database" name="PostgreSQL Database">
+                        <summary><postgres/> database.</summary>
+
+                        <text>The database name used when connecting to <postgres/>. The default is usually best but some installations may not contain this database.
+
+                        Note that for legacy reasons the setting of the <id>PGDATABASE</id> environment variable will be ignored.</text>
+
+                        <example>backupdb</example>
+                    </config-key>
+
                     <!-- CONFIG - STANZA SECTION - PG-PATH KEY -->
                     <config-key id="pg-path" name="PostgreSQL Path">
                         <summary><postgres/> data directory.</summary>
@@ -1839,9 +1850,7 @@
                     <li>Shut down the <postgres/> cluster associated with the stanza (or use --force to override).</li>
                     <li>Run the <cmd>stop</cmd> command on the repository host.</li>
                     <li>Run the <cmd>stanza-delete</cmd> command on the repository host.</li>
-                </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files and/or environment variables.
-
-                A stanza may only be deleted from one repository at a time. To delete the stanza from multiple repositories, repeat the <cmd>stanza-delete</cmd> command for each repository while specifying the <br-option>repo</br-option> option.</text>
+                </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->

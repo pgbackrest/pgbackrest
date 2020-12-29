@@ -45,6 +45,8 @@ testRun(void)
         TEST_RESULT_UINT(cvtDoubleToZ(999.1234, buffer, STACK_TRACE_PARAM_MAX), 8, "convert double to string");
         TEST_RESULT_Z(buffer, "999.1234", "    check buffer");
 
+        TEST_RESULT_STR_Z(cvtDoubleToStr(999.1), "999.1", "convert double to string");
+
         TEST_RESULT_UINT(cvtDoubleToZ(999999999.123456, buffer, STACK_TRACE_PARAM_MAX), 16, "convert double to string");
         TEST_RESULT_Z(buffer, "999999999.123456", "    check buffer");
 
@@ -73,9 +75,9 @@ testRun(void)
             cvtZToInt("-9223372036854775807"), FormatError, "unable to convert base 10 string '-9223372036854775807' to int");
 
         TEST_RESULT_INT(cvtZToIntBase("-FF", 16), -255, "convert string to int");
-        TEST_RESULT_DOUBLE(cvtZToInt("0"), 0, "convert string to int");
-        TEST_RESULT_DOUBLE(cvtZToInt("1234567890"), 1234567890, "convert string to int");
-        TEST_RESULT_DOUBLE(cvtZToInt("-1234567890"), -1234567890, "convert string to int");
+        TEST_RESULT_INT(cvtZToInt("0"), 0, "convert string to int");
+        TEST_RESULT_INT(cvtZToInt("1234567890"), 1234567890, "convert string to int");
+        TEST_RESULT_INT(cvtZToInt("-1234567890"), -1234567890, "convert string to int");
     }
 
     // *****************************************************************************************************************************

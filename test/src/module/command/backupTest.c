@@ -264,7 +264,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     PgControl pgControl = pgControlFromFile(storagePg());
 
     // Set archive timeout really small to save time on errors
-    cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewDbl(.1));
+    cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewInt64(100));
 
     uint64_t lsnStart = ((uint64_t)backupTimeStart & 0xFFFFFF00) << 28;
     uint64_t lsnStop =
@@ -1206,7 +1206,7 @@ testRun(void)
         const String *repoPath = strNewFmt("%s/repo", testPath());
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when second does not advance after sleep");
+        TEST_TITLE("sleep retries and stall error");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1225,9 +1225,16 @@ testRun(void)
             // Connect to primary
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_93, strZ(pg1Path), false, NULL, NULL),
 
-            // Don't advance time after wait
+            // Advance the time slowly to force retries
             HRNPQ_MACRO_TIME_QUERY(1, 1575392588998),
             HRNPQ_MACRO_TIME_QUERY(1, 1575392588999),
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392589001),
+
+            // Stall time to force an error
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392589998),
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392589997),
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392589998),
+            HRNPQ_MACRO_TIME_QUERY(1, 1575392589999),
 
             HRNPQ_MACRO_DONE()
         });
@@ -1235,7 +1242,9 @@ testRun(void)
         BackupData *backupData = backupInit(
             infoBackupNew(PG_VERSION_93, PG_VERSION_93, pgCatalogTestVersion(PG_VERSION_93), NULL));
 
-        TEST_ERROR(backupTime(backupData, true), AssertError, "invalid sleep for online backup time with wait remainder");
+        TEST_RESULT_INT(backupTime(backupData, true), 1575392588, "multiple tries for sleep");
+        TEST_ERROR(backupTime(backupData, true), KernelError, "PostgreSQL clock has not advanced to the next second after 3 tries");
+
         dbFree(backupData->dbPrimary);
     }
 

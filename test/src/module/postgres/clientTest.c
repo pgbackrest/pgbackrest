@@ -189,6 +189,25 @@ testRun(void)
         TEST_ERROR(pgClientQuery(client, query), DbQueryError, "unable to cancel query 'select pg_sleep(3000)': test error");
 #endif
 
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifndef HARNESS_PQ_REAL
+        TEST_TITLE("PQgetCancel() returns NULL");
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            {.function = HRNPQ_SENDQUERY, .param = "[\"select 1\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT, .sleep = 600},
+            {.function = HRNPQ_ISBUSY, .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY, .resultInt = 1},
+            {.function = HRNPQ_GETCANCEL, .resultNull = true},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(
+            pgClientQuery(client, STRDEF("select 1")), DbQueryError, "unable to cancel query 'select 1': connection was lost");
+#endif
+
         // Execute do block and raise notice
         // -------------------------------------------------------------------------------------------------------------------------
 #ifndef HARNESS_PQ_REAL

@@ -324,11 +324,25 @@ backupTime(BackupData *backupData, bool waitRemainder)
         // Sleep the remainder of the second when requested (this is so copyStart is not subject to one second resolution issues)
         if (waitRemainder)
         {
-            sleepMSec(MSEC_PER_SEC - (timeMSec % MSEC_PER_SEC));
+            unsigned int retry = 0;
 
-            // Check time again to be sure we slept long enough
-            if (result >= (time_t)(dbTimeMSec(backupData->dbPrimary) / MSEC_PER_SEC))
-                THROW(AssertError, "invalid sleep for online backup time with wait remainder");
+            // Just to be safe we'll loop until PostgreSQL reports that we have slept long enough
+            do
+            {
+                // Error if the clock has not advanced after several attempts
+                if (retry == 3)
+                    THROW_FMT(KernelError, PG_NAME " clock has not advanced to the next second after %u tries", retry);
+
+                // Sleep remainder of current second
+                sleepMSec(((TimeMSec)(result + 1) * MSEC_PER_SEC) - timeMSec);
+
+                // Check time again to be sure we slept long enough
+                timeMSec = dbTimeMSec(backupData->dbPrimary);
+
+                // Increment retry to prevent an infinite loop
+                retry++;
+            }
+            while ((time_t)(timeMSec / MSEC_PER_SEC) <= result);
         }
     }
 
@@ -890,7 +904,7 @@ backupStart(BackupData *backupData)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
-                dbReplayWait(backupData->dbStandby, result.lsn, (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
+                dbReplayWait(backupData->dbStandby, result.lsn, cfgOptionUInt64(cfgOptArchiveTimeout));
                 LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
 
                 // The standby db object won't be used anymore so free it
@@ -1585,7 +1599,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
-            (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, backupJobCallback, &jobData);
+            cfgOptionUInt64(cfgOptProtocolTimeout) / 2, backupJobCallback, &jobData);
 
         // First client is always on the primary
         protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, backupData->pgIdxPrimary, 1));
@@ -1760,7 +1774,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                 // Find the actual wal segment file in the archive
                 const String *archiveFile = walSegmentFind(
-                    storageRepo(), archiveId, walSegment,  (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
+                    storageRepo(), archiveId, walSegment,  cfgOptionUInt64(cfgOptArchiveTimeout));
 
                 if (cfgOptionBool(cfgOptArchiveCopy))
                 {

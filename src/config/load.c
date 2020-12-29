@@ -17,7 +17,6 @@ Configuration Load
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.intern.h"
-#include "config/define.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "storage/cifs/storage.h"
@@ -69,18 +68,10 @@ cfgLoadUpdateOption(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    // Prevent pg and repo options from being used for the default command role when they are internal. This is a cheap and cheerful
-    // way to prevent users from setting these options but still allow them to be used for other roles.
-    if (cfgCommandRole() == cfgCmdRoleDefault)
-    {
-        if (cfgOptionTest(cfgOptRepo) && cfgDefOptionInternal(cfgCommand(), cfgOptRepo))
-            THROW_FMT(OptionInvalidError, "option '" CFGOPT_REPO "' not valid for command '%s'", cfgCommandName(cfgCommand()));
-    }
-
     // Make sure repo option is set for the default command role when it is not internal and more than one repo is configured or the
     // first configured repo is not key 1.
-    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepo) && !cfgDefOptionInternal(cfgCommand(), cfgOptRepo) &&
-        !cfgOptionTest(cfgOptRepo) && (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepo) && !cfgOptionTest(cfgOptRepo) &&
+        (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
     {
         THROW_FMT(
             OptionRequiredError,
@@ -127,23 +118,26 @@ cfgLoadUpdateOption(void)
 
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
-        cfgOptionDbl(cfgOptProtocolTimeout) <= cfgOptionDbl(cfgOptDbTimeout))
+        cfgOptionInt64(cfgOptProtocolTimeout) <= cfgOptionInt64(cfgOptDbTimeout))
     {
         // If protocol-timeout is default then increase it to be greater than db-timeout
         if (cfgOptionSource(cfgOptProtocolTimeout) == cfgSourceDefault)
-            cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptDbTimeout) + 30));
+        {
+            cfgOptionSet(
+                cfgOptProtocolTimeout, cfgSourceDefault, VARINT64(cfgOptionInt64(cfgOptDbTimeout) + (int64_t)(30 * MSEC_PER_SEC)));
+        }
         else if (cfgOptionSource(cfgOptDbTimeout) == cfgSourceDefault)
         {
-            double dbTimeout = cfgOptionDbl(cfgOptProtocolTimeout) - 30;
+            int64_t dbTimeout = cfgOptionInt64(cfgOptProtocolTimeout) - (int64_t)(30 * MSEC_PER_SEC);
 
             // Normally the protocol time will be greater than 45 seconds so db timeout can be at least 15 seconds
-            if (dbTimeout >= 15)
+            if (dbTimeout >= (int64_t)(15 * MSEC_PER_SEC))
             {
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(dbTimeout));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARINT64(dbTimeout));
             }
             // But in some test cases the protocol timeout will be very small so make db timeout half of protocol timeout
             else
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptProtocolTimeout) / 2));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARINT64(cfgOptionInt64(cfgOptProtocolTimeout) / 2));
         }
         else
         {
@@ -182,7 +176,7 @@ cfgLoadUpdateOption(void)
     }
 
     // Warn when repo-retention-full is not set on a configured repo
-    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFullType) && cfgCommandRole() == cfgCmdRoleDefault)
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFullType))
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
@@ -409,7 +403,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
 
             // Set IO timeout
             if (cfgOptionValid(cfgOptIoTimeout))
-                ioTimeoutMsSet((TimeMSec)(cfgOptionDbl(cfgOptIoTimeout) * MSEC_PER_SEC));
+                ioTimeoutMsSet(cfgOptionUInt64(cfgOptIoTimeout));
 
             // Open the log file if this command logs to a file
             cfgLoadLogFile();

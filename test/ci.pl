@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ####################################################################################################################################
-# Travis CI Test Wrapper
+# CI Test Wrapper
 ####################################################################################################################################
 
 ####################################################################################################################################
@@ -37,7 +37,7 @@ use pgBackRestTest::Common::VmTest;
 
 =head1 NAME
 
-travis.pl - Travis CI Test Wrapper
+ci.pl - CI Test Wrapper
 
 =head1 SYNOPSIS
 
@@ -102,7 +102,7 @@ eval
     # Display version and exit if requested
     if ($bHelp)
     {
-        syswrite(*STDOUT, "Travis CI Test Wrapper\n");
+        syswrite(*STDOUT, "CI Test Wrapper\n");
 
         syswrite(*STDOUT, "\n");
         pod2usage();
@@ -145,6 +145,8 @@ eval
     ################################################################################################################################
     # Build documentation
     ################################################################################################################################
+    my $strUser = getpwuid($UID);
+
     if ($ARGV[0] eq 'doc')
     {
         if ($strVm eq VM_CO7)
@@ -153,11 +155,11 @@ eval
             processExec(
                 'sudo apt-get install -y --no-install-recommends texlive-latex-base texlive-latex-extra texlive-fonts-recommended',
                 {bSuppressStdErr => true});
-            processExec('sudo apt-get install -y texlive-font-utils latex-xcolor', {bSuppressStdErr => true});
+            processExec('sudo apt-get install -y texlive-font-utils texlive-latex-recommended', {bSuppressStdErr => true});
         }
 
         processBegin('remove sudo');
-        processExec('sudo rm /etc/sudoers.d/travis');
+        processExec("sudo rm /etc/sudoers.d/${strUser}");
         processEnd();
 
         processBegin('create link from home to repo for contributing doc');
@@ -205,7 +207,7 @@ eval
         if (!$bSudo)
         {
             processBegin('remove sudo');
-            processExec('sudo rm /etc/sudoers.d/travis');
+            processExec("sudo rm /etc/sudoers.d/${strUser}");
             processEnd();
         }
 
@@ -219,7 +221,7 @@ eval
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --no-gen --no-coverage-report --vm-host=none --vm-max=2 --vm=${strVm}" .
+            "${strTestExe} --no-gen --log-level-test-file=off --no-coverage-report --vm-host=none --vm-max=2 --vm=${strVm}" .
             (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();

@@ -46,12 +46,12 @@ pgbackrest/test/test.pl --vm=none --dry-run
     P00   INFO: test begin - log level info
     P00   INFO: check version info
     P00   INFO: builds required: bin
---> P00   INFO: 69 tests selected
+--> P00   INFO: 68 tests selected
                 
-    P00   INFO: P1-T01/69 - vm=none, module=common, test=error
-           [filtered 66 lines of output]
-    P00   INFO: P1-T68/69 - vm=none, module=performance, test=type
-    P00   INFO: P1-T69/69 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/68 - vm=none, module=common, test=error
+           [filtered 65 lines of output]
+    P00   INFO: P1-T67/68 - vm=none, module=performance, test=type
+    P00   INFO: P1-T68/68 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -215,7 +215,7 @@ Note that `CFGDEF_SECTION` is not present thereby making this a command-line onl
 
 - `CFGOPT_ONLINE` - the name of the option as defined in **Section 1**
 
-- `CFGDEF_TYPE` - the type of the option. Valid types are: `CFGDEF_TYPE_BOOLEAN`, `CFGDEF_TYPE_FLOAT`, `CFGDEF_TYPE_HASH`, `CFGDEF_TYPE_INTEGER`, `CFGDEF_TYPE_LIST`, `CFGDEF_TYPE_PATH`, `CFGDEF_TYPE_SIZE`, and `CFGDEF_TYPE_STRING`
+- `CFGDEF_TYPE` - the type of the option. Valid types are: `CFGDEF_TYPE_BOOLEAN`, `CFGDEF_TYPE_HASH`, `CFGDEF_TYPE_INTEGER`, `CFGDEF_TYPE_LIST`, `CFGDEF_TYPE_PATH`, `CFGDEF_TYPE_SIZE`, `CFGDEF_TYPE_STRING`, and `CFGDEF_TYPE_TIME`
 
 
 - `CFGDEF_NEGATE` - being a command-line only boolean option, this rule would automatically default to false so it must be defined if the option is negatable. Ask yourself if negation makes sense, for example, would a --dry-run option make sense as --no-dry-run? If the answer is no, then this rule can be omitted as it would automatically default to false. Any boolean option that cannot be negatable, must be a command-line only and not a configuration file option as all configuration boolean options must be negatable.

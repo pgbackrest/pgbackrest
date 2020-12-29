@@ -34,7 +34,7 @@ testRun(void)
     strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
     strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
     hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-    harnessCfgLoad(cfgCmdArchiveGet, argList);
+    harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleLocal, argList);
 
     // Set type since we'll be running local and remote tests here
     cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("repo"));
