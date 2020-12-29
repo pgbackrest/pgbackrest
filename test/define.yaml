@@ -453,8 +453,8 @@ unit:
 
         coverage:
           storage/remote/read: full
-          storage/remote/protocol: full
-          storage/remote/storage: full
+          # storage/remote/protocol: full
+          # storage/remote/storage: full
           storage/remote/write: full
           storage/helper: full
           storage/storage: full
@@ -462,6 +462,8 @@ unit:
         include:
           - storage/read
           - storage/write
+          - storage/remote/protocol
+          - storage/remote/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: s3

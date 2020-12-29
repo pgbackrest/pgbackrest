@@ -28,7 +28,7 @@ cmdLocal(int fdRead, int fdWrite)
         // Configure two retries for local commands
         VariantList *retryInterval = varLstNew();
         varLstAdd(retryInterval, varNewUInt64(0));
-        varLstAdd(retryInterval, varNewUInt64(15000));
+        // !!! varLstAdd(retryInterval, varNewUInt64(15000));
 
         String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u", cfgOptionUInt(cfgOptProcess));
         IoRead *read = ioFdReadNew(name, fdRead, cfgOptionUInt64(cfgOptProtocolTimeout));

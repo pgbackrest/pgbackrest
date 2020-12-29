@@ -249,8 +249,11 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
         {
-            StorageInfo info = storageInterfaceInfoP(
-                driver, pckReadStrP(param), (StorageInfoLevel)pckReadU32P(param), .followLink = pckReadBoolP(param));
+            const String *file = pckReadStrP(param);
+            StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
+            bool followLink = pckReadBoolP(param);
+
+            StorageInfo info = storageInterfaceInfoP(driver, file, level, .followLink = followLink);
 
             PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
             pckWriteBoolP(write, info.exists, .defaultWrite = true);
@@ -272,8 +275,10 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
 
             StorageRemoteProtocolInfoListCallbackData data = {.write = write, .memContext = memContextCurrent()};
 
-            bool result = storageInterfaceInfoListP(
-                driver, pckReadStrP(param), (StorageInfoLevel)pckReadU32P(param), storageRemoteProtocolInfoListCallback, &data);
+            const String *path = pckReadStrP(param);
+            StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
+
+            bool result = storageInterfaceInfoListP(driver, path, level, storageRemoteProtocolInfoListCallback, &data);
 
             pckWriteArrayEndP(write);
             pckWriteBoolP(write, result, .defaultWrite = true);
@@ -282,12 +287,16 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {
+            const String *file = pckReadStrP(param);
+            bool ignoreMissing = pckReadStrP(param);
+            const Variant *limit = jsonToVar(pckReadStrP(param));
+            const Variant *filter = jsonToVar(pckReadStrP(param));
+
             // Create the read object
-            IoRead *fileRead = storageReadIo(
-                storageInterfaceNewReadP(driver, pckReadStrP(param), pckReadStrP(param), .limit = jsonToVar(pckReadStrP(param))));
+            IoRead *fileRead = storageReadIo(storageInterfaceNewReadP(driver, file, ignoreMissing, .limit = limit));
 
             // Set filter group based on passed filters
-            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), jsonToVar(pckReadStrP(param)));
+            storageRemoteFilterGroup(ioReadFilterGroup(fileRead), filter);
 
             // Check if the file exists
             bool exists = ioReadOpen(fileRead);
@@ -327,15 +336,26 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR))
         {
             // Create the write object
+            const String *file = pckReadStrP(param);
+            mode_t modeFile = pckReadU32P(param);
+            mode_t modePath = pckReadU32P(param);
+            const String *user = pckReadStrP(param);
+            const String *group = pckReadStrP(param);
+            time_t timeModified = pckReadTimeP(param);
+            bool createPath = pckReadBoolP(param);
+            bool syncFile = pckReadBoolP(param);
+            bool syncPath = pckReadBoolP(param);
+            bool atomic = pckReadBoolP(param);
+            const Variant *filter = jsonToVar(pckReadStrP(param));
+
             IoWrite *fileWrite = storageWriteIo(
                 storageInterfaceNewWriteP(
-                    driver, pckReadStrP(param), .modeFile = pckReadU32P(param), .modePath = pckReadU32P(param),
-                    .user = pckReadStrP(param), .group = pckReadStrP(param), .timeModified = pckReadTimeP(param),
-                    .createPath = pckReadBoolP(param), .syncFile = pckReadBoolP(param), .syncPath = pckReadBoolP(param),
-                    .atomic = pckReadBoolP(param)));
+                    driver, file, .modeFile = modeFile, .modePath = modePath, .user = user, .group = group,
+                    .timeModified = timeModified, .createPath = createPath, .syncFile = syncFile, .syncPath = syncPath,
+                    .atomic = atomic));
 
             // Set filter group based on passed filters
-            storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), jsonToVar(pckReadStrP(param)));
+            storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), filter);
 
             // Open file
             ioWriteOpen(fileWrite);
@@ -388,23 +408,36 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR))
         {
-            storageInterfacePathCreateP(driver, pckReadStrP(param), pckReadBoolP(param), pckReadBoolP(param), pckReadU32P(param));
+            const String *path = pckReadStrP(param);
+            bool errorOnExists = pckReadBoolP(param);
+            bool noParentCreate = pckReadBoolP(param);
+            mode_t mode = pckReadU32P(param);
+
+            storageInterfacePathCreateP(driver, path, errorOnExists, noParentCreate, mode);
 
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {
-            protocolServerResponse(server, VARBOOL(storageInterfacePathRemoveP(driver, pckReadStrP(param), pckReadBoolP(param))));
+            const String *path = pckReadStrP(param);
+            bool recurse = pckReadBoolP(param);
+
+            protocolServerResponse(server, VARBOOL(storageInterfacePathRemoveP(driver, path, recurse)));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
         {
-            storageInterfacePathSyncP(driver, pckReadStrP(param));
+            const String *path = pckReadStrP(param);
+
+            storageInterfacePathSyncP(driver, path);
 
             protocolServerResponse(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_REMOVE_STR))
         {
-            storageInterfaceRemoveP(driver, pckReadStrP(param), .errorOnMissing = pckReadBoolP(param));
+            const String *file = pckReadStrP(param);
+            bool errorOnMissing = pckReadBoolP(param);
+
+            storageInterfaceRemoveP(driver, file, .errorOnMissing = errorOnMissing);
 
             protocolServerResponse(server, NULL);
         }

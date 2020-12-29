@@ -2430,7 +2430,7 @@ testRun(void)
             "P00 DETAIL: sync path '{[path]}/pg/global'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // Keep this test at the end since is corrupts the repo
+        // Keep this test at the end since it corrupts the repo
         TEST_TITLE("remove a repo file so a restore job errors");
 
         storageRemoveP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .errorOnMissing = true);
@@ -2444,6 +2444,8 @@ testRun(void)
             "raised from local-1 protocol: unable to open missing file"
                 " '%s/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read",
             testPath());
+
+        protocolFree();
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
