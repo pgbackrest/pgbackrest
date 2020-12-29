@@ -294,7 +294,7 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
             ASSERT(param != NULL);
 
             const String *file = pckReadStrP(param);
-            bool ignoreMissing = pckReadStrP(param);
+            bool ignoreMissing = pckReadBoolP(param);
             const Variant *limit = jsonToVar(pckReadStrP(param));
             const Variant *filter = jsonToVar(pckReadStrP(param));
 
