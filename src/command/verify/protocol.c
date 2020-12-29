@@ -28,7 +28,6 @@ verifyProtocol(const String *command, PackRead *param, ProtocolServer *server)
     FUNCTION_LOG_END();
 
     ASSERT(command != NULL);
-    ASSERT(param != NULL);
 
     // Attempt to satisfy the request -- we may get requests that are meant for other handlers
     bool found = true;
@@ -38,6 +37,8 @@ verifyProtocol(const String *command, PackRead *param, ProtocolServer *server)
         // Process any commands received that are for this handler
         if (strEq(command, PROTOCOL_COMMAND_VERIFY_FILE_STR))
         {
+            ASSERT(param != NULL);
+
             const String *filePathName = pckReadStrP(param);
             const String *fileChecksum = pckReadStrP(param);
             uint64_t fileSize = pckReadU64P(param);

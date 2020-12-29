@@ -39,7 +39,6 @@ dbProtocol(const String *command, PackRead *param, ProtocolServer *server)
     FUNCTION_LOG_END();
 
     ASSERT(command != NULL);
-    ASSERT(param != NULL);
 
     // Attempt to satisfy the request -- we may get requests that are meant for other handlers
     bool found = true;
@@ -78,6 +77,8 @@ dbProtocol(const String *command, PackRead *param, ProtocolServer *server)
         }
         else if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR) || strEq(command, PROTOCOL_COMMAND_DB_CLOSE_STR))
         {
+            ASSERT(param != NULL);
+
             PgClient *pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param));
 
             if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR))

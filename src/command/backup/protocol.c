@@ -28,7 +28,6 @@ backupProtocol(const String *command, PackRead *param, ProtocolServer *server)
     FUNCTION_LOG_END();
 
     ASSERT(command != NULL);
-    ASSERT(param != NULL);
 
     // Attempt to satisfy the request -- we may get requests that are meant for other handlers
     bool found = true;
@@ -37,6 +36,8 @@ backupProtocol(const String *command, PackRead *param, ProtocolServer *server)
     {
         if (strEq(command, PROTOCOL_COMMAND_BACKUP_FILE_STR))
         {
+            ASSERT(param != NULL);
+
             // Backup the file
             const String *pgFile = pckReadStrP(param);
             bool pgFileIgnoreMissing = pckReadBoolP(param);

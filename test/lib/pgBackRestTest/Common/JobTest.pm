@@ -264,7 +264,8 @@ sub run
                 "make -j $self->{iBuildMax} -s 2>&1 &&" .
                 # Test with valgrind when requested
                 ($self->{bValgrindUnit} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
-                    ' valgrind -q --gen-suppressions=all ' .
+                    ' valgrind -q --gen-suppressions=all' .
+                    ($self->{oTest}->{&TEST_VM} eq VM_F32 ? ' --exit-on-first-error=yes' : '') .
                     ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
                     " --leak-check=full --leak-resolution=high --error-exitcode=25" : '') .
                 " ./test.bin 2>&1'";

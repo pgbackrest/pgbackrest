@@ -249,6 +249,8 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
         {
+            ASSERT(param != NULL);
+
             const String *file = pckReadStrP(param);
             StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
             bool followLink = pckReadBoolP(param);
@@ -270,6 +272,8 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR))
         {
+            ASSERT(param != NULL);
+
             PackWrite *write = pckWriteNew(protocolServerIoWrite(server));
             pckWriteArrayBeginP(write);
 
@@ -287,6 +291,8 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR))
         {
+            ASSERT(param != NULL);
+
             const String *file = pckReadStrP(param);
             bool ignoreMissing = pckReadStrP(param);
             const Variant *limit = jsonToVar(pckReadStrP(param));
@@ -335,6 +341,8 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR))
         {
+            ASSERT(param != NULL);
+
             // Create the write object
             const String *file = pckReadStrP(param);
             mode_t modeFile = pckReadU32P(param);
@@ -408,6 +416,8 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR))
         {
+            ASSERT(param != NULL);
+
             const String *path = pckReadStrP(param);
             bool errorOnExists = pckReadBoolP(param);
             bool noParentCreate = pckReadBoolP(param);
@@ -419,6 +429,8 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {
+            ASSERT(param != NULL);
+
             const String *path = pckReadStrP(param);
             bool recurse = pckReadBoolP(param);
 
@@ -426,6 +438,8 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
         {
+            ASSERT(param != NULL);
+
             const String *path = pckReadStrP(param);
 
             storageInterfacePathSyncP(driver, path);
@@ -434,6 +448,8 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_REMOVE_STR))
         {
+            ASSERT(param != NULL);
+
             const String *file = pckReadStrP(param);
             bool errorOnMissing = pckReadBoolP(param);
 

@@ -28,7 +28,6 @@ restoreProtocol(const String *command, PackRead *param, ProtocolServer *server)
     FUNCTION_LOG_END();
 
     ASSERT(command != NULL);
-    ASSERT(param != NULL);
 
     // Attempt to satisfy the request -- we may get requests that are meant for other handlers
     bool found = true;
@@ -37,6 +36,8 @@ restoreProtocol(const String *command, PackRead *param, ProtocolServer *server)
     {
         if (strEq(command, PROTOCOL_COMMAND_RESTORE_FILE_STR))
         {
+            ASSERT(param != NULL);
+
             const String *repoFile = pckReadStrP(param);
             const String *repoFileReference = pckReadStrP(param);
             CompressType repoFileCompressType = (CompressType)pckReadU32P(param);

@@ -479,6 +479,9 @@ PackWrite *pckWriteEnd(PackWrite *this);
 /***********************************************************************************************************************************
 Write Getters/Setters
 ***********************************************************************************************************************************/
+// Is the pack empty? This function is only valid after pckWriteEndP() has been called.
+bool pckWriteEmpty(const PackWrite *this);
+
 // Get buffer the pack is writing to (returns NULL if pckWriteNewBuf() was not used to construct the object)
 const Buffer *pckWriteBuf(const PackWrite *this);
 

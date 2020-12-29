@@ -683,6 +683,8 @@ testRun(void)
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        protocolFree();
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

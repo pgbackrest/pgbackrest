@@ -28,7 +28,6 @@ archivePushProtocol(const String *command, PackRead *param, ProtocolServer *serv
     FUNCTION_LOG_END();
 
     ASSERT(command != NULL);
-    ASSERT(param != NULL);
 
     // Attempt to satisfy the request -- we may get requests that are meant for other handlers
     bool found = true;
@@ -37,6 +36,8 @@ archivePushProtocol(const String *command, PackRead *param, ProtocolServer *serv
     {
         if (strEq(command, PROTOCOL_COMMAND_ARCHIVE_PUSH_STR))
         {
+            ASSERT(param != NULL);
+
             const String *walSource = pckReadStrP(param);
             const String *archiveId = pckReadStrP(param);
             unsigned int pgVersion = pckReadU32P(param);

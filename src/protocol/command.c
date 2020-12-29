@@ -73,13 +73,13 @@ protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
 
     pckWriteStrP(commandPack, this->command);
 
-    const Buffer *paramPack = pckWriteBuf(this->pack);
-
-    if (bufUsed(paramPack) > 1)
-        pckWriteBinP(commandPack, paramPack);
+    // Only write params if there were any
+    if (!pckWriteEmpty(this->pack))
+        pckWriteBinP(commandPack, pckWriteBuf(this->pack));
 
     pckWriteEndP(commandPack);
 
+    // Flush to send command immediately
     ioWriteFlush(write);
 
     FUNCTION_TEST_RETURN_VOID();
