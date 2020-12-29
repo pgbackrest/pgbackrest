@@ -19,12 +19,17 @@
 #     1) Define the command roles for a command. CFGCMD_ROLE_DEFAULT is valid for all commands and is therefore added
 #        programmatically.
 #
-#     2) Define the command roles for an option. CFGCMD_ROLE_DEFAULT must be defined explictly in this case. If command roles are
-#        defined for the option they override the default of all roles for the command.
+#     2) Define the command roles for an option. If not defined, the option will be valid for all roles of all commands for which it
+#        is valid. If command roles are defined for the option, then they override the roles for all commands for which the option
+#        is valid. CFGCMD_ROLE_DEFAULT must be defined explicitly in this case. For example, if an option is only valid for the
+#        default role and the async role for each command then CFGDEF_COMMAND_ROLE must list the CFGCMD_ROLE_DEFAULT and
+#        CFGCMD_ROLE_ASYNC, meaning each command has a default role so the option is valid for that role and for commands that have
+#        the async role, it is also valid for the async role of those commands.
 #
-#     3) Define the command roles for an option command override. CFGCMD_ROLE_DEFAULT must be defined explictly in this case. If
-#        command roles are defined for the option command override they override command roles defined for the option and the
-#        default of all roles for the command.
+#     3) Define the command roles for an option command override.  If not defined, the option will be valid for all roles of the
+#        command or the roles specified by rule 2) above. CFGCMD_ROLE_DEFAULT must be defined explicitly in this case. If command
+#        roles are defined for the option command override, then they override command roles defined for the option (rule 2) above)
+#        and all roles defined for the command (rule 1) above).
 #
 # CFGDEF_REQUIRED:
 #   In global section:
@@ -111,14 +116,23 @@ use constant CFGCMD_VERIFY                                          => 'verify';
 use constant CFGCMD_VERSION                                         => 'version';
 
 ####################################################################################################################################
-# Command role constants - roles allowed for each command
+# Command role constants - roles allowed for each command. Commands may have multiple processes that work together to implement
+# their functionality.  These roles allow each process to know what it is supposed to do.
 ####################################################################################################################################
+# Called directly by the user. This is the main part of the command that may or may not spawn other command roles.
 use constant CFGCMD_ROLE_DEFAULT                                    => 'default';
     push @EXPORT, qw(CFGCMD_ROLE_DEFAULT);
+
+# Async worker that is spawned so the main process can return a result while work continues. An async worker may spawn local or
+# remote workers.
 use constant CFGCMD_ROLE_ASYNC                                      => 'async';
     push @EXPORT, qw(CFGCMD_ROLE_ASYNC);
+
+# Local worker for parallelizing jobs. A local work may spawn a remote worker.
 use constant CFGCMD_ROLE_LOCAL                                      => 'local';
     push @EXPORT, qw(CFGCMD_ROLE_LOCAL);
+
+# Remote worker for accessing resources on another host
 use constant CFGCMD_ROLE_REMOTE                                     => 'remote';
     push @EXPORT, qw(CFGCMD_ROLE_REMOTE);
 
