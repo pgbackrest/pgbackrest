@@ -20,11 +20,11 @@
 #        programmatically.
 #
 #     2) Define the command roles for an option. CFGCMD_ROLE_DEFAULT must be defined explictly in this case. If command roles are
-#        defined for the option they override the default of all roles in the command.
+#        defined for the option they override the default of all roles for the command.
 #
 #     3) Define the command roles for an option command override. CFGCMD_ROLE_DEFAULT must be defined explictly in this case. If
 #        command roles are defined for the option command override they override command roles defined for the option and the
-#        default of all roles in the command.
+#        default of all roles for the command.
 #
 # CFGDEF_REQUIRED:
 #   In global section:
@@ -3454,7 +3454,7 @@ foreach my $strOption (sort(keys(%hConfigDefine)))
     # Generate valid command roles for each command in the option
     foreach my $strCommand (sort(keys(%{$rhOption->{&CFGDEF_COMMAND}})))
     {
-        # If command roles are defined in the option command then check that they are valid
+        # If command roles are defined in the option command override then check that they are valid
         if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}))
         {
             foreach my $strCommandRole (sort(keys(%{$rhOption->{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}})))
