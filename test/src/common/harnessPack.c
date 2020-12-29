@@ -84,6 +84,12 @@ String *hrnPackToStr(PackRead *read)
                 break;
             }
 
+            case pckTypePack:
+            {
+                THROW(AssertError, "NOT YET IMPLEMENTED");
+                break;
+            }
+
             case pckTypePtr:
             {
                 strCatFmt(result, "%p", pckReadPtrP(read, .id = id));

@@ -182,6 +182,11 @@ static const PackTypeData packTypeData[] =
         .valueMultiBit = true,
         .name = STRDEF("u64"),
     },
+    {
+        .type = pckTypePack,
+        .size = true,
+        .name = STRDEF("bin"),
+    },
 };
 
 /***********************************************************************************************************************************
@@ -1550,6 +1555,36 @@ pckWriteObjEnd(PackWrite *this)
 
 /**********************************************************************************************************************************/
 PackWrite *
+pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_WRITE, this);
+        FUNCTION_TEST_PARAM(PACK_WRITE, value);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!pckWriteDefaultNull(this, false, value == NULL))
+    {
+        ASSERT(value != NULL);
+
+        // Write pack size
+        pckWriteTag(this, pckTypePack, param.id, 0);
+
+        // Write pack data
+        const Buffer *packBuffer = pckWriteBuf(value);
+
+        pckWriteUInt64Internal(this, bufUsed(packBuffer));
+        pckWriteBuffer(this, packBuffer);
+    }
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+PackWrite *
 pckWritePtr(PackWrite *this, const void *value, PckWritePtrParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -1710,6 +1745,7 @@ pckWriteBuf(const PackWrite *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->tagStackTop == NULL);
 
     FUNCTION_TEST_RETURN(this->buffer);
 }

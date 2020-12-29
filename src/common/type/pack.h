@@ -125,6 +125,7 @@ typedef enum
     pckTypeTime,
     pckTypeU32,
     pckTypeU64,
+    pckTypePack,
 } PackType;
 
 /***********************************************************************************************************************************
@@ -401,6 +402,19 @@ PackWrite *pckWriteObjBegin(PackWrite *this, PackIdParam param);
 
 PackWrite *pckWriteObjEnd(PackWrite *this);
 
+// Write pack
+typedef struct PckWritePackParam
+{
+    VAR_PARAM_HEADER;
+    bool defaultWrite;
+    unsigned int id;
+} PckWritePackParam;
+
+#define pckWritePackP(this, value, ...)                                                                                            \
+    pckWritepack(this, value, (PckWritePackParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackWrite *pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param);
+
 // Write pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 typedef struct PckWritePtrParam
 {
@@ -482,7 +496,8 @@ Write Getters/Setters
 // Is the pack empty? This function is only valid after pckWriteEndP() has been called.
 bool pckWriteEmpty(const PackWrite *this);
 
-// Get buffer the pack is writing to (returns NULL if pckWriteNewBuf() was not used to construct the object)
+// Get buffer the pack is writing to (returns NULL if pckWriteNewBuf() was not used to construct the object). This function is only
+// valid after pckWriteEndP() has been called.
 const Buffer *pckWriteBuf(const PackWrite *this);
 
 /***********************************************************************************************************************************
