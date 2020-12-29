@@ -255,54 +255,63 @@ testRun(void)
             "null {link, d=../, u=0, g=0}\n",
             "check result");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("check protocol function directly with missing path/file");
-        //
-        // VariantList *paramList = varLstNew();
-        // varLstAdd(paramList, varNewStrZ(BOGUS_STR));
-        // varLstAdd(paramList, varNewUInt(storageInfoLevelBasic));
-        // varLstAdd(paramList, varNewBool(false));
-        //
-        // TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        // TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:false", "check result");
-        //
-        // bufUsedSet(serverWrite, 0);
-        //
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("check protocol function directly with a file (basic level)");
-        //
-        // // Do these tests against pg for coverage.  We're not really going to get a pg remote here because the remote for this host
-        // // id has already been created.  This will just test that the pg storage is selected to provide coverage.
-        // cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
-        //
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo/test")));
-        // varLstAdd(paramList, varNewUInt(storageInfoLevelBasic));
-        // varLstAdd(paramList, varNewBool(false));
-        //
-        // TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        // TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 2:obj:{2:time:1555160001, 3:u64:6}", "check result");
-        //
-        // bufUsedSet(serverWrite, 0);
-        //
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("check protocol function directly with a file (detail level)");
-        //
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo/test")));
-        // varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
-        // varLstAdd(paramList, varNewBool(false));
-        //
-        // TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
-        // TEST_RESULT_STR_Z(
-        //     hrnPackBufToStr(serverWrite),
-        //     hrnReplaceKey(
-        //         "1:bool:true"
-        //         ", 2:obj:{2:time:1555160001, 3:u64:6, 4:u32:416, 5:u32:{[user-id]}, 7:str:{[user]}, 8:u32:{[group-id]}"
-        //             ", 10:str:{[group]}}"),
-        //     "check result");
-        //
-        // bufUsedSet(serverWrite, 0);
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly with missing path/file");
+
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, STRDEF(BOGUS_STR));
+        pckWriteU32P(paramList, storageInfoLevelBasic);
+        pckWriteBoolP(paramList, false);
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol list");
+        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:false", "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly with a file (basic level)");
+
+        // Do these tests against pg for coverage.  We're not really going to get a pg remote here because the remote for this host
+        // id has already been created.  This will just test that the pg storage is selected to provide coverage.
+        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
+
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, STR(hrnReplaceKey("{[path]}/repo/test")));
+        pckWriteU32P(paramList, storageInfoLevelBasic);
+        pckWriteBoolP(paramList, false);
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol list");
+        TEST_RESULT_STR_Z(hrnPackBufToStr(serverWrite), "1:bool:true, 2:obj:{2:time:1555160001, 3:u64:6}", "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly with a file (detail level)");
+
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, STR(hrnReplaceKey("{[path]}/repo/test")));
+        pckWriteU32P(paramList, storageInfoLevelDetail);
+        pckWriteBoolP(paramList, false);
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol list");
+        TEST_RESULT_STR_Z(
+            hrnPackBufToStr(serverWrite),
+            hrnReplaceKey(
+                "1:bool:true"
+                ", 2:obj:{2:time:1555160001, 3:u64:6, 4:u32:416, 5:u32:{[user-id]}, 7:str:{[user]}, 8:u32:{[group-id]}"
+                    ", 10:str:{[group]}}"),
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -346,27 +355,30 @@ testRun(void)
                 "test {file, s=6, m=0640, t=1555160001, u={[user]}, g={[group]}}\n"),
             "check content");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("check protocol function directly with a file");
-        //
-        // VariantList *paramList = varLstNew();
-        // varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
-        // varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
-        //
-        // TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
-        // TEST_RESULT_STR_Z(
-        //     hrnPackBufToStr(serverWrite),
-        //     hrnReplaceKey(
-        //         "1:array:"
-        //         "["
-        //             "1:obj:{1:str:., 2:u32:1, 3:time:1555160000, 4:u32:488, 5:u32:{[user-id]}, 7:str:{[user]}, 8:u32:{[group-id]}"
-        //                 ", 10:str:{[group]}}"
-        //             ", 2:obj:{1:str:test, 3:time:1, 4:u64:6, 5:u32:416}"
-        //         "]"
-        //         ", 2:bool:true"),
-        //     "check result");
-        //
-        // bufUsedSet(serverWrite, 0);
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly with a file");
+
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, STR(hrnReplaceKey("{[path]}/repo")));
+        pckWriteU32P(paramList, storageInfoLevelDetail);
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "call protocol");
+        TEST_RESULT_STR_Z(
+            hrnPackBufToStr(serverWrite),
+            hrnReplaceKey(
+                "1:array:"
+                "["
+                    "1:obj:{1:str:., 2:u32:1, 3:time:1555160000, 4:u32:488, 5:u32:{[user-id]}, 7:str:{[user]}, 8:u32:{[group-id]}"
+                        ", 10:str:{[group]}}"
+                    ", 2:obj:{1:str:test, 3:time:1, 4:u64:6, 5:u32:416}"
+                "]"
+                ", 2:bool:true"),
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -424,96 +436,105 @@ testRun(void)
         TEST_ERROR(
             storageRemoteProtocolBlockSize(strNew("bogus")), ProtocolError, "'bogus' is not a valid block size message");
 
-        // // Check protocol function directly (file missing)
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // VariantList *paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNew("missing.txt")));
-        // varLstAdd(paramList, varNewBool(true));
-        // varLstAdd(paramList, NULL);
-        // varLstAdd(paramList, varNewVarLst(varLstNew()));
-        //
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true,
-        //     "protocol open read (missing)");
-        // TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
-        //
-        // bufUsedSet(serverWrite, 0);
-        //
-        // // Check protocol function directly (file exists)
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA!"));
-        // ioBufferSizeSet(4);
-        //
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
-        // varLstAdd(paramList, varNewBool(false));
-        // varLstAdd(paramList, varNewUInt64(8));
-        //
-        // // Create filters to test filter logic
-        // IoFilterGroup *filterGroup = ioFilterGroupNew();
-        // ioFilterGroupAdd(filterGroup, ioSizeNew());
-        // ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
-        // ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
-        // ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
-        // ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
-        // ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
-        // ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeGz));
-        // varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
-        //
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read");
-        // TEST_RESULT_STR_Z(
-        //     strNewBuf(serverWrite),
-        //     "{\"out\":true}\n"
-        //         "BRBLOCK4\n"
-        //         "TESTBRBLOCK4\n"
-        //         "DATABRBLOCK0\n"
-        //         "{\"out\":{\"buffer\":null,\"cipherBlock\":null,\"gzCompress\":null,\"gzDecompress\":null"
-        //             ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"pageChecksum\":{\"align\":false,\"valid\":false}"
-        //             ",\"size\":8}}\n",
-        //     "check result");
-        //
-        // bufUsedSet(serverWrite, 0);
-        // ioBufferSizeSet(8192);
-        //
-        // // Check protocol function directly (file exists but all data goes to sink)
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA"));
-        //
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
-        // varLstAdd(paramList, varNewBool(false));
-        // varLstAdd(paramList, NULL);
-        //
-        // // Create filters to test filter logic
-        // filterGroup = ioFilterGroupNew();
-        // ioFilterGroupAdd(filterGroup, ioSizeNew());
-        // ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
-        // ioFilterGroupAdd(filterGroup, ioSinkNew());
-        // varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
-        //
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read (sink)");
-        // TEST_RESULT_STR_Z(
-        //     strNewBuf(serverWrite),
-        //     "{\"out\":true}\n"
-        //         "BRBLOCK0\n"
-        //         "{\"out\":{\"buffer\":null,\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"sink\":null,\"size\":8}}\n",
-        //     "check result");
-        //
-        // bufUsedSet(serverWrite, 0);
-        //
-        // // Check for error on a bogus filter
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
-        // varLstAdd(paramList, varNewBool(false));
-        // varLstAdd(paramList, NULL);
-        // varLstAdd(paramList, varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvAdd(kvNew(), varNewStrZ("bogus"), NULL)))));
-        //
-        // TEST_ERROR(
-        //     storageRemoteProtocol(
-        //         PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), AssertError, "unable to add filter 'bogus'");
+        // Check protocol function directly (file missing)
+        // -------------------------------------------------------------------------------------------------------------------------
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, STRDEF("missing.txt"));
+        pckWriteBoolP(paramList, true);
+        pckWriteStrP(paramList, NULL_STR);
+        pckWriteStrP(paramList, jsonFromVar(varNewVarLst(varLstNew())));
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol open read (missing)");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // Check protocol function directly (file exists)
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA!"));
+        ioBufferSizeSet(4);
+
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/test.txt", testPath()));
+        pckWriteBoolP(paramList, false);
+        pckWriteStrP(paramList, STRDEF("8"));
+
+        // Create filters to test filter logic
+        IoFilterGroup *filterGroup = ioFilterGroupNew();
+        ioFilterGroupAdd(filterGroup, ioSizeNew());
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
+        ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeGz));
+
+        pckWriteStrP(paramList, jsonFromVar(ioFilterGroupParamAll(filterGroup)));
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol open read");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
+            "{\"out\":true}\n"
+                "BRBLOCK4\n"
+                "TESTBRBLOCK4\n"
+                "DATABRBLOCK0\n"
+                "{\"out\":{\"buffer\":null,\"cipherBlock\":null,\"gzCompress\":null,\"gzDecompress\":null"
+                    ",\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"pageChecksum\":{\"align\":false,\"valid\":false}"
+                    ",\"size\":8}}\n",
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+        ioBufferSizeSet(8192);
+
+        // Check protocol function directly (file exists but all data goes to sink)
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), BUFSTRDEF("TESTDATA"));
+
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/test.txt", testPath()));
+        pckWriteBoolP(paramList, false);
+        pckWriteStrP(paramList, NULL_STR);
+
+        // Create filters to test filter logic
+        filterGroup = ioFilterGroupNew();
+        ioFilterGroupAdd(filterGroup, ioSizeNew());
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioFilterGroupAdd(filterGroup, ioSinkNew());
+
+        pckWriteStrP(paramList, jsonFromVar(ioFilterGroupParamAll(filterGroup)));
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol open read (sink)");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
+            "{\"out\":true}\n"
+                "BRBLOCK0\n"
+                "{\"out\":{\"buffer\":null,\"hash\":\"bbbcf2c59433f68f22376cd2439d6cd309378df6\",\"sink\":null,\"size\":8}}\n",
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // Check for error on a bogus filter
+        // -------------------------------------------------------------------------------------------------------------------------
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/test.txt", testPath()));
+        pckWriteBoolP(paramList, false);
+        pckWriteStrP(paramList, NULL_STR);
+        pckWriteStrP(
+            paramList, jsonFromVar(varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvAdd(kvNew(), varNewStrZ("bogus"), NULL))))));
+        pckWriteEndP(paramList);
+
+        TEST_ERROR(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, pckReadNewBuf(pckWriteBuf(paramList)), server),
+            AssertError, "unable to add filter 'bogus'");
     }
 
     // *****************************************************************************************************************************
@@ -582,77 +603,81 @@ testRun(void)
             ((StorageWriteRemote *)write->driver)->protocolWriteBytes < bufSize(contentBuf), true,
             "    check compressed write size");
 
-        // // Check protocol function directly (complete write)
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // ioBufferSizeSet(10);
-        //
-        // VariantList *paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test3.txt", testPath())));
-        // varLstAdd(paramList, varNewUInt64(0640));
-        // varLstAdd(paramList, varNewUInt64(0750));
-        // varLstAdd(paramList, NULL);
-        // varLstAdd(paramList, NULL);
-        // varLstAdd(paramList, varNewInt(0));
-        // varLstAdd(paramList, varNewBool(true));
-        // varLstAdd(paramList, varNewBool(true));
-        // varLstAdd(paramList, varNewBool(true));
-        // varLstAdd(paramList, varNewBool(true));
-        // varLstAdd(paramList, ioFilterGroupParamAll(ioFilterGroupAdd(ioFilterGroupNew(), ioSizeNew())));
-        //
-        // // Generate input (includes the input for the test below -- need a way to reset this for better testing)
-        // bufCat(
-        //     serverRead,
-        //     BUFSTRDEF(
-        //         "BRBLOCK3\n"
-        //         "ABCBRBLOCK15\n"
-        //         "123456789012345BRBLOCK0\n"
-        //         "BRBLOCK3\n"
-        //         "ABCBRBLOCK-1\n"));
-        //
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
-        // TEST_RESULT_STR_Z(
-        //     strNewBuf(serverWrite),
-        //     "{}\n"
-        //     "{\"out\":{\"buffer\":null,\"size\":18}}\n",
-        //     "check result");
-        //
-        // TEST_RESULT_STR_Z(
-        //     strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test3.txt")))), "ABC123456789012345",
-        //     "check file");
-        //
-        // bufUsedSet(serverWrite, 0);
-        //
-        // // Check protocol function directly (free before write is closed)
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // ioBufferSizeSet(10);
-        //
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test4.txt", testPath())));
-        // varLstAdd(paramList, varNewUInt64(0640));
-        // varLstAdd(paramList, varNewUInt64(0750));
-        // varLstAdd(paramList, NULL);
-        // varLstAdd(paramList, NULL);
-        // varLstAdd(paramList, varNewInt(0));
-        // varLstAdd(paramList, varNewBool(true));
-        // varLstAdd(paramList, varNewBool(true));
-        // varLstAdd(paramList, varNewBool(true));
-        // varLstAdd(paramList, varNewBool(true));
-        // varLstAdd(paramList, varNewVarLst(varLstNew()));
-        //
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
-        // TEST_RESULT_STR_Z(
-        //     strNewBuf(serverWrite),
-        //     "{}\n"
-        //     "{}\n",
-        //     "check result");
-        //
-        // bufUsedSet(serverWrite, 0);
-        // ioBufferSizeSet(8192);
-        //
-        // TEST_RESULT_STR_Z(
-        //     strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test4.txt.pgbackrest.tmp")))), "", "check file");
+        // Check protocol function directly (complete write)
+        // -------------------------------------------------------------------------------------------------------------------------
+        ioBufferSizeSet(10);
+
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/test3.txt", testPath()));
+        pckWriteU32P(paramList, 0640);
+        pckWriteU32P(paramList, 0750);
+        pckWriteStrP(paramList, NULL);
+        pckWriteStrP(paramList, NULL);
+        pckWriteTimeP(paramList, 0);
+        pckWriteBoolP(paramList, true);
+        pckWriteBoolP(paramList, true);
+        pckWriteBoolP(paramList, true);
+        pckWriteBoolP(paramList, true);
+        pckWriteStrP(paramList, jsonFromVar(ioFilterGroupParamAll(ioFilterGroupAdd(ioFilterGroupNew(), ioSizeNew()))));
+        pckWriteEndP(paramList);
+
+        // Generate input (includes the input for the test below -- need a way to reset this for better testing)
+        bufCat(
+            serverRead,
+            BUFSTRDEF(
+                "BRBLOCK3\n"
+                "ABCBRBLOCK15\n"
+                "123456789012345BRBLOCK0\n"
+                "BRBLOCK3\n"
+                "ABCBRBLOCK-1\n"));
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol open write");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
+            "{}\n"
+            "{\"out\":{\"buffer\":null,\"size\":18}}\n",
+            "check result");
+
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test3.txt")))), "ABC123456789012345",
+            "check file");
+
+        bufUsedSet(serverWrite, 0);
+
+        // Check protocol function directly (free before write is closed)
+        // -------------------------------------------------------------------------------------------------------------------------
+        ioBufferSizeSet(10);
+
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/test4.txt", testPath()));
+        pckWriteU32P(paramList, 0640);
+        pckWriteU32P(paramList, 0750);
+        pckWriteStrP(paramList, NULL);
+        pckWriteStrP(paramList, NULL);
+        pckWriteTimeP(paramList, 0);
+        pckWriteBoolP(paramList, true);
+        pckWriteBoolP(paramList, true);
+        pckWriteBoolP(paramList, true);
+        pckWriteBoolP(paramList, true);
+        pckWriteStrP(paramList, jsonFromVar(varNewVarLst(varLstNew())));
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol open write");
+        TEST_RESULT_STR_Z(
+            strNewBuf(serverWrite),
+            "{}\n"
+            "{}\n",
+            "check result");
+
+        bufUsedSet(serverWrite, 0);
+        ioBufferSizeSet(8192);
+
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageTest, strNew("repo/test4.txt.pgbackrest.tmp")))), "", "check file");
     }
 
     // *****************************************************************************************************************************
@@ -671,46 +696,54 @@ testRun(void)
         TEST_RESULT_BOOL(info.exists, true, "  path exists");
         TEST_RESULT_INT(info.mode, STORAGE_MODE_PATH_DEFAULT, "  mode is default");
 
-        // // Check protocol function directly
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // VariantList *paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
-        // varLstAdd(paramList, varNewBool(true));     // errorOnExists
-        // varLstAdd(paramList, varNewBool(true));     // noParentCreate (true=error if it does not have a parent, false=create parent)
-        // varLstAdd(paramList, varNewUInt64(0));      // path mode
-        //
-        // TEST_ERROR_FMT(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, paramList, server), PathCreateError,
-        //     "raised from remote-0 protocol on 'localhost': unable to create path '%s/repo/testpath': [17] File exists",
-        //     testPath());
-        //
-        // // Error if parent path not exist
-        // path = strNew("parent/testpath");
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
-        // varLstAdd(paramList, varNewBool(false));    // errorOnExists
-        // varLstAdd(paramList, varNewBool(true));     // noParentCreate (true=error if it does not have a parent, false=create parent)
-        // varLstAdd(paramList, varNewUInt64(0));      // path mode
-        //
-        // TEST_ERROR_FMT(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, paramList, server), PathCreateError,
-        //     "raised from remote-0 protocol on 'localhost': unable to create path '%s/repo/parent/testpath': "
-        //     "[2] No such file or directory", testPath());
-        //
-        // // Create parent and path with default mode
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
-        // varLstAdd(paramList, varNewBool(true));     // errorOnExists
-        // varLstAdd(paramList, varNewBool(false));    // noParentCreate (true=error if it does not have a parent, false=create parent)
-        // varLstAdd(paramList, varNewUInt64(0777));   // path mode
-        //
-        // TEST_RESULT_VOID(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, paramList, server), "create parent and path");
-        // TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strZ(path))), "  get path info");
-        // TEST_RESULT_BOOL(info.exists, true, "  path exists");
-        // TEST_RESULT_INT(info.mode, 0777, "  mode is set");
-        // TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
-        // bufUsedSet(serverWrite, 0);
+        // Check protocol function directly
+        // -------------------------------------------------------------------------------------------------------------------------
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/%s", testPath(), strZ(path)));
+        pckWriteBoolP(paramList, true);             // errorOnExists
+        pckWriteBoolP(paramList, true);             // noParentCreate (true=error if it does not have a parent, false=create parent)
+        pckWriteU32P(paramList, 0);                 // path mode
+        pckWriteEndP(paramList);
+
+        TEST_ERROR_FMT(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server),
+            PathCreateError,
+            "raised from remote-0 protocol on 'localhost': unable to create path '%s/repo/testpath': [17] File exists",
+            testPath());
+
+        // Error if parent path does not exist
+        path = strNew("parent/testpath");
+
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/%s", testPath(), strZ(path)));
+        pckWriteBoolP(paramList, false);            // errorOnExists
+        pckWriteBoolP(paramList, true);             // noParentCreate (true=error if it does not have a parent, false=create parent)
+        pckWriteU32P(paramList, 0);                 // path mode
+        pckWriteEndP(paramList);
+
+        TEST_ERROR_FMT(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server),
+            PathCreateError,
+            "raised from remote-0 protocol on 'localhost': unable to create path '%s/repo/parent/testpath': "
+                "[2] No such file or directory",
+            testPath());
+
+        // Create parent and path with default mode
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/%s", testPath(), strZ(path)));
+        pckWriteBoolP(paramList, true);             // errorOnExists
+        pckWriteBoolP(paramList, false);            // noParentCreate (true=error if it does not have a parent, false=create parent)
+        pckWriteU32P(paramList, 0777);              // path mode
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_VOID(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server),
+            "create parent and path");
+        TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strZ(path))), "  get path info");
+        TEST_RESULT_BOOL(info.exists, true, "  path exists");
+        TEST_RESULT_INT(info.mode, 0777, "  mode is set");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
+        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -728,30 +761,31 @@ testRun(void)
         TEST_RESULT_VOID(storagePathRemoveP(storageRemote, path), "remote remove path");
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "path removed");
 
-        // // Check protocol function directly
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // VariantList *paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
-        // varLstAdd(paramList, varNewBool(true));    // recurse
-        //
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), true,
-        //     "  protocol path remove missing");
-        // TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "  check result");
-        //
-        // bufUsedSet(serverWrite, 0);
-        //
-        // // Write the path and file to the repo and test the protocol
-        // TEST_RESULT_VOID(
-        //     storagePutP(storageNewWriteP(storageRemote, strNewFmt("%s/file.txt", strZ(path))), BUFSTRDEF("TEST")),
-        //     "new path and file");
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), true,
-        //     "  protocol path recurse remove");
-        // TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "  recurse path removed");
-        // TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "  check result");
-        //
-        // bufUsedSet(serverWrite, 0);
+        // Check protocol function directly
+        // -------------------------------------------------------------------------------------------------------------------------
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/%s", testPath(), strZ(path)));
+        pckWriteBoolP(paramList, true);             // recurse
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "  protocol path remove missing");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "  check result");
+
+        bufUsedSet(serverWrite, 0);
+
+        // Write the path and file to the repo and test the protocol
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRemote, strNewFmt("%s/file.txt", strZ(path))), BUFSTRDEF("TEST")),
+            "new path and file");
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "  protocol path recurse remove");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "  recurse path removed");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "  check result");
+
+        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -771,35 +805,39 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageRemote, file), "remote remove file");
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strZ(file))), false, "file removed");
 
-        // // Check protocol function directly
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // VariantList *paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(file))));
-        // varLstAdd(paramList, varNewBool(true));
-        //
-        // TEST_ERROR_FMT(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, paramList, server), FileRemoveError,
-        //     "raised from remote-0 protocol on 'localhost': unable to remove '%s/repo/file.txt': "
-        //     "[2] No such file or directory", testPath());
-        //
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(file))));
-        // varLstAdd(paramList, varNewBool(false));
-        //
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, paramList, server), true,
-        //     "protocol file remove - no error on missing");
-        // TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
-        // bufUsedSet(serverWrite, 0);
-        //
-        // // Write the file to the repo via the remote and test the protocol
-        // TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRemote, file), BUFSTRDEF("TEST")), "new file");
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, paramList, server), true,
-        //     "protocol file remove");
-        // TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strZ(file))), false, "  confirm file removed");
-        // TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
-        // bufUsedSet(serverWrite, 0);
+        // Check protocol function directly
+        // -------------------------------------------------------------------------------------------------------------------------
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/%s", testPath(), strZ(file)));
+        pckWriteBoolP(paramList, true);
+        pckWriteEndP(paramList);
+
+        TEST_ERROR_FMT(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server),
+            FileRemoveError,
+            "raised from remote-0 protocol on 'localhost': unable to remove '%s/repo/file.txt': "
+                "[2] No such file or directory",
+            testPath());
+
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/%s", testPath(), strZ(file)));
+        pckWriteBoolP(paramList, false);
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol file remove - no error on missing");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
+        bufUsedSet(serverWrite, 0);
+
+        // Write the file to the repo via the remote and test the protocol
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRemote, file), BUFSTRDEF("TEST")), "new file");
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol file remove");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strZ(file))), false, "  confirm file removed");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
+        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -814,23 +852,26 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageRemote, path), "new path");
         TEST_RESULT_VOID(storagePathSyncP(storageRemote, path), "sync path");
 
-        // // Check protocol function directly
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // VariantList *paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
-        //
-        // TEST_RESULT_BOOL(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), true,
-        //     "protocol path sync");
-        // TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
-        // bufUsedSet(serverWrite, 0);
-        //
-        // paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/anewpath", testPath())));
-        // TEST_ERROR_FMT(
-        //     storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), PathMissingError,
-        //     "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_PATH_SYNC_MISSING,
-        //     strZ(strNewFmt("%s/repo/anewpath", testPath())));
+        // Check protocol function directly
+        // -------------------------------------------------------------------------------------------------------------------------
+        PackWrite *paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/%s", testPath(), strZ(path)));
+        pckWriteEndP(paramList);
+
+        TEST_RESULT_BOOL(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, pckReadNewBuf(pckWriteBuf(paramList)), server), true,
+            "protocol path sync");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
+        bufUsedSet(serverWrite, 0);
+
+        paramList = pckWriteNewBuf(bufNew(256));
+        pckWriteStrP(paramList, strNewFmt("%s/repo/anewpath", testPath()));
+        pckWriteEndP(paramList);
+
+        TEST_ERROR_FMT(
+            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, pckReadNewBuf(pckWriteBuf(paramList)), server),
+            PathMissingError, "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_PATH_SYNC_MISSING,
+            strZ(strNewFmt("%s/repo/anewpath", testPath())));
     }
 
     protocolFree();
