@@ -436,8 +436,8 @@ stanzaInfoList(
     for (unsigned int idx = 0; idx < lstSize(stanzaRepoList); idx++)
     {
         InfoStanzaRepo *stanzaData = lstGet(stanzaRepoList, idx);
-printf("stanzaList Idx: %u, stanzaName: %s, repoIdx: %u, repoIdxMax %u\n", idx, strZ(stanzaData->name), repoIdx, repoIdxMax);fflush(stdout); // cshang remove
-// CSHANG TODO Figure out how to process
+// printf("stanzaList Idx: %u, stanzaName: %s, repoIdx: %u, repoIdxMax %u\n", idx, strZ(stanzaData->name), repoIdx, repoIdxMax);fflush(stdout); // cshang remove
+
         // Create the stanzaInfo and section variables
         Variant *stanzaInfo = varNewKv(kvNew());
         VariantList *dbSection = varLstNew();
@@ -449,7 +449,7 @@ printf("stanzaList Idx: %u, stanzaName: %s, repoIdx: %u, repoIdxMax %u\n", idx, 
 
         for (; repoIdx < repoIdxMax; repoIdx++)
         {
-printf("SIZE REPOLIST: %s,stanzaList Idx: %u, stanzaName: %s, repoIdx: %u, repoIdxMax %u\n", stanzaData->repoList == NULL ? "NULL" : "SOMETHING",  idx, strZ(stanzaData->name), repoIdx, repoIdxMax);fflush(stdout); // cshang remove
+// printf("SIZE REPOLIST: %s,stanzaList Idx: %u, stanzaName: %s, repoIdx: %u, repoIdxMax %u\n", stanzaData->repoList == NULL ? "NULL" : "SOMETHING",  idx, strZ(stanzaData->name), repoIdx, repoIdxMax);fflush(stdout); // cshang remove
 
             InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
 
@@ -462,21 +462,38 @@ printf("SIZE REPOLIST: %s,stanzaList Idx: %u, stanzaName: %s, repoIdx: %u, repoI
                 kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(archiveSection));
 
                 stanzaStatus(repoData->stanzaStatus, false, stanzaInfo);
+// CSHANG This also has to change to be the repo based cipher not the global, so this is temporary
+                if (repoData->stanzaStatus != INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH)
+                {
+                    if (repoData->cipherPass == NULL)
+                        kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_NONE_STR));
+                    else
+                        kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_AES_256_CBC_STR));
+                }
+
+                varLstAdd(result, stanzaInfo);
 
                 // No further processing of this stanza on this repo so continue to next repo
                 continue;
             }
             // InfoRepoData *repoData = lstGet(stanzaData->repoList, repoIdx); // cshang Does not work because repoList is not of List * type, instead it is InfoRepoData *
 // CSHANG This comment is wrong - we are getting the list as oldest to newest (MODIFIED 12/22/20)
-            // If the backup.info file exists, get the database history information (oldest to newest) and corresponding archive
+
 // CSHANG The backupinfo must exist at this point since status checked and repo skipped if it didn't
             // Determine if encryption is enabled by checking for a cipher passphrase.  This is not ideal since it does not tell us
             // what type of encryption is in use, but to figure that out we need a way to query the (possibly) remote repo to find
             // out.  No such mechanism exists so this will have to do for now.  Probably the easiest thing to do is store the
             // cipher type in the info file.
+// CSHANG NEED TO CHANGE THE cipher handling
             if (infoPgCipherPass(infoBackupPg(repoData->backupInfo)) != NULL)
                 kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_AES_256_CBC_STR));
+            else
+// CSHANG Why would we not go through the config parsing system? Also, we need to set the cipher for each repo - this is the global
+// repo status so need to set this at the end
+                // Since we may not be going through the config parsing system, default the cipher to NONE.
+                kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_NONE_STR));
 
+            // If the backup.info file exists, get the database history information (oldest to newest) and corresponding archive
             for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(repoData->backupInfo)) - 1; (int)pgIdx >= 0; pgIdx--)
             {
                 InfoPgData pgData = infoPgData(infoBackupPg(repoData->backupInfo), pgIdx);
@@ -526,11 +543,6 @@ printf("SIZE REPOLIST: %s,stanzaList Idx: %u, stanzaName: %s, repoIdx: %u, repoI
 
             varLstAdd(result, stanzaInfo);
         }
-
-// CSHANG Why would we not go through the config parsing system? Also, we need to set the cipher for each repo - this is the global
-// repo status so need to set this at the end
-        // Since we may not be going through the config parsing system, default the cipher to NONE.
-        kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_NONE_STR));
 
     }
 
@@ -886,25 +898,7 @@ infoRender(void)
             repoIdxMax = repoIdx + 1;
         }
 
-        // If a specific stanza has been requested, then add it to the stanza list
-//         if (stanza != NULL)
-//         { // CSHANG May need to change this comment
-//             // Initialize the stanza and repo data - note there may be more repos in the repo list then we will check so that the
-//             // array can be accessed directly by the repo array index. For example, the user requested --repo=3 and the internal
-//             // configuration has index 0=repo1, 1=repo2, 2=repo3, then here repoList[0].key and repoList[1].key will remain
-//             // initialized at 0 indicating these should be ignored when processing since the key cannot be 0.
-//             InfoStanzaRepo stanzaRepo =
-//             {
-//                 .name = stanza,
-//                 .repoList = memNew(repoTotal * sizeof(InfoRepoData)),
-//             };
-// // CSHANG Init the repo list but maybe can combine this later to have it all in one place...
-//             for (unsigned int idx = 0; idx < repoTotal; idx++)
-//                 stanzaRepo.repoList[idx] = (InfoRepoData){0};
-//
-//             lstAdd(stanzaRepoList, &stanzaRepo);
-//         }
-printf("repoTotal %u, repoIdx %u, repoIdxMax %u\n", repoTotal, repoIdx, repoIdxMax);fflush(stdout); // cshang remove
+// printf("repoTotal %u, repoIdx %u, repoIdxMax %u\n", repoTotal, repoIdx, repoIdxMax);fflush(stdout); // cshang remove
         for (unsigned int idx = repoIdx; idx < repoIdxMax; idx++)
         {
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
@@ -924,7 +918,7 @@ printf("repoTotal %u, repoIdx %u, repoIdxMax %u\n", repoTotal, repoIdx, repoIdxM
 
             // Get a list of stanzas in the backup directory
             StringList *stanzaNameList = storageListP(storageRepo, STORAGE_PATH_BACKUP_STR);
-printf("stanzaList size: %u\n", strLstSize(stanzaNameList));fflush(stdout); // cshang remove
+// printf("stanzaList size on disk: %u\n", strLstSize(stanzaNameList));fflush(stdout); // cshang remove
 
 
             // All stanzas will be "found" if they are in the storage list
@@ -941,7 +935,7 @@ printf("stanzaList size: %u\n", strLstSize(stanzaNameList));fflush(stdout); // c
                 stanzaNameList = strLstNew();
                 strLstAdd(stanzaNameList, stanza);
             }
-printf("stanzaList To Process: %u\n", strLstSize(stanzaNameList));fflush(stdout); // cshang remove
+// printf("stanzaList To Process: %u\n", strLstSize(stanzaNameList));fflush(stdout); // cshang remove
             // Process each stanza
             for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaNameList); stanzaIdx++)
             {
@@ -986,7 +980,7 @@ printf("stanzaList To Process: %u\n", strLstSize(stanzaNameList));fflush(stdout)
 // CSHANG Will we need to have a new status indicator if a stanza exists on one repo and not on another? Not one that has been requested, but one that we found on repo1 but not on repo2? We must not error, because maybe they did that on purpose, but we should be consistent and indicate, maybe INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH - but we won't know untill we build the full list of stanzas on every repo.
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
-printf("stanzaRepoList size: %u\n", lstSize(stanzaRepoList));fflush(stdout); // cshang remove
+// printf("stanzaRepoList size: %u\n", lstSize(stanzaRepoList));fflush(stdout); // cshang remove
 /* CSHANG Discuss wth David:
 
 1) Should go back and fix the original info command in https://github.com/pgbackrest/pgbackrest/blob/master/src/command/info/info.c#L510 so that we add an empty archive[] when the stanza is missing. The "minimum" set of data currently has  [{"backup":[],"db":[],"name":"stanza1","status":{"code":1,"lock":{"backup":{"held":false}},"message":"missing stanza path"}}] but should probably incude archive[], i.e.  [{"archive":[],"backup":[],"cipher":"none","db":[],"name":"stanza1","status":{"code":1,"lock":{"backup":{"held":false}},"message":"missing stanza path"}}]? Else I need to exlude it when the path is not found.

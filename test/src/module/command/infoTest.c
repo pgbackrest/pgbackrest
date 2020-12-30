@@ -108,6 +108,8 @@ testRun(void)
 
         // backup.info file exists, but archive.info does not
         //--------------------------------------------------------------------------------------------------------------------------
+// CSHANG I think this test may need to change. We probably need to use an environment variable to simulate repo encryption because I believe
+// the cipher should not be coming from the backup.info file.
         String *content = strNew
         (
             "[cipher]\n"
@@ -844,7 +846,7 @@ testRun(void)
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza2Path))),
                 harnessInfoChecksum(content)),
             "put backup info to file - stanza2");
-
+// CSHANG Enhance this test so both stanzas are listed (or maybe have the --stanza option passed to only one stanza is displayed?)
         harnessCfgLoad(cfgCmdInfo, argList);
         TEST_RESULT_STR_Z(
             infoRender(),
