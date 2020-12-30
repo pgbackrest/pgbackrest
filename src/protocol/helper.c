@@ -393,13 +393,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         }
     }
 
-    // Set local so host settings configured on the remote will not accidentally be picked up
-    kvPut(
-        optionReplace,
-        protocolStorageType == protocolStorageTypeRepo ?
-            VARSTRZ(cfgOptionIdxName(cfgOptRepoLocal, hostIdx)) : VARSTRZ(cfgParseOptionKeyIdxName(cfgOptPgLocal, 0)),
-        BOOL_TRUE_VAR);
-
     // Set default to make it explicit which host will be used on the remote
     kvPut(
         optionReplace,

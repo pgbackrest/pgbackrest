@@ -1809,6 +1809,12 @@ my %hConfigDefine =
             &CFGCMD_STOP => {},
             &CFGCMD_VERIFY => {},
         },
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+        },
     },
 
     &CFGOPT_REPO_HOST =>
@@ -2986,6 +2992,12 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
+        },
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
         },
     },
 
