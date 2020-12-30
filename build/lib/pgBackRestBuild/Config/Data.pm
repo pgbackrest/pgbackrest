@@ -2367,27 +2367,7 @@ my %hConfigDefine =
         {
             'repo-s3-key' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-            &CFGCMD_VERIFY => {},
-        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     &CFGOPT_REPO_S3_KEY_SECRET =>
