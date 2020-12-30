@@ -87,21 +87,16 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 
         if (result.exists)
         {
-            // Read info from protocol
-            storageRemoteInfoParse(this->client, &result);
-
-            // Acknowledge command completed
-            protocolClientReadOutput(this->client, false);
-
-            // Duplicate strings into the prior context
+            // Read info from protocol into prior context
             MEM_CONTEXT_PRIOR_BEGIN()
             {
                 result.name = strDup(result.name);
-                result.linkDestination = strDup(result.linkDestination);
-                result.user = strDup(result.user);
-                result.group = strDup(result.group);
+                storageRemoteInfoParse(this->client, &result);
             }
             MEM_CONTEXT_PRIOR_END();
+
+            // Acknowledge command completed
+            protocolClientReadOutput(this->client, false);
         }
     }
     MEM_CONTEXT_TEMP_END();
