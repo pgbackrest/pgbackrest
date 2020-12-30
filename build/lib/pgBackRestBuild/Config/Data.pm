@@ -1704,7 +1704,16 @@ my %hConfigDefine =
         &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_REPO],
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_ARCHIVE_GET => {},
+            &CFGCMD_ARCHIVE_GET =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_ASYNC => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
             &CFGCMD_ARCHIVE_PUSH =>
             {
                 &CFGDEF_COMMAND_ROLE =>
@@ -1712,7 +1721,14 @@ my %hConfigDefine =
                     &CFGCMD_ROLE_REMOTE => {},
                 },
             },
-            &CFGCMD_BACKUP => {},
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                },
+            },
             &CFGCMD_CHECK =>
             {
                 &CFGDEF_COMMAND_ROLE =>
@@ -1720,30 +1736,102 @@ my %hConfigDefine =
                     &CFGCMD_ROLE_REMOTE => {},
                 },
             },
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
+            &CFGCMD_EXPIRE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_INFO =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_CREATE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_GET =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_LS =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_PUT =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_RM =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_RESTORE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
             &CFGCMD_STANZA_CREATE =>
             {
-                &CFGDEF_COMMAND_ROLE =>
-                {
-                    &CFGCMD_ROLE_REMOTE => {},
-                },
+                &CFGDEF_COMMAND_ROLE => {},
             },
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE =>
+            &CFGCMD_STANZA_DELETE =>
             {
                 &CFGDEF_COMMAND_ROLE =>
                 {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_STANZA_UPGRADE =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_START =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_STOP =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_VERIFY =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
                     &CFGCMD_ROLE_REMOTE => {},
                 },
             },
-            &CFGCMD_VERIFY => {},
         },
     },
 
@@ -1848,6 +1936,12 @@ my %hConfigDefine =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
             &CFGCMD_VERIFY => {},
+        },
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
         },
     },
 
@@ -2415,24 +2509,144 @@ my %hConfigDefine =
         },
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-            &CFGCMD_VERIFY => {},
+            &CFGCMD_ARCHIVE_GET =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_ASYNC => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_ARCHIVE_PUSH =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_ASYNC => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                },
+            },
+            &CFGCMD_CHECK =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_EXPIRE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_INFO =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_CREATE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_GET =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_LS =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_PUT =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_RM =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_RESTORE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_STANZA_CREATE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_STANZA_DELETE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_STANZA_UPGRADE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_START =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_STOP =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_VERIFY =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
         },
     },
 
