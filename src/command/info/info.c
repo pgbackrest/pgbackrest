@@ -508,6 +508,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
 
         kvPut(varKv(stanzaInfo), STANZA_KEY_DB_VAR, varNewVarLst(varLstNew()));
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(varLstNew()));
+        kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(varLstNew()));
 
         stanzaStatus(
             INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH, INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR, false, stanzaInfo);
