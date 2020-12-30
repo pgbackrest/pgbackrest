@@ -53,16 +53,19 @@ VARIANT_STRDEF_STATIC(DB_KEY_SYSTEM_ID_VAR,                         "system-id")
 VARIANT_STRDEF_STATIC(DB_KEY_VERSION_VAR,                           "version");
 VARIANT_STRDEF_STATIC(INFO_KEY_REPOSITORY_VAR,                      "repository");
 VARIANT_STRDEF_STATIC(KEY_ARCHIVE_VAR,                              "archive");
+VARIANT_STRDEF_STATIC(KEY_CIPHER_VAR,                               "cipher");
 VARIANT_STRDEF_STATIC(KEY_DATABASE_VAR,                             "database");
 VARIANT_STRDEF_STATIC(KEY_DELTA_VAR,                                "delta");
 VARIANT_STRDEF_STATIC(KEY_DESTINATION_VAR,                          "destination");
 VARIANT_STRDEF_STATIC(KEY_NAME_VAR,                                 "name");
 VARIANT_STRDEF_STATIC(KEY_OID_VAR,                                  "oid");
+VARIANT_STRDEF_STATIC(KEY_REPO_KEY_VAR,                             "repo-key");
 VARIANT_STRDEF_STATIC(KEY_SIZE_VAR,                                 "size");
 VARIANT_STRDEF_STATIC(KEY_START_VAR,                                "start");
 VARIANT_STRDEF_STATIC(KEY_STOP_VAR,                                 "stop");
+VARIANT_STRDEF_STATIC(REPO_KEY_KEY_VAR,                             "key");
 VARIANT_STRDEF_STATIC(STANZA_KEY_BACKUP_VAR,                        "backup");
-VARIANT_STRDEF_STATIC(STANZA_KEY_CIPHER_VAR,                        "cipher");
+VARIANT_STRDEF_STATIC(STANZA_KEY_REPO_VAR,                          "repo");
 VARIANT_STRDEF_STATIC(STANZA_KEY_STATUS_VAR,                        "status");
 VARIANT_STRDEF_STATIC(STANZA_KEY_DB_VAR,                            "db");
 VARIANT_STRDEF_STATIC(STATUS_KEY_CODE_VAR,                          "code");
@@ -154,6 +157,48 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
     KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
     KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
     kvAdd(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(backupLockHeld));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+repoStanzaStatus(const int code, Variant *repoStanzaInfo)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, code);
+        FUNCTION_TEST_PARAM(VARIANT, repoStanzaInfo);
+    FUNCTION_TEST_END();
+
+    ASSERT(code >= 0 && code <= 3);
+    ASSERT(repoStanzaInfo != NULL);
+
+    KeyValue *statusKv = kvPutKv(varKv(repoStanzaInfo), STANZA_KEY_STATUS_VAR);
+
+    kvAdd(statusKv, STATUS_KEY_CODE_VAR, VARINT(code));
+
+    switch (code)
+    {
+        case INFO_STANZA_STATUS_CODE_OK:
+        {
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OK_STR));
+            break;
+        }
+        case INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH:
+        {
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR));
+            break;
+        }
+        case INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA:
+        {
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR));
+            break;
+        }
+        case INFO_STANZA_STATUS_CODE_NO_BACKUP:
+        {
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
+            break;
+        }
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -438,111 +483,88 @@ stanzaInfoList(
         InfoStanzaRepo *stanzaData = lstGet(stanzaRepoList, idx);
 // printf("stanzaList Idx: %u, stanzaName: %s, repoIdx: %u, repoIdxMax %u\n", idx, strZ(stanzaData->name), repoIdx, repoIdxMax);fflush(stdout); // cshang remove
 
-        // Create the stanzaInfo and section variables
+        // Create the stanzaInfo and set the name
         Variant *stanzaInfo = varNewKv(kvNew());
+        kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
+
         VariantList *dbSection = varLstNew();
         VariantList *backupSection = varLstNew();
         VariantList *archiveSection = varLstNew();
-
-        // Set the stanza name
-        kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
+        VariantList *repoSection = varLstNew();
 
         for (; repoIdx < repoIdxMax; repoIdx++)
         {
-// printf("SIZE REPOLIST: %s,stanzaList Idx: %u, stanzaName: %s, repoIdx: %u, repoIdxMax %u\n", stanzaData->repoList == NULL ? "NULL" : "SOMETHING",  idx, strZ(stanzaData->name), repoIdx, repoIdxMax);fflush(stdout); // cshang remove
 
             InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
 
-            if (repoData->stanzaStatus != INFO_STANZA_STATUS_CODE_OK)
-            {
-// CSHANG Combine these into a function:
-                // Add the database history, backup and archive sections to the stanza info
-                kvPut(varKv(stanzaInfo), STANZA_KEY_DB_VAR, varNewVarLst(dbSection));
-                kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
-                kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(archiveSection));
+            Variant *repoInfo = varNewKv(kvNew());
 
-                stanzaStatus(repoData->stanzaStatus, false, stanzaInfo);
-// CSHANG This also has to change to be the repo based cipher not the global, so this is temporary
-                if (repoData->stanzaStatus != INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH)
+            kvPut(varKv(repoInfo), REPO_KEY_KEY_VAR, VARUINT(repoData->key));
+            kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(repoData->cipher)));
+
+            unsigned int numBackups = varLstSize(backupSection);
+
+            // If the backup.info file has been read, then get the backup and archive information on this repo
+            if (repoData->backupInfo != NULL)
+            {
+                // If the backup.info file exists, get the database history information (oldest to newest) and corresponding archive
+                for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(repoData->backupInfo)) - 1; (int)pgIdx >= 0; pgIdx--)
                 {
-                    if (repoData->cipherPass == NULL)
-                        kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_NONE_STR));
-                    else
-                        kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_AES_256_CBC_STR));
+                    InfoPgData pgData = infoPgData(infoBackupPg(repoData->backupInfo), pgIdx);
+                    Variant *pgInfo = varNewKv(kvNew());
+
+                    kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT(pgData.id));
+                    kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
+                    kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
+
+                    varLstAdd(dbSection, pgInfo);
+
+                    // Get the archive info for the DB from the archive.info file
+                    archiveDbList(stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false));
                 }
 
-                varLstAdd(result, stanzaInfo);
-
-                // No further processing of this stanza on this repo so continue to next repo
-                continue;
-            }
-            // InfoRepoData *repoData = lstGet(stanzaData->repoList, repoIdx); // cshang Does not work because repoList is not of List * type, instead it is InfoRepoData *
-// CSHANG This comment is wrong - we are getting the list as oldest to newest (MODIFIED 12/22/20)
-
-// CSHANG The backupinfo must exist at this point since status checked and repo skipped if it didn't
-            // Determine if encryption is enabled by checking for a cipher passphrase.  This is not ideal since it does not tell us
-            // what type of encryption is in use, but to figure that out we need a way to query the (possibly) remote repo to find
-            // out.  No such mechanism exists so this will have to do for now.  Probably the easiest thing to do is store the
-            // cipher type in the info file.
-// CSHANG NEED TO CHANGE THE cipher handling
-            if (infoPgCipherPass(infoBackupPg(repoData->backupInfo)) != NULL)
-                kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_AES_256_CBC_STR));
-            else
-// CSHANG Why would we not go through the config parsing system? Also, we need to set the cipher for each repo - this is the global
-// repo status so need to set this at the end
-                // Since we may not be going through the config parsing system, default the cipher to NONE.
-                kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_NONE_STR));
-
-            // If the backup.info file exists, get the database history information (oldest to newest) and corresponding archive
-            for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(repoData->backupInfo)) - 1; (int)pgIdx >= 0; pgIdx--)
-            {
-                InfoPgData pgData = infoPgData(infoBackupPg(repoData->backupInfo), pgIdx);
-                Variant *pgInfo = varNewKv(kvNew());
-
-                kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT(pgData.id));
-                kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
-                kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
-
-                varLstAdd(dbSection, pgInfo);
-
-                // Get the archive info for the DB from the archive.info file
-                archiveDbList(stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false));
+                // Get data for all existing backups for this stanza for this repo
+                backupList(backupSection, repoData->backupInfo, backupLabel);
             }
 
-            // Get data for all existing backups for this stanza
-            backupList(backupSection, repoData->backupInfo, backupLabel);
+            // If a status has not already been set and no backups were added for this repo then set status to no backup
+            if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK && numBackups == varLstSize(backupSection))
+                repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_NO_BACKUP;
 
-            // Add the database history, backup and archive sections to the stanza info
+            // Add the status to the repo section
+            repoStanzaStatus(repoData->stanzaStatus, repoInfo);
+            varLstAdd(repoSection, repoInfo);
+
+            // Add the database history, backup, archive and repo sections to the stanza info
             kvPut(varKv(stanzaInfo), STANZA_KEY_DB_VAR, varNewVarLst(dbSection));
             kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
             kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(archiveSection));
-
-            // If a status has not already been set, check if there's a local backup running
-            static bool backupLockHeld = false;
-
-            if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
-            {
-                // Try to acquire a lock. If not possible, assume another backup or expire is already running.
-                backupLockHeld = !lockAcquire(
-                    cfgOptionStr(cfgOptLockPath), stanzaData->name, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
-
-                // Immediately release the lock acquired
-                lockRelease(!backupLockHeld);
-            }
-
-            // If a status has not already been set and there are no backups then set status to no backup
-            if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL &&
-                varLstSize(kvGetList(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR)) == 0)
-            {
-                stanzaStatus(INFO_STANZA_STATUS_CODE_NO_BACKUP, backupLockHeld, stanzaInfo);
-            }
-
-            // If a status has still not been set then set it to OK
-            if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
-                stanzaStatus(INFO_STANZA_STATUS_CODE_OK, backupLockHeld, stanzaInfo);
+            kvPut(varKv(stanzaInfo), STANZA_KEY_REPO_VAR, varNewVarLst(repoSection));
 
             varLstAdd(result, stanzaInfo);
         }
+
+/* CSHANG all of the below needs to be performed on the final part of the stanza processing
+ // Construct a specific lock part
+    KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
+    KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
+    kvAdd(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(backupLockHeld));
+
+        // If a status has not already been set, check if there's a local backup running
+        static bool backupLockHeld = false;
+
+        if (kvGet(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR) == NULL)
+        {
+            // Try to acquire a lock. If not possible, assume another backup or expire is already running.
+            backupLockHeld = !lockAcquire(
+                cfgOptionStr(cfgOptLockPath), stanzaListName, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
+
+            // Immediately release the lock acquired
+            lockRelease(!backupLockHeld);
+        }
+
+
+*/
 
     }
 
@@ -1037,7 +1059,7 @@ infoRender(void)
                             statusCode == INFO_STANZA_STATUS_CODE_NO_BACKUP)
                         {
                             strCatFmt(
-                                resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, STANZA_KEY_CIPHER_VAR))));
+                                resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, KEY_CIPHER_VAR))));
 
                             // If there is a backup.info file but no backups, then process the archive info
                             if (statusCode == INFO_STANZA_STATUS_CODE_NO_BACKUP)
@@ -1060,7 +1082,7 @@ infoRender(void)
 
                     // Cipher
                     strCatFmt(
-                        resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, STANZA_KEY_CIPHER_VAR))));
+                        resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, KEY_CIPHER_VAR))));
 
                     formatTextDb(stanzaInfo, resultStr, backupLabel);
                 }

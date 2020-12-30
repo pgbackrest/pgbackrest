@@ -656,7 +656,7 @@ Sort the list
     name: demo,
     repo: [
         {
-            idx: 0,
+            idx: 0,  <-- do we need this? I don't think the user cares about our internal index
             key: 1,
             cipher: none
             status : {

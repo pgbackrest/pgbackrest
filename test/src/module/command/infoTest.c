@@ -108,7 +108,7 @@ testRun(void)
 
         // backup.info file exists, but archive.info does not
         //--------------------------------------------------------------------------------------------------------------------------
-// CSHANG I think this test may need to change. We probably need to use an environment variable to simulate repo encryption because I believe
+// CSHANG This test will need to change. We probably need to use an environment variable to simulate repo encryption because I believe
 // the cipher should not be coming from the backup.info file.
         String *content = strNew
         (
