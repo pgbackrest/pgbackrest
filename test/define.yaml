@@ -189,7 +189,10 @@ unit:
         total: 1
 
         coverage:
-          common/type/pack: full
+#          common/type/pack: full
+
+        include:
+          - common/type/pack
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-mcv
