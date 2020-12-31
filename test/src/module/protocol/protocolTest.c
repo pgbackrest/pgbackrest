@@ -338,7 +338,7 @@ testRun(void)
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 0), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg1-host"
                 "|pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error --pg=1"
-                " --pg1-local --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote",
+                " --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote",
             "remote protocol params for db backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -360,7 +360,7 @@ testRun(void)
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg2-host"
                 "|pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error --pg=1"
-                " --pg1-local --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote",
+                " --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote",
             "remote protocol params for db local");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -382,8 +382,8 @@ testRun(void)
             strLstJoin(protocolRemoteParam(protocolStorageTypePg, 1), "|"),
             "-o|LogLevel=error|-o|Compression=no|-o|PasswordAuthentication=no|postgres@pg3-host"
                 "|pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error --pg=1"
-                " --pg1-local --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg"
-                " --stanza=test1 backup:remote",
+                " --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1"
+                " backup:remote",
             "remote protocol params for db local");
     }
 

@@ -3240,6 +3240,12 @@ my %hConfigDefine =
             &CFGCMD_START => {},
             &CFGCMD_STOP => {},
         },
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+        },
     },
 
     &CFGOPT_PG_HOST =>
