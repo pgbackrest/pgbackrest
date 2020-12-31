@@ -513,6 +513,12 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
             kvPut(varKv(repoInfo), REPO_KEY_KEY_VAR, VARUINT(repoData->key));
             kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(repoData->cipher)));
 
+            // If the stanza on this repo has the default status of ok but the backupInfo was not read, then the stanza exists on
+            // other repos but not this one
+            if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK && repoData->backupInfo == NULL)
+                repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH;
+
+            // The number of items in the backup section will increase as each repo is checked unless a repo has not backups
             unsigned int numBackups = varLstSize(backupSection);
 
             // If the backup.info file has been read, then get the backup and archive information on this repo
@@ -1028,12 +1034,7 @@ infoRender(void)
 // CSHANG Will we need to have a new status indicator if a stanza exists on one repo and not on another? Not one that has been requested, but one that we found on repo1 but not on repo2? We must not error, because maybe they did that on purpose, but we should be consistent and indicate, maybe INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH - but we won't know untill we build the full list of stanzas on every repo.
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
-// printf("stanzaRepoList size: %u\n", lstSize(stanzaRepoList));fflush(stdout); // cshang remove
-/* CSHANG Discuss wth David:
 
-1) Should go back and fix the original info command in https://github.com/pgbackrest/pgbackrest/blob/master/src/command/info/info.c#L510 so that we add an empty archive[] when the stanza is missing. The "minimum" set of data currently has  [{"backup":[],"db":[],"name":"stanza1","status":{"code":1,"lock":{"backup":{"held":false}},"message":"missing stanza path"}}] but should probably incude archive[], i.e.  [{"archive":[],"backup":[],"cipher":"none","db":[],"name":"stanza1","status":{"code":1,"lock":{"backup":{"held":false}},"message":"missing stanza path"}}]? Else I need to exlude it when the path is not found.
-
-*/
         // If the backup storage exists, then search for and process any stanzas
         if (lstSize(stanzaRepoList) > 0)
             infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdx, repoIdxMax);
