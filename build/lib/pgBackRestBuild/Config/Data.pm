@@ -222,9 +222,6 @@ use constant CFGDEF_INDEX_REPO                                      => 1;
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
 
-# Set default repository
-use constant CFGOPT_REPO                                            => CFGDEF_PREFIX_REPO;
-
 # Repository General
 use constant CFGOPT_REPO_CIPHER_TYPE                                => CFGDEF_PREFIX_REPO . '-cipher-type';
 use constant CFGOPT_REPO_CIPHER_PASS                                => CFGDEF_PREFIX_REPO . '-cipher-pass';
@@ -1693,18 +1690,6 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_VERIFY => {},
         }
-    },
-
-    # Repository selector
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_REPO =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_REPO],
-        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     # Repository options

@@ -308,7 +308,6 @@ STRING_EXTERN(CFGOPT_RAW_STR,                                       CFGOPT_RAW);
 STRING_EXTERN(CFGOPT_RECOVERY_OPTION_STR,                           CFGOPT_RECOVERY_OPTION);
 STRING_EXTERN(CFGOPT_RECURSE_STR,                                   CFGOPT_RECURSE);
 STRING_EXTERN(CFGOPT_REMOTE_TYPE_STR,                               CFGOPT_REMOTE_TYPE);
-STRING_EXTERN(CFGOPT_REPO_STR,                                      CFGOPT_REPO);
 STRING_EXTERN(CFGOPT_RESUME_STR,                                    CFGOPT_RESUME);
 STRING_EXTERN(CFGOPT_SCK_BLOCK_STR,                                 CFGOPT_SCK_BLOCK);
 STRING_EXTERN(CFGOPT_SCK_KEEP_ALIVE_STR,                            CFGOPT_SCK_KEEP_ALIVE);

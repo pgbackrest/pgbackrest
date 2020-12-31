@@ -481,19 +481,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
-                    <config-key id="repo" name="Set Repository">
-                        <summary>Set default repository.</summary>
-
-                        <text>Set the repository for a command to operate on.
-
-                        For example, this option may be used to perform a restore from a specific repository, rather than letting <backrest/> choose.
-
-                        Note that some commands, e.g. <cmd>archive-push</cmd>, are intended to operate on all repositories and will ignore this option.</text>
-
-                        <example>1</example>
-                    </config-key>
-
                     <!-- CONFIG - REPO SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Path where backups and archive are stored.</summary>
