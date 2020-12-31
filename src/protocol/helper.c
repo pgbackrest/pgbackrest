@@ -398,17 +398,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_PATH_STR), NULL);
     kvPut(optionReplace, VARSTR(CFGOPT_LOCK_PATH_STR), NULL);
 
-    // ??? Don't pass restore options which the remote doesn't need and are likely to contain spaces because they might get mangled
-    // on the way to the remote depending on how SSH is set up on the server.  This code should be removed when option passing with
-    // spaces is resolved.
-    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_EXCLUSIVE_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_ACTION_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_TIMELINE_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_RECOVERY_OPTION_STR), NULL);
-
     // Only enable file logging on the remote when requested
     kvPut(
         optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR),
