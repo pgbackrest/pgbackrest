@@ -1585,7 +1585,6 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
             &CFGCMD_REPO_CREATE => {},
             &CFGCMD_REPO_GET => {},
@@ -2521,7 +2520,6 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
             &CFGCMD_REPO_CREATE => {},
             &CFGCMD_REPO_GET => {},
@@ -2931,7 +2929,6 @@ my %hConfigDefine =
             },
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
             &CFGCMD_RESTORE =>
             {
                 &CFGDEF_INTERNAL => true,
@@ -2988,7 +2985,6 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
