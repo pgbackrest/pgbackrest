@@ -217,13 +217,17 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo)
 Set the data for the archive section of the stanza for the database info from the backup.info file.
 ***********************************************************************************************************************************/
 static void
-archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, const InfoArchive *info, bool currentDb)
+archiveDbList(
+    const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, const InfoArchive *info, bool currentDb,
+    unsigned int repoIdx, unsigned int repoKey)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, stanza);
         FUNCTION_TEST_PARAM_P(INFO_PG_DATA, pgData);
         FUNCTION_TEST_PARAM(VARIANT_LIST, archiveSection);
         FUNCTION_TEST_PARAM(BOOL, currentDb);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+        FUNCTION_TEST_PARAM(UINT, repoKey);
     FUNCTION_TEST_END();
 
     ASSERT(stanza != NULL);
@@ -239,10 +243,11 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     String *archiveStart = NULL;
     String *archiveStop = NULL;
     Variant *archiveInfo = varNewKv(kvNew());
+    const Storage *storageRepo = storageRepoIdx(repoIdx);
 
     // Get a list of WAL directories in the archive repo from oldest to newest, if any exist
     StringList *walDir = strLstSort(
-        storageListP(storageRepo(), archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
+        storageListP(storageRepo, archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
 
     if (strLstSize(walDir) > 0)
     {
@@ -251,7 +256,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         {
             // Get a list of all WAL in this WAL dir
             StringList *list = storageListP(
-                storageRepo(), strNewFmt("%s/%s", strZ(archivePath), strZ(strLstGet(walDir, idx))),
+                storageRepo, strNewFmt("%s/%s", strZ(archivePath), strZ(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
 
             // If wal segments are found, get the oldest one as the archive start
@@ -269,7 +274,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         {
             // Get a list of all WAL in this WAL dir
             StringList *list = storageListP(
-                storageRepo(), strNewFmt("%s/%s", strZ(archivePath), strZ(strLstGet(walDir, idx))),
+                storageRepo, strNewFmt("%s/%s", strZ(archivePath), strZ(strLstGet(walDir, idx))),
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
 
             // If wal segments are found, get the newest one as the archive stop
@@ -290,6 +295,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
         KeyValue *databaseInfo = kvPutKv(varKv(archiveInfo), KEY_DATABASE_VAR);
 
         kvAdd(databaseInfo, DB_KEY_ID_VAR, VARUINT(pgData->id));
+        kvAdd(databaseInfo, KEY_REPO_KEY_VAR, VARUINT(repoKey));
 
         kvPut(varKv(archiveInfo), DB_KEY_ID_VAR, VARSTR(archiveId));
         kvPut(varKv(archiveInfo), ARCHIVE_KEY_MIN_VAR, (archiveStart != NULL ? VARSTR(archiveStart) : (Variant *)NULL));
@@ -305,12 +311,13 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
 For each current backup in the backup.info file of the stanza, set the data for the backup section.
 ***********************************************************************************************************************************/
 static void
-backupList(VariantList *backupSection, InfoBackup *info, const String *backupLabel)
+backupList(VariantList *backupSection, InfoBackup *info, const String *backupLabel, unsigned int repoKey)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);
         FUNCTION_TEST_PARAM(INFO_BACKUP, info);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
+        FUNCTION_TEST_PARAM(UINT, repoKey);
     FUNCTION_TEST_END();
 
     ASSERT(backupSection != NULL);
@@ -354,6 +361,7 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
         KeyValue *dbInfo = kvPutKv(varKv(backupInfo), KEY_DATABASE_VAR);
 
         kvAdd(dbInfo, DB_KEY_ID_VAR, VARUINT(backupData.backupPgId));
+        kvAdd(dbInfo, KEY_REPO_KEY_VAR, VARUINT(repoKey));
 
         // info section
         KeyValue *infoInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_INFO_VAR);
@@ -469,12 +477,12 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
 Set the stanza data for each stanza found in the repo.
 ***********************************************************************************************************************************/
 static VariantList *
-stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int repoIdx, unsigned int repoIdxMax)
+stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int repoIdxStart, unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, stanzaRepoList);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
-        FUNCTION_TEST_PARAM(UINT, repoIdx);
+        FUNCTION_TEST_PARAM(UINT, repoIdxStart);
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
 
@@ -505,9 +513,9 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
 
         // Get the stanza for each requested repo
-        for (unsigned int idx = repoIdx; idx < repoIdxMax; idx++)
+        for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
         {
-            InfoRepoData *repoData = &stanzaData->repoList[idx];
+            InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
 
             Variant *repoInfo = varNewKv(kvNew());
             kvPut(varKv(repoInfo), REPO_KEY_KEY_VAR, VARUINT(repoData->key));
@@ -533,27 +541,33 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
                     kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT(pgData.id));
                     kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
                     kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
+                    kvPut(varKv(pgInfo), KEY_REPO_KEY_VAR, VARUINT(repoData->key));
 
                     varLstAdd(dbSection, pgInfo);
 
                     // Get the archive info for the DB from the archive.info file
-                    archiveDbList(stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false));
+                    archiveDbList(
+                        stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false), repoIdx,
+                        repoData->key);
                 }
 
                 // Get data for all existing backups for this stanza for this repo
-                backupList(backupSection, repoData->backupInfo, backupLabel);
+                backupList(backupSection, repoData->backupInfo, backupLabel, repoData->key);
             }
 
-            // If a status has not already been set and no backups were added for this repo then set status to no backup
-            if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK && numBackups == varLstSize(backupSection))
-                repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_NO_BACKUP;
-
-            // If the stanza status on at least one repo is OK, then a lock can be checked on the PG server
+            // If a status has not already been set (i.e. the stanza exists and has archive/backup info files)
             if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK)
+            {
+                // If the stanza status on at least one repo is OK, then a lock can be checked on the PG server
                 checkBackupLock = true;
 
+                // If no backups were added for this repo then set status to no backup
+                if (numBackups == varLstSize(backupSection))
+                    repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_NO_BACKUP;
+            }
+
             // Track the overall stanza status over all repos
-            if (idx == repoIdx)
+            if (repoIdx == repoIdxStart)
             {
                 stanzaStatusCode = repoData->stanzaStatus;
                 stanzaCipherType = repoData->cipher;
@@ -941,22 +955,22 @@ infoRender(void)
         }
 
         // Initialize the repo index
-        unsigned int repoIdx = 0;
+        unsigned int repoIdxStart = 0;
         unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
         unsigned int repoTotal = repoIdxMax;
 
         // If the repo was specified then set index to the array location and max to loop only once
         if (cfgOptionTest(cfgOptRepo))
         {
-            repoIdx = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
-            repoIdxMax = repoIdx + 1;
+            repoIdxStart = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
+            repoIdxMax = repoIdxStart + 1;
         }
 
 // printf("repoTotal %u, repoIdx %u, repoIdxMax %u\n", repoTotal, repoIdx, repoIdxMax);fflush(stdout); // cshang remove
-        for (unsigned int idx = repoIdx; idx < repoIdxMax; idx++)
+        for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
         {
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
-            const Storage *storageRepo = storageRepoIdx(idx);
+            const Storage *storageRepo = storageRepoIdx(repoIdx);
 
             // If a backup set was specified, see if the manifest exists
             if (backupLabel != NULL)
@@ -998,17 +1012,10 @@ infoRender(void)
                 // Get the stanza if it is already in the list
                 InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
 
-                // If the stanza was already added to the array, then update this repo for the stanza
+                // If the stanza was already added to the array, then update this repo for the stanza, else the stanza has not yet
+                // been added to the list, so add it
                 if (stanzaRepo != NULL)
-                {
-// CSHANG check if a stanza was specified (stanza != NULL) and if so, was it found on the repo? if not, then do nothing? stanzaMissing will remain 0 = false
-                    infoUpdateStanza(storageRepo, stanzaRepo, stanzaName, idx, stanzaExists);
-
-                    // CSHANG Not needed since this will only have the one stanza // If a stanza was requested then this must be it so exit the stanza loop
-                    // if (stanza != NULL)
-                    //     break;
-                }
-                // Else the stanza has not yet been added to the list, so add it
+                    infoUpdateStanza(storageRepo, stanzaRepo, stanzaName, repoIdx, stanzaExists);
                 else
                 {
                     InfoStanzaRepo stanzaRepo =
@@ -1026,7 +1033,7 @@ infoRender(void)
                     }
 
                     // Update the info for this repo
-                    infoUpdateStanza(storageRepo, &stanzaRepo, stanzaName, idx, stanzaExists);
+                    infoUpdateStanza(storageRepo, &stanzaRepo, stanzaName, repoIdx, stanzaExists);
                     lstAdd(stanzaRepoList, &stanzaRepo);
                 }
             }
@@ -1037,8 +1044,8 @@ infoRender(void)
 
         // If the backup storage exists, then search for and process any stanzas
         if (lstSize(stanzaRepoList) > 0)
-            infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdx, repoIdxMax);
-
+            infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxStart, repoIdxMax);
+// CSHANG Update text output to include repo key info
         // Format text output
         if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
         {

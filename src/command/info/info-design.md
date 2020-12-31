@@ -480,7 +480,7 @@ Sort the list
       {
         database: {
           id: 1,
-          repoKey: 2           <-- repo key is added to the database and will need to be used to find the correct database information from the json db section
+          repo-key: 2           <-- repo key is added to the database and will need to be used to find the correct database information from the json db section
         },
         id: 13-1,
         max: 00000001000000000000000D,
@@ -489,7 +489,7 @@ Sort the list
       {
         database: {
           id: 2,
-          repoKey: 1
+          repo-key: 1
         },
         id: 13-2,
         max: 00000001000000000000000D,
@@ -498,7 +498,7 @@ Sort the list
       {
         database: {
           id: 1,
-          repoKey: 1
+          repo-key: 1
         },
         id: 12-1,       <-- This is considered a "prior" database in our current display but is grouped here because it has same system-id/version as current db even though it was created before the above 13-2 (repo1)
         max: 000000020000000000000008,
@@ -535,7 +535,7 @@ Sort the list
         },
         database: {
           id: 1,
-          repoKey: 1
+          repo-key: 1
         },
         info: {
           delta: 24529261,
@@ -626,7 +626,7 @@ Sort the list
         id: 1,
         system-id: 6902042121635099000,
         version: 12,
-        repoKey: 1
+        repo-key: 1
       },
       {
         id: 2,
@@ -650,13 +650,12 @@ Sort the list
         id: 2,
         system-id: 6902042121635099000,
         version: 12,
-        repoKey: 2
+        repo-key: 2
       }
     ],
     name: demo,
     repo: [
         {
-            idx: 0,  <-- do we need this? I don't think the user cares about our internal index
             key: 1,
             cipher: none
             status : {
@@ -665,7 +664,6 @@ Sort the list
             }
         },
         {
-            idx: 1,
             key: 2,
             cipher: none
             status : {
@@ -675,7 +673,7 @@ Sort the list
         },
     ],
     status: {
-      code: 5,   <-- since different statuses on each repo, the overall status code represents "mixed"
+      code: 4,   <-- since different statuses on each repo, the overall status code represents "mixed"
       lock: {
         backup: {
           held: false
