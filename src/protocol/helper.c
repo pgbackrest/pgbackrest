@@ -389,10 +389,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         }
     }
 
-    // Set default to make it explicit which host will be used on the remote
-    if (protocolStorageType == protocolStorageTypePg)
-        kvPut(optionReplace, VARSTRDEF(CFGOPT_PG), VARUINT(1));
-
     // Add the process id if not set. This means that the remote is being started from the main process and should always get a
     // process id of 0.
     if (!cfgOptionTest(cfgOptProcess))

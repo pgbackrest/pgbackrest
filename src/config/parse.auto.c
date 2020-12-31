@@ -2077,38 +2077,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("pg"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
         PARSE_RULE_OPTION_REQUIRED(false),
-        PARSE_RULE_OPTION_SECTION(cfgSectionStanza),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-        ),
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
@@ -7014,10 +6987,6 @@ static const struct option optionList[] =
         .name = "pg",
         .has_arg = required_argument,
         .val = PARSE_OPTION_FLAG | cfgOptPg,
-    },
-    {
-        .name = "reset-pg",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptPg,
     },
 
     // pg-database option

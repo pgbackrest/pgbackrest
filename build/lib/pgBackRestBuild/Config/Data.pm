@@ -2906,43 +2906,17 @@ my %hConfigDefine =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_PG =>
     {
-        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_INTERNAL => true,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG],
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP =>
             {
                 &CFGDEF_COMMAND_ROLE =>
                 {
                     &CFGCMD_ROLE_LOCAL => {},
-                    &CFGCMD_ROLE_REMOTE => {},
-                },
-            },
-            &CFGCMD_CHECK =>
-            {
-                &CFGDEF_COMMAND_ROLE =>
-                {
-                    &CFGCMD_ROLE_REMOTE => {},
-                },
-            },
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE =>
-            {
-                &CFGDEF_COMMAND_ROLE =>
-                {
-                    &CFGCMD_ROLE_REMOTE => {},
-                },
-            },
-            &CFGCMD_STANZA_UPGRADE =>
-            {
-                &CFGDEF_COMMAND_ROLE =>
-                {
-                    &CFGCMD_ROLE_REMOTE => {},
                 },
             },
         },

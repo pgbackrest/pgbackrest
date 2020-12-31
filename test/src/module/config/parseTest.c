@@ -761,8 +761,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        hrnCfgArgRawZ(argList, cfgOptPg, "1");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
+        hrnCfgArgRawZ(argList, cfgOptPg, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/path/to/2");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
@@ -772,6 +773,7 @@ testRun(void)
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "load local config");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/2", "default pg-path");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleLocal, "    command role is local");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "    backup:local command does not require lock");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup:local", "    command/role name is backup:local");
@@ -1469,14 +1471,10 @@ testRun(void)
 
         setenv("PGBACKREST_STANZA", "db", true);
         setenv("PGBACKREST_PG1_PATH", "/path/to/db", true);
-        hrnCfgEnvKeyRawZ(cfgOptPgPath, 2, "/path/to/db2");
-        hrnCfgEnvRawZ(cfgOptPg, "2");
         setenv("PGBACKREST_RECOVERY_OPTION", "f=g:hijk=l", true);
         setenv("PGBACKREST_DB_INCLUDE", "77", true);
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
-
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db2", "default pg-path");
 
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("f")))), "g", "check recovery option");
@@ -1486,8 +1484,6 @@ testRun(void)
 
         unsetenv("PGBACKREST_STANZA");
         unsetenv("PGBACKREST_PG1_PATH");
-        hrnCfgEnvKeyRemoveRaw(cfgOptPgPath, 2);
-        hrnCfgEnvRemoveRaw(cfgOptPg);
         unsetenv("PGBACKREST_RECOVERY_OPTION");
         unsetenv("PGBACKREST_DB_INCLUDE");
 
@@ -1573,7 +1569,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
         hrnCfgArgRawZ(argList, cfgOptPg, "4");
         TEST_ERROR(
-            harnessCfgLoadRole(cfgCmdCheck, cfgCmdRoleRemote, argList), OptionInvalidValueError,
+            harnessCfgLoadRole(cfgCmdBackup, cfgCmdRoleLocal, argList), OptionInvalidValueError,
             "key '4' is not valid for 'pg' option");
     }
 

@@ -1037,19 +1037,6 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="pg" name="Set PostgreSQL Cluster">
-                        <summary>Set PostgreSQL cluster.</summary>
-
-                        <text>Set the <postgres/> cluster for a command to operate on.
-
-                        For example, this option may be used to perform a restore to a specific <postgres/> cluster, rather than using the first configured cluster.
-
-                        Note that some commands, e.g. <cmd>backup</cmd>, are intended to operate on multiple <postgres/> clusters and will ignore this option.</text>
-
-                        <example>1</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
                     <config-key id="pg-database" name="PostgreSQL Database">
                         <summary><postgres/> database.</summary>
 
