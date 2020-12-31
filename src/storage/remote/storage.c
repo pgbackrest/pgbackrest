@@ -142,17 +142,14 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 
         if (result.exists)
         {
-            pckReadObjBeginP(read);
-            storageRemoteInfoParse(&(StorageRemoteInfoParseData){.read = read}, &result);
-            pckReadObjEndP(read);
-
-            // Duplicate strings into the prior context
+            // Read info from protocol into prior context
             MEM_CONTEXT_PRIOR_BEGIN()
             {
                 result.name = strDup(result.name);
-                result.linkDestination = strDup(result.linkDestination);
-                result.user = strDup(result.user);
-                result.group = strDup(result.group);
+
+                pckReadObjBeginP(read);
+                storageRemoteInfoParse(&(StorageRemoteInfoParseData){.read = read}, &result);
+                pckReadObjEndP(read);
             }
             MEM_CONTEXT_PRIOR_END();
         }
