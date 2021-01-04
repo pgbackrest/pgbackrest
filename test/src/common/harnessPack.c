@@ -86,7 +86,7 @@ String *hrnPackToStr(PackRead *read)
 
             case pckTypePack:
             {
-                THROW(AssertError, "NOT YET IMPLEMENTED");
+                strCatFmt(result, "<%s>", strZ(hrnPackToStr(pckReadPackP(read))));
                 break;
             }
 

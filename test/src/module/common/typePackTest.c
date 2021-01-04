@@ -85,6 +85,16 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteBinP(packWrite, NULL), "write bin NULL default");
         TEST_RESULT_VOID(pckWriteBinP(packWrite, bufNew(0)), "write bin zero length");
 
+        // Write pack
+        PackWrite *packSub = pckWriteNewBuf(bufNew(128));
+        pckWriteU64P(packSub, 345);
+        pckWriteStrP(packSub, STRDEF("sub"), .id = 3);
+        pckWriteEndP(packSub);
+
+        TEST_RESULT_VOID(pckWritePackP(packWrite, packSub), "write pack");
+        TEST_RESULT_VOID(pckWritePackP(packWrite, NULL), "write null pack");
+
+        // End pack
         TEST_RESULT_VOID(pckWriteEndP(packWrite), "end");
         TEST_RESULT_VOID(pckWriteEmpty(packWrite), "not empty");
         TEST_RESULT_VOID(pckWriteFree(packWrite), "free");
@@ -136,7 +146,8 @@ testRun(void)
                 ", 6:time:66"
             "]"
             ", 49:bin:050403020100"
-            ", 51:bin:",
+            ", 51:bin:"
+            ", 52:pack:<1:u64:345, 3:str:sub>",
             "check pack string");
 
         TEST_RESULT_STR_Z(
@@ -181,6 +192,7 @@ testRun(void)
                 "00"                                                //     array end
             "2806050403020100"                                      // 49,  bin, 0x050403020100
             "21"                                                    // 51,  bin, zero length
+            "c009b8d902890373756200"                                // 52,  pack, 1:u64:345, 3:str:sub
             "00",                                                   // end
             "check pack hex");
 
@@ -262,6 +274,9 @@ testRun(void)
         TEST_RESULT_STR_Z(bufHex(pckReadBinP(packRead)), "050403020100", "read bin");
         TEST_RESULT_PTR(pckReadBinP(packRead), NULL, "read bin null");
         TEST_RESULT_UINT(bufSize(pckReadBinP(packRead)), 0, "read bin zero length");
+
+        TEST_RESULT_STR_Z(hrnPackToStr(pckReadPackP(packRead)), "1:u64:345, 3:str:sub", "read pack");
+        TEST_RESULT_PTR(pckReadPackP(packRead), NULL, "read null pack");
 
         TEST_RESULT_BOOL(pckReadNullP(packRead, .id = 999), true, "field 999 is null");
         TEST_RESULT_UINT(pckReadU64P(packRead, .id = 1000), 0, "field 1000 default is 0");

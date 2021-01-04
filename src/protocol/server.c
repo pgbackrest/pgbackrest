@@ -144,11 +144,8 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                 // Read command
                 PackRead *commandPack = pckReadNew(this->read);
                 const String *command = pckReadStrP(commandPack);
-                const Buffer *paramBuf = pckReadBinP(commandPack);
+                const Buffer *paramBuf = pckReadPackBufP(commandPack);
                 pckReadEndP(commandPack);
-
-                // Create param pack
-                PackRead *paramPack = paramBuf == NULL ? NULL : pckReadNewBuf(paramBuf);
 
                 // Process command
                 bool found = false;
@@ -175,7 +172,7 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
 
                             TRY_BEGIN()
                             {
-                                found = handler(command, paramPack, this);
+                                found = handler(command, pckReadNewBuf(paramBuf), this);
                             }
                             CATCH_ANY()
                             {
@@ -198,9 +195,6 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                                     // Decrement retries remaining and retry
                                     retryRemaining--;
                                     retry = true;
-
-                                    // Reset the param pack
-                                    paramPack = paramBuf == NULL ? NULL : pckReadNewBuf(paramBuf);
 
                                     // Send keep alives to remotes. A retry means the command is taking longer than usual so make
                                     // sure the remote does not timeout.

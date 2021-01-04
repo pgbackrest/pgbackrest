@@ -233,6 +233,24 @@ void pckReadObjBegin(PackRead *this, PackIdParam param);
 
 void pckReadObjEnd(PackRead *this);
 
+// Read pack
+typedef struct PckReadPackParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int id;
+} PckReadPackParam;
+
+#define pckReadPackP(this, ...)                                                                                                    \
+    pckReadPack(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+PackRead *pckReadPack(PackRead *this, PckReadPackParam param);
+
+// Read pack buffer
+#define pckReadPackBufP(this, ...)                                                                                                 \
+    pckReadPackBuf(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+Buffer *pckReadPackBuf(PackRead *this, PckReadPackParam param);
+
 // Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
 typedef struct PckReadPtrParam
 {
@@ -411,7 +429,7 @@ typedef struct PckWritePackParam
 } PckWritePackParam;
 
 #define pckWritePackP(this, value, ...)                                                                                            \
-    pckWritepack(this, value, (PckWritePackParam){VAR_PARAM_INIT, __VA_ARGS__})
+    pckWritePack(this, value, (PckWritePackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWritePack(PackWrite *this, const PackWrite *value, PckWritePackParam param);
 

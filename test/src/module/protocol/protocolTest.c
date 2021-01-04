@@ -742,7 +742,7 @@ testRun(void)
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR_Z(
-                    hrnPackToStr(pckReadNew(read)), "1:str:command1, 2:bin:8806706172616d318806706172616d3200", "command1");
+                    hrnPackToStr(pckReadNew(read)), "1:str:command1, 2:pack:<1:str:param1, 2:str:param2>", "command1");
                 sleepMSec(4000);
                 ioWriteStrLine(write, strNew("{\"out\":1}"));
                 ioWriteFlush(write);
@@ -768,12 +768,12 @@ testRun(void)
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:command2, 2:bin:8806706172616d3100", "command2");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:command2, 2:pack:<1:str:param1>", "command2");
                 sleepMSec(1000);
                 ioWriteStrLine(write, strNew("{\"out\":2}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:command3, 2:bin:8806706172616d3100", "command3");
+                TEST_RESULT_STR_Z(hrnPackToStr(pckReadNew(read)), "1:str:command3, 2:pack:<1:str:param1>", "command3");
 
                 ioWriteStrLine(write, strNew("{\"err\":39,\"out\":\"very serious error\"}"));
                 ioWriteFlush(write);

@@ -75,7 +75,7 @@ protocolCommandWrite(const ProtocolCommand *this, IoWrite *write)
 
     // Only write params if there were any
     if (!pckWriteEmpty(this->pack))
-        pckWriteBinP(commandPack, pckWriteBuf(this->pack));
+        pckWritePackP(commandPack, this->pack);
 
     pckWriteEndP(commandPack);
 

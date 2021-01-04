@@ -185,7 +185,7 @@ static const PackTypeData packTypeData[] =
     {
         .type = pckTypePack,
         .size = true,
-        .name = STRDEF("bin"),
+        .name = STRDEF("pack"),
     },
 };
 
@@ -203,7 +203,7 @@ struct PackRead
 {
     MemContext *memContext;                                         // Mem context
     IoRead *read;                                                   // Read pack from
-    Buffer *buffer;                                                 // Buffer to contain read data
+    Buffer *buffer;                                                 // Buffer containing read data
     const uint8_t *bufferPtr;                                       // Pointer to buffer
     size_t bufferPos;                                               // Position in the buffer
     size_t bufferUsed;                                              // Amount of data in the buffer
@@ -293,7 +293,8 @@ pckReadNewBuf(const Buffer *buffer)
         FUNCTION_TEST_PARAM(BUFFER, buffer);
     FUNCTION_TEST_END();
 
-    ASSERT(buffer != NULL);
+    if (buffer == NULL)
+        FUNCTION_TEST_RETURN(NULL);
 
     PackRead *this = pckReadNewInternal();
     this->bufferPtr = bufPtrConst(buffer);
@@ -831,6 +832,48 @@ pckReadObjEnd(PackRead *this)
     this->tagNextId = 0;
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+PackRead *
+pckReadPack(PackRead *this, PckReadPackParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(pckReadNewBuf(pckReadPackBuf(this, param)));
+}
+
+Buffer *
+pckReadPackBuf(PackRead *this, PckReadPackParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, this);
+        FUNCTION_TEST_PARAM(UINT, param.id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (pckReadNullInternal(this, &param.id))
+        FUNCTION_TEST_RETURN(NULL);
+
+    // Read the tag
+    pckReadTag(this, &param.id, pckTypePack, false);
+
+    // Get the pack size
+    Buffer *result = bufNew((size_t)pckReadUInt64Internal(this));
+
+    // Read the pack out in chunks
+    while (bufUsed(result) < bufSize(result))
+    {
+        size_t size = pckReadBuffer(this, bufRemains(result));
+        bufCatC(result, this->bufferPtr, this->bufferPos, size);
+        this->bufferPos += size;
+    }
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
