@@ -1857,21 +1857,22 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         // Initialize config
         cfgInit(config);
 
-        // Set option group default index. The first index in the group is automatically set unless the group option, e.g. repo, is
+        // Set option group default index. The first index in the group is automatically set unless the group option, e.g. pg, is
         // set. For now the group default options are hard-coded but they could be dynamic. An assert has been added to make sure
         // the code breaks if a new group is added.
         for (unsigned int groupId = 0; groupId < CFG_OPTION_GROUP_TOTAL; groupId++)
         {
             ASSERT(groupId == cfgOptGrpPg || groupId == cfgOptGrpRepo);
 
-            // Get the group default option
-            unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPg : cfgOptRepo;
+            // The repo default is always key 1 since only one is allowed
+            if (groupId == cfgOptGrpRepo)
+                continue;
 
             // Does the group default option exist?
-            if (cfgOptionTest(defaultOptionId))
+            if (cfgOptionTest(cfgOptPg))
             {
                 // Search for the key
-                unsigned int optionKeyIdx = cfgOptionUInt(defaultOptionId) - 1;
+                unsigned int optionKeyIdx = cfgOptionUInt(cfgOptPg) - 1;
                 unsigned int index = 0;
 
                 for (; index < cfgOptionGroupIdxTotal(groupId); index++)
@@ -1884,8 +1885,8 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 if (index == cfgOptionGroupIdxTotal(groupId))
                 {
                     THROW_FMT(
-                        OptionInvalidValueError, "key '%u' is not valid for '%s' option", cfgOptionUInt(defaultOptionId),
-                        cfgOptionName(defaultOptionId));
+                        OptionInvalidValueError, "key '%u' is not valid for '%s' option", cfgOptionUInt(cfgOptPg),
+                        cfgOptionName(cfgOptPg));
                 }
 
                 // Set the default

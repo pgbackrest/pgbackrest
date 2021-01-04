@@ -222,9 +222,6 @@ use constant CFGDEF_INDEX_REPO                                      => 1;
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
 
-# Set default repository
-use constant CFGOPT_REPO                                            => CFGDEF_PREFIX_REPO;
-
 # Repository General
 use constant CFGOPT_REPO_CIPHER_TYPE                                => CFGDEF_PREFIX_REPO . '-cipher-type';
 use constant CFGOPT_REPO_CIPHER_PASS                                => CFGDEF_PREFIX_REPO . '-cipher-pass';
@@ -769,27 +766,6 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
         &CFGDEF_NEGATE => true,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-            &CFGCMD_VERIFY => {},
-        }
     },
 
     &CFGOPT_CONFIG_INCLUDE_PATH =>
@@ -1588,7 +1564,6 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
             &CFGCMD_REPO_CREATE => {},
             &CFGCMD_REPO_GET => {},
@@ -1599,8 +1574,6 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
             &CFGCMD_VERIFY => {},
         },
         &CFGDEF_COMMAND_ROLE =>
@@ -1646,27 +1619,6 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_DEFAULT => '/var/log/' . PROJECT_EXE,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-            &CFGCMD_VERIFY => {},
-        },
     },
 
     &CFGOPT_PROTOCOL_TIMEOUT =>
@@ -1693,18 +1645,6 @@ my %hConfigDefine =
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_VERIFY => {},
         }
-    },
-
-    # Repository selector
-    #-------------------------------------------------------------------------------------------------------------------------------
-    &CFGOPT_REPO =>
-    {
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_INTERNAL => true,
-        &CFGDEF_REQUIRED => false,
-        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_REPO],
-        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
     # Repository options
@@ -1805,8 +1745,6 @@ my %hConfigDefine =
             {
                 &CFGDEF_INTERNAL => true,
             },
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
             &CFGCMD_VERIFY => {},
         },
         &CFGDEF_COMMAND_ROLE =>
@@ -1863,8 +1801,6 @@ my %hConfigDefine =
             &CFGCMD_REPO_PUT => {},
             &CFGCMD_REPO_RM => {},
             &CFGCMD_RESTORE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
             &CFGCMD_VERIFY => {},
         },
         &CFGDEF_COMMAND_ROLE =>
@@ -2376,8 +2312,6 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
             &CFGCMD_VERIFY => {},
         },
     },
@@ -2452,27 +2386,6 @@ my %hConfigDefine =
             lc(DEBUG),
             lc(TRACE),
         ],
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-            &CFGCMD_VERIFY => {},
-        }
     },
 
     &CFGOPT_LOG_LEVEL_FILE =>
@@ -2481,27 +2394,6 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => lc(INFO),
         &CFGDEF_ALLOW_LIST => CFGOPT_LOG_LEVEL_CONSOLE,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-            &CFGCMD_VERIFY => {},
-        }
     },
 
     &CFGOPT_LOG_LEVEL_STDERR =>
@@ -2510,27 +2402,6 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
         &CFGDEF_DEFAULT => lc(WARN),
         &CFGDEF_ALLOW_LIST => CFGOPT_LOG_LEVEL_CONSOLE,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
-            &CFGCMD_VERIFY => {},
-        }
     },
 
     &CFGOPT_LOG_SUBPROCESS =>
@@ -2544,7 +2415,6 @@ my %hConfigDefine =
             &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
             &CFGCMD_INFO => {},
             &CFGCMD_REPO_CREATE => {},
             &CFGCMD_REPO_GET => {},
@@ -2555,8 +2425,6 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
             &CFGCMD_VERIFY => {},
         }
     },
@@ -2921,43 +2789,17 @@ my %hConfigDefine =
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_PG =>
     {
-        &CFGDEF_SECTION => CFGDEF_SECTION_STANZA,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_INTERNAL => true,
         &CFGDEF_REQUIRED => false,
         &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_PG],
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
             &CFGCMD_BACKUP =>
             {
                 &CFGDEF_COMMAND_ROLE =>
                 {
                     &CFGCMD_ROLE_LOCAL => {},
-                    &CFGCMD_ROLE_REMOTE => {},
-                },
-            },
-            &CFGCMD_CHECK =>
-            {
-                &CFGDEF_COMMAND_ROLE =>
-                {
-                    &CFGCMD_ROLE_REMOTE => {},
-                },
-            },
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE =>
-            {
-                &CFGDEF_COMMAND_ROLE =>
-                {
-                    &CFGCMD_ROLE_REMOTE => {},
-                },
-            },
-            &CFGCMD_STANZA_UPGRADE =>
-            {
-                &CFGDEF_COMMAND_ROLE =>
-                {
-                    &CFGCMD_ROLE_REMOTE => {},
                 },
             },
         },
@@ -2982,7 +2824,6 @@ my %hConfigDefine =
             },
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
             &CFGCMD_RESTORE =>
             {
                 &CFGDEF_INTERNAL => true,
@@ -2990,8 +2831,6 @@ my %hConfigDefine =
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
         },
         &CFGDEF_COMMAND_ROLE =>
         {
@@ -3041,12 +2880,9 @@ my %hConfigDefine =
         {
             &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
             &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_START => {},
-            &CFGCMD_STOP => {},
         },
         &CFGDEF_COMMAND_ROLE =>
         {

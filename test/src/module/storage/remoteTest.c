@@ -356,7 +356,14 @@ testRun(void)
             "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check protocol function directly with a file");
+        TEST_TITLE("check protocol function directly with a path");
+
+        // Remove the file since ordering cannot be guaranteed in the protocol results
+        storageRemoveP(storageRemote, STRDEF("test"), .errorOnMissing = true);
+
+        // Path timestamp must be set after file is removed since file removal updates it
+        utimeTest = (struct utimbuf){.actime = 1000000000, .modtime = 1555160000};
+        THROW_ON_SYS_ERROR(utime(strZ(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
 
         PackWrite *paramList = pckWriteNewBuf(bufNew(256));
         pckWriteStrP(paramList, STR(hrnReplaceKey("{[path]}/repo")));
@@ -373,7 +380,6 @@ testRun(void)
                 "["
                     "1:obj:{1:str:., 2:u32:1, 3:time:1555160000, 4:u32:488, 5:u32:{[user-id]}, 7:str:{[user]}, 8:u32:{[group-id]}"
                         ", 10:str:{[group]}}"
-                    ", 2:obj:{1:str:test, 3:time:1, 4:u64:6, 5:u32:416}"
                 "]"
                 ", 2:bool:true"),
             "check result");

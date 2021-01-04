@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 PostgreSQL Types That Do Not Vary By Version
 
-Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
 
 For each supported release of PostgreSQL check the types in this file to see if they have changed.  The easiest way to do this is to
