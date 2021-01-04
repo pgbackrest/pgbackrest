@@ -721,7 +721,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test");
-        strLstAddZ(argList, "--no-compress");
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
         strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));

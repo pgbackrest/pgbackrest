@@ -32,7 +32,7 @@ dbGetIdx(unsigned int pgIdx)
                 pgClientNew(
                     cfgOptionIdxStrNull(cfgOptPgSocketPath, pgIdx), cfgOptionIdxUInt(cfgOptPgPort, pgIdx),
                     cfgOptionIdxStr(cfgOptPgDatabase, pgIdx), cfgOptionIdxStrNull(cfgOptPgUser, pgIdx),
-                    (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
+                    cfgOptionUInt64(cfgOptDbTimeout)),
                 NULL, applicationName);
         }
         else

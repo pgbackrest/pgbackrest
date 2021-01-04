@@ -53,43 +53,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("double"))
-    {
-        // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantDoubleConst), TEST_64BIT() ? 16 : 12, "check VariantDoubleConst size");
-        TEST_RESULT_UINT(sizeof(VariantDouble), TEST_64BIT() ? 24 : 16, "check VariantDouble size");
-
-        Variant *var = varNewDbl(44.44);
-        TEST_RESULT_DOUBLE(varDbl(var), 44.44, "double variant");
-        varFree(var);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varDbl(varNewStrZ("string")), AssertError, "assertion 'this->type == varTypeDouble' failed");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_DOUBLE(varDblForce(VARDBL(4.567)), 4.567, "force double to double");
-        TEST_RESULT_DOUBLE(varDblForce(varNewBool(false)), 0, "force bool to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARINT(123)), 123, "force int to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARINT64(999999999999)), 999999999999, "force int64 to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARUINT64(9223372036854775807U)), 9223372036854775807.0, "force uint64 to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARUINT(992)), 992, "force uint to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARSTRDEF("879.01")), 879.01, "force String to double");
-        TEST_RESULT_DOUBLE(varDblForce(VARSTRDEF("0")), 0, "force String to double");
-        TEST_RESULT_DOUBLE(
-            varDblForce(VARUINT64(UINT64_MAX)), 18446744073709551616.0, "force max uint64 to double (it will be rounded)");
-
-        TEST_ERROR(varDblForce(VARSTRDEF("AAA")), FormatError, "unable to convert string 'AAA' to double");
-        TEST_ERROR(varDblForce(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to double");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_DOUBLE(varDbl(varDup(VARDBL(3.1415))), 3.1415, "dup double");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(varEq(VARDBL(1.234), VARDBL(1.234)), true, "double, double eq");
-        TEST_RESULT_BOOL(varEq(VARDBL(4.321), VARDBL(1.234)), false, "double, double not eq");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("int"))
     {
         // Ensure type sizes are as expected
@@ -324,7 +287,6 @@ testRun(void)
         TEST_RESULT_STR_Z(varStrForce(VARSTRDEF("teststring")), "teststring", "force string to string");
         TEST_RESULT_STR_Z(varStrForce(VARINT(999)), "999", "force int to string");
         TEST_RESULT_STR_Z(varStrForce(VARINT64(9223372036854775807L)), "9223372036854775807", "force int64 to string");
-        TEST_RESULT_STR_Z(varStrForce(VARDBL((double)999999999.123456)), "999999999.123456", "force double to string");
         TEST_RESULT_STR_Z(varStrForce(varNewBool(true)), "true", "force bool to string");
         TEST_RESULT_STR_Z(varStrForce(varNewBool(false)), "false", "force bool to string");
         TEST_RESULT_STR_Z(varStrForce(VARUINT64(18446744073709551615U)), "18446744073709551615", "force uint64 to string");

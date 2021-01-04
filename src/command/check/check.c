@@ -154,8 +154,8 @@ checkPrimary(const DbGetResult dbGroup)
             LOG_INFO_FMT(CFGCMD_CHECK " repo%u archive for WAL (primary)", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
 
             const Storage *storageRepo = storageRepoIdx(repoIdx);
-            TimeMSec archiveTimeout = (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC);
-            const String *walSegmentFile = walSegmentFind(storageRepo, repoArchiveId[repoIdx], walSegment, archiveTimeout);
+            const String *walSegmentFile = walSegmentFind(
+                storageRepo, repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             LOG_INFO_FMT(
                 "WAL segment %s successfully archived to '%s' on repo%u", strZ(walSegment),

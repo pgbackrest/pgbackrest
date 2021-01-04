@@ -65,7 +65,7 @@ dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *
                 // Only a single db is passed to the remote
                 PgClient *pgClient = pgClientNew(
                     cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
-                    cfgOptionStrNull(cfgOptPgUser), (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC));
+                    cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
                 pgClientOpen(pgClient);
 
                 lstAdd(dbProtocolLocal.pgClientList, &pgClient);
