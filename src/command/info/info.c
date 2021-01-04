@@ -656,15 +656,13 @@ printf("DBID: %u, repo: %u, pg-version: %s\n", pgData.id, repoData->key, strZ(pg
 
             // Add the database history, backup, archive and repo arrays to the stanza info
             kvPut(varKv(stanzaInfo), STANZA_KEY_DB_VAR, varNewVarLst(dbSection));
-            kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
             kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(archiveSection));
             kvPut(varKv(stanzaInfo), STANZA_KEY_REPO_VAR, varNewVarLst(repoSection));
-
-            varLstAdd(result, stanzaInfo);
         }
 
         // Get a sorted list of the data for all existing backups for this stanza over all repos
         backupList(backupSection, stanzaData, backupLabel, repoIdxStart, repoIdxMax);
+        kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
 
         static bool backupLockHeld = false;
 
@@ -687,6 +685,8 @@ printf("DBID: %u, repo: %u, pg-version: %s\n", pgData.id, repoData->key, strZ(pg
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(stanzaCipherType)));
         else
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(INFO_STANZA_MIXED_STR));
+
+        varLstAdd(result, stanzaInfo);
     }
 
     FUNCTION_TEST_RETURN(result);

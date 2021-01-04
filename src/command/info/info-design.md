@@ -8,6 +8,10 @@ REQUIREMENTS:
 2. Output the data (JSON and Text) in such a way that the user can easily determine the location (repository) of the most recent backup.
 3. Identify the WAL (currently min/max) repo location.
 4. Backups, in the text output, should still be displayed from oldest to newest.
+Added from discussion 1/4/21:
+5. db (current) should display all backups on all repos as current when the PG system-id and version are the same. For example, if the history on a repo indicates 12-1, 13-2, 12-3 and 12-1 and 12-3 have the same system-id then the archive and backups for these are to be displayed as current. Same for prior. In either case the order must be deterministic across repos. For example if the 12-1, 13-2, 12-3 was on repo1 and repo2 had 13-1 and 12-2 then current would be repo1 12-1, 12-3 and repo2 12-2 and prior is 13-2 from repo1 and 13-1 from repo2 - meaning the repo order is deterministic and the order of the backups are as well since by timestamp over all repos.
+6. Although 3. above indicates the repo WAL location will be identified, we will leave that for the JSON only and for the text output, we will display the min archive over all repos for the database section being displayed.
+7. Although the "db (prior)" text output will now combine dbs with the same system/version id, those with different system-id and/or versions will be displayed in their own "db (prior)" section.
 
 USE SECTION 8 MONITORING SECTION
 want to know the wal across the repos and what the wal looks like - per stanza - none of the data can cross stanzas
