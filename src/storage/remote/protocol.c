@@ -242,10 +242,12 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
     {
         if (strEq(command, PROTOCOL_COMMAND_STORAGE_FEATURE_STR))
         {
-            protocolServerWriteLine(server, jsonFromStr(storagePathP(storage, NULL)));
-            protocolServerWriteLine(server, jsonFromUInt64(interface.feature));
+            PackWrite *result = pckWriteNewBuf(bufNew(512));
+            pckWriteStrP(result, storagePathP(storage, NULL));
+            pckWriteU64P(result, interface.feature);
 
-            protocolServerResponse(server, NULL);
+            protocolServerResult(server, result);
+            protocolServerResponse(server);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_INFO_STR))
         {
@@ -306,7 +308,7 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
 
             // Check if the file exists
             bool exists = ioReadOpen(fileRead);
-            protocolServerResponse(server, VARBOOL(exists));
+            protocolServerResponseVar(server, VARBOOL(exists));
 
             // Transfer the file if it exists
             if (exists)
@@ -336,7 +338,7 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
                 ioWriteFlush(protocolServerIoWrite(server));
 
                 // Push filter results
-                protocolServerResponse(server, ioFilterGroupResultAll(ioReadFilterGroup(fileRead)));
+                protocolServerResponseVar(server, ioFilterGroupResultAll(ioReadFilterGroup(fileRead)));
             }
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR))
@@ -367,7 +369,7 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
 
             // Open file
             ioWriteOpen(fileWrite);
-            protocolServerResponse(server, NULL);
+            protocolServerResponseVar(server, NULL);
 
             // Write data
             Buffer *buffer = bufNew(ioBufferSize());
@@ -402,13 +404,13 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
                     ioWriteClose(fileWrite);
 
                     // Push filter results
-                    protocolServerResponse(server, ioFilterGroupResultAll(ioWriteFilterGroup(fileWrite)));
+                    protocolServerResponseVar(server, ioFilterGroupResultAll(ioWriteFilterGroup(fileWrite)));
                 }
                 // Write was aborted so free the file
                 else
                 {
                     ioWriteFree(fileWrite);
-                    protocolServerResponse(server, NULL);
+                    protocolServerResponseVar(server, NULL);
                 }
             }
             while (remaining > 0);
@@ -425,7 +427,7 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
 
             storageInterfacePathCreateP(driver, path, errorOnExists, noParentCreate, mode);
 
-            protocolServerResponse(server, NULL);
+            protocolServerResponseVar(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR))
         {
@@ -434,7 +436,7 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
             const String *path = pckReadStrP(param);
             bool recurse = pckReadBoolP(param);
 
-            protocolServerResponse(server, VARBOOL(storageInterfacePathRemoveP(driver, path, recurse)));
+            protocolServerResponseVar(server, VARBOOL(storageInterfacePathRemoveP(driver, path, recurse)));
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR))
         {
@@ -444,7 +446,7 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
 
             storageInterfacePathSyncP(driver, path);
 
-            protocolServerResponse(server, NULL);
+            protocolServerResponseVar(server, NULL);
         }
         else if (strEq(command, PROTOCOL_COMMAND_STORAGE_REMOVE_STR))
         {
@@ -455,7 +457,7 @@ storageRemoteProtocol(const String *command, PackRead *param, ProtocolServer *se
 
             storageInterfaceRemoveP(driver, file, .errorOnMissing = errorOnMissing);
 
-            protocolServerResponse(server, NULL);
+            protocolServerResponseVar(server, NULL);
         }
         else
             found = false;

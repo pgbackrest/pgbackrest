@@ -13,6 +13,7 @@ Write to a file descriptor using the IoWrite interface.
 Constructors
 ***********************************************************************************************************************************/
 IoWrite *ioFdWriteNew(const String *name, int fd, TimeMSec timeout);
+IoWrite *ioFdWriteNewOpen(const String *name, int fd, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Helper functions

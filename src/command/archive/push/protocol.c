@@ -48,7 +48,7 @@ archivePushProtocol(const String *command, PackRead *param, ProtocolServer *serv
             CompressType compressType = (CompressType)pckReadU32P(param);
             int compressLevel = pckReadI32P(param);
 
-            protocolServerResponse(
+            protocolServerResponseVar(
                 server,
                 VARSTR(
                     archivePushFile(

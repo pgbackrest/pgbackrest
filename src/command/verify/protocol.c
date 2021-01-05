@@ -46,7 +46,7 @@ verifyProtocol(const String *command, PackRead *param, ProtocolServer *server)
 
             VerifyResult result = verifyFile(filePathName, fileChecksum, fileSize, cipherPass);
 
-            protocolServerResponse(server, varNewInt(result));
+            protocolServerResponseVar(server, varNewInt(result));
         }
         else
             found = false;

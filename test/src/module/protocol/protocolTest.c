@@ -41,11 +41,11 @@ testServerProtocol(const String *command, PackRead *param, ProtocolServer *serve
         }
         else if (strEq(command, strNew("request-simple")))
         {
-            protocolServerResponse(server, varNewBool(true));
+            protocolServerResponseVar(server, varNewBool(true));
         }
         else if (strEq(command, strNew("request-complex")))
         {
-            protocolServerResponse(server, varNewBool(false));
+            protocolServerResponseVar(server, varNewBool(false));
             protocolServerWriteLine(server, strNew("LINEOFTEXT"));
             protocolServerWriteLine(server, NULL);
             ioWriteFlush(protocolServerIoWrite(server));
@@ -58,7 +58,7 @@ testServerProtocol(const String *command, PackRead *param, ProtocolServer *serve
                 THROW(FormatError, "error-until-0");
             }
 
-            protocolServerResponse(server, varNewBool(true));
+            protocolServerResponseVar(server, varNewBool(true));
         }
         else
             found = false;
@@ -526,7 +526,7 @@ testRun(void)
                 TEST_RESULT_VOID(
                     protocolClientWriteCommand(client, protocolCommandNew(strNew("test"))), "execute command with output");
                 TEST_RESULT_STR_Z(protocolClientReadLine(client), "OUTPUT", "check output");
-                TEST_ASSIGN(output, varVarLst(protocolClientReadOutput(client, true)), "execute command with output");
+                TEST_ASSIGN(output, varVarLst(protocolClientReadOutputVar(client, true)), "execute command with output");
                 TEST_RESULT_UINT(varLstSize(output), 2, "check output size");
                 TEST_RESULT_STR_Z(varStr(varLstGet(output, 0)), "value1", "check value1");
                 TEST_RESULT_STR_Z(varStr(varLstGet(output, 1)), "value2", "check value2");

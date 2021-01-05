@@ -40,7 +40,7 @@ archiveGetProtocol(const String *command, PackRead *param, ProtocolServer *serve
 
             const String *walSegment = pckReadStrP(param);
 
-            protocolServerResponse(
+            protocolServerResponseVar(
                 server,
                 VARINT(
                     archiveGetFile(

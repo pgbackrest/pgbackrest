@@ -48,7 +48,7 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_REMOTE, LOG, logLevelTrace)
 {
     ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "-1"));
     ioWriteFlush(protocolClientIoWrite(this->client));
-    protocolClientReadOutput(this->client, false);
+    protocolClientReadOutputVar(this->client, false);
 }
 OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
@@ -154,7 +154,7 @@ storageWriteRemoteClose(THIS_VOID)
     {
         ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "0"));
         ioWriteFlush(protocolClientIoWrite(this->client));
-        ioFilterGroupResultAllSet(ioWriteFilterGroup(storageWriteIo(this->write)), protocolClientReadOutput(this->client, true));
+        ioFilterGroupResultAllSet(ioWriteFilterGroup(storageWriteIo(this->write)), protocolClientReadOutputVar(this->client, true));
         this->client = NULL;
 
         memContextCallbackClear(this->memContext);

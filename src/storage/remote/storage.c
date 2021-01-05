@@ -468,19 +468,18 @@ storageRemoteNew(
             // Send command
             protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR));
 
-            // Read values
-            path = jsonToStr(protocolClientReadLine(driver->client));
-            driver->interface.feature = jsonToUInt64(protocolClientReadLine(driver->client));
+            // Get result and acknowledge command compeleted
+            PackRead *result = protocolClientResult(driver->client, true);
+            protocolClientResponse(driver->client);
 
-            // Acknowledge command completed
-            protocolClientReadOutput(driver->client, false);
-
-            // Dup path into parent context
+            // Get path in parent context
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                path = strDup(path);
+                path = pckReadStrP(result);
             }
             MEM_CONTEXT_PRIOR_END();
+
+            driver->interface.feature = pckReadU64P(result);
         }
         MEM_CONTEXT_TEMP_END();
 

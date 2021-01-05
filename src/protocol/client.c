@@ -11,6 +11,7 @@ Protocol Client
 #include "common/type/keyValue.h"
 #include "common/type/object.h"
 #include "protocol/client.h"
+#include "protocol/server.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -182,8 +183,59 @@ protocolClientProcessError(ProtocolClient *this, KeyValue *errorKv)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+PackRead *
+protocolClientResult(ProtocolClient *this, bool resultRequired)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+        FUNCTION_LOG_PARAM(BOOL, resultRequired);
+    FUNCTION_LOG_END();
+
+    PackRead *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *response = pckReadNew(this->read);
+        ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = pckReadPackP(response);
+        }
+        MEM_CONTEXT_PRIOR_END();
+
+        pckReadEndP(response);
+
+        CHECK(type == protocolServerTypeResult);
+        CHECK(!resultRequired || result != NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PACK_READ, result);
+}
+
+void
+protocolClientResponse(ProtocolClient *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackRead *response = pckReadNew(this->read);
+        ProtocolServerType type = (ProtocolServerType)pckReadU32P(response);
+        pckReadEndP(response);
+
+        CHECK(type == protocolServerTypeResponse);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 const Variant *
-protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
+protocolClientReadOutputVar(ProtocolClient *this, bool outputRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
@@ -262,7 +314,7 @@ protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool outpu
 
     protocolClientWriteCommand(this, command);
 
-    FUNCTION_LOG_RETURN_CONST(VARIANT, protocolClientReadOutput(this, outputRequired));
+    FUNCTION_LOG_RETURN_CONST(VARIANT, protocolClientReadOutputVar(this, outputRequired));
 }
 
 /**********************************************************************************************************************************/

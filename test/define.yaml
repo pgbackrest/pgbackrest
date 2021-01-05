@@ -449,7 +449,6 @@ unit:
       - name: remote
         total: 9
         containerReq: true
-        binReq: true
 
         coverage:
           storage/remote/read: full
@@ -460,6 +459,7 @@ unit:
           storage/storage: full
 
         include:
+          - protocol/helper
           - storage/read
           - storage/write
 

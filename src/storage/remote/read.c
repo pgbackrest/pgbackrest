@@ -126,7 +126,7 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     if (this->remaining == 0)
                     {
                         ioFilterGroupResultAllSet(
-                            ioReadFilterGroup(storageReadIo(this->read)), protocolClientReadOutput(this->client, true));
+                            ioReadFilterGroup(storageReadIo(this->read)), protocolClientReadOutputVar(this->client, true));
                         this->eof = true;
                     }
 

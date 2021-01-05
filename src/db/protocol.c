@@ -73,7 +73,7 @@ dbProtocol(const String *command, PackRead *param, ProtocolServer *server)
             MEM_CONTEXT_END();
 
             // Return db index which should be included in subsequent calls
-            protocolServerResponse(server, VARUINT(dbIdx));
+            protocolServerResponseVar(server, VARUINT(dbIdx));
         }
         else if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR) || strEq(command, PROTOCOL_COMMAND_DB_CLOSE_STR))
         {
@@ -82,11 +82,11 @@ dbProtocol(const String *command, PackRead *param, ProtocolServer *server)
             PgClient *pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param));
 
             if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR))
-                protocolServerResponse(server, varNewVarLst(pgClientQuery(pgClient, pckReadStrP(param))));
+                protocolServerResponseVar(server, varNewVarLst(pgClientQuery(pgClient, pckReadStrP(param))));
             else
             {
                 pgClientClose(pgClient);
-                protocolServerResponse(server, NULL);
+                protocolServerResponseVar(server, NULL);
             }
         }
         else

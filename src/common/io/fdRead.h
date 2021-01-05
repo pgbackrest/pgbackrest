@@ -13,5 +13,6 @@ Read from a file descriptor using the IoRead interface.
 Constructors
 ***********************************************************************************************************************************/
 IoRead *ioFdReadNew(const String *name, int fd, TimeMSec timeout);
+IoRead *ioFdReadNewOpen(const String *name, int fd, TimeMSec timeout);
 
 #endif

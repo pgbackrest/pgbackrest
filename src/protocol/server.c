@@ -217,7 +217,7 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                 if (!found)
                 {
                     if (strEq(command, PROTOCOL_COMMAND_NOOP_STR))
-                        protocolServerResponse(this, NULL);
+                        protocolServerResponseVar(this, NULL);
                     else if (strEq(command, PROTOCOL_COMMAND_EXIT_STR))
                         exit = true;
                     else
@@ -245,7 +245,44 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
 
 /**********************************************************************************************************************************/
 void
-protocolServerResponse(ProtocolServer *this, const Variant *output)
+protocolServerResult(ProtocolServer *this, PackWrite *resultPack)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_LOG_PARAM(PACK_WRITE, resultPack);
+    FUNCTION_LOG_END();
+
+    // End the pack
+    pckWriteEndP(resultPack);
+
+    // Write the response and flush to be sure it gets sent immediately
+    PackWrite *responsePack = pckWriteNew(this->write);
+    pckWriteU32P(responsePack, protocolServerTypeResult, .defaultWrite = true);
+    pckWritePackP(responsePack, resultPack);
+    pckWriteEndP(responsePack);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+protocolServerResponse(ProtocolServer *this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
+    FUNCTION_LOG_END();
+
+    // Write the response and flush to be sure it gets sent immediately
+    PackWrite *responsePack = pckWriteNew(this->write);
+    pckWriteU32P(responsePack, protocolServerTypeResponse, .defaultWrite = true);
+    pckWriteEndP(responsePack);
+
+    ioWriteFlush(this->write);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+void
+protocolServerResponseVar(ProtocolServer *this, const Variant *output)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);

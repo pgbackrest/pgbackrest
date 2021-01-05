@@ -68,7 +68,7 @@ backupProtocol(const String *command, PackRead *param, ProtocolServer *server)
             varLstAdd(resultList, varNewStr(result.copyChecksum));
             varLstAdd(resultList, result.pageChecksumResult != NULL ? varNewKv(result.pageChecksumResult) : NULL);
 
-            protocolServerResponse(server, varNewVarLst(resultList));
+            protocolServerResponseVar(server, varNewVarLst(resultList));
         }
         else
             found = false;

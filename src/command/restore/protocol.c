@@ -54,7 +54,7 @@ restoreProtocol(const String *command, PackRead *param, ProtocolServer *server)
             bool deltaForce = pckReadBoolP(param);
             const String *cipherPass = pckReadStrP(param);
 
-            protocolServerResponse(
+            protocolServerResponseVar(
                 server,
                 VARBOOL(
                     restoreFile(

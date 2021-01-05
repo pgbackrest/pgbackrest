@@ -47,7 +47,7 @@ configProtocol(const String *command, PackRead *param, ProtocolServer *server)
                 varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
             }
 
-            protocolServerResponse(server, varNewVarLst(optionList));
+            protocolServerResponseVar(server, varNewVarLst(optionList));
         }
         else
             found = false;

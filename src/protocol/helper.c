@@ -420,6 +420,33 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
 }
 
 /**********************************************************************************************************************************/
+__attribute__((always_inline)) static inline void
+protocolRemoteCacheInit(ProtocolStorageType protocolStorageType)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, protocolStorageType);
+    FUNCTION_TEST_END();
+
+    protocolHelperInit();
+
+    // Allocate the client cache
+    if (protocolHelper.clientRemoteSize == 0)
+    {
+        MEM_CONTEXT_BEGIN(protocolHelper.memContext)
+        {
+            protocolHelper.clientRemoteSize = cfgOptionGroupIdxTotal(
+                protocolStorageType == protocolStorageTypeRepo ? cfgOptGrpRepo : cfgOptGrpPg) + 1;
+            protocolHelper.clientRemote = memNew(protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
+
+            for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+                protocolHelper.clientRemote[clientIdx] = (ProtocolHelperClient){.exec = NULL};
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 ProtocolClient *
 protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 {
@@ -431,21 +458,8 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
     // Is this a repo remote?
     bool isRepo = protocolStorageType == protocolStorageTypeRepo;
 
-    protocolHelperInit();
-
-    // Allocate the client cache
-    if (protocolHelper.clientRemoteSize == 0)
-    {
-        MEM_CONTEXT_BEGIN(protocolHelper.memContext)
-        {
-            protocolHelper.clientRemoteSize = cfgOptionGroupIdxTotal(isRepo ? cfgOptGrpRepo : cfgOptGrpPg) + 1;
-            protocolHelper.clientRemote = memNew(protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
-
-            for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
-                protocolHelper.clientRemote[clientIdx] = (ProtocolHelperClient){.exec = NULL};
-        }
-        MEM_CONTEXT_END();
-    }
+    // Init remote protocol cache
+    protocolRemoteCacheInit(protocolStorageType);
 
     // Determine protocol id for the remote.  If the process option is set then use that since we want the remote protocol id to
     // match the local protocol id. Otherwise set to 0 since the remote is being started from a main process and there should only

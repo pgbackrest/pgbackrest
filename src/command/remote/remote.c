@@ -63,7 +63,7 @@ cmdRemote(int fdRead, int fdWrite)
             }
 
             // Notify the client of success
-            protocolServerResponse(server, NULL);
+            protocolServerResponseVar(server, NULL);
             success = true;
         }
         CATCH_ANY()

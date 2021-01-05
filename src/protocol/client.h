@@ -60,7 +60,9 @@ void protocolClientNoOp(ProtocolClient *this);
 String *protocolClientReadLine(ProtocolClient *this);
 
 // Read the command output
-const Variant *protocolClientReadOutput(ProtocolClient *this, bool outputRequired);
+PackRead *protocolClientResult(ProtocolClient *this, bool resultRequired);
+void protocolClientResponse(ProtocolClient *this);
+const Variant *protocolClientReadOutputVar(ProtocolClient *this, bool outputRequired);
 
 // Write the protocol command
 void protocolClientWriteCommand(ProtocolClient *this, ProtocolCommand *command);

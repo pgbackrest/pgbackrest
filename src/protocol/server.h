@@ -5,6 +5,19 @@ Protocol Server
 #define PROTOCOL_SERVER_H
 
 /***********************************************************************************************************************************
+Commands may have multiple processes that work together to implement their functionality.  These roles allow each process to know
+what it is supposed to do.
+***********************************************************************************************************************************/
+typedef enum
+{
+    // One of possibly many results to be returned to the client
+    protocolServerTypeResult = 0,
+
+    // Final response that indicates the end of command processing and may also have a result
+    protocolServerTypeResponse = 1,
+} ProtocolServerType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 #define PROTOCOL_SERVER_TYPE                                        ProtocolServer
@@ -36,7 +49,9 @@ void protocolServerError(ProtocolServer *this, int code, const String *message, 
 void protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval);
 
 // Respond to request with output if provided
-void protocolServerResponse(ProtocolServer *this, const Variant *output);
+void protocolServerResult(ProtocolServer *this, PackWrite *resultPack);
+void protocolServerResponse(ProtocolServer *this);
+void protocolServerResponseVar(ProtocolServer *this, const Variant *output);
 
 // Add a new handler
 void protocolServerHandlerAdd(ProtocolServer *this, ProtocolServerProcessHandler handler);

@@ -169,7 +169,7 @@ protocolParallelProcess(ProtocolParallel *this)
                         TRY_BEGIN()
                         {
                             protocolParallelJobResultSet(
-                                job, protocolClientReadOutput(*(ProtocolClient **)lstGet(this->clientList, clientIdx), true));
+                                job, protocolClientReadOutputVar(*(ProtocolClient **)lstGet(this->clientList, clientIdx), true));
                         }
                         CATCH_ANY()
                         {
