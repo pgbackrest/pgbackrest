@@ -570,9 +570,14 @@ unit:
 
         coverage:
           command/archive/common: full
-          command/archive/get/file: full
-          command/archive/get/get: full
-          command/archive/get/protocol: full
+          # command/archive/get/file: full
+          # command/archive/get/get: full
+          # command/archive/get/protocol: full
+
+        include:
+          - command/archive/get/file
+          - command/archive/get/get
+          - command/archive/get/protocol
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-push
@@ -581,14 +586,9 @@ unit:
 
         coverage:
           command/archive/common: full
-          # command/archive/push/file: full
-          # command/archive/push/protocol: full
-          # command/archive/push/push: full
-
-        include:
-          - command/archive/push/file
-          - command/archive/push/protocol
-          - command/archive/push/push
+          command/archive/push/file: full
+          command/archive/push/protocol: full
+          command/archive/push/push: full
 
       # ----------------------------------------------------------------------------------------------------------------------------
       # --test=backup and --test=backup-common must must be run together to get full coverage of backup/common
