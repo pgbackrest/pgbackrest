@@ -314,186 +314,216 @@ testRun(void)
             "000000010000000A00000FFE|000000010000000A00000FFF", "check queue");
     }
 
-
     // *****************************************************************************************************************************
     if (testBegin("cmdArchiveGetAsync()"))
     {
-        // harnessLogLevelSet(logLevelDetail);
-        //
-        // StringList *argCleanList = strLstNew();
-        // strLstAdd(argCleanList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        // strLstAdd(argCleanList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        // strLstAdd(argCleanList, strNewFmt("--spool-path=%s/spool", testPath()));
-        // strLstAddZ(argCleanList, "--" CFGOPT_ARCHIVE_ASYNC);
-        // strLstAddZ(argCleanList, "--stanza=test2");
-        // harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argCleanList);
-        //
-        // TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
-        //
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("command must be run on the pg host");
-        //
-        // StringList *argList = strLstNew();
-        // hrnCfgArgRawZ(argList, cfgOptPgHost, "host");
-        // hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
-        // hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        // strLstAddZ(argList, "--" CFGOPT_SPOOL_PATH "=/spool");
-        // strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        // strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
-        // strLstAddZ(argList, "000000010000000100000001");
-        // harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
-        //
-        // TEST_ERROR(cmdArchiveGetAsync(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
-        //
-        // // Create pg_control file and archive.info
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // storagePutP(
-        //     storageNewWriteP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
-        //     pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
-        //
-        // storagePutP(
-        //     storageNewWriteP(storageTest, strNew("repo/archive/test2/archive.info")),
-        //     harnessInfoChecksumZ(
-        //         "[db]\n"
-        //         "db-id=1\n"
-        //         "\n"
-        //         "[db:history]\n"
-        //         "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"));
-        //
-        // // Get a single segment
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // argList = strLstDup(argCleanList);
-        // strLstAddZ(argList, "000000010000000100000001");
-        // harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
-        //
-        // storagePathCreateP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
-        //
-        // TEST_RESULT_VOID(
-        //     storagePutP(
-        //         storageNewWriteP(
-        //             storageTest,
-        //             strNew(
-        //                 "repo/archive/test2/10-1/0000000100000001/"
-        //                     "000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd")),
-        //         NULL),
-        //     "normal WAL segment");
-        //
-        // // Create tmp file to make it look like a prior async get failed partway through to ensure that retries work
-        // TEST_RESULT_VOID(
-        //     storagePutP(
-        //         storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.pgbackrest.tmp")),
-        //         NULL),
-        //     "normal WAL segment");
-        //
-        // TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
-        // harnessLogResult(
-        //     "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-        //     "P01 DETAIL: found 000000010000000100000001 in the archive");
-        //
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001")), true,
-        //     "check 000000010000000100000001 in spool");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.pgbackrest.tmp")), false,
-        //     "check 000000010000000100000001 tmp not in spool");
-        //
-        // // Get multiple segments where some are missing or errored
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // argList = strLstDup(argCleanList);
-        // strLstAddZ(argList, "000000010000000100000001");
-        // strLstAddZ(argList, "000000010000000100000002");
-        // strLstAddZ(argList, "000000010000000100000003");
-        // harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
-        //
-        // storagePathCreateP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
-        //
-        // TEST_RESULT_VOID(
-        //     storagePutP(
-        //         storageNewWriteP(
-        //             storageTest,
-        //             strNew(
-        //                 "repo/archive/test2/10-1/0000000100000001/"
-        //                     "000000010000000100000003-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
-        //         NULL),
-        //     "normal WAL segment");
-        //
-        // TEST_RESULT_VOID(
-        //     storagePutP(
-        //         storageNewWriteP(
-        //             storageTest,
-        //             strNew(
-        //                 "repo/archive/test2/10-1/0000000100000001/"
-        //                     "000000010000000100000003-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
-        //         NULL),
-        //     "duplicate WAL segment");
-        //
-        // TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
-        // harnessLogResult(
-        //     "P00   INFO: get 3 WAL file(s) from archive: 000000010000000100000001...000000010000000100000003\n"
-        //     "P01 DETAIL: found 000000010000000100000001 in the archive\n"
-        //     "P01 DETAIL: unable to find 000000010000000100000002 in the archive\n"
-        //     "P01   WARN: could not get 000000010000000100000003 from the archive (will be retried): "
-        //         "[45] raised from local-1 protocol: duplicates found in archive for WAL segment 000000010000000100000003: "
-        //         "000000010000000100000003-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, "
-        //         "000000010000000100000003-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
-        //     "            HINT: are multiple primaries archiving to this stanza?");
-        //
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001")), true,
-        //     "check 000000010000000100000001 in spool");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002")), false,
-        //     "check 000000010000000100000002 not in spool");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002.ok")), true,
-        //     "check 000000010000000100000002.ok in spool");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003")), false,
-        //     "check 000000010000000100000003 not in spool");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error")), true,
-        //     "check 000000010000000100000003.error in spool");
-        //
-        // protocolFree();
-        //
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // storageRemoveP(
-        //     storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error"), .errorOnMissing = true);
-        //
-        // argList = strLstNew();
-        // strLstAddZ(argList, "pgbackrest-bogus");
-        // strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        // strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        // strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
-        // strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        // strLstAddZ(argList, "--stanza=test2");
-        // strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
-        // strLstAddZ(argList, "000000010000000100000001");
-        // strLstAddZ(argList, "000000010000000100000002");
-        // strLstAddZ(argList, "000000010000000100000003");
-        // harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
-        //
-        // TEST_ERROR(
-        //     cmdArchiveGetAsync(), ExecuteError,
-        //     "local-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': [2] No such file or directory");
-        //
-        // harnessLogResult(
-        //     "P00   INFO: get 3 WAL file(s) from archive: 000000010000000100000001...000000010000000100000003");
-        //
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error")), false,
-        //     "check 000000010000000100000001.error not in spool");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002.error")), false,
-        //     "check 000000010000000100000002.error not in spool");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error")), false,
-        //     "check 000000010000000100000003.error not in spool");
-        // TEST_RESULT_STR_Z(
-        //     strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/global.error")))),
-        //     "102\nlocal-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': "
-        //         "[2] No such file or directory",
-        //     "check global error");
+        harnessLogLevelSet(logLevelDetail);
+
+        StringList *argCleanList = strLstNew();
+        strLstAdd(argCleanList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAdd(argCleanList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argCleanList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argCleanList, "--" CFGOPT_ARCHIVE_ASYNC);
+        strLstAddZ(argCleanList, "--stanza=test2");
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argCleanList);
+
+        TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("command must be run on the pg host");
+
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptPgHost, "host");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        strLstAddZ(argList, "--" CFGOPT_SPOOL_PATH "=/spool");
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
+        strLstAddZ(argList, "000000010000000100000001");
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+
+        TEST_ERROR(cmdArchiveGetAsync(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
+
+        // Create pg_control file and archive.info
+        // -------------------------------------------------------------------------------------------------------------------------
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo/archive/test2/archive.info")),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=1\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"));
+
+        // Get a single segment
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argCleanList);
+        strLstAddZ(argList, "000000010000000100000001");
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+
+        storagePathCreateP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNew(
+                        "repo/archive/test2/10-1/0000000100000001/"
+                            "000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd")),
+                NULL),
+            "normal WAL segment");
+
+        // Create tmp file to make it look like a prior async get failed partway through to ensure that retries work
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.pgbackrest.tmp")),
+                NULL),
+            "normal WAL segment");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+        harnessLogResult(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
+            "P01 DETAIL: found 000000010000000100000001 in the archive");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001")), true,
+            "check 000000010000000100000001 in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.pgbackrest.tmp")), false,
+            "check 000000010000000100000001 tmp not in spool");
+
+        // Get multiple segments where some are missing or errored
+        // -------------------------------------------------------------------------------------------------------------------------
+        argList = strLstDup(argCleanList);
+        strLstAddZ(argList, "000000010000000100000001");
+        strLstAddZ(argList, "000000010000000100000002");
+        strLstAddZ(argList, "000000010000000100000003");
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+
+        storagePathCreateP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNew(
+                        "repo/archive/test2/10-1/0000000100000001/"
+                            "000000010000000100000003-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+                NULL),
+            "normal WAL segment");
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNew(
+                        "repo/archive/test2/10-1/0000000100000001/"
+                            "000000010000000100000003-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
+                NULL),
+            "duplicate WAL segment");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+        harnessLogResult(
+            "P00   INFO: get 3 WAL file(s) from archive: 000000010000000100000001...000000010000000100000003\n"
+            "P01 DETAIL: found 000000010000000100000001 in the archive\n"
+            "P00 DETAIL: unable to find 000000010000000100000002 in the archive");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001")), true,
+            "check 000000010000000100000001 in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002")), false,
+            "check 000000010000000100000002 not in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002.ok")), true,
+            "check 000000010000000100000002.ok in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003")), false,
+            "check 000000010000000100000003 not in spool");
+
+        protocolFree();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("!!!");
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(
+                    storageTest,
+                    strNew(
+                        "repo/archive/test2/10-1/0000000100000001/"
+                            "000000010000000100000002-efefefefefefefefefefefefefefefefefefefef")),
+                NULL),
+            "normal WAL segment");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+        harnessLogResult(
+            "P00   INFO: get 3 WAL file(s) from archive: 000000010000000100000001...000000010000000100000003\n"
+            "P01 DETAIL: found 000000010000000100000001 in the archive\n"
+            "P01 DETAIL: found 000000010000000100000002 in the archive\n"
+            "P00   WARN: could not get 000000010000000100000003 from the archive (will be retried): "
+                "[45] duplicates found in archive for WAL segment 000000010000000100000003: "
+                "000000010000000100000003-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, "
+                "000000010000000100000003-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            "            HINT: are multiple primaries archiving to this stanza?");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001")), true,
+            "check 000000010000000100000001 in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002")), true,
+            "check 000000010000000100000002 in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003")), false,
+            "check 000000010000000100000003 not in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error")), true,
+            "check 000000010000000100000003.error in spool");
+
+        protocolFree();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        storageRemoveP(
+            storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error"), .errorOnMissing = true);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest-bogus");
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        strLstAddZ(argList, "--stanza=test2");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
+        strLstAddZ(argList, "000000010000000100000001");
+        strLstAddZ(argList, "000000010000000100000002");
+        strLstAddZ(argList, "000000010000000100000003");
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(
+            cmdArchiveGetAsync(), ExecuteError,
+            "local-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': [2] No such file or directory");
+
+        harnessLogResult(
+            "P00   INFO: get 3 WAL file(s) from archive: 000000010000000100000001...000000010000000100000003");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error")), false,
+            "check 000000010000000100000001.error not in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002.error")), false,
+            "check 000000010000000100000002.error not in spool");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000003.error")), false,
+            "check 000000010000000100000003.error not in spool");
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/global.error")))),
+            "102\nlocal-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': "
+                "[2] No such file or directory",
+            "check global error");
     }
 
     // *****************************************************************************************************************************
