@@ -325,7 +325,7 @@ backupListAdd(
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);           // The section to add the backup data to
-        FUNCTION_TEST_PARAM_P(INFO_BACKUP_DATA, backupData);          // The data for the backup
+        FUNCTION_TEST_PARAM_P(INFO_BACKUP_DATA, backupData);        // The data for the backup
         FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup label to filter if requested by the user
         FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);              // The repo data where this backup is located
         FUNCTION_TEST_PARAM(UINT, repoIdx);                         // Internal index for the repo
@@ -336,7 +336,7 @@ backupListAdd(
     ASSERT(repoData != NULL);
 
     Variant *backupInfo = varNewKv(kvNew());
-
+printf("ADDING: %s\n", strZ(backupData->backupLabel)); fflush(stdout);
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
     kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(backupData->backupType));
@@ -490,7 +490,7 @@ backupList(
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);           // The section to add the backup data to
-        FUNCTION_TEST_PARAM_P(INFO_STANZA_REPO, stanzaData);          // The data for the stanza
+        FUNCTION_TEST_PARAM_P(INFO_STANZA_REPO, stanzaData);        // The data for the stanza
         FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup label to filter if requested by the user
         FUNCTION_TEST_PARAM(UINT, repoIdxStart);                    // The start index of the repo array to begin checking
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index beyond the last repo index to check
@@ -499,7 +499,6 @@ backupList(
     ASSERT(backupSection != NULL);
     ASSERT(stanzaData != NULL);
 
-    String *backupLabelNext = NULL;
     unsigned int backupRepoNextIdx = 0;
     unsigned int backupTotal = 0;
     unsigned int backupTotalProcessed = 0;
@@ -515,6 +514,8 @@ backupList(
     // Process any backups
     while (backupTotalProcessed < backupTotal)
     {
+        String *backupLabelNext = NULL;
+
         for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
         {
             InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
@@ -524,12 +525,13 @@ backupList(
                 repoData->backupIdx < infoBackupDataTotal(repoData->backupInfo))
             {
                 InfoBackupData backupData = infoBackupData(repoData->backupInfo, repoData->backupIdx);
-
+printf("REPO-%u idx: %u, backupIdx: %u, backupLabel: %s\n", repoData->key, repoIdx, repoData->backupIdx, strZ(backupData.backupLabel)); fflush(stdout);
                 // See if this backup should be next in the list, ordering from oldest to newest
                 if (backupLabelNext == NULL || strCmp(backupLabelNext, backupData.backupLabel) > 0)
                 {
                     backupLabelNext = strDup(backupData.backupLabel);
                     backupRepoNextIdx = repoIdx;
+printf("CHOOSE: %s from REPO idx: %u\n", strZ(backupLabelNext), backupRepoNextIdx); fflush(stdout);
                 }
             }
         }

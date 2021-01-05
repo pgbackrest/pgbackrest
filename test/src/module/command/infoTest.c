@@ -248,7 +248,7 @@ testRun(void)
             "    db (current)\n"
             "        wal archive min/max (9.4-3): none present\n",
             "text - single stanza, no valid backups");
-// CSHANG We're repeating tests here so maybe also set up for encryption?
+// CSHANG We're repeating tests here so maybe also set up for encryption? Or maybe just remove the tests above and combine
         // Repeat prior tests while a backup lock is held
         HARNESS_FORK_BEGIN()
         {
@@ -1345,7 +1345,8 @@ testRun(void)
                      "\"archive\":["
                         "{"
                             "\"database\":{"
-                                "\"id\":1"
+                                "\"id\":1,"
+                                "\"repo-key\":1"
                             "},"
                             "\"id\":\"9.4-1\","
                             "\"max\":null,"
@@ -1357,12 +1358,23 @@ testRun(void)
                      "\"db\":["
                         "{"
                             "\"id\":1,"
+                            "\"repo-key\":1,"
                             "\"system-id\":6625633699176220261,"
                             "\"version\":\"9.4\""
                         "}"
                     "],"
-                     "\"name\":\"stanza2\","
-                     "\"status\":{"
+                    "\"name\":\"stanza2\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":2,"
+                                "\"message\":\"no valid backups\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
                         "\"code\":2,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"no valid backups\""
