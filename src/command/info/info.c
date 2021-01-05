@@ -707,17 +707,263 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
     FUNCTION_TEST_END();
 
     ASSERT(stanzaInfo != NULL);
+/* CSHANG Revamp this so that we get the last DB (newest) and compare all other DBs with system/version/repo-key to see if same?
+ Or does repo-key matter? Maybe ned a list of all db-id and repo-keys that have the same system/version, and create a list to group by.
+ So then if the backup's db-id/repo-key is in the current list, that's where it gets display, else it goes in a prior - but may also have to group priors!
 
+ CSHANG NO
+     for (unsigned int archiveIdx = 0; archiveIdx < varLstSize(archiveSection); archiveIdx++)
+     {
+         KeyValue *archiveInfo = varKv(varLstGet(archiveSection, archiveIdx));
+         KeyValue *archiveDbInfo = varKv(kvGet(archiveInfo, KEY_DATABASE_VAR));
+         unsigned int archiveDbId = varUInt(kvGet(archiveDbInfo, DB_KEY_ID_VAR));
+         unsigned int archiveRepoKey = varUInt(kvGet(archiveDbInfo, KEY_REPO_KEY_VAR));
+
+         // Get the min/max archive information for each archive
+         String *archiveResult = strNew("");
+         bool currentDb = false;
+         unsigned int dbIdx = 0;
+
+         // Find the db record for this archive and repo
+         while (dbIdx < varLstSize(dbSection))
+         {
+             KeyValue *pgInfo = varKv(varLstGet(dbSection, dbIdx));
+             unsigned int dbId = varUInt(kvGet(pgInfo, DB_KEY_ID_VAR));
+             unsigned int dbRepoKey = varUInt(kvGet(pgInfo, KEY_REPO_KEY_VAR));
+
+             if (strEq(currentPgSystemId, varStr(kvGet(pgInfo, DB_KEY_SYSTEM_ID_VAR))) &&
+                 strEq(currentPgVersion, varStr(kvGet(pgInfo, DB_KEY_VERSION_VAR))))
+             {
+                 currentDb = true;
+             }
+
+             if (archiveDbId == dbId &&  archiveRepoKey == dbRepoKey)
+             {
+                 strCatFmt(
+                     archiveResult, "\n        wal archive min/max (%s): ",
+                     strZ(varStr(kvGet(archiveInfo, DB_KEY_ID_VAR))));
+
+                 // Get the archive min/max if there are any archives for the database
+                 if (kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR) != NULL)
+                 {
+                     strCatFmt(
+                         archiveResult, "%s/%s\n", strZ(varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR))),
+                         strZ(varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR))));
+                 }
+                 else
+                     strCatZ(archiveResult, "none present\n");
+
+                 if (currentDb)
+                     strCatZ(resultCurrent, archiveResult);
+                 else
+                     strCatZ(resultPrior, archiveResult);
+
+                 // Signal a break from the loop
+                 dbIdx = varLstSize(dbSection);
+             }
+
+             dbIdx++;
+         }
+     }
+
+     // For each backup of the stanza (sorted oldest to newest), build the current/prior results
+     for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
+     {
+         KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
+
+         // If a backup label was specified but this is not it then continue
+         if (backupLabel != NULL && !strEq(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)), backupLabel))
+             continue;
+
+         KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
+         unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
+         unsigned int backupRepoKey = varUInt(kvGet(backupDbInfo, KEY_REPO_KEY_VAR));
+
+
+
+         if (backupDbId == dbId && backupRepoKey == dbRepoKey)
+         {
+
+ */
     VariantList *dbSection = kvGetList(stanzaInfo, STANZA_KEY_DB_VAR);
     VariantList *archiveSection = kvGetList(stanzaInfo, KEY_ARCHIVE_VAR);
     VariantList *backupSection = kvGetList(stanzaInfo, STANZA_KEY_BACKUP_VAR);
 
-    // For each database (working from oldest to newest) find the corresponding archive and backup info
+    // Group all databases with the same system-id and version together regardless of db-id or repo
+    typedef struct DbGroup
+    {
+        String *systemId;
+        String *version;
+        bool current;
+        String *archiveMin;
+        String *archiveMax;
+        VariantList *backupList;
+    } DbGroup;
+
+    List *dbGroupList = lstNewP(sizeof(DbGroup));
+
+    // Access to the PostgreSQL database is not required so it must be assumed that the last database in the list collected over all
+    // the repos is current
+    KeyValue *currentPgInfo = varKv(varLstGet(dbSection, varLstSize(dbSection) - 1));
+    String *currentPgSystemId = varStr(kvGet(currentPgInfo, DB_KEY_SYSTEM_ID_VAR));
+    String *currentPgVersion = varStr(kvGet(currentPgInfo, DB_KEY_VERSION_VAR));
+
+    String *resultCurrent = strNew("\n    db (current)");
+    String *resultPrior = strNew("\n    db (prior)");
+
+    // For each database find the corresponding archive info
     for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
     {
         KeyValue *pgInfo = varKv(varLstGet(dbSection, dbIdx));
+        String *dbSysId = varStr(kvGet(pgInfo, DB_KEY_SYSTEM_ID_VAR));
+        String *dbVersion = varStr(kvGet(currentPgInfo, DB_KEY_VERSION_VAR));
         unsigned int dbId = varUInt(kvGet(pgInfo, DB_KEY_ID_VAR));
+        unsigned int dbRepoKey = varUInt(kvGet(pgInfo, KEY_REPO_KEY_VAR));
+
+        DbGroup *dbGroup = NULL;
+        for (unsigned int dbGrpIdx = 0; dbGrpIdx < lstSize(dbGroupList); dbGrpIdx++)
+        {
+            DbGroup *dbGroupInfo = lstGet(dbGroupList, dbGrpIdx);
+            if (strEq(dbGroupInfo->systemId, dbSysId) && strEq(dbGroupInfo->version, dbVersion))
+            {
+                dbGroup = dbGroupInfo;
+                break;
+            }
+        }
+
+        // If the group was not found, add it
+        if (dbGroup == NULL)
+        {
+            DbGroup dbGroupInfo =
+            {
+                .systemId = dbSysId,
+                .version = dbVersion,
+                .current = (strEq(currentPgSystemId, dbSysId) && strEq(currentPgVersion, dbVersion)),
+                .archiveMin = NULL,
+                .archiveMax = NULL,
+                .backupList = varLstNew(),
+            };
+
+            // CSHANG This may not be needed if above compiles
+            // if (strEq(currentPgSystemId, dbSysId) && strEq(currentPgVersion, dbVersion))
+            //     dbGroupInfo.current = true;
+
+            lstAdd(dbGroupList, &dbGroupInfo);
+
+            dbGroup = lstGetLast(dbGroupList);
+        }
+
+        // For each archive of this stanza, update the archive min/max for this database group if necessary
+        for (unsigned int archiveIdx = 0; archiveIdx < varLstSize(archiveSection); archiveIdx++)
+        {
+            KeyValue *archiveInfo = varKv(varLstGet(archiveSection, archiveIdx));
+            KeyValue *archiveDbInfo = varKv(kvGet(archiveInfo, KEY_DATABASE_VAR));
+            unsigned int archiveDbId = varUInt(kvGet(archiveDbInfo, DB_KEY_ID_VAR));
+            unsigned int archiveRepoKey = varUInt(kvGet(archiveDbInfo, KEY_REPO_KEY_VAR));
+
+            // If the min is less than that for this database group, then update the group
+            if (archiveDbId == dbId && archiveRepoKey == dbRepoKey)
+            {
+                if (dbGroup->archiveMin == NULL || strCmp(dbGroup->archiveMin, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR))) > 0)
+                    dbGroup->archiveMin = varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR));
+
+                if (dbGroup->archiveMax == NULL || strCmp(dbGroup->archiveMax, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR))) < 0)
+                    dbGroup->archiveMax = varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR));
+            }
+        }
+    }
+
+    // For every backup (oldest to newest) for the stanza, add it to the database group based on system-id and version
+    for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
+    {
+        KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
+
+        // If a backup label was specified but this is not it then continue
+        if (backupLabel != NULL && !strEq(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)), backupLabel))
+            continue;
+
+        KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
+        unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
+        unsigned int backupRepoKey = varUInt(kvGet(backupDbInfo, KEY_REPO_KEY_VAR));
+
+        // Find the database group this backup belongs to
+        for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
+        {
+            KeyValue *pgInfo = varKv(varLstGet(dbSection, dbIdx));
+
+            unsigned int dbId = varUInt(kvGet(pgInfo, DB_KEY_ID_VAR));
+            unsigned int dbRepoKey = varUInt(kvGet(pgInfo, KEY_REPO_KEY_VAR));
+
+            if (backupDbId == dbId && backupRepoKey == dbRepoKey)
+            {
+                String *dbSysId = varStr(kvGet(pgInfo, DB_KEY_SYSTEM_ID_VAR));
+                String *dbVersion = varStr(kvGet(currentPgInfo, DB_KEY_VERSION_VAR));
+
+                for (unsigned int dbGrpIdx = 0; dbGrpIdx < lstSize(dbGroupList); dbGrpIdx++)
+                {
+                    DbGroup *dbGroupInfo = lstGet(dbGroupList, dbGrpIdx);
+                    if (strEq(dbGroupInfo->systemId, dbSysId) && strEq(dbGroupInfo->version, dbVersion))
+                    {
+                        varLstAdd(dbGroupInfo->backupList, varLstGet(backupSection, backupIdx));
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    for (unsigned int dbGrpIdx = 0; dbGrpIdx < lstSize(dbGroupList); dbGrpIdx++)
+    {
+        DbGroup *dbGroupInfo = lstGet(dbGroupList, dbGrpIdx);
+
+        // Collate the results based on current (only one) or prior (possibly multiple)
+        if (dbGroupInfo->current)
+        {
+            strCatFmt(resultCurrent, "\n        wal archive min/max (%s): ", strZ(dbGroupInfo->version));
+
+            // Get the archive min/max if there are any archives for the database
+            if (dbGroupInfo->archiveMin != NULL)
+                strCatFmt(resultCurrent, "%s/%s\n", strZ(dbGroupInfo->archiveMin), strZ(dbGroupInfo->archiveMax));
+            else
+                strCatZ(resultCurrent, "none present\n");
+
+            // CSHANG NOW NEED TO GIGURE OUT THE BACKUP STUFF HERE
+
+        }
+        else
+            // CSHANG HERE need to add to resultStr and always preface with "db (prior)"
+
+    }
+
+    // CSHANG At the end here, add the resultCurrent to the resultStr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
         bool backupInDb = false;
+        bool currentDb = false;
+
+        if (strEq(currentPgSystemId, varStr(kvGet(pgInfo, DB_KEY_SYSTEM_ID_VAR))) &&
+            strEq(currentPgVersion, varStr(kvGet(currentPgInfo, DB_KEY_VERSION_VAR))))
+        {
+            currentDb = true;
+        }
 
         // If a backup label was specified then see if it exists for this database
         if (backupLabel != NULL)
@@ -740,10 +986,10 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
         // If backup label was requested but was not found in this database then continue to next database
         if (backupLabel != NULL && !backupInDb)
             continue;
-// CSHANG This will have to be updated. The last is the current DB for the last repo read - which should always be the current DB b/c we shouldn't be able to get the info if the backup.info did not have the current pg system/version info, but when we do archive min/max, we should probably display per repo...
+// CSHANG This will have to be updated. The last is the current DB for the last repo read - which should always be the current DB b/c we shouldn't be able to get the info if the backup.info did not have the current pg system/version info, but when we do archive min/max, DAvid says we should combine for databases that have same system and version
         // List is ordered so last is always the current DB index
-        if (dbIdx == varLstSize(dbSection) - 1)
-            strCatZ(resultStr, "\n    db (current)");
+        // if (dbIdx == varLstSize(dbSection) - 1)
+        //     strCatZ(resultStr, "\n    db (current)");
 
         // Get the min/max archive information for the database
         String *archiveResult = strNew("");
@@ -775,17 +1021,19 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
         // Get the information for each current backup
         String *backupResult = strNew("");
 
+        // For every backup for the stanza
         for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
         {
             KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
             KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
             unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
+            unsigned int backupRepoKey = varUInt(kvGet(backupDbInfo, KEY_REPO_KEY_VAR));
 
             // If a backup label was specified but this is not it then continue
             if (backupLabel != NULL && !strEq(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)), backupLabel))
                 continue;
 
-            if (backupDbId == dbId)
+            if (backupDbId == dbId && backupRepoKey == dbRepoKey)
             {
                 strCatFmt(
                     backupResult, "\n        %s backup: %s\n", strZ(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR))),
@@ -928,6 +1176,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                 strCat(resultStr, backupResult);
         }
     }
+*/
     FUNCTION_TEST_RETURN_VOID();
 }
 
@@ -1013,7 +1262,7 @@ infoRender(void)
         // Get stanza if specified
         const String *stanza = cfgOptionStrNull(cfgOptStanza);
 
-        // initialize the list of stanzas on all repos
+        // Initialize the list of stanzas on all repos
         List *stanzaRepoList = lstNewP(sizeof(InfoStanzaRepo), .sortOrder = sortOrderAsc, .comparator = lstComparatorStr);
 
         // Get the backup label if specified
