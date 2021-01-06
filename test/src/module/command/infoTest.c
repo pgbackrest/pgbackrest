@@ -3,9 +3,12 @@ Test Info Command
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
+#include "common/crypto/cipherBlock.h"
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessFork.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -169,7 +172,7 @@ testRun(void)
         content = strNew
         (
             "[db]\n"
-            "db-id=1\n"
+            "db-id=3\n"
             "db-system-id=6569239123849665679\n"
             "db-version=\"9.4\"\n"
             "\n"
@@ -184,6 +187,10 @@ testRun(void)
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
                 harnessInfoChecksum(content)),
             "put archive info to file");
+
+        // Create a WAL directory in 9.3-2 but since there are no WAL files or backups it will not show
+        String *archiveDb2_1 = strNewFmt("%s/9.3-2/0000000100000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb2_1), "create empty db2 archive WAL1 directory");
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
         // backup.info. Execute while a backup lock is held.
@@ -264,7 +271,7 @@ testRun(void)
                     "    cipher: none\n"
                     "\n"
                     "    db (current)\n"
-                    "        wal archive min/max (9.4-3): none present\n",
+                    "        wal archive min/max (9.4): none present\n",
                     "text - single stanza, no valid backups, backup/expire lock detected");
 
             }
@@ -294,7 +301,7 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-3): 000000030000000000000001/000000030000000000000001\n",
+            "        wal archive min/max (9.4): 000000030000000000000001/000000030000000000000001\n",
             "text - multi-repo, single stanza, one wal segment");
 
         TEST_RESULT_VOID(storageRemoveP(storageLocalWrite(), archiveDb3Wal, .errorOnMissing = true), "remove WAL file");
@@ -311,7 +318,7 @@ testRun(void)
             "stanza: stanza1\n"
             "    status: error (missing stanza path)\n",
             "text - multi-repo, requested stanza missing on selected repo");
-// CSHANG -- see about updating the following since now archive.info and backup.info are the same:
+
         // Coverage for stanzaStatus branches
         //--------------------------------------------------------------------------------------------------------------------------
         String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
@@ -336,9 +343,10 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "create db3 archive WAL3 file");
 
-        // Create a WAL file in 9.3-2 but since there is no backup it will not show
-        String *archiveDb2 = strNewFmt("%s/9.3-2/0000000100000000", strZ(archiveStanza1Path));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb2), "create empty db2 archive WAL1 directory");
+        // Create a WAL file in 9.3-2 so that a prior will show
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file in prior");
 
         harnessCfgLoad(cfgCmdInfo, argList);
         content = strNew
@@ -361,7 +369,7 @@ testRun(void)
             "20201116-154900F={\"backrest-format\":5,\"backrest-version\":\"2.30\","
             "\"backup-archive-start\":\"000000030000000000000001\",\"backup-archive-stop\":\"000000030000000000000001\","
             "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159,\"backup-info-size\":26897033,"
-            "\"backup-info-size-delta\":26897033,\"backup-timestamp-start\":1542383900,\"backup-timestamp-stop\":1542383902,"
+            "\"backup-info-size-delta\":26897033,\"backup-timestamp-start\":1605541676,\"backup-timestamp-stop\":1605541680,"
             "\"backup-type\":\"full\",\"db-id\":3,\"option-archive-check\":true,\"option-archive-copy\":false,"
             "\"option-backup-standby\":false,\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,"
             "\"option-online\":true}\n"
@@ -413,6 +421,15 @@ testRun(void)
                                     "\"id\":\"9.4-1\","
                                     "\"max\":\"000000020000000000000003\","
                                     "\"min\":\"000000010000000000000002\""
+                                "},"
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":2,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"id\":\"9.3-2\","
+                                    "\"max\":\"000000010000000000000001\","
+                                    "\"min\":\"000000010000000000000001\""
                                 "},"
                                 "{"
                                     "\"database\":{"
@@ -480,8 +497,8 @@ testRun(void)
                                     "\"prior\":null,"
                                     "\"reference\":null,"
                                     "\"timestamp\":{"
-                                        "\"start\":1542383900,"
-                                        "\"stop\":1542383902"
+                                        "\"start\":1605541676,"
+                                        "\"stop\":1605541680"
                                     "},"
                                     "\"type\":\"full\""
                                 "}"
@@ -526,34 +543,39 @@ testRun(void)
                         "}"
                     "]",
                     "json - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
-// CSHANG Need to update the text output once we can combine dbs with system ids/versions that are the same and archives of same.
-                // harnessCfgLoad(cfgCmdInfo, argListText);
-                // TEST_RESULT_STR_Z(
-                //     infoRender(),
-                //     "stanza: stanza1\n"
-                //     "    status: ok (backup/expire running)\n"
-                //     "    cipher: none\n"
-                //     "\n"
-                //     "    db (prior)\n"
-                //     "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
-                //     "\n"
-                //     "        full backup: 20181116-154756F\n"
-                //     "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
-                //     "            wal start/stop: n/a\n"
-                //     "            database size: 25.7MB, backup size: 25.7MB\n"
-                //     "            repository size: 3MB, repository backup size: 3KB\n"
-                //     "\n"
-                //     "    db (current)\n"
-                //     "        wal archive min/max (9.4-3): none present\n",
-                //     "text - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
+
+                harnessCfgLoad(cfgCmdInfo, argListText);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "stanza: stanza1\n"
+                    "    status: ok (backup/expire running)\n"
+                    "    cipher: none\n"
+                    "\n"
+                    "    db (prior)\n"
+                    "        wal archive min/max (9.3): 000000010000000000000001/000000010000000000000001\n"
+                    "\n"
+                    "    db (current)\n"
+                    "        wal archive min/max (9.4): 000000010000000000000002/000000030000000000000001\n"
+                    "\n"
+                    "        full backup: 20181116-154756F\n"
+                    "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
+                    "            wal start/stop: n/a\n"
+                    "            database size: 25.7MB, backup size: 25.7MB\n"
+                    "            repository: 1, repository size: 3MB, repository backup size: 3KB\n"
+                    "\n"
+                    "        full backup: 20201116-154900F\n"
+                    "            timestamp start/stop: 2020-11-16 15:47:56 / 2020-11-16 15:48:00\n"
+                    "            wal start/stop: 000000030000000000000001 / 000000030000000000000001\n"
+                    "            database size: 25.7MB, backup size: 25.7MB\n"
+                    "            repository: 1, repository size: 3MB, repository backup size: 3KB\n",
+                    "text - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
             }
             HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
 
-
-// CSHANG This starts new backup/archive info files
-        // backup.info/archive.info files exist, backups exist, archives exist
+        // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
+        // repos and the db history is different between the repos
         //--------------------------------------------------------------------------------------------------------------------------
         content = strNew
         (
@@ -571,7 +593,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
                 harnessInfoChecksum(content)),
-            "put archive info to file - stanza1");
+            "put archive info to file - stanza1, repo1");
 
         content = strNew
         (
@@ -620,10 +642,9 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
                 harnessInfoChecksum(content)),
-            "put backup info to file - stanza1");
+            "put backup info to file - stanza1, repo1");
 
         // Manifest with all features
-        // -------------------------------------------------------------------------------------------------------------------------
         #define TEST_MANIFEST_HEADER                                                                                               \
             "[backup]\n"                                                                                                           \
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
@@ -744,12 +765,12 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageLocalWrite(),
             strNewFmt("%s/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE, strZ(backupStanza1Path))), contentLoad),
-            "write manifest - stanza1");
+            "write manifest - stanza1, repo1");
 
         String *archiveStanza2Path = strNewFmt("%s/stanza2", strZ(archivePath));
         String *backupStanza2Path = strNewFmt("%s/stanza2", strZ(backupPath));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup stanza2 directory");
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive stanza2 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup path stanza2 directory, repo1");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive path stanza2 directory, repo1");
 
         content = strNew
         (
@@ -766,7 +787,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza2Path))),
                 harnessInfoChecksum(content)),
-            "put archive info to file - stanza2");
+            "put archive info to file - stanza2, repo1");
 
         content = strNew
         (
@@ -786,7 +807,64 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza2Path))),
                 harnessInfoChecksum(content)),
-            "put backup info to file - stanza2");
+            "put backup info to file - stanza2, repo1");
+/* CSHANG
+- Add an encrypted repo2
+- Add create stanza1 on repo2 - this should only have the 9.5 db as db-id 1 not 2
+- Add a full backup and archives on repo2 for stanza1
+- Stanza2 does not exist on repo2
+- Create stanza3 on repo2 with one backup/archive
+*/
+        // Create encrypted repo2
+        String *repo2archivePath =  strNewFmt("%s/repo2/archive", testPath());
+        String *repo2backupPath =  strNewFmt("%s/repo2/backup", testPath());
+        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2archivePath)));
+        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2backupPath)));
+
+        // Write encrypted info files
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n"
+        );
+
+        String *filePathName = strNewFmt("%s/stanza1/archive.info", strZ(repo2archivePath));
+        StorageWrite *write = storageNewWriteP(storageLocalWrite(), filePathName);
+        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
+        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201510051\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"9.5\"}\n"
+        );
+        filePathName = strNewFmt("%s/stanza1/backup.info", strZ(repo2backupPath));
+        write = storageNewWriteP(storageLocalWrite(), filePathName);
+        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
+        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted backup.info, repo2");
+
+        // StringList *argListMultiRepo = strLstNew();
+        // hrnCfgArgKeyRawFmt(argListMultiRepo, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        // hrnCfgArgKeyRawZ(argListMultiRepo, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        // hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
+
+
+exit(0);
 // CSHANG Enhance this test so both stanzas are listed (or maybe have the --stanza option passed to only one stanza is displayed?)
         harnessCfgLoad(cfgCmdInfo, argList);
         TEST_RESULT_STR_Z(
