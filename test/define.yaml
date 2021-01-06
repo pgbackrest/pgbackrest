@@ -565,19 +565,17 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-get
-        total: 5
+        total: 4
         binReq: true
 
         coverage:
           command/archive/common: full
-          # command/archive/get/file: full
-          # command/archive/get/get: full
-          # command/archive/get/protocol: full
+          command/archive/get/file: full
+#          command/archive/get/get: full
+          command/archive/get/protocol: full
 
         include:
-          - command/archive/get/file
           - command/archive/get/get
-          - command/archive/get/protocol
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-push

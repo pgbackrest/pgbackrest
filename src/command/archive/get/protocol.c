@@ -41,12 +41,11 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
             const CipherType cipherType = (CipherType)varUIntForce(varLstGet(paramList, 2));
             const String *cipherPassArchive = varStr(varLstGet(paramList, 3));
 
-            protocolServerResponse(
-                server,
-                VARINT(
-                    archiveGetFile(
-                        storageSpoolWrite(), archiveFileActual, strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(archiveFileRequest)),
-                        true, cipherType, cipherPassArchive)));
+            archiveGetFile(
+                storageSpoolWrite(), archiveFileActual, strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(archiveFileRequest)), true,
+                cipherType, cipherPassArchive);
+
+            protocolServerResponse(server, NULL);
         }
         else
             found = false;

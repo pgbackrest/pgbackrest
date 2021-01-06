@@ -17,7 +17,7 @@ Archive Get File
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-int
+void
 archiveGetFile(
     const Storage *storage, const String *archiveFile, const String *walDestination, bool durable, CipherType cipherType,
     const String *cipherPassArchive)
@@ -33,9 +33,6 @@ archiveGetFile(
 
     ASSERT(archiveFile != NULL);
     ASSERT(walDestination != NULL);
-
-    // By default result indicates WAL segment not found
-    int result = 1;
 
     // Is the file compressible during the copy?
     bool compressible = true;
@@ -70,11 +67,8 @@ archiveGetFile(
         storageCopyP(
             storageNewReadP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveFile)), .compressible = compressible),
             destination);
-
-        // The WAL file was found
-        result = 0;
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(INT, result);
+    FUNCTION_LOG_RETURN_VOID();
 }
