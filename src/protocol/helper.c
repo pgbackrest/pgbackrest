@@ -401,11 +401,9 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         }
     }
 
-    // Set default to make it explicit which host will be used on the remote
-    kvPut(
-        optionReplace,
-        VARSTRZ(cfgOptionName(protocolStorageType == protocolStorageTypeRepo ? cfgOptRepo : cfgOptPg)),
-        VARUINT(protocolStorageType == protocolStorageTypeRepo ? cfgOptionGroupIdxToKey(cfgOptGrpRepo, hostIdx) : 1));
+    // Set repo default so the remote only operates on a single repo
+    if (protocolStorageType == protocolStorageTypeRepo)
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_REPO), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, hostIdx)));
 
     // Add the process id if not set. This means that the remote is being started from the main process and should always get a
     // process id of 0.
@@ -415,17 +413,6 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     // Don't pass log-path or lock-path since these are host specific
     kvPut(optionReplace, VARSTR(CFGOPT_LOG_PATH_STR), NULL);
     kvPut(optionReplace, VARSTR(CFGOPT_LOCK_PATH_STR), NULL);
-
-    // ??? Don't pass restore options which the remote doesn't need and are likely to contain spaces because they might get mangled
-    // on the way to the remote depending on how SSH is set up on the server.  This code should be removed when option passing with
-    // spaces is resolved.
-    kvPut(optionReplace, VARSTR(CFGOPT_TYPE_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_EXCLUSIVE_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_ACTION_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_TARGET_TIMELINE_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_RECOVERY_OPTION_STR), NULL);
 
     // Only enable file logging on the remote when requested
     kvPut(

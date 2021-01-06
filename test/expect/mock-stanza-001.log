@@ -312,7 +312,7 @@ P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/00
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -459,7 +459,7 @@ P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/archive_status/00
 P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db
 P00   INFO: remove archive path: [TEST_PATH]/db-primary/repo/archive/db/9.3-1
 P00   INFO: expire command end: completed successfully
 
@@ -509,7 +509,7 @@ db
 stop db stanza (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stop
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --stanza=db
+P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --stanza=db
 P00   INFO: stop command end: completed successfully
 
 stanza-delete db - successfully delete the stanza (db-primary host)

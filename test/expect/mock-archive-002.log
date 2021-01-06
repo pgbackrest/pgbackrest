@@ -121,7 +121,7 @@ P00   INFO: archive-get command end: aborted with exception [044]
 stop db stanza (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stop
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
+P00   INFO: stop command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --stanza=db
 P00   INFO: stop command end: completed successfully
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
@@ -139,7 +139,7 @@ P00   INFO: archive-get command end: aborted with exception [062]
 start db stanza (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db start
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: start command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
+P00   INFO: start command begin [BACKREST-VERSION]: --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --stanza=db
 P00   INFO: start command end: completed successfully
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
@@ -156,9 +156,9 @@ P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-prima
 P00  ERROR: [045]: WAL file '000000010000000100000002' already exists in the repo1 archive with a different checksum
 P00   INFO: archive-push command end: aborted with exception [045]
 
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get --cmd-ssh=/usr/bin/ssh --archive-async --archive-timeout=5 000000010000000100000002 [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get --cmd-ssh=/usr/bin/ssh --archive-async 000000010000000100000002 [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG] --archive-async --archive-timeout=5 --buffer-size=[BUFFER-SIZE] --cmd-ssh=/usr/bin/ssh --compress-level-network=1 --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --spool-path=[TEST_PATH]/db-primary/spool --stanza=db
+P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG] --archive-async --buffer-size=[BUFFER-SIZE] --cmd-ssh=/usr/bin/ssh --compress-level-network=1 --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --spool-path=[TEST_PATH]/db-primary/spool --stanza=db
 P00   INFO: found 000000010000000100000002 in the archive
 P00   INFO: archive-get command end: completed successfully
 
