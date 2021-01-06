@@ -22,16 +22,6 @@ testRun(void)
 
     Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
-    // Start a protocol server to test the protocol directly
-    // Buffer *serverWrite = bufNew(8192);
-    // IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
-    // ioWriteOpen(serverWriteIo);
-    //
-    // ProtocolServer *server = protocolServerNew(
-    //     strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-    //
-    // bufUsedSet(serverWrite, 0);
-
     // *****************************************************************************************************************************
     if (testBegin("archiveGetCheck()"))
     {
@@ -120,127 +110,150 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("archiveGetFile()"))
     {
-        // // Load Parameters
-        // StringList *argList = strLstNew();
-        // strLstAddZ(argList, "--stanza=test1");
-        // strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        // strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        // harnessCfgLoad(cfgCmdArchiveGet, argList);
-        //
-        // // Create pg_control file
-        // storagePutP(
-        //     storageNewWriteP(storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
-        //     pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
-        //
-        // // Create archive.info
-        // storagePutP(
-        //     storageNewWriteP(storageTest, strNew("repo/archive/test1/archive.info")),
-        //     harnessInfoChecksumZ(
-        //         "[db]\n"
-        //         "db-id=1\n"
-        //         "\n"
-        //         "[db:history]\n"
-        //         "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
-        //
-        // // Nothing to copy
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // String *archiveFile = strNew("01ABCDEF01ABCDEF01ABCDEF");
-        // String *walDestination = strNewFmt("%s/db/pg_wal/RECOVERYXLOG", testPath());
-        // storagePathCreateP(storageTest, strPath(walDestination));
-        //
-        // TEST_RESULT_INT(
-        //     archiveGetFile(storageTest, archiveFile, walDestination, false, cipherTypeNone, NULL), 1, "WAL segment missing");
-        //
-        // // Create a WAL segment to copy
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // Buffer *buffer = bufNew(16 * 1024 * 1024);
-        // memset(bufPtr(buffer), 0, bufSize(buffer));
-        // bufUsedSet(buffer, bufSize(buffer));
-        //
-        // storagePutP(
-        //     storageNewWriteP(
-        //         storageTest,
-        //         strNew(
-        //             "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
-        //     buffer);
-        //
-        // TEST_RESULT_INT(
-        //     archiveGetFile(storageTest, archiveFile, walDestination, false, cipherTypeNone, NULL), 0, "WAL segment copied");
-        // TEST_RESULT_BOOL(storageExistsP(storageTest, walDestination), true, "  check exists");
-        // TEST_RESULT_UINT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
-        //
-        // storageRemoveP(
-        //     storageTest,
-        //     strNew("repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-        //     .errorOnMissing = true);
-        // storageRemoveP(storageTest, walDestination, .errorOnMissing = true);
-        //
-        // // Create a compressed WAL segment to copy
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // StorageWrite *infoWrite = storageNewWriteP(storageTest, strNew("repo/archive/test1/archive.info"));
-        //
-        // ioFilterGroupAdd(
-        //     ioWriteFilterGroup(storageWriteIo(infoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
-        //     BUFSTRDEF("12345678"), NULL));
-        //
-        // storagePutP(
-        //     infoWrite,
-        //     harnessInfoChecksumZ(
-        //         "[cipher]\n"
-        //         "cipher-pass=\"worstpassphraseever\"\n"
-        //         "\n"
-        //         "[db]\n"
-        //         "db-id=1\n"
-        //         "\n"
-        //         "[db:history]\n"
-        //         "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
-        //
-        // StorageWrite *destination = storageNewWriteP(
-        //     storageTest,
-        //     strNew(
-        //         "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
-        //
-        // IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
-        // ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
-        // ioFilterGroupAdd(
-        //     filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL));
-        // storagePutP(destination, buffer);
-        //
-        // TEST_RESULT_INT(
-        //     archiveGetFile(
-        //         storageTest, archiveFile, walDestination, false, cipherTypeAes256Cbc, strNew("12345678")), 0, "WAL segment copied");
-        // TEST_RESULT_BOOL(storageExistsP(storageTest, walDestination), true, "  check exists");
-        // TEST_RESULT_UINT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
-        //
-        // // Check protocol function directly
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // argList = strLstNew();
-        // strLstAddZ(argList, "--stanza=test1");
-        // strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        // strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        // strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
-        // strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        // strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
-        // setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
-        // harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
-        // unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
-        //
-        // storagePathCreateP(storageTest, strNew("spool/archive/test1/in"));
-        //
-        // VariantList *paramList = varLstNew();
-        // varLstAdd(paramList, varNewStr(archiveFile));
-        //
-        // TEST_RESULT_BOOL(
-        //     archiveGetProtocol(PROTOCOL_COMMAND_ARCHIVE_GET_STR, paramList, server), true, "protocol archive get");
-        // TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
-        // TEST_RESULT_BOOL(
-        //     storageExistsP(storageTest, strNewFmt("spool/archive/test1/in/%s", strZ(archiveFile))), true, "  check exists");
-        //
-        // bufUsedSet(serverWrite, 0);
-        //
-        // // Check invalid protocol function
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_RESULT_BOOL(archiveGetProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
+        // Load Parameters
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
+
+        // Create pg_control file
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("db/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+
+        // Create archive.info
+        storagePutP(
+            storageNewWriteP(storageTest, strNew("repo/archive/test1/archive.info")),
+            harnessInfoChecksumZ(
+                "[db]\n"
+                "db-id=1\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when file is missing");
+
+        String *archiveFile = strNew("10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        String *walDestination = strNewFmt("%s/db/pg_wal/RECOVERYXLOG", testPath());
+        storagePathCreateP(storageTest, strPath(walDestination));
+
+        TEST_ERROR(
+            archiveGetFile(storageTest, archiveFile, walDestination, false, cipherTypeNone, NULL), FileMissingError,
+            hrnReplaceKey(
+                "unable to open missing file '{[path]}/repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF"
+                    "-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' for read"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get WAL segment");
+
+        Buffer *buffer = bufNew(16 * 1024 * 1024);
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+        bufUsedSet(buffer, bufSize(buffer));
+
+        storagePutP(
+            storageNewWriteP(
+                storageTest,
+                strNew(
+                    "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+            buffer);
+
+        TEST_RESULT_INT(
+            archiveGetFile(storageTest, archiveFile, walDestination, false, cipherTypeNone, NULL), 0, "WAL segment copied");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, walDestination), true, "  check exists");
+        TEST_RESULT_UINT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
+
+        storageRemoveP(
+            storageTest,
+            strNew("repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+            .errorOnMissing = true);
+        storageRemoveP(storageTest, walDestination, .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get compressed and encrypted WAL segment");
+
+        strCatZ(archiveFile, ".gz");
+
+        StorageWrite *infoWrite = storageNewWriteP(storageTest, strNew("repo/archive/test1/archive.info"));
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(storageWriteIo(infoWrite)), cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc,
+            BUFSTRDEF("12345678"), NULL));
+
+        storagePutP(
+            infoWrite,
+            harnessInfoChecksumZ(
+                "[cipher]\n"
+                "cipher-pass=\"worstpassphraseever\"\n"
+                "\n"
+                "[db]\n"
+                "db-id=1\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
+
+        StorageWrite *destination = storageNewWriteP(
+            storageTest,
+            strNew(
+                "repo/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
+
+        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
+        ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
+        ioFilterGroupAdd(
+            filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("worstpassphraseever"), NULL));
+        storagePutP(destination, buffer);
+
+        TEST_RESULT_INT(
+            archiveGetFile(storageTest, archiveFile, walDestination, false, cipherTypeAes256Cbc, STRDEF("worstpassphraseever")),
+            0, "WAL segment copied");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, walDestination), true, "  check exists");
+        TEST_RESULT_UINT(storageInfoP(storageTest, walDestination).size, 16 * 1024 * 1024, "  check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly");
+
+        // Start a protocol server
+        Buffer *serverWrite = bufNew(8192);
+        IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
+        ioWriteOpen(serverWriteIo);
+
+        ProtocolServer *server = protocolServerNew(
+            strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
+
+        bufUsedSet(serverWrite, 0);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
+        strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
+        strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
+        setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+        unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
+
+        storagePathCreateP(storageTest, strNew("spool/archive/test1/in"));
+
+        VariantList *paramList = varLstNew();
+        varLstAdd(paramList, varNewStrZ("01ABCDEF01ABCDEF01ABCDEF"));
+        varLstAdd(paramList, varNewStr(archiveFile));
+        varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));
+        varLstAdd(paramList, varNewStrZ("worstpassphraseever"));
+
+        TEST_RESULT_BOOL(
+            archiveGetProtocol(PROTOCOL_COMMAND_ARCHIVE_GET_STR, paramList, server), true, "protocol archive get");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
+        TEST_RESULT_BOOL(
+            storageExistsP(storageTest, STRDEF("spool/archive/test1/in/01ABCDEF01ABCDEF01ABCDEF")), true, "  check exists");
+
+        bufUsedSet(serverWrite, 0);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check invalid protocol function");
+
+        TEST_RESULT_BOOL(archiveGetProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
     }
 
     // *****************************************************************************************************************************

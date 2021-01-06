@@ -560,17 +560,18 @@ cmdArchiveGetAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            // Get the archive file
-                            if (varIntForce(protocolParallelJobResult(job)) == 0)
-                            {
+                            // !!! NEED TO DECIDE IF WE REALLY WANT TO ERROR HERE
+                            // // Get the archive file
+                            // if (varIntForce(protocolParallelJobResult(job)) == 0)
+                            // {
                                 LOG_DETAIL_PID_FMT(processId, "found %s in the archive", strZ(walSegment));
-                            }
+                            // }
                             // If it does not exist write an ok file to indicate that it was checked
-                            else
-                            {
-                                LOG_DETAIL_PID_FMT(processId, "unable to find %s in the archive", strZ(walSegment));
-                                archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL);
-                            }
+                            // else
+                            // {
+                            //     LOG_DETAIL_PID_FMT(processId, "unable to find %s in the archive", strZ(walSegment));
+                            //     archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL);
+                            // }
                         }
                         // Else the job errored
                         else
