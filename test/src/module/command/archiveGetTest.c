@@ -568,15 +568,7 @@ testRun(void)
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
-            {
-                TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "WAL segment to get required");
-            }
-            HARNESS_FORK_CHILD_END();
-        }
-        HARNESS_FORK_END();
+        TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "WAL segment to get required");
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
@@ -584,15 +576,7 @@ testRun(void)
         strLstAdd(argListTemp, walSegment);
         harnessCfgLoadRaw(strLstSize(argListTemp), strLstPtr(argListTemp));
 
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
-            {
-                TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
-            }
-            HARNESS_FORK_CHILD_END();
-        }
-        HARNESS_FORK_END();
+        TEST_ERROR(cmdArchiveGet(), ParamRequiredError, "path to copy WAL segment required");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(
@@ -605,28 +589,19 @@ testRun(void)
         strLstAdd(argListTemp, walFile);
         harnessCfgLoadRaw(strLstSize(argListTemp), strLstPtr(argListTemp));
 
-        // Test this in a fork so we can use different Perl options in later tests
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
-            {
-                TEST_ERROR_FMT(
-                    cmdArchiveGet(), FileMissingError,
-                    "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
-                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-                    "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-                    "HINT: is archive_command configured correctly in postgresql.conf?\n"
-                    "HINT: has a stanza-create been performed?\n"
-                    "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
-                        " scheme.",
-                    strZ(cfgOptionStr(cfgOptRepoPath)), strZ(cfgOptionStr(cfgOptRepoPath)),
-                    strZ(strNewFmt("%s/archive/test1/archive.info", strZ(cfgOptionStr(cfgOptRepoPath)))),
-                    strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
-            }
-            HARNESS_FORK_CHILD_END();
-        }
-        HARNESS_FORK_END();
+        TEST_ERROR_FMT(
+            cmdArchiveGet(), FileMissingError,
+            "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
+                " scheme.",
+            strZ(cfgOptionStr(cfgOptRepoPath)), strZ(cfgOptionStr(cfgOptRepoPath)),
+            strZ(strNewFmt("%s/archive/test1/archive.info", strZ(cfgOptionStr(cfgOptRepoPath)))),
+            strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
 
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
@@ -635,28 +610,19 @@ testRun(void)
         strLstAddZ(argListTemp, "--archive-async");
         harnessCfgLoadRaw(strLstSize(argListTemp), strLstPtr(argListTemp));
 
-        // Test this in a fork so we can use different Perl options in later tests
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
-            {
-                TEST_ERROR_FMT(
-                    cmdArchiveGet(), FileMissingError,
-                    "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
-                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-                    "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-                    "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-                    "HINT: is archive_command configured correctly in postgresql.conf?\n"
-                    "HINT: has a stanza-create been performed?\n"
-                    "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
-                        " scheme.",
-                    strZ(cfgOptionStr(cfgOptRepoPath)), strZ(cfgOptionStr(cfgOptRepoPath)),
-                    strZ(strNewFmt("%s/archive/test1/archive.info", strZ(cfgOptionStr(cfgOptRepoPath)))),
-                    strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
-            }
-            HARNESS_FORK_CHILD_END();
-        }
-        HARNESS_FORK_END();
+        TEST_ERROR_FMT(
+            cmdArchiveGet(), FileMissingError,
+            "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
+                " scheme.",
+            strZ(cfgOptionStr(cfgOptRepoPath)), strZ(cfgOptionStr(cfgOptRepoPath)),
+            strZ(strNewFmt("%s/archive/test1/archive.info", strZ(cfgOptionStr(cfgOptRepoPath)))),
+            strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
 
         // Make sure the process times out when there is nothing to get
         // -------------------------------------------------------------------------------------------------------------------------
@@ -668,33 +634,17 @@ testRun(void)
 
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
-            {
-                TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout getting WAL segment");
-            }
-            HARNESS_FORK_CHILD_END();
-        }
-        HARNESS_FORK_END();
+        TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout getting WAL segment");
 
-        harnessLogResult("P01   INFO: unable to find 000000010000000100000001 in the archive");
+        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
 
         // Check for missing WAL
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strZ(walSegment))), NULL);
 
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
-            {
-                TEST_RESULT_INT(cmdArchiveGet(), 1, "successful get of missing WAL");
-            }
-            HARNESS_FORK_CHILD_END();
-        }
-        HARNESS_FORK_END();
+        TEST_RESULT_INT(cmdArchiveGet(), 1, "successful get of missing WAL");
 
-        harnessLogResult("P01   INFO: unable to find 000000010000000100000001 in the archive");
+        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s.ok", strZ(walSegment))), false,
@@ -706,17 +656,9 @@ testRun(void)
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment))),
             BUFSTRDEF("SHOULD-BE-A-REAL-WAL-FILE"));
 
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
-            {
-                TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
-            }
-            HARNESS_FORK_CHILD_END();
-        }
-        HARNESS_FORK_END();
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
 
-        TEST_RESULT_VOID(harnessLogResult("P01   INFO: found 000000010000000100000001 in the archive"), "check log");
+        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive"), "check log");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment))), false,
@@ -738,17 +680,9 @@ testRun(void)
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment2))),
             BUFSTRDEF("SHOULD-BE-A-REAL-WAL-FILE"));
 
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
-            {
-                TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
-            }
-            HARNESS_FORK_CHILD_END();
-        }
-        HARNESS_FORK_END();
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
 
-        TEST_RESULT_VOID(harnessLogResult("P01   INFO: found 000000010000000100000001 in the archive"), "check log");
+        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive"), "check log");
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, walFile), true, "check WAL segment was moved");
 
@@ -760,17 +694,9 @@ testRun(void)
             "acquire lock");
         TEST_RESULT_VOID(lockClear(true), "clear lock");
 
-        HARNESS_FORK_BEGIN()
-        {
-            HARNESS_FORK_CHILD_BEGIN(0, false)
-            {
-                TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout waiting for lock");
-            }
-            HARNESS_FORK_CHILD_END();
-        }
-        HARNESS_FORK_END();
+        TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout waiting for lock");
 
-        harnessLogResult("P01   INFO: unable to find 000000010000000100000001 in the archive");
+        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, BOGUS_STR);
