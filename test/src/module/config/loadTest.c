@@ -335,7 +335,6 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        hrnCfgArgRawZ(argList, cfgOptPg, "1");
         strLstAdd(argList, strNew("--repo2-type=s3"));
         strLstAdd(argList, strNew("--repo2-s3-bucket=bogus.bucket"));
         strLstAdd(argList, strNew("--repo2-s3-region=region"));
@@ -599,7 +598,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        hrnCfgArgRawZ(argList, cfgOptPg, "1");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
         hrnCfgArgRawZ(argList, cfgOptExecId, "1111-fe70d611");
