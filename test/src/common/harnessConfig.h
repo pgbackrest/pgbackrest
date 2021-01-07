@@ -9,6 +9,13 @@ Prefix for environment variables
 #define HRN_PGBACKREST_ENV                                          "PGBACKREST_"
 
 /***********************************************************************************************************************************
+Config option constants
+***********************************************************************************************************************************/
+#define TEST_PATH_REPO                                              TEST_PATH "/repo"
+#define TEST_PATH_PG                                                TEST_PATH "/pg"
+#define TEST_PATH_SPOOL                                             TEST_PATH "/spool"
+
+/***********************************************************************************************************************************
 Load a test configuration without any side effects
 
 There's no need to open log files, acquire locks, reset log levels, etc.

@@ -175,20 +175,26 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 
 /**********************************************************************************************************************************/
 const char *
-hrnStorageListJoin(const Storage *storage, const char *path)
+hrnStorageList(const Storage *storage, const char *path)
 {
-    return strZ(strLstJoin(strLstSort(storageListP(storage, STR(path)), sortOrderAsc), "|"));
+    StringList *list = strLstSort(storageListP(storage, STR(path)), sortOrderAsc);
+
+    for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
+        TEST_LOG_FMT("    %s", strZ(strLstGet(list, listIdx)));
+
+    return strZ(strLstJoin(list, "|"));
 }
 
 /**********************************************************************************************************************************/
-const char *hrnStorageListJoinRemove(const Storage *storage, const char *path)
+const char *
+hrnStorageListRemove(const Storage *storage, const char *path)
 {
     StringList *list = strLstSort(storageListP(storage, STR(path)), sortOrderAsc);
 
     for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
     {
         storageRemoveP(storage, strNewFmt("%s/%s", path, strZ(strLstGet(list, listIdx))), .errorOnMissing = true);
-        TEST_LOG_FMT("    remove %s", strZ(strLstGet(list, listIdx)));
+        TEST_LOG_FMT("    %s", strZ(strLstGet(list, listIdx)));
     }
 
     return strZ(strLstJoin(list, "|"));
