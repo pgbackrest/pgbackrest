@@ -2,6 +2,8 @@
 Storage Test Harness
 ***********************************************************************************************************************************/
 #include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "common/debug.h"
 #include "common/compress/helper.h"
@@ -10,6 +12,7 @@ Storage Test Harness
 #include "storage/storage.h"
 
 #include "common/harnessStorage.h"
+#include "common/harnessTest.h"
 
 /***********************************************************************************************************************************
 Dummy functions and interface for constructing test storage drivers
@@ -168,4 +171,25 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
     }
 
     strCatZ(data->content, "}\n");
+}
+
+/**********************************************************************************************************************************/
+const char *
+hrnStorageListJoin(const Storage *storage, const char *path)
+{
+    return strZ(strLstJoin(strLstSort(storageListP(storage, STR(path)), sortOrderAsc), "|"));
+}
+
+/**********************************************************************************************************************************/
+const char *hrnStorageListJoinRemove(const Storage *storage, const char *path)
+{
+    StringList *list = strLstSort(storageListP(storage, STR(path)), sortOrderAsc);
+
+    for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
+    {
+        storageRemoveP(storage, strNewFmt("%s/%s", path, strZ(strLstGet(list, listIdx))), .errorOnMissing = true);
+        TEST_LOG_FMT("    remove %s", strZ(strLstGet(list, listIdx)));
+    }
+
+    return strZ(strLstJoin(list, "|"));
 }

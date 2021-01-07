@@ -268,7 +268,7 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
 
             // Else delete it
             else
-                storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(file)));
+                storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(file)), .errorOnMissing = true);
         }
 
         // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
@@ -510,13 +510,13 @@ cmdArchiveGetAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // PostgreSQL must be local
-    pgIsLocalVerify();
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
         TRY_BEGIN()
         {
+            // PostgreSQL must be local
+            pgIsLocalVerify();
+
             // Check the parameters
             if (strLstSize(cfgCommandParam()) < 1)
                 THROW(ParamInvalidError, "at least one wal segment is required");

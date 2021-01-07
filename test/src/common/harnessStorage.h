@@ -9,6 +9,28 @@ Helper functions for testing storage and related functions.
 #include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************
+List files in a path and join the files into a string separated by |
+***********************************************************************************************************************************/
+const char *hrnStorageListJoin(const Storage *storage, const char *path);
+
+#define TEST_STORAGE_LIST_Z(storage, path, list)                                                                                   \
+    TEST_RESULT_Z(hrnStorageListJoin(storage, path), list, "check " #storage "/" #path " files")
+
+#define TEST_STORAGE_LIST_STR_Z(storage, path, list)                                                                               \
+    TEST_STORAGE_LIST_Z(storage, strZ(path), list)
+
+/***********************************************************************************************************************************
+List files in a path and join the files into a string separated by | and then remove them
+***********************************************************************************************************************************/
+const char *hrnStorageListJoinRemove(const Storage *storage, const char *path);
+
+#define TEST_STORAGE_LIST_REMOVE_Z(storage, path, list)                                                                            \
+    TEST_RESULT_Z(hrnStorageListJoinRemove(storage, path), list, "check and remove " #storage "/" #path " files")
+
+#define TEST_STORAGE_LIST_REMOVE_STR_Z(storage, path, list)                                                                        \
+    TEST_STORAGE_LIST_REMOVE_Z(storage, strZ(path), list)
+
+/***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers. All required functions are stubbed out so this interface can be copied and
 specific functions replaced for testing.
 ***********************************************************************************************************************************/
