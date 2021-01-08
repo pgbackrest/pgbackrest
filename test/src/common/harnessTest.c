@@ -24,6 +24,7 @@ typedef struct TestData
 static TestData testList[TEST_LIST_SIZE];
 
 static int testRun = 0;
+static int testRunSub = 0;
 static int testTotal = 0;
 static bool testFirst = true;
 
@@ -197,9 +198,10 @@ testBegin(const char *name)
         if (testRun != 1)
             printf("\n");
 
-        printf("run %03d - %s\n", testRun, name);
+        printf("run %d - %s\n", testRun, name);
         fflush(stdout);
 
+        testRunSub = 1;
         timeMSecBegin = testTimeMSec();
 
 #ifndef NO_LOG
@@ -402,6 +404,27 @@ hrnDiff(const char *expected, const char *actual)
 
 /**********************************************************************************************************************************/
 void
+hrnTestLogTitle(int lineNo)
+{
+    // Output run/test
+    char buffer[32];
+    int bufferSize = snprintf(buffer, sizeof(buffer), "%d/%d", testRun, testRunSub);
+
+    printf("\nrun %s ", buffer);
+
+    // Output dashes
+    for (int dashIdx = 0; dashIdx < 16 - bufferSize; dashIdx++)
+        putchar('-');
+
+    // Output line number
+    printf(" l%04d", lineNo);
+
+    // Increment testSub and reset log time
+    testRunSub++;
+}
+
+/**********************************************************************************************************************************/
+void
 hrnTestLogPrefix(int lineNo, bool padding)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -435,8 +458,8 @@ hrnTestLogPrefix(int lineNo, bool padding)
         harnessTestLocal.logLastBeginTime = currentTime;
     }
 
-    // Add number and padding
-    printf("l%04d - %s", lineNo, padding ? "    " : "");
+    // Add line number and padding
+    printf("l%04d %s", lineNo, padding ? "    " : "");
 
     FUNCTION_HARNESS_RESULT_VOID();
 }

@@ -26,6 +26,9 @@ void hrnInit(
 void hrnAdd(int run, bool selected);
 void hrnComplete(void);
 
+// Output test log title with line number
+void hrnTestLogTitle(int lineNo);
+
 // Output test log prefix with timing, line number, and optional padding
 void hrnTestLogPrefix(int lineNo, bool padding);
 
