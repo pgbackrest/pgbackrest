@@ -203,30 +203,29 @@ testRun(void)
 
         // infoBackupDataLabelList and infoBackupDataDelete
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", "),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I",
+        TEST_RESULT_STRLST_Z(
+            strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
+            "20161219-212741F\n20161219-212741F_20161219-212803D\n20161219-212741F_20161219-212918I\n",
             "infoBackupDataLabelList without expression");
-        TEST_RESULT_STR_Z(
-            strLstJoin(
-                strLstSort(
-                    infoBackupDataLabelList(
-                        infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderAsc), ", "),
-            "20161219-212741F, 20161219-212741F_20161219-212803D, 20161219-212741F_20161219-212918I",
+        TEST_RESULT_STRLST_Z(
+            strLstSort(
+                infoBackupDataLabelList(
+                    infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)), sortOrderAsc),
+            "20161219-212741F\n20161219-212741F_20161219-212803D\n20161219-212741F_20161219-212918I\n",
             "infoBackupDataLabelList with expression");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), ", "), "20161219-212741F", "  full=true");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.differential=true)), ", "),
-            "20161219-212741F_20161219-212803D", "differential=true");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), ", "),
-            "20161219-212741F_20161219-212918I", "incremental=true");
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), "20161219-212741F\n", "  full=true");
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.differential=true)), "20161219-212741F_20161219-212803D\n",
+            "differential=true");
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), "20161219-212741F_20161219-212918I\n",
+            "incremental=true");
 
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212918I")), "delete a backup");
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", "),
-            "20161219-212741F, 20161219-212741F_20161219-212803D", "  backup deleted");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
+            "20161219-212741F\n20161219-212741F_20161219-212803D\n", "  backup deleted");
 
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212803D")), "delete all backups");
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F")), "  deleted");
@@ -425,9 +424,9 @@ testRun(void)
         TEST_RESULT_STR_Z(backupData.backupArchiveStop, "000000030000028500000090", "archive stop set");
         TEST_RESULT_STR_Z(backupData.backupType, "diff", "backup type set");
         TEST_RESULT_STR_Z(backupData.backupPrior, "20190818-084502F", "backup prior set");
-        TEST_RESULT_STR_Z(
-            strLstJoin(backupData.backupReference, ", "),
-            "20190818-084502F, 20190818-084502F_20190819-084506D, 20190818-084502F_20190819-084506I",
+        TEST_RESULT_STRLST_Z(
+            backupData.backupReference,
+            "20190818-084502F\n20190818-084502F_20190819-084506D\n20190818-084502F_20190819-084506I\n",
             "backup reference set and ordered");
         TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "option archive check");
         TEST_RESULT_BOOL(backupData.optionArchiveCopy, true, "option archive copy");
@@ -687,16 +686,14 @@ testRun(void)
             storagePathCreateP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F")),
             "create backup on disk that is in current but no manifest");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(
-                strLstSort(
-                    storageListP(
-                        storageRepo(), STORAGE_REPO_BACKUP_STR,
-                        .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
-                    sortOrderAsc),
-                ", "),
-            "20190818-084444F, 20190818-084502F, 20190818-084502F_20190820-084502I, 20190818-084555F, 20190818-084666F, "
-            "20190818-084777F, 20190923-164324F", "confirm backups on disk");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(
+                storageListP(
+                    storageRepo(), STORAGE_REPO_BACKUP_STR,
+                    .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+                sortOrderAsc),
+            "20190818-084444F\n20190818-084502F\n20190818-084502F_20190820-084502I\n20190818-084555F\n20190818-084666F\n"
+            "20190818-084777F\n20190923-164324F\n", "confirm backups on disk");
 
         // With the infoBackup from above, upgrade the DB so there a 2 histories then save to disk
         TEST_ASSIGN(
@@ -805,9 +802,9 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "reconstruct");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20190818-084444F, 20190818-084444F_20190924-084502D, 20190923-164324F",
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL),
+            "20190818-084444F\n20190818-084444F_20190924-084502D\n20190923-164324F\n",
             "previously ignored pgId=1 manifest copy-only now added before existing, and add dependent found");
         harnessLogResult(
             "P00   WARN: backup '20190818-084444F' found in repository added to backup.info\n"
@@ -925,27 +922,26 @@ testRun(void)
 
         TEST_ASSIGN(
             dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F")), "full");
-        TEST_RESULT_STR_Z(
-            strLstJoin(dependencyList, ", "),
-            "20200317-181625F, 20200317-181625F_20200317-182239D, 20200317-181625F_20200317-182300D, "
-            "20200317-181625F_20200317-182324I, 20200317-181625F_20200317-182340I, 20200317-181625F_20200317-182340D",
+        TEST_RESULT_STRLST_Z(
+            dependencyList,
+            "20200317-181625F\n20200317-181625F_20200317-182239D\n20200317-181625F_20200317-182300D\n"
+                "20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n20200317-181625F_20200317-182340D\n",
             "all dependents");
 
         TEST_ASSIGN(
             dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181416F")), "full");
-        TEST_RESULT_STR_Z(strLstJoin(dependencyList, ", "), "20200317-181416F", "no dependents");
+        TEST_RESULT_STRLST_Z(dependencyList, "20200317-181416F\n", "no dependents");
 
         TEST_ASSIGN(
             dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F_20200317-182300D")), "diff");
-        TEST_RESULT_STR_Z(
-            strLstJoin(dependencyList, ", "),
-            "20200317-181625F_20200317-182300D, 20200317-181625F_20200317-182324I, 20200317-181625F_20200317-182340I",
+        TEST_RESULT_STRLST_Z(
+            dependencyList,
+            "20200317-181625F_20200317-182300D\n20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n",
             "all dependents");
 
         TEST_ASSIGN(
             dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F_20200317-182324I")), "incr");
-        TEST_RESULT_STR_Z(
-            strLstJoin(dependencyList, ", "), "20200317-181625F_20200317-182324I, 20200317-181625F_20200317-182340I",
-            "all dependents");
+        TEST_RESULT_STRLST_Z(
+            dependencyList, "20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n", "all dependents");
     }
 }

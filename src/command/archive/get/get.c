@@ -316,13 +316,13 @@ cmdArchiveGetAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // PostgreSQL must be local
-    pgIsLocalVerify();
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
         TRY_BEGIN()
         {
+            // PostgreSQL must be local
+            pgIsLocalVerify();
+
             // Check the parameters
             ArchiveGetAsyncData jobData = {.walSegmentList = cfgCommandParam()};
 

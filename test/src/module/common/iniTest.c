@@ -150,16 +150,16 @@ testRun(void)
         TEST_RESULT_STR_Z(iniGetDefault(ini, strNew("section3"), strNew("key3"), strNew("true")), "true", "get section, key, bool");
 
         TEST_RESULT_INT(strLstSize(iniSectionKeyList(ini, strNew("bogus"))), 0, "get keys for missing section");
-        TEST_RESULT_STR_Z(strLstJoin(iniSectionKeyList(ini, strNew("section1")), "|"), "key1|key2", "get keys for section");
+        TEST_RESULT_STRLST_Z(iniSectionKeyList(ini, strNew("section1")), "key1\nkey2\n", "get keys for section");
 
         TEST_RESULT_VOID(iniSet(ini, strNew("section2"), strNew("key2"), strNew("2")), "set section2, key");
         TEST_RESULT_INT(strLstSize(iniSectionList(ini)), 2, "number of sections");
-        TEST_RESULT_STR_Z(strLstJoin(iniSectionList(ini), "|"), "section1|section2", "get sections");
+        TEST_RESULT_STRLST_Z(iniSectionList(ini), "section1\nsection2\n", "get sections");
 
         TEST_RESULT_BOOL(iniSectionKeyIsList(ini, strNew("section1"), strNew("key1")), false, "single value is not list");
         TEST_RESULT_VOID(iniSet(ini, strNew("section2"), strNew("key2"), strNew("7")), "set section2, key");
         TEST_RESULT_BOOL(iniSectionKeyIsList(ini, strNew("section2"), strNew("key2")), true, "section2, key2 is a list");
-        TEST_RESULT_STR_Z(strLstJoin(iniGetList(ini, strNew("section2"), strNew("key2")), "|"), "2|7", "get list");
+        TEST_RESULT_STRLST_Z(iniGetList(ini, strNew("section2"), strNew("key2")), "2\n7\n", "get list");
         TEST_RESULT_PTR(iniGetList(ini, strNew("section2"), strNew("key-missing")), NULL, "get missing list");
 
         TEST_RESULT_VOID(iniFree(ini), "free ini");
