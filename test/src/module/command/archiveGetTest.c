@@ -319,6 +319,8 @@ testRun(void)
 
         TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
 
+        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command must be run on the pg host");
 
@@ -326,13 +328,15 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgHost, "host");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        strLstAddZ(argList, "--" CFGOPT_SPOOL_PATH "=/spool");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
         strLstAddZ(argList, "000000010000000100000001");
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
 
         TEST_ERROR(cmdArchiveGetAsync(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
+
+        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
 
         // Create pg_control file and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
