@@ -278,12 +278,8 @@ testRun(void)
         Buffer *walSegmentBuffer = bufNew(walSegmentSize);
         memset(bufPtr(walSegmentBuffer), 0, walSegmentSize);
 
-        storagePutP(
-            storageNewWriteP(
-                storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE")), walSegmentBuffer);
-        storagePutP(
-            storageNewWriteP(
-                storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF")), walSegmentBuffer);
+        HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", walSegmentBuffer);
+        HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF", walSegmentBuffer);
 
         TEST_RESULT_STRLST_Z(
             queueNeed(strNew("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92),
@@ -296,21 +292,15 @@ testRun(void)
         walSegmentSize = 1024 * 1024;
         queueSize = walSegmentSize * 5;
 
-        storagePutP(storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/junk")), BUFSTRDEF("JUNK"));
-        storagePutP(
-            storageNewWriteP(
-                storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE")), walSegmentBuffer);
-        storagePutP(
-            storageNewWriteP(
-                storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF")), walSegmentBuffer);
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/junk", "JUNK");
+        HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE", walSegmentBuffer);
+        HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF", walSegmentBuffer);
 
         TEST_RESULT_STRLST_Z(
             queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11),
             "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal >= 9.3");
 
-        TEST_RESULT_STRLST_Z(
-            strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), sortOrderAsc),
-            "000000010000000A00000FFE\n000000010000000A00000FFF\n", "check queue");
+        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000A00000FFE\n000000010000000A00000FFF\n");
     }
 
 
