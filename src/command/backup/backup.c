@@ -692,7 +692,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
             const String *backupLabel = strLstGet(backupList, 0);
             const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
-            // Resumable backups do not have a backup.manifest
+            // Resumable backups do not have backup.manifest
             if (!storageExistsP(storageRepo(), manifestFile))
             {
                 bool usable = false;
@@ -704,8 +704,8 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 {
                     reason = STRDEF("resume is disabled");
 
-                    // Attempt to read the manifest file in the resumable backup to see if it can be used.  If any error at all occurs
-                    // then the backup will be considered unusable and a resume will not be attempted.
+                    // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
+                    // occurs then the backup will be considered unusable and a resume will not be attempted.
                     if (cfgOptionBool(cfgOptResume))
                     {
                         reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
@@ -717,7 +717,8 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             const ManifestData *manifestResumeData = manifestData(manifestResume);
 
                             // Check pgBackRest version. This allows the resume implementation to be changed with each version of
-                            // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the cost.
+                            // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the
+                            // cost.
                             if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
                             {
                                 reason = strNewFmt(
@@ -728,8 +729,8 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
                             {
                                 reason = strNewFmt(
-                                    "new backup type '%s' does not match resumable backup type '%s'", strZ(cfgOptionStr(cfgOptType)),
-                                    strZ(backupTypeStr(manifestResumeData->backupType)));
+                                    "new backup type '%s' does not match resumable backup type '%s'",
+                                    strZ(cfgOptionStr(cfgOptType)), strZ(backupTypeStr(manifestResumeData->backupType)));
                             }
                             // Check prior backup label ??? Do we really care about the prior backup label?
                             else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
@@ -741,7 +742,8 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                                         strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
                             }
                             // Check compression. Compression can't be changed between backups so resume won't work either.
-                            else if (manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
+                            else if (manifestResumeData->backupOptionCompressType !=
+                                     compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
                             {
                                 reason = strNewFmt(
                                     "new compression '%s' does not match resumable compression '%s'",
