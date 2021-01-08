@@ -15,6 +15,9 @@ Config option constants
 #define TEST_PATH_PG                                                TEST_PATH "/pg"
 #define TEST_PATH_SPOOL                                             TEST_PATH "/spool"
 
+#define TEST_CIPHER_PASS                                            "xmainx"
+#define TEST_CIPHER_PASS_ARCHIVE                                    "xarchivex"
+
 /***********************************************************************************************************************************
 Load a test configuration without any side effects
 

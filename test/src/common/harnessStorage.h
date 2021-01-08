@@ -6,64 +6,67 @@ Helper functions for testing storage and related functions.
 #ifndef TEST_COMMON_HARNESS_STORAGE_H
 #define TEST_COMMON_HARNESS_STORAGE_H
 
+#include "common/compress/helper.h"
+#include "common/crypto/common.h"
 #include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************
 Check file exists
 ***********************************************************************************************************************************/
-#define TEST_FILE_EXISTS_STR(storage, path)                                                                                        \
-    TEST_RESULT_BOOL(storageExistsP(storage, path), true, "file exists '%s'", strZ(storagePathP(storage, path)))
-
-#define TEST_FILE_EXISTS_Z(storage, path)                                                                                          \
-    TEST_FILE_EXISTS_STR(storage, STR(path))
+#define TEST_STORAGE_EXISTS(storage, file)                                                                                         \
+    TEST_RESULT_BOOL(storageExistsP(storage, STR(file)), true, "file exists '%s'", strZ(storagePathP(storage, STR(file))))
 
 /***********************************************************************************************************************************
-List files in a path and join the files into a string separated by |
+List files in a path and optionally remove them
 ***********************************************************************************************************************************/
-const char *hrnStorageList(const Storage *storage, const char *path);
+typedef struct HrnStorageListParam
+{
+    VAR_PARAM_HEADER;
+    bool remove;
+} HrnStorageListParam;
 
-#define TEST_FILE_LIST_Z(storage, path, list)                                                                                      \
-    TEST_RESULT_Z(hrnStorageList(storage, path), list, "check files in '%s'", strZ(storagePathP(storage, STR(path))))
+#define TEST_STORAGE_LIST(storage, path, list, ...)                                                                                \
+    TEST_RESULT_STRLST_Z(                                                                                                          \
+        hrnStorageList(storage, path, (HrnStorageListParam){VAR_PARAM_INIT, __VA_ARGS__}), list, "%s",                             \
+        hrnStorageListLog(storage, path, (HrnStorageListParam){VAR_PARAM_INIT, __VA_ARGS__}))
 
-#define TEST_FILE_LIST_STR_Z(storage, path, list)                                                                                  \
-    TEST_FILE_LIST_Z(storage, strZ(path), list)
+#define TEST_STORAGE_LIST_EMPTY(storage, path, ...)                                                                                \
+    TEST_STORAGE_LIST(storage, path, NULL, __VA_ARGS__)
+
+StringList *hrnStorageList(const Storage *storage, const char *path, HrnStorageListParam param);
+const char *hrnStorageListLog(const Storage *storage, const char *path, HrnStorageListParam param);
 
 /***********************************************************************************************************************************
-List files in a path and join the files into a string separated by | and then remove them
+Put a file with optional compression and/or encryption
 ***********************************************************************************************************************************/
-const char *hrnStorageListRemove(const Storage *storage, const char *path);
+typedef struct HrnStoragePutParam
+{
+    VAR_PARAM_HEADER;
+    CompressType compressType;
+    CipherType cipherType;
+    const char *cipherPass;
+} HrnStoragePutParam;
 
-#define TEST_FILE_LIST_REMOVE_Z(storage, path, list)                                                                               \
-    TEST_RESULT_Z(hrnStorageListRemove(storage, path), list, "check/remove files in '%s'", strZ(storagePathP(storage, STR(path))))
-
-#define TEST_FILE_LIST_REMOVE_STR_Z(storage, path, list)                                                                           \
-    TEST_FILE_LIST_REMOVE_Z(storage, strZ(path), list)
-
-/***********************************************************************************************************************************
-Write a file
-***********************************************************************************************************************************/
-#define TEST_FILE_PUT_Z_BUF(storage, path, buffer)                                                                                 \
-    TEST_FILE_PUT_STR_BUF(storage, STR(path), buffer)
-
-#define TEST_FILE_PUT_STR_BUF(storage, path, buffer)                                                                               \
+#define HRN_STORAGE_PUT(storage, file, buffer, ...)                                                                                \
     TEST_RESULT_VOID(                                                                                                              \
-        storagePutP(storageNewWriteP(storage, path), buffer), "put %zub file '%s'", bufSize(buffer),                               \
-        strZ(storagePathP(storage, path)))
+        hrnStoragePut(storage, file, buffer, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}), "put file %s",                    \
+        hrnStoragePutLog(storage, file, buffer, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}))
 
-#define TEST_FILE_PUT_EMPTY_Z(storage, path)                                                                                       \
-    TEST_FILE_PUT_EMPTY_STR(storage, STR(path));
+#define HRN_STORAGE_PUT_EMPTY(storage, file, ...)                                                                                  \
+    HRN_STORAGE_PUT(storage, file, NULL, __VA_ARGS__)
 
-#define TEST_FILE_PUT_EMPTY_STR(storage, path)                                                                                     \
-    TEST_RESULT_VOID(storagePutP(storageNewWriteP(storage, path), NULL), "put empty file '%s'", strZ(storagePathP(storage, path)))
+#define HRN_STORAGE_PUT_Z(storage, file, stringz, ...)                                                                             \
+    HRN_STORAGE_PUT(storage, file, BUFSTRZ(stringz), __VA_ARGS__)
+
+void hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param);
+const char *hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param);
 
 /***********************************************************************************************************************************
 Remove a file and error if it does not exist
 ***********************************************************************************************************************************/
-#define TEST_FILE_REMOVE_Z(storage, path)                                                                                          \
-    TEST_FILE_REMOVE_STR(storage, STR(path))
-
-#define TEST_FILE_REMOVE_STR(storage, path)                                                                                        \
-    TEST_RESULT_VOID(storageRemoveP(storage, path, .errorOnMissing = true), "remove file '%s'", strZ(storagePathP(storage, path)))
+#define TEST_STORAGE_REMOVE(storage, path)                                                                                         \
+    TEST_RESULT_VOID(storageRemoveP(storage, STR(path), .errorOnMissing = true), "remove file '%s'",                               \
+    strZ(storagePathP(storage, STR(path))))
 
 /***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers. All required functions are stubbed out so this interface can be copied and

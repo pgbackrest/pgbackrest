@@ -247,6 +247,16 @@ Macros to compare results of common data types
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_Z(statement, strZNull(resultExpected), __VA_ARGS__);
 
+// Compare a string list to a \n delimited string
+#define TEST_RESULT_STRLST_Z(statement, resultExpected, ...)                                                                       \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultStringList(statement, resultExpected, harnessTestResultOperationEq);                                          \
+    }                                                                                                                              \
+    while (0)
+
 #define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
     do                                                                                                                             \
     {                                                                                                                              \

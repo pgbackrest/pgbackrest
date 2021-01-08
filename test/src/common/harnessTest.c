@@ -498,7 +498,7 @@ static void hrnTestResultDiff(const char *actual, const char *expected)
 #else
             AssertError,
 #endif
-            "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF IS (- remove from expected, + add to expected):\n%s\n\n",
+            "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF FROM EXPECTED IS (- remove from expected, + add to expected):\n%s\n\n",
             harnessTestLocal.result.statement, actual, hrnDiff(expected, actual));
     }
     else
@@ -625,6 +625,23 @@ void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResul
     }
 
     hrnTestResultEnd();
+}
+
+void
+hrnTestResultStringList(const StringList *actual, const void *expected, HarnessTestResultOperation operation)
+{
+    // Return NULL if list is empty
+    if (strLstSize(actual) == 0)
+    {
+        hrnTestResultZ(NULL, expected, operation);
+        return;
+    }
+
+    // Add \n to list to make diffs better
+    StringList *actualCopy = strLstDup(actual);
+    strLstAdd(actualCopy, EMPTY_STR);
+
+    hrnTestResultZ(strZ(strLstJoin(actualCopy, "\n")), expected, operation);
 }
 
 void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation)

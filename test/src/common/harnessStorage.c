@@ -5,12 +5,14 @@ Storage Test Harness
 #include <stdio.h>
 #include <string.h>
 
+#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/compress/helper.h"
 #include "common/type/object.h"
+#include "common/type/param.h"
 #include "common/user.h"
 #include "storage/storage.h"
 
+#include "common/harnessConfig.h"
 #include "common/harnessStorage.h"
 #include "common/harnessTest.h"
 
@@ -174,28 +176,93 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 }
 
 /**********************************************************************************************************************************/
-const char *
-hrnStorageList(const Storage *storage, const char *path)
+StringList *
+hrnStorageList(const Storage *storage, const char *path, HrnStorageListParam param)
 {
     StringList *list = strLstSort(storageListP(storage, STR(path)), sortOrderAsc);
 
-    for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
-        TEST_LOG_FMT("    %s", strZ(strLstGet(list, listIdx)));
-
-    return strZ(strLstJoin(list, "|"));
-}
-
-/**********************************************************************************************************************************/
-const char *
-hrnStorageListRemove(const Storage *storage, const char *path)
-{
-    StringList *list = strLstSort(storageListP(storage, STR(path)), sortOrderAsc);
-
+    // Iterate file list
     for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
     {
-        storageRemoveP(storage, strNewFmt("%s/%s", path, strZ(strLstGet(list, listIdx))), .errorOnMissing = true);
+        // Remove file if requested
+        if (param.remove)
+            storageRemoveP(storage, strNewFmt("%s/%s", path, strZ(strLstGet(list, listIdx))), .errorOnMissing = true);
+
+        // Log file
         TEST_LOG_FMT("    %s", strZ(strLstGet(list, listIdx)));
     }
 
-    return strZ(strLstJoin(list, "|"));
+    // Return list for comparison
+    return list;
+}
+
+const char *
+hrnStorageListLog(const Storage *storage, const char *path, HrnStorageListParam param)
+{
+    return strZ(strNewFmt("list%s path '%s'", param.remove ? "/remove": "", strZ(storagePathP(storage, STR(path)))));
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param)
+{
+    // Add compression extension to file name
+    String *fileStr = strNew(file);
+    compressExtCat(fileStr, param.compressType);
+
+    // Create file
+    StorageWrite *destination = storageNewWriteP(storage, fileStr);
+    IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
+
+    // Add compression filter
+    if (param.compressType != compressTypeNone)
+    {
+        ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
+        ioFilterGroupAdd(filterGroup, compressFilter(param.compressType, 1));
+    }
+
+    // Add encrypted filter
+    if (param.cipherType != cipherTypeNone)
+    {
+        // Default to main cipher pass
+        if (param.cipherPass == NULL)
+            param.cipherPass = TEST_CIPHER_PASS;
+
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, param.cipherType, BUFSTRZ(param.cipherPass), NULL));
+    }
+
+    // Put file
+    storagePutP(destination, buffer);
+}
+
+const char *
+hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param)
+{
+    // Empty if buffer is NULL
+    String *log = strNew(buffer == NULL || bufUsed(buffer) == 0 ? "(empty) " : "");
+
+    // Add compression detail
+    if (param.compressType != compressTypeNone)
+        strCatFmt(log, "cmp[%s]", strZ(compressTypeStr(param.compressType)));
+
+    // Add encryption detail
+    if (param.cipherType != cipherTypeNone)
+    {
+        if (param.cipherPass == NULL)
+            param.cipherPass = TEST_CIPHER_PASS;
+
+        if (param.compressType != compressTypeNone)
+            strCatZ(log, "/");
+
+        strCatFmt(log, "enc[%s,%s]", strZ(cipherTypeName(param.cipherType)), param.cipherPass);
+    }
+
+    // Add a space if compression/encryption defined
+    if (param.compressType != compressTypeNone || param.cipherType != cipherTypeNone)
+        strCatZ(log, " ");
+
+    // Add file name
+    strCatFmt(log, "'%s%s'", strZ(storagePathP(storage, STR(file))), strZ(compressExtStr(param.compressType)));
+
+    return strZ(log);
 }
