@@ -43,6 +43,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("backup"),
+        PARSE_RULE_COMMAND_LOCAL_RETRY(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -167,6 +168,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("restore"),
+        PARSE_RULE_COMMAND_LOCAL_RETRY(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -238,6 +240,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("verify"),
+        PARSE_RULE_COMMAND_LOCAL_RETRY(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (

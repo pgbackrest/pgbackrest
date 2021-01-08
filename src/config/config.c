@@ -138,6 +138,26 @@ cfgCommandId(const char *commandName)
 }
 
 /**********************************************************************************************************************************/
+VariantList *
+cfgCommandLocalRetry(void)
+{
+    FUNCTION_TEST_VOID();
+
+    ASSERT(configLocal != NULL);
+
+    // No retries if local retry disabled
+    if (!configLocal->localRetry)
+        FUNCTION_TEST_RETURN(NULL);
+
+    // Configure two retries
+    VariantList *retryInterval = varLstNew();
+    varLstAdd(retryInterval, varNewUInt64(0));
+    varLstAdd(retryInterval, varNewUInt64(15000));
+
+    FUNCTION_TEST_RETURN(retryInterval);
+}
+
+/**********************************************************************************************************************************/
 const char *
 cfgCommandName(ConfigCommand commandId)
 {

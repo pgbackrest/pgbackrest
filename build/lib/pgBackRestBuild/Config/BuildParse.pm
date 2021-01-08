@@ -257,6 +257,12 @@ sub buildConfigParse
             "    (\n" .
             "        PARSE_RULE_COMMAND_NAME(\"${strCommand}\"),\n";
 
+        if ($rhCommand->{&CFGDEF_LOCAL_RETRY})
+        {
+            $strBuildSource .=
+                "        PARSE_RULE_COMMAND_LOCAL_RETRY(true),\n";
+        }
+
         if ($rhCommand->{&CFGDEF_PARAMETER_ALLOWED})
         {
             $strBuildSource .=

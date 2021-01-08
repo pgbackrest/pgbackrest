@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Configuration Parse
 ***********************************************************************************************************************************/
+#include "common/type/json.h"
 #include "protocol/helper.h"
 #include "storage/storage.intern.h"
 
@@ -1281,6 +1282,7 @@ testRun(void)
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
                     "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
+        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandLocalRetry())), "[0,15000]", "    backup command has retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "    pg1-host was reset");
         TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 0, "    pg1 is default");
@@ -1375,6 +1377,7 @@ testRun(void)
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "archive-push command");
 
+        TEST_RESULT_PTR(cfgCommandLocalRetry(), NULL, "    archive-push does not have retries");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "    archive-push:async command requires lock");
         TEST_RESULT_BOOL(cfgLogFile(), true, "    archive-push:async command does file logging");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 4503599627370496, "archive-push-queue-max is set");

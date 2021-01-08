@@ -420,6 +420,12 @@ use constant CFGDEF_DEFAULT_RETENTION_MAX                           => 9999999;
 
 # Command defines
 #-----------------------------------------------------------------------------------------------------------------------------------
+# Does this command retry jobs in the local process? This is the default behavior but it can be overridden by setting this option
+# to false. archive-get and archive-push don't need retries since they are automatically retried by PostgreSQL so retrying only
+# slows reporting of definitely fatal errors and testing.
+use constant CFGDEF_LOCAL_RETRY                                     => 'local-retry';
+    push @EXPORT, qw(CFGDEF_LOCAL_RETRY);
+
 # Does this command log to a file?  This is the default behavior, but it can be overridden in code by calling logFileInit().  The
 # default is true.
 use constant CFGDEF_LOG_FILE                                        => 'log-file';
@@ -539,6 +545,7 @@ my $rhCommandDefine =
 {
     &CFGCMD_ARCHIVE_GET =>
     {
+        &CFGDEF_LOCAL_RETRY => false,
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
         &CFGDEF_PARAMETER_ALLOWED => true,
@@ -552,6 +559,7 @@ my $rhCommandDefine =
 
     &CFGCMD_ARCHIVE_PUSH =>
     {
+        &CFGDEF_LOCAL_RETRY => false,
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOCK_REMOTE_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
@@ -3109,6 +3117,13 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT}))
     {
         $rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT} = {};
+    }
+
+    # Commands with the local role also retry local jobs by default
+    if (defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_LOCAL}) &&
+        !defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOCAL_RETRY}))
+    {
+        $rhCommandDefine->{$strCommand}{&CFGDEF_LOCAL_RETRY} = true;
     }
 }
 
