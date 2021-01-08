@@ -903,8 +903,6 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
         uint64_t currentPgSystemId = varUInt64(kvGet(currentPgInfo, DB_KEY_SYSTEM_ID_VAR));
         const String *currentPgVersion = varStr(kvGet(currentPgInfo, DB_KEY_VERSION_VAR));
 
-        String *resultCurrent = strNew("\n    db (current)");
-
         // For each database update the corresponding archive info
         for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
         {
@@ -962,6 +960,9 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                 }
             }
         }
+// CSHANG Still a problem here to debug
+        unsigned int backupDbGrpIdxMin = 0;
+        unsigned int backupDbGrpIdxMax = lstSize(dbGroupList);
 
         // For every backup (oldest to newest) for the stanza, add it to the database group based on system-id and version
         for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
@@ -987,7 +988,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                 if (backupDbId == dbId && backupRepoKey == dbRepoKey)
                 {
                     uint64_t dbSysId = varUInt64(kvGet(pgInfo, DB_KEY_SYSTEM_ID_VAR));
-                    const String *dbVersion = varStr(kvGet(currentPgInfo, DB_KEY_VERSION_VAR));
+                    const String *dbVersion = varStr(kvGet(pgInfo, DB_KEY_VERSION_VAR));
 
                     for (unsigned int dbGrpIdx = 0; dbGrpIdx < lstSize(dbGroupList); dbGrpIdx++)
                     {
@@ -995,6 +996,13 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                         if (dbGroupInfo->systemId == dbSysId && strEq(dbGroupInfo->version, dbVersion))
                         {
                             varLstAdd(dbGroupInfo->backupList, varLstGet(backupSection, backupIdx));
+
+                            // If we're only looking for one backup, then narrow the db group iterators
+                            if (backupLabel != NULL && strEq(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)), backupLabel))
+                            {
+                                backupDbGrpIdxMin = dbGrpIdx;
+                                backupDbGrpIdxMax = dbGrpIdx + 1;
+                            }
                             break;
                         }
                     }
@@ -1003,13 +1011,19 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
             }
         }
 
-        for (unsigned int dbGrpIdx = 0; dbGrpIdx < lstSize(dbGroupList); dbGrpIdx++)
+        String *resultCurrent = strNew("\n    db (current)");
+        bool displayCurrent = false;
+
+        for (unsigned int dbGrpIdx = backupDbGrpIdxMin; dbGrpIdx < backupDbGrpIdxMax; dbGrpIdx++)
         {
             DbGroup *dbGroupInfo = lstGet(dbGroupList, dbGrpIdx);
 
             // Sort the results based on current or prior and only show the prior if it has archives or backups
             if (dbGroupInfo->current)
+            {
                 formatTextBackup(dbGroupInfo, resultCurrent, backupLabel);
+                displayCurrent = true;
+            }
             else if (dbGroupInfo->archiveMin != NULL || varLstSize(dbGroupInfo->backupList) > 0)
             {
                 strCatZ(resultStr, "\n    db (prior)");
@@ -1017,8 +1031,9 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
             }
         }
 
-        // Add the current results to the end
-        strCat(resultStr, resultCurrent);
+        // Add the current results to the end if necessary (e.g. current not displayed if a specified backup label is only in prior)
+        if (displayCurrent == true)
+            strCat(resultStr, resultCurrent);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -1234,7 +1249,7 @@ infoRender(void)
         // If the backup storage exists, then search for and process any stanzas
         if (lstSize(stanzaRepoList) > 0)
             infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxStart, repoIdxMax);
-printf("NUM INFOLIST %u\n", varLstSize(infoList)); fflush(stdout);
+
         // Format text output
         if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
         {

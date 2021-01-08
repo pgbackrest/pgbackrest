@@ -787,7 +787,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageLocalWrite(),
-            strNewFmt("%s/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE, strZ(backupStanza1Path))), contentLoad),
+            strNewFmt("%s/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE, strZ(backupStanza1Path))), contentLoad),
             "write manifest - stanza1, repo1");
 
         String *archiveStanza2Path = strNewFmt("%s/stanza2", strZ(archivePath));
@@ -831,13 +831,7 @@ testRun(void)
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza2Path))),
                 harnessInfoChecksum(content)),
             "put backup info to file - stanza2, repo1");
-/* CSHANG
-- Add an encrypted repo2
-- Add stanza1 on repo2 - this should only have the 9.5 db as db-id 1 not 2
-- Add a full backup and archives on repo2 for stanza1
-- Stanza2 does not exist on repo2
-- Create stanza3 on repo2 with one backup/archive
-*/
+
         // Create encrypted repo2
         String *repo2archivePath =  strNewFmt("%s/repo2/archive", testPath());
         String *repo2backupPath =  strNewFmt("%s/repo2/backup", testPath());
@@ -1446,54 +1440,86 @@ testRun(void)
                 "}"
             "]",
             "json - multiple stanzas, some with valid backups, archives in latest DB");
-// CSHANG Start here and fix text output
+
         harnessCfgLoad(cfgCmdInfo, argListMultiRepo);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
             "    status: ok\n"
-            "    cipher: none\n"
+            "    cipher: mixed\n"
             "\n"
             "    db (prior)\n"
-            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:51\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
             "            database size: 19.2MB, backup size: 19.2MB\n"
-            "            repository size: 2.3MB, repository backup size: 2.3MB\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 2.3MB\n"
             "\n"
             "        diff backup: 20181119-152138F_20181119-152152D\n"
             "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
-            "            wal start/stop: 000000010000000000000003 / 000000010000000000000003\n"
+            "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
             "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F\n"
             "\n"
-            "        incr backup: 20181119-152138F_20181119-152152I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.5-2): none present\n"
+            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repository: 1, repository size: 3MB, repository backup size: 3KB\n"
+            "\n"
+            "        full backup: 20201116-200000F\n"
+            "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+            "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repository: 2, repository size: 3MB, repository backup size: 3KB\n"
+            "\n"
+            "        incr backup: 20201116-155000F_20201119-152100I\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 346B\n"
+            "            backup reference list: 20201116-155000F\n"
             "\n"
             "stanza: stanza2\n"
-            "    status: error (no valid backups)\n"
-            "    cipher: none\n"
+            "    status: mixed (different across repos)\n"
+            "    cipher: mixed\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-1): none present\n",
+            "        wal archive min/max (9.4): none present\n"
+            "\n"
+            "stanza: stanza3\n"
+            "    status: mixed (different across repos)\n"
+            "    cipher: mixed\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002\n"
+            "\n"
+            "        full backup: 20201110-100000F\n"
+            "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+            "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repository: 2, repository size: 3MB, repository backup size: 3KB\n",
             "text - multiple stanzas, one with valid backups, archives in latest DB");
 
         // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
-        argList2 = strLstDup(argListText);
+        argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
-        strLstAddZ(argList2, "--repo=1");  // CSHANG added temporarily (although may be permanent)
+        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
+        strLstAddZ(argList2, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
@@ -1503,13 +1529,13 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (prior)\n"
-            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
-            "        incr backup: 20181119-152138F_20181119-152152I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: mail (16456), postgres (12173)\n"
             "            symlinks:\n"
