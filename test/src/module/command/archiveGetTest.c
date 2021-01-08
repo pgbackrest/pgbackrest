@@ -594,12 +594,7 @@ testRun(void)
 
         bufUsedSet(serverWrite, 0);
 
-        // Add spool path
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, CIPHER_TYPE_AES_256_CBC);
+        // Add archive-async and spool path
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
