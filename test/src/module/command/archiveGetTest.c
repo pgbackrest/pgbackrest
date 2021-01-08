@@ -456,7 +456,7 @@ testRun(void)
 
         // Write out a WAL segment for success
         // -------------------------------------------------------------------------------------------------------------------------
-        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "NOT-A-REAL-WAL-FILE");
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "SHOULD-BE-A-REAL-WAL-FILE");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
 
@@ -470,8 +470,8 @@ testRun(void)
         strLstAddZ(argList, "--archive-get-queue-max=48");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "NOT-A-REAL-WAL-FILE");
-        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002", "NOT-A-REAL-WAL-FILE");
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "SHOULD-BE-A-REAL-WAL-FILE");
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002", "SHOULD-BE-A-REAL-WAL-FILE");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
 

@@ -660,11 +660,7 @@ hrnTestResultStringList(const StringList *actual, const void *expected, HarnessT
         return;
     }
 
-    // Add \n to list to make diffs better
-    StringList *actualCopy = strLstDup(actual);
-    strLstAdd(actualCopy, EMPTY_STR);
-
-    hrnTestResultZ(strZ(strLstJoin(actualCopy, "\n")), expected, operation);
+    hrnTestResultZ(strZ(strCatZ(strLstJoin(actual, "\n"), "\n")), expected, operation);
 }
 
 void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation)

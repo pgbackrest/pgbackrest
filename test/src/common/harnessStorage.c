@@ -181,15 +181,11 @@ hrnStorageList(const Storage *storage, const char *path, HrnStorageListParam par
 {
     StringList *list = strLstSort(storageListP(storage, STR(path)), sortOrderAsc);
 
-    // Iterate file list
-    for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
+    // Remove files if requested
+    if (param.remove)
     {
-        // Remove file if requested
-        if (param.remove)
+        for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
             storageRemoveP(storage, strNewFmt("%s/%s", path, strZ(strLstGet(list, listIdx))), .errorOnMissing = true);
-
-        // Log file
-        TEST_LOG_FMT("    %s", strZ(strLstGet(list, listIdx)));
     }
 
     // Return list for comparison
@@ -199,7 +195,12 @@ hrnStorageList(const Storage *storage, const char *path, HrnStorageListParam par
 const char *
 hrnStorageListLog(const Storage *storage, const char *path, HrnStorageListParam param)
 {
-    return strZ(strNewFmt("list%s path '%s'", param.remove ? "/remove": "", strZ(storagePathP(storage, STR(path)))));
+    StringList *list = strLstSort(storageListP(storage, STR(path)), sortOrderAsc);
+
+    return strZ(
+        strNewFmt(
+            "list%s %u file%s in '%s'", param.remove ? "/remove": "", strLstSize(list), strLstSize(list) == 1 ? "" : "s",
+            strZ(storagePathP(storage, STR(path)))));
 }
 
 /**********************************************************************************************************************************/

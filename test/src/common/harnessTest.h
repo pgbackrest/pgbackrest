@@ -257,6 +257,9 @@ Macros to compare results of common data types
     }                                                                                                                              \
     while (0)
 
+#define TEST_RESULT_STRLST_STR(statement, resultExpected, ...)                                                                     \
+    TEST_RESULT_STRLST_Z(statement, strZNull(resultExpected), __VA_ARGS__);
+
 #define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
     do                                                                                                                             \
     {                                                                                                                              \
