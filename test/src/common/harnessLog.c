@@ -364,7 +364,7 @@ harnessLogResult(const char *expected)
     if (strcmp(harnessLogBuffer, expected) != 0)
     {
         THROW_FMT(
-            AssertError, "\n\nactual log:\n\n%s\n\nbut diff is (- remove from expected, + add to expected):\n\n%s",
+            AssertError, "\nACTUAL LOG:\n\n%s\n\nBUT DIFF FROM EXPECTED IS (- remove from expected, + add to expected):\n\n%s",
             harnessLogBuffer, hrnDiff(expected, harnessLogBuffer));
     }
 

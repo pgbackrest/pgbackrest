@@ -521,7 +521,7 @@ static void hrnTestResultDiff(const char *actual, const char *expected)
 #else
             AssertError,
 #endif
-            "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF IS (- remove from expected, + add to expected):\n%s\n\n",
+            "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF FROM EXPECTED IS (- remove from expected, + add to expected):\n%s\n\n",
             harnessTestLocal.result.statement, actual, hrnDiff(expected, actual));
     }
     else
