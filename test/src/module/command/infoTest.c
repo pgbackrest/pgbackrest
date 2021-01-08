@@ -1040,12 +1040,17 @@ testRun(void)
             strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-2261b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
 
-        StringList *argListMultiRepo = strLstDup(argList);
+        // Set up the configuration
+        StringList *argListMultiRepo = strLstNew();
+        hrnCfgArgKeyRawFmt(argListMultiRepo, cfgOptRepoPath, 1, "%s/repo", testPath());
         hrnCfgArgKeyRawFmt(argListMultiRepo, cfgOptRepoPath, 2, "%s/repo2", testPath());
         hrnCfgArgKeyRawZ(argListMultiRepo, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "pass");
 
-        harnessCfgLoad(cfgCmdInfo, argListMultiRepo);
+        StringList *argListMultiRepoJson = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argListMultiRepoJson, cfgOptOutput, "json");
+
+        harnessCfgLoad(cfgCmdInfo, argListMultiRepoJson);
         TEST_RESULT_STR_Z(
             infoRender(),
             "["
@@ -1358,7 +1363,7 @@ testRun(void)
                     "\"status\":{"
                         "\"code\":4,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
-                        "\"message\":\"mixed\""
+                        "\"message\":\"different across repos\""
                     "}"
                 "},"
                 "{"
@@ -1436,13 +1441,13 @@ testRun(void)
                     "\"status\":{"
                         "\"code\":4,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
-                        "\"message\":\"mixed\""
+                        "\"message\":\"different across repos\""
                     "}"
                 "}"
             "]",
             "json - multiple stanzas, some with valid backups, archives in latest DB");
 // CSHANG Start here and fix text output
-        harnessCfgLoad(cfgCmdInfo, argListText);
+        harnessCfgLoad(cfgCmdInfo, argListMultiRepo);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
