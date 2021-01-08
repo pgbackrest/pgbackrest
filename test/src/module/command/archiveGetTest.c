@@ -263,16 +263,16 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92), "|"),
-            "000000010000000100000001|000000010000000100000002", "queue size smaller than min");
+        TEST_RESULT_STRLST_Z(
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
+            "000000010000000100000001\n000000010000000100000002\n", "queue size smaller than min");
 
         // -------------------------------------------------------------------------------------------------------------------------
         queueSize = (16 * 1024 * 1024) * 3;
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92), "|"),
-            "000000010000000100000001|000000010000000100000002|000000010000000100000003", "empty queue");
+        TEST_RESULT_STRLST_Z(
+            queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
+            "000000010000000100000001\n000000010000000100000002\n000000010000000100000003\n", "empty queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *walSegmentBuffer = bufNew(walSegmentSize);
@@ -285,13 +285,12 @@ testRun(void)
             storageNewWriteP(
                 storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF")), walSegmentBuffer);
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(queueNeed(strNew("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92), "|"),
-            "000000010000000200000000|000000010000000200000001", "queue has wal < 9.3");
+        TEST_RESULT_STRLST_Z(
+            queueNeed(strNew("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92),
+            "000000010000000200000000\n000000010000000200000001\n", "queue has wal < 9.3");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(storageListP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), "|"), "0000000100000001000000FE",
-            "check queue");
+        TEST_RESULT_STRLST_Z(
+            storageListP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), "0000000100000001000000FE\n", "check queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
         walSegmentSize = 1024 * 1024;
@@ -305,13 +304,13 @@ testRun(void)
             storageNewWriteP(
                 storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF")), walSegmentBuffer);
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11), "|"),
-            "000000010000000B00000000|000000010000000B00000001|000000010000000B00000002", "queue has wal >= 9.3");
+        TEST_RESULT_STRLST_Z(
+            queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11),
+            "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal >= 9.3");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), sortOrderAsc), "|"),
-            "000000010000000A00000FFE|000000010000000A00000FFF", "check queue");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), sortOrderAsc),
+            "000000010000000A00000FFE\n000000010000000A00000FFF\n", "check queue");
     }
 
 

@@ -650,6 +650,19 @@ void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResul
     hrnTestResultEnd();
 }
 
+void
+hrnTestResultStringList(const StringList *actual, const void *expected, HarnessTestResultOperation operation)
+{
+    // Return NULL if list is empty
+    if (strLstSize(actual) == 0)
+    {
+        hrnTestResultZ(NULL, expected, operation);
+        return;
+    }
+
+    hrnTestResultZ(strZ(strCatZ(strLstJoin(actual, "\n"), "\n")), expected, operation);
+}
+
 void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);

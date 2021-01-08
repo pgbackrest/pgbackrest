@@ -55,8 +55,8 @@ testRun(void)
                 varLstAdd(list, varNewStr(strNew("repo1-host")));
                 varLstAdd(list, varNewStr(strNew("repo1-host-user")));
 
-                TEST_RESULT_STR_Z(
-                    strLstJoin(strLstNewVarLst(configProtocolOption(client, list)), "|"), "repo-host|repo-host-user",
+                TEST_RESULT_STRLST_Z(
+                    strLstNewVarLst(configProtocolOption(client, list)), "repo-host\nrepo-host-user\n",
                     "get options");
 
                 protocolClientFree(client);
