@@ -1628,7 +1628,7 @@ my %hConfigDefine =
     {
         &CFGDEF_INHERIT => &CFGOPT_JOB_RETRY,
         &CFGDEF_TYPE => CFGDEF_TYPE_TIME,
-        &CFGDEF_DEFAULT => 3600,
+        &CFGDEF_DEFAULT => 15,
         &CFGDEF_ALLOW_RANGE => [0, 900],
     },
 
