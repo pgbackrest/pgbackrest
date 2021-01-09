@@ -37,7 +37,7 @@ cmdLocal(int fdRead, int fdWrite)
         protocolServerHandlerAdd(server, backupProtocol);
         protocolServerHandlerAdd(server, restoreProtocol);
         protocolServerHandlerAdd(server, verifyProtocol);
-        protocolServerProcess(server, cfgCommandLocalRetry());
+        protocolServerProcess(server, cfgCommandJobRetry());
     }
     MEM_CONTEXT_TEMP_END();
 

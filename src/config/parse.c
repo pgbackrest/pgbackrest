@@ -89,7 +89,6 @@ Define how a command is parsed
 typedef struct ParseRuleCommand
 {
     const char *name;                                               // Name
-    bool localRetry:1;                                              // Will local jobs be retried?
     unsigned int commandRoleValid:CFG_COMMAND_ROLE_TOTAL;           // Valid for the command role?
     bool parameterAllowed:1;                                        // Command-line parameters are allowed
 } ParseRuleCommand;
@@ -100,9 +99,6 @@ typedef struct ParseRuleCommand
 
 #define PARSE_RULE_COMMAND_NAME(nameParam)                                                                                         \
     .name = nameParam
-
-#define PARSE_RULE_COMMAND_LOCAL_RETRY(localRetryParam)                                                                            \
-    .localRetry = localRetryParam
 
 #define PARSE_RULE_COMMAND_ROLE_VALID_LIST(...)                                                                                    \
     .commandRoleValid = 0 __VA_ARGS__
@@ -979,11 +975,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                         if (config->command == cfgCmdHelp)
                             config->help = true;
                         else
-                        {
                             commandSet = true;
-
-                            config->localRetry = parseRuleCommand[config->command].localRetry;
-                        }
                     }
                     // Additional arguments are command arguments
                     else

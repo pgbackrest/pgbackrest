@@ -139,20 +139,24 @@ cfgCommandId(const char *commandName)
 
 /**********************************************************************************************************************************/
 VariantList *
-cfgCommandLocalRetry(void)
+cfgCommandJobRetry(void)
 {
     FUNCTION_TEST_VOID();
 
     ASSERT(configLocal != NULL);
 
-    // No retries if local retry disabled
-    if (!configLocal->localRetry)
-        FUNCTION_TEST_RETURN(NULL);
-
-    // Configure two retries
+    // There is always at least one retry
     VariantList *retryInterval = varLstNew();
     varLstAdd(retryInterval, varNewUInt64(0));
-    varLstAdd(retryInterval, varNewUInt64(15000));
+
+    // Add additional retries
+    unsigned int retryTotal = cfgOptionUInt(cfgOptJobRetry);
+
+    if (retryTotal > 0)
+    {
+        for (unsigned int retryIdx = 0; retryIdx < retryTotal; retryIdx++)
+            varLstAdd(retryInterval, varNewUInt64(cfgOptionUInt64(cfgOptJobRetryInterval)));
+    }
 
     FUNCTION_TEST_RETURN(retryInterval);
 }

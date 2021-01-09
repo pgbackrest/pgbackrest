@@ -185,6 +185,8 @@ use constant CFGOPT_COMPRESS_TYPE                                   => 'compress
 use constant CFGOPT_COMPRESS_LEVEL                                  => 'compress-level';
 use constant CFGOPT_COMPRESS_LEVEL_NETWORK                          => 'compress-level-network';
 use constant CFGOPT_IO_TIMEOUT                                      => 'io-timeout';
+use constant CFGOPT_JOB_RETRY                                       => 'job-retry';
+use constant CFGOPT_JOB_RETRY_INTERVAL                              => CFGOPT_JOB_RETRY . '-interval';
 use constant CFGOPT_NEUTRAL_UMASK                                   => 'neutral-umask';
 use constant CFGOPT_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
 use constant CFGOPT_PROCESS_MAX                                     => 'process-max';
@@ -420,12 +422,6 @@ use constant CFGDEF_DEFAULT_RETENTION_MAX                           => 9999999;
 
 # Command defines
 #-----------------------------------------------------------------------------------------------------------------------------------
-# Does this command retry jobs in the local process? This is the default behavior but it can be overridden by setting this option
-# to false. archive-get and archive-push don't need retries since they are automatically retried by PostgreSQL so retrying only
-# slows reporting of definitely fatal errors and testing.
-use constant CFGDEF_LOCAL_RETRY                                     => 'local-retry';
-    push @EXPORT, qw(CFGDEF_LOCAL_RETRY);
-
 # Does this command log to a file?  This is the default behavior, but it can be overridden in code by calling logFileInit().  The
 # default is true.
 use constant CFGDEF_LOG_FILE                                        => 'log-file';
@@ -545,7 +541,6 @@ my $rhCommandDefine =
 {
     &CFGCMD_ARCHIVE_GET =>
     {
-        &CFGDEF_LOCAL_RETRY => false,
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
         &CFGDEF_PARAMETER_ALLOWED => true,
@@ -559,7 +554,6 @@ my $rhCommandDefine =
 
     &CFGCMD_ARCHIVE_PUSH =>
     {
-        &CFGDEF_LOCAL_RETRY => false,
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOCK_REMOTE_REQUIRED => true,
         &CFGDEF_LOCK_TYPE => CFGDEF_LOCK_TYPE_ARCHIVE,
@@ -1599,6 +1593,43 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => 60,
         &CFGDEF_ALLOW_RANGE => [.1, 3600],
         &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
+    },
+
+    &CFGOPT_JOB_RETRY =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_DEFAULT => 1,
+        &CFGDEF_ALLOW_RANGE => [0, 360],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET =>
+            {
+                &CFGDEF_DEFAULT => 0,
+            },
+            &CFGCMD_ARCHIVE_PUSH =>
+            {
+                &CFGDEF_DEFAULT => 0,
+            },
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_VERIFY => {},
+        },
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+        },
+    },
+
+    &CFGOPT_JOB_RETRY_INTERVAL =>
+    {
+        &CFGDEF_INHERIT => &CFGOPT_JOB_RETRY,
+        &CFGDEF_TYPE => CFGDEF_TYPE_TIME,
+        &CFGDEF_DEFAULT => 15,
+        &CFGDEF_ALLOW_RANGE => [0, 900],
     },
 
     &CFGOPT_LOCK_PATH =>
@@ -3117,13 +3148,6 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT}))
     {
         $rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT} = {};
-    }
-
-    # Commands with the local role also retry local jobs by default
-    if (defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_LOCAL}) &&
-        !defined($rhCommandDefine->{$strCommand}{&CFGDEF_LOCAL_RETRY}))
-    {
-        $rhCommandDefine->{$strCommand}{&CFGDEF_LOCAL_RETRY} = true;
     }
 }
 

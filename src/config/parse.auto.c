@@ -43,7 +43,6 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("backup"),
-        PARSE_RULE_COMMAND_LOCAL_RETRY(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -168,7 +167,6 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("restore"),
-        PARSE_RULE_COMMAND_LOCAL_RETRY(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -240,7 +238,6 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND
     (
         PARSE_RULE_COMMAND_NAME("verify"),
-        PARSE_RULE_COMMAND_LOCAL_RETRY(true),
 
         PARSE_RULE_COMMAND_ROLE_VALID_LIST
         (
@@ -1373,6 +1370,112 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(100, 3600000),
             PARSE_RULE_OPTION_OPTIONAL_DEFAULT("60000"),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("job-retry"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeInteger),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(0, 360),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
+
+            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdArchiveGet),
+
+                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
+            )
+
+            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdArchivePush),
+
+                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
+            )
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("job-retry-interval"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeTime),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(0, 900000),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("15000"),
+
+            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdArchiveGet),
+
+                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
+            )
+
+            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
+            (
+                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdArchivePush),
+
+                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
+            )
         ),
     ),
 
@@ -6719,6 +6822,30 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptIoTimeout,
     },
 
+    // job-retry option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "job-retry",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptJobRetry,
+    },
+    {
+        .name = "reset-job-retry",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptJobRetry,
+    },
+
+    // job-retry-interval option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "job-retry-interval",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptJobRetryInterval,
+    },
+    {
+        .name = "reset-job-retry-interval",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptJobRetryInterval,
+    },
+
     // link-all option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -9208,6 +9335,8 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptFilter,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
+    cfgOptJobRetry,
+    cfgOptJobRetryInterval,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLockPath,

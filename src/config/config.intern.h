@@ -39,7 +39,6 @@ typedef struct Config
     String *exe;                                                    // Location of the executable
     bool help;                                                      // Was help requested for the command?
     StringList *paramList;                                          // Parameters passed to the command (if any)
-    bool localRetry;                                                // Does the command retry local jobs?
 
     // Group options that are related together to allow valid and test checks across all options in the group
     struct
@@ -73,7 +72,7 @@ void cfgInit(Config *config);
 Command Functions
 ***********************************************************************************************************************************/
 // Does the command retry local jobs?
-VariantList *cfgCommandLocalRetry(void);
+VariantList *cfgCommandJobRetry(void);
 
 /***********************************************************************************************************************************
 Option Group Functions
