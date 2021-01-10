@@ -1495,6 +1495,8 @@ testRun(void)
             "\n"
             "stanza: stanza2\n"
             "    status: mixed (different across repos)\n"
+            "        repo1: error (no valid backups)\n"
+            "        repo2: error (missing stanza path)\n"
             "    cipher: mixed\n"
             "\n"
             "    db (current)\n"
@@ -1502,6 +1504,8 @@ testRun(void)
             "\n"
             "stanza: stanza3\n"
             "    status: mixed (different across repos)\n"
+            "        repo1: error (missing stanza path)\n"
+            "        repo2: ok\n"
             "    cipher: mixed\n"
             "\n"
             "    db (current)\n"
@@ -1512,8 +1516,8 @@ testRun(void)
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, backup size: 25.7MB\n"
             "            repository: 2, repository size: 3MB, repository backup size: 3KB\n",
-            "text - multiple stanzas, one with valid backups, archives in latest DB");
-
+            "text - multiple stanzas, multi-repo with valid backups");
+// CSHANG run test with the encrypted repo backup
         // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListMultiRepo);
@@ -1556,7 +1560,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
+        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
         strLstAddZ(argList2, "--repo=1");  // CSHANG added temporarily (although may be permanent)
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -1598,7 +1602,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
-                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE)),
+                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
                 "write manifest");
 
@@ -1609,13 +1613,13 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (prior)\n"
-            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
-            "        incr backup: 20181119-152138F_20181119-152152I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: mail (16456), postgres (12173)\n"
             "            page checksum error: base/16384/17000, base/32768/33000\n",
@@ -1625,7 +1629,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
+        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
         strLstAddZ(argList2, "--repo=1");  // CSHANG added temporarily (although may be permanent)
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -1668,7 +1672,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
-                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE)),
+                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
             "write manifest");
 
@@ -1679,13 +1683,13 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (prior)\n"
-            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
-            "        incr backup: 20181119-152138F_20181119-152152I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: none\n",
             "text - backup set requested, no db and no checksum error");
@@ -1728,16 +1732,24 @@ testRun(void)
                                 "\"code\":2,"
                                 "\"message\":\"no valid backups\""
                             "}"
+                        "},"
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":2,"
+                            "\"status\":{"
+                                "\"code\":1,"
+                                "\"message\":\"missing stanza path\""
+                            "}"
                         "}"
                     "],"
                     "\"status\":{"
-                        "\"code\":2,"
+                        "\"code\":4,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
-                        "\"message\":\"no valid backups\""
+                        "\"message\":\"different across repos\""
                     "}"
                 "}"
             "]",
-            "json - multiple stanzas - selected found");
+            "json - multiple stanzas - selected found, repo1");
 
         strLstAddZ(argListText, "--stanza=stanza2");
         harnessCfgLoad(cfgCmdInfo, argListText);
