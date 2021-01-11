@@ -138,6 +138,29 @@ cfgCommandId(const char *commandName)
 }
 
 /**********************************************************************************************************************************/
+VariantList *
+cfgCommandJobRetry(void)
+{
+    FUNCTION_TEST_VOID();
+
+    ASSERT(configLocal != NULL);
+
+    // Return NULL if no retries
+    unsigned int retryTotal = cfgOptionUInt(cfgOptJobRetry);
+
+    if (retryTotal == 0)
+        FUNCTION_TEST_RETURN(NULL);
+
+    // Build retry list
+    VariantList *result = varLstNew();
+
+    for (unsigned int retryIdx = 0; retryIdx < cfgOptionUInt(cfgOptJobRetry); retryIdx++)
+        varLstAdd(result, varNewUInt64(retryIdx == 0 ? 0 : cfgOptionUInt64(cfgOptJobRetryInterval)));
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
 const char *
 cfgCommandName(ConfigCommand commandId)
 {

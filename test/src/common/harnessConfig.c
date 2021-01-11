@@ -57,6 +57,10 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
     // Make a copy of the arg list that we can modify
     StringList *argList = strLstDup(argListParam);
 
+    // Set job retry to 0 if it is valid
+    if (cfgParseOptionValid(commandId, commandRoleId, cfgOptJobRetry))
+        strLstInsertZ(argList, 0, "--" CFGOPT_JOB_RETRY "=0");
+
     // Set log path if valid
     if (cfgParseOptionValid(commandId, commandRoleId, cfgOptLogPath))
         strLstInsert(argList, 0, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testDataPath()));
