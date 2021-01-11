@@ -67,13 +67,13 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000005.ready")), NULL);
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/archive_status/000000010000000100000006.ready")), NULL);
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath())), "|"),
-            "000000010000000100000002|000000010000000100000005|000000010000000100000006", "ready list");
+        TEST_RESULT_STRLST_Z(
+            archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath())),
+            "000000010000000100000002\n000000010000000100000005\n000000010000000100000006\n", "ready list");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
-            "000000010000000100000003.ok", "remaining status list");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
+            "000000010000000100000003.ok\n", "remaining status list");
 
         // Test drop
         // -------------------------------------------------------------------------------------------------------------------------
@@ -749,9 +749,9 @@ testRun(void)
             strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")))),
             "25\nno WAL files to process", "check global.error");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
-            "global.error", "check status files");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
+            "global.error\n", "check status files");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add repo, push already pushed WAL and new WAL");
@@ -802,9 +802,9 @@ testRun(void)
                 storageTest, strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
             true, "check repo3 for WAL 1 file");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
-            "000000010000000100000001.ok|000000010000000100000002.error", "check status files");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
+            "000000010000000100000001.ok\n000000010000000100000002.error\n", "check status files");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create and push previously missing WAL");
@@ -836,9 +836,9 @@ testRun(void)
                 storageTest, strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
             true, "check repo3 for WAL 2 file");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
-            "000000010000000100000001.ok|000000010000000100000002.ok", "check status files");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
+            "000000010000000100000001.ok\n000000010000000100000002.ok\n", "check status files");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("push wal 2 again to get warnings from both repos");
@@ -913,9 +913,9 @@ testRun(void)
                 storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok")))),
             "0\ndropped WAL file '000000010000000100000002' because archive queue exceeded 16MB", "check WAL 2 warning");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc), "|"),
-            "000000010000000100000001.ok|000000010000000100000002.ok", "check status files");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_OUT)), sortOrderAsc),
+            "000000010000000100000001.ok\n000000010000000100000002.ok\n", "check status files");
         }
 
     FUNCTION_HARNESS_RESULT_VOID();

@@ -247,6 +247,19 @@ Macros to compare results of common data types
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_Z(statement, strZNull(resultExpected), __VA_ARGS__);
 
+// Compare a string list to a \n delimited string
+#define TEST_RESULT_STRLST_Z(statement, resultExpected, ...)                                                                       \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultStringList(statement, resultExpected, harnessTestResultOperationEq);                                          \
+    }                                                                                                                              \
+    while (0)
+
+#define TEST_RESULT_STRLST_STR(statement, resultExpected, ...)                                                                     \
+    TEST_RESULT_STRLST_Z(statement, strZNull(resultExpected), __VA_ARGS__);
+
 #define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
     do                                                                                                                             \
     {                                                                                                                              \
@@ -355,16 +368,16 @@ Test title macro
 #define TEST_TITLE(message)                                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, false);                                                                                         \
-        printf("%s\n", message);                                                                                                   \
+        hrnTestLogTitle(__LINE__);                                                                                                 \
+        printf(" %s\n", message);                                                                                                  \
         fflush(stdout);                                                                                                            \
     } while (0)
 
 #define TEST_TITLE_FMT(format, ...)                                                                                                \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, false);                                                                                         \
-        printf(format "\n", __VA_ARGS__);                                                                                          \
+        hrnTestLogTitle(__LINE__);                                                                                                 \
+        printf(" " format "\n", __VA_ARGS__);                                                                                      \
         fflush(stdout);                                                                                                            \
     } while (0)
 

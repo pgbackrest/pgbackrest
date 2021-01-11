@@ -1127,9 +1127,8 @@ testRun(void)
         strLstAdd(argList, strNew("000000010000000200000003"));
         strLstAdd(argList, strNew("/path/to/wal/RECOVERYWAL"));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "command arguments");
-        TEST_RESULT_STR_Z(
-            strLstJoin(cfgCommandParam(), "|"), "000000010000000200000003|/path/to/wal/RECOVERYWAL",
-            "    check command arguments");
+        TEST_RESULT_STRLST_Z(
+            cfgCommandParam(), "000000010000000200000003\n/path/to/wal/RECOVERYWAL\n", "    check command arguments");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1152,7 +1151,7 @@ testRun(void)
         TEST_RESULT_UINT(cfgLogLevelDefault(), logLevelInfo, "    backup defaults to log level warn");
         TEST_RESULT_BOOL(cfgLogFile(), true, "    backup command does file logging");
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "    backup command requires remote lock");
-        TEST_RESULT_STR_Z(strLstJoin(cfgCommandParam(), "|"), "", "    check command arguments");
+        TEST_RESULT_STRLST_Z(cfgCommandParam(), NULL, "    check command arguments");
         TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleDefault, "command role default enum");
         TEST_ERROR(cfgCommandRoleEnum(STRDEF("bogus")), CommandInvalidError, "invalid command role 'bogus'");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleDefault, "    command role is default");

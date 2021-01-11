@@ -65,6 +65,8 @@ harnessInfoChecksum(const String *info)
         FUNCTION_HARNESS_PARAM(STRING, info);
     FUNCTION_HARNESS_END();
 
+    ASSERT(info != NULL);
+
     Buffer *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -109,6 +111,8 @@ harnessInfoChecksumZ(const char *info)
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRINGZ, info);
     FUNCTION_HARNESS_END();
+
+    ASSERT(info != NULL);
 
     FUNCTION_HARNESS_RESULT(BUFFER, harnessInfoChecksum(STR(info)));
 }

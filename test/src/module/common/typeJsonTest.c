@@ -114,7 +114,7 @@ testRun(void)
         TEST_ERROR(jsonToVarLst(strNew("[")), JsonFormatError, "expected data");
         TEST_ERROR(jsonToVarLst(strNew(" [] ZZZ")), JsonFormatError, "unexpected characters after array at 'ZZZ'");
 
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewVarLst(jsonToVarLst(strNew("[\"e1\", \"e2\"]"))), "|"), "e1|e2", "json list");
+        TEST_RESULT_STRLST_Z(strLstNewVarLst(jsonToVarLst(strNew("[\"e1\", \"e2\"]"))), "e1\ne2\n", "json list");
     }
 
     // *****************************************************************************************************************************

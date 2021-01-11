@@ -398,7 +398,7 @@ testRun(void)
         varLstAdd(list, varNewStrZ("string1"));
         varLstAdd(list, varNewStrZ("string2"));
 
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewVarLst(varLstDup(list)), ", "), "string1, string2", "duplicate variant list");
+        TEST_RESULT_STRLST_Z(strLstNewVarLst(varLstDup(list)), "string1\nstring2\n", "duplicate variant list");
 
         TEST_RESULT_PTR(varLstDup(NULL), NULL, "duplicate null list");
     }
@@ -411,8 +411,7 @@ testRun(void)
         strLstAdd(listStr, strNew("string1"));
         strLstAdd(listStr, strNew("string2"));
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstNewVarLst(varLstNewStrLst(listStr)), ", "), "string1, string2", "variant list from string list");
+        TEST_RESULT_STRLST_Z(strLstNewVarLst(varLstNewStrLst(listStr)), "string1\nstring2\n", "variant list from string list");
 
         TEST_RESULT_PTR(varLstNewStrLst(NULL), NULL, "variant list from null string list");
     }

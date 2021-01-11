@@ -71,7 +71,7 @@ testRun(void)
         TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key2"), strNew("value2b")), header, "add header");
 
         TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key1"), strNew("value1")), header, "add header");
-        TEST_RESULT_STR_Z(strLstJoin(httpHeaderList(header), ", "), "key1, key2", "header list");
+        TEST_RESULT_STRLST_Z(httpHeaderList(header), "key1\nkey2\n", "header list");
 
         TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key1")), "value1", "get value");
         TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key2")), "value2a, value2b", "get value");
@@ -132,7 +132,7 @@ testRun(void)
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "key2=value2a", "render one query item");
 
         TEST_RESULT_PTR(httpQueryAdd(query, strNew("key1"), strNew("value 1?")), query, "add query");
-        TEST_RESULT_STR_Z(strLstJoin(httpQueryList(query), ", "), "key1, key2", "query list");
+        TEST_RESULT_STRLST_Z(httpQueryList(query), "key1\nkey2\n", "query list");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "key1=value%201%3F&key2=value2a", "render two query items");
         TEST_RESULT_STR_Z(
             httpQueryRenderP(query, .redact = true), "key1=value%201%3F&key2=<redacted>", "render two query items with redaction");
