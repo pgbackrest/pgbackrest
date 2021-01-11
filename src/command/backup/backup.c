@@ -742,8 +742,8 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                                         strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
                             }
                             // Check compression. Compression can't be changed between backups so resume won't work either.
-                            else if (manifestResumeData->backupOptionCompressType !=
-                                     compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
+                            else if (
+                                manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
                             {
                                 reason = strNewFmt(
                                     "new compression '%s' does not match resumable compression '%s'",
