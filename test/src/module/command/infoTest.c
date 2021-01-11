@@ -146,7 +146,7 @@ testRun(void)
                 "\"db-version\":\"9.3\"}\n"
             "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
                 "\"db-version\":\"9.4\"}\n"
-        );  // CSHANG Use this for the backup (and archive) info for a second repo
+        );
 
         TEST_RESULT_VOID(
             storagePutP(
@@ -578,6 +578,7 @@ testRun(void)
         storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.3-2", strZ(archiveStanza1Path)), .recurse = true);
         storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.4-3", strZ(archiveStanza1Path)), .recurse = true);
 
+// CSHANG This starts again a bit from scratch?
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1592,7 +1593,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
-        strLstAddZ(argList2, "--repo=1");  // CSHANG added temporarily (although may be permanent)
+        strLstAddZ(argList2, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_TARGET_NO_LINK                                                                                       \
@@ -1727,8 +1728,9 @@ testRun(void)
 
         // Stanza found
         //--------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--stanza=stanza2");
-        harnessCfgLoad(cfgCmdInfo, argList);
+        argList2 = strLstDup(argList);
+        strLstAddZ(argList2, "--stanza=stanza2");
+        harnessCfgLoad(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
             "["
@@ -1782,8 +1784,9 @@ testRun(void)
             "]",
             "json - multiple stanzas - selected found, repo1");
 
-        strLstAddZ(argListText, "--stanza=stanza2");
-        harnessCfgLoad(cfgCmdInfo, argListText);
+        argList2 = strLstDup(argListText);
+        strLstAddZ(argList2, "--stanza=stanza2");
+        harnessCfgLoad(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza2\n"
@@ -1796,9 +1799,84 @@ testRun(void)
             "        wal archive min/max (9.4): none present\n",
             "text - multiple stanzas - selected found, repo1");
 
+        // Remove backups from repo2 for stanza1 so multi-repos are scanned but backups are on only 1 repo
+        //--------------------------------------------------------------------------------------------------------------------------
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201510051\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[cipher]\n"
+            "cipher-pass=\"somepass\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"9.5\"}\n"
+        );
+
+        filePathName = strNewFmt("%s/stanza1/backup.info", strZ(repo2backupPath));
+        write = storageNewWriteP(storageLocalWrite(), filePathName);
+        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
+        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "backup.info without current, repo2, stanza1");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: ok\n"
+            "        repo2: error (no valid backups)\n"
+            "    cipher: mixed\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
+            "\n"
+            "        full backup: 20181119-152138F\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
+            "            database size: 19.2MB, backup size: 19.2MB\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 2.3MB\n"
+            "\n"
+            "        diff backup: 20181119-152138F_20181119-152152D\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 346B\n"
+            "            backup reference list: 20181119-152138F\n"
+            "\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            wal start/stop: n/a\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 346B\n"
+            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repository: 1, repository size: 3MB, repository backup size: 3KB\n"
+            "\n"
+            "        incr backup: 20201116-155000F_20201119-152100I\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repository: 1, repository size: 2.3MB, repository backup size: 346B\n"
+            "            backup reference list: 20201116-155000F\n",
+            "text - multi-repo, valid backups only on repo1");
+
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
-// CSHANG Remove or update with encrypted repo? Might remove since we're not reading the backup.info to get the cipher anymore
         content = strNew
         (
             "[global]\n"
@@ -1824,57 +1902,84 @@ testRun(void)
     }
 
     //******************************************************************************************************************************
-    if (testBegin("formatTextDb()"))
+    if (testBegin("infoUpdateStanza() errors"))
     {
-        // These tests cover branches not covered in other tests
-        KeyValue *stanzaInfo = kvNew();
-        VariantList *dbSection = varLstNew();
-        Variant *pgInfo = varNewKv(kvNew());
-        kvPut(varKv(pgInfo), DB_KEY_ID_VAR, varNewUInt(1));
-        kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, varNewUInt64(6625633699176220261));
-        kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(90500)));
+        TEST_TITLE("archive/backup info mismatch");
 
-        varLstAdd(dbSection, pgInfo);
+        StringList *argList = strLstNew();
+        strLstAdd(argList, strNewFmt("--repo-path=%s", strZ(repoPath)));
+        harnessCfgLoad(cfgCmdInfo, argList);
 
-        // Add the database history, backup and archive sections to the stanza info
-        kvPut(stanzaInfo, STANZA_KEY_DB_VAR, varNewVarLst(dbSection));
+        storagePathCreateP(storageLocalWrite(), archivePath);
+        storagePathCreateP(storageLocalWrite(), backupPath);
 
-        VariantList *backupSection = varLstNew();
-        Variant *backupInfo = varNewKv(kvNew());
-
-        kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTRDEF("20181119-152138F"));
-        kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTRDEF("full"));
-        kvPutKv(varKv(backupInfo), KEY_ARCHIVE_VAR);
-        KeyValue *infoInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_INFO_VAR);
-        kvPut(infoInfo, KEY_SIZE_VAR, varNewUInt64(0));
-        kvPut(infoInfo, KEY_DELTA_VAR, varNewUInt64(0));
-        KeyValue *repoInfo = kvPutKv(infoInfo, INFO_KEY_REPOSITORY_VAR);
-        kvAdd(repoInfo, KEY_SIZE_VAR, varNewUInt64(0));
-        kvAdd(repoInfo, KEY_DELTA_VAR, varNewUInt64(0));
-        KeyValue *databaseInfo = kvPutKv(varKv(backupInfo), KEY_DATABASE_VAR);
-        kvAdd(databaseInfo, DB_KEY_ID_VAR, varNewUInt(1));
-        KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
-        kvAdd(timeInfo, KEY_START_VAR, varNewUInt64(1542383276));
-        kvAdd(timeInfo, KEY_STOP_VAR, varNewUInt64(1542383289));
-
-        varLstAdd(backupSection, backupInfo);
-
-        kvPut(stanzaInfo, STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
-        kvPut(stanzaInfo, KEY_ARCHIVE_VAR, varNewVarLst(varLstNew()));
-
-        String *result = strNew("");
-        formatTextDb(stanzaInfo, result, NULL);
-
-        TEST_RESULT_STR_Z(
-            result,
+        String *content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
             "\n"
-            "    db (current)\n"
-            "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
-            "            wal start/stop: n/a\n"
-            "            database size: 0B, backup size: 0B\n"
-            "            repository size: 0B, repository backup size: 0B\n",
-            "formatTextDb only backup section (code coverage only)");
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
+                harnessInfoChecksum(content)),
+            "put backup info to file");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665888\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665888,\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
+                harnessInfoChecksum(content)),
+            "put archive info to file");
+
+        TEST_ERROR_FMT(
+            infoRender(), FileInvalidError,
+            "backup info file and archive info file database information does not match on repo1 for stanza stanza1\n"
+            "archive: version = 9.4, system-id = 6569239123849665888\n"
+            "backup : version = 9.4, system-id = 6569239123849665679\n"
+            "HINT: this may be a symptom of repository corruption!");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
+                harnessInfoChecksum(content)),
+            "put archive info to file");
+
+        TEST_ERROR_FMT(
+            infoRender(), FileInvalidError,
+            "backup info file and archive info file database information does not match on repo1 for stanza stanza1\n"
+            "archive: version = 9.5, system-id = 6569239123849665679\n"
+            "backup : version = 9.4, system-id = 6569239123849665679\n"
+            "HINT: this may be a symptom of repository corruption!");
     }
 
     //******************************************************************************************************************************

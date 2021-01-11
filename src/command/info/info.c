@@ -117,6 +117,8 @@ typedef struct InfoRepoData
 typedef struct InfoStanzaRepo
 {
     const String *name;                                             // Name of the stanza
+    uint64_t currentPgSystemId;                                     // Current postgres system id for the stanza
+    unsigned int currentPgVersion;                                  // Current postgres version for the stanza
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
 
@@ -719,12 +721,11 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 Format the text output for archive and backups for a database group of a stanza.
 ***********************************************************************************************************************************/
 static void
-formatTextBackup(const DbGroup *dbGroup, String *resultStr, const String *backupLabel)
+formatTextBackup(const DbGroup *dbGroup, String *resultStr)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(DB_GROUP, dbGroup);
         FUNCTION_TEST_PARAM(STRING, resultStr);
-        FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
 
     ASSERT(dbGroup != NULL);
@@ -740,10 +741,6 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr, const String *backup
     for (unsigned int backupIdx = 0; backupIdx < varLstSize(dbGroup->backupList); backupIdx++)
     {
         KeyValue *backupInfo = varKv(varLstGet(dbGroup->backupList, backupIdx));
-
-        // If a backup label was specified but this is not it then continue
-        if (backupLabel != NULL && !strEq(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)), backupLabel))
-            continue;
 
         strCatFmt(
             resultStr, "\n        %s backup: %s\n", strZ(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR))),
@@ -897,8 +894,8 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
 
         List *dbGroupList = lstNewP(sizeof(DbGroup));
 
-        // Access to the PostgreSQL database is not required so it must be assumed that the last database in the list collected over all
-        // the repos is the current database
+        // Access to the PostgreSQL database is not required so the last database in the list collected over all the repos is the
+        // current database since an earlier check ensured all backup/archive info files have the same current database information
         KeyValue *currentPgInfo = varKv(varLstGet(dbSection, varLstSize(dbSection) - 1));
         uint64_t currentPgSystemId = varUInt64(kvGet(currentPgInfo, DB_KEY_SYSTEM_ID_VAR));
         const String *currentPgVersion = varStr(kvGet(currentPgInfo, DB_KEY_VERSION_VAR));
@@ -969,7 +966,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
 
         unsigned int backupDbGrpIdxMin = 0;
         unsigned int backupDbGrpIdxMax = lstSize(dbGroupList);
-printf("BACKUPLABEL %s\n", backupLabel == NULL ? "NULL" : strZ(backupLabel)); fflush(stdout);
+
         // For every backup (oldest to newest) for the stanza, add it to the database group based on system-id and version
         for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
         {
@@ -1002,15 +999,15 @@ printf("BACKUPLABEL %s\n", backupLabel == NULL ? "NULL" : strZ(backupLabel)); ff
                             varLstAdd(dbGroupInfo->backupList, varLstGet(backupSection, backupIdx));
 
                             // If we're only looking for one backup, then narrow the db group iterators
-                            if (backupLabel != NULL && strEq(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)), backupLabel))
+                            if (backupLabel != NULL)
                             {
                                 backupDbGrpIdxMin = dbGrpIdx;
                                 backupDbGrpIdxMax = dbGrpIdx + 1;
                             }
-                            break;
+                            dbGrpIdx = lstSize(dbGroupList);
                         }
                     }
-                    break;
+                    dbIdx = varLstSize(dbSection);
                 }
             }
         }
@@ -1025,13 +1022,13 @@ printf("BACKUPLABEL %s\n", backupLabel == NULL ? "NULL" : strZ(backupLabel)); ff
             // Sort the results based on current or prior and only show the prior if it has archives or backups
             if (dbGroupInfo->current)
             {
-                formatTextBackup(dbGroupInfo, resultCurrent, backupLabel);
+                formatTextBackup(dbGroupInfo, resultCurrent);
                 displayCurrent = true;
             }
             else if (dbGroupInfo->archiveMin != NULL || varLstSize(dbGroupInfo->backupList) > 0)
             {
                 strCatZ(resultStr, "\n    db (prior)");
-                formatTextBackup(dbGroupInfo, resultStr, backupLabel);
+                formatTextBackup(dbGroupInfo, resultStr);
             }
         }
 
@@ -1105,7 +1102,7 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned in
 
     stanzaRepo->repoList[repoIdx].backupInfo = info;
 
-    // If the backup.info and therefore archive.info exist, confirm their current db sections match, else error
+    // If the backup.info and therefore archive.info exist, confirm the current db sections match and are not different across repos
     if (stanzaRepo->repoList[repoIdx].backupInfo != NULL)
     {
         InfoPgData archiveInfoPg = infoPgData(
@@ -1120,12 +1117,26 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned in
         {
             THROW_FMT(
                 FileInvalidError,
-                "backup info file and archive info file database information does not match on repo-%u for stanza %s\n"
+                "backup info file and archive info file database information does not match on repo%u for stanza %s\n"
                 "archive: version = %s, system-id = %" PRIu64 "\n"
                 "backup : version = %s, system-id = %" PRIu64 "\n"
                 "HINT: this may be a symptom of repository corruption!", stanzaRepo->repoList[repoIdx].key, strZ(stanzaRepo->name),
                 strZ(pgVersionToStr(archiveInfoPg.version)), archiveInfoPg.systemId,
                 strZ(pgVersionToStr(backupInfoPg.version)), backupInfoPg.systemId);
+        }
+
+        // The current PG system and version must match across repos for the stanza, if not, a failure during an upgrade may have
+        // occurred
+        if (stanzaRepo->currentPgVersion == 0)
+        {
+            stanzaRepo->currentPgVersion = backupInfoPg.version;
+            stanzaRepo->currentPgSystemId = backupInfoPg.systemId;
+        }
+        else if (stanzaRepo->currentPgVersion != backupInfoPg.version || stanzaRepo->currentPgSystemId != backupInfoPg.systemId)
+        {
+            THROW_FMT(
+                FileInvalidError, "the current postgres version for this stanza does not match across repos\n"
+                "HINT: has a stanza-upgrade been performed?");
         }
     }
 
@@ -1228,6 +1239,8 @@ infoRender(void)
                     InfoStanzaRepo stanzaRepo =
                     {
                         .name = stanzaName,
+                        .currentPgVersion = 0,
+                        .currentPgSystemId = 0,
                         .repoList = memNew(repoTotal * sizeof(InfoRepoData)),
                     };
 
