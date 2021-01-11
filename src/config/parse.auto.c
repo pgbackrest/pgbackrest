@@ -1408,20 +1408,20 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
             PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(0, 360),
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("2"),
 
             PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdArchiveGet),
 
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
+                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
             )
 
             PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdArchivePush),
 
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
+                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
             )
         ),
     ),
@@ -1467,14 +1467,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (
                 PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdArchiveGet),
 
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
+                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
             )
 
             PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdArchivePush),
 
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
+                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
             )
         ),
     ),

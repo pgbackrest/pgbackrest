@@ -1600,17 +1600,17 @@ my %hConfigDefine =
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
         &CFGDEF_INTERNAL => true,
-        &CFGDEF_DEFAULT => 1,
+        &CFGDEF_DEFAULT => 2,
         &CFGDEF_ALLOW_RANGE => [0, 360],
         &CFGDEF_COMMAND =>
         {
             &CFGCMD_ARCHIVE_GET =>
             {
-                &CFGDEF_DEFAULT => 0,
+                &CFGDEF_DEFAULT => 1,
             },
             &CFGCMD_ARCHIVE_PUSH =>
             {
-                &CFGDEF_DEFAULT => 0,
+                &CFGDEF_DEFAULT => 1,
             },
             &CFGCMD_BACKUP => {},
             &CFGCMD_RESTORE => {},

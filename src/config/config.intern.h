@@ -71,7 +71,7 @@ void cfgInit(Config *config);
 /***********************************************************************************************************************************
 Command Functions
 ***********************************************************************************************************************************/
-// List of retry intervals for local jobs. NULL if there are no retries.
+// List of retry intervals for local jobs. The interval for the first retry will always be 0. NULL if there are no retries.
 VariantList *cfgCommandJobRetry(void);
 
 /***********************************************************************************************************************************

@@ -1254,7 +1254,7 @@ testRun(void)
                     "backup-standby=y\n"
                     "buffer-size=65536\n"
                     "protocol-timeout=3600\n"
-                    CFGOPT_JOB_RETRY "=2\n"
+                    CFGOPT_JOB_RETRY "=3\n"
                     CFGOPT_JOB_RETRY_INTERVAL "=33\n"
                     "\n"
                     "[db:backup]\n"
@@ -1436,8 +1436,11 @@ testRun(void)
         strLstAdd(argList, strNew("--recovery-option=a=b"));
         strLstAdd(argList, strNew("--recovery-option=c=de=fg hi"));
         strLstAdd(argList, strNew("--stanza=db"));
+        hrnCfgArgRawZ(argList, cfgOptJobRetry, "0");
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
+
+        TEST_RESULT_PTR(cfgCommandJobRetry(), NULL, "    no job retries");
 
         const KeyValue *recoveryKv = NULL;
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");

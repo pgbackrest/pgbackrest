@@ -145,20 +145,19 @@ cfgCommandJobRetry(void)
 
     ASSERT(configLocal != NULL);
 
-    // There is always at least one retry
-    VariantList *retryInterval = varLstNew();
-    varLstAdd(retryInterval, varNewUInt64(0));
-
-    // Add additional retries
+    // Return NULL if no retries
     unsigned int retryTotal = cfgOptionUInt(cfgOptJobRetry);
 
-    if (retryTotal > 0)
-    {
-        for (unsigned int retryIdx = 0; retryIdx < retryTotal; retryIdx++)
-            varLstAdd(retryInterval, varNewUInt64(cfgOptionUInt64(cfgOptJobRetryInterval)));
-    }
+    if (retryTotal == 0)
+        FUNCTION_TEST_RETURN(NULL);
 
-    FUNCTION_TEST_RETURN(retryInterval);
+    // Build retry list
+    VariantList *result = varLstNew();
+
+    for (unsigned int retryIdx = 0; retryIdx < cfgOptionUInt(cfgOptJobRetry); retryIdx++)
+        varLstAdd(result, varNewUInt64(retryIdx == 0 ? 0 : cfgOptionUInt64(cfgOptJobRetryInterval)));
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
