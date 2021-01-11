@@ -12,7 +12,7 @@ Local Command
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/log.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "config/protocol.h"
 #include "protocol/helper.h"
 #include "protocol/server.h"
@@ -25,11 +25,6 @@ cmdLocal(int fdRead, int fdWrite)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Configure two retries for local commands
-        VariantList *retryInterval = varLstNew();
-        varLstAdd(retryInterval, varNewUInt64(0));
-        varLstAdd(retryInterval, varNewUInt64(15000));
-
         String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%u", cfgOptionUInt(cfgOptProcess));
         IoRead *read = ioFdReadNew(name, fdRead, cfgOptionUInt64(cfgOptProtocolTimeout));
         ioReadOpen(read);
@@ -42,7 +37,7 @@ cmdLocal(int fdRead, int fdWrite)
         protocolServerHandlerAdd(server, backupProtocol);
         protocolServerHandlerAdd(server, restoreProtocol);
         protocolServerHandlerAdd(server, verifyProtocol);
-        protocolServerProcess(server, retryInterval);
+        protocolServerProcess(server, cfgCommandJobRetry());
     }
     MEM_CONTEXT_TEMP_END();
 

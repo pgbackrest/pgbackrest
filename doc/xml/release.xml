@@ -51,6 +51,14 @@
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
+                        <p>Add <br-option>job-retry</br-option> and <br-option>job-retry-interval</br-option> options.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
                         <p>Replace <id>double</id> type with <id>time</id> in <id>config</id> module.</p>
                     </release-item>
                 </release-development-list>
