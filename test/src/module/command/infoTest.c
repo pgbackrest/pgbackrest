@@ -581,8 +581,6 @@ testRun(void)
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("multi-repo, multi-stanza, multi-db, multi-backups");
-
         content = strNew
         (
             "[db]\n"
@@ -847,7 +845,7 @@ testRun(void)
             "db-version=\"9.5\"\n"
             "\n"
             "[cipher]\n"
-            "cipher-pass=\"somepass\"\n"
+            "cipher-pass=\"" TEST_CIPHER_PASS_ARCHIVE "\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n"
@@ -856,7 +854,7 @@ testRun(void)
         String *filePathName = strNewFmt("%s/stanza1/archive.info", strZ(repo2archivePath));
         StorageWrite *write = storageNewWriteP(storageLocalWrite(), filePathName);
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
         TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2");
 
         content = strNew
@@ -888,7 +886,7 @@ testRun(void)
         filePathName = strNewFmt("%s/stanza1/backup.info", strZ(repo2backupPath));
         write = storageNewWriteP(storageLocalWrite(), filePathName);
         filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
         TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted backup.info, repo2");
 
         // Add WAL on repo1 and encrypted repo2 for stanza1
@@ -915,7 +913,7 @@ testRun(void)
         TEST_RESULT_INT(system(
             strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-ff61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
-// CSHANG Make sure we print from the encypted repo manifest to ensure we're able to open the manifest
+
         // Add a manifest on the encrypted repo2
         #define TEST_MANIFEST_HEADER2                                                                                              \
             "[backup]\n"                                                                                                           \
@@ -964,7 +962,7 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT
         );
 
-        // Create manifest file
+        // Create encrypted manifest file
         storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1/20201116-200000F", strZ(repo2backupPath)));
         filePathName = strNewFmt("%s/stanza1/20201116-200000F/" BACKUP_MANIFEST_FILE, strZ(repo2backupPath));
         write = storageNewWriteP(storageLocalWrite(), filePathName);
@@ -981,7 +979,7 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[cipher]\n"
-            "cipher-pass=\"somepass\"\n"
+            "cipher-pass=\"" TEST_CIPHER_PASS_ARCHIVE "\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6626363367545678089,\"db-version\":\"9.4\"}\n"
@@ -990,7 +988,7 @@ testRun(void)
         filePathName = strNewFmt("%s/stanza3/archive.info", strZ(repo2archivePath));
         write = storageNewWriteP(storageLocalWrite(), filePathName);
         filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
         TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2, stanza3");
 
         content = strNew
@@ -1022,7 +1020,7 @@ testRun(void)
         filePathName = strNewFmt("%s/stanza3/backup.info", strZ(repo2backupPath));
         write = storageNewWriteP(storageLocalWrite(), filePathName);
         filterGroup = ioWriteFilterGroup(storageWriteIo(write));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("pass"), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
         TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted backup.info, repo2, stanza3");
 
         archive2Db1_1 = strNewFmt("%s/stanza3/9.4-1/0000000100000000", strZ(repo2archivePath));
@@ -1036,10 +1034,10 @@ testRun(void)
 
         // Set up the configuration
         StringList *argListMultiRepo = strLstNew();
-        hrnCfgArgKeyRawFmt(argListMultiRepo, cfgOptRepoPath, 1, "%s/repo", testPath());
+        hrnCfgArgRawZ(argListMultiRepo, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgKeyRawFmt(argListMultiRepo, cfgOptRepoPath, 2, "%s/repo2", testPath());
         hrnCfgArgKeyRawZ(argListMultiRepo, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
-        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "pass");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
 
         StringList *argListMultiRepoJson = strLstDup(argListMultiRepo);
         hrnCfgArgRawZ(argListMultiRepoJson, cfgOptOutput, "json");
@@ -1494,7 +1492,7 @@ testRun(void)
             "            backup reference list: 20201116-155000F\n"
             "\n"
             "stanza: stanza2\n"
-            "    status: mixed (different across repos)\n"
+            "    status: mixed\n"
             "        repo1: error (no valid backups)\n"
             "        repo2: error (missing stanza path)\n"
             "    cipher: mixed\n"
@@ -1503,7 +1501,7 @@ testRun(void)
             "        wal archive min/max (9.4): none present\n"
             "\n"
             "stanza: stanza3\n"
-            "    status: mixed (different across repos)\n"
+            "    status: mixed\n"
             "        repo1: error (missing stanza path)\n"
             "        repo2: ok\n"
             "    cipher: mixed\n"
@@ -1517,7 +1515,7 @@ testRun(void)
             "            database size: 25.7MB, backup size: 25.7MB\n"
             "            repository: 2, repository size: 3MB, repository backup size: 3KB\n",
             "text - multiple stanzas, multi-repo with valid backups");
-// CSHANG run test with the encrypted repo backup
+
         // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListMultiRepo);
@@ -1551,6 +1549,39 @@ testRun(void)
             "            page checksum error: base/16384/17000\n",
             "text - backup set requested");
 
+        // Confirm ability to read encrypted repo manifest
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList2 = strLstDup(argListMultiRepo);
+        strLstAddZ(argList2, "--stanza=stanza1");
+        strLstAddZ(argList2, "--set=20201116-200000F");
+        strLstAddZ(argList2, "--repo=2");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: ok\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004\n"
+            "\n"
+            "        full backup: 20201116-200000F\n"
+            "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+            "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repository: 2, repository size: 3MB, repository backup size: 3KB\n"
+            "            database list: mail (16456), postgres (12173)\n"
+            "            symlinks:\n"
+            "                pg_hba.conf => ../pg_config/pg_hba.conf\n"
+            "                pg_stat => ../pg_stat\n"
+            "            tablespaces:\n"
+            "                ts1 (1) => /tblspc/ts1\n"
+            "                ts12 (12) => /tblspc/ts12\n"
+            "            page checksum error: base/16384/17000\n",
+            "text - backup set requested");
+
+        //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList2, "--output=json");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -1756,12 +1787,14 @@ testRun(void)
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza2\n"
-            "    status: error (no valid backups)\n"
+            "    status: mixed\n"
+            "        repo1: error (no valid backups)\n"
+            "        repo2: error (missing stanza path)\n"
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-1): none present\n",
-            "text - multiple stanzas - selected found");
+            "        wal archive min/max (9.4): none present\n",
+            "text - multiple stanzas - selected found, repo1");
 
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1877,9 +1910,13 @@ testRun(void)
         TEST_ERROR_FMT(
             harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
-        //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--stanza=stanza1");
-        strLstAddZ(argList, "--repo=1");  // CSHANG added temporarily (although may be permanent)
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        TEST_ERROR_FMT(
+                cmdInfo(), OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
+
+        strLstAddZ(argList, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ERROR_FMT(

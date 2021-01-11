@@ -952,15 +952,21 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
                 // If there are archives and the min is less than that for this database group, then update the group
                 if (archiveDbId == dbId && archiveRepoKey == dbRepoKey && varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR)) != NULL)
                 {
-                    if (dbGroup->archiveMin == NULL || strCmp(dbGroup->archiveMin, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR))) > 0)
+                    if (dbGroup->archiveMin == NULL ||
+                        strCmp(dbGroup->archiveMin, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR))) > 0)
+                    {
                         dbGroup->archiveMin = varStrForce(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR));
+                    }
 
-                    if (dbGroup->archiveMax == NULL || strCmp(dbGroup->archiveMax, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR))) < 0)
+                    if (dbGroup->archiveMax == NULL ||
+                        strCmp(dbGroup->archiveMax, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR))) < 0)
+                    {
                         dbGroup->archiveMax = varStrForce(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR));
+                    }
                 }
             }
         }
-// CSHANG Still a problem here to debug
+
         unsigned int backupDbGrpIdxMin = 0;
         unsigned int backupDbGrpIdxMax = lstSize(dbGroupList);
 printf("BACKUPLABEL %s\n", backupLabel == NULL ? "NULL" : strZ(backupLabel)); fflush(stdout);
@@ -987,13 +993,11 @@ printf("BACKUPLABEL %s\n", backupLabel == NULL ? "NULL" : strZ(backupLabel)); ff
 
                 if (backupDbId == dbId && backupRepoKey == dbRepoKey)
                 {
-                    uint64_t dbSysId = varUInt64(kvGet(pgInfo, DB_KEY_SYSTEM_ID_VAR));
-                    const String *dbVersion = varStr(kvGet(pgInfo, DB_KEY_VERSION_VAR));
-
                     for (unsigned int dbGrpIdx = 0; dbGrpIdx < lstSize(dbGroupList); dbGrpIdx++)
                     {
                         DbGroup *dbGroupInfo = lstGet(dbGroupList, dbGrpIdx);
-                        if (dbGroupInfo->systemId == dbSysId && strEq(dbGroupInfo->version, dbVersion))
+                        if (dbGroupInfo->systemId == varUInt64(kvGet(pgInfo, DB_KEY_SYSTEM_ID_VAR)) &&
+                            strEq(dbGroupInfo->version, varStr(kvGet(pgInfo, DB_KEY_VERSION_VAR))))
                         {
                             varLstAdd(dbGroupInfo->backupList, varLstGet(backupSection, backupIdx));
 
@@ -1279,35 +1283,41 @@ infoRender(void)
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
-// CSHANG if stanza code is mixed, need to display the per repo results
-                        // Change display to indicate an error over all repos and append the backup lock held message if necessary
-                        strCatFmt(
-                            resultStr, "%s (%s%s\n",
-                            statusCode != INFO_STANZA_STATUS_CODE_MIXED ? INFO_STANZA_STATUS_ERROR : INFO_STANZA_MIXED,
-                            strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))),
-                            backupLockHeld == true ? ", " INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : ")");
+                        // Update the overall stanza status and change displayed status if backup lock is found
+                        if (statusCode == INFO_STANZA_STATUS_CODE_MIXED)
+                        {
+                            strCatFmt(
+                                resultStr, "%s%s\n", INFO_STANZA_MIXED,
+                                backupLockHeld == true ? " (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : "");
 
+                            // Output the status per repo
+                            VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
+                            for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
+                            {
+                                KeyValue *repoInfo = varKv(varLstGet(repoSection, repoIdx));
+                                strCatFmt(
+                                    resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
+                                KeyValue *repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
+                                strCatFmt(
+                                    resultStr, "%s",
+                                    varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK ?
+                                    INFO_STANZA_STATUS_OK "\n" : strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)\n",
+                                    strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))))));
+                            }
+                        }
+                        else
+                        {
+                            strCatFmt(
+                                resultStr, "%s (%s%s\n", INFO_STANZA_STATUS_ERROR,
+                                strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))),
+                                backupLockHeld == true ? ", " INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : ")");
+                        }
+// CSHANG Should we always just display the cipher? none, 256 or mixed? Should we display the cipher per repo?
+                        // Add cipher info if the stanza path was found
                         if (statusCode != INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH)
                         {
-                            if (statusCode == INFO_STANZA_STATUS_CODE_MIXED)
-                            {
-                                VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
-                                for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
-                                {
-                                    KeyValue *repoInfo = varKv(varLstGet(repoSection, repoIdx));
-                                    strCatFmt(
-                                        resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
-                                    KeyValue *repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
-                                    strCatFmt(
-                                        resultStr, "%s",
-                                        varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK ?
-                                        INFO_STANZA_STATUS_OK "\n" : strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)\n",
-                                        strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))))));
-                                }
-                            }
                             strCatFmt(
                                 resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, KEY_CIPHER_VAR))));
-
                         }
                     }
                     else
