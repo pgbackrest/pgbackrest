@@ -579,7 +579,7 @@ cmdArchiveGetAsync(void)
             // Check for archive files
             ArchiveGetCheckResult checkResult = archiveGetCheck(cfgCommandParam());
 
-            // Check if any files were missing !!!
+            // If any files are missing get the first one used to construct the "unable to find" warning
             const String *archiveFileMissing = NULL;
 
             if (lstSize(checkResult.archiveFileMapList) < strLstSize(cfgCommandParam()))
@@ -631,7 +631,8 @@ cmdArchiveGetAsync(void)
                 while (!protocolParallelDone(parallelExec));
             }
 
-            // !!! ERROR
+            // Log an error from archiveGetCheck() after any existing files have been fetched. This ordering is important because we
+            // need to fetch as many valid files as possible before throwing an error.
             if (checkResult.errorType != NULL)
             {
                 LOG_WARN_FMT(
@@ -641,6 +642,7 @@ cmdArchiveGetAsync(void)
                 archiveAsyncStatusErrorWrite(
                     archiveModeGet, checkResult.errorFile, errorTypeCode(checkResult.errorType), checkResult.errorMessage);
             }
+            // Else log a warning if any files were missing
             else if (archiveFileMissing != NULL)
             {
                 LOG_DETAIL_FMT("unable to find %s in the archive", strZ(archiveFileMissing));
