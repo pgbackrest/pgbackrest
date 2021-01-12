@@ -692,65 +692,72 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
             const String *backupLabel = strLstGet(backupList, 0);
             const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
-            // Resumable backups have a copy of the manifest but no main
-            if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))) &&
-                !storageExistsP(storageRepo(), manifestFile))
+            // Resumable backups do not have backup.manifest
+            if (!storageExistsP(storageRepo(), manifestFile))
             {
                 bool usable = false;
-                const String *reason = STRDEF("resume is disabled");
+                const String *reason = STRDEF("partially deleted by prior resume or invalid");
                 Manifest *manifestResume = NULL;
 
-                // Attempt to read the manifest file in the resumable backup to see if it can be used.  If any error at all occurs
-                // then the backup will be considered unusable and a resume will not be attempted.
-                if (cfgOptionBool(cfgOptResume))
+                // Resumable backups must have backup.manifest.copy
+                if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
                 {
-                    reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
+                    reason = STRDEF("resume is disabled");
 
-                    TRY_BEGIN()
+                    // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
+                    // occurs then the backup will be considered unusable and a resume will not be attempted.
+                    if (cfgOptionBool(cfgOptResume))
                     {
-                        manifestResume = manifestLoadFile(
-                            storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassBackup);
-                        const ManifestData *manifestResumeData = manifestData(manifestResume);
+                        reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
 
-                        // Check pgBackRest version. This allows the resume implementation to be changed with each version of
-                        // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the cost.
-                        if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
+                        TRY_BEGIN()
                         {
-                            reason = strNewFmt(
-                                "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
-                                strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
+                            manifestResume = manifestLoadFile(
+                                storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassBackup);
+                            const ManifestData *manifestResumeData = manifestData(manifestResume);
+
+                            // Check pgBackRest version. This allows the resume implementation to be changed with each version of
+                            // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the
+                            // cost.
+                            if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
+                            {
+                                reason = strNewFmt(
+                                    "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
+                                    strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
+                            }
+                            // Check backup type because new backup label must be the same type as resume backup label
+                            else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
+                            {
+                                reason = strNewFmt(
+                                    "new backup type '%s' does not match resumable backup type '%s'",
+                                    strZ(cfgOptionStr(cfgOptType)), strZ(backupTypeStr(manifestResumeData->backupType)));
+                            }
+                            // Check prior backup label ??? Do we really care about the prior backup label?
+                            else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
+                            {
+                                reason = strNewFmt(
+                                    "new prior backup label '%s' does not match resumable prior backup label '%s'",
+                                    manifestResumeData->backupLabelPrior ? strZ(manifestResumeData->backupLabelPrior) : "<undef>",
+                                    manifestData(manifest)->backupLabelPrior ?
+                                        strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
+                            }
+                            // Check compression. Compression can't be changed between backups so resume won't work either.
+                            else if (
+                                manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
+                            {
+                                reason = strNewFmt(
+                                    "new compression '%s' does not match resumable compression '%s'",
+                                    strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
+                                    strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
+                            }
+                            else
+                                usable = true;
                         }
-                        // Check backup type because new backup label must be the same type as resume backup label
-                        else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
+                        CATCH_ANY()
                         {
-                            reason = strNewFmt(
-                                "new backup type '%s' does not match resumable backup type '%s'", strZ(cfgOptionStr(cfgOptType)),
-                                strZ(backupTypeStr(manifestResumeData->backupType)));
                         }
-                        // Check prior backup label ??? Do we really care about the prior backup label?
-                        else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
-                        {
-                            reason = strNewFmt(
-                                "new prior backup label '%s' does not match resumable prior backup label '%s'",
-                                manifestResumeData->backupLabelPrior ? strZ(manifestResumeData->backupLabelPrior) : "<undef>",
-                                manifestData(manifest)->backupLabelPrior ?
-                                    strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
-                        }
-                        // Check compression. Compression can't be changed between backups so resume won't work either.
-                        else if (manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
-                        {
-                            reason = strNewFmt(
-                                "new compression '%s' does not match resumable compression '%s'",
-                                strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
-                                strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
-                        }
-                        else
-                            usable = true;
+                        TRY_END();
                     }
-                    CATCH_ANY()
-                    {
-                    }
-                    TRY_END();
                 }
 
                 // If the backup is usable then return the manifest
