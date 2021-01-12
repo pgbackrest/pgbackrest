@@ -89,6 +89,8 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing sta
 #define INFO_STANZA_STATUS_CODE_MIXED                               4
 // If the cipher or status of the stanza is different across repos, then the overall cipher or status message is mixed
 STRING_STATIC(INFO_STANZA_MESSAGE_MIXED_STR,                        "different across repos");
+#define INFO_STANZA_STATUS_CODE_PG_MISMATCH                         5
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mismatch across repos");
 
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR,           INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP);
@@ -155,7 +157,7 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
-    ASSERT(code >= 0 && code <= 4);
+    ASSERT(code >= 0 && code <= 5);
     ASSERT(stanzaInfo != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR);
@@ -187,6 +189,11 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
         case INFO_STANZA_STATUS_CODE_MIXED:
         {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_MESSAGE_MIXED_STR));
+            break;
+        }
+        case INFO_STANZA_STATUS_CODE_PG_MISMATCH:
+        {
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR));
             break;
         }
     }
@@ -646,9 +653,21 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
                         stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false), repoIdx,
                         repoData->key);
                 }
+
+                // Set stanza status if the current db sections do not match across repos
+                InfoPgData backupInfoCurrentPg = infoPgData(
+                    infoBackupPg(repoData->backupInfo), infoPgDataCurrentId(infoBackupPg(repoData->backupInfo)));
+
+                // The current PG system and version must match across repos for the stanza, if not, a failure may have occurred
+                // during an upgrade or the repo may have been disabled during the stanza upgrade to protect from error propagation
+                if (stanzaData->currentPgVersion != backupInfoCurrentPg.version ||
+                    stanzaData->currentPgSystemId != backupInfoCurrentPg.systemId)
+                {
+                    stanzaStatusCode = INFO_STANZA_STATUS_CODE_PG_MISMATCH;
+                }
             }
 
-            // If the stanza has been created on at least one repo, then check for a lock on the PG server
+            // If the stanza has been created successfully on at least one repo, then check for a lock on the PG server
             if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK)
             {
                 checkBackupLock = true;
@@ -658,20 +677,25 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
                     repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_NO_BACKUP;
             }
 
-            // Track the overall stanza status over all repos
-            if (repoIdx == repoIdxStart)
+            // Track the status over all repos if the status for the stanza has not already been determined
+            if (stanzaStatusCode != INFO_STANZA_STATUS_CODE_PG_MISMATCH)
             {
-                stanzaStatusCode = repoData->stanzaStatus;
-                stanzaCipherType = repoData->cipher;
-            }
-            else
-            {
-                stanzaStatusCode =
-                    stanzaStatusCode != repoData->stanzaStatus ? INFO_STANZA_STATUS_CODE_MIXED : repoData->stanzaStatus;
-                stanzaCipherType = stanzaCipherType != repoData->cipher ? INFO_STANZA_STATUS_CODE_MIXED : repoData->cipher;
+                if (repoIdx == repoIdxStart)
+                    stanzaStatusCode = repoData->stanzaStatus;
+                else
+                {
+                    stanzaStatusCode =
+                        stanzaStatusCode != repoData->stanzaStatus ? INFO_STANZA_STATUS_CODE_MIXED : repoData->stanzaStatus;
+                }
             }
 
-            // Add the status to the repo section, and the repo to the repo array
+            // Track cipher type over all repos
+            if (repoIdx == repoIdxStart)
+                stanzaCipherType = repoData->cipher;
+            else
+                stanzaCipherType = stanzaCipherType != repoData->cipher ? INFO_STANZA_STATUS_CODE_MIXED : repoData->cipher;
+
+            // Add the status of the stanza on the repo to the repo section, and the repo to the repo array
             repoStanzaStatus(repoData->stanzaStatus, repoInfo);
             varLstAdd(repoSection, repoInfo);
 
@@ -1049,11 +1073,11 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned in
     ASSERT(stanzaRepo != NULL);
 
     InfoBackup *info = NULL;
+    volatile int stanzaStatus = INFO_STANZA_STATUS_CODE_OK;
 
     // If the stanza exists, attempt to get the backup.info file
     if (stanzaExists)
     {
-        volatile int stanzaStatus = INFO_STANZA_STATUS_CODE_OK;
 
         // Catch certain errors
         TRY_BEGIN()
@@ -1094,27 +1118,15 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned in
 
     stanzaRepo->repoList[repoIdx].backupInfo = info;
 
-    // If the backup.info and therefore archive.info exist, confirm the current db sections match across repos
-    if (stanzaRepo->repoList[repoIdx].backupInfo != NULL)
+    // If the backup.info and therefore archive.info exist, and the currentPg has not been set for the stanza, then set it
+    if (stanzaRepo->currentPgVersion == 0 && stanzaRepo->repoList[repoIdx].backupInfo != NULL)
     {
-        InfoPgData backupInfoPg = infoPgData(
+        InfoPgData backupInfoCurrentPg = infoPgData(
             infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo),
             infoPgDataCurrentId(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
 
-        // The current PG system and version must match across repos for the stanza, if not, a failure during an upgrade may have
-        // occurred or the repo may have been disabled during the stanza upgrade to protect from error propagation
-        if (stanzaRepo->currentPgVersion == 0)
-        {
-            stanzaRepo->currentPgVersion = backupInfoPg.version;
-            stanzaRepo->currentPgSystemId = backupInfoPg.systemId;
-        }
-        else if (stanzaRepo->currentPgVersion != backupInfoPg.version || stanzaRepo->currentPgSystemId != backupInfoPg.systemId)
-        {
-// CSHANG Question here is to throw an error or a warning...DONT ERROR WHEN --REPO IS SET -- SEE IF CAN PUT AN ERROR CODE/MSG -- NO BACKUP LIST, NO ARCHIVE LIST - SO MUST NOT PRINT THE THIS STANZA AT ALL - REPO STANZAS INDICATE MISMATCH - BUT INDIVIDUAL REPOS LOOK OK, BUT OVERALL STANZA IS IN ERROR - SO NEED TO STILL PROCESS JSON -- DO WHAT'S EASIEST SO SHOULD SHOW REPO STATUS? SHOULD TRY to print the info
-            THROW_FMT(
-                FileInvalidError, "the current postgres version on repo%u for stanza %s does not match across repos\n"
-                "HINT: has a stanza-upgrade been performed?", stanzaRepo->repoList[repoIdx].key, strZ(stanzaRepo->name));
-        }
+        stanzaRepo->currentPgVersion = backupInfoCurrentPg.version;
+        stanzaRepo->currentPgSystemId = backupInfoCurrentPg.systemId;
     }
 
     FUNCTION_TEST_RETURN_VOID();
