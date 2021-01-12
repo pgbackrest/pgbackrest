@@ -27,7 +27,7 @@ Archive Get Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
-Clean the queue and prepare a list of WAL segments that the async process should get
+Check for a list of archive files in the repository
 ***********************************************************************************************************************************/
 typedef struct ArchiveFileMap
 {
@@ -47,18 +47,28 @@ typedef struct ArchiveGetCheckResult
     const String *errorMessage;                                     // Error message if there was an error
 } ArchiveGetCheckResult;
 
+// Helper to find a single archive file in the repository using a cache to speed up the process and minimize storageListP() calls
+typedef struct ArchiveGetFindCache
+{
+    const String *path;
+    const StringList *fileList;
+} ArchiveGetFindCache;
+
 static bool
 archiveGetFind(
-    const String *archiveFileRequest, const String *archiveId, ArchiveGetCheckResult *getCheckResult, StringList *path,
-    StringList *file)
+    const String *archiveFileRequest, const String *archiveId, ArchiveGetCheckResult *getCheckResult, List *cache, bool single)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, archiveFileRequest);
         FUNCTION_LOG_PARAM(STRING, archiveId);
         FUNCTION_LOG_PARAM_P(VOID, getCheckResult);
-        FUNCTION_LOG_PARAM(STRING_LIST, path);
-        FUNCTION_LOG_PARAM(STRING_LIST, file);
+        FUNCTION_LOG_PARAM(LIST, cache);
+        FUNCTION_LOG_PARAM(BOOL, single);
     FUNCTION_LOG_END();
+
+    ASSERT(archiveFileRequest != NULL);
+    ASSERT(archiveId != NULL);
+    ASSERT(getCheckResult != NULL);
 
     ArchiveFileMap archiveFileMap = {0};
 
@@ -67,40 +77,80 @@ archiveGetFind(
         // If a WAL segment search among the possible file names
         if (walIsSegment(archiveFileRequest))
         {
-            // Get a list of all WAL segments that match
-            StringList *list = storageListP(
-                storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(strSubN(archiveFileRequest, 0, 16))),
-                .expression = strNewFmt(
-                    "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(archiveFileRequest, 0, 24)),
-                        walIsPartial(archiveFileRequest) ? WAL_SEGMENT_PARTIAL_EXT : ""),
-                .nullOnMissing = true);
+            // Get the path
+            const String *path = strSubN(archiveFileRequest, 0, 16);
 
-            // If there are results
-            if (list != NULL && strLstSize(list) > 0)
+            // List to hold matches for the requested file
+            StringList *matchList = NULL;
+
+            // If a single file is requested then optimize by adding a more restrictive expression to reduce network bandwidth
+            if (single)
             {
-                // Error if there is more than one match
-                if (strLstSize(list) > 1)
+                matchList = storageListP(
+                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(path)),
+                    .expression = strNewFmt(
+                        "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(archiveFileRequest, 0, 24)),
+                            walIsPartial(archiveFileRequest) ? WAL_SEGMENT_PARTIAL_EXT : ""));
+            }
+            // Else multiple files will be requested so cache list results
+            else
+            {
+                // Partial files cannot be in a list with multiple requests
+                ASSERT(!walIsPartial(archiveFileRequest));
+
+                // If the path does not exist in the cache then fetch it
+                const ArchiveGetFindCache *cachePath = lstFind(cache, &path);
+
+                if (cachePath == NULL)
                 {
-                    MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+                    MEM_CONTEXT_BEGIN(lstMemContext(cache))
                     {
-                        getCheckResult->errorType = &ArchiveDuplicateError;
-                        getCheckResult->errorFile = strDup(archiveFileRequest);
-                        getCheckResult->errorMessage = strNewFmt(
-                            "duplicates found in archive for WAL segment %s: %s\n"
-                                "HINT: are multiple primaries archiving to this stanza?",
-                            strZ(archiveFileRequest), strZ(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
+                        cachePath = lstAdd(
+                            cache,
+                            &(ArchiveGetFindCache)
+                            {
+                                .path = strDup(path),
+                                .fileList = storageListP(
+                                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(path)),
+                                    .expression = strNewFmt("^%s[0-F]{8}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(path))),
+                            });
                     }
                     MEM_CONTEXT_END();
                 }
-                else
+
+                // Get a list of all WAL segments that match
+                matchList = strLstNew();
+
+                for (unsigned int fileIdx = 0; fileIdx < strLstSize(cachePath->fileList); fileIdx++)
                 {
-                    MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
-                    {
-                        archiveFileMap.actual = strNewFmt(
-                            "%s/%s/%s", strZ(archiveId), strZ(strSubN(archiveFileRequest, 0, 16)), strZ(strLstGet(list, 0)));
-                    }
-                    MEM_CONTEXT_END();
+                    if (strBeginsWith(strLstGet(cachePath->fileList, fileIdx), archiveFileRequest))
+                        strLstAdd(matchList, strLstGet(cachePath->fileList, fileIdx));
                 }
+            }
+
+            // If there is a single result then return it
+            if (strLstSize(matchList) == 1)
+            {
+                MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+                {
+                    archiveFileMap.actual = strNewFmt(
+                        "%s/%s/%s", strZ(archiveId), strZ(path), strZ(strLstGet(matchList, 0)));
+                }
+                MEM_CONTEXT_END();
+            }
+            // Else error if there are multiple results
+            if (strLstSize(matchList) > 1)
+            {
+                MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+                {
+                    getCheckResult->errorType = &ArchiveDuplicateError;
+                    getCheckResult->errorFile = strDup(archiveFileRequest);
+                    getCheckResult->errorMessage = strNewFmt(
+                        "duplicates found in archive for WAL segment %s: %s\n"
+                            "HINT: are multiple primaries archiving to this stanza?",
+                        strZ(archiveFileRequest), strZ(strLstJoin(strLstSort(matchList, sortOrderAsc), ", ")));
+                }
+                MEM_CONTEXT_END();
             }
         }
         // Else if not a WAL segment, see if it exists in the archive dir
@@ -158,8 +208,7 @@ archiveGetCheck(const StringList *archiveRequestList)
         // Loop through the pg history and determine which archiveId to use based on the first file in the list
         bool found = false;
         const String *archiveId = NULL;
-        StringList *cachePath = NULL;
-        StringList *cacheFile = NULL;
+        List *cache = NULL;
 
         for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoArchivePg(info)); pgIdx++)
         {
@@ -169,10 +218,10 @@ archiveGetCheck(const StringList *archiveRequestList)
             if (pgData.systemId == controlInfo.systemId && pgData.version == controlInfo.version)
             {
                 archiveId = infoPgArchiveId(infoArchivePg(info), pgIdx);
-                cachePath = strLstNew();
-                cacheFile = strLstNew();
+                cache = lstNewP(sizeof(ArchiveGetFindCache), .comparator = lstComparatorStr);
 
-                found = archiveGetFind(strLstGet(archiveRequestList, 0), archiveId, &result, cachePath, cacheFile);
+                found = archiveGetFind(
+                    strLstGet(archiveRequestList, 0), archiveId, &result, cache, strLstSize(archiveRequestList) == 1);
 
                 // If the file was found then use this archiveId for the rest of the files
                 if (found)
@@ -201,7 +250,7 @@ archiveGetCheck(const StringList *archiveRequestList)
             // Find the rest of the files in the list
             for (unsigned int archiveRequestIdx = 1; archiveRequestIdx < strLstSize(archiveRequestList); archiveRequestIdx++)
             {
-                if (!archiveGetFind(strLstGet(archiveRequestList, archiveRequestIdx), archiveId, &result, cachePath, cacheFile))
+                if (!archiveGetFind(strLstGet(archiveRequestList, archiveRequestIdx), archiveId, &result, cache, false))
                     break;
             }
         }
