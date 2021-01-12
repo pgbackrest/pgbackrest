@@ -1094,31 +1094,15 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned in
 
     stanzaRepo->repoList[repoIdx].backupInfo = info;
 
-    // If the backup.info and therefore archive.info exist, confirm the current db sections match and are not different across repos
+    // If the backup.info and therefore archive.info exist, confirm the current db sections match across repos
     if (stanzaRepo->repoList[repoIdx].backupInfo != NULL)
     {
-        InfoPgData archiveInfoPg = infoPgData(
-            infoArchivePg(stanzaRepo->repoList[repoIdx].archiveInfo),
-            infoPgDataCurrentId(infoArchivePg(stanzaRepo->repoList[repoIdx].archiveInfo)));
-
         InfoPgData backupInfoPg = infoPgData(
             infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo),
             infoPgDataCurrentId(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
-// DO AN ERROR CODE BUT NOT THROW AN ERROR - REPO ERROR - AND NO BACKUP AND ARCHIVE will be in the json -- maybe look at doing this in current master but there, indicate an error -- or maybe don't do in master -- NO, DON'T FIX THIS IN MULTI-REPO B/C OTHER THINGS WILL FAIL AND THIS IS REALLY THEORETICAL - SO ADD TO THE PROJECT BOARD
-        if (archiveInfoPg.systemId != backupInfoPg.systemId || archiveInfoPg.version != backupInfoPg.version)
-        {
-            THROW_FMT(
-                FileInvalidError,
-                "backup info file and archive info file database information does not match on repo%u for stanza %s\n"
-                "archive: version = %s, system-id = %" PRIu64 "\n"
-                "backup : version = %s, system-id = %" PRIu64 "\n"
-                "HINT: this may be a symptom of repository corruption!", stanzaRepo->repoList[repoIdx].key, strZ(stanzaRepo->name),
-                strZ(pgVersionToStr(archiveInfoPg.version)), archiveInfoPg.systemId,
-                strZ(pgVersionToStr(backupInfoPg.version)), backupInfoPg.systemId);
-        }
 
         // The current PG system and version must match across repos for the stanza, if not, a failure during an upgrade may have
-        // occurred
+        // occurred or the repo may have been disabled during the stanza upgrade to protect from error propagation
         if (stanzaRepo->currentPgVersion == 0)
         {
             stanzaRepo->currentPgVersion = backupInfoPg.version;
@@ -1318,8 +1302,6 @@ infoRender(void)
                                 strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))),
                                 backupLockHeld == true ? ", " INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : ")");
                         }
-// CSHANG Should we always just display the cipher? none, 256 or mixed? Should we display the cipher per repo? https://github.com/pgbackrest/pgbackrest/issues/586
-// CSHANG DECISION: DISPLAY THE STATUS PER REPO
                     }
                     else
                     {

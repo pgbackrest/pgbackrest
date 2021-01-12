@@ -1932,84 +1932,9 @@ testRun(void)
     }
 
     //******************************************************************************************************************************
-    if (testBegin("infoUpdateStanza() errors"))
+    if (testBegin("PLACEHOLDER"))
     {
-        TEST_TITLE("archive/backup info mismatch");
 
-        StringList *argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--repo-path=%s", strZ(repoPath)));
-        harnessCfgLoad(cfgCmdInfo, argList);
-
-        storagePathCreateP(storageLocalWrite(), archivePath);
-        storagePathCreateP(storageLocalWrite(), backupPath);
-
-        String *content = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put backup info to file");
-
-        content = strNew
-        (
-            "[db]\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665888\n"
-            "db-version=\"9.4\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-id\":6569239123849665888,\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put archive info to file");
-
-        TEST_ERROR_FMT(
-            infoRender(), FileInvalidError,
-            "backup info file and archive info file database information does not match on repo1 for stanza stanza1\n"
-            "archive: version = 9.4, system-id = 6569239123849665888\n"
-            "backup : version = 9.4, system-id = 6569239123849665679\n"
-            "HINT: this may be a symptom of repository corruption!");
-
-        content = strNew
-        (
-            "[db]\n"
-            "db-id=1\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.5\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-                harnessInfoChecksum(content)),
-            "put archive info to file");
-
-        TEST_ERROR_FMT(
-            infoRender(), FileInvalidError,
-            "backup info file and archive info file database information does not match on repo1 for stanza stanza1\n"
-            "archive: version = 9.5, system-id = 6569239123849665679\n"
-            "backup : version = 9.4, system-id = 6569239123849665679\n"
-            "HINT: this may be a symptom of repository corruption!");
     }
 
     //******************************************************************************************************************************
