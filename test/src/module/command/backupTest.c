@@ -1263,14 +1263,19 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cannot resume empty directory");
+        TEST_TITLE("cannot resume when manifest and copy are missing");
 
         storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F"));
 
         TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
 
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed: partially deleted by prior resume or invalid");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when resume is disabled");
+
+        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F"));
 
         cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_FALSE_VAR);
 
