@@ -498,11 +498,11 @@ testRun(void)
         TEST_ERROR(cmdArchiveGet(), ParamInvalidError, "extra parameters found");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("file is missing");
+        TEST_TITLE("pg version does not match archive.info");
 
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}));
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
@@ -512,13 +512,37 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
 
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        argBaseList = strLstNew();
+        hrnCfgArgRawZ(argBaseList, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argBaseList, cfgOptStanza, "test1");
+
+        argList = strLstDup(argBaseList);
         strLstAddZ(argList, "01ABCDEF01ABCDEF01ABCDEF");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
+
+        TEST_ERROR(
+            cmdArchiveGet(), ArchiveMismatchError,
+            "unable to retrieve the archive id for database version '11' and system-id '18072658121562454734'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg version does not match archive.info");
+
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0x8888888888888888}));
+
+        TEST_ERROR(
+            cmdArchiveGet(), ArchiveMismatchError,
+            "unable to retrieve the archive id for database version '10' and system-id '9838263505978427528'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file is missing");
+
+        HRN_STORAGE_PUT(
+            storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         TEST_RESULT_INT(cmdArchiveGet(), 1, "get");
 
@@ -545,8 +569,78 @@ testRun(void)
             storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get from prior db-id");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
+            "2={\"db-id\":10000000000000000000,\"db-version\":\"11\"}\n"
+            "3={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the archive");
+
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get partial");
+
+        buffer = bufNew(16 * 1024 * 1024);
+        memset(bufPtr(buffer), 0xFF, bufSize(buffer));
+        bufUsedSet(buffer, bufSize(buffer));
+
+        HRN_STORAGE_PUT(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/10-3/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            buffer);
+
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "000000010000000100000001.partial");
+        strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the archive");
+
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+        TEST_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/10-3/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get missing history");
+
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "00000001.history");
+        strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYHISTORY");
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 1, "get");
+
+        harnessLogResult("P00   INFO: unable to find 00000001.history in the archive");
+
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", NULL);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get history");
+
+        HRN_STORAGE_PUT(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/00000001.history", BUFSTRDEF("HISTORY"));
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult("P00   INFO: found 00000001.history in the archive");
+
+        TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYHISTORY")).size, 7, "check size");
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYHISTORY\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get compressed and encrypted WAL segment");
@@ -568,8 +662,11 @@ testRun(void)
             buffer, .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
         // Add encryption options
+        argList = strLstDup(argBaseList);
         hrnCfgArgRawZ(argList, cfgOptRepoCipherType, CIPHER_TYPE_AES_256_CBC);
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        strLstAddZ(argList, "01ABCDEF01ABCDEF01ABCDEF");
+        strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
         hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
