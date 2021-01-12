@@ -1194,7 +1194,7 @@ infoRender(void)
             }
 
             // Get a list of stanzas in the backup directory
-            StringList *stanzaNameList = storageListP(storageRepo, STORAGE_PATH_BACKUP_STR);
+            StringList *stanzaNameList = strLstSort(storageListP(storageRepo, STORAGE_PATH_BACKUP_STR), sortOrderAsc);
 
             // All stanzas will be "found" if they are in the storage list
             bool stanzaExists = true;
@@ -1286,10 +1286,13 @@ infoRender(void)
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
                         // Update the overall stanza status and change displayed status if backup lock is found
-                        if (statusCode == INFO_STANZA_STATUS_CODE_MIXED)
+                        if (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH)
                         {
                             strCatFmt(
-                                resultStr, "%s%s\n", INFO_STANZA_MIXED,
+                                resultStr, "%s%s\n",
+                                statusCode == INFO_STANZA_STATUS_CODE_MIXED ? INFO_STANZA_MIXED :
+                                    strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)",
+                                    strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))))),
                                 backupLockHeld == true ? " (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : "");
 
                             // Output the status per repo
@@ -1326,7 +1329,7 @@ infoRender(void)
                         else
                             strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
                     }
-
+// CSHANG This is a hold over from the old code where we did not bother to display the cipher if stanza was not found - should we change in master? It will still look lke completely new code anyway so not sure it is worth it...so I propose we just always show the cipher
                     // Add cipher type if the stanza is found on at least one repo
                     if (statusCode != INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH)
                     {
