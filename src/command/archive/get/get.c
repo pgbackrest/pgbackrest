@@ -509,7 +509,7 @@ cmdArchiveGet(void)
         // Else perform synchronous get
         else
         {
-            // Check for archive files
+            // Check for the archive file
             StringList *archiveRequestList = strLstNew();
             strLstAdd(archiveRequestList, walSegment);
 
@@ -597,7 +597,7 @@ cmdArchiveGetAsync(void)
             // Check for archive files
             ArchiveGetCheckResult checkResult = archiveGetCheck(cfgCommandParam());
 
-            // If any files are missing get the first one used to construct the "unable to find" warning
+            // If any files are missing get the first one (used to construct the "unable to find" warning)
             const String *archiveFileMissing = NULL;
 
             if (lstSize(checkResult.archiveFileMapList) < strLstSize(cfgCommandParam()))
