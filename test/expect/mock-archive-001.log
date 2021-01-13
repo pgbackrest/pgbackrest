@@ -88,7 +88,7 @@ P00   INFO: archive-get command end: completed successfully
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000001, [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG] --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
-P00   INFO: found 000000010000000100000001 in the archive
+P00   INFO: found 000000010000000100000001 in the repo1:9.4-1 archive
 P00   INFO: archive-get command end: completed successfully
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push --compress-type=lz4 --archive-async --process-max=2 [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
@@ -163,7 +163,7 @@ P00   INFO: archive-push command end: aborted with exception [045]
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get --archive-async --repo-type=cifs 000000010000000100000002 [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG] --archive-async --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-primary/repo --repo1-type=cifs --spool-path=[TEST_PATH]/db-primary/spool --stanza=db
-P00   INFO: found 000000010000000100000002 in the archive
+P00   INFO: found 000000010000000100000002 in the archive asynchronously
 P00   INFO: archive-get command end: completed successfully
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get --archive-async 00000001.history [TEST_PATH]/db-primary/db/base/pg_xlog/00000001.history
@@ -175,7 +175,7 @@ P00   INFO: archive-get command end: completed successfully
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get --archive-async 00000002.history [TEST_PATH]/db-primary/db/base/pg_xlog/00000002.history
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [00000002.history, [TEST_PATH]/db-primary/db/base/pg_xlog/00000002.history] --archive-async --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=[TEST_PATH]/db-primary/repo --spool-path=[TEST_PATH]/db-primary/spool --stanza=db
-P00   INFO: found 00000002.history in the archive
+P00   INFO: found 00000002.history in the repo1:9.4-1 archive
 P00   INFO: archive-get command end: completed successfully
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002.partial
