@@ -153,7 +153,7 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01   WARN: could not get 000000010000000100000001 from the archive (will be retried):"
+            "P01   WARN: could not get 000000010000000100000001 from the repo1:10-1 archive (will be retried):"
                 " [29] raised from local-1 protocol: unexpected eof in compressed data");
 
         TEST_STORAGE_LIST(
@@ -221,7 +221,7 @@ testRun(void)
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1:10-1 archive\n"
-            "P00   WARN: could not get 000000010000000200000000 from the archive (will be retried): "
+            "P00   WARN: could not get 000000010000000200000000 from the repo1:10-1 archive (will be retried): "
                 "[45] duplicates found in archive for WAL segment 000000010000000200000000: "
                 "000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, "
                 "000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
