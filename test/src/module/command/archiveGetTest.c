@@ -558,6 +558,23 @@ testRun(void)
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on duplicate WAL segment");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+
+        TEST_ERROR(
+            cmdArchiveGet(), ArchiveDuplicateError,
+            "duplicates found in archive for WAL segment 01ABCDEF01ABCDEF01ABCDEF:"
+                " 01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,"
+                " 01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            "HINT: are multiple primaries archiving to this stanza?");
+
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", NULL);
+        TEST_STORAGE_REMOVE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get from prior db-id");
 
         HRN_INFO_PUT(
