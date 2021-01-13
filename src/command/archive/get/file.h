@@ -14,6 +14,6 @@ Functions
 // Copy a file from the archive to the specified destination
 void archiveGetFile(
     const Storage *storage, const String *archiveFile, const String *walDestination, bool durable, CipherType cipherType,
-    const String *cipherPass);
+    const String *cipherPassArchive);
 
 #endif
