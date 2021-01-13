@@ -32,8 +32,7 @@ Constants for log messages that are used multiple times to keep them consistent
 #define FOUND_IN_ARCHIVE_MSG                                        "found %s in the archive"
 #define FOUND_IN_REPO_ARCHIVE_MSG                                   "found %s in the repo%u:%s archive"
 #define UNABLE_TO_FIND_IN_ARCHIVE_MSG                               "unable to find %s in the archive"
-#define COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG                                                                                        \
-    "could not get %s from the repo%u:%s archive (will be retried): [%d] %s"
+#define COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG                         "could not get %s from the repo%u:%s archive (will be retried):"
 
 /***********************************************************************************************************************************
 Check for a list of archive files in the repository
@@ -79,6 +78,7 @@ archiveGetFind(
     ASSERT(archiveFileRequest != NULL);
     ASSERT(archiveId != NULL);
     ASSERT(getCheckResult != NULL);
+    ASSERT(cache != NULL);
 
     ArchiveFileMap archiveFileMap = {0};
 
@@ -149,7 +149,7 @@ archiveGetFind(
                 MEM_CONTEXT_END();
             }
             // Else error if there are multiple results
-            if (strLstSize(matchList) > 1)
+            else if (strLstSize(matchList) > 1)
             {
                 MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
                 {
@@ -199,7 +199,11 @@ archiveGetCheck(const StringList *archiveRequestList)
     ASSERT(archiveRequestList != NULL);
     ASSERT(strLstSize(archiveRequestList) > 0);
 
-    ArchiveGetCheckResult result = {.archiveFileMapList = lstNewP(sizeof(ArchiveFileMap))};
+    ArchiveGetCheckResult result =
+    {
+        .archiveFileMapList = lstNewP(sizeof(ArchiveFileMap)),
+        .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+    };
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -209,15 +213,18 @@ archiveGetCheck(const StringList *archiveRequestList)
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
 
-        result.cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
-
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveLoadFile(
             storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, result.cipherType, cfgOptionStrNull(cfgOptRepoCipherPass));
 
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result.cipherPassArchive = strDup(infoArchiveCipherPass(info));
+        }
+        MEM_CONTEXT_PRIOR_END();
+
         // Loop through the pg history and determine which archiveId to use based on the first file in the list
         bool found = false;
-        const String *archiveId = NULL;
         List *cache = NULL;
 
         for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoArchivePg(info)); pgIdx++)
@@ -227,11 +234,16 @@ archiveGetCheck(const StringList *archiveRequestList)
             // Only use the archive id if it matches the current cluster
             if (pgData.systemId == controlInfo.systemId && pgData.version == controlInfo.version)
             {
-                archiveId = infoPgArchiveId(infoArchivePg(info), pgIdx);
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result.archiveId = strDup(infoPgArchiveId(infoArchivePg(info), pgIdx));
+                }
+                MEM_CONTEXT_PRIOR_END();
+
                 cache = lstNewP(sizeof(ArchiveGetFindCache), .comparator = lstComparatorStr);
 
                 found = archiveGetFind(
-                    strLstGet(archiveRequestList, 0), archiveId, &result, cache, strLstSize(archiveRequestList) == 1);
+                    strLstGet(archiveRequestList, 0), result.archiveId, &result, cache, strLstSize(archiveRequestList) == 1);
 
                 // If the file was found then use this archiveId for the rest of the files
                 if (found)
@@ -240,7 +252,7 @@ archiveGetCheck(const StringList *archiveRequestList)
         }
 
         // Error if no archive id was found -- this indicates a mismatch with the current cluster
-        if (archiveId == NULL)
+        if (result.archiveId == NULL)
         {
             THROW_FMT(
                 ArchiveMismatchError, "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
@@ -250,18 +262,10 @@ archiveGetCheck(const StringList *archiveRequestList)
         // Continue only if the first file was found
         if (found)
         {
-            // Copy repo data to result
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                result.archiveId = strDup(archiveId);
-                result.cipherPassArchive = strDup(infoArchiveCipherPass(info));
-            }
-            MEM_CONTEXT_PRIOR_END();
-
             // Find the rest of the files in the list
             for (unsigned int archiveRequestIdx = 1; archiveRequestIdx < strLstSize(archiveRequestList); archiveRequestIdx++)
             {
-                if (!archiveGetFind(strLstGet(archiveRequestList, archiveRequestIdx), archiveId, &result, cache, false))
+                if (!archiveGetFind(strLstGet(archiveRequestList, archiveRequestIdx), result.archiveId, &result, cache, false))
                     break;
             }
         }
@@ -515,6 +519,15 @@ cmdArchiveGet(void)
 
             ArchiveGetCheckResult checkResult = archiveGetCheck(archiveRequestList);
 
+            // If there was an error then throw it
+            if (checkResult.errorType != NULL)
+            {
+                THROW_CODE_FMT(
+                    errorTypeCode(checkResult.errorType), COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG " %s", strZ(checkResult.errorFile),
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
+                    strZ(checkResult.archiveId), strZ(checkResult.errorMessage));
+            }
+
             // Get the archive file
             if (lstSize(checkResult.archiveFileMapList) > 0)
             {
@@ -639,7 +652,7 @@ cmdArchiveGetAsync(void)
                         {
                             LOG_WARN_PID_FMT(
                                 processId,
-                                COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG, strZ(walSegment),
+                                COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG " [%d] %s", strZ(walSegment),
                                 cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
                                 strZ(checkResult.archiveId), protocolParallelJobErrorCode(job),
                                 strZ(protocolParallelJobErrorMessage(job)));
@@ -660,7 +673,7 @@ cmdArchiveGetAsync(void)
             if (checkResult.errorType != NULL)
             {
                 LOG_WARN_FMT(
-                    COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG, strZ(checkResult.errorFile),
+                    COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG " [%d] %s", strZ(checkResult.errorFile),
                     cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
                     strZ(checkResult.archiveId), errorTypeCode(checkResult.errorType), strZ(checkResult.errorMessage));
 
