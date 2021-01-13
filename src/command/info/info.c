@@ -803,7 +803,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         KeyValue *repoInfo = varKv(kvGet(info, INFO_KEY_REPOSITORY_VAR));
 
         strCatFmt(
-            resultStr, "            repository: %u, repository size: %s, repository backup size: %s\n",
+            resultStr, "            repo%u: size: %s, backup size: %s\n",
             varUInt(kvGet(varKv(kvGet(backupInfo, KEY_DATABASE_VAR)), KEY_REPO_KEY_VAR)),
             strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_SIZE_VAR)))),
             strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR)))));
