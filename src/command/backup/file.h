@@ -39,12 +39,4 @@ BackupFileResult backupFile(
     CompressType repoFileCompressType, int repoFileCompressLevel, const String *backupLabel, bool delta, CipherType cipherType,
     const String *cipherPass);
 
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_BACKUP_FILE_RESULT_TYPE                                                                                       \
-    BackupFileResult
-#define FUNCTION_LOG_BACKUP_FILE_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(&value, "BackupFileResult", buffer, bufferSize)
-
 #endif
