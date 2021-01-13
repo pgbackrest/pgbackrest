@@ -578,10 +578,11 @@ testRun(void)
         storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.3-2", strZ(archiveStanza1Path)), .recurse = true);
         storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.4-3", strZ(archiveStanza1Path)), .recurse = true);
 
-// CSHANG This starts again a bit from scratch?
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("mixed multi-repo");
+
         content = strNew
         (
             "[db]\n"
@@ -1455,7 +1456,7 @@ testRun(void)
                             "}"
                         "}"
                     "]",
-                    "json - multiple stanzas, some with valid backups, archives in latest DB");
+                    "json - multiple stanzas, some with valid backups, archives in latest DB, backup lock held on one stanza");
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -1559,7 +1560,7 @@ testRun(void)
                     "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
                     "            database size: 25.7MB, backup size: 25.7MB\n"
                     "            repo2: size: 3MB, backup size: 3KB\n",
-                    "text - multiple stanzas, multi-repo with valid backups");
+                    "text - multiple stanzas, multi-repo with valid backups, backup lock held on one stanza");
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -1628,7 +1629,7 @@ testRun(void)
             "                ts1 (1) => /tblspc/ts1\n"
             "                ts12 (12) => /tblspc/ts12\n"
             "            page checksum error: base/16384/17000\n",
-            "text - backup set requested");
+            "text - multi-repo, backup set requested, repo2");
 
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList2, "--output=json");
@@ -1710,7 +1711,7 @@ testRun(void)
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
-        strLstAddZ(argList2, "--repo=1");  // CSHANG added temporarily (although may be permanent)
+        strLstAddZ(argList2, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_NO_DB                                                                                                \
@@ -1849,7 +1850,7 @@ testRun(void)
 
         // Remove backups from repo2 for stanza1 so multi-repos are scanned but backups are on only 1 repo
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("multi-repos scanned but backups only on one");
+        TEST_TITLE("multi-repo, backups only on one");
 
         content = strNew
         (
@@ -1927,9 +1928,80 @@ testRun(void)
             "            backup reference list: 20201116-155000F\n",
             "text - multi-repo, valid backups only on repo1");
 
+        // Remove archives for prior backup so archiveMin prior DB == NULL but backupList > 0 (edge case)
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo, prior backup: no archives but backups (code coverage)");
+
+        TEST_RESULT_VOID(
+            storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.4-1", strZ(archiveStanza1Path)), .recurse = true),
+            "remove archives on db prior");
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: ok\n"
+            "        repo2: error (no valid backups)\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4): none present\n"
+            "\n"
+            "        full backup: 20181119-152138F\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
+            "            database size: 19.2MB, backup size: 19.2MB\n"
+            "            repo1: size: 2.3MB, backup size: 2.3MB\n"
+            "\n"
+            "        diff backup: 20181119-152138F_20181119-152152D\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20181119-152138F\n"
+            "\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            wal start/stop: n/a\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo1: size: 3MB, backup size: 3KB\n"
+            "\n"
+            "        incr backup: 20201116-155000F_20201119-152100I\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20201116-155000F\n",
+            "text - multi-repo, prior backup: no archives but backups (code coverage)");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo, stanza requested does not exist, but other stanzas do");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza4");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza4\n"
+            "    status: error (missing stanza path)\n",
+            "multi-repo, stanza requested does not exist, but other stanzas do");
+
         // Add stanza3 to repo1 but with a current PG that is different than repo2
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("current database different across repos");
+        TEST_TITLE("multi-repo, current database different across repos");
 
         content = strNew
         (
@@ -1946,7 +2018,7 @@ testRun(void)
         filePathName = strNewFmt("%s/stanza3/archive.info", strZ(archivePath));
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), harnessInfoChecksum(content)),
-            "put archive info to file - stanza3, repo1, diff pg version from repo1");
+            "put archive info to file - stanza3, repo1 stanza upgraded");
 
         content = strNew
         (
@@ -1983,7 +2055,7 @@ testRun(void)
         filePathName = strNewFmt("%s/stanza3/backup.info", strZ(backupPath));
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), harnessInfoChecksum(content)),
-            "put backup info to file - stanza3, repo1, diff pg version from repo1");
+            "put backup info to file - stanza3, repo1 stanza upgraded");
 
         String *archiveStanza3 = strNewFmt("%s/stanza3/9.4-1/0000000100000000", strZ(archivePath));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza3), "create stanza3 db1 WAL directory, repo1");
@@ -2037,7 +2109,7 @@ testRun(void)
             "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
             "            database size: 25.7MB, backup size: 25.7MB\n"
             "            repo1: size: 3MB, backup size: 3KB\n",
-            "text - multi-repo, database mismatch");
+            "text - multi-repo, database mismatch, repo2 stanza-upgrade needed");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         harnessCfgLoad(cfgCmdInfo, argList2);
@@ -2214,7 +2286,7 @@ testRun(void)
                     "}"
                 "}"
             "]",
-            "json - multi-repo, database mismatch");
+            "json - multi-repo, database mismatch, repo2 stanza-upgrade needed");
 
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
@@ -2242,12 +2314,247 @@ testRun(void)
             "HINT: has a stanza-create been performed?\n"
             "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
             strZ(backupStanza1Path), strZ(backupStanza1Path),  strZ(strNewFmt("%s/backup.info.copy", strZ(backupStanza1Path))));
+
+        // Unset environment key
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
     }
 
     //******************************************************************************************************************************
-    if (testBegin("PLACEHOLDER"))
+    if (testBegin("database mismatch - special cases"))
     {
+        // These tests cover branches not covered in other tests
+        TEST_TITLE("multi-repo, database mismatch, pg system-id only");
 
+        storagePathCreateP(storageLocalWrite(), archivePath);
+        storagePathCreateP(storageLocalWrite(), backupPath);
+        String *archivePath2 = strNewFmt("%s/repo2/%s", testPath(), "archive");
+        String *backupPath2 = strNewFmt("%s/repo2/%s", testPath(), "backup");
+        storagePathCreateP(storageLocalWrite(), archivePath2);
+        storagePathCreateP(storageLocalWrite(), backupPath2);
+
+        String *content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[backup:current]\n"
+            "20201116-155000F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000003\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541800,\"backup-timestamp-stop\":1605541802,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
+                harnessInfoChecksum(content)),
+            "put backup info to file, repo1");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
+                harnessInfoChecksum(content)),
+            "put archive info to file, repo1");
+
+        String *walPath = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo1, archive directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo1");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo1");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[backup:current]\n"
+            "20201116-155010F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541810,\"backup-timestamp-stop\":1605541812,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.5\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/backup.info", strZ(backupPath2))),
+                harnessInfoChecksum(content)),
+            "put backup info to file, repo2, same system-id, different version");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/archive.info", strZ(archivePath2))),
+                harnessInfoChecksum(content)),
+            "put archive info to file,  repo2, same system-id, different version");
+
+        walPath = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(archivePath2));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo2, archive directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo2");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo2");
+
+        StringList *argList2 = strLstNew();
+        hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        // Note that although the time on the backup in repo2 > repo1, repo1 current db is not the same because of the version so
+        // the repo1, since read first, will be considered the current PG
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (database mismatch across repos)\n"
+            "        repo1: ok\n"
+            "        repo2: ok\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.5): 000000010000000000000001/000000010000000000000002\n"
+            "\n"
+            "        full backup: 20201116-155010F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:10 / 2020-11-16 15:50:12\n"
+            "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo2: size: 3MB, backup size: 3KB\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000010000000000000003\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo1: size: 3MB, backup size: 3KB\n",
+            "text - db mismatch, diff system-id across repos, repo1 considered current db since read first");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo, database mismatch, pg version only");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665888\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[backup:current]\n"
+            "20201116-155010F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541810,\"backup-timestamp-stop\":1605541812,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665888,"
+                "\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/backup.info", strZ(backupPath2))),
+                harnessInfoChecksum(content)),
+            "put backup info to file, repo2, different system-id, same version");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665888\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665888,\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/archive.info", strZ(archivePath2))),
+                harnessInfoChecksum(content)),
+            "put archive info to file,  repo2, different system-id, same version");
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (database mismatch across repos)\n"
+            "        repo1: ok\n"
+            "        repo2: ok\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4): none present\n"
+            "\n"
+            "        full backup: 20201116-155010F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:10 / 2020-11-16 15:50:12\n"
+            "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo2: size: 3MB, backup size: 3KB\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000010000000000000003\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo1: size: 3MB, backup size: 3KB\n",
+            "text - db mismatch, diff version across repos, repo1 considered current db since read first");
     }
 
     //******************************************************************************************************************************

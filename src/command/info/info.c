@@ -7,7 +7,6 @@ Info Command
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdio.h> // cshang remove
 
 #include "command/archive/common.h"
 #include "command/info/info.h"
@@ -966,6 +965,9 @@ formatTextDb(
             // If there are archives and the min is less than that for this database group, then update the group
             if (archiveDbId == dbId && archiveRepoKey == dbRepoKey && varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR)) != NULL)
             {
+                // Although archives should continue to increment over system-id/version with different db-ids, there may be cases
+                // where an archived WAL may exist on both, and if the archive id on a later db is less than a prior instance of
+                // the same PG, then ensure it is updated as the min. Any need to error should not be handled in the INFO command.
                 if (dbGroup->archiveMin == NULL ||
                     strCmp(dbGroup->archiveMin, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR))) > 0)
                 {
@@ -1329,7 +1331,7 @@ infoRender(void)
                         else
                             strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
                     }
-// CSHANG This is a hold over from the old code where we did not bother to display the cipher if stanza was not found - should we change in master? It will still look lke completely new code anyway so not sure it is worth it...so I propose we just always show the cipher
+
                     // Add cipher type if the stanza is found on at least one repo
                     if (statusCode != INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH)
                     {
