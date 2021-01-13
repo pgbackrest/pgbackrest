@@ -39,6 +39,7 @@ typedef struct ArchiveGetCheckResult
 {
     List *archiveFileMapList;                                       // List of mapped archive files, i.e. found in the repo
 
+    const String *archiveId;                                        // Repo archive id
     CipherType cipherType;                                          // Repo cipher type
     const String *cipherPassArchive;                                // Repo archive cipher pass
 
@@ -240,9 +241,10 @@ archiveGetCheck(const StringList *archiveRequestList)
         // Continue only if the first file was found
         if (found)
         {
-            // Copy cipher subpass to result
+            // Copy repo data to result
             MEM_CONTEXT_PRIOR_BEGIN()
             {
+                result.archiveId = strDup(archiveId);
                 result.cipherPassArchive = strDup(infoArchiveCipherPass(info));
             }
             MEM_CONTEXT_PRIOR_END();
@@ -417,6 +419,7 @@ cmdArchiveGet(void)
                     storageMoveP(storageSpoolWrite(), source, destination);
 
                     // Return success
+                    LOG_INFO_FMT("found %s in the archive asynchronously", strZ(walSegment));
                     result = 0;
 
                     // Get a list of WAL segments left in the queue
@@ -488,6 +491,11 @@ cmdArchiveGet(void)
                 throwOnError = true;
             }
             while (waitMore(wait));
+
+            // Log that the file was not found
+            if (result == 1)
+                LOG_INFO_FMT("unable to find %s in the archive asynchronously", strZ(walSegment));
+
         }
         // Else perform synchronous get
         else
@@ -508,15 +516,16 @@ cmdArchiveGet(void)
                     false, checkResult.cipherType, checkResult.cipherPassArchive);
 
                 // If there was no error then the file existed
+                LOG_INFO_FMT(
+                    "found %s in the repo%u:%s archive", strZ(walSegment),
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)), strZ(checkResult.archiveId));
+
                 result = 0;
             }
+            // Else log that the file was not found
+            else
+                LOG_INFO_FMT("unable to find %s in the archive", strZ(walSegment));
         }
-
-        // Log whether or not the file was found
-        if (result == 0)
-            LOG_INFO_FMT("found %s in the archive", strZ(walSegment));
-        else
-            LOG_INFO_FMT("unable to find %s in the archive", strZ(walSegment));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -610,7 +619,11 @@ cmdArchiveGetAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            LOG_DETAIL_PID_FMT(processId, "found %s in the archive", strZ(walSegment));
+                            LOG_DETAIL_PID_FMT(
+                                processId,
+                                "found %s in the repo%u:%s archive", strZ(walSegment),
+                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
+                                strZ(checkResult.archiveId));
                         }
                         // Else the job errored
                         else
