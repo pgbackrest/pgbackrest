@@ -13,6 +13,14 @@ Added from discussion 1/4/21:
 6. Although 3. above indicates the repo WAL location will be identified, we will leave that for the JSON only and for the text output, we will display the min archive over all repos for the database section being displayed.
 7. Although the "db (prior)" text output will now combine dbs with the same system/version id, those with different system-id and/or versions will be displayed in their own "db (prior)" section.
 
+CONDITIONS/NOTES:
+- If the cipher type is mixed, display the cipher type in the text output for each repo (same as doing now for stanza status)
+- put a test in for WAL when it is less that the previous instantiation of the same DB (archived WAL should increment (although can be equal) so should not happen but...) and add in a comment in the code explaining what we're doing and why
+- punt on checking the archive.info against the backup.info current PG sections - don't do it now since it is more a theoretical problem than actual and anyway, if this happens, other commands should be failing. However, add a note to the project board.
+- if the current PG version across repos is different for a stanza, then create a new error code and try to process the data anyway or, if can't, just indicate the error code and message and then list the repos under stanza status in text output.
+- If a backup label is requested, we currently require the --repo option but will consider having the INFO command attempt to find it across repos (this requirement will be done if time permits)
+
+
 USE SECTION 8 MONITORING SECTION
 want to know the wal across the repos and what the wal looks like - per stanza - none of the data can cross stanzas
 database version and system id - maybe use instead of db-id
