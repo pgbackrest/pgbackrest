@@ -238,7 +238,7 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01   WARN: could not get 000000010000000100000001 from the archive (will be retried):"
+            "P01   WARN: could not get 000000010000000100000001 from the repo1 archive (will be retried):"
                 " [29] raised from local-1 protocol: unexpected eof in compressed data");
 
         TEST_STORAGE_LIST(
@@ -261,7 +261,7 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01 DETAIL: found 000000010000000100000001 in the archive");
+            "P01 DETAIL: found 000000010000000100000001 in the repo1 archive");
 
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001\n", .remove = true);
 
@@ -287,9 +287,9 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P01 DETAIL: found 0000000100000001000000FE in the archive\n"
+            "P01 DETAIL: found 0000000100000001000000FE in the repo1 archive\n"
             "P01 DETAIL: unable to find 0000000100000001000000FF in the archive\n"
-            "P01   WARN: could not get 000000010000000200000000 from the archive (will be retried): "
+            "P01   WARN: could not get 000000010000000200000000 from the repo1 archive (will be retried): "
                 "[45] raised from local-1 protocol: duplicates found in archive for WAL segment 000000010000000200000000: "
                 "000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, "
                 "000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
@@ -427,7 +427,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout getting WAL segment");
 
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
+        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
 
         // Check for missing WAL
         // -------------------------------------------------------------------------------------------------------------------------
@@ -435,7 +435,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 1, "successful get of missing WAL");
 
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
+        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok")), false,
@@ -447,7 +447,8 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
 
-        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive"), "check log");
+        TEST_RESULT_VOID(
+            harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive asynchronously"), "check log");
 
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
@@ -462,7 +463,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
 
-        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive"), "check log");
+        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive asynchronously"), "check log");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
 
@@ -476,7 +477,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout waiting for lock");
 
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive");
+        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, BOGUS_STR);
@@ -550,7 +551,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1 archive");
 
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
@@ -571,7 +572,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
@@ -596,7 +597,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the archive");
+        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the repo1 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
@@ -624,7 +625,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 00000001.history in the archive");
+        harnessLogResult("P00   INFO: found 00000001.history in the repo1 archive");
 
         TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYHISTORY")).size, 7, "check size");
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYHISTORY\n", .remove = true);
@@ -659,7 +660,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n");
         TEST_RESULT_UINT(

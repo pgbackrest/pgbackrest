@@ -26,6 +26,15 @@ Archive Get Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+Constants for log messages that are used multiple times to keep them consistent
+***********************************************************************************************************************************/
+#define FOUND_IN_ARCHIVE_MSG                                        "found %s in the archive"
+#define FOUND_IN_REPO_ARCHIVE_MSG                                   "found %s in the repo%u archive"
+#define UNABLE_TO_FIND_IN_ARCHIVE_MSG                               "unable to find %s in the archive"
+#define COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG                                                                                        \
+    "could not get %s from the repo%u archive (will be retried): [%d] %s"
+
+/***********************************************************************************************************************************
 Clean the queue and prepare a list of WAL segments that the async process should get
 ***********************************************************************************************************************************/
 static StringList *
@@ -182,6 +191,7 @@ cmdArchiveGet(void)
                     storageMoveP(storageSpoolWrite(), source, destination);
 
                     // Return success
+                    LOG_INFO_FMT(FOUND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
                     result = 0;
 
                     // Get a list of WAL segments left in the queue
@@ -253,6 +263,11 @@ cmdArchiveGet(void)
                 throwOnError = true;
             }
             while (waitMore(wait));
+
+            // Log that the file was not found
+            if (result == 1)
+                LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
+
         }
         // Else perform synchronous get
         else
@@ -264,13 +279,18 @@ cmdArchiveGet(void)
             result = archiveGetFile(
                 storageLocalWrite(), walSegment, walDestination, false, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
                 cfgOptionStrNull(cfgOptRepoCipherPass));
-        }
 
-        // Log whether or not the file was found
-        if (result == 0)
-            LOG_INFO_FMT("found %s in the archive", strZ(walSegment));
-        else
-            LOG_INFO_FMT("unable to find %s in the archive", strZ(walSegment));
+            // Log that the file was found
+            if (result == 0)
+            {
+                LOG_INFO_FMT(
+                    FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+            }
+            // Else log that the file was not found
+            else
+                LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(walSegment));
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -361,12 +381,15 @@ cmdArchiveGetAsync(void)
                         // Get the archive file
                         if (varIntForce(protocolParallelJobResult(job)) == 0)
                         {
-                            LOG_DETAIL_PID_FMT(processId, "found %s in the archive", strZ(walSegment));
+                            LOG_DETAIL_PID_FMT(
+                                processId,
+                                FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
+                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
                         }
                         // If it does not exist write an ok file to indicate that it was checked
                         else
                         {
-                            LOG_DETAIL_PID_FMT(processId, "unable to find %s in the archive", strZ(walSegment));
+                            LOG_DETAIL_PID_FMT(processId, UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(walSegment));
                             archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL);
                         }
                     }
@@ -375,11 +398,13 @@ cmdArchiveGetAsync(void)
                     {
                         LOG_WARN_PID_FMT(
                             processId,
-                            "could not get %s from the archive (will be retried): [%d] %s", strZ(walSegment),
+                            COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG, strZ(walSegment),
+                            cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
                             protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
                         archiveAsyncStatusErrorWrite(
-                            archiveModeGet, walSegment, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
+                            archiveModeGet, walSegment, protocolParallelJobErrorCode(job),
+                            protocolParallelJobErrorMessage(job));
                     }
 
                     protocolParallelJobFree(job);
