@@ -1052,14 +1052,14 @@ testRun(void)
                     lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
-                sleepMSec(800);
+                sleepMSec(1000);
                 lockRelease(true);
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                sleepMSec(100);
+                sleepMSec(250);
 
                 harnessCfgLoad(cfgCmdInfo, argListMultiRepoJson);
                 TEST_RESULT_STR_Z(
@@ -1470,14 +1470,14 @@ testRun(void)
                     lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
-                sleepMSec(800);
+                sleepMSec(1000);
                 lockRelease(true);
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                sleepMSec(100);
+                sleepMSec(250);
 
                 harnessCfgLoad(cfgCmdInfo, argListMultiRepo);
                 TEST_RESULT_STR_Z(
@@ -1571,6 +1571,11 @@ testRun(void)
         argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_ERROR_FMT(infoRender(), OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
+
+        // Specify the repo
         strLstAddZ(argList2, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -2590,12 +2595,15 @@ testRun(void)
         TEST_ERROR_FMT(
             harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
+        // Option --repo not requied when only 1 repo configured
         strLstAddZ(argList, "--stanza=stanza1");
         harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ERROR_FMT(
-                cmdInfo(), OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
+                cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
+                "HINT: is the backup listed when running the info command with --stanza option only?");
 
+        // Option --repo when only 1 repo configured but will search the repo provided
         strLstAddZ(argList, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList);
 

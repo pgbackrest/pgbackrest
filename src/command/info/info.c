@@ -92,7 +92,6 @@ STRING_STATIC(INFO_STANZA_MESSAGE_MIXED_STR,                        "different a
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mismatch across repos");
 
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
-STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR,           INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP);
 
 /***********************************************************************************************************************************
 Data Types and Structures
@@ -1162,7 +1161,7 @@ infoRender(void)
             if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
                 THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
 
-            if (!(cfgOptionTest(cfgOptRepo)))
+            if (!(cfgOptionTest(cfgOptRepo)) && cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
                 THROW(OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
         }
 

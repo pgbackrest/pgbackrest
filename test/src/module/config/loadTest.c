@@ -49,14 +49,17 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdInfo, argList), OptionRequiredError,
+            harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
             "info command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
+
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdInfo, argList), "load info config -- option repo not required");
+        TEST_RESULT_BOOL(cfgCommand() == cfgCmdInfo, true, "    command is info");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdInfo, argList), OptionRequiredError,
+            harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
             "info command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
 
