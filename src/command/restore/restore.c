@@ -1367,6 +1367,8 @@ restoreRecoveryOption(unsigned int pgVersion)
             KeyValue *optionReplace = kvNew();
 
             kvPut(optionReplace, VARSTR(CFGOPT_EXEC_ID_STR), NULL);
+            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_STR), NULL);
+            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_INTERVAL_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);

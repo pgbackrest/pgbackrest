@@ -38,6 +38,9 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
         {
             const String *walSegment = varStr(varLstGet(paramList, 0));
 
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down
+            storageRepo();
+
             protocolServerResponse(
                 server,
                 VARINT(

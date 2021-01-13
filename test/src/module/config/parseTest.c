@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Configuration Parse
 ***********************************************************************************************************************************/
+#include "common/type/json.h"
 #include "protocol/helper.h"
 #include "storage/storage.intern.h"
 
@@ -1253,6 +1254,8 @@ testRun(void)
                     "backup-standby=y\n"
                     "buffer-size=65536\n"
                     "protocol-timeout=3600\n"
+                    CFGOPT_JOB_RETRY "=3\n"
+                    CFGOPT_JOB_RETRY_INTERVAL "=33\n"
                     "\n"
                     "[db:backup]\n"
                     "delta=n\n"
@@ -1281,6 +1284,7 @@ testRun(void)
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
                     "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
+        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "    custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "    pg1-host was reset");
         TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 0, "    pg1 is default");
@@ -1376,6 +1380,7 @@ testRun(void)
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "archive-push command");
 
+        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0]", "    default job retry");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "    archive-push:async command requires lock");
         TEST_RESULT_BOOL(cfgLogFile(), true, "    archive-push:async command does file logging");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 4503599627370496, "archive-push-queue-max is set");
@@ -1418,6 +1423,8 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
 
+        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,15000]", "    default job retry");
+
         const VariantList *includeList = NULL;
         TEST_ASSIGN(includeList, cfgOptionLst(cfgOptDbInclude), "get db include options");
         TEST_RESULT_STR_Z(varStr(varLstGet(includeList, 0)), "abc", "check db include option");
@@ -1430,8 +1437,11 @@ testRun(void)
         strLstAdd(argList, strNew("--recovery-option=a=b"));
         strLstAdd(argList, strNew("--recovery-option=c=de=fg hi"));
         strLstAdd(argList, strNew("--stanza=db"));
+        hrnCfgArgRawZ(argList, cfgOptJobRetry, "0");
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
+
+        TEST_RESULT_PTR(cfgCommandJobRetry(), NULL, "    no job retries");
 
         const KeyValue *recoveryKv = NULL;
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");

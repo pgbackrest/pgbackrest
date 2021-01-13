@@ -269,6 +269,18 @@ Macros to return function results (or void)
 #define FUNCTION_LOG_RETURN_CONST_PP(typeMacroPrefix, result)                                                                      \
     FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, **, result)
 
+#define FUNCTION_LOG_RETURN_STRUCT(result)                                                                                         \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        STACK_TRACE_POP(false);                                                                                                    \
+                                                                                                                                   \
+        IF_LOG_ANY(FUNCTION_LOG_LEVEL())                                                                                           \
+            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "=> struct");                                                                         \
+                                                                                                                                   \
+        return result;                                                                                                             \
+    }                                                                                                                              \
+    while (0)
+
 #define FUNCTION_LOG_RETURN_VOID()                                                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
