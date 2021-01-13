@@ -200,11 +200,7 @@ archiveGetCheck(const StringList *archiveRequestList)
     ASSERT(archiveRequestList != NULL);
     ASSERT(strLstSize(archiveRequestList) > 0);
 
-    ArchiveGetCheckResult result =
-    {
-        .archiveFileMapList = lstNewP(sizeof(ArchiveFileMap)),
-        .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-    };
+    ArchiveGetCheckResult result = {.archiveFileMapList = lstNewP(sizeof(ArchiveFileMap))};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -214,18 +210,15 @@ archiveGetCheck(const StringList *archiveRequestList)
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         storageRepo();
 
+        result.cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
+
         // Attempt to load the archive info file
         InfoArchive *info = infoArchiveLoadFile(
             storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, result.cipherType, cfgOptionStrNull(cfgOptRepoCipherPass));
 
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result.cipherPassArchive = strDup(infoArchiveCipherPass(info));
-        }
-        MEM_CONTEXT_PRIOR_END();
-
         // Loop through the pg history and determine which archiveId to use based on the first file in the list
         bool found = false;
+        const String *archiveId = NULL;
         List *cache = NULL;
 
         for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoArchivePg(info)); pgIdx++)
@@ -235,16 +228,11 @@ archiveGetCheck(const StringList *archiveRequestList)
             // Only use the archive id if it matches the current cluster
             if (pgData.systemId == controlInfo.systemId && pgData.version == controlInfo.version)
             {
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    result.archiveId = strDup(infoPgArchiveId(infoArchivePg(info), pgIdx));
-                }
-                MEM_CONTEXT_PRIOR_END();
-
+                archiveId = infoPgArchiveId(infoArchivePg(info), pgIdx);
                 cache = lstNewP(sizeof(ArchiveGetFindCache), .comparator = lstComparatorStr);
 
                 found = archiveGetFind(
-                    strLstGet(archiveRequestList, 0), result.archiveId, &result, cache, strLstSize(archiveRequestList) == 1);
+                    strLstGet(archiveRequestList, 0), archiveId, &result, cache, strLstSize(archiveRequestList) == 1);
 
                 // If the file was found then use this archiveId for the rest of the files
                 if (found)
@@ -253,11 +241,22 @@ archiveGetCheck(const StringList *archiveRequestList)
         }
 
         // Error if no archive id was found -- this indicates a mismatch with the current cluster
-        if (result.archiveId == NULL)
+        if (archiveId == NULL)
         {
             THROW_FMT(
                 ArchiveMismatchError, "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
                 strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId);
+        }
+
+        // Copy repo data to result if the first file was found or on error
+        if (found || result.errorType != NULL)
+        {
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.archiveId = strDup(archiveId);
+                result.cipherPassArchive = strDup(infoArchiveCipherPass(info));
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
 
         // Continue only if the first file was found
@@ -266,7 +265,7 @@ archiveGetCheck(const StringList *archiveRequestList)
             // Find the rest of the files in the list
             for (unsigned int archiveRequestIdx = 1; archiveRequestIdx < strLstSize(archiveRequestList); archiveRequestIdx++)
             {
-                if (!archiveGetFind(strLstGet(archiveRequestList, archiveRequestIdx), result.archiveId, &result, cache, false))
+                if (!archiveGetFind(strLstGet(archiveRequestList, archiveRequestIdx), archiveId, &result, cache, false))
                     break;
             }
         }
