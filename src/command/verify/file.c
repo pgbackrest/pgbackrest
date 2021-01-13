@@ -72,5 +72,5 @@ verifyFile(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(ENUM, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }

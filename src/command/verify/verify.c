@@ -36,11 +36,6 @@ Data Types and Structures
 #define FUNCTION_LOG_VERIFY_ARCHIVE_RESULT_FORMAT(value, buffer, bufferSize)                                                       \
     objToLog(&value, "VerifyArchiveResult", buffer, bufferSize)
 
-#define FUNCTION_LOG_VERIFY_INFO_FILE_TYPE                                                                                         \
-    VerifyInfoFile
-#define FUNCTION_LOG_VERIFY_INFO_FILE_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(&value, "VerifyInfoFile", buffer, bufferSize)
-
 // Structure for verifying repository info files
 typedef struct VerifyInfoFile
 {
@@ -173,7 +168,7 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(VERIFY_INFO_FILE, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /***********************************************************************************************************************************

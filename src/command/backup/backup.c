@@ -843,11 +843,6 @@ typedef struct BackupStartResult
     VariantList *tablespaceList;
 } BackupStartResult;
 
-#define FUNCTION_LOG_BACKUP_START_RESULT_TYPE                                                                                      \
-    BackupStartResult
-#define FUNCTION_LOG_BACKUP_START_RESULT_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(&value, "BackupStartResult", buffer, bufferSize)
-
 static BackupStartResult
 backupStart(BackupData *backupData)
 {
@@ -924,7 +919,7 @@ backupStart(BackupData *backupData)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BACKUP_START_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /***********************************************************************************************************************************
@@ -1018,11 +1013,6 @@ typedef struct BackupStopResult
     time_t timestamp;
 } BackupStopResult;
 
-#define FUNCTION_LOG_BACKUP_STOP_RESULT_TYPE                                                                                       \
-    BackupStopResult
-#define FUNCTION_LOG_BACKUP_STOP_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(&value, "BackupStopResult", buffer, bufferSize)
-
 static BackupStopResult
 backupStop(BackupData *backupData, Manifest *manifest)
 {
@@ -1063,7 +1053,7 @@ backupStop(BackupData *backupData, Manifest *manifest)
     else
         result.timestamp = backupTime(backupData, false);
 
-    FUNCTION_LOG_RETURN(BACKUP_STOP_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /***********************************************************************************************************************************
