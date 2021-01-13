@@ -378,7 +378,8 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
 
-        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive asynchronously"), "check log");
+        TEST_RESULT_VOID(
+            harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive asynchronously"), "check log");
 
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
