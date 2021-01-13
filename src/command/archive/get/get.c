@@ -156,8 +156,9 @@ archiveGetFind(
                     getCheckResult->errorType = &ArchiveDuplicateError;
                     getCheckResult->errorFile = strDup(archiveFileRequest);
                     getCheckResult->errorMessage = strNewFmt(
-                        "duplicates found in archive for WAL segment %s: %s\n"
+                        "duplicates found in the repo%u:%s archive for WAL segment %s: %s\n"
                             "HINT: are multiple primaries archiving to this stanza?",
+                        cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)), strZ(archiveId),
                         strZ(archiveFileRequest), strZ(strLstJoin(strLstSort(matchList, sortOrderAsc), ", ")));
                 }
                 MEM_CONTEXT_END();
@@ -521,12 +522,7 @@ cmdArchiveGet(void)
 
             // If there was an error then throw it
             if (checkResult.errorType != NULL)
-            {
-                THROW_CODE_FMT(
-                    errorTypeCode(checkResult.errorType), COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG " %s", strZ(checkResult.errorFile),
-                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
-                    strZ(checkResult.archiveId), strZ(checkResult.errorMessage));
-            }
+                THROW_CODE(errorTypeCode(checkResult.errorType), strZ(checkResult.errorMessage));
 
             // Get the archive file
             if (lstSize(checkResult.archiveFileMapList) > 0)

@@ -222,7 +222,7 @@ testRun(void)
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1:10-1 archive\n"
             "P00   WARN: could not get 000000010000000200000000 from the repo1:10-1 archive (will be retried): "
-                "[45] duplicates found in archive for WAL segment 000000010000000200000000: "
+                "[45] duplicates found in the repo1:10-1 archive for WAL segment 000000010000000200000000: "
                 "000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, "
                 "000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "            HINT: are multiple primaries archiving to this stanza?");
@@ -496,8 +496,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchiveGet(), ArchiveDuplicateError,
-            "could not get 01ABCDEF01ABCDEF01ABCDEF from the repo1:10-1 archive (will be retried):"
-                " duplicates found in archive for WAL segment 01ABCDEF01ABCDEF01ABCDEF:"
+            "duplicates found in the repo1:10-1 archive for WAL segment 01ABCDEF01ABCDEF01ABCDEF:"
                 " 01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,"
                 " 01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "HINT: are multiple primaries archiving to this stanza?");
