@@ -94,7 +94,7 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mi
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
 
 /***********************************************************************************************************************************
-Data Types and Structures
+Data types and structures
 ***********************************************************************************************************************************/
 // Repository information for a stanza
 typedef struct InfoRepoData
@@ -109,9 +109,9 @@ typedef struct InfoRepoData
 } InfoRepoData;
 
 #define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
-    InfoRepoData
+    InfoRepoData *
 #define FUNCTION_LOG_INFO_REPO_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(&value, "InfoRepoData", buffer, bufferSize)
+    objToLog(value, "InfoRepoData", buffer, bufferSize)
 
 // Stanza with repository list of information for each repository
 typedef struct InfoStanzaRepo
@@ -123,9 +123,9 @@ typedef struct InfoStanzaRepo
 } InfoStanzaRepo;
 
 #define FUNCTION_LOG_INFO_STANZA_REPO_TYPE                                                                                         \
-    InfoStanzaRepo
+    InfoStanzaRepo *
 #define FUNCTION_LOG_INFO_STANZA_REPO_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(&value, "InfoStanzaRepo", buffer, bufferSize)
+    objToLog(value, "InfoStanzaRepo", buffer, bufferSize)
 
 // Group all databases with the same system-id and version together regardless of db-id or repo
 typedef struct DbGroup
@@ -139,12 +139,12 @@ typedef struct DbGroup
 } DbGroup;
 
 #define FUNCTION_LOG_DB_GROUP_TYPE                                                                                                 \
-    DbGroup
+    DbGroup *
 #define FUNCTION_LOG_DB_GROUP_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(&value, "DbGroup", buffer, bufferSize)
+    objToLog(value, "DbGroup", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Set the overall error status code and message for the stanza to the code and message passed.
+Set the overall error status code and message for the stanza to the code and message passed
 ***********************************************************************************************************************************/
 static void
 stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
@@ -169,26 +169,31 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OK_STR));
             break;
         }
+
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH:
         {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR));
             break;
         }
+
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA:
         {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR));
             break;
         }
+
         case INFO_STANZA_STATUS_CODE_NO_BACKUP:
         {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
             break;
         }
+
         case INFO_STANZA_STATUS_CODE_MIXED:
         {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_MESSAGE_MIXED_STR));
             break;
         }
+
         case INFO_STANZA_STATUS_CODE_PG_MISMATCH:
         {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR));
@@ -205,7 +210,7 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
 }
 
 /***********************************************************************************************************************************
-Set the error status code and message for the stanza on the repo to the code and message passed.
+Set the error status code and message for the stanza on the repo to the code and message passed
 ***********************************************************************************************************************************/
 static void
 repoStanzaStatus(const int code, Variant *repoStanzaInfo)
@@ -229,16 +234,19 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo)
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OK_STR));
             break;
         }
+
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH:
         {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR));
             break;
         }
+
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA:
         {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR));
             break;
         }
+
         case INFO_STANZA_STATUS_CODE_NO_BACKUP:
         {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
@@ -250,7 +258,7 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo)
 }
 
 /***********************************************************************************************************************************
-Set the data for the archive section of the stanza for the database info from the backup.info file.
+Set the data for the archive section of the stanza for the database info from the backup.info file
 ***********************************************************************************************************************************/
 static void
 archiveDbList(
@@ -344,7 +352,7 @@ archiveDbList(
 }
 
 /***********************************************************************************************************************************
-Add the backup data to the backup section.
+Add the backup data to the backup section
 ***********************************************************************************************************************************/
 static void
 backupListAdd(
@@ -434,6 +442,7 @@ backupListAdd(
             if (db->id > db->lastSystemId)
             {
                 Variant *database = varNewKv(kvNew());
+
                 kvPut(varKv(database), KEY_NAME_VAR, VARSTR(db->name));
                 kvPut(varKv(database), KEY_OID_VAR, VARUINT64(db->id));
                 varLstAdd(databaseSection, database);
@@ -508,7 +517,7 @@ backupListAdd(
 }
 
 /***********************************************************************************************************************************
-For each current backup in the backup.info file of the stanza, set the data for the backup section.
+For each current backup in the backup.info file of the stanza, set the data for the backup section
 ***********************************************************************************************************************************/
 static void
 backupList(
@@ -517,7 +526,7 @@ backupList(
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);           // The section to add the backup data to
-        FUNCTION_TEST_PARAM_P(INFO_STANZA_REPO, stanzaData);        // The data for the stanza
+        FUNCTION_TEST_PARAM(INFO_STANZA_REPO, stanzaData);          // The data for the stanza
         FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup label to filter if requested by the user
         FUNCTION_TEST_PARAM(UINT, repoIdxStart);                    // The start index of the repo array to begin checking
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index beyond the last repo index to check
@@ -534,6 +543,7 @@ backupList(
     for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
     {
         InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
+
         if (repoData->backupInfo != NULL && infoBackupDataTotal(repoData->backupInfo) > 0)
             backupTotal += infoBackupDataTotal(repoData->backupInfo);
     }
@@ -736,7 +746,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 }
 
 /***********************************************************************************************************************************
-Format the text output for archive and backups for a database group of a stanza.
+Format the text output for archive and backups for a database group of a stanza
 ***********************************************************************************************************************************/
 static void
 formatTextBackup(const DbGroup *dbGroup, String *resultStr)
@@ -764,9 +774,9 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             resultStr, "\n        %s backup: %s\n", strZ(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR))),
             strZ(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR))));
 
+        // Get and format the backup start/stop time
         KeyValue *timestampInfo = varKv(kvGet(backupInfo, BACKUP_KEY_TIMESTAMP_VAR));
 
-        // Get and format the backup start/stop time
         char timeBufferStart[20];
         char timeBufferStop[20];
         time_t timeStart = (time_t)varUInt64(kvGet(timestampInfo, KEY_START_VAR));
@@ -775,14 +785,12 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         strftime(timeBufferStart, sizeof(timeBufferStart), "%Y-%m-%d %H:%M:%S", localtime(&timeStart));
         strftime(timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime(&timeStop));
 
-        strCatFmt(
-            resultStr, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
+        strCatFmt(resultStr, "            timestamp start/stop: %s / %s\n", timeBufferStart, timeBufferStop);
         strCatZ(resultStr, "            wal start/stop: ");
 
         KeyValue *archiveBackupInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
 
-        if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL &&
-            kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)
+        if (kvGet(archiveBackupInfo, KEY_START_VAR) != NULL && kvGet(archiveBackupInfo, KEY_STOP_VAR) != NULL)
         {
             strCatFmt(
                 resultStr, "%s / %s\n", strZ(varStr(kvGet(archiveBackupInfo, KEY_START_VAR))),
@@ -815,6 +823,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         if (kvGet(backupInfo, BACKUP_KEY_DATABASE_REF_VAR) != NULL)
         {
             VariantList *dbSection = kvGetList(backupInfo, BACKUP_KEY_DATABASE_REF_VAR);
+
             strCatZ(resultStr, "            database list:");
 
             if (varLstSize(dbSection) == 0)
@@ -824,6 +833,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
                 for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
                 {
                     KeyValue *db = varKv(varLstGet(dbSection, dbIdx));
+
                     strCatFmt(
                         resultStr, " %s (%s)", strZ(varStr(kvGet(db, KEY_NAME_VAR))),
                         strZ(varStrForce(kvGet(db, KEY_OID_VAR))));
@@ -839,6 +849,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         if (kvGet(backupInfo, BACKUP_KEY_LINK_VAR) != NULL)
         {
             VariantList *linkSection = kvGetList(backupInfo, BACKUP_KEY_LINK_VAR);
+
             strCatZ(resultStr, "            symlinks:\n");
 
             for (unsigned int linkIdx = 0; linkIdx < varLstSize(linkSection); linkIdx++)
@@ -859,6 +870,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         if (kvGet(backupInfo, BACKUP_KEY_TABLESPACE_VAR) != NULL)
         {
             VariantList *tablespaceSection = kvGetList(backupInfo, BACKUP_KEY_TABLESPACE_VAR);
+
             strCatZ(resultStr, "            tablespaces:\n");
 
             for (unsigned int tblIdx = 0; tblIdx < varLstSize(tablespaceSection); tblIdx++)
@@ -890,6 +902,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
 
     FUNCTION_TEST_RETURN_VOID();
 }
+
 /***********************************************************************************************************************************
 Format the text output for each database of the stanza
 ***********************************************************************************************************************************/
@@ -925,9 +938,11 @@ formatTextDb(
         unsigned int dbRepoKey = varUInt(kvGet(pgInfo, KEY_REPO_KEY_VAR));
 
         DbGroup *dbGroup = NULL;
+
         for (unsigned int dbGrpIdx = 0; dbGrpIdx < lstSize(dbGroupList); dbGrpIdx++)
         {
             DbGroup *dbGroupInfo = lstGet(dbGroupList, dbGrpIdx);
+
             if (dbGroupInfo->systemId == dbSysId && strEq(dbGroupInfo->version, dbVersion))
             {
                 dbGroup = dbGroupInfo;
@@ -966,18 +981,12 @@ formatTextDb(
             {
                 // Although archives should continue to increment over system-id/version with different db-ids, there may be cases
                 // where an archived WAL may exist on both, and if the archive id on a later db is less than a prior instance of
-                // the same PG, then ensure it is updated as the min. Any need to error should not be handled in the INFO command.
-                if (dbGroup->archiveMin == NULL ||
-                    strCmp(dbGroup->archiveMin, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR))) > 0)
-                {
+                // the same PG, then ensure it is updated as the min. Any need to error should not be handled in the info command.
+                if (dbGroup->archiveMin == NULL || strCmp(dbGroup->archiveMin, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR))) > 0)
                     dbGroup->archiveMin = varStrForce(kvGet(archiveInfo, ARCHIVE_KEY_MIN_VAR));
-                }
 
-                if (dbGroup->archiveMax == NULL ||
-                    strCmp(dbGroup->archiveMax, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR))) < 0)
-                {
+                if (dbGroup->archiveMax == NULL || strCmp(dbGroup->archiveMax, varStr(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR))) < 0)
                     dbGroup->archiveMax = varStrForce(kvGet(archiveInfo, ARCHIVE_KEY_MAX_VAR));
-                }
             }
         }
     }
@@ -1011,6 +1020,7 @@ formatTextDb(
                 for (unsigned int dbGrpIdx = 0; dbGrpIdx < lstSize(dbGroupList); dbGrpIdx++)
                 {
                     DbGroup *dbGroupInfo = lstGet(dbGroupList, dbGrpIdx);
+
                     if (dbGroupInfo->systemId == varUInt64(kvGet(pgInfo, DB_KEY_SYSTEM_ID_VAR)) &&
                         strEq(dbGroupInfo->version, varStr(kvGet(pgInfo, DB_KEY_VERSION_VAR))))
                     {
@@ -1022,9 +1032,11 @@ formatTextDb(
                             backupDbGrpIdxMin = dbGrpIdx;
                             backupDbGrpIdxMax = dbGrpIdx + 1;
                         }
+
                         dbGrpIdx = lstSize(dbGroupList);
                     }
                 }
+
                 dbIdx = varLstSize(dbSection);
             }
         }
@@ -1065,7 +1077,7 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned in
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, storage);
-        FUNCTION_TEST_PARAM_P(INFO_STANZA_REPO, stanzaRepo);
+        FUNCTION_TEST_PARAM(INFO_STANZA_REPO, stanzaRepo);
         FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(BOOL, stanzaExists);
     FUNCTION_TEST_END();
@@ -1161,6 +1173,7 @@ infoRender(void)
             if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
                 THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
 
+            // !!! THIS LIMITATION SHOULD BE REMOVED
             if (!(cfgOptionTest(cfgOptRepo)) && cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
                 THROW(OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
         }
@@ -1185,7 +1198,6 @@ infoRender(void)
             // If a backup set was specified, see if the manifest exists
             if (backupLabel != NULL)
             {
-
                 if (!storageExistsP(storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
                 {
                     THROW_FMT(
@@ -1237,10 +1249,12 @@ infoRender(void)
                     // Initialize all the repos
                     for (unsigned int repoListIdx = 0; repoListIdx < repoTotal; repoListIdx++)
                     {
-                        stanzaRepo.repoList[repoListIdx] = (InfoRepoData){0};
-                        stanzaRepo.repoList[repoListIdx].key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx);
-                        stanzaRepo.repoList[repoListIdx].cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx));
-                        stanzaRepo.repoList[repoListIdx].cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx);
+                        stanzaRepo.repoList[repoListIdx] = (InfoRepoData)
+                        {
+                            .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
+                            .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
+                            .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
+                        };
                     }
 
                     // Update the info for this repo
@@ -1298,12 +1312,14 @@ infoRender(void)
 
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
+
                             for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
                             {
                                 KeyValue *repoInfo = varKv(varLstGet(repoSection, repoIdx));
+                                KeyValue *repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
+
                                 strCatFmt(
                                     resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
-                                KeyValue *repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
                                 strCatFmt(
                                     resultStr, "%s",
                                     varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK ?
@@ -1323,10 +1339,7 @@ infoRender(void)
                     {
                         // Change displayed status if backup lock is found
                         if (backupLockHeld)
-                        {
-                            strCatFmt(
-                                resultStr, "%s (%s)\n", INFO_STANZA_STATUS_OK, INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP);
-                        }
+                            strCatFmt(resultStr, "%s (%s)\n", INFO_STANZA_STATUS_OK, INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP);
                         else
                             strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
                     }
@@ -1334,16 +1347,17 @@ infoRender(void)
                     // Add cipher type if the stanza is found on at least one repo
                     if (statusCode != INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH)
                     {
-                        strCatFmt(
-                            resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, KEY_CIPHER_VAR))));
+                        strCatFmt(resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, KEY_CIPHER_VAR))));
 
                         // If the cipher is mixed across repos for this stanza then display the per-repo cipher type
                         if (strEq(varStr(kvGet(stanzaInfo, KEY_CIPHER_VAR)), STRDEF(INFO_STANZA_MIXED)))
                         {
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
+
                             for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
                             {
                                 KeyValue *repoInfo = varKv(varLstGet(repoSection, repoIdx));
+
                                 strCatFmt(
                                     resultStr, "        repo%u: %s\n", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)),
                                     strZ(varStr(kvGet(repoInfo, KEY_CIPHER_VAR))));
@@ -1351,9 +1365,9 @@ infoRender(void)
                         }
                     }
 
+                    // Get the current database for this stanza
                     if (varLstSize(kvGetList(stanzaInfo, STANZA_KEY_DB_VAR)) > 0)
                     {
-                        // Get the current database for this stanza
                         InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
 
                         formatTextDb(
