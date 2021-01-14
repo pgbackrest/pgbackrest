@@ -85,7 +85,7 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing sta
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP_STR,           "backup/expire running");
 
 /***********************************************************************************************************************************
-Set error status code and message for the stanza to the code and message passed.
+Set error status code and message for the stanza to the code and message passed
 ***********************************************************************************************************************************/
 static void
 stanzaStatus(const int code, const String *message, bool backupLockHeld, Variant *stanzaInfo)
@@ -115,7 +115,7 @@ stanzaStatus(const int code, const String *message, bool backupLockHeld, Variant
 }
 
 /***********************************************************************************************************************************
-Set the data for the archive section of the stanza for the database info from the backup.info file.
+Set the data for the archive section of the stanza for the database info from the backup.info file
 ***********************************************************************************************************************************/
 static void
 archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archiveSection, const InfoArchive *info, bool currentDb)
@@ -131,9 +131,9 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
     ASSERT(pgData != NULL);
     ASSERT(archiveSection != NULL);
 
-    // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
-    // archive path must be built by retrieving the archive id given the db version and system id of the backup.info file.
-    // If there is no match, an error will be thrown.
+    // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the archive path
+    // must be built by retrieving the archive id given the db version and system id of the backup.info file. If there is no match,
+    // an error will be thrown.
     const String *archiveId = infoArchiveIdHistoryMatch(info, pgData->id, pgData->version, pgData->systemId);
 
     String *archivePath = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), strZ(archiveId));
@@ -203,7 +203,7 @@ archiveDbList(const String *stanza, const InfoPgData *pgData, VariantList *archi
 }
 
 /***********************************************************************************************************************************
-For each current backup in the backup.info file of the stanza, set the data for the backup section.
+For each current backup in the backup.info file of the stanza, set the data for the backup section
 ***********************************************************************************************************************************/
 static void
 backupList(VariantList *backupSection, InfoBackup *info, const String *backupLabel)
@@ -367,7 +367,7 @@ backupList(VariantList *backupSection, InfoBackup *info, const String *backupLab
 }
 
 /***********************************************************************************************************************************
-Set the stanza data for each stanza found in the repo.
+Set the stanza data for each stanza found in the repo
 ***********************************************************************************************************************************/
 static VariantList *
 stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backupLabel)
@@ -438,10 +438,10 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
         // If the backup.info file exists, get the database history information (newest to oldest) and corresponding archive
         if (info != NULL)
         {
-            // Determine if encryption is enabled by checking for a cipher passphrase.  This is not ideal since it does not tell us
+            // Determine if encryption is enabled by checking for a cipher passphrase. This is not ideal since it does not tell us
             // what type of encryption is in use, but to figure that out we need a way to query the (possibly) remote repo to find
-            // out.  No such mechanism exists so this will have to do for now.  Probably the easiest thing to do is store the
-            // cipher type in the info file.
+            // out. No such mechanism exists so this will have to do for now. Probably the easiest thing to do is store the cipher
+            // type in the info file.
             if (infoPgCipherPass(infoBackupPg(info)) != NULL)
                 kvPut(varKv(stanzaInfo), STANZA_KEY_CIPHER_VAR, VARSTR(CIPHER_TYPE_AES_256_CBC_STR));
 
@@ -519,7 +519,7 @@ stanzaInfoList(const String *stanza, StringList *stanzaList, const String *backu
 }
 
 /***********************************************************************************************************************************
-Format the text output for each database of the stanza.
+Format the text output for each database of the stanza
 ***********************************************************************************************************************************/
 static void
 formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backupLabel)
@@ -739,7 +739,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
             }
         }
 
-        // If there is data to display, then display it.
+        // If there is data to display, then display it
         if (strSize(archiveResult) > 0 || strSize(backupResult) > 0)
         {
             if (dbIdx != varLstSize(dbSection) - 1)
@@ -756,7 +756,7 @@ formatTextDb(const KeyValue *stanzaInfo, String *resultStr, const String *backup
 }
 
 /***********************************************************************************************************************************
-Render the information for the stanza based on the command parameters.
+Render the information for the stanza based on the command parameters
 ***********************************************************************************************************************************/
 static String *
 infoRender(void)
@@ -790,7 +790,7 @@ infoRender(void)
             }
         }
 
-        // Get a list of stanzas in the backup directory.
+        // Get a list of stanzas in the backup directory
         StringList *stanzaList = storageListP(storageRepo(), STORAGE_PATH_BACKUP_STR);
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
