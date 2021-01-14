@@ -523,8 +523,22 @@ testRun(void)
         harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-1 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get from current db-id");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-3/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-3 archive");
+
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        TEST_STORAGE_REMOVE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-3/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get partial");
