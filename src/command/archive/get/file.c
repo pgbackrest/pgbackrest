@@ -19,11 +19,6 @@ Archive Get File
 /***********************************************************************************************************************************
 Check if a WAL file exists in the repository
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_ARCHIVE_GET_CHECK_RESULT_TYPE                                                                                 \
-    ArchiveGetCheckResult
-#define FUNCTION_LOG_ARCHIVE_GET_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                    \
-    objToLog(&value, "ArchiveGetCheckResult", buffer, bufferSize)
-
 typedef struct ArchiveGetCheckResult
 {
     String *archiveFileActual;
@@ -105,7 +100,7 @@ archiveGetCheck(const String *archiveFile, CipherType cipherType, const String *
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(ARCHIVE_GET_CHECK_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /**********************************************************************************************************************************/

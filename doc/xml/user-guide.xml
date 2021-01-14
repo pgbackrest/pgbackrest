@@ -3175,7 +3175,7 @@
                 </execute>
                 <execute user="postgres" output="y">
                     <exe-cmd>cat /var/log/pgbackrest/demo-archive-get-async.log</exe-cmd>
-                    <exe-highlight>found [0-F]{24} in the archive</exe-highlight>
+                    <exe-highlight>found [0-F]{24} in the .* archive</exe-highlight>
                 </execute>
             </execute-list>
         </section>

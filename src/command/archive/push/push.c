@@ -187,11 +187,6 @@ Check that pg_control and archive.info match and get the archive id and archive 
 As much information as possible is collected here so that async archiving has as little work as possible to do for each file.  Sync
 archiving does not benefit but it makes sense to use the same function.
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_ARCHIVE_PUSH_CHECK_RESULT_TYPE                                                                                \
-    ArchivePushCheckResult
-#define FUNCTION_LOG_ARCHIVE_PUSH_CHECK_RESULT_FORMAT(value, buffer, bufferSize)                                                   \
-    objToLog(&value, "ArchivePushCheckResult", buffer, bufferSize)
-
 typedef struct ArchivePushCheckResult
 {
     unsigned int pgVersion;                                         // PostgreSQL version
@@ -266,7 +261,7 @@ archivePushCheck(bool pgPathSet)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(ARCHIVE_PUSH_CHECK_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /**********************************************************************************************************************************/

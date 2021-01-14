@@ -270,9 +270,9 @@ archiveDbList(
     ASSERT(pgData != NULL);
     ASSERT(archiveSection != NULL);
 
-    // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the
-    // archive path must be built by retrieving the archive id given the db version and system id of the backup.info file.
-    // If there is no match, an error will be thrown.
+    // With multiple DB versions, the backup.info history-id may not be the same as archive.info history-id, so the archive path
+    // must be built by retrieving the archive id given the db version and system id of the backup.info file. If there is no match,
+    // an error will be thrown.
     const String *archiveId = infoArchiveIdHistoryMatch(info, pgData->id, pgData->version, pgData->systemId);
 
     String *archivePath = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), strZ(archiveId));
@@ -578,7 +578,7 @@ backupList(
 }
 
 /***********************************************************************************************************************************
-Set the stanza data for each stanza found in the repo.
+Set the stanza data for each stanza found in the repo
 ***********************************************************************************************************************************/
 static VariantList *
 stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int repoIdxStart, unsigned int repoIdxMax)
@@ -891,7 +891,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
     FUNCTION_TEST_RETURN_VOID();
 }
 /***********************************************************************************************************************************
-Format the text output for each database of the stanza.
+Format the text output for each database of the stanza
 ***********************************************************************************************************************************/
 static void
 formatTextDb(
@@ -1134,7 +1134,7 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned in
 }
 
 /***********************************************************************************************************************************
-Render the information for the stanza based on the command parameters.
+Render the information for the stanza based on the command parameters
 ***********************************************************************************************************************************/
 static String *
 infoRender(void)

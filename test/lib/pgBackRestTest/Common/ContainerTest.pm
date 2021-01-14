@@ -347,7 +347,7 @@ sub containerBuild
             if ($strOS eq VM_CO7)
             {
                 $strScript .=
-                    "    yum -y install epel-release && \\\n";
+                    "    yum -y install centos-release-scl-rh epel-release && \\\n";
             }
 
             $strScript .=
@@ -464,7 +464,6 @@ sub containerBuild
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        http://yum.postgresql.org/9.2/redhat/rhel-7-x86_64/pgdg-centos92-9.2-3.noarch.rpm \\\n" .
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }

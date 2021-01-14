@@ -185,6 +185,8 @@ use constant CFGOPT_COMPRESS_TYPE                                   => 'compress
 use constant CFGOPT_COMPRESS_LEVEL                                  => 'compress-level';
 use constant CFGOPT_COMPRESS_LEVEL_NETWORK                          => 'compress-level-network';
 use constant CFGOPT_IO_TIMEOUT                                      => 'io-timeout';
+use constant CFGOPT_JOB_RETRY                                       => 'job-retry';
+use constant CFGOPT_JOB_RETRY_INTERVAL                              => CFGOPT_JOB_RETRY . '-interval';
 use constant CFGOPT_NEUTRAL_UMASK                                   => 'neutral-umask';
 use constant CFGOPT_PROTOCOL_TIMEOUT                                => 'protocol-timeout';
 use constant CFGOPT_PROCESS_MAX                                     => 'process-max';
@@ -1594,6 +1596,43 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => 60,
         &CFGDEF_ALLOW_RANGE => [.1, 3600],
         &CFGDEF_COMMAND => CFGOPT_BUFFER_SIZE,
+    },
+
+    &CFGOPT_JOB_RETRY =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_DEFAULT => 2,
+        &CFGDEF_ALLOW_RANGE => [0, 360],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET =>
+            {
+                &CFGDEF_DEFAULT => 1,
+            },
+            &CFGCMD_ARCHIVE_PUSH =>
+            {
+                &CFGDEF_DEFAULT => 1,
+            },
+            &CFGCMD_BACKUP => {},
+            &CFGCMD_RESTORE => {},
+            &CFGCMD_VERIFY => {},
+        },
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+            &CFGCMD_ROLE_ASYNC => {},
+            &CFGCMD_ROLE_LOCAL => {},
+        },
+    },
+
+    &CFGOPT_JOB_RETRY_INTERVAL =>
+    {
+        &CFGDEF_INHERIT => &CFGOPT_JOB_RETRY,
+        &CFGDEF_TYPE => CFGDEF_TYPE_TIME,
+        &CFGDEF_DEFAULT => 15,
+        &CFGDEF_ALLOW_RANGE => [0, 900],
     },
 
     &CFGOPT_LOCK_PATH =>

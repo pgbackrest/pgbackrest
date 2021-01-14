@@ -138,5 +138,5 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(DB_GET_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }

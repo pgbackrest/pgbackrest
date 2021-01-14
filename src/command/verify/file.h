@@ -32,12 +32,4 @@ typedef struct VerifyFileResult
 VerifyResult verifyFile(
     const String *filePathName, const String *fileChecksum, uint64_t fileSize, const String *cipherPass);
 
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_VERIFY_FILE_RESULT_TYPE                                                                                       \
-    VerifyFileResult
-#define FUNCTION_LOG_VERIFY_FILE_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(&value, "VerifyFileResult", buffer, bufferSize)
-
 #endif
