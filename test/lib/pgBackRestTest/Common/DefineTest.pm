@@ -70,8 +70,6 @@ use constant TESTDEF_VM                                             => 'vm';
 
 use constant TESTDEF_COVERAGE_FULL                                  => 'full';
     push @EXPORT, qw(TESTDEF_COVERAGE_FULL);
-use constant TESTDEF_COVERAGE_PARTIAL                               => 'partial';
-    push @EXPORT, qw(TESTDEF_COVERAGE_PARTIAL);
 use constant TESTDEF_COVERAGE_NOCODE                                => 'noCode';
     push @EXPORT, qw(TESTDEF_COVERAGE_NOCODE);
 
@@ -161,32 +159,37 @@ sub testDefLoad
                     $hModuleTest->{&TESTDEF_COVERAGE}{$strTestFile} = TESTDEF_COVERAGE_FULL;
                 }
 
-                # Concatenate coverage for modules and tests
-                foreach my $hCoverage ($hModule->{&TESTDEF_COVERAGE}, $hModuleTest->{&TESTDEF_COVERAGE})
+                # Concatenate coverage for tests
+                foreach my $xCodeModule (@{$hModuleTest->{&TESTDEF_COVERAGE}})
                 {
-                    foreach my $strCodeModule (sort(keys(%{$hCoverage})))
+                    my $strCodeModule = undef;
+                    my $strCoverage = undef;
+
+                    if (ref($xCodeModule))
                     {
-                        if (defined($hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule}))
-                        {
-                            confess &log(ASSERT,
-                                "${strCodeModule} is defined for coverage in both module ${strModule} and test ${strTest}");
-                        }
-
-                        $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule} = $hCoverage->{$strCodeModule};
-
-                        # Build coverage type hash and make sure coverage type does not change
-                        if (!defined($hCoverageType->{$strCodeModule}))
-                        {
-                            $hCoverageType->{$strCodeModule} = $hCoverage->{$strCodeModule};
-                        }
-                        elsif ($hCoverageType->{$strCodeModule} ne $hCoverage->{$strCodeModule})
-                        {
-                            confess &log(ASSERT, "cannot mix coverage types for ${strCodeModule}");
-                        }
-
-                        # Add to coverage list
-                        push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
+                        $strCodeModule = (keys(%{$xCodeModule}))[0];
+                        $strCoverage = $xCodeModule->{$strCodeModule};
                     }
+                    else
+                    {
+                        $strCodeModule = $xCodeModule;
+                        $strCoverage = TESTDEF_COVERAGE_FULL;
+                    }
+
+                    $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_COVERAGE}{$strCodeModule} = $strCoverage;
+
+                    # Build coverage type hash and make sure coverage type does not change
+                    if (!defined($hCoverageType->{$strCodeModule}))
+                    {
+                        $hCoverageType->{$strCodeModule} = $strCoverage;
+                    }
+                    elsif ($hCoverageType->{$strCodeModule} ne $strCoverage)
+                    {
+                        confess &log(ASSERT, "cannot mix coverage types for ${strCodeModule}");
+                    }
+
+                    # Add to coverage list
+                    push(@{$hCoverageList->{$strCodeModule}}, {strModule=> $strModule, strTest => $strTest});
                 }
 
                 # Set include list
