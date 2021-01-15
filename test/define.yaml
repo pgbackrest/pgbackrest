@@ -9,10 +9,6 @@
 #
 # Most options can be set for modules and tests (test option will override module option if both are set):
 #     * db - determines if the test will be run against multiple db versions
-#     * coverage - determines coverage for the test
-#           full - the module/test provides full coverage for the code module
-#           partial - the module/test provides partial coverage for the code module
-#           noCode - the code module should not contain any coverable code.  If it does an error will be thrown.
 #     * define - defines for C code (will also be applied to the test harness)
 #     * define-test - defines for the test harness
 #     * debugUnitSuppress - don't define DEBUG_UNIT for unit tests -- this is used to test unit test debugging macros
@@ -20,6 +16,9 @@
 #     * containerReq - is this test required to run in a container?
 #
 # Some options are unique to tests:
+#     * coverage - a list of code modules that the test provides coverage for. A code module may be covered by multiple tests. That
+#         means you must run all the tests by providing the --run option multiple times to get full coverage on the code module. If
+#         a code module contains only data it should be marked noCode (e.g. - help/help.auto.c: noCode).
 #     * total - total runs in the test
 #     * vm - VMs that the test will be run on
 #     * include - modules to include directly into test.c (all files in coverage are automatically included)
@@ -41,8 +40,8 @@ unit:
         define-test: -DNO_ERROR -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
-          common/error: full
-          common/error.auto: noCode
+          - common/error
+          - common/error.auto: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-on
@@ -50,7 +49,7 @@ unit:
         define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
-          common/assert: noCode
+          - common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-off
@@ -60,7 +59,7 @@ unit:
         debugUnitSuppress: true
 
         coverage:
-          common/assert: noCode
+          - common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stack-trace
@@ -68,7 +67,7 @@ unit:
         define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
-          common/stackTrace: full
+          - common/stackTrace
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: mem-context
@@ -76,7 +75,7 @@ unit:
         define-test: -DNO_MEM_CONTEXT -DNO_LOG -DNO_STAT
 
         coverage:
-          common/memContext: full
+          - common/memContext
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
@@ -84,7 +83,7 @@ unit:
         define-test: -DNO_ERROR -DNO_LOG
 
         coverage:
-          common/time: full
+          - common/time
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: fork
@@ -92,7 +91,7 @@ unit:
         define-test: -DNO_LOG
 
         coverage:
-          common/fork: full
+          - common/fork
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: log
@@ -100,7 +99,7 @@ unit:
         define-test: -DNO_LOG
 
         coverage:
-          common/log: full
+          - common/log
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-off
@@ -110,160 +109,160 @@ unit:
         debugUnitSuppress: true
 
         coverage:
-          common/debug: full
+          - common/debug
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-on
         total: 4
 
         coverage:
-          common/debug: full
+          - common/debug
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
         total: 2
 
         coverage:
-          common/lock: full
+          - common/lock
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exit
         total: 3
 
         coverage:
-          common/exit: full
+          - common/exit
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: wait
         total: 1
 
         coverage:
-          common/wait: full
+          - common/wait
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert
         total: 11
 
         coverage:
-          common/type/convert: full
+          - common/type/convert
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-object
         total: 1
 
         coverage:
-          common/type/object: noCode
+          - common/type/object: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-list
         total: 4
 
         coverage:
-          common/type/list: full
+          - common/type/list
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
         total: 26
 
         coverage:
-          common/type/string: full
-          common/type/stringList: full
+          - common/type/string
+          - common/type/stringList
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-buffer
         total: 6
 
         coverage:
-          common/type/buffer: full
+          - common/type/buffer
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-variant
         total: 12
 
         coverage:
-          common/type/variant: full
-          common/type/variantList: full
+          - common/type/variant
+          - common/type/variantList
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-pack
         total: 1
 
         coverage:
-          common/type/pack: full
+          - common/type/pack
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-mcv
         total: 1
 
         coverage:
-          common/type/mcv: full
+          - common/type/mcv
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-json
         total: 11
 
         coverage:
-          common/type/json: full
+          - common/type/json
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-key-value
         total: 2
 
         coverage:
-          common/type/keyValue: full
+          - common/type/keyValue
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-xml
         total: 1
 
         coverage:
-          common/type/xml: full
+          - common/type/xml
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stat
         total: 1
 
         coverage:
-          common/stat: full
+          - common/stat
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: user
         total: 1
 
         coverage:
-          common/user: full
+          - common/user
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io
         total: 4
 
         coverage:
-          common/io/bufferRead: full
-          common/io/bufferWrite: full
-          common/io/fd: full
-          common/io/fdRead: full
-          common/io/fdWrite: full
-          common/io/filter/buffer: full
-          common/io/filter/filter: full
-          common/io/filter/group: full
-          common/io/filter/sink: full
-          common/io/filter/size: full
-          common/io/io: full
-          common/io/read: full
-          common/io/write: full
+          - common/io/bufferRead
+          - common/io/bufferWrite
+          - common/io/fd
+          - common/io/fdRead
+          - common/io/fdWrite
+          - common/io/filter/buffer
+          - common/io/filter/filter
+          - common/io/filter/group
+          - common/io/filter/sink
+          - common/io/filter/size
+          - common/io/io
+          - common/io/read
+          - common/io/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
         total: 5
 
         coverage:
-          common/io/client: full
-          common/io/session: full
-          common/io/tls/client: full
-          common/io/tls/session: full
-          common/io/socket/client: full
-          common/io/socket/common: full
-          common/io/socket/session: full
+          - common/io/client
+          - common/io/session
+          - common/io/tls/client
+          - common/io/tls/session
+          - common/io/socket/client
+          - common/io/socket/common
+          - common/io/socket/session
 
         include:
           - common/io/fdRead
@@ -274,71 +273,71 @@ unit:
         total: 5
 
         coverage:
-          common/io/http/client: full
-          common/io/http/common: full
-          common/io/http/header: full
-          common/io/http/query: full
-          common/io/http/request: full
-          common/io/http/response: full
-          common/io/http/session: full
+          - common/io/http/client
+          - common/io/http/common
+          - common/io/http/header
+          - common/io/http/query
+          - common/io/http/request
+          - common/io/http/response
+          - common/io/http/session
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress
         total: 5
 
         coverage:
-          common/compress/bz2/common: full
-          common/compress/bz2/compress: full
-          common/compress/bz2/decompress: full
-          common/compress/gz/common: full
-          common/compress/gz/compress: full
-          common/compress/gz/decompress: full
-          common/compress/lz4/common: full
-          common/compress/lz4/compress: full
-          common/compress/lz4/decompress: full
-          common/compress/zst/common: full
-          common/compress/zst/compress: full
-          common/compress/zst/decompress: full
-          common/compress/helper: full
+          - common/compress/bz2/common
+          - common/compress/bz2/compress
+          - common/compress/bz2/decompress
+          - common/compress/gz/common
+          - common/compress/gz/compress
+          - common/compress/gz/decompress
+          - common/compress/lz4/common
+          - common/compress/lz4/compress
+          - common/compress/lz4/decompress
+          - common/compress/zst/common
+          - common/compress/zst/compress
+          - common/compress/zst/decompress
+          - common/compress/helper
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
         total: 3
 
         coverage:
-          common/crypto/cipherBlock: full
-          common/crypto/common: full
-          common/crypto/hash: full
-          common/crypto/md5.vendor: full
+          - common/crypto/cipherBlock
+          - common/crypto/common
+          - common/crypto/hash
+          - common/crypto/md5.vendor
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
         total: 1
 
         coverage:
-          common/exec: full
+          - common/exec
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: encode
         total: 1
 
         coverage:
-          common/encode: full
-          common/encode/base64: full
+          - common/encode
+          - common/encode/base64
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: reg-exp
         total: 3
 
         coverage:
-          common/regExp: full
+          - common/regExp
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: ini
         total: 4
 
         coverage:
-          common/ini: full
+          - common/ini
 
   # ********************************************************************************************************************************
   - name: postgres
@@ -349,15 +348,15 @@ unit:
         total: 1
 
         coverage:
-          postgres/client: full
+          - postgres/client
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: interface
         total: 9
 
         coverage:
-          postgres/interface: full
-          postgres/interface/page: full
+          - postgres/interface
+          - postgres/interface/page
 
   # ********************************************************************************************************************************
   - name: config
@@ -368,9 +367,9 @@ unit:
         total: 6
 
         coverage:
-          config/config: full
-          config/parse: full
-          config/parse.auto: noCode
+          - config/config
+          - config/parse
+          - config/parse.auto: noCode
 
         include:
           - common/log
@@ -380,7 +379,7 @@ unit:
         total: 4
 
         coverage:
-          config/load: full
+          - config/load
 
         include:
           - common/log
@@ -391,14 +390,14 @@ unit:
         total: 1
 
         coverage:
-          config/exec: full
+          - config/exec
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol
         total: 1
 
         coverage:
-          config/protocol: full
+          - config/protocol
 
   # ********************************************************************************************************************************
   - name: storage
@@ -409,10 +408,10 @@ unit:
         total: 3
 
         coverage:
-          storage/azure/read: full
-          storage/azure/storage: full
-          storage/azure/write: full
-          storage/helper: full
+          - storage/azure/read
+          - storage/azure/storage
+          - storage/azure/write
+          - storage/helper
 
         include:
           - storage/storage
@@ -423,9 +422,9 @@ unit:
         total: 1
 
         coverage:
-          storage/cifs/storage: full
-          storage/posix/storage: full
-          storage/helper: full
+          - storage/cifs/storage
+          - storage/posix/storage
+          - storage/helper
 
         include:
           - storage/storage
@@ -435,15 +434,13 @@ unit:
         total: 21
 
         coverage:
-          storage/posix/read: full
-          storage/posix/storage: full
-          storage/posix/write: full
-
-          # Provide as much coverage as possible for these modules but some coverage needs to be provided by other driver tests
-          storage/helper: full
-          storage/read: full
-          storage/storage: full
-          storage/write: full
+          - storage/posix/read
+          - storage/posix/storage
+          - storage/posix/write
+          - storage/helper
+          - storage/read
+          - storage/storage
+          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
@@ -452,12 +449,12 @@ unit:
         binReq: true
 
         coverage:
-          storage/remote/read: full
-          storage/remote/protocol: full
-          storage/remote/storage: full
-          storage/remote/write: full
-          storage/helper: full
-          storage/storage: full
+          - storage/remote/read
+          - storage/remote/protocol
+          - storage/remote/storage
+          - storage/remote/write
+          - storage/helper
+          - storage/storage
 
         include:
           - storage/read
@@ -468,11 +465,11 @@ unit:
         total: 2
 
         coverage:
-          storage/s3/read: full
-          storage/s3/storage: full
-          storage/s3/write: full
-          storage/helper: full
-          storage/storage: full
+          - storage/s3/read
+          - storage/s3/storage
+          - storage/s3/write
+          - storage/helper
+          - storage/storage
 
         include:
           - storage/write
@@ -488,12 +485,12 @@ unit:
         binReq: true
 
         coverage:
-          protocol/client: full
-          protocol/command: full
-          protocol/helper: full
-          protocol/parallel: full
-          protocol/parallelJob: full
-          protocol/server: full
+          - protocol/client
+          - protocol/command
+          - protocol/helper
+          - protocol/parallel
+          - protocol/parallelJob
+          - protocol/server
 
         include:
           - common/exec
@@ -507,35 +504,35 @@ unit:
         total: 3
 
         coverage:
-          info/info: full
+          - info/info
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info-pg
         total: 2
 
         coverage:
-          info/infoPg: full
+          - info/infoPg
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info-archive
         total: 2
 
         coverage:
-          info/infoArchive: full
+          - info/infoArchive
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info-backup
         total: 3
 
         coverage:
-          info/infoBackup: full
+          - info/infoBackup
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest
         total: 6
 
         coverage:
-          info/manifest: full
+          - info/manifest
 
   # ********************************************************************************************************************************
   - name: db
@@ -548,9 +545,9 @@ unit:
         binReq: true
 
         coverage:
-          db/db: full
-          db/helper: full
-          db/protocol: full
+          - db/db
+          - db/helper
+          - db/protocol
 
   # ********************************************************************************************************************************
   - name: command
@@ -561,18 +558,18 @@ unit:
         total: 9
 
         coverage:
-          command/archive/common: full
+          - command/archive/common
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-get
-        total: 4
+        total: 3
         binReq: true
 
         coverage:
-          command/archive/common: full
-          command/archive/get/file: full
-          command/archive/get/get: full
-          command/archive/get/protocol: full
+          - command/archive/common
+          - command/archive/get/file
+          - command/archive/get/get
+          - command/archive/get/protocol
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-push
@@ -580,19 +577,18 @@ unit:
         binReq: true
 
         coverage:
-          command/archive/common: full
-          command/archive/push/file: full
-          command/archive/push/protocol: full
-          command/archive/push/push: full
+          - command/archive/common
+          - command/archive/push/file
+          - command/archive/push/protocol
+          - command/archive/push/push
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      # --test=backup and --test=backup-common must must be run together to get full coverage of backup/common
       - name: backup-common
         total: 3
 
         coverage:
-          command/backup/common: full
-          command/backup/pageChecksum: full
+          - command/backup/common
+          - command/backup/pageChecksum
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
@@ -600,10 +596,10 @@ unit:
         binReq: true
 
         coverage:
-          command/backup/backup: full
-          command/backup/common: full
-          command/backup/file: full
-          command/backup/protocol: full
+          - command/backup/backup
+          - command/backup/common
+          - command/backup/file
+          - command/backup/protocol
 
         include:
           - info/info
@@ -616,31 +612,31 @@ unit:
         containerReq: true
 
         coverage:
-          command/check/common: full
-          command/check/check: full
+          - command/check/common
+          - command/check/check
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: command
         total: 1
 
         coverage:
-          command/command: full
+          - command/command
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: control
         total: 3
 
         coverage:
-          command/control/common: full
-          command/control/start: full
-          command/control/stop: full
+          - command/control/common
+          - command/control/start
+          - command/control/stop
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: expire
         total: 8
 
         coverage:
-          command/expire/expire: full
+          - command/expire/expire
 
         include:
           - info/infoBackup
@@ -650,29 +646,29 @@ unit:
         total: 4
 
         coverage:
-          command/help/help: full
-          command/help/help.auto: noCode
+          - command/help/help
+          - command/help/help.auto: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info
         total: 3
 
         coverage:
-          command/info/info: full
+          - command/info/info
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: local
         total: 1
 
         coverage:
-          command/local/local: full
+          - command/local/local
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
         total: 1
 
         coverage:
-          command/remote/remote: full
+          - command/remote/remote
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
@@ -680,9 +676,9 @@ unit:
         binReq: true
 
         coverage:
-          command/restore/file: full
-          command/restore/protocol: full
-          command/restore/restore: full
+          - command/restore/file
+          - command/restore/protocol
+          - command/restore/restore
 
         include:
           - common/user
@@ -694,20 +690,20 @@ unit:
         total: 4
 
         coverage:
-          command/stanza/common: full
-          command/stanza/create: full
-          command/stanza/upgrade: full
-          command/stanza/delete: full
+          - command/stanza/common
+          - command/stanza/create
+          - command/stanza/upgrade
+          - command/stanza/delete
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
         total: 4
 
         coverage:
-          command/repo/get: full
-          command/repo/ls: full
-          command/repo/put: full
-          command/repo/rm: full
+          - command/repo/get
+          - command/repo/ls
+          - command/repo/put
+          - command/repo/rm
 
         include:
           # command/repo/create is currently for testing purposes only so coverage is not provided except in integration.  In the
@@ -720,9 +716,9 @@ unit:
         binReq: true
 
         coverage:
-          command/verify/file: full
-          command/verify/protocol: full
-          command/verify/verify: fulll
+          - command/verify/file
+          - command/verify/protocol
+          - command/verify/verify
 
 # **********************************************************************************************************************************
 # Integration tests
