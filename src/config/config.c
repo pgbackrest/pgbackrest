@@ -631,7 +631,7 @@ cfgOptionIdxHostPort(ConfigOption optionId, unsigned int optionIdx, unsigned int
     String *result = NULL;
 
     // Proceed if option is valid and has a value
-    if (cfgOptionTest(optionId))
+    if (cfgOptionIdxTest(optionId, optionIdx))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
