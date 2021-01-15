@@ -1206,9 +1206,10 @@ cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx)
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
     ASSERT(
-        (!configLocal->option[optionId].group && optionIdx == 0) ||
-        (configLocal->option[optionId].group && optionIdx <
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+        !cfgOptionValid(optionId) ||
+        ((!configLocal->option[optionId].group && optionIdx == 0) ||
+         (configLocal->option[optionId].group && optionIdx <
+          configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal)));
 
     FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configLocal->option[optionId].index[optionIdx].value != NULL);
 }
