@@ -36,17 +36,16 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
     {
         if (strEq(command, PROTOCOL_COMMAND_ARCHIVE_GET_STR))
         {
-            const String *walSegment = varStr(varLstGet(paramList, 0));
+            const String *archiveFileRequest = varStr(varLstGet(paramList, 0));
+            const String *archiveFileActual = varStr(varLstGet(paramList, 1));
+            const CipherType cipherType = (CipherType)varUIntForce(varLstGet(paramList, 2));
+            const String *cipherPassArchive = varStr(varLstGet(paramList, 3));
 
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            storageRepo();
+            archiveGetFile(
+                storageSpoolWrite(), archiveFileActual, strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(archiveFileRequest)), true,
+                cipherType, cipherPassArchive);
 
-            protocolServerResponse(
-                server,
-                VARINT(
-                    archiveGetFile(
-                        storageSpoolWrite(), walSegment, strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)), true,
-                        cipherType(cfgOptionStr(cfgOptRepoCipherType)), cfgOptionStrNull(cfgOptRepoCipherPass))));
+            protocolServerResponse(server, NULL);
         }
         else
             found = false;

@@ -24,91 +24,6 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     // *****************************************************************************************************************************
-    if (testBegin("archiveGetCheck()"))
-    {
-        // Load Parameters
-        StringList *argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        harnessCfgLoad(cfgCmdArchiveGet, argList);
-
-        // Create pg_control file
-        storagePutP(
-            storageNewWriteP(storageTest, strNew("pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
-
-        // Control and archive info mismatch
-        // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageTest, strNew("repo/archive/test1/archive.info")),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=1\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
-
-        TEST_ERROR(
-            archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL), ArchiveMismatchError,
-            "unable to retrieve the archive id for database version '10' and system-id '18072658121562454734'");
-
-        // Nothing to find in empty archive dir
-        // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageTest, strNew("repo/archive/test1/archive.info")),
-            harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=3\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
-                "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
-                "3={\"db-id\":18072658121562454734,\"db-version\":\"9.6\"}\n"
-                "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}"));
-
-        TEST_RESULT_STR(
-            archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual, NULL, "no segment found");
-
-        // Write segment into an older archive path
-        // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNew(
-                    "repo/archive/test1/10-2/8765432187654321/876543218765432187654321-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
-            NULL);
-
-        TEST_RESULT_STR_Z(
-            archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual,
-            "10-2/8765432187654321/876543218765432187654321-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "segment found");
-
-        // Write segment into an newer archive path
-        // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNew(
-                    "repo/archive/test1/10-4/8765432187654321/876543218765432187654321-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
-            NULL);
-
-        TEST_RESULT_STR_Z(
-            archiveGetCheck(strNew("876543218765432187654321"), cipherTypeNone, NULL).archiveFileActual,
-            "10-4/8765432187654321/876543218765432187654321-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "newer segment found");
-
-        // Get history file
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR(
-            archiveGetCheck(strNew("00000009.history"), cipherTypeNone, NULL).archiveFileActual, NULL, "history file not found");
-
-        storagePutP(storageNewWriteP(storageTest, strNew("repo/archive/test1/10-4/00000009.history")), NULL);
-
-        TEST_RESULT_STR_Z(
-            archiveGetCheck(strNew("00000009.history"), cipherTypeNone, NULL).archiveFileActual, "10-4/00000009.history",
-            "history file found");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("queueNeed()"))
     {
         StringList *argList = strLstNew();
@@ -224,7 +139,7 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01 DETAIL: unable to find 000000010000000100000001 in the archive");
+            "P00 DETAIL: unable to find 000000010000000100000001 in the archive");
 
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.ok\n", .remove = true);
 
@@ -238,7 +153,7 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01   WARN: could not get 000000010000000100000001 from the repo1 archive (will be retried):"
+            "P01   WARN: could not get 000000010000000100000001 from the repo1:10-1 archive (will be retried):"
                 " [29] raised from local-1 protocol: unexpected eof in compressed data");
 
         TEST_STORAGE_LIST(
@@ -261,7 +176,7 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01 DETAIL: found 000000010000000100000001 in the repo1 archive");
+            "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
 
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001\n", .remove = true);
 
@@ -287,18 +202,34 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P01 DETAIL: found 0000000100000001000000FE in the repo1 archive\n"
-            "P01 DETAIL: unable to find 0000000100000001000000FF in the archive\n"
-            "P01   WARN: could not get 000000010000000200000000 from the repo1 archive (will be retried): "
-                "[45] raised from local-1 protocol: duplicates found in archive for WAL segment 000000010000000200000000: "
+            "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
+            "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
+
+        TEST_STORAGE_LIST(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "0000000100000001000000FE\n0000000100000001000000FF.ok\n",
+            .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on duplicates now that no segments are missing");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FF-efefefefefefefefefefefefefefefefefefefef");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+
+        harnessLogResult(
+            "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
+            "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
+            "P01 DETAIL: found 0000000100000001000000FF in the repo1:10-1 archive\n"
+            "P00   WARN: could not get 000000010000000200000000 from the repo1:10-1 archive (will be retried): "
+                "[45] duplicates found in the repo1:10-1 archive for WAL segment 000000010000000200000000: "
                 "000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, "
                 "000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_LIST(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN,
-            "0000000100000001000000FE\n0000000100000001000000FF.ok\n000000010000000200000000.error\n",
-            .remove = true);
+            "0000000100000001000000FE\n0000000100000001000000FF\n000000010000000200000000.error\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("global error on invalid executable");
@@ -551,7 +482,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-1 archive");
 
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
@@ -565,7 +496,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchiveGet(), ArchiveDuplicateError,
-            "duplicates found in archive for WAL segment 01ABCDEF01ABCDEF01ABCDEF:"
+            "duplicates found in the repo1:10-1 archive for WAL segment 01ABCDEF01ABCDEF01ABCDEF:"
                 " 01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,"
                 " 01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
             "HINT: are multiple primaries archiving to this stanza?");
@@ -589,11 +520,25 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-1 archive");
+
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get from current db-id");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-3/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-3 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        TEST_STORAGE_REMOVE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-3/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get partial");
@@ -614,7 +559,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the repo1 archive");
+        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the repo1:10-3 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
@@ -642,7 +587,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 00000001.history in the repo1 archive");
+        harnessLogResult("P00   INFO: found 00000001.history in the repo1:10-1 archive");
 
         TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYHISTORY")).size, 7, "check size");
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYHISTORY\n", .remove = true);
@@ -677,7 +622,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-1 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n");
         TEST_RESULT_UINT(
@@ -706,11 +651,15 @@ testRun(void)
         // Setup protocol command
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ("01ABCDEF01ABCDEF01ABCDEF"));
+        varLstAdd(
+            paramList, varNewStrZ("10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
+        varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));
+        varLstAdd(paramList, varNewStrZ(TEST_CIPHER_PASS_ARCHIVE));
 
         TEST_RESULT_BOOL(
             archiveGetProtocol(PROTOCOL_COMMAND_ARCHIVE_GET_STR, paramList, server), true, "protocol archive get");
 
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "check result");
         TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF\n");
 
         bufUsedSet(serverWrite, 0);
