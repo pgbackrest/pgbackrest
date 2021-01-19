@@ -275,6 +275,7 @@ testRun(void)
         hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawZ(argBaseList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argBaseList, cfgOptArchiveTimeout, "1");
+        hrnCfgArgRawFmt(argBaseList, cfgOptLockPath, "%s/lock", testDataPath());
         strLstAddZ(argBaseList, CFGCMD_ARCHIVE_GET);
 
         // -------------------------------------------------------------------------------------------------------------------------

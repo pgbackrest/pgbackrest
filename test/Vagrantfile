@@ -75,7 +75,8 @@ Vagrant.configure(2) do |config|
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Build Tools' && date
             apt-get install -y devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
-                 libxml2-dev liblz4-dev liblz4-tool libpq-dev valgrind lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev
+                 libxml2-dev liblz4-dev liblz4-tool libpq-dev valgrind lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev \
+                 pkg-config
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Docker' && date
@@ -85,10 +86,6 @@ Vagrant.configure(2) do |config|
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Dev Utilities' && date
             apt-get install -y vim htop jq
-
-            #-----------------------------------------------------------------------------------------------------------------------
-            echo '/tmp/pgbackrest owned by root so tests do not use it' && date
-            mkdir -p 700 /tmp/pgbackrest
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'create link to repo in old location to make the transition less painful' && date
