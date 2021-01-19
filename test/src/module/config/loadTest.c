@@ -485,6 +485,29 @@ testRun(void)
             storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
         lockRelease(true);
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on multi-repo");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
+        strLstAddZ(argList, CFGCMD_EXPIRE);
+
+        TEST_ERROR(cfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError, "only repo1 may be configured");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
+        strLstAddZ(argList, CFGCMD_EXPIRE);
+
+        TEST_ERROR(cfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError, "only repo1 may be configured");
+        // !!!
+        // TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 1), "", "check path");
+        // TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpRepo), 1, "check total");
+
         // Command does not have umask and disables keep-alives
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
