@@ -3,9 +3,12 @@ Test Info Command
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
+#include "common/crypto/cipherBlock.h"
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessFork.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -53,8 +56,19 @@ testRun(void)
                 "{"
                     "\"archive\":[],"
                     "\"backup\":[],"
+                    "\"cipher\":\"none\","
                     "\"db\":[],"
                     "\"name\":\"stanza1\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":1,"
+                                "\"message\":\"missing stanza path\""
+                            "}"
+                        "}"
+                    "],"
                     "\"status\":{"
                         "\"code\":1,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
@@ -97,6 +111,16 @@ testRun(void)
                     "\"cipher\":\"none\","
                     "\"db\":[],"
                     "\"name\":\"stanza1\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":3,"
+                                "\"message\":\"missing stanza data\""
+                            "}"
+                        "}"
+                    "],"
                     "\"status\":{"
                         "\"code\":3,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
@@ -110,9 +134,6 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         String *content = strNew
         (
-            "[cipher]\n"
-            "cipher-pass=\"12345\"\n"
-            "\n"
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -151,7 +172,7 @@ testRun(void)
         content = strNew
         (
             "[db]\n"
-            "db-id=1\n"
+            "db-id=3\n"
             "db-system-id=6569239123849665679\n"
             "db-version=\"9.4\"\n"
             "\n"
@@ -166,6 +187,10 @@ testRun(void)
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
                 harnessInfoChecksum(content)),
             "put archive info to file");
+
+        // Create a WAL directory in 9.3-2 but since there are no WAL files or backups it will not show
+        String *archiveDb2_1 = strNewFmt("%s/9.3-2/0000000100000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb2_1), "create empty db2 archive WAL1 directory");
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
         // backup.info. Execute while a backup lock is held.
@@ -194,7 +219,8 @@ testRun(void)
                             "\"archive\":["
                                 "{"
                                     "\"database\":{"
-                                        "\"id\":2"
+                                        "\"id\":2,"
+                                        "\"repo-key\":1"
                                     "},"
                                     "\"id\":\"9.4-3\","
                                     "\"max\":null,"
@@ -202,21 +228,33 @@ testRun(void)
                                 "}"
                             "],"
                              "\"backup\":[],"
-                             "\"cipher\":\"aes-256-cbc\","
+                             "\"cipher\":\"none\","
                              "\"db\":["
                                 "{"
                                     "\"id\":1,"
+                                    "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665666,"
                                     "\"version\":\"9.3\""
                                 "},"
                                 "{"
                                     "\"id\":2,"
+                                    "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665679,"
                                     "\"version\":\"9.4\""
                                 "}"
                             "],"
-                             "\"name\":\"stanza1\","
-                             "\"status\":{"
+                            "\"name\":\"stanza1\","
+                            "\"repo\":["
+                                "{"
+                                    "\"cipher\":\"none\","
+                                    "\"key\":1,"
+                                    "\"status\":{"
+                                        "\"code\":2,"
+                                        "\"message\":\"no valid backups\""
+                                    "}"
+                                "}"
+                            "],"
+                            "\"status\":{"
                                 "\"code\":2,"
                                 "\"lock\":{\"backup\":{\"held\":true}},"
                                 "\"message\":\"no valid backups\""
@@ -230,10 +268,10 @@ testRun(void)
                     infoRender(),
                     "stanza: stanza1\n"
                     "    status: error (no valid backups, backup/expire running)\n"
-                    "    cipher: aes-256-cbc\n"
+                    "    cipher: none\n"
                     "\n"
                     "    db (current)\n"
-                    "        wal archive min/max (9.4-3): none present\n",
+                    "        wal archive min/max (9.4): none present\n",
                     "text - single stanza, no valid backups, backup/expire lock detected");
 
             }
@@ -243,11 +281,11 @@ testRun(void)
 
         // Add WAL segments
         //--------------------------------------------------------------------------------------------------------------------------
-        String *archiveDb3 = strNewFmt("%s/9.4-3/0000000100000000", strZ(archiveStanza1Path));
+        String *archiveDb3 = strNewFmt("%s/9.4-3/0000000300000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb3), "create db3 archive WAL1 directory");
 
         String *archiveDb3Wal = strNewFmt(
-            "%s/000000010000000000000004-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveDb3));
+            "%s/000000030000000000000001-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveDb3));
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "touch WAL3 file");
 
         StringList *argList2 = strLstDup(argListText);
@@ -260,10 +298,10 @@ testRun(void)
             infoRender(),
             "stanza: stanza1\n"
             "    status: error (no valid backups)\n"
-            "    cipher: aes-256-cbc\n"
+            "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-3): 000000010000000000000004/000000010000000000000004\n",
+            "        wal archive min/max (9.4): 000000030000000000000001/000000030000000000000001\n",
             "text - multi-repo, single stanza, one wal segment");
 
         TEST_RESULT_VOID(storageRemoveP(storageLocalWrite(), archiveDb3Wal, .errorOnMissing = true), "remove WAL file");
@@ -301,6 +339,15 @@ testRun(void)
         String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
 
+        // Db1 and Db3 have same system-id and db-version so consider them the same for WAL reporting
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "create db3 archive WAL3 file");
+
+        // Create a WAL file in 9.3-2 so that a prior will show
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            strZ(archiveDb2_1)))))), 0, "touch WAL1 file in prior");
+
         harnessCfgLoad(cfgCmdInfo, argList);
         content = strNew
         (
@@ -317,6 +364,13 @@ testRun(void)
             "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1542383276,\"backup-timestamp-stop\":1542383289,"
             "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "20201116-154900F={\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000030000000000000001\",\"backup-archive-stop\":\"000000030000000000000001\","
+            "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159,\"backup-info-size\":26897033,"
+            "\"backup-info-size-delta\":26897033,\"backup-timestamp-start\":1605541676,\"backup-timestamp-stop\":1605541680,"
+            "\"backup-type\":\"full\",\"db-id\":3,\"option-archive-check\":true,\"option-archive-copy\":false,"
             "\"option-backup-standby\":false,\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,"
             "\"option-online\":true}\n"
             "\n"
@@ -361,7 +415,8 @@ testRun(void)
                              "\"archive\":["
                                 "{"
                                     "\"database\":{"
-                                        "\"id\":1"
+                                        "\"id\":1,"
+                                        "\"repo-key\":1"
                                     "},"
                                     "\"id\":\"9.4-1\","
                                     "\"max\":\"000000020000000000000003\","
@@ -369,11 +424,21 @@ testRun(void)
                                 "},"
                                 "{"
                                     "\"database\":{"
-                                        "\"id\":3"
+                                        "\"id\":2,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"id\":\"9.3-2\","
+                                    "\"max\":\"000000010000000000000001\","
+                                    "\"min\":\"000000010000000000000001\""
+                                "},"
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":3,"
+                                        "\"repo-key\":1"
                                     "},"
                                     "\"id\":\"9.4-3\","
-                                    "\"max\":null,"
-                                    "\"min\":null"
+                                    "\"max\":\"000000030000000000000001\","
+                                    "\"min\":\"000000030000000000000001\""
                                 "}"
                             "],"
                              "\"backup\":["
@@ -387,7 +452,8 @@ testRun(void)
                                         "\"version\":\"2.04\""
                                     "},"
                                     "\"database\":{"
-                                        "\"id\":1"
+                                        "\"id\":1,"
+                                        "\"repo-key\":1"
                                     "},"
                                     "\"info\":{"
                                         "\"delta\":26897030,"
@@ -405,28 +471,71 @@ testRun(void)
                                         "\"stop\":1542383289"
                                     "},"
                                     "\"type\":\"full\""
+                                "},"
+                                "{"
+                                    "\"archive\":{"
+                                        "\"start\":\"000000030000000000000001\","
+                                        "\"stop\":\"000000030000000000000001\""
+                                    "},"
+                                    "\"backrest\":{"
+                                        "\"format\":5,"
+                                        "\"version\":\"2.30\""
+                                    "},"
+                                    "\"database\":{"
+                                        "\"id\":3,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"info\":{"
+                                        "\"delta\":26897033,"
+                                        "\"repository\":{"
+                                            "\"delta\":3159,"
+                                            "\"size\":3159776"
+                                        "},"
+                                        "\"size\":26897033"
+                                    "},"
+                                    "\"label\":\"20201116-154900F\","
+                                    "\"prior\":null,"
+                                    "\"reference\":null,"
+                                    "\"timestamp\":{"
+                                        "\"start\":1605541676,"
+                                        "\"stop\":1605541680"
+                                    "},"
+                                    "\"type\":\"full\""
                                 "}"
                             "],"
                              "\"cipher\":\"none\","
                              "\"db\":["
                                 "{"
                                     "\"id\":1,"
+                                    "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665679,"
                                     "\"version\":\"9.4\""
                                 "},"
                                 "{"
                                     "\"id\":2,"
+                                    "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665666,"
                                     "\"version\":\"9.3\""
                                 "},"
                                 "{"
                                     "\"id\":3,"
+                                    "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665679,"
                                     "\"version\":\"9.4\""
                                 "}"
                             "],"
-                             "\"name\":\"stanza1\","
-                             "\"status\":{"
+                            "\"name\":\"stanza1\","
+                            "\"repo\":["
+                                "{"
+                                    "\"cipher\":\"none\","
+                                    "\"key\":1,"
+                                    "\"status\":{"
+                                        "\"code\":0,"
+                                        "\"message\":\"ok\""
+                                    "}"
+                                "}"
+                            "],"
+                            "\"status\":{"
                                 "\"code\":0,"
                                 "\"lock\":{\"backup\":{\"held\":true}},"
                                 "\"message\":\"ok\""
@@ -443,24 +552,37 @@ testRun(void)
                     "    cipher: none\n"
                     "\n"
                     "    db (prior)\n"
-                    "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+                    "        wal archive min/max (9.3): 000000010000000000000001/000000010000000000000001\n"
+                    "\n"
+                    "    db (current)\n"
+                    "        wal archive min/max (9.4): 000000010000000000000002/000000030000000000000001\n"
                     "\n"
                     "        full backup: 20181116-154756F\n"
                     "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
                     "            wal start/stop: n/a\n"
                     "            database size: 25.7MB, backup size: 25.7MB\n"
-                    "            repository size: 3MB, repository backup size: 3KB\n"
+                    "            repo1: size: 3MB, backup size: 3KB\n"
                     "\n"
-                    "    db (current)\n"
-                    "        wal archive min/max (9.4-3): none present\n",
+                    "        full backup: 20201116-154900F\n"
+                    "            timestamp start/stop: 2020-11-16 15:47:56 / 2020-11-16 15:48:00\n"
+                    "            wal start/stop: 000000030000000000000001 / 000000030000000000000001\n"
+                    "            database size: 25.7MB, backup size: 25.7MB\n"
+                    "            repo1: size: 3MB, backup size: 3KB\n",
                     "text - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
             }
             HARNESS_FORK_PARENT_END();
         }
         HARNESS_FORK_END();
 
-        // backup.info/archive.info files exist, backups exist, archives exist
+        // Cleanup
+        storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.3-2", strZ(archiveStanza1Path)), .recurse = true);
+        storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.4-3", strZ(archiveStanza1Path)), .recurse = true);
+
+        // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
+        // repos and the db history is different between the repos
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("mixed multi-repo");
+
         content = strNew
         (
             "[db]\n"
@@ -477,7 +599,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
                 harnessInfoChecksum(content)),
-            "put archive info to file - stanza1");
+            "put archive info to file - stanza1, repo1");
 
         content = strNew
         (
@@ -487,25 +609,42 @@ testRun(void)
             "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
             "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
             "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640899,\"backup-type\":\"full\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20181119-152138F_20181119-152152D={"
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000003\","
-            "\"backup-archive-stop\":\"000000010000000000000003\",\"backup-info-repo-size\":2369186,"
+            "\"backup-archive-stop\":\"000000020000000000000003\",\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
             "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152138F\"],"
             "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-            "20181119-152138F_20181119-152152I={"
+            "20181119-152138F_20181119-152155I={"
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000003\","
             "\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
             "\"backup-prior\":\"20181119-152138F_20181119-152152D\","
             "\"backup-reference\":[\"20181119-152138F\",\"20181119-152138F_20181119-152152D\"],"
-            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"incr\","
+            "\"backup-timestamp-start\":1542640915,\"backup-timestamp-stop\":1542640917,\"backup-type\":\"incr\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20201116-155000F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000003\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541800,\"backup-timestamp-stop\":1605541802,"
+            "\"backup-type\":\"full\",\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "20201116-155000F_20201119-152100I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000005\",\"backup-archive-stop\":\"000000010000000000000005\","
+            "\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-prior\":\"20201116-155000F\",\"backup-reference\":[\"20201116-155000F\"],"
+            "\"backup-timestamp-start\":1605799260,\"backup-timestamp-stop\":1605799263,\"backup-type\":\"incr\","
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
             "[db]\n"
@@ -526,10 +665,9 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
                 harnessInfoChecksum(content)),
-            "put backup info to file - stanza1");
+            "put backup info to file - stanza1, repo1");
 
         // Manifest with all features
-        // -------------------------------------------------------------------------------------------------------------------------
         #define TEST_MANIFEST_HEADER                                                                                               \
             "[backup]\n"                                                                                                           \
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
@@ -649,13 +787,13 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageLocalWrite(),
-            strNewFmt("%s/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE, strZ(backupStanza1Path))), contentLoad),
-            "write manifest - stanza1");
+            strNewFmt("%s/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE, strZ(backupStanza1Path))), contentLoad),
+            "write manifest - stanza1, repo1");
 
         String *archiveStanza2Path = strNewFmt("%s/stanza2", strZ(archivePath));
         String *backupStanza2Path = strNewFmt("%s/stanza2", strZ(backupPath));
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup stanza2 directory");
-        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive stanza2 directory");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup path stanza2 directory, repo1");
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive path stanza2 directory, repo1");
 
         content = strNew
         (
@@ -672,7 +810,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza2Path))),
                 harnessInfoChecksum(content)),
-            "put archive info to file - stanza2");
+            "put archive info to file - stanza2, repo1");
 
         content = strNew
         (
@@ -692,221 +830,753 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza2Path))),
                 harnessInfoChecksum(content)),
-            "put backup info to file - stanza2");
+            "put backup info to file - stanza2, repo1");
 
-        harnessCfgLoad(cfgCmdInfo, argList);
-        TEST_RESULT_STR_Z(
-            infoRender(),
-            "["
-                "{"
-                     "\"archive\":["
-                        "{"
-                            "\"database\":{"
-                                "\"id\":1"
-                            "},"
-                            "\"id\":\"9.4-1\","
-                            "\"max\":\"000000020000000000000003\","
-                            "\"min\":\"000000010000000000000002\""
-                        "},"
-                        "{"
-                            "\"database\":{"
-                                "\"id\":2"
-                            "},"
-                            "\"id\":\"9.5-2\","
-                            "\"max\":null,"
-                            "\"min\":null"
-                        "}"
-                    "],"
-                     "\"backup\":["
-                        "{"
-                            "\"archive\":{"
-                                "\"start\":\"000000010000000000000002\","
-                                "\"stop\":\"000000010000000000000002\""
-                            "},"
-                            "\"backrest\":{"
-                                "\"format\":5,"
-                                "\"version\":\"2.08dev\""
-                            "},"
-                            "\"database\":{"
-                                "\"id\":1"
-                            "},"
-                            "\"info\":{"
-                                "\"delta\":20162900,"
-                                "\"repository\":{"
-                                    "\"delta\":2369186,"
-                                    "\"size\":2369186"
-                                "},"
-                                "\"size\":20162900"
-                            "},"
-                            "\"label\":\"20181119-152138F\","
-                            "\"prior\":null,"
-                            "\"reference\":null,"
-                            "\"timestamp\":{"
-                                "\"start\":1542640898,"
-                                "\"stop\":1542640911"
-                            "},"
-                            "\"type\":\"full\""
-                        "},"
-                        "{"
-                            "\"archive\":{"
-                                "\"start\":\"000000010000000000000003\","
-                                "\"stop\":\"000000010000000000000003\""
-                            "},"
-                            "\"backrest\":{"
-                                "\"format\":5,"
-                                "\"version\":\"2.08dev\""
-                            "},"
-                            "\"database\":{"
-                                "\"id\":1"
-                            "},"
-                            "\"info\":{"
-                                "\"delta\":8428,"
-                                "\"repository\":{"
-                                    "\"delta\":346,"
-                                    "\"size\":2369186"
-                                "},"
-                                "\"size\":20162900"
-                            "},"
-                            "\"label\":\"20181119-152138F_20181119-152152D\","
-                            "\"prior\":\"20181119-152138F\","
-                            "\"reference\":["
-                                "\"20181119-152138F\""
-                            "],"
-                            "\"timestamp\":{"
-                                "\"start\":1542640912,"
-                                "\"stop\":1542640915"
-                            "},"
-                            "\"type\":\"diff\""
-                        "},"
-                        "{"
-                            "\"archive\":{"
-                                "\"start\":\"000000010000000000000003\","
-                                "\"stop\":null"
-                            "},"
-                            "\"backrest\":{"
-                                "\"format\":5,"
-                                "\"version\":\"2.08dev\""
-                            "},"
-                            "\"database\":{"
-                                "\"id\":1"
-                            "},"
-                            "\"info\":{"
-                                "\"delta\":8428,"
-                                "\"repository\":{"
-                                    "\"delta\":346,"
-                                    "\"size\":2369186"
-                                "},"
-                                "\"size\":20162900"
-                            "},"
-                            "\"label\":\"20181119-152138F_20181119-152152I\","
-                            "\"prior\":\"20181119-152138F_20181119-152152D\","
-                            "\"reference\":["
-                                "\"20181119-152138F\","
-                                "\"20181119-152138F_20181119-152152D\""
-                            "],"
-                            "\"timestamp\":{"
-                                "\"start\":1542640912,"
-                                "\"stop\":1542640915"
-                            "},"
-                            "\"type\":\"incr\""
-                        "}"
-                    "],"
-                     "\"cipher\":\"none\","
-                     "\"db\":["
-                        "{"
-                            "\"id\":1,"
-                            "\"system-id\":6625592122879095702,"
-                            "\"version\":\"9.4\""
-                        "},"
-                        "{"
-                            "\"id\":2,"
-                            "\"system-id\":6626363367545678089,"
-                            "\"version\":\"9.5\""
-                        "}"
-                    "],"
-                     "\"name\":\"stanza1\","
-                     "\"status\":{"
-                        "\"code\":0,"
-                        "\"lock\":{\"backup\":{\"held\":false}},"
-                        "\"message\":\"ok\""
-                    "}"
-                "},"
-                "{"
-                     "\"archive\":["
-                        "{"
-                            "\"database\":{"
-                                "\"id\":1"
-                            "},"
-                            "\"id\":\"9.4-1\","
-                            "\"max\":null,"
-                            "\"min\":null"
-                        "}"
-                    "],"
-                     "\"backup\":[],"
-                     "\"cipher\":\"none\","
-                     "\"db\":["
-                        "{"
-                            "\"id\":1,"
-                            "\"system-id\":6625633699176220261,"
-                            "\"version\":\"9.4\""
-                        "}"
-                    "],"
-                     "\"name\":\"stanza2\","
-                     "\"status\":{"
-                        "\"code\":2,"
-                        "\"lock\":{\"backup\":{\"held\":false}},"
-                        "\"message\":\"no valid backups\""
-                    "}"
-                "}"
-            "]",
-            "json - multiple stanzas, one with valid backups, archives in latest DB");
+        // Create encrypted repo2
+        String *repo2archivePath =  strNewFmt("%s/repo2/archive", testPath());
+        String *repo2backupPath =  strNewFmt("%s/repo2/backup", testPath());
+        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2archivePath)));
+        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2backupPath)));
 
-        harnessCfgLoad(cfgCmdInfo, argListText);
-        TEST_RESULT_STR_Z(
-            infoRender(),
-            "stanza: stanza1\n"
-            "    status: ok\n"
-            "    cipher: none\n"
+        // Write encrypted info files
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
             "\n"
-            "    db (prior)\n"
-            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+            "[cipher]\n"
+            "cipher-pass=\"" TEST_CIPHER_PASS_ARCHIVE "\"\n"
             "\n"
-            "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:51\n"
-            "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
-            "            database size: 19.2MB, backup size: 19.2MB\n"
-            "            repository size: 2.3MB, repository backup size: 2.3MB\n"
+            "[db:history]\n"
+            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n"
+        );
+
+        String *filePathName = strNewFmt("%s/stanza1/archive.info", strZ(repo2archivePath));
+        StorageWrite *write = storageNewWriteP(storageLocalWrite(), filePathName);
+        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
+        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201510051\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
             "\n"
-            "        diff backup: 20181119-152138F_20181119-152152D\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
-            "            wal start/stop: 000000010000000000000003 / 000000010000000000000003\n"
-            "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
-            "            backup reference list: 20181119-152138F\n"
+            "[backup:current]\n"
+            "20201116-200000F={\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000004\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605556800,\"backup-timestamp-stop\":1605556805,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":true,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":true,"
+            "\"option-online\":true}\n"
             "\n"
-            "        incr backup: 20181119-152138F_20181119-152152I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
-            "            wal start/stop: n/a\n"
-            "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
-            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+            "[cipher]\n"
+            "cipher-pass=\"somepass\"\n"
             "\n"
-            "    db (current)\n"
-            "        wal archive min/max (9.5-2): none present\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"9.5\"}\n"
+        );
+
+        filePathName = strNewFmt("%s/stanza1/backup.info", strZ(repo2backupPath));
+        write = storageNewWriteP(storageLocalWrite(), filePathName);
+        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
+        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted backup.info, repo2");
+
+        // Add WAL on repo1 and encrypted repo2 for stanza1
+        String *archive1Db1_1 = strNewFmt("%s/9.5-2/0000000100000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive1Db1_1), "create db1 archive WAL directory, repo1");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-ee61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000005-abc123f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
+
+        String *archive2Db1_1 = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(repo2archivePath));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive2Db1_1), "create db1 archive WAL directory, repo2");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-ff61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
+
+        // Add a manifest on the encrypted repo2
+        #define TEST_MANIFEST_HEADER2                                                                                              \
+            "[backup]\n"                                                                                                           \
+            "backup-archive-start=\"000000010000000000000004\"\n"                                                                  \
+            "backup-archive-stop=\"000000010000000000000004\"\n"                                                                   \
+            "backup-label=\"20201116-200000F\"\n"                                                                                  \
+            "backup-timestamp-copy-start=1605556800\n"                                                                             \
+            "backup-timestamp-start=1605556800\n"                                                                                  \
+            "backup-timestamp-stop=1605556802\n"                                                                                   \
+            "backup-type=\"full\"\n"                                                                                               \
+            "\n"                                                                                                                   \
+            "[backup:db]\n"                                                                                                        \
+            "db-catalog-version=201510051\n"                                                                                       \
+            "db-control-version=942\n"                                                                                             \
+            "db-id=1\n"                                                                                                            \
+            "db-system-id=6626363367545678089\n"                                                                                   \
+            "db-version=\"9.5\"\n"                                                                                                 \
+            "\n"                                                                                                                   \
+            "[backup:option]\n"                                                                                                    \
+            "option-archive-check=true\n"                                                                                          \
+            "option-archive-copy=true\n"                                                                                           \
+            "option-backup-standby=true\n"                                                                                         \
+            "option-buffer-size=16384\n"                                                                                           \
+            "option-checksum-page=false\n"                                                                                         \
+            "option-compress=false\n"                                                                                              \
+            "option-compress-level=3\n"                                                                                            \
+            "option-compress-level-network=3\n"                                                                                    \
+            "option-delta=false\n"                                                                                                 \
+            "option-hardlink=true\n"                                                                                               \
+            "option-online=true\n"                                                                                                 \
+            "option-process-max=32\n"                                                                                              \
+
+        contentLoad = harnessInfoChecksumZ
+        (
+            TEST_MANIFEST_HEADER2
+            TEST_MANIFEST_TARGET
             "\n"
-            "stanza: stanza2\n"
-            "    status: error (no valid backups)\n"
-            "    cipher: none\n"
+            "[cipher]\n"
+            "cipher-pass=\"someotherpass\"\n"
+            TEST_MANIFEST_DB
+            TEST_MANIFEST_FILE
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT
+        );
+
+        // Create encrypted manifest file
+        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1/20201116-200000F", strZ(repo2backupPath)));
+        filePathName = strNewFmt("%s/stanza1/20201116-200000F/" BACKUP_MANIFEST_FILE, strZ(repo2backupPath));
+        write = storageNewWriteP(storageLocalWrite(), filePathName);
+        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF("somepass"), NULL));
+        TEST_RESULT_VOID(storagePutP(write, contentLoad), "write encrypted manifest, repo2");
+
+        // Create a stanza on repo2 that is not on repo1
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.4\"\n"
             "\n"
-            "    db (current)\n"
-            "        wal archive min/max (9.4-1): none present\n",
-            "text - multiple stanzas, one with valid backups, archives in latest DB");
+            "[cipher]\n"
+            "cipher-pass=\"" TEST_CIPHER_PASS_ARCHIVE "\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.4\"}\n"
+        );
+
+        filePathName = strNewFmt("%s/stanza3/archive.info", strZ(repo2archivePath));
+        write = storageNewWriteP(storageLocalWrite(), filePathName);
+        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
+        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2, stanza3");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[backup:current]\n"
+            "20201110-100000F={\"backrest-format\":5,\"backrest-version\":\"2.25\","
+            "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605002400,\"backup-timestamp-stop\":1605002402,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":true,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":true,"
+            "\"option-online\":true}\n"
+            "\n"
+            "[cipher]\n"
+            "cipher-pass=\"somepass\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"9.4\"}\n"
+        );
+
+        filePathName = strNewFmt("%s/stanza3/backup.info", strZ(repo2backupPath));
+        write = storageNewWriteP(storageLocalWrite(), filePathName);
+        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
+        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted backup.info, repo2, stanza3");
+
+        archive2Db1_1 = strNewFmt("%s/stanza3/9.4-1/0000000100000000", strZ(repo2archivePath));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive2Db1_1), "create db1 archive WAL directory, repo2");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-2261b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
+
+        // Set up the configuration
+        StringList *argListMultiRepo = strLstNew();
+        hrnCfgArgRawZ(argListMultiRepo, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgKeyRawFmt(argListMultiRepo, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argListMultiRepo, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
+
+        StringList *argListMultiRepoJson = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argListMultiRepoJson, cfgOptOutput, "json");
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, false)
+            {
+                TEST_RESULT_INT_NE(
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    -1, "create backup/expire lock");
+
+                sleepMSec(1000);
+                lockRelease(true);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                sleepMSec(250);
+
+                harnessCfgLoad(cfgCmdInfo, argListMultiRepoJson);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "["
+                        "{"
+                             "\"archive\":["
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":1,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"id\":\"9.4-1\","
+                                    "\"max\":\"000000020000000000000003\","
+                                    "\"min\":\"000000010000000000000002\""
+                                "},"
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":2,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"id\":\"9.5-2\","
+                                    "\"max\":\"000000010000000000000005\","
+                                    "\"min\":\"000000010000000000000002\""
+                                "},"
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":1,"
+                                        "\"repo-key\":2"
+                                    "},"
+                                    "\"id\":\"9.5-1\","
+                                    "\"max\":\"000000010000000000000004\","
+                                    "\"min\":\"000000010000000000000003\""
+                                "}"
+                            "],"
+                            "\"backup\":["
+                                "{"
+                                    "\"archive\":{"
+                                        "\"start\":\"000000010000000000000002\","
+                                        "\"stop\":\"000000010000000000000002\""
+                                    "},"
+                                    "\"backrest\":{"
+                                        "\"format\":5,"
+                                        "\"version\":\"2.08dev\""
+                                    "},"
+                                    "\"database\":{"
+                                        "\"id\":1,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"info\":{"
+                                        "\"delta\":20162900,"
+                                        "\"repository\":{"
+                                            "\"delta\":2369186,"
+                                            "\"size\":2369186"
+                                        "},"
+                                        "\"size\":20162900"
+                                    "},"
+                                    "\"label\":\"20181119-152138F\","
+                                    "\"prior\":null,"
+                                    "\"reference\":null,"
+                                    "\"timestamp\":{"
+                                        "\"start\":1542640898,"
+                                        "\"stop\":1542640899"
+                                    "},"
+                                    "\"type\":\"full\""
+                                "},"
+                                "{"
+                                    "\"archive\":{"
+                                        "\"start\":\"000000010000000000000003\","
+                                        "\"stop\":\"000000020000000000000003\""
+                                    "},"
+                                    "\"backrest\":{"
+                                        "\"format\":5,"
+                                        "\"version\":\"2.08dev\""
+                                    "},"
+                                    "\"database\":{"
+                                        "\"id\":1,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"info\":{"
+                                        "\"delta\":8428,"
+                                        "\"repository\":{"
+                                            "\"delta\":346,"
+                                            "\"size\":2369186"
+                                        "},"
+                                        "\"size\":20162900"
+                                    "},"
+                                    "\"label\":\"20181119-152138F_20181119-152152D\","
+                                    "\"prior\":\"20181119-152138F\","
+                                    "\"reference\":["
+                                        "\"20181119-152138F\""
+                                    "],"
+                                    "\"timestamp\":{"
+                                        "\"start\":1542640912,"
+                                        "\"stop\":1542640915"
+                                    "},"
+                                    "\"type\":\"diff\""
+                                "},"
+                                "{"
+                                    "\"archive\":{"
+                                        "\"start\":\"000000010000000000000003\","
+                                        "\"stop\":null"
+                                    "},"
+                                    "\"backrest\":{"
+                                        "\"format\":5,"
+                                        "\"version\":\"2.08dev\""
+                                    "},"
+                                    "\"database\":{"
+                                        "\"id\":1,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"info\":{"
+                                        "\"delta\":8428,"
+                                        "\"repository\":{"
+                                            "\"delta\":346,"
+                                            "\"size\":2369186"
+                                        "},"
+                                        "\"size\":20162900"
+                                    "},"
+                                    "\"label\":\"20181119-152138F_20181119-152155I\","
+                                    "\"prior\":\"20181119-152138F_20181119-152152D\","
+                                    "\"reference\":["
+                                        "\"20181119-152138F\","
+                                        "\"20181119-152138F_20181119-152152D\""
+                                    "],"
+                                    "\"timestamp\":{"
+                                        "\"start\":1542640915,"
+                                        "\"stop\":1542640917"
+                                    "},"
+                                    "\"type\":\"incr\""
+                                "},"
+                                "{"
+                                    "\"archive\":{"
+                                        "\"start\":\"000000010000000000000002\","
+                                        "\"stop\":\"000000010000000000000003\""
+                                    "},"
+                                    "\"backrest\":{"
+                                        "\"format\":5,"
+                                        "\"version\":\"2.30\""
+                                    "},"
+                                    "\"database\":{"
+                                        "\"id\":2,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"info\":{"
+                                        "\"delta\":26897020,"
+                                        "\"repository\":{"
+                                            "\"delta\":3100,"
+                                            "\"size\":3159000"
+                                        "},"
+                                        "\"size\":26897000"
+                                    "},"
+                                    "\"label\":\"20201116-155000F\","
+                                    "\"prior\":null,"
+                                    "\"reference\":null,"
+                                    "\"timestamp\":{"
+                                        "\"start\":1605541800,"
+                                        "\"stop\":1605541802"
+                                    "},"
+                                    "\"type\":\"full\""
+                                "},"
+                                "{"
+                                    "\"archive\":{"
+                                        "\"start\":\"000000010000000000000004\","
+                                        "\"stop\":\"000000010000000000000004\""
+                                    "},"
+                                    "\"backrest\":{"
+                                        "\"format\":5,"
+                                        "\"version\":\"2.30\""
+                                    "},"
+                                    "\"database\":{"
+                                        "\"id\":1,"
+                                        "\"repo-key\":2"
+                                    "},"
+                                    "\"info\":{"
+                                        "\"delta\":26897020,"
+                                        "\"repository\":{"
+                                            "\"delta\":3100,"
+                                            "\"size\":3159000"
+                                        "},"
+                                        "\"size\":26897000"
+                                    "},"
+                                    "\"label\":\"20201116-200000F\","
+                                    "\"prior\":null,"
+                                    "\"reference\":null,"
+                                    "\"timestamp\":{"
+                                        "\"start\":1605556800,"
+                                        "\"stop\":1605556805"
+                                    "},"
+                                    "\"type\":\"full\""
+                                "},"
+                                "{"
+                                    "\"archive\":{"
+                                        "\"start\":\"000000010000000000000005\","
+                                        "\"stop\":\"000000010000000000000005\""
+                                    "},"
+                                    "\"backrest\":{"
+                                        "\"format\":5,"
+                                        "\"version\":\"2.30\""
+                                    "},"
+                                    "\"database\":{"
+                                        "\"id\":2,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"info\":{"
+                                        "\"delta\":8428,"
+                                        "\"repository\":{"
+                                            "\"delta\":346,"
+                                            "\"size\":2369186"
+                                        "},"
+                                        "\"size\":20162900"
+                                    "},"
+                                    "\"label\":\"20201116-155000F_20201119-152100I\","
+                                    "\"prior\":\"20201116-155000F\","
+                                    "\"reference\":["
+                                        "\"20201116-155000F\""
+                                    "],"
+                                    "\"timestamp\":{"
+                                        "\"start\":1605799260,"
+                                        "\"stop\":1605799263"
+                                    "},"
+                                    "\"type\":\"incr\""
+                                "}"
+                            "],"
+                             "\"cipher\":\"mixed\","
+                             "\"db\":["
+                                "{"
+                                    "\"id\":1,"
+                                    "\"repo-key\":1,"
+                                    "\"system-id\":6625592122879095702,"
+                                    "\"version\":\"9.4\""
+                                "},"
+                                "{"
+                                    "\"id\":2,"
+                                    "\"repo-key\":1,"
+                                    "\"system-id\":6626363367545678089,"
+                                    "\"version\":\"9.5\""
+                                "},"
+                                "{"
+                                    "\"id\":1,"
+                                    "\"repo-key\":2,"
+                                    "\"system-id\":6626363367545678089,"
+                                    "\"version\":\"9.5\""
+                                "}"
+                            "],"
+                            "\"name\":\"stanza1\","
+                            "\"repo\":["
+                                "{"
+                                    "\"cipher\":\"none\","
+                                    "\"key\":1,"
+                                    "\"status\":{"
+                                        "\"code\":0,"
+                                        "\"message\":\"ok\""
+                                    "}"
+                                "},"
+                                "{"
+                                    "\"cipher\":\"aes-256-cbc\","
+                                    "\"key\":2,"
+                                    "\"status\":{"
+                                        "\"code\":0,"
+                                        "\"message\":\"ok\""
+                                    "}"
+                                "}"
+                            "],"
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{\"backup\":{\"held\":false}},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                             "\"archive\":["
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":1,"
+                                        "\"repo-key\":1"
+                                    "},"
+                                    "\"id\":\"9.4-1\","
+                                    "\"max\":null,"
+                                    "\"min\":null"
+                                "}"
+                            "],"
+                             "\"backup\":[],"
+                             "\"cipher\":\"mixed\","
+                             "\"db\":["
+                                "{"
+                                    "\"id\":1,"
+                                    "\"repo-key\":1,"
+                                    "\"system-id\":6625633699176220261,"
+                                    "\"version\":\"9.4\""
+                                "}"
+                            "],"
+                            "\"name\":\"stanza2\","
+                            "\"repo\":["
+                                "{"
+                                    "\"cipher\":\"none\","
+                                    "\"key\":1,"
+                                    "\"status\":{"
+                                        "\"code\":2,"
+                                        "\"message\":\"no valid backups\""
+                                    "}"
+                                "},"
+                                "{"
+                                    "\"cipher\":\"aes-256-cbc\","
+                                    "\"key\":2,"
+                                    "\"status\":{"
+                                        "\"code\":1,"
+                                        "\"message\":\"missing stanza path\""
+                                    "}"
+                                "}"
+                            "],"
+                            "\"status\":{"
+                                "\"code\":4,"
+                                "\"lock\":{\"backup\":{\"held\":true}},"
+                                "\"message\":\"different across repos\""
+                            "}"
+                        "},"
+                        "{"
+                             "\"archive\":["
+                                "{"
+                                    "\"database\":{"
+                                        "\"id\":1,"
+                                        "\"repo-key\":2"
+                                    "},"
+                                    "\"id\":\"9.4-1\","
+                                    "\"max\":\"000000010000000000000002\","
+                                    "\"min\":\"000000010000000000000001\""
+                                "}"
+                            "],"
+                            "\"backup\":["
+                                "{"
+                                    "\"archive\":{"
+                                        "\"start\":\"000000010000000000000001\","
+                                        "\"stop\":\"000000010000000000000002\""
+                                    "},"
+                                    "\"backrest\":{"
+                                        "\"format\":5,"
+                                        "\"version\":\"2.25\""
+                                    "},"
+                                    "\"database\":{"
+                                        "\"id\":1,"
+                                        "\"repo-key\":2"
+                                    "},"
+                                    "\"info\":{"
+                                        "\"delta\":26897020,"
+                                        "\"repository\":{"
+                                            "\"delta\":3100,"
+                                            "\"size\":3159000"
+                                        "},"
+                                        "\"size\":26897000"
+                                    "},"
+                                    "\"label\":\"20201110-100000F\","
+                                    "\"prior\":null,"
+                                    "\"reference\":null,"
+                                    "\"timestamp\":{"
+                                        "\"start\":1605002400,"
+                                        "\"stop\":1605002402"
+                                    "},"
+                                    "\"type\":\"full\""
+                                "}"
+                            "],"
+                             "\"cipher\":\"mixed\","
+                             "\"db\":["
+                                "{"
+                                    "\"id\":1,"
+                                    "\"repo-key\":2,"
+                                    "\"system-id\":6626363367545678089,"
+                                    "\"version\":\"9.4\""
+                                "}"
+                            "],"
+                            "\"name\":\"stanza3\","
+                            "\"repo\":["
+                                "{"
+                                    "\"cipher\":\"none\","
+                                    "\"key\":1,"
+                                    "\"status\":{"
+                                        "\"code\":1,"
+                                        "\"message\":\"missing stanza path\""
+                                    "}"
+                                "},"
+                                "{"
+                                    "\"cipher\":\"aes-256-cbc\","
+                                    "\"key\":2,"
+                                    "\"status\":{"
+                                        "\"code\":0,"
+                                        "\"message\":\"ok\""
+                                    "}"
+                                "}"
+                            "],"
+                            "\"status\":{"
+                                "\"code\":4,"
+                                "\"lock\":{\"backup\":{\"held\":false}},"
+                                "\"message\":\"different across repos\""
+                            "}"
+                        "}"
+                    "]",
+                    "json - multiple stanzas, some with valid backups, archives in latest DB, backup lock held on one stanza");
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
+
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, false)
+            {
+                TEST_RESULT_INT_NE(
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    -1, "create backup/expire lock");
+
+                sleepMSec(1000);
+                lockRelease(true);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                sleepMSec(250);
+
+                harnessCfgLoad(cfgCmdInfo, argListMultiRepo);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "stanza: stanza1\n"
+                    "    status: ok\n"
+                    "    cipher: mixed\n"
+                    "        repo1: none\n"
+                    "        repo2: aes-256-cbc\n"
+                    "\n"
+                    "    db (prior)\n"
+                    "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
+                    "\n"
+                    "        full backup: 20181119-152138F\n"
+                    "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+                    "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
+                    "            database size: 19.2MB, backup size: 19.2MB\n"
+                    "            repo1: size: 2.3MB, backup size: 2.3MB\n"
+                    "\n"
+                    "        diff backup: 20181119-152138F_20181119-152152D\n"
+                    "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+                    "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
+                    "            database size: 19.2MB, backup size: 8.2KB\n"
+                    "            repo1: size: 2.3MB, backup size: 346B\n"
+                    "            backup reference list: 20181119-152138F\n"
+                    "\n"
+                    "        incr backup: 20181119-152138F_20181119-152155I\n"
+                    "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+                    "            wal start/stop: n/a\n"
+                    "            database size: 19.2MB, backup size: 8.2KB\n"
+                    "            repo1: size: 2.3MB, backup size: 346B\n"
+                    "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+                    "\n"
+                    "    db (current)\n"
+                    "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
+                    "\n"
+                    "        full backup: 20201116-155000F\n"
+                    "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+                    "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+                    "            database size: 25.7MB, backup size: 25.7MB\n"
+                    "            repo1: size: 3MB, backup size: 3KB\n"
+                    "\n"
+                    "        full backup: 20201116-200000F\n"
+                    "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+                    "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
+                    "            database size: 25.7MB, backup size: 25.7MB\n"
+                    "            repo2: size: 3MB, backup size: 3KB\n"
+                    "\n"
+                    "        incr backup: 20201116-155000F_20201119-152100I\n"
+                    "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+                    "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
+                    "            database size: 19.2MB, backup size: 8.2KB\n"
+                    "            repo1: size: 2.3MB, backup size: 346B\n"
+                    "            backup reference list: 20201116-155000F\n"
+                    "\n"
+                    "stanza: stanza2\n"
+                    "    status: mixed (backup/expire running)\n"
+                    "        repo1: error (no valid backups)\n"
+                    "        repo2: error (missing stanza path)\n"
+                    "    cipher: mixed\n"
+                    "        repo1: none\n"
+                    "        repo2: aes-256-cbc\n"
+                    "\n"
+                    "    db (current)\n"
+                    "        wal archive min/max (9.4): none present\n"
+                    "\n"
+                    "stanza: stanza3\n"
+                    "    status: mixed\n"
+                    "        repo1: error (missing stanza path)\n"
+                    "        repo2: ok\n"
+                    "    cipher: mixed\n"
+                    "        repo1: none\n"
+                    "        repo2: aes-256-cbc\n"
+                    "\n"
+                    "    db (current)\n"
+                    "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002\n"
+                    "\n"
+                    "        full backup: 20201110-100000F\n"
+                    "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+                    "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+                    "            database size: 25.7MB, backup size: 25.7MB\n"
+                    "            repo2: size: 3MB, backup size: 3KB\n",
+                    "text - multiple stanzas, multi-repo with valid backups, backup lock held on one stanza");
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
 
         // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
-        argList2 = strLstDup(argListText);
+        argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
+        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_ERROR_FMT(infoRender(), OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
+
+        // Specify the repo
+        strLstAddZ(argList2, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
@@ -916,13 +1586,13 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (prior)\n"
-            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
-            "        incr backup: 20181119-152138F_20181119-152152I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: mail (16456), postgres (12173)\n"
             "            symlinks:\n"
@@ -934,6 +1604,39 @@ testRun(void)
             "            page checksum error: base/16384/17000\n",
             "text - backup set requested");
 
+        // Confirm ability to read encrypted repo manifest
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList2 = strLstDup(argListMultiRepo);
+        strLstAddZ(argList2, "--stanza=stanza1");
+        strLstAddZ(argList2, "--set=20201116-200000F");
+        strLstAddZ(argList2, "--repo=2");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: ok\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004\n"
+            "\n"
+            "        full backup: 20201116-200000F\n"
+            "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+            "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo2: size: 3MB, backup size: 3KB\n"
+            "            database list: mail (16456), postgres (12173)\n"
+            "            symlinks:\n"
+            "                pg_hba.conf => ../pg_config/pg_hba.conf\n"
+            "                pg_stat => ../pg_stat\n"
+            "            tablespaces:\n"
+            "                ts1 (1) => /tblspc/ts1\n"
+            "                ts12 (12) => /tblspc/ts12\n"
+            "            page checksum error: base/16384/17000\n",
+            "text - multi-repo, backup set requested, repo2");
+
+        //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList2, "--output=json");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -943,7 +1646,8 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
+        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
+        strLstAddZ(argList2, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_TARGET_NO_LINK                                                                                       \
@@ -984,7 +1688,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
-                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE)),
+                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
                 "write manifest");
 
@@ -995,13 +1699,13 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (prior)\n"
-            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
-            "        incr backup: 20181119-152138F_20181119-152152I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: mail (16456), postgres (12173)\n"
             "            page checksum error: base/16384/17000, base/32768/33000\n",
@@ -1011,7 +1715,8 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152152I");
+        strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
+        strLstAddZ(argList2, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         #define TEST_MANIFEST_NO_DB                                                                                                \
@@ -1053,7 +1758,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
-                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152152I/" BACKUP_MANIFEST_FILE)),
+                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
             "write manifest");
 
@@ -1064,21 +1769,22 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (prior)\n"
-            "        wal archive min/max (9.4-1): 000000010000000000000002/000000020000000000000003\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
-            "        incr backup: 20181119-152138F_20181119-152152I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, backup size: 8.2KB\n"
-            "            repository size: 2.3MB, repository backup size: 346B\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: none\n",
             "text - backup set requested, no db and no checksum error");
 
         // Stanza found
         //--------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--stanza=stanza2");
-        harnessCfgLoad(cfgCmdInfo, argList);
+        argList2 = strLstDup(argList);
+        strLstAddZ(argList2, "--stanza=stanza2");
+        harnessCfgLoad(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
             "["
@@ -1086,7 +1792,8 @@ testRun(void)
                      "\"archive\":["
                         "{"
                             "\"database\":{"
-                                "\"id\":1"
+                                "\"id\":1,"
+                                "\"repo-key\":1"
                             "},"
                             "\"id\":\"9.4-1\","
                             "\"max\":null,"
@@ -1098,34 +1805,498 @@ testRun(void)
                      "\"db\":["
                         "{"
                             "\"id\":1,"
+                            "\"repo-key\":1,"
                             "\"system-id\":6625633699176220261,"
                             "\"version\":\"9.4\""
                         "}"
                     "],"
-                     "\"name\":\"stanza2\","
-                     "\"status\":{"
-                        "\"code\":2,"
+                    "\"name\":\"stanza2\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":2,"
+                                "\"message\":\"no valid backups\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":2,"
+                            "\"status\":{"
+                                "\"code\":1,"
+                                "\"message\":\"missing stanza path\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
+                        "\"code\":4,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
-                        "\"message\":\"no valid backups\""
+                        "\"message\":\"different across repos\""
                     "}"
                 "}"
             "]",
-            "json - multiple stanzas - selected found");
+            "json - multiple stanzas - selected found, repo1");
 
-        strLstAddZ(argListText, "--stanza=stanza2");
-        harnessCfgLoad(cfgCmdInfo, argListText);
+        argList2 = strLstDup(argListText);
+        strLstAddZ(argList2, "--stanza=stanza2");
+        harnessCfgLoad(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza2\n"
-            "    status: error (no valid backups)\n"
+            "    status: mixed\n"
+            "        repo1: error (no valid backups)\n"
+            "        repo2: error (missing stanza path)\n"
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4-1): none present\n",
-            "text - multiple stanzas - selected found");
+            "        wal archive min/max (9.4): none present\n",
+            "text - multiple stanzas - selected found, repo1");
+
+        // Remove backups from repo2 for stanza1 so multi-repos are scanned but backups are on only 1 repo
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo, backups only on one");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201510051\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[cipher]\n"
+            "cipher-pass=\"somepass\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"9.5\"}\n"
+        );
+
+        filePathName = strNewFmt("%s/stanza1/backup.info", strZ(repo2backupPath));
+        write = storageNewWriteP(storageLocalWrite(), filePathName);
+        filterGroup = ioWriteFilterGroup(storageWriteIo(write));
+        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
+        TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "backup.info without current, repo2, stanza1");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: ok\n"
+            "        repo2: error (no valid backups)\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
+            "\n"
+            "        full backup: 20181119-152138F\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
+            "            database size: 19.2MB, backup size: 19.2MB\n"
+            "            repo1: size: 2.3MB, backup size: 2.3MB\n"
+            "\n"
+            "        diff backup: 20181119-152138F_20181119-152152D\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20181119-152138F\n"
+            "\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            wal start/stop: n/a\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo1: size: 3MB, backup size: 3KB\n"
+            "\n"
+            "        incr backup: 20201116-155000F_20201119-152100I\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20201116-155000F\n",
+            "text - multi-repo, valid backups only on repo1");
+
+        // Remove archives for prior backup so archiveMin prior DB == NULL but backupList > 0 (edge case)
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo, prior backup: no archives but backups (code coverage)");
+
+        TEST_RESULT_VOID(
+            storagePathRemoveP(storageLocalWrite(), strNewFmt("%s/9.4-1", strZ(archiveStanza1Path)), .recurse = true),
+            "remove archives on db prior");
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: ok\n"
+            "        repo2: error (no valid backups)\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4): none present\n"
+            "\n"
+            "        full backup: 20181119-152138F\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
+            "            database size: 19.2MB, backup size: 19.2MB\n"
+            "            repo1: size: 2.3MB, backup size: 2.3MB\n"
+            "\n"
+            "        diff backup: 20181119-152138F_20181119-152152D\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20181119-152138F\n"
+            "\n"
+            "        incr backup: 20181119-152138F_20181119-152155I\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            wal start/stop: n/a\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo1: size: 3MB, backup size: 3KB\n"
+            "\n"
+            "        incr backup: 20201116-155000F_20201119-152100I\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
+            "            database size: 19.2MB, backup size: 8.2KB\n"
+            "            repo1: size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20201116-155000F\n",
+            "text - multi-repo, prior backup: no archives but backups (code coverage)");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo, stanza requested does not exist, but other stanzas do");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza4");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza4\n"
+            "    status: error (missing stanza path)\n",
+            "multi-repo, stanza requested does not exist, but other stanzas do");
+
+        // Add stanza3 to repo1 but with a current PG that is different than repo2
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo, current database different across repos");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678888\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6626363367545678089,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6626363367545678888,\"db-version\":\"9.5\"}\n"
+        );
+
+        filePathName = strNewFmt("%s/stanza3/archive.info", strZ(archivePath));
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), harnessInfoChecksum(content)),
+            "put archive info to file - stanza3, repo1 stanza upgraded");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678888\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[backup:current]\n"
+            "20201212-192538F={\"backrest-format\":5,\"backrest-version\":\"2.25\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000003\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1607801138,\"backup-timestamp-stop\":1607801140,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":true,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":true,"
+            "\"option-online\":true}\n"
+            "20210112-192538F={\"backrest-format\":5,\"backrest-version\":\"2.25\","
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1610479538,\"backup-timestamp-stop\":1610479540,"
+            "\"backup-type\":\"full\",\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":true,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":true,"
+            "\"option-online\":true}\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678888,"
+                "\"db-version\":\"9.5\"}\n"
+        );
+
+        filePathName = strNewFmt("%s/stanza3/backup.info", strZ(backupPath));
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), harnessInfoChecksum(content)),
+            "put backup info to file - stanza3, repo1 stanza upgraded");
+
+        String *archiveStanza3 = strNewFmt("%s/stanza3/9.4-1/0000000100000000", strZ(archivePath));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza3), "create stanza3 db1 WAL directory, repo1");
+        filePathName = strNewFmt(
+            "%s/000000010000000000000002-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveStanza3));
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), bufNew(0)), "touch WAL stanza3, db1");
+        filePathName = strNewFmt(
+            "%s/000000010000000000000003-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveStanza3));
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), bufNew(0)), "touch WAL stanza3, db1");
+
+        archiveStanza3 = strNewFmt("%s/stanza3/9.5-2/0000000100000000", strZ(archivePath));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza3), "create stanza3 db2 WAL directory, repo1");
+        filePathName = strNewFmt(
+            "%s/000000010000000000000006-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveStanza3));
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), bufNew(0)), "touch WAL stanza3, db2");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza3\n"
+            "    status: error (database mismatch across repos)\n"
+            "        repo1: ok\n"
+            "        repo2: ok\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000003\n"
+            "\n"
+            "        full backup: 20201110-100000F\n"
+            "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+            "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo2: size: 3MB, backup size: 3KB\n"
+            "\n"
+            "        full backup: 20201212-192538F\n"
+            "            timestamp start/stop: 2020-12-12 19:25:38 / 2020-12-12 19:25:40\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo1: size: 3MB, backup size: 3KB\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000006/000000010000000000000006\n"
+            "\n"
+            "        full backup: 20210112-192538F\n"
+            "            timestamp start/stop: 2021-01-12 19:25:38 / 2021-01-12 19:25:40\n"
+            "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo1: size: 3MB, backup size: 3KB\n",
+            "text - multi-repo, database mismatch, repo2 stanza-upgrade needed");
+
+        hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "["
+                "{"
+                     "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":1,"
+                                "\"repo-key\":1"
+                            "},"
+                            "\"id\":\"9.4-1\","
+                            "\"max\":\"000000010000000000000003\","
+                            "\"min\":\"000000010000000000000002\""
+                        "},"
+                        "{"
+                            "\"database\":{"
+                                "\"id\":2,"
+                                "\"repo-key\":1"
+                            "},"
+                            "\"id\":\"9.5-2\","
+                            "\"max\":\"000000010000000000000006\","
+                            "\"min\":\"000000010000000000000006\""
+                        "},"
+                        "{"
+                            "\"database\":{"
+                                "\"id\":1,"
+                                "\"repo-key\":2"
+                            "},"
+                            "\"id\":\"9.4-1\","
+                            "\"max\":\"000000010000000000000002\","
+                            "\"min\":\"000000010000000000000001\""
+                        "}"
+                    "],"
+                    "\"backup\":["
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000001\","
+                                "\"stop\":\"000000010000000000000002\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.25\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":1,"
+                                "\"repo-key\":2"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":26897020,"
+                                "\"repository\":{"
+                                    "\"delta\":3100,"
+                                    "\"size\":3159000"
+                                "},"
+                                "\"size\":26897000"
+                            "},"
+                            "\"label\":\"20201110-100000F\","
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"timestamp\":{"
+                                "\"start\":1605002400,"
+                                "\"stop\":1605002402"
+                            "},"
+                            "\"type\":\"full\""
+                        "},"
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000002\","
+                                "\"stop\":\"000000010000000000000003\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.25\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":1,"
+                                "\"repo-key\":1"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":26897020,"
+                                "\"repository\":{"
+                                    "\"delta\":3100,"
+                                    "\"size\":3159000"
+                                "},"
+                                "\"size\":26897000"
+                            "},"
+                            "\"label\":\"20201212-192538F\","
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"timestamp\":{"
+                                "\"start\":1607801138,"
+                                "\"stop\":1607801140"
+                            "},"
+                            "\"type\":\"full\""
+                        "},"
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000006\","
+                                "\"stop\":\"000000010000000000000006\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.25\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":2,"
+                                "\"repo-key\":1"
+                            "},"
+                            "\"info\":{"
+                                "\"delta\":26897020,"
+                                "\"repository\":{"
+                                    "\"delta\":3100,"
+                                    "\"size\":3159000"
+                                "},"
+                                "\"size\":26897000"
+                            "},"
+                            "\"label\":\"20210112-192538F\","
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"timestamp\":{"
+                                "\"start\":1610479538,"
+                                "\"stop\":1610479540"
+                            "},"
+                            "\"type\":\"full\""
+                        "}"
+                    "],"
+                     "\"cipher\":\"mixed\","
+                     "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"repo-key\":1,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.4\""
+                        "},"
+                        "{"
+                            "\"id\":2,"
+                            "\"repo-key\":1,"
+                            "\"system-id\":6626363367545678888,"
+                            "\"version\":\"9.5\""
+                        "},"
+                        "{"
+                            "\"id\":1,"
+                            "\"repo-key\":2,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.4\""
+                        "}"
+                    "],"
+                    "\"name\":\"stanza3\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"cipher\":\"aes-256-cbc\","
+                            "\"key\":2,"
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"message\":\"ok\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
+                        "\"code\":5,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
+                        "\"message\":\"database mismatch across repos\""
+                    "}"
+                "}"
+            "]",
+            "json - multi-repo, database mismatch, repo2 stanza-upgrade needed");
 
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("encryption error");
+
         content = strNew
         (
             "[global]\n"
@@ -1147,61 +2318,248 @@ testRun(void)
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
-            strZ(backupStanza2Path), strZ(backupStanza2Path),  strZ(strNewFmt("%s/backup.info.copy", strZ(backupStanza2Path))));
+            strZ(backupStanza1Path), strZ(backupStanza1Path),  strZ(strNewFmt("%s/backup.info.copy", strZ(backupStanza1Path))));
+
+        // Unset environment key
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
     }
 
     //******************************************************************************************************************************
-    if (testBegin("formatTextDb()"))
+    if (testBegin("database mismatch - special cases"))
     {
         // These tests cover branches not covered in other tests
-        KeyValue *stanzaInfo = kvNew();
-        VariantList *dbSection = varLstNew();
-        Variant *pgInfo = varNewKv(kvNew());
-        kvPut(varKv(pgInfo), DB_KEY_ID_VAR, varNewUInt(1));
-        kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, varNewUInt64(6625633699176220261));
-        kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(90500)));
+        TEST_TITLE("multi-repo, database mismatch, pg system-id only");
 
-        varLstAdd(dbSection, pgInfo);
+        storagePathCreateP(storageLocalWrite(), archivePath);
+        storagePathCreateP(storageLocalWrite(), backupPath);
+        String *archivePath2 = strNewFmt("%s/repo2/%s", testPath(), "archive");
+        String *backupPath2 = strNewFmt("%s/repo2/%s", testPath(), "backup");
+        storagePathCreateP(storageLocalWrite(), archivePath2);
+        storagePathCreateP(storageLocalWrite(), backupPath2);
 
-        // Add the database history, backup and archive sections to the stanza info
-        kvPut(stanzaInfo, STANZA_KEY_DB_VAR, varNewVarLst(dbSection));
+        String *content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[backup:current]\n"
+            "20201116-155000F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000003\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541800,\"backup-timestamp-stop\":1605541802,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.4\"}\n"
+        );
 
-        VariantList *backupSection = varLstNew();
-        Variant *backupInfo = varNewKv(kvNew());
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
+                harnessInfoChecksum(content)),
+            "put backup info to file, repo1");
 
-        kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTRDEF("20181119-152138F"));
-        kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTRDEF("full"));
-        kvPutKv(varKv(backupInfo), KEY_ARCHIVE_VAR);
-        KeyValue *infoInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_INFO_VAR);
-        kvPut(infoInfo, KEY_SIZE_VAR, varNewUInt64(0));
-        kvPut(infoInfo, KEY_DELTA_VAR, varNewUInt64(0));
-        KeyValue *repoInfo = kvPutKv(infoInfo, INFO_KEY_REPOSITORY_VAR);
-        kvAdd(repoInfo, KEY_SIZE_VAR, varNewUInt64(0));
-        kvAdd(repoInfo, KEY_DELTA_VAR, varNewUInt64(0));
-        KeyValue *databaseInfo = kvPutKv(varKv(backupInfo), KEY_DATABASE_VAR);
-        kvAdd(databaseInfo, DB_KEY_ID_VAR, varNewUInt(1));
-        KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);
-        kvAdd(timeInfo, KEY_START_VAR, varNewUInt64(1542383276));
-        kvAdd(timeInfo, KEY_STOP_VAR, varNewUInt64(1542383289));
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+        );
 
-        varLstAdd(backupSection, backupInfo);
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
+                harnessInfoChecksum(content)),
+            "put archive info to file, repo1");
 
-        kvPut(stanzaInfo, STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
-        kvPut(stanzaInfo, KEY_ARCHIVE_VAR, varNewVarLst(varLstNew()));
+        String *walPath = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo1, archive directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo1");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo1");
 
-        String *result = strNew("");
-        formatTextDb(stanzaInfo, result, NULL);
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[backup:current]\n"
+            "20201116-155010F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541810,\"backup-timestamp-stop\":1605541812,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.5\"}\n"
+        );
 
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/backup.info", strZ(backupPath2))),
+                harnessInfoChecksum(content)),
+            "put backup info to file, repo2, same system-id, different version");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/archive.info", strZ(archivePath2))),
+                harnessInfoChecksum(content)),
+            "put archive info to file,  repo2, same system-id, different version");
+
+        walPath = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(archivePath2));
+        TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo2, archive directory");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo2");
+        TEST_RESULT_INT(system(
+            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo2");
+
+        StringList *argList2 = strLstNew();
+        hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        // Note that although the time on the backup in repo2 > repo1, repo1 current db is not the same because of the version so
+        // the repo1, since read first, will be considered the current PG
         TEST_RESULT_STR_Z(
-            result,
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (database mismatch across repos)\n"
+            "        repo1: ok\n"
+            "        repo2: ok\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.5): 000000010000000000000001/000000010000000000000002\n"
+            "\n"
+            "        full backup: 20201116-155010F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:10 / 2020-11-16 15:50:12\n"
+            "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo2: size: 3MB, backup size: 3KB\n"
             "\n"
             "    db (current)\n"
-            "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
-            "            wal start/stop: n/a\n"
-            "            database size: 0B, backup size: 0B\n"
-            "            repository size: 0B, repository backup size: 0B\n",
-            "formatTextDb only backup section (code coverage only)");
+            "        wal archive min/max (9.4): 000000010000000000000002/000000010000000000000003\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo1: size: 3MB, backup size: 3KB\n",
+            "text - db mismatch, diff system-id across repos, repo1 considered current db since read first");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo, database mismatch, pg version only");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665888\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[backup:current]\n"
+            "20201116-155010F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000001\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541810,\"backup-timestamp-stop\":1605541812,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665888,"
+                "\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/backup.info", strZ(backupPath2))),
+                harnessInfoChecksum(content)),
+            "put backup info to file, repo2, different system-id, same version");
+
+        content = strNew
+        (
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6569239123849665888\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665888,\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/stanza1/archive.info", strZ(archivePath2))),
+                harnessInfoChecksum(content)),
+            "put archive info to file,  repo2, different system-id, same version");
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (database mismatch across repos)\n"
+            "        repo1: ok\n"
+            "        repo2: ok\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (prior)\n"
+            "        wal archive min/max (9.4): none present\n"
+            "\n"
+            "        full backup: 20201116-155010F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:10 / 2020-11-16 15:50:12\n"
+            "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo2: size: 3MB, backup size: 3KB\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4): 000000010000000000000002/000000010000000000000003\n"
+            "\n"
+            "        full backup: 20201116-155000F\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
+            "            database size: 25.7MB, backup size: 25.7MB\n"
+            "            repo1: size: 3MB, backup size: 3KB\n",
+            "text - db mismatch, diff version across repos, repo1 considered current db since read first");
     }
 
     //******************************************************************************************************************************
@@ -1237,8 +2595,16 @@ testRun(void)
         TEST_ERROR_FMT(
             harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // Option --repo not requied when only 1 repo configured
         strLstAddZ(argList, "--stanza=stanza1");
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        TEST_ERROR_FMT(
+                cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
+                "HINT: is the backup listed when running the info command with --stanza option only?");
+
+        // Option --repo when only 1 repo configured but will search the repo provided
+        strLstAddZ(argList, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList);
 
         TEST_ERROR_FMT(

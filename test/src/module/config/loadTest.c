@@ -48,17 +48,27 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdInfo, argList), OptionRequiredError,
-            "info command requires option: repo\n"
+            harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
+            "stanza-delete command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdInfo, argList), OptionRequiredError,
-            "info command requires option: repo\n"
+            harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
+            "stanza-delete command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdInfo, argList), "load info config -- option repo not required");
+        TEST_RESULT_BOOL(cfgCommand() == cfgCmdInfo, true, "    command is info");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local default repo paths must be different");
