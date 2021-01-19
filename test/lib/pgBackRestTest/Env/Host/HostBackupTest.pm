@@ -2197,8 +2197,6 @@ sub restoreCompare
     $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} .= '';
 
     storageTest()->put("${strTestPath}/actual.manifest", iniRender($oActualManifest->{oContent}));
-
-    $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} .= '';
     storageTest()->put("${strTestPath}/expected.manifest", iniRender($oExpectedManifestRef));
 
     executeTest("diff ${strTestPath}/expected.manifest ${strTestPath}/actual.manifest");

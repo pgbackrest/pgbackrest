@@ -374,7 +374,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         configParse(argListSize, argList, true);
 
         // Check that only repo1 is configured to !!!
-        if (cfgOptionGroupValid(cfgOptGrpRepo) && (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 /*|| cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1*/))
+        if (cfgCommandRole() == cfgCmdRoleDefault && cfgOptionGroupValid(cfgOptGrpRepo) && (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 /*|| cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1*/))
         {
             THROW_FMT(OptionInvalidValueError, "only repo1 may be configured");
         }
