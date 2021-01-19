@@ -88,10 +88,6 @@ Vagrant.configure(2) do |config|
             apt-get install -y vim htop jq
 
             #-----------------------------------------------------------------------------------------------------------------------
-            echo '/tmp/pgbackrest owned by root so tests do not use it' && date
-            mkdir -p 700 /tmp/pgbackrest
-
-            #-----------------------------------------------------------------------------------------------------------------------
             echo 'create link to repo in old location to make the transition less painful' && date
             ln -s /home/vagrant/pgbackrest /backrest
 
