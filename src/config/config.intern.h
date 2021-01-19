@@ -46,6 +46,7 @@ typedef struct Config
         const char *name;                                           // Name
         bool valid;                                                 // Is option group valid for the current command?
         unsigned int indexTotal;                                    // Total number of indexes with values in option group
+        bool indexDefaultExists;                                    // Is there a default index for non-indexed functions?
         unsigned int indexDefault;                                  // Default index (usually 0)
         unsigned int indexMap[CFG_OPTION_KEY_MAX];                  // List of index to key index mappings
     } optionGroup[CFG_OPTION_GROUP_TOTAL];

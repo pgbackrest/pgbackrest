@@ -325,7 +325,6 @@ testRun(void)
             strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // !!! IS THIS TEST NEEDED
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "00000001.history");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYHISTORY");
@@ -613,17 +612,22 @@ testRun(void)
             buffer, .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
         // Add encryption options
-        argList = strLstDup(argBaseList);
-        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, CIPHER_TYPE_AES_256_CBC);
-        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         strLstAddZ(argList, "01ABCDEF01ABCDEF01ABCDEF");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
-        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-1 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n");
         TEST_RESULT_UINT(
@@ -645,9 +649,9 @@ testRun(void)
         // Add archive-async and spool path
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
-        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
-        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         // Setup protocol command
         VariantList *paramList = varLstNew();

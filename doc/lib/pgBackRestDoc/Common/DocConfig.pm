@@ -282,6 +282,8 @@ sub process
                     $oOptionDoc = $oDoc->nodeGet('operation')->nodeGet('operation-general')->nodeGet('option-list')
                                        ->nodeGetById('option', $strOption, false);
 
+                    $strSection = $oOptionDoc->paramGet('section', false);
+
                     $strOptionSource = CONFIG_HELP_SOURCE_DEFAULT if (defined($oOptionDoc));
                 }
             }

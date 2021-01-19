@@ -7,6 +7,8 @@ Test Configuration Load
 #include "version.h"
 
 #include "common/harnessConfig.h"
+#include "storage/cifs/storage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Test run
@@ -32,22 +34,102 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cfgLoadUpdateOption()"))
     {
-        TEST_TITLE("repo-host-cmd is defaulted when null");
+        TEST_TITLE("error if user passes pg/repo options when they are internal");
 
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidError, "option 'repo' not valid for command 'check'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when repo option not set and repo total > 1 or first repo index != 1");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        TEST_ERROR(
+            harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
+            "stanza-delete command requires option: repo\n"
+            "HINT: this command requires a specific repository to operate on");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        TEST_ERROR(
+            harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
+            "stanza-delete command requires option: repo\n"
+            "HINT: this command requires a specific repository to operate on");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdInfo, argList), "load info config -- option repo not required");
+        TEST_RESULT_BOOL(cfgCommand() == cfgCmdInfo, true, "    command is info");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local default repo paths must be different");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 4, "4");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 3, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "host2");
+        TEST_ERROR(
+            harnessCfgLoad(cfgCmdExpire, argList), OptionInvalidValueError,
+            "local repo3 and repo4 paths are both '/var/lib/pgbackrest' but must be different");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local default repo paths for cifs repo type must be different");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, STORAGE_CIFS_TYPE);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, STORAGE_CIFS_TYPE);
+        TEST_ERROR(
+            harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidValueError,
+            "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local repo paths same but types different");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, STORAGE_POSIX_TYPE);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, STORAGE_CIFS_TYPE);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 3, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 3, "cool-bucket");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 3, "region");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 3, "endpoint");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 3, "mykey");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 3, "mysecretkey");
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 3);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 3);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo-host-cmd is defaulted when null");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         harnessCfgLoad(cfgCmdCheck, argList);
 
-        cfgOptionSet(cfgOptRepoHost, cfgSourceParam, varNewStrZ("repo-host"));
+        cfgOptionIdxSet(cfgOptRepoHost, 0, cfgSourceParam, varNewStrZ("repo-host"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoHostCmd), testProjectExe(), "    check repo1-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), testProjectExe(), "    check repo1-host-cmd");
 
-        cfgOptionSet(cfgOptRepoHostCmd, cfgSourceParam, VARSTRDEF("/other"));
+        cfgOptionIdxSet(cfgOptRepoHostCmd, 0, cfgSourceParam, VARSTRDEF("/other"));
 
         TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoHostCmd), "/other", "    check repo1-host-cmd");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), "/other", "    check repo1-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg-host-cmd is defaulted when null");
@@ -151,6 +233,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo1");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdInfo, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -258,27 +341,33 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        setenv("PGBACKREST_REPO1_S3_KEY", "mykey", true);
-        setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "mysecretkey", true);
-
         // Invalid bucket name with verification enabled fails
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAdd(argList, strNew("--repo1-type=s3"));
-        strLstAdd(argList, strNew("--repo1-s3-bucket=bogus.bucket"));
-        strLstAdd(argList, strNew("--repo1-s3-region=region"));
-        strLstAdd(argList, strNew("--repo1-s3-endpoint=endpoint"));
-        strLstAdd(argList, strNew("--repo1-path=/repo"));
+        strLstAdd(argList, strNew("--repo2-type=s3"));
+        strLstAdd(argList, strNew("--repo2-s3-bucket=bogus.bucket"));
+        strLstAdd(argList, strNew("--repo2-s3-region=region"));
+        strLstAdd(argList, strNew("--repo2-s3-endpoint=endpoint"));
+        strLstAdd(argList, strNew("--repo2-path=/repo"));
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 2, "mykey");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 2, "mysecretkey");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 
         TEST_ERROR(
             harnessCfgLoad(cfgCmdArchiveGet, argList), OptionInvalidValueError,
-            "'bogus.bucket' is not valid for option 'repo1-s3-bucket'"
+            "'bogus.bucket' is not valid for option 'repo2-s3-bucket'"
                 "\nHINT: RFC-2818 forbids dots in wildcard matches."
                 "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
                 "\nHINT: remove dots from the bucket name.");
 
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 2);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 2);
+
         // Invalid bucket name with verification disabled succeeds
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 1, "mykey");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 1, "mysecretkey");
+
         argList = strLstNew();
         strLstAdd(argList, strNew("--stanza=db"));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
@@ -519,7 +608,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        hrnCfgArgRawZ(argList, cfgOptPg, "1");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAdd(argList, strNew("--log-level-file=warn"));
         hrnCfgArgRawZ(argList, cfgOptExecId, "1111-fe70d611");

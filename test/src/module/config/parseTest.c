@@ -1290,6 +1290,7 @@ testRun(void)
         TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 0, "    pg1 is default");
         TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "    pg2 is index 2");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    default pg-path");
+        TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), true, "    pg group is valid");
         TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "    pg1 and pg2 are set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "    pg2-local is set");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 1), false, "    pg2-host is not set (pg2-local override)");
