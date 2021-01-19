@@ -2192,6 +2192,10 @@ sub restoreCompare
 
     $self->manifestDefault($oExpectedManifestRef);
 
+    # Newer Perls will change this variable to a number whenever a numeric comparison is performed. It is expected to be a string so
+    # make sure it is one before saving.
+    $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} .= '';
+
     storageTest()->put("${strTestPath}/actual.manifest", iniRender($oActualManifest->{oContent}));
 
     $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_DB}{&MANIFEST_KEY_DB_VERSION} .= '';
