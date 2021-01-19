@@ -395,8 +395,8 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "cool-bucket", "    check bucket value");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
 
-        unsetenv("PGBACKREST_REPO1_S3_KEY");
-        unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compress-type=none when compress=n");
