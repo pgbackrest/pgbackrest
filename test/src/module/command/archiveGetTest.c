@@ -325,7 +325,6 @@ testRun(void)
             strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // !!! IS THIS TEST NEEDED
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "00000001.history");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYHISTORY");
