@@ -130,12 +130,12 @@ typedef struct InfoStanzaRepo
 // Group all databases with the same system-id and version together regardless of db-id or repo
 typedef struct DbGroup
 {
-    uint64_t systemId;
-    const String *version;
-    bool current;
-    String *archiveMin;
-    String *archiveMax;
-    VariantList *backupList;
+    uint64_t systemId;                                              // Postgres database system id
+    const String *version;                                          // Postgres database version
+    bool current;                                                   // Is this the current postgres database?
+    String *archiveMin;                                             // Minimum WAL found for this database over all repositories
+    String *archiveMax;                                             // Maximum WAL found for this database over all repositories
+    VariantList *backupList;                                        // List of backups found for this database over all repositories
 } DbGroup;
 
 #define FUNCTION_LOG_DB_GROUP_TYPE                                                                                                 \
@@ -1192,7 +1192,7 @@ infoRender(void)
 
         for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down
             const Storage *storageRepo = storageRepoIdx(repoIdx);
 
             // If a backup set was specified, see if the manifest exists
