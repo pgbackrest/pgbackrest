@@ -395,8 +395,8 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "cool-bucket", "    check bucket value");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
 
-        unsetenv("PGBACKREST_REPO1_S3_KEY");
-        unsetenv("PGBACKREST_REPO1_S3_KEY_SECRET");
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compress-type=none when compress=n");
@@ -504,9 +504,6 @@ testRun(void)
         strLstAddZ(argList, CFGCMD_EXPIRE);
 
         TEST_ERROR(cfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError, "only repo1 may be configured");
-        // !!!
-        // TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 1), "", "check path");
-        // TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpRepo), 1, "check total");
 
         // Command does not have umask and disables keep-alives
         // -------------------------------------------------------------------------------------------------------------------------
