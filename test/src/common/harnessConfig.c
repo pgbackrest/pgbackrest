@@ -114,7 +114,7 @@ hrnCfgArgRawFmt(StringList *argList, ConfigOption optionId, const char *format, 
 
     va_list argument;
     va_start(argument, format);
-    (size_t)vsnprintf(buffer, sizeof(buffer) - 1, format, argument);
+    vsnprintf(buffer, sizeof(buffer) - 1, format, argument);
     va_end(argument);
 
     hrnCfgArgKeyRawZ(argList, optionId, 1, buffer);
@@ -127,7 +127,7 @@ hrnCfgArgKeyRawFmt(StringList *argList, ConfigOption optionId, unsigned optionKe
 
     va_list argument;
     va_start(argument, format);
-    (size_t)vsnprintf(buffer, sizeof(buffer) - 1, format, argument);
+    vsnprintf(buffer, sizeof(buffer) - 1, format, argument);
     va_end(argument);
 
     hrnCfgArgKeyRawZ(argList, optionId, optionKey, buffer);
