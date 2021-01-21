@@ -336,7 +336,7 @@ helpRender(void)
                             section = strNew("command");
                         }
 
-                        kvAdd(optionKv, VARSTR(section), VARINT((int)optionId));
+                        kvAdd(optionKv, VARSTR(section), VARUINT(optionId));
 
                         if (strlen(cfgParseOptionName(optionId)) > optionSizeMax)
                             optionSizeMax = strlen(cfgParseOptionName(optionId));
@@ -357,7 +357,7 @@ helpRender(void)
 
                     for (unsigned int optionIdx = 0; optionIdx < varLstSize(optionList); optionIdx++)
                     {
-                        ConfigOption optionId = varInt(varLstGet(optionList, optionIdx));
+                        ConfigOption optionId = varUInt(varLstGet(optionList, optionIdx));
 
                         // Get option summary
                         String *summary = strFirstLower(
