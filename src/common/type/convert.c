@@ -333,7 +333,7 @@ cvtZToMode(const char *value)
 
     ASSERT(value != NULL);
 
-    FUNCTION_TEST_RETURN(cvtZToUIntBase(value, 8));
+    FUNCTION_TEST_RETURN((mode_t)cvtZToUIntBase(value, 8));
 }
 
 /**********************************************************************************************************************************/

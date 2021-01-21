@@ -2283,7 +2283,7 @@ manifestSave(Manifest *this, IoWrite *write)
         }
 
         saveData.fileGroupDefault = manifestOwnerVar(varStr(mcvResult(fileGroupMcv)));
-        saveData.fileModeDefault = varUInt(mcvResult(fileModeMcv));
+        saveData.fileModeDefault = (mode_t)varUInt(mcvResult(fileModeMcv));
         saveData.filePrimaryDefault = varBool(mcvResult(filePrimaryMcv));
         saveData.fileUserDefault = manifestOwnerVar(varStr(mcvResult(fileUserMcv)));
 
@@ -2322,7 +2322,7 @@ manifestSave(Manifest *this, IoWrite *write)
         }
 
         saveData.pathGroupDefault = manifestOwnerVar(varStr(mcvResult(pathGroupMcv)));
-        saveData.pathModeDefault = varUInt(mcvResult(pathModeMcv));
+        saveData.pathModeDefault = (mode_t)varUInt(mcvResult(pathModeMcv));
         saveData.pathUserDefault = manifestOwnerVar(varStr(mcvResult(pathUserMcv)));
 
         // Save manifest
