@@ -232,7 +232,7 @@ pgClientQuery(PgClient *this, const String *query)
                 THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strZ(query), this->queryTimeout);
 
             // If this was a command that returned no results then we are done
-            int resultStatus = PQresultStatus(pgResult);
+            ExecStatusType resultStatus = PQresultStatus(pgResult);
 
             if (resultStatus != PGRES_COMMAND_OK)
             {
