@@ -182,6 +182,13 @@ hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned option
 }
 
 /**********************************************************************************************************************************/
+__attribute__((always_inline)) static inline const char *
+hrnCfgEnvName(ConfigOption optionId, unsigned optionKey)
+{
+    return strZ(
+        strReplaceChr(strUpper(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))), '-', '_'));
+}
+
 void
 hrnCfgEnvRaw(ConfigOption optionId, const String *value)
 {
@@ -203,7 +210,7 @@ hrnCfgEnvRawZ(ConfigOption optionId, const char *value)
 void
 hrnCfgEnvKeyRawZ(ConfigOption optionId, unsigned optionKey, const char *value)
 {
-    setenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))), value, true);
+    setenv(hrnCfgEnvName(optionId, optionKey), value, true);
 }
 
 void
@@ -215,5 +222,5 @@ hrnCfgEnvRemoveRaw(ConfigOption optionId)
 void
 hrnCfgEnvKeyRemoveRaw(ConfigOption optionId, unsigned optionKey)
 {
-    unsetenv(strZ(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))));
+    unsetenv(hrnCfgEnvName(optionId, optionKey));
 }
