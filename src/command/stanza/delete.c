@@ -56,7 +56,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, storageRepoWriteStanza);
         FUNCTION_TEST_PARAM(STRING_LIST, archiveList);
-        FUNCTION_TEST_PARAM(STRING_LIST, archiveList);
+        FUNCTION_TEST_PARAM(STRING_LIST, backupList);
     FUNCTION_TEST_END();
 
     ASSERT(storageRepoWriteStanza != NULL);
