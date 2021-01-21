@@ -139,7 +139,8 @@ sub setup
         strCompressType => $$oConfigParam{strCompressType},
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
         bArchiveAsync => $$oConfigParam{bArchiveAsync},
-        strStorage => $oConfigParam->{strStorage}});
+        strStorage => $oConfigParam->{strStorage},
+        iRepoTotal => $oConfigParam->{iRepoTotal}});
 
     # Create backup config if backup host exists
     if (defined($oHostBackup))
@@ -147,7 +148,8 @@ sub setup
         $oHostBackup->configCreate({
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $$oConfigParam{bHardLink},
-            strStorage => $oConfigParam->{strStorage}});
+            strStorage => $oConfigParam->{strStorage},
+            iRepoTotal => $oConfigParam->{iRepoTotal}});
     }
     # If backup host is not defined set it to db-primary
     else
@@ -171,7 +173,8 @@ sub setup
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
             bArchiveAsync => $$oConfigParam{bArchiveAsync},
-            strStorage => $oConfigParam->{strStorage}});
+            strStorage => $oConfigParam->{strStorage},
+            iRepoTotal => $oConfigParam->{iRepoTotal}});
     }
 
     # Create object storage

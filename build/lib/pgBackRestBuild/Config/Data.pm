@@ -219,10 +219,13 @@ use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-time
 # Repository options
 #-----------------------------------------------------------------------------------------------------------------------------------
 # Determines how many repositories can be configured
-use constant CFGDEF_INDEX_REPO                                      => 1;
+use constant CFGDEF_INDEX_REPO                                      => 4;
 
 # Prefix that must be used by all repo options that allow multiple configurations
 use constant CFGDEF_PREFIX_REPO                                     => 'repo';
+
+# Set default repository
+use constant CFGOPT_REPO                                            => CFGDEF_PREFIX_REPO;
 
 # Repository General
 use constant CFGOPT_REPO_CIPHER_TYPE                                => CFGDEF_PREFIX_REPO . '-cipher-type';
@@ -1686,6 +1689,147 @@ my %hConfigDefine =
         }
     },
 
+    # Repository selector
+    #-------------------------------------------------------------------------------------------------------------------------------
+    &CFGOPT_REPO =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_INTERNAL => true,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_ALLOW_RANGE => [1, CFGDEF_INDEX_REPO],
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_ARCHIVE_GET =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_ASYNC => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_ARCHIVE_PUSH =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                },
+            },
+            &CFGCMD_CHECK =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_EXPIRE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_INFO =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_CREATE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_GET =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_LS =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_PUT =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_RM =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_RESTORE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_STANZA_CREATE =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_STANZA_DELETE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_STANZA_UPGRADE =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_START =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_STOP =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_VERIFY =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+        },
+    },
+
     # Repository options
     #-------------------------------------------------------------------------------------------------------------------------------
     &CFGOPT_REPO_CIPHER_PASS =>
@@ -2336,22 +2480,144 @@ my %hConfigDefine =
         },
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_ARCHIVE_GET => {},
-            &CFGCMD_ARCHIVE_PUSH => {},
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_CHECK => {},
-            &CFGCMD_EXPIRE => {},
-            &CFGCMD_INFO => {},
-            &CFGCMD_REPO_CREATE => {},
-            &CFGCMD_REPO_GET => {},
-            &CFGCMD_REPO_LS => {},
-            &CFGCMD_REPO_PUT => {},
-            &CFGCMD_REPO_RM => {},
-            &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_DELETE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-            &CFGCMD_VERIFY => {},
+            &CFGCMD_ARCHIVE_GET =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_ASYNC => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_ARCHIVE_PUSH =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_ASYNC => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_BACKUP =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                },
+            },
+            &CFGCMD_CHECK =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_EXPIRE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_INFO =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_CREATE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_GET =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_LS =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_PUT =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_REPO_RM =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_RESTORE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
+            &CFGCMD_STANZA_CREATE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_STANZA_DELETE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_STANZA_UPGRADE =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                },
+            },
+            &CFGCMD_START =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_STOP =>
+            {
+                &CFGDEF_COMMAND_ROLE => {},
+            },
+            &CFGCMD_VERIFY =>
+            {
+                &CFGDEF_COMMAND_ROLE =>
+                {
+                    &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_LOCAL => {},
+                    &CFGCMD_ROLE_REMOTE => {},
+                },
+            },
         },
     },
 

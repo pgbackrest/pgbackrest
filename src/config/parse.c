@@ -1864,15 +1864,22 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
         {
             ASSERT(groupId == cfgOptGrpPg || groupId == cfgOptGrpRepo);
 
-            // The repo default is always key 1 since only one is allowed
-            if (groupId == cfgOptGrpRepo)
-                continue;
+            // Get the group default option
+            unsigned int defaultOptionId = groupId == cfgOptGrpPg ? cfgOptPg : cfgOptRepo;
+
+            // Does a default always exist?
+            config->optionGroup[groupId].indexDefaultExists =
+                // A default always exists for the pg group
+                groupId == cfgOptGrpPg ||
+                // The repo group allows a default when the repo option is valid, i.e. either repo1 is the only key set or a repo
+                // is specified
+                cfgOptionValid(cfgOptRepo);
 
             // Does the group default option exist?
-            if (cfgOptionTest(cfgOptPg))
+            if (cfgOptionTest(defaultOptionId))
             {
                 // Search for the key
-                unsigned int optionKeyIdx = cfgOptionUInt(cfgOptPg) - 1;
+                unsigned int optionKeyIdx = cfgOptionUInt(defaultOptionId) - 1;
                 unsigned int index = 0;
 
                 for (; index < cfgOptionGroupIdxTotal(groupId); index++)
@@ -1885,12 +1892,13 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
                 if (index == cfgOptionGroupIdxTotal(groupId))
                 {
                     THROW_FMT(
-                        OptionInvalidValueError, "key '%u' is not valid for '%s' option", cfgOptionUInt(cfgOptPg),
-                        cfgOptionName(cfgOptPg));
+                        OptionInvalidValueError, "key '%u' is not valid for '%s' option", cfgOptionUInt(defaultOptionId),
+                        cfgOptionName(defaultOptionId));
                 }
 
                 // Set the default
                 config->optionGroup[groupId].indexDefault = index;
+                config->optionGroup[groupId].indexDefaultExists = true;
             }
         }
     }

@@ -367,8 +367,8 @@ helpRender(void)
                         const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgParseOptionType(optionId));
                         const String *value = NULL;
 
-                        if (cfgOptionSource(optionId) != cfgSourceDefault)
-                            value = helpRenderValue(cfgOption(optionId), cfgParseOptionType(optionId));
+                        if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
+                            value = helpRenderValue(cfgOptionIdx(optionId, 0), cfgParseOptionType(optionId));
 
                         if (value != NULL || defaultValue != NULL)
                         {
@@ -437,8 +437,8 @@ helpRender(void)
                 const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
                 const String *value = NULL;
 
-                if (cfgOptionSource(option.id) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOption(option.id), cfgParseOptionType(option.id));
+                if (cfgOptionIdxSource(option.id, 0) != cfgSourceDefault)
+                    value = helpRenderValue(cfgOptionIdx(option.id, 0), cfgParseOptionType(option.id));
 
                 if (value != NULL || defaultValue != NULL)
                 {

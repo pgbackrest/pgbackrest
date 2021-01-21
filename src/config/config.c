@@ -394,6 +394,7 @@ cfgOptionGroupIdxDefault(ConfigOptionGroup groupId)
 
     ASSERT(configLocal != NULL);
     ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
+    ASSERT(configLocal->optionGroup[groupId].indexDefaultExists);
 
     FUNCTION_TEST_RETURN(configLocal->optionGroup[groupId].indexDefault);
 }
@@ -486,6 +487,8 @@ cfgOptionIdxDefault(ConfigOption optionId)
 
     ASSERT(configLocal != NULL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(
+        !configLocal->option[optionId].group || configLocal->optionGroup[configLocal->option[optionId].groupId].indexDefaultExists);
 
     FUNCTION_TEST_RETURN(
         configLocal->option[optionId].group ? configLocal->optionGroup[configLocal->option[optionId].groupId].indexDefault : 0);

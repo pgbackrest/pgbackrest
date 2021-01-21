@@ -49,6 +49,7 @@ sub new
         $self->{strType},
         $self->{lBufferMax},
         $self->{iTimeoutIo},
+        $self->{iRepo},
         $self->{strDefaultPathMode},
         $self->{strDefaultFileMode},
     ) =
@@ -59,6 +60,7 @@ sub new
             {name => 'strType'},
             {name => 'lBufferMax'},
             {name => 'iTimeoutIo'},
+            {name => 'iRepo'},
             {name => 'strDefaultPathMode', optional => true, default => '0750'},
             {name => 'strDefaultFileMode', optional => true, default => '0640'},
         );
@@ -165,7 +167,7 @@ sub create
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->create');
 
-    $self->exec("repo-create");
+    $self->exec("--repo=$self->{iRepo} repo-create");
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -241,7 +243,7 @@ sub get
     # Get file
     my ($tResult, $iExitStatus) = $self->exec(
         (defined($strCipherPass) ? ' --cipher-pass=' . $self->escape($strCipherPass) : '') . ($bRaw ? ' --raw' : '') .
-        ($bIgnoreMissing ? ' --ignore-missing' : '') . ' repo-get ' . $self->escape($strFile));
+        ($bIgnoreMissing ? ' --ignore-missing' : '') . " --repo=$self->{iRepo} repo-get " . $self->escape($strFile));
 
     # Error if missing an not ignored
     if ($iExitStatus == 1 && !$bIgnoreMissing)
@@ -353,7 +355,8 @@ sub manifest
         );
 
     my $rhManifest = $self->{oJSON}->decode(
-        $self->exec("--output=json " . ($bRecurse ? ' --recurse' : '') . " repo-ls " . $self->escape($strPathExp)));
+        $self->exec(
+            "--output=json" . ($bRecurse ? ' --recurse' : '') . " --repo=$self->{iRepo} repo-ls " . $self->escape($strPathExp)));
 
     # Transform the manifest to the old format
     foreach my $strKey (keys(%{$rhManifest}))
@@ -447,7 +450,7 @@ sub pathRemove
             {name => 'bRecurse', optional => true, default => false},
         );
 
-    $self->exec("repo-rm " . ($bRecurse ? '--recurse ' : '') . $self->escape($strPath));
+    $self->exec("--repo=$self->{iRepo} repo-rm " . ($bRecurse ? '--recurse ' : '') . $self->escape($strPath));
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -487,7 +490,7 @@ sub put
     # Put file
     my $strCommand =
         "$self->{strCommand}" . (defined($strCipherPass) ? ' --cipher-pass=' . $self->escape($strCipherPass) : '') .
-            ($bRaw ? ' --raw' : '') . ' repo-put ' . $self->escape($strFile);
+            ($bRaw ? ' --raw' : '') . " --repo=$self->{iRepo} repo-put " . $self->escape($strFile);
 
     my $oBuffer = new pgBackRestTest::Common::Io::Buffered(
         new pgBackRestTest::Common::Io::Handle($strCommand), $self->{iTimeoutIo}, $self->{lBufferMax});
@@ -533,7 +536,7 @@ sub remove
             {name => 'xFileExp'},
         );
 
-    $self->exec("repo-rm " . $self->escape($strFile));
+    $self->exec("--repo=$self->{iRepo} repo-rm " . $self->escape($strFile));
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -585,24 +588,27 @@ sub storageRepo
     (
         $strOperation,
         $strStanza,
+        $iRepo,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '::storageRepo', \@_,
             {name => 'strStanza', optional => true, trace => true},
+            {name => 'iRepo', optional => true, default => 1, trace => true},
         );
 
     # Create storage if not defined
-    if (!defined($oRepoStorage))
+    if (!defined($oRepoStorage->{$iRepo}))
     {
-        $oRepoStorage = new pgBackRestTest::Common::StorageRepo($strStorageRepoCommand, $strStorageRepoType, 64 * 1024, 60);
+        $oRepoStorage->{$iRepo} = new pgBackRestTest::Common::StorageRepo(
+            $strStorageRepoCommand, $strStorageRepoType, 64 * 1024, 60, $iRepo);
     }
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
-        {name => 'oStorageRepo', value => $oRepoStorage, trace => true},
+        {name => 'oStorageRepo', value => $oRepoStorage->{$iRepo}, trace => true},
     );
 }
 

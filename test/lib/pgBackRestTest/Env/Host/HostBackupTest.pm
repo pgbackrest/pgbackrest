@@ -161,6 +161,9 @@ sub new
         $self->{strRepoPath} = '/';
     }
 
+    # If there is a repo2 it will always be posix on the repo host
+    $self->{strRepo2Path} = $self->testRunGet()->testPath() . "/$$oParam{strBackupDestination}/" . HOST_PATH_REPO . "2";
+
     # Set log/lock paths
     $self->{strLogPath} = $self->testPath() . '/' . HOST_PATH_LOG;
     storageTest()->pathCreate($self->{strLogPath}, {strMode => '0770'});
@@ -325,6 +328,7 @@ sub backupBegin
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
         (defined($oParam->{strRepoType}) ? " --repo1-type=$oParam->{strRepoType}" : '') .
+        ' --repo=' . (defined($oParam->{iRepo}) ? $oParam->{iRepo} : '1') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus},
@@ -379,112 +383,118 @@ sub backupEnd
             'if an alternate stanza is specified it must generate an error - the remaining code will not be aware of the stanza');
     }
 
-    my $strBackup = $self->backupLast();
+    my $strBackup = $self->backupLast($oParam->{iRepo});
 
-    # If a real backup then load the expected manifest from the actual manifest.  An expected manifest can't be generated perfectly
-    # because a running database is always in flux.  Even so, it allows us test many things.
-    if (!$self->synthetic())
+    # Only compare backups that are in repo1. There is not a lot of value in comparing backups in other repos and it would require a
+    # lot of changes to the test harness.
+    if (!defined($oParam->{iRepo}) || $oParam->{iRepo} == 1)
     {
-        $oExpectedManifest = iniParse(
-            ${storageRepo()->get(
-                storageRepo()->openRead(
-                    'backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST,
-                    {strCipherPass => $self->cipherPassManifest()}))});
-    }
-
-    # Make sure tablespace links are correct
-    if ($self->hasLink())
-    {
-        if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink())
+        # If a real backup then load the expected manifest from the actual manifest. An expected manifest can't be generated
+        # perfectly because a running database is always in flux. Even so, it allows us to test many things.
+        if (!$self->synthetic())
         {
-            my $hTablespaceManifest = storageTest()->manifest(
-                $self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC));
+            $oExpectedManifest = iniParse(
+                ${storageRepo()->get(
+                    storageRepo()->openRead(
+                        'backup/' . $self->stanza() . "/${strBackup}/" . FILE_MANIFEST,
+                        {strCipherPass => $self->cipherPassManifest()}))});
+        }
 
-            # Remove . and ..
-            delete($hTablespaceManifest->{'.'});
-            delete($hTablespaceManifest->{'..'});
-
-            # Iterate file links
-            for my $strFile (sort(keys(%{$hTablespaceManifest})))
+        # Make sure tablespace links are correct
+        if ($self->hasLink())
+        {
+            if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink())
             {
-                # Make sure the link is in the expected manifest
-                my $hManifestTarget =
-                    $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
+                my $hTablespaceManifest = storageTest()->manifest(
+                    $self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC));
 
-                if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
-                    $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
+                # Remove . and ..
+                delete($hTablespaceManifest->{'.'});
+                delete($hTablespaceManifest->{'..'});
+
+                # Iterate file links
+                for my $strFile (sort(keys(%{$hTablespaceManifest})))
                 {
-                    confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
+                    # Make sure the link is in the expected manifest
+                    my $hManifestTarget =
+                        $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGTBLSPC . "/${strFile}"};
+
+                    if (!defined($hManifestTarget) || $hManifestTarget->{&MANIFEST_SUBKEY_TYPE} ne MANIFEST_VALUE_LINK ||
+                        $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID} ne $strFile)
+                    {
+                        confess &log(ERROR, "'${strFile}' is not in expected manifest as a link with the correct tablespace id");
+                    }
+
+                    # Make sure the link really is a link
+                    if ($hTablespaceManifest->{$strFile}{type} ne 'l')
+                    {
+                        confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
+                    }
+
+                    # Make sure the link destination is correct
+                    my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
+
+                    if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
+                    {
+                        confess &log(ERROR,
+                            "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
+                            "'$hTablespaceManifest->{$strFile}{link_destination}'");
+                    }
                 }
 
-                # Make sure the link really is a link
-                if ($hTablespaceManifest->{$strFile}{type} ne 'l')
+                # Iterate manifest targets
+                for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
                 {
-                    confess &log(ERROR, "'${strFile}' in tablespace directory is not a link");
-                }
+                    my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
+                    my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
 
-                # Make sure the link destination is correct
-                my $strLinkDestination = '../../' . MANIFEST_TARGET_PGTBLSPC . "/${strFile}";
-
-                if ($hTablespaceManifest->{$strFile}{link_destination} ne $strLinkDestination)
-                {
-                    confess &log(ERROR,
-                        "'${strFile}' link should reference '${strLinkDestination}' but actually references " .
-                        "'$hTablespaceManifest->{$strFile}{link_destination}'");
+                    # Make sure the target exists as a link on disk
+                    if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
+                        !defined($hTablespaceManifest->{$strTablespaceId}))
+                    {
+                        confess &log(ERROR,
+                            "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
+                    }
                 }
             }
-
-            # Iterate manifest targets
-            for my $strTarget (sort(keys(%{$oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}})))
+            # Else there should not be a tablespace directory at all.  This is only valid for storage that supports links.
+            elsif (storageRepo()->capability(STORAGE_CAPABILITY_LINK) &&
+                   storageTest()->pathExists(
+                       $self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC)))
             {
-                my $hManifestTarget = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{$strTarget};
-                my $strTablespaceId = $hManifestTarget->{&MANIFEST_SUBKEY_TABLESPACE_ID};
-
-                # Make sure the target exists as a link on disk
-                if ($hManifestTarget->{&MANIFEST_SUBKEY_TYPE} eq MANIFEST_VALUE_LINK && defined($strTablespaceId) &&
-                    !defined($hTablespaceManifest->{$strTablespaceId}))
-                {
-                    confess &log(ERROR,
-                        "target '${strTarget}' does not have a link at '" . DB_PATH_PGTBLSPC. "/${strTablespaceId}'");
-                }
+                confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
             }
         }
-        # Else there should not be a tablespace directory at all.  This is only valid for storage that supports links.
-        elsif (storageRepo()->capability(STORAGE_CAPABILITY_LINK) &&
-               storageTest()->pathExists($self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC)))
+
+        # Check that latest link exists unless repo links are disabled
+        my $strLatestLink = $self->repoBackupPath(LINK_LATEST);
+        my $bLatestLinkExists = storageRepo()->exists($strLatestLink);
+
+        if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq POSIX) && $self->hasLink())
         {
-            confess &log(ERROR, 'backup must be full or hard-linked to have ' . DB_PATH_PGTBLSPC . ' directory');
+            my $strLatestLinkDestination = readlink($strLatestLink);
+
+            if ($strLatestLinkDestination ne $strBackup)
+            {
+                confess &log(ERROR, "'" . LINK_LATEST . "' link should be '${strBackup}' but is '${strLatestLinkDestination}");
+            }
         }
-    }
-
-    # Check that latest link exists unless repo links are disabled
-    my $strLatestLink = $self->repoBackupPath(LINK_LATEST);
-    my $bLatestLinkExists = storageRepo()->exists($strLatestLink);
-
-    if ((!defined($oParam->{strRepoType}) || $oParam->{strRepoType} eq POSIX) && $self->hasLink())
-    {
-        my $strLatestLinkDestination = readlink($strLatestLink);
-
-        if ($strLatestLinkDestination ne $strBackup)
+        elsif ($bLatestLinkExists)
         {
-            confess &log(ERROR, "'" . LINK_LATEST . "' link should be '${strBackup}' but is '${strLatestLinkDestination}");
+            confess &log(ERROR, "'" . LINK_LATEST . "' link should not exist");
         }
-    }
-    elsif ($bLatestLinkExists)
-    {
-        confess &log(ERROR, "'" . LINK_LATEST . "' link should not exist");
-    }
 
-    # Only do compare for synthetic backups since for real backups the expected manifest *is* the actual manifest.
-    if ($self->synthetic())
-    {
-        # Compare only if expected to do so
-        if ($bManifestCompare)
+        # Only do compare for synthetic backups since for real backups the expected manifest *is* the actual manifest.
+        if ($self->synthetic())
         {
-            # Set backup type in the expected manifest
-            ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
+            # Compare only if expected to do so
+            if ($bManifestCompare)
+            {
+                # Set backup type in the expected manifest
+                ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE} = $strType;
 
-            $self->backupCompare($strBackup, $oExpectedManifest);
+                $self->backupCompare($strBackup, $oExpectedManifest);
+            }
         }
     }
 
@@ -514,7 +524,8 @@ sub backupEnd
                 $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), undef,
                 ${storageRepo()->get(
                     storageRepo()->openRead(
-                        $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), {strCipherPass => $self->cipherPassManifest()}))});
+                        $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST),
+                        {strCipherPass => $self->cipherPassManifest()}))});
             $self->{oLogTest}->supplementalAdd(
                 $self->repoBackupPath(FILE_BACKUP_INFO), undef, ${storageRepo->get($self->repoBackupPath(FILE_BACKUP_INFO))});
         }
@@ -752,9 +763,11 @@ sub manifestDefault
 sub backupLast
 {
     my $self = shift;
+    my $iRepo = shift;
 
-    my @stryBackup = storageRepo()->list(
-        $self->repoBackupPath(), {strExpression => '[0-9]{8}-[0-9]{6}F(_[0-9]{8}-[0-9]{6}(D|I)){0,1}', strSortOrder => 'reverse'});
+    my @stryBackup = storageRepo({iRepo => $iRepo})->list(
+        $self->repoBackupPath(undef, $iRepo),
+        {strExpression => '[0-9]{8}-[0-9]{6}F(_[0-9]{8}-[0-9]{6}(D|I)){0,1}', strSortOrder => 'reverse'});
 
     if (!defined($stryBackup[0]))
     {
@@ -839,6 +852,7 @@ sub expire
         (defined($$oParam{iRetentionFull}) ? " --repo1-retention-full=$$oParam{iRetentionFull}" : '') .
         (defined($$oParam{iRetentionDiff}) ? " --repo1-retention-diff=$$oParam{iRetentionDiff}" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
+        ' --repo=' . (defined($oParam->{iRepo}) ? $oParam->{iRepo} : '1') .
         '  --stanza=' . $self->stanza() . ' expire',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()});
@@ -1031,6 +1045,7 @@ sub stanzaDelete
     $self->executeSimple(
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
+        ' --repo=' . (defined($oParam->{iRepo}) ? $oParam->{iRepo} : '1') .
         ' --stanza=' . $self->stanza() .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' stanza-delete',
@@ -1145,6 +1160,13 @@ sub configCreate
 
     my $bArchiveAsync = defined($$oParam{bArchiveAsync}) ? $$oParam{bArchiveAsync} : false;
 
+    my $iRepoTotal = defined($oParam->{iRepoTotal}) ? $oParam->{iRepoTotal} : 1;
+
+    if ($iRepoTotal < 1 || $iRepoTotal > 2)
+    {
+        confess "invalid repo total ${iRepoTotal}";
+    }
+
     # General options
     # ------------------------------------------------------------------------------------------------------------------------------
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'job-retry'} = 0;
@@ -1206,6 +1228,11 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-container'} = HOST_AZURE_CONTAINER;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-host'} = HOST_AZURE;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-verify-tls'} = 'n';
+        }
+
+        if ($iRepoTotal == 2)
+        {
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-path'} = $self->repo2Path();
         }
 
         if (defined($$oParam{bHardlink}) && $$oParam{bHardlink})
@@ -1302,6 +1329,14 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-user'} = $oHostBackup->userGet();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
+
+            if ($iRepoTotal == 2)
+            {
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host'} = $oHostBackup->nameGet();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-user'} = $oHostBackup->userGet();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-cmd'} = $oHostBackup->backrestExe();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo2-host-config'} = $oHostBackup->backrestConfig();
+            }
 
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'lock-path'} = $self->lockPath();
@@ -1682,6 +1717,7 @@ sub restore
         $bTablespace,
         $strUser,
         $strBackupExpected,
+        $iRepo,
     ) =
         logDebugParam
         (
@@ -1703,6 +1739,7 @@ sub restore
             {name => 'bTablespace', optional => true},
             {name => 'strUser', optional => true},
             {name => 'strBackupExpected', optional => true},
+            {name => 'iRepo', optional => true, default => 1},
         );
 
     # Build link map options
@@ -1740,16 +1777,15 @@ sub restore
     # - which should be the backup passed as strBackupExpected. If it is not defined, then set it based on the strBackup passed.
     if (!defined($strBackupExpected))
     {
-        $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast() :
-            $strBackup;
+        $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast($iRepo) : $strBackup;
     }
 
     if (!defined($rhExpectedManifest))
     {
         # Load the manifest from the backup expected to be chosen/processed by restore
         my $oExpectedManifest = new pgBackRestTest::Env::Manifest(
-            $self->repoBackupPath($strBackupExpected . qw{/} . FILE_MANIFEST),
-            {strCipherPass => $oHostBackup->cipherPassManifest()});
+            $self->repoBackupPath($strBackupExpected . qw{/} . FILE_MANIFEST, $iRepo),
+            {strCipherPass => $oHostBackup->cipherPassManifest(), oStorage => storageRepo({iRepo => $iRepo})});
 
         $rhExpectedManifest = $oExpectedManifest->{oContent};
 
@@ -1817,14 +1853,19 @@ sub restore
         (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
         (defined($strTargetAction) && $strTargetAction ne 'pause' ? " --target-action=${strTargetAction}" : '') .
-        ' --stanza=' . $self->stanza() . ' restore',
+        " --repo=${iRepo} --stanza=" . $self->stanza() . ' restore',
         {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()},
         $strUser);
 
     if (!defined($iExpectedExitStatus))
     {
-        $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
+        # Only compare restores in repo1. There is not a lot of value in comparing restores in other repos and it would require a
+        # lot of changes to the Perl test harness.
+        if ($iRepo == 1)
+        {
+            $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
+        }
 
         if (defined($self->{oLogTest}))
         {
@@ -2172,9 +2213,17 @@ sub repoSubPath
     my $self = shift;
     my $strSubPath = shift;
     my $strPath = shift;
+    my $iRepo = shift;
+
+    my $strRepoPath = $self->repoPath();
+
+    if (defined($iRepo) && $iRepo == 2)
+    {
+        $strRepoPath = $self->repo2Path();
+    }
 
     return
-        ($self->{strRepoPath} eq '/' ? '' : $self->{strRepoPath}) . "/${strSubPath}/" . $self->stanza() .
+        ($strRepoPath eq '/' ? '' : $strRepoPath) . "/${strSubPath}/" . $self->stanza() .
         (defined($strPath) ? "/${strPath}" : '');
 }
 
@@ -2195,8 +2244,9 @@ sub isHostDb {my $self = shift; return $self->isHostDbPrimary() || $self->isHost
 sub lockPath {return shift->{strLockPath}}
 sub logPath {return shift->{strLogPath}}
 sub repoArchivePath {return shift->repoSubPath('archive', shift)}
-sub repoBackupPath {return shift->repoSubPath('backup', shift)}
+sub repoBackupPath {return shift->repoSubPath('backup', shift, shift)}
 sub repoPath {return shift->{strRepoPath}}
+sub repo2Path {return shift->{strRepo2Path}}
 sub repoEncrypt {return shift->{bRepoEncrypt}}
 sub stanza {return testRunGet()->stanza()}
 sub synthetic {return shift->{bSynthetic}}

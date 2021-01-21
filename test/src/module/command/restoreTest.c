@@ -2354,7 +2354,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "--type=preserve");

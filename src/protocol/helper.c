@@ -85,7 +85,18 @@ repoIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
 
-    if (!repoIsLocal(cfgOptionGroupIdxDefault(cfgOptGrpRepo)))
+    repoIsLocalVerifyIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+repoIsLocalVerifyIdx(unsigned int repoIdx)
+{
+    FUNCTION_TEST_VOID();
+
+    if (!repoIsLocal(repoIdx))
         THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName(cfgCommand()));
 
     FUNCTION_TEST_RETURN_VOID();
@@ -136,7 +147,8 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
         // Add the process id -- used when more than one process will be called
         kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(processId));
 
-        // Add the group default id
+        // Add the pg default. Don't do this for repos because the repo default should come from the user or the local should
+        // handle all the repos equally. Repos don't get special handling like pg primaries or standbys.
         if (protocolStorageType == protocolStorageTypePg)
             kvPut(optionReplace, VARSTRDEF(CFGOPT_PG), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, hostIdx)));
 
@@ -389,6 +401,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         }
     }
 
+    // Set repo default so the remote only operates on a single repo
+    if (protocolStorageType == protocolStorageTypeRepo)
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_REPO), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, hostIdx)));
+
     // Add the process id if not set. This means that the remote is being started from the main process and should always get a
     // process id of 0.
     if (!cfgOptionTest(cfgOptProcess))
@@ -479,19 +495,19 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
                 PROTOCOL_SERVICE_REMOTE_STR, execIoRead(protocolHelperClient->exec), execIoWrite(protocolHelperClient->exec));
 
             // Get cipher options from the remote if none are locally configured
-            if (isRepo && strEq(cfgOptionStr(cfgOptRepoCipherType), CIPHER_TYPE_NONE_STR))
+            if (isRepo && strEq(cfgOptionIdxStr(cfgOptRepoCipherType, hostIdx), CIPHER_TYPE_NONE_STR))
             {
                 // Options to query
                 VariantList *param = varLstNew();
-                varLstAdd(param, varNewStrZ(cfgOptionName(cfgOptRepoCipherType)));
-                varLstAdd(param, varNewStrZ(cfgOptionName(cfgOptRepoCipherPass)));
+                varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherType, hostIdx)));
+                varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherPass, hostIdx)));
 
                 VariantList *optionList = configProtocolOption(protocolHelperClient->client, param);
 
                 if (!strEq(varStr(varLstGet(optionList, 0)), CIPHER_TYPE_NONE_STR))
                 {
-                    cfgOptionSet(cfgOptRepoCipherType, cfgSourceConfig, varLstGet(optionList, 0));
-                    cfgOptionSet(cfgOptRepoCipherPass, cfgSourceConfig, varLstGet(optionList, 1));
+                    cfgOptionIdxSet(cfgOptRepoCipherType, hostIdx, cfgSourceConfig, varLstGet(optionList, 0));
+                    cfgOptionIdxSet(cfgOptRepoCipherPass, hostIdx, cfgSourceConfig, varLstGet(optionList, 1));
                 }
             }
 

@@ -19,6 +19,8 @@ Configuration Load
 #include "config/config.intern.h"
 #include "config/load.h"
 #include "config/parse.h"
+#include "storage/cifs/storage.h"
+#include "storage/posix/storage.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -65,6 +67,46 @@ void
 cfgLoadUpdateOption(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
+
+    // Make sure repo option is set for the default command role when it is not internal and more than one repo is configured or the
+    // first configured repo is not key 1. Filter out any commands where this does not apply.
+    if (!cfgCommandHelp() && cfgCommand() != cfgCmdInfo && cfgOptionValid(cfgOptRepo) && !cfgOptionTest(cfgOptRepo) &&
+        (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
+    {
+        THROW_FMT(
+            OptionRequiredError,
+            "%s command requires option: " CFGOPT_REPO "\n"
+            "HINT: this command requires a specific repository to operate on",
+            cfgCommandName(cfgCommand()));
+    }
+
+    // If there is more than one repo configured
+    if (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
+    {
+        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
+        {
+            // If the repo is local and either posix or cifs
+            if (!(cfgOptionIdxTest(cfgOptRepoHost, optionIdx)) &&
+                (strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), STORAGE_POSIX_TYPE_STR) ||
+                strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), STORAGE_CIFS_TYPE_STR)))
+            {
+                // Ensure a local repo does not have the same path as another local repo of the same type
+                for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+                {
+                    if (optionIdx != repoIdx && !(cfgOptionIdxTest(cfgOptRepoHost, repoIdx)) &&
+                        strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), cfgOptionIdxStr(cfgOptRepoType, repoIdx)) &&
+                        strEq(cfgOptionIdxStr(cfgOptRepoPath, optionIdx), cfgOptionIdxStr(cfgOptRepoPath, repoIdx)))
+                    {
+                        THROW_FMT(
+                            OptionInvalidValueError,
+                            "local repo%u and repo%u paths are both '%s' but must be different",
+                            cfgOptionGroupIdxToKey(cfgOptGrpRepo, optionIdx), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                            strZ(cfgOptionIdxStr(cfgOptRepoPath, repoIdx)));
+                    }
+                }
+            }
+        }
+    }
 
     // Set default for repo-host-cmd
     if (cfgOptionValid(cfgOptRepoHostCmd))
@@ -223,17 +265,20 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // Error if an S3 bucket name contains dots
-    if (cfgOptionGroupValid(cfgOptGrpRepo) && cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifyTls) &&
-        strChr(cfgOptionStr(cfgOptRepoS3Bucket), '.') != -1)
+    // For each possible repo, error if an S3 bucket name contains dots
+    for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
     {
-        THROW_FMT(
-            OptionInvalidValueError,
-            "'%s' is not valid for option '%s'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches."
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
-                "\nHINT: remove dots from the bucket name.",
-            strZ(cfgOptionStr(cfgOptRepoS3Bucket)), cfgOptionName(cfgOptRepoS3Bucket));
+        if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx) &&
+            strChr(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), '.') != -1)
+        {
+            THROW_FMT(
+                OptionInvalidValueError,
+                "'%s' is not valid for option '%s'"
+                    "\nHINT: RFC-2818 forbids dots in wildcard matches."
+                    "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
+                    "\nHINT: remove dots from the bucket name.",
+                strZ(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx)), cfgOptionIdxName(cfgOptRepoS3Bucket, repoIdx));
+        }
     }
 
     // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.
@@ -327,6 +372,13 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     {
         // Parse config from command line and config file
         configParse(argListSize, argList, true);
+
+        // Check that only repo1 is configured. This is temporary until the multi-repo support is finalized.
+        if (cfgCommandRole() == cfgCmdRoleDefault && cfgOptionGroupValid(cfgOptGrpRepo) &&
+            (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
+        {
+            THROW_FMT(OptionInvalidValueError, "only repo1 may be configured");
+        }
 
         // Initialize dry-run mode for storage when valid for the current command
         storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));

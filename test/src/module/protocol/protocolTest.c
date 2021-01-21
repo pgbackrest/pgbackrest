@@ -130,11 +130,19 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        strLstAddZ(argList, "--repo1-path=/repo-local");
+        strLstAddZ(argList, "--repo4-path=/remote-host-new");
+        strLstAddZ(argList, "--repo4-host=remote-host-new");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(repoIsLocal(0), true, "repo is local");
         TEST_RESULT_VOID(repoIsLocalVerify(), "    local verified");
+        TEST_RESULT_VOID(repoIsLocalVerifyIdx(0), "    local by index verified");
+        TEST_ERROR_FMT(
+            repoIsLocalVerifyIdx(cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1), HostInvalidError,
+            "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -270,7 +278,7 @@ testRun(void)
             protocolRemoteParam(protocolStorageTypeRepo, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\nrepo-host-user@repo-host\n"
                 "pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-                " --pg1-path=/path/to/pg --process=0 --remote-type=repo --stanza=test1 archive-get:remote\n",
+                " --pg1-path=/path/to/pg --process=0 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
             "remote protocol params");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -279,7 +287,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--log-subprocess");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");            // Will be passed to remote (required)
-        hrnCfgArgRawZ(argList, cfgOptPgPort, "777");                // Not be passed to remote (required but has default)
+        hrnCfgArgRawZ(argList, cfgOptPgPort, "777");                // Not passed to remote (required but has default)
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, "--repo1-host-port=444");
         strLstAddZ(argList, "--repo1-host-config=/path/pgbackrest.conf");
@@ -294,7 +302,7 @@ testRun(void)
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\n-p\n444\nrepo-host-user@repo-host\n"
                 "pgbackrest --config=/path/pgbackrest.conf --config-include-path=/path/include --config-path=/path/config"
                 " --exec-id=1-test --log-level-console=off --log-level-file=info --log-level-stderr=error --log-subprocess"
-                " --pg1-path=/unused --process=0 --remote-type=repo --stanza=test1 check:remote\n",
+                " --pg1-path=/unused --process=0 --remote-type=repo --repo=1 --stanza=test1 check:remote\n",
             "remote protocol params with replacements");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -303,6 +311,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--process=3");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_LOCAL);
@@ -312,7 +321,7 @@ testRun(void)
             protocolRemoteParam(protocolStorageTypeRepo, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npgbackrest@repo-host\n"
                 "pgbackrest --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-                " --pg1-path=/path/to/pg --process=3 --remote-type=repo --stanza=test1 archive-get:remote\n",
+                " --pg1-path=/path/to/pg --process=3 --remote-type=repo --repo=1 --stanza=test1 archive-get:remote\n",
             "remote protocol params for backup local");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -991,20 +1000,31 @@ testRun(void)
             BUFSTRDEF(
                 "[global]\n"
                 "repo1-cipher-type=aes-256-cbc\n"
-                "repo1-cipher-pass=dcba\n"));
+                "repo1-cipher-pass=dcba\n"
+                "repo2-cipher-type=aes-256-cbc\n"
+                "repo2-cipher-pass=xxxx\n"));
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--pg1-path=/pg");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAdd(argList, strNewFmt("--repo1-host-config=%s/pgbackrest.conf", testPath()));
         strLstAddZ(argList, "--repo1-host=localhost");
         strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        harnessCfgLoad(cfgCmdInfo, argList);
+        strLstAdd(argList, strNewFmt("--repo2-host-config=%s/pgbackrest.conf", testPath()));
+        strLstAddZ(argList, "--repo2-host=localhost");
+        strLstAdd(argList, strNewFmt("--repo2-host-user=%s", testUser()));
+        strLstAdd(argList, strNewFmt("--repo2-path=%s2", testPath()));
+        harnessCfgLoad(cfgCmdCheck, argList);
 
-        TEST_RESULT_PTR(cfgOptionStrNull(cfgOptRepoCipherPass), NULL, "check cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "dcba", "check cipher pass after");
+        TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 0), NULL, "check repo1 cipher pass before");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get repo1 remote protocol");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 0), "dcba", "check repo1 cipher pass after");
+
+        TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 1), NULL, "check repo2 cipher pass before");
+        TEST_RESULT_VOID(protocolRemoteGet(protocolStorageTypeRepo, 1), "get repo2 remote protocol");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 1), "xxxx", "check repo2 cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
 

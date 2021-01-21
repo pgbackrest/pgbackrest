@@ -166,6 +166,8 @@ Option constants
     STRING_DECLARE(CFGOPT_RECURSE_STR);
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
     STRING_DECLARE(CFGOPT_REMOTE_TYPE_STR);
+#define CFGOPT_REPO                                                 "repo"
+    STRING_DECLARE(CFGOPT_REPO_STR);
 #define CFGOPT_RESUME                                               "resume"
     STRING_DECLARE(CFGOPT_RESUME_STR);
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
@@ -205,7 +207,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            127
+#define CFG_OPTION_TOTAL                                            128
 
 /***********************************************************************************************************************************
 Command enum
@@ -315,6 +317,7 @@ typedef enum
     cfgOptRecoveryOption,
     cfgOptRecurse,
     cfgOptRemoteType,
+    cfgOptRepo,
     cfgOptRepoAzureAccount,
     cfgOptRepoAzureCaFile,
     cfgOptRepoAzureCaPath,

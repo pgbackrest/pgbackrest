@@ -674,8 +674,17 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdVerify(), verifyProcess()"))
     {
-        // Load Parameters
+        //--------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 4, "%s/repo4", testPath());
+
+        TEST_ERROR_FMT(
+            harnessCfgLoad(cfgCmdVerify, argList), OptionRequiredError, "verify command requires option: repo\n"
+            "HINT: this command requires a specific repository to operate on");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Load Parameters with multi-repo
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdVerify, argList);
 
         // Store valid archive/backup info files
@@ -808,6 +817,10 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, start next timeline");
 
+        // Load Parameters - single default repo
+        argList = strLstDup(argListBase);
+        harnessCfgLoad(cfgCmdVerify, argList);
+
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
@@ -843,6 +856,13 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, unreadable WAL file");
+
+        // Load Parameters - single non-default repo
+        argList = strLstNew();
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo", testPath());
+        hrnCfgArgRawFmt(argList, cfgOptStanza, "%s", strZ(stanza));
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        harnessCfgLoad(cfgCmdVerify, argList);
 
         TEST_RESULT_VOID(
             storagePutP(
