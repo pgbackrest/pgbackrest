@@ -1173,7 +1173,6 @@ infoRender(void)
             if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
                 THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
 
-            // !!! THIS LIMITATION SHOULD BE REMOVED
             if (!(cfgOptionTest(cfgOptRepo)) && cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
                 THROW(OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
         }
