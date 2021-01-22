@@ -275,6 +275,7 @@ testRun(void)
         hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawZ(argBaseList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argBaseList, cfgOptArchiveTimeout, "1");
+        hrnCfgArgRawFmt(argBaseList, cfgOptLockPath, "%s/lock", testDataPath());
         strLstAddZ(argBaseList, CFGCMD_ARCHIVE_GET);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -324,7 +325,6 @@ testRun(void)
             strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // !!! IS THIS TEST NEEDED
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "00000001.history");
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYHISTORY");

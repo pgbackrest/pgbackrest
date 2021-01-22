@@ -51,7 +51,7 @@ storageRemoteInfoParse(ProtocolClient *client, StorageInfo *info)
         info->user = jsonToStr(protocolClientReadLine(client));
         info->groupId = jsonToUInt(protocolClientReadLine(client));
         info->group = jsonToStr(protocolClientReadLine(client));
-        info->mode = jsonToUInt(protocolClientReadLine(client));
+        info->mode = (mode_t)jsonToUInt(protocolClientReadLine(client));
 
         if (info->type == storageTypeLink)
             info->linkDestination = jsonToStr(protocolClientReadLine(client));
