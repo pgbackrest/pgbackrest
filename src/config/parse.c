@@ -476,7 +476,7 @@ cfgParseOptionId(const char *optionName)
 
     for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         if (strcmp(optionName, parseRuleOption[optionId].name) == 0)
-            result = optionId;
+            result = (int)optionId;
 
     FUNCTION_TEST_RETURN(result);
 }

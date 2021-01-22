@@ -75,7 +75,6 @@ IoWrite *hrnServerScriptBegin(IoWrite *write)
 
     ASSERT(write != NULL);
 
-    write = write;
     ioWriteOpen(write);
 
     FUNCTION_HARNESS_RESULT(IO_WRITE, write);
