@@ -450,7 +450,9 @@ eval
                 trim(
                     executeTest(
                         "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
-                            " rsync -rtW --out-format=\"\%n\" --delete --ignore-missing-args" .
+                            " rsync -rtW --out-format=\"\%n\" --delete" .
+                            # This option is not supported on MacOS. The eventual plan is to remove the need for it.
+                            (trim(`uname`) ne 'Darwin' ? ' --ignore-missing-args' : '') .
                             " --exclude=test/result --exclude=repo.manifest" .
                             " ${strBackRestBase}/ --files-from=- ${strRepoCachePath}" .
                             " | grep -E -v '/\$' | cat"))));
