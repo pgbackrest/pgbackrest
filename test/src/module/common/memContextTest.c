@@ -228,7 +228,7 @@ testRun(void)
         TEST_ERROR(
             memFree(NULL), AssertError,
             "assertion '((MemContextAlloc *)buffer - 1) != NULL"
-                " && ((MemContextAlloc *)buffer - 1) != MEM_CONTEXT_ALLOC_HEADER(NULL)"
+                " && (uintptr_t)((MemContextAlloc *)buffer - 1) != (uintptr_t)-sizeof(MemContextAlloc)"
                 " && ((MemContextAlloc *)buffer - 1)->allocIdx <"
                 " memContextStack[memContextCurrentStackIdx].memContext->allocListSize"
                 " && memContextStack[memContextCurrentStackIdx].memContext->allocList[((MemContextAlloc *)buffer - 1)->allocIdx]'"
