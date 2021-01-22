@@ -1571,11 +1571,6 @@ testRun(void)
         argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20181119-152138F_20181119-152155I");
-        harnessCfgLoad(cfgCmdInfo, argList2);
-
-        TEST_ERROR_FMT(infoRender(), OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
-
-        // Specify the repo
         strLstAddZ(argList2, "--repo=1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -1604,22 +1599,23 @@ testRun(void)
             "            page checksum error: base/16384/17000\n",
             "text - backup set requested");
 
-        // Confirm ability to read encrypted repo manifest
+        // Confirm ability to read encrypted repo manifest and that the requested database will be found without setting --repo
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--stanza=stanza1");
         strLstAddZ(argList2, "--set=20201116-200000F");
-        strLstAddZ(argList2, "--repo=2");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
             "    status: ok\n"
-            "    cipher: aes-256-cbc\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004\n"
+            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        full backup: 20201116-200000F\n"
             "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
@@ -1634,7 +1630,7 @@ testRun(void)
             "                ts1 (1) => /tblspc/ts1\n"
             "                ts12 (12) => /tblspc/ts12\n"
             "            page checksum error: base/16384/17000\n",
-            "text - multi-repo, backup set requested, repo2");
+            "text - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
 
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList2, "--output=json");
@@ -2595,7 +2591,7 @@ testRun(void)
         TEST_ERROR_FMT(
             harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
-        // Option --repo not requied when only 1 repo configured
+        // Option --repo not required when only 1 repo configured
         strLstAddZ(argList, "--stanza=stanza1");
         harnessCfgLoad(cfgCmdInfo, argList);
 

@@ -1165,17 +1165,12 @@ infoRender(void)
 
         // Get the backup label if specified
         const String *backupLabel = cfgOptionStrNull(cfgOptSet);
+        bool backupFound = false;
 
         // Since the --set option depends on the --stanza option, the parser will error before this if the backup label is
         // specified but a stanza is not
-        if (backupLabel != NULL)
-        {
-            if (!strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
-                THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
-
-            if (!(cfgOptionTest(cfgOptRepo)) && cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
-                THROW(OptionRequiredError, "option '" CFGOPT_REPO "' is required when specifying a backup set");
-        }
+        if (backupLabel != NULL && !strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
+            THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
 
         // Initialize the repo index
         unsigned int repoIdxStart = 0;
@@ -1197,12 +1192,8 @@ infoRender(void)
             // If a backup set was specified, see if the manifest exists
             if (backupLabel != NULL)
             {
-                if (!storageExistsP(storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
-                {
-                    THROW_FMT(
-                        FileMissingError, "manifest does not exist for backup '%s'\n"
-                        "HINT: is the backup listed when running the info command with --stanza option only?", strZ(backupLabel));
-                }
+                if (storageExistsP(storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
+                    backupFound = true;
             }
 
             // Get a list of stanzas in the backup directory
@@ -1261,6 +1252,14 @@ infoRender(void)
                     lstAdd(stanzaRepoList, &stanzaRepo);
                 }
             }
+        }
+
+        // If a backup label was requested but it was not found on any repo
+        if (backupLabel != NULL && !backupFound)
+        {
+            THROW_FMT(
+                FileMissingError, "manifest does not exist for backup '%s'\n"
+                "HINT: is the backup listed when running the info command with --stanza option only?", strZ(backupLabel));
         }
 
         VariantList *infoList = varLstNew();
