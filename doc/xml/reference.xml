@@ -1602,7 +1602,9 @@
 
                 The '<id>wal start/stop</id>' defines the WAL range that is required to make the database consistent when restoring.  The <cmd>backup</cmd> command will ensure that this WAL range is in the archive before completing.
 
-                The '<id>database size</id>' is the full uncompressed size of the database while '<id>backup size</id>' is the amount of data actually backed up (these will be the same for full backups).  The '<id>repository size</id>' includes all the files from this backup and any referenced backups that are required to restore the database while '<id>repository backup size</id>' includes only the files in this backup (these will also be the same for full backups).  Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.
+                The '<id>database size</id>' is the full uncompressed size of the database while '<id>database backup size</id>' is the amount of data in the database to actually back up (these will be the same for full backups).
+
+                The '<id>repo</id>' indicates in which repository this backup resides. The '<id>backup set size</id>' includes all the files from this backup and any referenced backups in the repository that are required to restore the database from this backup while '<id>backup size</id>' includes only the files in this backup (these will also be the same for full backups).  Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.
 
                 The '<id>backup reference list</id>' contains the additional backups that are required to restore this backup.</text>
 

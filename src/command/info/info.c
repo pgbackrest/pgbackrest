@@ -802,14 +802,14 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         KeyValue *info = varKv(kvGet(backupInfo, BACKUP_KEY_INFO_VAR));
 
         strCatFmt(
-            resultStr, "            database size: %s, backup size: %s\n",
+            resultStr, "            database size: %s, database backup size: %s\n",
             strZ(strSizeFormat(varUInt64Force(kvGet(info, KEY_SIZE_VAR)))),
             strZ(strSizeFormat(varUInt64Force(kvGet(info, KEY_DELTA_VAR)))));
 
         KeyValue *repoInfo = varKv(kvGet(info, INFO_KEY_REPOSITORY_VAR));
 
         strCatFmt(
-            resultStr, "            repo%u: size: %s, backup size: %s\n",
+            resultStr, "            repo%u: backup set size: %s, backup size: %s\n",
             varUInt(kvGet(varKv(kvGet(backupInfo, KEY_DATABASE_VAR)), KEY_REPO_KEY_VAR)),
             strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_SIZE_VAR)))),
             strZ(strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR)))));
