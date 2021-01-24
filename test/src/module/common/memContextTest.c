@@ -170,7 +170,7 @@ testRun(void)
     if (testBegin("memContextAlloc(), memNew*(), memGrow(), and memFree()"))
     {
         TEST_RESULT_UINT(sizeof(MemContextAlloc), 8, "check MemContextAlloc size (same for 32/64 bit)");
-        TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER((void *)0), (void *)sizeof(MemContextAlloc), "check buffer macro");
+        TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_BUFFER((void *)1), (void *)(sizeof(MemContextAlloc) + 1), "check buffer macro");
         TEST_RESULT_PTR(MEM_CONTEXT_ALLOC_HEADER((void *)sizeof(MemContextAlloc)), (void *)0, "check header macro");
 
         memContextSwitch(memContextTop());
