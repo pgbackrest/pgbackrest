@@ -149,7 +149,7 @@ Vagrant.configure(2) do |config|
     #-------------------------------------------------------------------------------------------------------------------------------
     # mkdir ~/homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C ~/homebrew
     # ~/homebrew/bin/brew install -q libpq libxml2 cpanm
-    # ~/homebrew/bin/cpanm --local-lib=~/homebrew/perl5 install YAML
+    # ~/homebrew/bin/cpanm --force --local-lib=~/homebrew/perl5 install YAML XML::Checker::Parser
     #
     # export LDFLAGS="-L${HOME?}/homebrew/opt/openssl@1.1/lib -L${HOME?}/homebrew/opt/libpq/lib -L${HOME?}/homebrew/opt/libxml2/lib"
     # export CPPFLAGS="-I${HOME?}/homebrew/opt/openssl@1.1/include -I/${HOME?}/homebrew/opt/libpq/include"
