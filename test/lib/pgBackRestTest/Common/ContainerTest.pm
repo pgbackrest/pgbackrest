@@ -301,8 +301,8 @@ sub containerBuild
     $oStorageDocker->pathCreate($strTempPath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
     # Load container definitions from yaml
-    require YAML::XS;
-    YAML::XS->import(qw(Load));
+    require YAML::Any;
+    YAML::Any->import(qw(Load));
 
     $hContainerCache = Load(${$oStorageDocker->get($oStorageDocker->pathGet('test/container.yaml'))});
 
