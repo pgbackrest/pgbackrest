@@ -237,7 +237,7 @@ testRun(void)
         ASSERT(bufUsed(block) == 1024 * 1024);
 
         // Build the input buffer
-        Buffer *input = bufNew(blockTotal * bufSize(block));
+        Buffer *input = bufNew((size_t)blockTotal * bufSize(block));
 
         for (unsigned int blockIdx = 0; blockIdx < blockTotal; blockIdx++)
             memcpy(bufPtr(input) + (blockIdx * bufSize(block)), bufPtr(block), bufSize(block));
@@ -246,7 +246,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE_FMT(
-            "%u iteration(s) of %" PRIu64 "MiB with %" PRIu64 "MB/s input, %" PRIu64 "MB/s output", iteration,
+            "%u iteration(s) of %zuMiB with %" PRIu64 "MB/s input, %" PRIu64 "MB/s output", iteration,
             bufUsed(input) / bufUsed(block), rateIn, rateOut);
 
         #define BENCHMARK_BEGIN()                                                                                                  \
