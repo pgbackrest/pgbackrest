@@ -701,7 +701,7 @@ sub end
                 containerRemove("test-$self->{iVmIdx}");
             }
 
-            executeTest("rm -rf ${strHostTestPath}");
+            executeTest("chmod -R 700 ${strHostTestPath}/* 2>&1;rm -rf ${strHostTestPath}");
         }
 
         $bDone = true;
