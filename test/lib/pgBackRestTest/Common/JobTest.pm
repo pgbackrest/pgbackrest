@@ -657,9 +657,29 @@ sub end
         # Output error
         if ($iExitStatus != 0)
         {
+            # Get stdout
+            my $strOutput = trim($oExecDone->{strOutLog}) ? "STDOUT:\n" . trim($oExecDone->{strOutLog}) : '';
+
+            # Get stderr
+            if (trim($oExecDone->{strSuppressedErrorLog}) ne '')
+            {
+                if ($strOutput ne '')
+                {
+                    $strOutput .= "\n";
+                }
+
+                $strOutput .= "STDERR:\n" . trim($oExecDone->{strSuppressedErrorLog});
+            }
+
+            # If no stdout or stderr output something rather than a blank line
+            if ($strOutput eq '')
+            {
+                $strOutput = 'NO OUTPUT ON STDOUT OR STDERR';
+            }
+
             &log(ERROR, "${strTestDone} (err${iExitStatus}" . ($self->{bLogTimestamp} ? "-${fTestElapsedTime}s)" : '') .
-                 (defined($oExecDone->{strOutLog}) && !$self->{bShowOutputAsync} ?
-                    ":\n\n" . trim($oExecDone->{strOutLog}) . "\n" : ''), undef, undef, 4);
+                 (defined($oExecDone->{strOutLog}) && !$self->{bShowOutputAsync} ? ":\n\n${strOutput}\n" : ''), undef, undef, 4);
+
             $bFail = true;
         }
         # Output success
