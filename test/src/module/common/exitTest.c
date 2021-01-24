@@ -95,7 +95,7 @@ testRun(void)
         {
             exitSafe(0, true, signalTypeNone);
             harnessLogResult(
-                "P00  DEBUG:     common/exit::exitSafe: (result: 0, error: true, signalType: 0)\n"
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/exit::exitSafe: (result: 0, error: true, signalType: 0)\n"
                 "P00  ERROR: [122]: test debug error message\n"
                 "            --------------------------------------------------------------------\n"
                 "            If SUBMITTING AN ISSUE please provide the following information:\n"
@@ -105,13 +105,13 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            test/module/common/exitTest:testRun:92:(void)\n"
+                "            " TEST_PGB_PATH "/test/src/module/common/exitTest:testRun:92:(void)\n"
                 "            test:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [122]\n"
-                "P00  DEBUG:     common/lock::lockRelease: (failOnNoLock: false)\n"
-                "P00  DEBUG:     common/lock::lockRelease: => false\n"
-                "P00  DEBUG:     common/exit::exitSafe: => 122");
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: (failOnNoLock: false)\n"
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: => false\n"
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/exit::exitSafe: => 122");
         }
         TRY_END();
 
@@ -135,7 +135,7 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            test/module/common/exitTest:testRun:123:(void)\n"
+                "            " TEST_PGB_PATH "/test/src/module/common/exitTest:testRun:123:(void)\n"
                 "            test:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [025]");

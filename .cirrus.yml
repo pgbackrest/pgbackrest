@@ -12,17 +12,16 @@ auto_cancellation: $CIRRUS_BRANCH != 'integration'
 freebsd_12_task:
   freebsd_instance:
     image_family: freebsd-12-1
+    cpu: 4
+    memory: 4G
 
-  install_script: pkg install -y git postgresql-libpqxx pkgconf libxml2 gmake
+  install_script: pkg install -y git postgresql-libpqxx pkgconf libxml2 gmake perl5 p5-YAML rsync
 
   script:
-    - cd ${CIRRUS_WORKING_DIR}/src && ./configure
-    - gmake -s -C ${CIRRUS_WORKING_DIR}/src
-    - ${CIRRUS_WORKING_DIR}/src/pgbackrest
+    - perl ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup --test=archive-get --test=archive-push
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
-    - cat ${CIRRUS_WORKING_DIR}/src/Makefile
 
 # MacOS Catalina
 # ----------------------------------------------------------------------------------------------------------------------------------
@@ -33,14 +32,14 @@ macos_catalina_task:
   environment:
     LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/libpq/lib -L/usr/local/opt/libxml2/lib
     CPPFLAGS: -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include -I/usr/local/opt/libxml2/include/libxml2
+    PERL5LIB: /usr/local/opt/perl5/lib/perl5
 
-  install_script: brew install openssl@1.1 libpq libxml2
+  install_script:
+      - brew install -q openssl@1.1 libpq libxml2 cpanm
+      - cpanm --local-lib=/usr/local/opt/perl5 install YAML
 
   script:
-    - cd ${CIRRUS_WORKING_DIR}/src && ./configure
-    - make -s -C ${CIRRUS_WORKING_DIR}/src
-    - ${CIRRUS_WORKING_DIR}/src/pgbackrest
+    - ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup --test=archive-get --test=archive-push
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
-    - cat ${CIRRUS_WORKING_DIR}/src/Makefile
