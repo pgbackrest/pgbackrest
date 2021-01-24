@@ -49,7 +49,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdHelp, strLstNew());
         cfgCommandSet(cfgCmdNone, cfgCmdRoleDefault);
 
-        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command")
+        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
@@ -57,10 +57,10 @@ testRun(void)
         hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
-        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error")
+        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error");
         harnessLogResult("P00   INFO: archive-push command end: completed successfully");
 
-        TEST_RESULT_INT(exitSafe(1, false, signalTypeNone), 1, "exit with no error")
+        TEST_RESULT_INT(exitSafe(1, false, signalTypeNone), 1, "exit with no error");
         harnessLogResult("P00   INFO: archive-push command end: completed successfully");
 
         // -------------------------------------------------------------------------------------------------------------------------
