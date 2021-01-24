@@ -289,7 +289,10 @@ testRun(void)
         uint64_t sha1Total = 1;
         uint64_t sha256Total = 1;
         uint64_t gzip6Total = 1;
+
+#ifdef HAVE_LIBLZ4
         uint64_t lz41Total = 1;
+#endif // HAVE_LIBLZ4
 
         for (unsigned int idx = 0; idx < iteration; idx++)
         {
@@ -348,6 +351,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_END();
 
             // -------------------------------------------------------------------------------------------------------------------------
+#ifdef HAVE_LIBLZ4
             TEST_LOG_FMT("lz4 -1 iteration %u", idx + 1);
 
             MEM_CONTEXT_TEMP_BEGIN()
@@ -357,6 +361,7 @@ testRun(void)
                 BENCHMARK_END(lz41Total);
             }
             MEM_CONTEXT_TEMP_END();
+#endif // HAVE_LIBLZ4
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -372,7 +377,10 @@ testRun(void)
         TEST_RESULT("sha1", sha1Total);
         TEST_RESULT("sha256", sha256Total);
         TEST_RESULT("gzip -6", gzip6Total);
+
+#ifdef HAVE_LIBLZ4
         TEST_RESULT("lz4 -1", lz41Total);
+#endif // HAVE_LIBLZ4
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
