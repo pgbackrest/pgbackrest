@@ -113,6 +113,7 @@ test.pl [options]
    --log-level-test     log level to use for C tests (defaults to OFF)
    --log-level-test-file log level to use for file logging in integration tests (defaults to TRACE)
    --no-log-timestamp   suppress timestamps, timings, etc. Used to generate documentation.
+   --make-cmd           gnu-compatible make command (defaults to make)
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
@@ -146,6 +147,7 @@ my $bDryRun = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
 my $strTestPath;
+my $strMakeCmd = 'make';
 my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
@@ -191,6 +193,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'clean-only' => \$bCleanOnly,
             'pgsql-bin=s' => \$strPgSqlBin,
             'test-path=s' => \$strTestPath,
+            'make-cmd=s' => \$strMakeCmd,
             'log-level=s' => \$strLogLevel,
             'log-level-test=s' => \$strLogLevelTest,
             'log-level-test-file=s' => \$strLogLevelTestFile,
@@ -798,7 +801,7 @@ eval
 
                         executeTest(
                             ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
-                            "make -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
+                            "${strMakeCmd} -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
                                 " --directory ${strBuildPath} CFLAGS='${strCFlags}' LDFLAGS='${strLdFlags}'",
                             {bShowOutputAsync => $bLogDetail});
 
@@ -1100,7 +1103,7 @@ eval
                 {
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $strVmHost, $bVmOut,
-                        $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile,
+                        $iVmIdx, $iVmMax, $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile,
                         !$bNoLogTimestamp, $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage,
                         $bCoverageSummary, !$bNoOptimize, $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug,
                         $bDebugTestTrace, $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));

@@ -61,6 +61,7 @@ sub new
         $self->{bVmOut},
         $self->{iVmIdx},
         $self->{iVmMax},
+        $self->{strMakeCmd},
         $self->{iTestIdx},
         $self->{iTestMax},
         $self->{strLogLevel},
@@ -95,6 +96,7 @@ sub new
             {name => 'bVmOut'},
             {name => 'iVmIdx'},
             {name => 'iVmMax'},
+            {name => 'strMakeCmd'},
             {name => 'iTestIdx'},
             {name => 'iTestMax'},
             {name => 'strLogLevel'},
@@ -261,7 +263,7 @@ sub run
                 "cd $self->{strGCovPath} && " .
                 # Remove coverage data from last run
                 "rm -f test.gcda && " .
-                "make -j $self->{iBuildMax} -s 2>&1 &&" .
+                $self->{strMakeCmd} . " -j $self->{iBuildMax} -s 2>&1 &&" .
                 # Test with valgrind when requested
                 ($self->{bValgrindUnit} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
                     ' valgrind -q --gen-suppressions=all ' .
