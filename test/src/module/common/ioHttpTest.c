@@ -49,7 +49,7 @@ testRun(void)
             httpDateToTime(STRDEF("Wed,  1 Oct 2015 07:28:00 GMT")), FormatError, "unable to convert base 10 string ' 1' to int");
         TEST_RESULT_INT(httpDateToTime(STRDEF("Wed, 21 Oct 2015 07:28:00 GMT")), 1445412480, "convert HTTP date to time_t");
 
-        TEST_RESULT_STR_Z(httpDateFromTime(1592743579), "Sun, 21 Jun 2020 12:46:19 GMT", "convert time_t to HTTP date")
+        TEST_RESULT_STR_Z(httpDateFromTime(1592743579), "Sun, 21 Jun 2020 12:46:19 GMT", "convert time_t to HTTP date");
     }
 
     // *****************************************************************************************************************************
@@ -71,7 +71,7 @@ testRun(void)
         TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key2"), strNew("value2b")), header, "add header");
 
         TEST_RESULT_PTR(httpHeaderAdd(header, strNew("key1"), strNew("value1")), header, "add header");
-        TEST_RESULT_STR_Z(strLstJoin(httpHeaderList(header), ", "), "key1, key2", "header list");
+        TEST_RESULT_STRLST_Z(httpHeaderList(header), "key1\nkey2\n", "header list");
 
         TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key1")), "value1", "get value");
         TEST_RESULT_STR_Z(httpHeaderGet(header, strNew("key2")), "value2a, value2b", "get value");
@@ -132,7 +132,7 @@ testRun(void)
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "key2=value2a", "render one query item");
 
         TEST_RESULT_PTR(httpQueryAdd(query, strNew("key1"), strNew("value 1?")), query, "add query");
-        TEST_RESULT_STR_Z(strLstJoin(httpQueryList(query), ", "), "key1, key2", "query list");
+        TEST_RESULT_STRLST_Z(httpQueryList(query), "key1\nkey2\n", "query list");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "key1=value%201%3F&key2=value2a", "render two query items");
         TEST_RESULT_STR_Z(
             httpQueryRenderP(query, .redact = true), "key1=value%201%3F&key2=<redacted>", "render two query items with redaction");

@@ -180,6 +180,19 @@ cvtDoubleToZ(double value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN((size_t)(end - buffer + 1));
 }
 
+String *cvtDoubleToStr(double value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DOUBLE, value);
+    FUNCTION_TEST_END();
+
+    char working[CVT_BASE10_BUFFER_SIZE];
+
+    cvtDoubleToZ(value, working, sizeof(working));
+
+    FUNCTION_TEST_RETURN(strNew(working));
+}
+
 double
 cvtZToDouble(const char *value)
 {
@@ -320,7 +333,7 @@ cvtZToMode(const char *value)
 
     ASSERT(value != NULL);
 
-    FUNCTION_TEST_RETURN(cvtZToUIntBase(value, 8));
+    FUNCTION_TEST_RETURN((mode_t)cvtZToUIntBase(value, 8));
 }
 
 /**********************************************************************************************************************************/

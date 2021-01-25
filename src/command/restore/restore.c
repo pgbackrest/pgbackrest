@@ -1367,6 +1367,8 @@ restoreRecoveryOption(unsigned int pgVersion)
             KeyValue *optionReplace = kvNew();
 
             kvPut(optionReplace, VARSTR(CFGOPT_EXEC_ID_STR), NULL);
+            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_STR), NULL);
+            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_INTERVAL_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
             kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);
@@ -1554,9 +1556,9 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             RegExp *recoveryExp =
                 regExpNew(
                     STRDEF(
-                        "^\\s*(" RECOVERY_TARGET "|" RECOVERY_TARGET_ACTION "|" RECOVERY_TARGET_INCLUSIVE "|" RECOVERY_TARGET_LSN
-                            "|" RECOVERY_TARGET_NAME "|" RECOVERY_TARGET_TIME "|" RECOVERY_TARGET_TIMELINE "|" RECOVERY_TARGET_XID
-                            ")\\s*="));
+                        "^[\t ]*(" RECOVERY_TARGET "|" RECOVERY_TARGET_ACTION "|" RECOVERY_TARGET_INCLUSIVE "|"
+                            RECOVERY_TARGET_LSN "|" RECOVERY_TARGET_NAME "|" RECOVERY_TARGET_TIME "|" RECOVERY_TARGET_TIMELINE "|"
+                            RECOVERY_TARGET_XID ")[\t ]*="));
 
             // Check each line for recovery settings
             const StringList *contentList = strLstNewSplit(strNewBuf(autoConf), LF_STR);
@@ -2096,7 +2098,7 @@ cmdRestore(void)
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
-            (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, restoreJobCallback, &jobData);
+            cfgOptionUInt64(cfgOptProtocolTimeout) / 2, restoreJobCallback, &jobData);
 
         for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));

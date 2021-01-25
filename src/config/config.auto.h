@@ -50,7 +50,7 @@ Command constants
 #define CFGCMD_VERSION                                              "version"
     STRING_DECLARE(CFGCMD_VERSION_STR);
 
-#define CFG_COMMAND_TOTAL                                           21
+#define CFG_COMMAND_TOTAL                                           20
 
 /***********************************************************************************************************************************
 Option group constants
@@ -120,6 +120,10 @@ Option constants
     STRING_DECLARE(CFGOPT_IGNORE_MISSING_STR);
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
     STRING_DECLARE(CFGOPT_IO_TIMEOUT_STR);
+#define CFGOPT_JOB_RETRY                                            "job-retry"
+    STRING_DECLARE(CFGOPT_JOB_RETRY_STR);
+#define CFGOPT_JOB_RETRY_INTERVAL                                   "job-retry-interval"
+    STRING_DECLARE(CFGOPT_JOB_RETRY_INTERVAL_STR);
 #define CFGOPT_LINK_ALL                                             "link-all"
     STRING_DECLARE(CFGOPT_LINK_ALL_STR);
 #define CFGOPT_LINK_MAP                                             "link-map"
@@ -203,7 +207,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            126
+#define CFG_OPTION_TOTAL                                            128
 
 /***********************************************************************************************************************************
 Command enum
@@ -277,6 +281,8 @@ typedef enum
     cfgOptForce,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
+    cfgOptJobRetry,
+    cfgOptJobRetryInterval,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLockPath,

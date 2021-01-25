@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Configuration Parse
 ***********************************************************************************************************************************/
+#include "common/type/json.h"
 #include "protocol/helper.h"
 #include "storage/storage.intern.h"
 
@@ -38,6 +39,14 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // *****************************************************************************************************************************
+    if (testBegin("size"))
+    {
+        TEST_TITLE("check size of parse structures");
+
+        TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 40 : 28, "ParseRuleOption size");
+    }
+
     // Config functions that are not tested with parse
     // *****************************************************************************************************************************
     if (testBegin("cfg*()"))
@@ -45,6 +54,11 @@ testRun(void)
         TEST_TITLE("config command defaults to none before cfgInit()");
 
         TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
+
+        TEST_TITLE("parse option name to id");
+
+        TEST_RESULT_INT(cfgParseOptionId(BOGUS_STR), -1, "invalid option");
+        TEST_RESULT_INT(cfgParseOptionId(CFGOPT_STANZA), cfgOptStanza, "valid option");
     }
 
     // config and config-include-path options
@@ -146,9 +160,9 @@ testRun(void)
             strZ(strNewFmt("%s/global-backup.confsave", strZ(configIncludePath))));
 
         // Set up defaults
-        String *backupCmdDefConfigValue = strNew(cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
+        String *backupCmdDefConfigValue = strNew(cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
         String *backupCmdDefConfigInclPathValue = strNew(
-            cfgDefOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
+            cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
         String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
@@ -536,84 +550,14 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("convertToByte()"))
     {
-        double valueDbl = 0;
-        String *value = strNew("10.0");
-
         TEST_ERROR(sizeQualifierToMultiplier('w'), AssertError, "'w' is not a valid size qualifier");
-        TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10.0' is not valid");
-        strTrunc(value, strChr(value, '.'));
-        strCatZ(value, "K2");
-        TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value '10K2' is not valid");
-        strTrunc(value, strChr(value, '1'));
-        strCatZ(value, "ab");
-        TEST_ERROR(convertToByte(&value, &valueDbl), FormatError, "value 'ab' is not valid");
-
-        strTrunc(value, strChr(value, 'a'));
-        strCatZ(value, "10");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl no character identifier - straight to bytes");
-        TEST_RESULT_STR_Z(value, "10", "value no character identifier - straight to bytes");
-
-        strCatZ(value, "B");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10, "valueDbl B to bytes");
-        TEST_RESULT_STR_Z(value, "10", "value B to bytes");
-
-        strCatZ(value, "Kb");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl KB to bytes");
-        TEST_RESULT_STR_Z(value, "10240", "value KB to bytes");
-
-        strTrunc(value, strChr(value, '2'));
-        strCatZ(value, "k");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10240, "valueDbl k to bytes");
-        TEST_RESULT_STR_Z(value, "10240", "value k to bytes");
-
-        strCatZ(value, "pB");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 11529215046068469760U, "valueDbl Pb to bytes");
-        TEST_RESULT_STR_Z(value, "11529215046068469760", "value Pb to bytes");
-
-        strTrunc(value, strChr(value, '5'));
-        strCatZ(value, "GB");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl GB to bytes");
-        TEST_RESULT_STR_Z(value, "11811160064", "value GB to bytes");
-
-        strTrunc(value, strChr(value, '8'));
-        strCatZ(value, "g");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 11811160064U, "valueDbl g to bytes");
-        TEST_RESULT_STR_Z(value, "11811160064", "value g to bytes");
-
-        strTrunc(value, strChr(value, '8'));
-        strCatZ(value, "T");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 12094627905536U, "valueDbl T to bytes");
-        TEST_RESULT_STR_Z(value, "12094627905536", "value T to bytes");
-
-        strTrunc(value, strChr(value, '0'));
-        strCatZ(value, "tb");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 13194139533312U, "valueDbl tb to bytes");
-        TEST_RESULT_STR_Z(value, "13194139533312", "value tb to bytes");
-
-        strTrunc(value, strChr(value, '3'));
-        strCatZ(value, "0m");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10485760, "valueDbl m to bytes");
-        TEST_RESULT_STR_Z(value, "10485760", "value m to bytes");
-
-        strCatZ(value, "mb");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_DOUBLE(valueDbl, 10995116277760U, "valueDbl mb to bytes");
-        TEST_RESULT_STR_Z(value, "10995116277760", "value mb to bytes");
-
-        strTrunc(value, strChr(value, '0'));
-        strCatZ(value, "99999999999999999999p");
-        convertToByte(&value, &valueDbl);
-        TEST_RESULT_STR_Z(value, "225179981368524800000000000000000000", "value really large  to bytes");
+        TEST_RESULT_UINT(convertToByte(STRDEF("10B")), 10, "10B");
+        TEST_RESULT_UINT(convertToByte(STRDEF("1k")), 1024, "1k");
+        TEST_RESULT_UINT(convertToByte(STRDEF("5G")), (uint64_t)5 * 1024 * 1024 * 1024, "5G");
+        TEST_RESULT_UINT(convertToByte(STRDEF("3Tb")), (uint64_t)3 * 1024 * 1024 * 1024 * 1024, "3Tb");
+        TEST_RESULT_UINT(convertToByte(STRDEF("11")), 11, "11 - no qualifier, default bytes");
+        TEST_RESULT_UINT(convertToByte(STRDEF("4pB")), 4503599627370496, "4pB");
+        TEST_RESULT_UINT(convertToByte(STRDEF("15MB")), (uint64_t)15 * 1024 * 1024, "15MB");
     }
 
     // *****************************************************************************************************************************
@@ -631,6 +575,17 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(BOGUS_STR));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError, "invalid command 'BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid command/role combination");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_ASYNC);
+
+        TEST_ERROR(
+            configParse(strLstSize(argList), strLstPtr(argList), false), CommandInvalidError,
+            "invalid command/role combination 'backup:async'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -763,9 +718,9 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--manifest-save-threshold=199999999999999999999p"));
+        strLstAdd(argList, strNew("--manifest-save-threshold=9999999999999999999p"));
         TEST_ERROR(configParse(strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "'225179981368524800000000000000000000' is out of range for 'manifest-save-threshold' option");
+            "'9999999999999999999p' is out of range for 'manifest-save-threshold' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -807,8 +762,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
-        hrnCfgArgRawZ(argList, cfgOptPg, "1");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
+        hrnCfgArgRawZ(argList, cfgOptPg, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/path/to/2");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
         strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
@@ -818,6 +774,7 @@ testRun(void)
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "load local config");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/2", "default pg-path");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleLocal, "    command role is local");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "    backup:local command does not require lock");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup:local", "    command/role name is backup:local");
@@ -1171,9 +1128,8 @@ testRun(void)
         strLstAdd(argList, strNew("000000010000000200000003"));
         strLstAdd(argList, strNew("/path/to/wal/RECOVERYWAL"));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "command arguments");
-        TEST_RESULT_STR_Z(
-            strLstJoin(cfgCommandParam(), "|"), "000000010000000200000003|/path/to/wal/RECOVERYWAL",
-            "    check command arguments");
+        TEST_RESULT_STRLST_Z(
+            cfgCommandParam(), "000000010000000200000003\n/path/to/wal/RECOVERYWAL\n", "    check command arguments");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1191,13 +1147,12 @@ testRun(void)
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "xxx", true);
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "    command is " TEST_COMMAND_BACKUP);
-        TEST_RESULT_BOOL(cfgCommandInternal(cfgCmdBackup), false, "    backup command is not internal");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "    backup command requires lock");
         TEST_RESULT_UINT(cfgLockType(), lockTypeBackup, "    backup command requires backup lock type");
         TEST_RESULT_UINT(cfgLogLevelDefault(), logLevelInfo, "    backup defaults to log level warn");
         TEST_RESULT_BOOL(cfgLogFile(), true, "    backup command does file logging");
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "    backup command requires remote lock");
-        TEST_RESULT_STR_Z(strLstJoin(cfgCommandParam(), "|"), "", "    check command arguments");
+        TEST_RESULT_STRLST_Z(cfgCommandParam(), NULL, "    check command arguments");
         TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleDefault, "command role default enum");
         TEST_ERROR(cfgCommandRoleEnum(STRDEF("bogus")), CommandInvalidError, "invalid command role 'bogus'");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleDefault, "    command role is default");
@@ -1263,7 +1218,6 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNew("--no-online"));
         hrnCfgArgKeyRawBool(argList, cfgOptPgLocal, 2, true);
-        hrnCfgArgRawZ(argList, cfgOptPg, "2");
         strLstAdd(argList, strNew("--reset-pg1-host"));
         strLstAdd(argList, strNew("--reset-pg3-host"));
         strLstAdd(argList, strNew("--reset-backup-standby"));
@@ -1299,6 +1253,9 @@ testRun(void)
                     "pg1-path=/not/path/to/db\n"
                     "backup-standby=y\n"
                     "buffer-size=65536\n"
+                    "protocol-timeout=3600\n"
+                    CFGOPT_JOB_RETRY "=3\n"
+                    CFGOPT_JOB_RETRY_INTERVAL "=33\n"
                     "\n"
                     "[db:backup]\n"
                     "delta=n\n"
@@ -1311,7 +1268,7 @@ testRun(void)
                     "%s=/path/to/db2\n"
                     "pg3-host=ignore\n"
                     "recovery-option=c=d\n",
-                    cfgOptionKeyIdxName(cfgOptPgHost, 1), cfgOptionKeyIdxName(cfgOptPgPath, 1))));
+                    cfgParseOptionKeyIdxName(cfgOptPgHost, 1), cfgParseOptionKeyIdxName(cfgOptPgPath, 1))));
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         harnessLogResult(
@@ -1327,11 +1284,13 @@ testRun(void)
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
                     "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
 
+        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "    custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptPgHost, 0), true, "    pg1-host was reset");
-        TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 1, "    pg2 is default");
-        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "    pg2 is index 1");
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db2", "    default pg-path");
+        TEST_RESULT_UINT(cfgOptionGroupIdxDefault(cfgOptGrpPg), 0, "    pg1 is default");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "    pg2 is index 2");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    default pg-path");
+        TEST_RESULT_BOOL(cfgOptionGroupValid(cfgOptGrpPg), true, "    pg group is valid");
         TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "    pg1 and pg2 are set");
         TEST_RESULT_BOOL(cfgOptionIdxBool(cfgOptPgLocal, 1), true, "    pg2-local is set");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 1), false, "    pg2-host is not set (pg2-local override)");
@@ -1361,27 +1320,28 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "    delta is source config");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "    buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "    backup-standby is source config");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptDbTimeout), 1800, "    db-timeout is set");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptDbTimeout), 1800000, "    db-timeout is set");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 3600000, "    protocol-timeout is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgPort, 1), 5432, "    pg2-port is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt64(cfgOptPgPort, 1), 5432, "    pg2-port is set");
         TEST_RESULT_STR(cfgOptionIdxStrNull(cfgOptPgHost, 1), NULL, "    pg2-host is NULL");
         TEST_RESULT_STR(cfgOptionStrNull(cfgOptPgHost), NULL, "    pg2-host is NULL");
-        TEST_ERROR(cfgOptionStr(cfgOptPgHost), AssertError, "option 'pg2-host' is null but non-null was requested");
+        TEST_ERROR(cfgOptionIdxStr(cfgOptPgHost, 1), AssertError, "option 'pg2-host' is null but non-null was requested");
 
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "    backup-standby default is false");
         TEST_RESULT_BOOL(varBool(cfgOptionDefault(cfgOptBackupStandby)), false, "    backup-standby default is false (again)");
         TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHost), NULL, "    pg-host default is NULL");
         TEST_RESULT_STR_Z(varStr(cfgOptionDefault(cfgOptLogLevelConsole)), "warn", "    log-level-console default is warn");
         TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptPgPort)), 5432, "    pg-port default is 5432");
-        TEST_RESULT_DOUBLE(varDbl(cfgOptionDefault(cfgOptDbTimeout)), 1800, "    db-timeout default is 1800");
+        TEST_RESULT_INT(varInt64(cfgOptionDefault(cfgOptDbTimeout)), 1800000, "    db-timeout default is 1800000");
 
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, VARSTRDEF("/default")), "    set pg-socket-path default");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "    pg1-socket-path unchanged");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 1), "/default", "    pg2-socket-path is new default");
 
-        TEST_ERROR(cfgOptionDefaultValue(cfgOptDbInclude), AssertError, "default value not available for option type 4");
+        TEST_ERROR(cfgOptionDefaultValue(cfgOptDbInclude), AssertError, "default value not available for option type 3");
         TEST_ERROR(cfgOptionLst(cfgOptDbInclude), AssertError, "option 'db-include' is not valid for the current command");
-        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg2-path' is type 5 but 4 was requested");
+        TEST_ERROR(cfgOptionKv(cfgOptPgPath), AssertError, "option 'pg1-path' is type 4 but 3 was requested");
 
         TEST_RESULT_VOID(cfgOptionInvalidate(cfgOptPgPath), "    invalidate pg-path");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), false, "    pg-path no longer valid");
@@ -1420,6 +1380,7 @@ testRun(void)
 
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), "archive-push command");
 
+        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0]", "    default job retry");
         TEST_RESULT_BOOL(cfgLockRequired(), true, "    archive-push:async command requires lock");
         TEST_RESULT_BOOL(cfgLogFile(), true, "    archive-push:async command does file logging");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptArchivePushQueueMax), 4503599627370496, "archive-push-queue-max is set");
@@ -1462,6 +1423,8 @@ testRun(void)
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
 
+        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,15000]", "    default job retry");
+
         const VariantList *includeList = NULL;
         TEST_ASSIGN(includeList, cfgOptionLst(cfgOptDbInclude), "get db include options");
         TEST_RESULT_STR_Z(varStr(varLstGet(includeList, 0)), "abc", "check db include option");
@@ -1474,8 +1437,11 @@ testRun(void)
         strLstAdd(argList, strNew("--recovery-option=a=b"));
         strLstAdd(argList, strNew("--recovery-option=c=de=fg hi"));
         strLstAdd(argList, strNew("--stanza=db"));
+        hrnCfgArgRawZ(argList, cfgOptJobRetry, "0");
         strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
         TEST_RESULT_VOID(configParse(strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
+
+        TEST_RESULT_PTR(cfgCommandJobRetry(), NULL, "    no job retries");
 
         const KeyValue *recoveryKv = NULL;
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
@@ -1539,17 +1505,17 @@ testRun(void)
         TEST_RESULT_VOID(cfgOptionSet(cfgOptForce, cfgSourceParam, VARBOOL(false)), "set force false");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "check force");
 
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT(1)), "set protocol-timeout to 1");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 1, "check protocol-timeout");
-        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARDBL(2.2)), "set protocol-timeout to 2.2");
-        TEST_RESULT_DOUBLE(cfgOptionDbl(cfgOptProtocolTimeout), 2.2, "check protocol-timeout");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT64(1000)), "set protocol-timeout to 1");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 1000, "check protocol-timeout");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptProtocolTimeout, cfgSourceParam, VARINT64(2200)), "set protocol-timeout to 2.2");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 2200, "check protocol-timeout");
 
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProcessMax, cfgSourceParam, VARINT(50)), "set process-max to 50");
         TEST_RESULT_INT(cfgOptionInt(cfgOptProcessMax), 50, "check process-max");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptProcessMax, cfgSourceParam, VARINT64(51)), "set process-max to 51");
         TEST_RESULT_INT(cfgOptionInt(cfgOptProcessMax), 51, "check process-max");
 
-        TEST_ERROR(cfgOptionSet(cfgOptDbInclude, cfgSourceParam, VARINT(1)), AssertError, "set not available for option type 4");
+        TEST_ERROR(cfgOptionSet(cfgOptDbInclude, cfgSourceParam, VARINT(1)), AssertError, "set not available for option type 3");
 
         TEST_ERROR(
             cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, VARINT(1)), AssertError,
@@ -1612,7 +1578,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, "/pg8");
         hrnCfgArgRawZ(argList, cfgOptPg, "4");
-        TEST_ERROR(harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError, "key '4' is not valid for 'pg' option");
+        TEST_ERROR(
+            harnessCfgLoadRole(cfgCmdBackup, cfgCmdRoleLocal, argList), OptionInvalidValueError,
+            "key '4' is not valid for 'pg' option");
     }
 
     // *****************************************************************************************************************************

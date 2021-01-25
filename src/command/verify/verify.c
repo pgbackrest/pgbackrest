@@ -42,11 +42,6 @@ Data Types and Structures
 #define FUNCTION_LOG_VERIFY_BACKUP_RESULT_FORMAT(value, buffer, bufferSize)                                                        \
     objToLog(&value, "VerifyBackupResult", buffer, bufferSize)
 
-#define FUNCTION_LOG_VERIFY_INFO_FILE_TYPE                                                                                         \
-    VerifyInfoFile
-#define FUNCTION_LOG_VERIFY_INFO_FILE_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(&value, "VerifyInfoFile", buffer, bufferSize)
-
 // Structure for verifying repository info files
 typedef struct VerifyInfoFile
 {
@@ -242,7 +237,7 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(VERIFY_INFO_FILE, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /***********************************************************************************************************************************
@@ -1488,7 +1483,7 @@ verifyProcess(unsigned int *errorTotal)
 
                 // Create the parallel executor
                 ProtocolParallel *parallelExec = protocolParallelNew(
-                    (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, verifyJobCallback, &jobData);
+                    cfgOptionUInt64(cfgOptProtocolTimeout) / 2, verifyJobCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));

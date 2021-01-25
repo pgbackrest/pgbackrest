@@ -3237,6 +3237,117 @@ fi
 
     fi
 else
+    # Check for optional warnings (note that these must be checked before the additional warnings below are added)
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wformat-signedness" >&5
+$as_echo_n "checking whether C compiler accepts -Wformat-signedness... " >&6; }
+if ${ax_cv_check_cflags__Werror__Wformat_signedness+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS -Werror -Wformat-signedness"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags__Werror__Wformat_signedness=yes
+else
+  ax_cv_check_cflags__Werror__Wformat_signedness=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wformat_signedness" >&5
+$as_echo "$ax_cv_check_cflags__Werror__Wformat_signedness" >&6; }
+if test "x$ax_cv_check_cflags__Werror__Wformat_signedness" = xyes; then :
+  CFLAGS="${CFLAGS} -Wformat-signedness"
+
+else
+  :
+fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wduplicated-branches" >&5
+$as_echo_n "checking whether C compiler accepts -Wduplicated-branches... " >&6; }
+if ${ax_cv_check_cflags__Werror__Wduplicated_branches+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS -Werror -Wduplicated-branches"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags__Werror__Wduplicated_branches=yes
+else
+  ax_cv_check_cflags__Werror__Wduplicated_branches=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wduplicated_branches" >&5
+$as_echo "$ax_cv_check_cflags__Werror__Wduplicated_branches" >&6; }
+if test "x$ax_cv_check_cflags__Werror__Wduplicated_branches" = xyes; then :
+  CFLAGS="${CFLAGS} -Wduplicated-branches"
+
+else
+  :
+fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wduplicated-cond" >&5
+$as_echo_n "checking whether C compiler accepts -Wduplicated-cond... " >&6; }
+if ${ax_cv_check_cflags__Werror__Wduplicated_cond+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS -Werror -Wduplicated-cond"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ax_cv_check_cflags__Werror__Wduplicated_cond=yes
+else
+  ax_cv_check_cflags__Werror__Wduplicated_cond=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cflags__Werror__Wduplicated_cond" >&5
+$as_echo "$ax_cv_check_cflags__Werror__Wduplicated_cond" >&6; }
+if test "x$ax_cv_check_cflags__Werror__Wduplicated_cond" = xyes; then :
+  CFLAGS="${CFLAGS} -Wduplicated-cond"
+
+else
+  :
+fi
+
+
+    # Add additional warnings
     CFLAGS="${CFLAGS} -Wwrite-strings -Wconversion -Wformat=2 -Wformat-nonliteral -Wstrict-prototypes -Wpointer-arith"
 
     CFLAGS="${CFLAGS} -Wvla"
@@ -5475,4 +5586,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 5be6f288e819c7746e4bf79575573990a18a560a
+# Generated from src/build/configure.ac sha1 406a92943e4e2dce304ab151e5f299f02f7570a0

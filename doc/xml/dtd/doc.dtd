@@ -33,6 +33,7 @@
 
 <!ELEMENT option (summary, text, example)>
     <!ATTLIST option id CDATA #REQUIRED>
+    <!ATTLIST option section CDATA "">
     <!ATTLIST option name CDATA #REQUIRED>
 
 <!ELEMENT config (description, text, config-section-list)>

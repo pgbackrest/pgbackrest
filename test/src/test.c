@@ -27,6 +27,12 @@ The test code is included directly so it can freely interact with the included C
     #include "common/error.h"
 #endif
 
+// Path where the test is running
+#define TEST_PATH                                                   "{[C_TEST_PATH]}"
+
+// Path to source -- used to construct __FILENAME__ tests
+#define TEST_PGB_PATH                                               "{[C_TEST_PGB_PATH]}"
+
 #include "common/harnessDebug.h"
 #include "common/harnessTest.intern.h"
 

@@ -52,19 +52,19 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => PG_VERSION_83, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt => false, compress => NONE},
-        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt =>  true, compress =>   GZ},
-        {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt =>  true, compress =>  BZ2},
-        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt => false, compress => NONE},
-        {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress => NONE},
-        {pg => PG_VERSION_93, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>   GZ},
-        {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress =>  LZ4},
-        {pg => PG_VERSION_95, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt => false, compress =>  BZ2},
-        {pg => PG_VERSION_96, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt => false, compress => NONE},
-        {pg => PG_VERSION_10, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt =>  true, compress =>   GZ},
-        {pg => PG_VERSION_11, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>  ZST},
-        {pg => PG_VERSION_12, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt =>  true, compress =>  LZ4},
-        {pg => PG_VERSION_13, repoDest => HOST_DB_STANDBY, storage => AZURE, encrypt => false, compress =>  ZST},
+        {pg => PG_VERSION_83, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt => false, compress => NONE, repo => 1},
+        {pg => PG_VERSION_84, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt =>  true, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_90, repoDest => HOST_DB_PRIMARY, storage => POSIX, encrypt =>  true, compress =>  BZ2, repo => 1},
+        {pg => PG_VERSION_91, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt => false, compress => NONE, repo => 1},
+        {pg => PG_VERSION_92, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress => NONE, repo => 1},
+        {pg => PG_VERSION_93, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_94, repoDest => HOST_DB_STANDBY, storage => POSIX, encrypt =>  true, compress =>  LZ4, repo => 1},
+        {pg => PG_VERSION_95, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt => false, compress =>  BZ2, repo => 1},
+        {pg => PG_VERSION_96, repoDest =>     HOST_BACKUP, storage => POSIX, encrypt => false, compress => NONE, repo => 1},
+        {pg => PG_VERSION_10, repoDest => HOST_DB_STANDBY, storage =>    S3, encrypt =>  true, compress =>   GZ, repo => 1},
+        {pg => PG_VERSION_11, repoDest =>     HOST_BACKUP, storage => AZURE, encrypt => false, compress =>  ZST, repo => 1},
+        {pg => PG_VERSION_12, repoDest =>     HOST_BACKUP, storage =>    S3, encrypt =>  true, compress =>  LZ4, repo => 1},
+        {pg => PG_VERSION_13, repoDest => HOST_DB_STANDBY, storage => AZURE, encrypt => false, compress =>  ZST, repo => 1},
     )
     {
         # Only run tests for this pg version
@@ -77,6 +77,7 @@ sub run
         my $strStorage = $rhRun->{storage};
         my $bRepoEncrypt = $rhRun->{encrypt};
         my $strCompressType = $rhRun->{compress};
+        my $iRepoTotal = $rhRun->{repo};
 
         # Use a specific VM and version of PostgreSQL for expect testing. This version will also be used to run tests that are not
         # version specific.
@@ -93,7 +94,7 @@ sub run
             false, $self->expect(),
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, strBackupDestination => $strBackupDestination,
              strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
-             bRepoEncrypt => $bRepoEncrypt});
+             bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal});
 
         # Some commands will fail because of the bogus host created when a standby is present. These options reset the bogus host
         # so it won't interfere with commands that won't tolerate a connection failure.
@@ -192,9 +193,16 @@ sub run
         # Required to set hint bits to be sent to the standby to make the heap match on both sides
         $oHostDbPrimary->sqlSelectOneTest('select message from test', $strFullMessage);
 
+        # Backup to repo1
         my $strFullBackup = $oHostBackup->backup(
-            CFGOPTVAL_BACKUP_TYPE_FULL, 'update during backup',
+            CFGOPTVAL_BACKUP_TYPE_FULL, 'repo1',
             {strOptionalParam => ' --buffer-size=16384'});
+
+        # Backup to repo2 if it exists
+        if ($iRepoTotal == 2)
+        {
+            $oHostBackup->backup(CFGOPTVAL_BACKUP_TYPE_FULL, 'repo2', {iRepo => 2});
+        }
 
         # Make a new backup with expire-auto disabled then run the expire command and compare backup numbers to ensure that expire
         # was really disabled. This test is not version specific so is run on only the expect version.
@@ -450,7 +458,8 @@ sub run
 
         # Exercise --delta checksum option
         my $strIncrBackup = $oHostBackup->backup(
-            CFGOPTVAL_BACKUP_TYPE_INCR, 'update during backup', {strOptionalParam => '--stop-auto --buffer-size=32768 --delta'});
+            CFGOPTVAL_BACKUP_TYPE_INCR, 'delta',
+            {strOptionalParam => '--stop-auto --buffer-size=32768 --delta', iRepo => $iRepoTotal});
 
         # Ensure the check command runs properly with a tablespace
         $oHostBackup->check( 'check command with tablespace', {iTimeout => 5, strOptionalParam => $strBogusReset});
@@ -520,7 +529,8 @@ sub run
 
         # Now the restore should work
         $oHostDbPrimary->restore(
-            undef, 'latest', {strOptionalParam => ' --db-include=test2 --db-include=test3 --buffer-size=16384'});
+            undef, 'latest',
+            {strOptionalParam => ' --db-include=test2 --db-include=test3 --buffer-size=16384', iRepo => $iRepoTotal});
 
         # Test that the first database has not been restored since --db-include did not include test1
         my ($strSHA1, $lSize) = storageTest()->hashSize($strDb1TablePath);
@@ -646,7 +656,8 @@ sub run
             {bForce => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget,
                 strTargetAction => $oHostDbPrimary->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
                 strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef,
-                strOptionalParam => '--tablespace-map-all=../../tablespace', bTablespace => false});
+                strOptionalParam => '--tablespace-map-all=../../tablespace', bTablespace => false,
+                iRepo => $iRepoTotal});
 
         # Save recovery file to test so we can use it in the next test
         $strRecoveryFile = $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'postgresql.auto.conf' : DB_FILE_RECOVERYCONF;
@@ -712,7 +723,8 @@ sub run
             undef, $strIncrBackup,
             {bDelta => true, strType => CFGOPTVAL_RESTORE_TYPE_XID, strTarget => $strXidTarget, bTargetExclusive => true,
                 strTargetAction => $oHostDbPrimary->pgVersion() >= PG_VERSION_91 ? 'promote' : undef,
-                strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef});
+                strTargetTimeline => $oHostDbPrimary->pgVersion() >= PG_VERSION_12 ? 'current' : undef,
+                iRepo => $iRepoTotal});
 
         $oHostDbPrimary->clusterStart();
         $oHostDbPrimary->sqlSelectOneTest('select message from test', $strIncrMessage);
@@ -751,7 +763,7 @@ sub run
                 {bDelta => true,
                     strType => $oHostDbPrimary->pgVersion() >= PG_VERSION_90 ?
                         CFGOPTVAL_RESTORE_TYPE_STANDBY : CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                    strTargetTimeline => 4});
+                    strTargetTimeline => 4, iRepo => $iRepoTotal});
 
             $oHostDbPrimary->clusterStart({bHotStandby => true});
             $oHostDbPrimary->sqlSelectOneTest('select message from test', $strTimelineMessage, {iTimeout => 120});

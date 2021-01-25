@@ -264,7 +264,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     PgControl pgControl = pgControlFromFile(storagePg());
 
     // Set archive timeout really small to save time on errors
-    cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewDbl(.1));
+    cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewInt64(100));
 
     uint64_t lsnStart = ((uint64_t)backupTimeStart & 0xFFFFFF00) << 28;
     uint64_t lsnStop =
@@ -539,7 +539,7 @@ testRun(void)
 
         // With the expected backupCopyResultCopy, unset the storageFeatureCompress bit for the storageRepo for code coverage
         uint64_t feature = storageRepo()->interface.feature;
-        ((Storage *)storageRepo())->interface.feature = feature && ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
+        ((Storage *)storageRepo())->interface.feature = feature & ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
 
         // Create tmp file to make it look like a prior backup file failed partway through to ensure that retries work
         TEST_RESULT_VOID(
@@ -1263,14 +1263,19 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cannot resume empty directory");
+        TEST_TITLE("cannot resume when manifest and copy are missing");
 
         storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F"));
 
         TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
 
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed: partially deleted by prior resume or invalid");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when resume is disabled");
+
+        storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F"));
 
         cfgOptionSet(cfgOptResume, cfgSourceParam, BOOL_FALSE_VAR);
 
@@ -1460,6 +1465,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         cmdStanzaCreate();
+        harnessLogResult("P00   INFO: stanza-create for stanza 'test1' on repo1");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg appears to be running");
@@ -1635,6 +1641,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
             cmdStanzaCreate();
+            harnessLogResult("P00   INFO: stanza-create for stanza 'test1' on repo1");
 
             // Load options
             argList = strLstNew();
@@ -2100,6 +2107,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
+            harnessLogResult("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
 
             // Load options
             argList = strLstNew();
@@ -2248,6 +2256,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
+            harnessLogResult("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
 
             // Load options
             argList = strLstNew();
@@ -2472,7 +2481,11 @@ testRun(void)
             // Load options
             StringList *argList = strLstNew();
             strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
-            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
+            hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
+            hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
+            hrnCfgArgKeyRawBool(argList, cfgOptRepoHardlink, 2, true);
+            hrnCfgArgRawZ(argList, cfgOptRepo, "2");
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);

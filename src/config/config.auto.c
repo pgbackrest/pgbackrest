@@ -31,286 +31,228 @@ STRING_EXTERN(CFGCMD_VERSION_STR,                                   CFGCMD_VERSI
 /***********************************************************************************************************************************
 Command data
 ***********************************************************************************************************************************/
-static ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_LIST
+static const ConfigCommandData configCommandData[CFG_COMMAND_TOTAL] = CONFIG_COMMAND_LIST
 (
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_ARCHIVE_GET)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeArchive)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_ARCHIVE_PUSH)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(true)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeArchive)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_BACKUP)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(true)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeBackup)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_CHECK)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_EXPIRE)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeBackup)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_HELP)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_INFO)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_REPO_CREATE)
 
-        CONFIG_COMMAND_INTERNAL(true)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_REPO_GET)
 
-        CONFIG_COMMAND_INTERNAL(true)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_REPO_LS)
 
-        CONFIG_COMMAND_INTERNAL(true)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_REPO_PUT)
 
-        CONFIG_COMMAND_INTERNAL(true)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_REPO_RM)
 
-        CONFIG_COMMAND_INTERNAL(true)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(true)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_RESTORE)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_STANZA_CREATE)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeAll)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_STANZA_DELETE)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeAll)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_STANZA_UPGRADE)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(true)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeAll)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_START)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_STOP)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_VERIFY)
 
-        CONFIG_COMMAND_INTERNAL(true)
         CONFIG_COMMAND_LOG_FILE(true)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 
     CONFIG_COMMAND
     (
         CONFIG_COMMAND_NAME(CFGCMD_VERSION)
 
-        CONFIG_COMMAND_INTERNAL(false)
         CONFIG_COMMAND_LOG_FILE(false)
         CONFIG_COMMAND_LOG_LEVEL_DEFAULT(logLevelDebug)
         CONFIG_COMMAND_LOCK_REQUIRED(false)
         CONFIG_COMMAND_LOCK_REMOTE_REQUIRED(false)
         CONFIG_COMMAND_LOCK_TYPE(lockTypeNone)
-        CONFIG_COMMAND_PARAMETER_ALLOWED(false)
     )
 )
-
-/***********************************************************************************************************************************
-Option group data
-***********************************************************************************************************************************/
-static ConfigOptionGroupData configOptionGroupData[CFG_OPTION_GROUP_TOTAL] = 
-{
-    // cfgOptGrpPg
-    //------------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "pg"
-    },
-
-    // cfgOptGrpRepo
-    //------------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo"
-    },
-};
 
 /***********************************************************************************************************************************
 Option constants
@@ -345,6 +287,8 @@ STRING_EXTERN(CFGOPT_FILTER_STR,                                    CFGOPT_FILTE
 STRING_EXTERN(CFGOPT_FORCE_STR,                                     CFGOPT_FORCE);
 STRING_EXTERN(CFGOPT_IGNORE_MISSING_STR,                            CFGOPT_IGNORE_MISSING);
 STRING_EXTERN(CFGOPT_IO_TIMEOUT_STR,                                CFGOPT_IO_TIMEOUT);
+STRING_EXTERN(CFGOPT_JOB_RETRY_STR,                                 CFGOPT_JOB_RETRY);
+STRING_EXTERN(CFGOPT_JOB_RETRY_INTERVAL_STR,                        CFGOPT_JOB_RETRY_INTERVAL);
 STRING_EXTERN(CFGOPT_LINK_ALL_STR,                                  CFGOPT_LINK_ALL);
 STRING_EXTERN(CFGOPT_LINK_MAP_STR,                                  CFGOPT_LINK_MAP);
 STRING_EXTERN(CFGOPT_LOCK_PATH_STR,                                 CFGOPT_LOCK_PATH);
@@ -386,875 +330,3 @@ STRING_EXTERN(CFGOPT_TCP_KEEP_ALIVE_COUNT_STR,                      CFGOPT_TCP_K
 STRING_EXTERN(CFGOPT_TCP_KEEP_ALIVE_IDLE_STR,                       CFGOPT_TCP_KEEP_ALIVE_IDLE);
 STRING_EXTERN(CFGOPT_TCP_KEEP_ALIVE_INTERVAL_STR,                   CFGOPT_TCP_KEEP_ALIVE_INTERVAL);
 STRING_EXTERN(CFGOPT_TYPE_STR,                                      CFGOPT_TYPE);
-
-/***********************************************************************************************************************************
-Option data
-***********************************************************************************************************************************/
-static ConfigOptionData configOptionData[CFG_OPTION_TOTAL] = CONFIG_OPTION_LIST
-(
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("archive-async")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("archive-check")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("archive-copy")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("archive-get-queue-max")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("archive-mode")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("archive-push-queue-max")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("archive-timeout")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("backup-standby")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("buffer-size")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("checksum-page")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("cipher-pass")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("cmd-ssh")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("compress")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("compress-level")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("compress-level-network")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("compress-type")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("config")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("config-include-path")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("config-path")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db-include")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("db-timeout")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("delta")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("dry-run")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("exclude")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("exec-id")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("expire-auto")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("filter")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("force")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("ignore-missing")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("io-timeout")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("link-all")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("link-map")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("lock-path")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("log-level-console")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("log-level-file")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("log-level-stderr")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("log-path")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("log-subprocess")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("log-timestamp")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("manifest-save-threshold")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("neutral-umask")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("online")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("output")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-database")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-host")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-host-cmd")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-host-config")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-host-config-include-path")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-host-config-path")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-host-port")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-host-user")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-local")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-path")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-port")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-socket-path")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("pg-user")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpPg)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("process")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("process-max")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("protocol-timeout")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("raw")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("recovery-option")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("recurse")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("remote-type")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-account")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-ca-file")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-ca-path")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-container")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-endpoint")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-host")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-key")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-key-type")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-port")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-azure-verify-tls")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-cipher-pass")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-cipher-type")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-hardlink")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-host")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-host-cmd")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-host-config")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-host-config-include-path")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-host-config-path")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-host-port")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-host-user")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-local")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-path")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-retention-archive")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-retention-archive-type")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-retention-diff")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-retention-full")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-retention-full-type")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-bucket")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-ca-file")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-ca-path")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-endpoint")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-host")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-key")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-key-secret")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-key-type")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-port")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-region")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-role")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-token")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-uri-style")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-s3-verify-tls")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("repo-type")
-        CONFIG_OPTION_GROUP(true)
-        CONFIG_OPTION_GROUP_ID(cfgOptGrpRepo)
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("resume")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("sck-block")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("sck-keep-alive")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("set")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("sort")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("spool-path")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("stanza")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("start-fast")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("stop-auto")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("tablespace-map")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("tablespace-map-all")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("target")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("target-action")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("target-exclusive")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("target-timeline")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("tcp-keep-alive-count")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("tcp-keep-alive-idle")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("tcp-keep-alive-interval")
-    )
-
-    //------------------------------------------------------------------------------------------------------------------------------
-    CONFIG_OPTION
-    (
-        CONFIG_OPTION_NAME("type")
-    )
-)

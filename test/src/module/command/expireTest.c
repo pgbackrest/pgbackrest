@@ -54,10 +54,7 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
         else
             wal = strNewFmt("%s000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
 
-        if (strSize(result) == 0)
-            strCat(result, wal);
-        else
-            strCatFmt(result, ", %s", strZ(wal));
+        strCatFmt(result, "%s\n", strZ(wal));
     }
 
     return result;
@@ -201,9 +198,9 @@ testRun(void)
 
         TEST_RESULT_VOID(expireBackup(infoBackup, full2), "expire backup with no manifest - does not error");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20181119-152900F, 20181119-152900F_20181119-152600D",
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL),
+            "20181119-152900F\n20181119-152900F_20181119-152600D\n",
             "only backups in set passed to expireBackup are removed from backup:current (result is sorted)");
     }
 
@@ -236,10 +233,10 @@ testRun(void)
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup), 1, "retention-full=2 - one full backup expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 5, "current backups reduced by 1 full - no dependencies");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20181119-152800F, 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I"
-                ", 20181119-152900F, 20181119-152900F_20181119-152600D",
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL),
+            "20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n20181119-152900F\n"
+                "20181119-152900F_20181119-152600D\n",
             "remaining backups correct");
         harnessLogResult("P00   INFO: expire full backup 20181119-152138F");
 
@@ -252,8 +249,8 @@ testRun(void)
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup), 3, "retention-full=1 - one full backup and dependencies expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "current backups reduced by 1 full and dependencies");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "), "20181119-152900F, 20181119-152900F_20181119-152600D",
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL), "20181119-152900F\n20181119-152900F_20181119-152600D\n",
             "remaining backups correct");
         harnessLogResult(
             "P00   INFO: expire full backup set: 20181119-152800F, 20181119-152800F_20181119-152152D, "
@@ -263,8 +260,8 @@ testRun(void)
         TEST_TITLE("retention-full set - no backups expired");
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup), 0, "retention-full=1 - not enough backups to expire any");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "), "20181119-152900F, 20181119-152900F_20181119-152600D",
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL), "20181119-152900F\n20181119-152900F_20181119-152600D\n",
             "  remaining backups correct");
     }
 
@@ -304,9 +301,9 @@ testRun(void)
 
         TEST_RESULT_UINT(expireDiffBackup(infoBackup), 2, "retention-diff=2 - full considered in diff");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 4, "current backups reduced by 1 diff and dependent increment");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20181119-152138F, 20181119-152800F, 20181119-152900F, 20181119-152900F_20181119-152600D",
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL),
+            "20181119-152138F\n20181119-152800F\n20181119-152900F\n20181119-152900F_20181119-152600D\n",
             "remaining backups correct");
         harnessLogResult(
             "P00   INFO: expire diff backup set: 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I");
@@ -321,9 +318,9 @@ testRun(void)
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
         TEST_RESULT_UINT(expireDiffBackup(infoBackup), 2, "retention-diff set to 1 - full considered in diff");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20181119-152138F, 20181119-152800F, 20181119-152900F, 20181119-152900F_20181119-152600D",
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL),
+            "20181119-152138F\n20181119-152800F\n20181119-152900F\n20181119-152900F_20181119-152600D\n",
             "  remaining backups correct");
         harnessLogResult(
             "P00   INFO: expire diff backup set: 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I");
@@ -381,8 +378,8 @@ testRun(void)
 
         TEST_RESULT_UINT(expireDiffBackup(infoBackup), 1, "retention-diff set - only oldest diff expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "current backups reduced by one");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "), "20181119-152800F, 20181119-152800F_20181119-152155D",
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL), "20181119-152800F\n20181119-152800F_20181119-152155D\n",
             "remaining backups correct");
         harnessLogResult(
             "P00   INFO: expire diff backup 20181119-152800F_20181119-152152D");
@@ -452,9 +449,9 @@ testRun(void)
             "P00   INFO: remove expired backup 20181119-152100F_20181119-152152D\n"
             "P00   INFO: remove expired backup 20181119-152100F");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageTest, backupStanzaPath), sortOrderAsc), ", "),
-            "20181118-152100F_20181119-152152D.save, 20181119-152138F, backup.info, bogus",
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageTest, backupStanzaPath), sortOrderAsc),
+            "20181118-152100F_20181119-152152D.save\n20181119-152138F\nbackup.info\nbogus\n",
             "remaining file/directories correct");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -480,9 +477,9 @@ testRun(void)
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL), "remove backups - backup.info current empty");
 
         harnessLogResult("P00   INFO: remove expired backup 20181119-152138F");
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageTest, backupStanzaPath), sortOrderAsc), ", "),
-            "20181118-152100F_20181119-152152D.save, backup.info, bogus", "remaining file/directories correct");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageTest, backupStanzaPath), sortOrderAsc),
+            "20181118-152100F_20181119-152152D.save\nbackup.info\nbogus\n", "remaining file/directories correct");
     }
 
     // *****************************************************************************************************************************
@@ -672,18 +669,18 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false), "archive retention type = full (default), repo1-retention-archive=3");
 
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
             archiveExpectList(2, 10, "0000000100000000"), "only 9.4-1/0000000100000000/000000010000000000000001 removed");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
             archiveExpectList(1, 10, "0000000200000000"),
             "none removed from 9.4-1/0000000200000000 - crossing timelines to play through PITR");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"),
             "000000010000000000000001 and 000000010000000000000002 removed from 10-2/0000000100000000");
 
@@ -696,19 +693,19 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false), "archive retention type = full (default), repo1-retention-archive=2");
 
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
             archiveExpectList(2, 2, "0000000100000000"),
             "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
             archiveExpectList(2, 10, "0000000200000000"),
             "only 9.4-1/0000000200000000/000000010000000000000001 removed from major wal 2");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"),
             "none removed from 10-2/0000000100000000");
 
@@ -721,19 +718,19 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false), "archive retention type = full (default), repo1-retention-archive=1");
 
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
             archiveExpectList(2, 2, "0000000100000000"),
             "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
             archiveExpectList(2, 10, "0000000200000000"),
             "nothing removed from 9.4-1/0000000200000000 major wal 2 - each archiveId must have one backup to play through PITR");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"), "none removed from 10-2/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -752,22 +749,22 @@ testRun(void)
         String *result = strNew("");
         strCatFmt(
             result,
-            "%s, %s, %s, %s",
+            "%s%s%s%s",
             strZ(archiveExpectList(2, 2, "0000000200000000")), strZ(archiveExpectList(4, 5, "0000000200000000")),
             strZ(archiveExpectList(7, 7, "0000000200000000")), strZ(archiveExpectList(9, 10, "0000000200000000")));
 
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
             archiveExpectList(2, 2, "0000000100000000"),
             "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
             result, "all in-between removed from 9.4-1/0000000200000000 major wal 2 - last backup able to play through PITR");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"), "none removed from 10-2/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -786,22 +783,22 @@ testRun(void)
         result = strNew("");
         strCatFmt(
             result,
-            "%s, %s, %s",
+            "%s%s%s",
             strZ(archiveExpectList(2, 2, "0000000200000000")), strZ(archiveExpectList(4, 5, "0000000200000000")),
             strZ(archiveExpectList(7, 10, "0000000200000000")));
 
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
             archiveExpectList(2, 2, "0000000100000000"),
             "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000200000000")), sortOrderAsc),
             result, "incremental and after remain in 9.4-1/0000000200000000 major wal 2");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(3, 10, "0000000100000000"), "none removed from 10-2/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -849,56 +846,69 @@ testRun(void)
             "P00   INFO: [DRY-RUN] expire full backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] remove expired backup 20181119-152138F");
 
-        // Save a copy of the info files for a later test
-        storageCopy(
-            storageNewReadP(storageTest, backupInfoFileName),
-            storageNewWriteP(storageTest, strNewFmt("%s%s", strZ(backupInfoFileName), ".save")));
-        storageCopy(
-            storageNewReadP(storageTest, archiveInfoFileName),
-            storageNewWriteP(storageTest, strNewFmt("%s%s", strZ(archiveInfoFileName), ".save")));
-
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire via backup command");
 
+        // Copy the repo to another repo
+        TEST_SYSTEM_FMT("mkdir %s/repo2", testPath());
+        TEST_SYSTEM_FMT("cp -r %s/repo/* %s/repo2/", testPath(), testPath());
+
+        // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
         strLstAddZ(argList, "--repo1-retention-diff=3");
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchiveType, 2, "diff");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1/0000000100000000")), false,
-            "archive sub path removed");
+            storagePathExistsP(storageTest, STRDEF("repo2/archive/db/9.4-1/0000000100000000")), false,
+            "archive sub path removed repo2");
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageTest, strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanzaPath))), true,
+            "archive sub path repo1 not removed");
+
+        String *backupLabel = strNew("20181119-152138F");
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageTest, STRDEF("repo2/backup/db/backup.info"), cipherTypeNone, NULL),
+            "get backup.info repo2");
+        TEST_RESULT_BOOL(strLstExists(infoBackupDataLabelList(infoBackup, NULL), backupLabel), false, "backup removed from repo2");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info repo1");
+        TEST_RESULT_BOOL(strLstExists(infoBackupDataLabelList(infoBackup, NULL), backupLabel), true, "backup exists repo1");
+
         harnessLogResult(
             "P00   INFO: expire full backup 20181119-152138F\n"
             "P00   INFO: remove expired backup 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire command - no dry run");
+        TEST_TITLE("expire command requires repo option");
 
         argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "3");
+
+        TEST_ERROR_FMT(
+            harnessCfgLoad(cfgCmdExpire, argList), OptionRequiredError, "expire command requires option: repo\n"
+            "HINT: this command requires a specific repository to operate on");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire command - no dry run");
+
+        // Add to previous list and specify repo
         strLstAddZ(argList, "--repo1-retention-full=2");
         strLstAddZ(argList, "--repo1-retention-diff=3");
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdExpire, argList);
-
-        // Restore info files from a previous test
-        storageCopy(
-            storageNewReadP(storageTest, strNewFmt("%s%s", strZ(backupInfoFileName), ".save")),
-            storageNewWriteP(storageTest, backupInfoFileName));
-        storageCopy(
-            storageNewReadP(storageTest,  strNewFmt("%s%s", strZ(archiveInfoFileName), ".save")),
-            storageNewWriteP(storageTest, archiveInfoFileName));
-
-        // Write out manifest and archive that will be removed
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152138F/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath))),
-            BUFSTRDEF("tmp"));
-        archiveGenerate(storageTest, archiveStanzaPath, 2, 2, "9.4-1", "0000000100000000");
 
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
@@ -962,9 +972,9 @@ testRun(void)
 
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup.info updated on disk");
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc), ", "),
-            "20181119-152900F, 20181119-152900F_20181119-152500I", "remaining current backups correct");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
+            "20181119-152900F\n20181119-152900F_20181119-152500I\n", "remaining current backups correct");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - archive removed");
@@ -1032,9 +1042,9 @@ testRun(void)
 
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false), "backup selected for retention does not have archive-start so do nothing");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
             archiveExpectList(1, 5, "0000000100000000"), "nothing removed from 9.4-1/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1284,13 +1294,13 @@ testRun(void)
         harnessLogResult(
             "P00   INFO: expire full backup 20181119-152138F\n"
             "P00   INFO: remove expired backup 20181119-152138F");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc),
             archiveExpectList(1, 7, "0000000100000000"), "none removed from 10-1/0000000100000000");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(1, 7, "0000000100000000"), "none removed from 10-2/0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1408,13 +1418,13 @@ testRun(void)
             "P00   INFO: expire full backup 20181119-152800F\n"
             "P00   INFO: remove expired backup 20181119-152800F\n"
             "P00   INFO: remove expired backup 20181119-152138F");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-1", "0000000100000000")), sortOrderAsc),
             archiveExpectList(1, 7, "0000000100000000"), "none removed from 10-1/0000000100000000");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "10-2", "0000000100000000")), sortOrderAsc),
             archiveExpectList(6, 7, "0000000100000000"),
             "all prior to 000000010000000000000006 removed from 10-2/0000000100000000");
     }
@@ -1700,7 +1710,7 @@ testRun(void)
 
         String *archiveRemaining = strNew("");
         strCatFmt(
-            archiveRemaining, "%s, %s", strZ(archiveExpectList(2, 4, "0000000100000000")),
+            archiveRemaining, "%s%s", strZ(archiveExpectList(2, 4, "0000000100000000")),
             strZ(archiveExpectList(6, 10, "0000000100000000")));
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest backup");
@@ -1728,9 +1738,9 @@ testRun(void)
             "P00 DETAIL: no archive to remove, archiveId = 12-2");
         TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
             STRDEF("20181119-152850F"), "latest link updated");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "12-2", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "12-2", "0000000100000000")), sortOrderAsc),
             archiveRemaining,
             "no archives removed from latest except what was already removed");
 
@@ -2040,25 +2050,25 @@ testRun(void)
         TEST_RESULT_UINT(
             expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * SEC_PER_DAY))), 0,
             "oldest backup stop time equals retention time");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20181119-152138F, 20181119-152800F, 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, "
-            "20181119-152900F, 20181119-152900F_20181119-152600D", "no backups expired");
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL),
+            "20181119-152138F\n20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n"
+            "20181119-152900F\n20181119-152900F_20181119-152600D\n", "no backups expired");
 
         // Add a time period
         strLstAddZ(argList, "--repo1-retention-full=35");
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "oldest backup older but other backups too young");
-        TEST_RESULT_STR(
-            strLstJoin(strLstSort(storageListP(
-                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc), ", "),
+        TEST_RESULT_STRLST_STR(
+            strLstSort(storageListP(
+                storageTest, strNewFmt("%s/%s/%s", strZ(archiveStanzaPath), "9.4-1", "0000000100000000")), sortOrderAsc),
             archiveExpectList(1, 11, "0000000100000000"),
             "no archives expired");
-        TEST_RESULT_STR_Z(
-            strLstJoin(infoBackupDataLabelList(infoBackup, NULL), ", "),
-            "20181119-152138F, 20181119-152800F, 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I, "
-            "20181119-152900F, 20181119-152900F_20181119-152600D", "no backups expired");
+        TEST_RESULT_STRLST_Z(
+            infoBackupDataLabelList(infoBackup, NULL),
+            "20181119-152138F\n20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n"
+            "20181119-152900F\n20181119-152900F_20181119-152600D\n", "no backups expired");
         harnessLogResult("P00   INFO: time-based archive retention not met - archive logs will not be expired");
 
         //--------------------------------------------------------------------------------------------------------------------------

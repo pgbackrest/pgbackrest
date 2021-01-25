@@ -20,10 +20,10 @@ Exit Routines
 Return signal names
 ***********************************************************************************************************************************/
 static const char *
-exitSignalName(int signalType)
+exitSignalName(SignalType signalType)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INT, signalType);
+        FUNCTION_TEST_PARAM(ENUM, signalType);
     FUNCTION_TEST_END();
 
     const char *name = NULL;

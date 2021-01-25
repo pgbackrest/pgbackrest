@@ -178,7 +178,7 @@ Macros to compare results of common data types
     while (0)
 
 #define TEST_RESULT_BOOL(statement, expected, ...)                                                                                 \
-    TEST_RESULT_BOOL_PARAM(statement, expected, __VA_ARGS__);
+    TEST_RESULT_BOOL_PARAM(statement, expected, __VA_ARGS__)
 
 #define TEST_RESULT_DOUBLE_PARAM(statement, expected, ...)                                                                         \
     do                                                                                                                             \
@@ -190,7 +190,7 @@ Macros to compare results of common data types
     while (0)
 
 #define TEST_RESULT_DOUBLE(statement, expected, ...)                                                                               \
-    TEST_RESULT_DOUBLE_PARAM(statement, expected, __VA_ARGS__);
+    TEST_RESULT_DOUBLE_PARAM(statement, expected, __VA_ARGS__)
 
 #define TEST_RESULT_INT_PARAM(statement, expected, operation, ...)                                                                 \
     do                                                                                                                             \
@@ -202,9 +202,9 @@ Macros to compare results of common data types
     while (0)
 
 #define TEST_RESULT_INT(statement, expected, ...)                                                                                  \
-    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__)
 #define TEST_RESULT_INT_NE(statement, expected, ...)                                                                               \
-    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
+    TEST_RESULT_INT_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__)
 
 #define TEST_RESULT_PTR_PARAM(statement, expected, operation, ...)                                                                 \
     do                                                                                                                             \
@@ -218,9 +218,9 @@ Macros to compare results of common data types
 // Compare raw pointers. When checking for NULL use the type-specific macro when available, e.g. TEST_RESULT_STR(). This is more
 // type-safe and makes it clearer what is being tested.
 #define TEST_RESULT_PTR(statement, expected, ...)                                                                                  \
-    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__)
 #define TEST_RESULT_PTR_NE(statement, expected, ...)                                                                               \
-    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
+    TEST_RESULT_PTR_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__)
 
 #define TEST_RESULT_Z_PARAM(statement, expected, operation, ...)                                                                   \
     do                                                                                                                             \
@@ -232,20 +232,33 @@ Macros to compare results of common data types
     while (0)
 
 #define TEST_RESULT_Z(statement, expected, ...)                                                                                    \
-    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__)
 #define TEST_RESULT_Z_NE(statement, expected, ...)                                                                                 \
-    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__);
+    TEST_RESULT_Z_PARAM(statement, expected, harnessTestResultOperationNe, __VA_ARGS__)
 
 #define TEST_RESULT_STR(statement, resultExpected, ...)                                                                            \
-    TEST_RESULT_Z(strZNull(statement), strZNull(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), strZNull(resultExpected), __VA_ARGS__)
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(strZNull(statement), resultExpected, __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), resultExpected, __VA_ARGS__)
 #define TEST_RESULT_STR_KEYRPL(statement, resultExpected, ...)                                                                     \
-    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(strZ(resultExpected)), __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(strZ(resultExpected)), __VA_ARGS__)
 #define TEST_RESULT_STR_Z_KEYRPL(statement, resultExpected, ...)                                                                   \
-    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(resultExpected), __VA_ARGS__)
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
-    TEST_RESULT_Z(statement, strZNull(resultExpected), __VA_ARGS__);
+    TEST_RESULT_Z(statement, strZNull(resultExpected), __VA_ARGS__)
+
+// Compare a string list to a \n delimited string
+#define TEST_RESULT_STRLST_Z(statement, resultExpected, ...)                                                                       \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO(__VA_ARGS__);                                                                                             \
+        hrnTestResultBegin(#statement, __LINE__, true);                                                                            \
+        hrnTestResultStringList(statement, resultExpected, harnessTestResultOperationEq);                                          \
+    }                                                                                                                              \
+    while (0)
+
+#define TEST_RESULT_STRLST_STR(statement, resultExpected, ...)                                                                     \
+    TEST_RESULT_STRLST_Z(statement, strZNull(resultExpected), __VA_ARGS__)
 
 #define TEST_RESULT_UINT_PARAM(statement, expected, operation, ...)                                                                \
     do                                                                                                                             \
@@ -257,7 +270,7 @@ Macros to compare results of common data types
     while (0)
 
 #define TEST_RESULT_UINT(statement, expected, ...)                                                                                 \
-    TEST_RESULT_UINT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+    TEST_RESULT_UINT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__)
 
 #define TEST_RESULT_UINT_INT_PARAM(statement, expected, operation, ...)                                                            \
     do                                                                                                                             \
@@ -269,7 +282,7 @@ Macros to compare results of common data types
     while (0)
 
 #define TEST_RESULT_UINT_INT(statement, expected, ...)                                                                             \
-    TEST_RESULT_UINT_INT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__);
+    TEST_RESULT_UINT_INT_PARAM(statement, expected, harnessTestResultOperationEq, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Test system calls
@@ -355,16 +368,16 @@ Test title macro
 #define TEST_TITLE(message)                                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, false);                                                                                         \
-        printf("%s\n", message);                                                                                                   \
+        hrnTestLogTitle(__LINE__);                                                                                                 \
+        printf(" %s\n", message);                                                                                                  \
         fflush(stdout);                                                                                                            \
     } while (0)
 
 #define TEST_TITLE_FMT(format, ...)                                                                                                \
     do                                                                                                                             \
     {                                                                                                                              \
-        hrnTestLogPrefix(__LINE__, false);                                                                                         \
-        printf(format "\n", __VA_ARGS__);                                                                                          \
+        hrnTestLogTitle(__LINE__);                                                                                                 \
+        printf(" " format "\n", __VA_ARGS__);                                                                                      \
         fflush(stdout);                                                                                                            \
     } while (0)
 

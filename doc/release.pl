@@ -36,6 +36,7 @@ use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Custom::DocCustomRelease;
 use pgBackRestDoc::Html::DocHtmlSite;
 use pgBackRestDoc::Latex::DocLatex;
 use pgBackRestDoc::Markdown::DocMarkdown;
@@ -133,6 +134,17 @@ eval
     # Determine if this is a dev release
     my $bDev = PROJECT_VERSION =~ /dev$/;
     my $strVersion = $bDev ? 'dev' : PROJECT_VERSION;
+
+    # Make sure version number matches the latest release
+    &log(INFO, "check version info");
+
+    my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
+    my $oRelease = (new pgBackRestDoc::Custom::DocCustomRelease(new pgBackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
+
+    if ($oRelease->paramGet('version') ne PROJECT_VERSION)
+    {
+        confess 'unable to find version ' . PROJECT_VERSION . " as the most recent release in ${strReleaseFile}";
+    }
 
     if ($bBuild)
     {

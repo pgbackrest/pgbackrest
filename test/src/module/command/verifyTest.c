@@ -529,11 +529,11 @@ testRun(void)
             "P00  ERROR: [028]: invalid WAL '0000000200000001000000FF' for '9.2-1' exists, skipping\n"
             "P00  ERROR: [028]: duplicate WAL '000000020000000200000001' for '9.2-1' exists, skipping");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(walFileList, ", "),
-            "0000000200000001000000FD-daa497dba64008db824607940609ba1cd7c6c501.gz, "
-            "0000000200000001000000FE-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz, "
-            "000000020000000200000000, 000000020000000200000002",
+        TEST_RESULT_STRLST_Z(
+            walFileList,
+            "0000000200000001000000FD-daa497dba64008db824607940609ba1cd7c6c501.gz\n"
+            "0000000200000001000000FE-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
+            "000000020000000200000000\n000000020000000200000002\n",
             "skipped files removed");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -937,8 +937,17 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdVerify(), verifyProcess() - errors"))
     {
-        // Load Parameters
+        //--------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 4, "%s/repo4", testPath());
+
+        TEST_ERROR_FMT(
+            harnessCfgLoad(cfgCmdVerify, argList), OptionRequiredError, "verify command requires option: repo\n"
+            "HINT: this command requires a specific repository to operate on");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        // Load Parameters with multi-repo
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdVerify, argList);
 
         // Store valid archive/backup info files
@@ -1070,6 +1079,10 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, start next timeline");
 
+        // Load Parameters - single default repo
+        argList = strLstDup(argListBase);
+        harnessCfgLoad(cfgCmdVerify, argList);
+
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
@@ -1105,6 +1118,13 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files - various archive/backup errors");
+
+        // Load Parameters - single non-default repo
+        argList = strLstNew();
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo", testPath());
+        hrnCfgArgRawFmt(argList, cfgOptStanza, "%s", strZ(stanza));
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        harnessCfgLoad(cfgCmdVerify, argList);
 
         TEST_RESULT_VOID(
             storagePutP(

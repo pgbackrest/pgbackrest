@@ -183,12 +183,14 @@ testRun(void)
         CATCH(AssertError)
         {
             assert(errorCode() == AssertError.code);
-            assert(strcmp(errorFileName(), "test/module/common/errorTest.c") == 0);
+            assert(strcmp(errorFileName(), TEST_PGB_PATH "/test/src/module/common/errorTest.c") == 0);
             assert(strcmp(errorFunctionName(), "testTryRecurse") == 0);
             assert(errorFileLine() == 29);
             assert(
-                strcmp(errorStackTrace(),
-                "test/module/common/errorTest:testTryRecurse:29:(test build required for parameters)") == 0);
+                strcmp(
+                    errorStackTrace(),
+                    TEST_PGB_PATH "/test/src/module/common/errorTest:testTryRecurse:29:(test build required for parameters)")
+                == 0);
             assert(strcmp(errorMessage(), "too many nested try blocks") == 0);
             assert(strcmp(errorName(), AssertError.name) == 0);
             assert(errorType() == &AssertError);

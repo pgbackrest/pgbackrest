@@ -32,7 +32,7 @@ dbGetIdx(unsigned int pgIdx)
                 pgClientNew(
                     cfgOptionIdxStrNull(cfgOptPgSocketPath, pgIdx), cfgOptionIdxUInt(cfgOptPgPort, pgIdx),
                     cfgOptionIdxStr(cfgOptPgDatabase, pgIdx), cfgOptionIdxStrNull(cfgOptPgUser, pgIdx),
-                    (TimeMSec)(cfgOptionDbl(cfgOptDbTimeout) * MSEC_PER_SEC)),
+                    cfgOptionUInt64(cfgOptDbTimeout)),
                 NULL, applicationName);
         }
         else
@@ -138,5 +138,5 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(DB_GET_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }

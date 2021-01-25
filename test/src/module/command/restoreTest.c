@@ -861,7 +861,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: unknown user '{[user]}' in backup manifest mapped to current user\n"
-            "P00   WARN: unknown group '{[user]}' in backup manifest mapped to current group");
+            "P00   WARN: unknown group '{[group]}' in backup manifest mapped to current group");
 
         userInitInternal();
 
@@ -909,7 +909,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
-        TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '{[user]}'");
+        TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '{[group]}'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is root and group is bad");
@@ -1672,11 +1672,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verify next queue calculations");
 
-        TEST_RESULT_INT(restoreJobQueueNext(0, 0, 1), 0, "client idx 0, queue idx 0, 1 queue")
-        TEST_RESULT_INT(restoreJobQueueNext(0, 0, 2), 1, "client idx 0, queue idx 0, 2 queues")
-        TEST_RESULT_INT(restoreJobQueueNext(1, 1, 2), 0, "client idx 1, queue idx 1, 2 queues")
-        TEST_RESULT_INT(restoreJobQueueNext(0, 1, 2), 0, "client idx 0, queue idx 1, 2 queues")
-        TEST_RESULT_INT(restoreJobQueueNext(1, 0, 2), 1, "client idx 1, queue idx 0, 2 queues")
+        TEST_RESULT_INT(restoreJobQueueNext(0, 0, 1), 0, "client idx 0, queue idx 0, 1 queue");
+        TEST_RESULT_INT(restoreJobQueueNext(0, 0, 2), 1, "client idx 0, queue idx 0, 2 queues");
+        TEST_RESULT_INT(restoreJobQueueNext(1, 1, 2), 0, "client idx 1, queue idx 1, 2 queues");
+        TEST_RESULT_INT(restoreJobQueueNext(0, 1, 2), 0, "client idx 0, queue idx 1, 2 queues");
+        TEST_RESULT_INT(restoreJobQueueNext(1, 0, 2), 1, "client idx 1, queue idx 0, 2 queues");
 
         // Locality error
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2354,7 +2354,9 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "--type=preserve");

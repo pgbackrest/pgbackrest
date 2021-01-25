@@ -2,6 +2,7 @@
 Server Test Harness
 ***********************************************************************************************************************************/
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -75,7 +76,6 @@ IoWrite *hrnServerScriptBegin(IoWrite *write)
 
     ASSERT(write != NULL);
 
-    write = write;
     ioWriteOpen(write);
 
     FUNCTION_HARNESS_RESULT(IO_WRITE, write);

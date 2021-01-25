@@ -72,14 +72,15 @@ testRun(void)
 
         TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
 
-        // Standby only, repo remote but more than one pg-path configured
+        // Standby only, one of multiple repos remote but more than one pg-path configured
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAddZ(argList, "--pg8-path=/path/to/standby2");
         strLstAddZ(argList, "--pg8-port=5433");
-        strLstAddZ(argList, "--repo1-host=repo.domain.com");
+        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--repo2-host=repo.domain.com");
         strLstAddZ(argList, "--archive-timeout=.5");
         harnessCfgLoad(cfgCmdCheck, argList);
 
@@ -175,32 +176,7 @@ testRun(void)
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
             strZ(pgVersionToStr(PG_VERSION_92)), testPath(), strZ(pgVersionToStr(PG_VERSION_92)), strZ(pg1Path), strZ(pg1Path));
 
-        // Standby - Stanza has not yet been created
-        // -------------------------------------------------------------------------------------------------------------------------
-        harnessPqScriptSet((HarnessPq [])
-        {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, strZ(pg8Path), false, NULL, NULL),
-
-            HRNPQ_MACRO_CLOSE(8),
-            HRNPQ_MACRO_CLOSE(1),
-
-            HRNPQ_MACRO_DONE()
-        });
-
-        TEST_ERROR_FMT(
-            cmdCheck(), FileMissingError,
-            "unable to load info file '%s/repo/archive/test1/archive.info' or '%s/repo/archive/test1/archive.info.copy':\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured correctly in postgresql.conf?\n"
-            "HINT: has a stanza-create been performed?\n"
-            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            testPath(), testPath(), strZ(strNewFmt("%s/repo/archive/test1/archive.info", testPath())),
-            strZ(strNewFmt("%s/repo/archive/test1/archive.info.copy", testPath())));
-
-        // Standby - Stanza created
+        // Standby
         // -------------------------------------------------------------------------------------------------------------------------
         // Create pg_control for primary
         storagePutP(
@@ -208,33 +184,33 @@ testRun(void)
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
 
         // Create info files
-        storagePutP(
-            storageNewWriteP(storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR),
-            harnessInfoChecksum(
-                strNew(
-                    "[db]\n"
-                    "db-id=1\n"
-                    "db-system-id=6569239123849665679\n"
-                    "db-version=\"9.2\"\n"
-                    "\n"
-                    "[db:history]\n"
-                    "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n")));
+        const Buffer *archiveInfoContent = harnessInfoChecksum(
+            strNew(
+                "[db]\n"
+                "db-id=1\n"
+                "db-system-id=6569239123849665679\n"
+                "db-version=\"9.2\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-id\":6569239123849665679,\"db-version\":\"9.2\"}\n"));
 
-        storagePutP(
-            storageNewWriteP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
-            harnessInfoChecksum(
-                strNew(
-                    "[db]\n"
-                    "db-catalog-version=201608131\n"
-                    "db-control-version=920\n"
-                    "db-id=1\n"
-                    "db-system-id=6569239123849665679\n"
-                    "db-version=\"9.2\"\n"
-                    "\n"
-                    "[db:history]\n"
-                    "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
-                        "\"db-version\":\"9.2\"}\n")));
+        storagePutP(storageNewWriteP(storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
 
+        const Buffer *backupInfoContent = harnessInfoChecksum(
+            strNew(
+                "[db]\n"
+                "db-catalog-version=201608131\n"
+                "db-control-version=920\n"
+                "db-id=1\n"
+                "db-system-id=6569239123849665679\n"
+                "db-version=\"9.2\"\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":6569239123849665679,"
+                    "\"db-version\":\"9.2\"}\n"));
+        storagePutP(storageNewWriteP(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE_STR), backupInfoContent);
+
+        // Single repo config - error when checking archive mode setting on database
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), true, NULL, NULL),
@@ -248,16 +224,54 @@ testRun(void)
 
         // Error on primary but standby check ok
         TEST_ERROR_FMT(cmdCheck(), ArchiveDisabledError, "archive_mode must be enabled");
-        harnessLogResult("P00   INFO: switch wal not performed because this is a standby");
+        harnessLogResult(
+            "P00   INFO: check repo1 (standby)\n"
+            "P00   INFO: switch wal not performed because this is a standby");
+
+        // Multi-repo - add a second repo (repo2)
+        StringList *argListRepo2 = strLstDup(argList);
+        strLstAdd(argListRepo2, strNewFmt("--repo2-path=%s/repo2", testPath()));
+        harnessCfgLoad(cfgCmdCheck, argListRepo2);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, strZ(pg8Path), false, NULL, NULL),
+
+            HRNPQ_MACRO_CLOSE(8),
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        // Stanza has not yet been created on repo2 but is created (and checked) on repo1
+        TEST_ERROR_FMT(
+            cmdCheck(), FileMissingError,
+            "unable to load info file '%s/repo2/archive/test1/archive.info' or '%s/repo2/archive/test1/archive.info.copy':\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
+            testPath(), testPath(), strZ(strNewFmt("%s/repo2/archive/test1/archive.info", testPath())),
+            strZ(strNewFmt("%s/repo2/archive/test1/archive.info.copy", testPath())));
+        harnessLogResult("P00   INFO: check repo1 (standby)\nP00   INFO: check repo2 (standby)");
 
         // Single primary
         // -------------------------------------------------------------------------------------------------------------------------
+        // Multi repo
         argList = strLstNew();
         strLstAdd(argList, stanzaOpt);
         strLstAdd(argList, pg1PathOpt);
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAdd(argList, strNewFmt("--repo2-path=%s/repo2", testPath()));
         strLstAddZ(argList, "--archive-timeout=.5");
         harnessCfgLoad(cfgCmdCheck, argList);
+
+        // Create stanza files on repo2
+        storagePutP(storageNewWriteP(storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
+        storagePutP(storageNewWriteP(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR), backupInfoContent);
 
         // Error when WAL segment not found
         harnessPqScriptSet((HarnessPq [])
@@ -275,13 +289,17 @@ testRun(void)
             "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
             "HINT: check the PostgreSQL server log for errors.\n"
             "HINT: run the 'start' command if the stanza was previously stopped.");
+        harnessLogResult(
+            "P00   INFO: check repo1 configuration (primary)\n"
+            "P00   INFO: check repo2 configuration (primary)\n"
+            "P00   INFO: check repo1 archive for WAL (primary)");
 
         // Create WAL segment
         Buffer *buffer = bufNew(16 * 1024 * 1024);
         memset(bufPtr(buffer), 0, bufSize(buffer));
         bufUsedSet(buffer, bufSize(buffer));
 
-        // WAL segment is found
+        // WAL segment switch is performed once for all repos
         harnessPqScriptSet((HarnessPq [])
         {
             HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(pg1Path), false, NULL, NULL),
@@ -293,7 +311,13 @@ testRun(void)
 
         storagePutP(
             storageNewWriteP(
-                storageRepoWrite(),
+                storageRepoIdxWrite(0),
+                strNew(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+            buffer);
+
+        storagePutP(
+            storageNewWriteP(
+                storageRepoIdxWrite(1),
                 strNew(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
             buffer);
 
@@ -301,9 +325,15 @@ testRun(void)
         harnessLogResult(
             strZ(
                 strNewFmt(
+                    "P00   INFO: check repo1 configuration (primary)\n"
+                    "P00   INFO: check repo2 configuration (primary)\n"
+                    "P00   INFO: check repo1 archive for WAL (primary)\n"
                     "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo/archive/test1/9.2-1/"
-                        "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
-                    testPath())));
+                        "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
+                    "P00   INFO: check repo2 archive for WAL (primary)\n"
+                    "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo2/archive/test1/9.2-1/"
+                        "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2",
+                    testPath(), testPath())));
 
         // Primary == NULL (for test coverage)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -511,19 +541,24 @@ testRun(void)
 
         // Create info files
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");
+        harnessLogResult("P00   INFO: stanza-create for stanza 'test1' on repo1");
 
         // Version mismatch
         TEST_ERROR_FMT(
-            checkStanzaInfoPg(storageRepo(), PG_VERSION_94, 6569239123849665679, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass)), FileInvalidError,
+            checkStanzaInfoPg(
+                storageRepoIdx(0), PG_VERSION_94, 6569239123849665679, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, 0)),
+                cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
+            FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
 
         // SystemId mismatch
         TEST_ERROR_FMT(
-            checkStanzaInfoPg(storageRepo(), PG_VERSION_96, 6569239123849665699, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStr(cfgOptRepoCipherPass)), FileInvalidError,
+            checkStanzaInfoPg(
+                storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, 0)),
+                cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
+            FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");

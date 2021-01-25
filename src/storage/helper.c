@@ -9,7 +9,6 @@ Storage Helper
 #include "common/io/io.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
-#include "config/define.h"
 #include "config/config.h"
 #include "protocol/helper.h"
 #include "storage/azure/storage.h"
@@ -347,7 +346,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionIdxUInt(cfgOptCompressLevelNetwork, repoIdx));
+            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use Azure storage
     else

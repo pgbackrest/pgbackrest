@@ -56,7 +56,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, storageRepoWriteStanza);
         FUNCTION_TEST_PARAM(STRING_LIST, archiveList);
-        FUNCTION_TEST_PARAM(STRING_LIST, archiveList);
+        FUNCTION_TEST_PARAM(STRING_LIST, backupList);
     FUNCTION_TEST_END();
 
     ASSERT(storageRepoWriteStanza != NULL);
@@ -87,8 +87,10 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
             {
                 THROW_FMT(
                     PgRunningError, PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running. "
-                    "To delete stanza '%s', shut down " PG_NAME " for stanza '%s' and try again, or use --force.",
-                    strZ(cfgOptionStr(cfgOptStanza)), strZ(cfgOptionStr(cfgOptStanza)));
+                    "To delete stanza '%s' on repo%u, shut down " PG_NAME " for stanza '%s' and try again, or use --force.",
+                    strZ(cfgOptionStr(cfgOptStanza)),
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
+                    strZ(cfgOptionStr(cfgOptStanza)));
             }
 
             // Delete the archive info files
