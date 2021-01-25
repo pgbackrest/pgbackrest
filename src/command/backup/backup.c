@@ -1908,7 +1908,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
         // used by us since symlinks are not supported on all storage types.
         // -------------------------------------------------------------------------------------------------------------------------
-        backupLinkLatest(backupLabel);
+        backupLinkLatest(backupLabel, cfgOptionGroupIdxDefault(cfgOptGrpRepo));
 
         // Add manifest and save backup.info (infoBackupSaveFile() is responsible for proper syncing)
         // -------------------------------------------------------------------------------------------------------------------------
