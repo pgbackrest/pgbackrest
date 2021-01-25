@@ -1556,9 +1556,9 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             RegExp *recoveryExp =
                 regExpNew(
                     STRDEF(
-                        "^[[:blank:]]*(" RECOVERY_TARGET "|" RECOVERY_TARGET_ACTION "|" RECOVERY_TARGET_INCLUSIVE "|"
+                        "^[\t ]*(" RECOVERY_TARGET "|" RECOVERY_TARGET_ACTION "|" RECOVERY_TARGET_INCLUSIVE "|"
                             RECOVERY_TARGET_LSN "|" RECOVERY_TARGET_NAME "|" RECOVERY_TARGET_TIME "|" RECOVERY_TARGET_TIMELINE "|"
-                            RECOVERY_TARGET_XID ")[[:blank:]]*="));
+                            RECOVERY_TARGET_XID ")[\t ]*="));
 
             // Check each line for recovery settings
             const StringList *contentList = strLstNewSplit(strNewBuf(autoConf), LF_STR);
