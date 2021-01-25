@@ -233,7 +233,9 @@ sub endRetry
         if ($self->{bSuppressError})
         {
             &log(DEBUG, "suppressed error was ${iExitStatus}");
-            $self->{strErrorLog} = '';
+
+            # Make a copy of the suppressed error log in case it is needed
+            $self->{strSuppressedErrorLog} = $self->{strErrorLog};
         }
         else
         {

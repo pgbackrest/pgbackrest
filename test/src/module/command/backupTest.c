@@ -539,7 +539,7 @@ testRun(void)
 
         // With the expected backupCopyResultCopy, unset the storageFeatureCompress bit for the storageRepo for code coverage
         uint64_t feature = storageRepo()->interface.feature;
-        ((Storage *)storageRepo())->interface.feature = feature && ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
+        ((Storage *)storageRepo())->interface.feature = feature & ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
 
         // Create tmp file to make it look like a prior backup file failed partway through to ensure that retries work
         TEST_RESULT_VOID(

@@ -133,7 +133,7 @@ eval
 
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
-    processExec('sudo apt-get install -y libxml-checker-perl libyaml-libyaml-perl', {bSuppressStdErr => true});
+    processExec('sudo apt-get install -y libxml-checker-perl libyaml-perl', {bSuppressStdErr => true});
     processEnd();
 
     processBegin('mount tmpfs');

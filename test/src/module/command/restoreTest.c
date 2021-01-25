@@ -1672,11 +1672,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verify next queue calculations");
 
-        TEST_RESULT_INT(restoreJobQueueNext(0, 0, 1), 0, "client idx 0, queue idx 0, 1 queue")
-        TEST_RESULT_INT(restoreJobQueueNext(0, 0, 2), 1, "client idx 0, queue idx 0, 2 queues")
-        TEST_RESULT_INT(restoreJobQueueNext(1, 1, 2), 0, "client idx 1, queue idx 1, 2 queues")
-        TEST_RESULT_INT(restoreJobQueueNext(0, 1, 2), 0, "client idx 0, queue idx 1, 2 queues")
-        TEST_RESULT_INT(restoreJobQueueNext(1, 0, 2), 1, "client idx 1, queue idx 0, 2 queues")
+        TEST_RESULT_INT(restoreJobQueueNext(0, 0, 1), 0, "client idx 0, queue idx 0, 1 queue");
+        TEST_RESULT_INT(restoreJobQueueNext(0, 0, 2), 1, "client idx 0, queue idx 0, 2 queues");
+        TEST_RESULT_INT(restoreJobQueueNext(1, 1, 2), 0, "client idx 1, queue idx 1, 2 queues");
+        TEST_RESULT_INT(restoreJobQueueNext(0, 1, 2), 0, "client idx 0, queue idx 1, 2 queues");
+        TEST_RESULT_INT(restoreJobQueueNext(1, 0, 2), 1, "client idx 1, queue idx 0, 2 queues");
 
         // Locality error
         // -------------------------------------------------------------------------------------------------------------------------

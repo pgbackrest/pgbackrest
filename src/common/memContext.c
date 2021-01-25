@@ -41,7 +41,7 @@ typedef struct MemContextAlloc
 // belongs to another context.  Otherwise, there is likely to be a segfault.
 #define ASSERT_ALLOC_VALID(alloc)                                                                                                  \
     ASSERT(                                                                                                                        \
-        alloc != NULL && alloc != MEM_CONTEXT_ALLOC_HEADER(NULL) &&                                                                \
+        alloc != NULL && (uintptr_t)alloc != (uintptr_t)-sizeof(MemContextAlloc) &&                                                \
         alloc->allocIdx < memContextStack[memContextCurrentStackIdx].memContext->allocListSize &&                                  \
         memContextStack[memContextCurrentStackIdx].memContext->allocList[alloc->allocIdx]);
 
