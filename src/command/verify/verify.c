@@ -131,7 +131,7 @@ verifyInvalidFileAdd(List *invalidFileList, VerifyResult reason, const String *f
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, invalidFileList);                 // Invalid file list to add the filename to
-        FUNCTION_TEST_PARAM(UINT, reason);                          // Reason for invalid file
+        FUNCTION_TEST_PARAM(ENUM, reason);                          // Reason for invalid file
         FUNCTION_TEST_PARAM(STRING, fileName);                      // Name of invalid file
     FUNCTION_TEST_END();
 
@@ -453,9 +453,10 @@ verifyManifestFile(
             {
                 LOG_ERROR_FMT(
                     errorTypeCode(&FileInvalidError),
-                    "'%s' may not be recoverable - PG data (id %u, version %s, system-id %"
-                    PRIu64 ") is not in the backup.info history, skipping",
+                    "'%s' may not be recoverable - PG data (id %u, version %s, system-id %" PRIu64 ") is not in the backup.info"
+                        " history, skipping",
                     strZ(backupResult->backupLabel), manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId);
+
                 manifestFree(result);
                 result = NULL;
             }
@@ -915,9 +916,10 @@ verifyBackup(void *data)
                 // Check if the file is referenced in a prior backup
                 if (fileData->reference != NULL)
                 {
-                    // If the prior backup is not in the result list, then that backup was never processed (likely due to the
-                    // --set option) so verify the file
+                    // If the prior backup is not in the result list, then that backup was never processed (likely due to the --set
+                    // option) so verify the file
                     unsigned int backupPriorIdx = lstFindIdx(jobData->backupResultList, &fileData->reference);
+
                     if (backupPriorIdx == LIST_NOT_FOUND)
                     {
                         filePathName = strNewFmt(
@@ -963,6 +965,7 @@ verifyBackup(void *data)
                         }
                     }
                 }
+                // Else file is not referenced in a prior backup
                 else
                 {
                     filePathName = strNewFmt(
@@ -1007,11 +1010,9 @@ verifyBackup(void *data)
         }
         else
         {
-            // Nothing to process so report an error, free the manifest, set the status and remove the backup from the
-            // processing list
+            // Nothing to process so report an error, free the manifest, set the status, and remove the backup from processing list
             LOG_ERROR_FMT(
-                errorTypeCode(&FileInvalidError),
-                "backup '%s' manifest does not contain any target files to verify",
+                errorTypeCode(&FileInvalidError), "backup '%s' manifest does not contain any target files to verify",
                 strZ(backupResult->backupLabel));
 
             jobData->jobErrorTotal++;
@@ -1062,7 +1063,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
 
         if (jobData->backupProcessing)
         {
-            // Only begin backup verification if there the last result was processed
+            // Only begin backup verification if the last archive result was processed
             if (result == NULL)
                 result = protocolParallelJobMove(verifyBackup(data), memContextPrior());
         }
@@ -1303,9 +1304,8 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
                 }
 
                 strCatFmt(
-                    result,
-                    "\n    missing: %u, checksum invalid: %u, size invalid: %u, other: %u",
-                    errMissing, errChecksum, errSize, errOther);
+                    result, "\n    missing: %u, checksum invalid: %u, size invalid: %u, other: %u", errMissing, errChecksum,
+                    errSize, errOther);
             }
         }
     }
@@ -1327,16 +1327,19 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
                     status = strNew("valid");
                     break;
                 }
+
                 case backupInvalid:
                 {
                     status = strNew("invalid");
                     break;
                 }
+
                 case backupMissingManifest:
                 {
                     status = strNew("manifest missing");
                     break;
                 }
+
                 case backupInProgress:
                 {
                     status = strNew("in-progress");
@@ -1370,9 +1373,8 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
                 }
 
                 strCatFmt(
-                    result,
-                    "\n    missing: %u, checksum invalid: %u, size invalid: %u, other: %u",
-                    errMissing, errChecksum, errSize, errOther);
+                    result, "\n    missing: %u, checksum invalid: %u, size invalid: %u, other: %u", errMissing, errChecksum,
+                    errSize, errOther);
             }
         }
     }
