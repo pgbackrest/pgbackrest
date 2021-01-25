@@ -257,6 +257,11 @@ testRun(void)
         TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");
         TEST_RESULT_INT(logFdFile, -1, "log file is closed");
 
+        // Get the error message from above to use for the expect log test
+        int testFdFile = open("/" BOGUS_STR, O_CREAT | O_APPEND, 0640);
+        const char *testErrorFile = strerror(errno);
+        TEST_RESULT_INT(testFdFile, -1, "got error message");
+
         // Close logging again
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 99, false), "reduce log size");
         TEST_RESULT_BOOL(logFileSet(fileFile), true, "open valid file");
@@ -277,14 +282,19 @@ testRun(void)
             "            message2");
 
         // Check stderr
-        testLogResult(
-            stderrFile,
+        char buffer[4096];
+
+        sprintf(
+            buffer,
             "DEBUG:     test::test_func: message\n"
             "           message2\n"
             "INFO: [DRY-RUN] info message\n"
             "INFO: [DRY-RUN] info message 2\n"
-            "WARN: [DRY-RUN] unable to open log file '/BOGUS': Permission denied\n"
-            "      NOTE: process will continue without log file.");
+            "WARN: [DRY-RUN] unable to open log file '/BOGUS': %s\n"
+            "      NOTE: process will continue without log file.",
+            testErrorFile);
+
+        testLogResult(stderrFile, buffer);
 
         // Check file
         testLogResult(

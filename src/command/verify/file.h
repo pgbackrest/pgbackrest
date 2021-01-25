@@ -22,12 +22,6 @@ typedef enum
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-typedef struct VerifyFileResult
-{
-    VerifyResult fileResult;
-    String *filePathName;
-} VerifyFileResult;
-
 // Verify a file in the pgBackRest repository
 VerifyResult verifyFile(
     const String *filePathName, const String *fileChecksum, uint64_t fileSize, const String *cipherPass);

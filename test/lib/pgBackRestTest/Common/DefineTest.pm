@@ -87,8 +87,8 @@ sub testDefLoad
     my $strDefineYaml = shift;
 
     # Load test definitions from yaml
-    require YAML::XS;
-    YAML::XS->import(qw(Load));
+    require YAML::Any;
+    YAML::Any->import(qw(Load));
 
     my $hTestDef = Load($strDefineYaml);
 
