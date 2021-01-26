@@ -858,7 +858,7 @@ testRun(void)
         // Copy the repo to another repo
         TEST_SYSTEM_FMT("mkdir %s/repo2", testPath());
         TEST_SYSTEM_FMT("cp -r %s/repo/* %s/repo2/", testPath(), testPath());
-
+ // CSHANG Here should probably change to have different retention on the 2 repos, and see if one is expired and the other not?
         // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
@@ -1621,28 +1621,38 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid backup label");
-// CSHANG Fix this test - just move it somewhere where we already call cmdExpire
-        TEST_RESULT_UINT(
-            expireAdhocBackup(infoBackup, STRDEF("20201119-123456F_20201119-234567I"), 0), 0,
-            "label format OK but backup does not exist");
-        harnessLogResult(
-            "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
-            "            HINT: run the info command and confirm the backup is listed");
-
-        TEST_ERROR(
-            expireAdhocBackup(infoBackup, STRDEF(BOGUS_STR), 0), OptionInvalidValueError,
-            "'" BOGUS_STR "' is not a valid backup label format");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire backup and dependent");
 
         StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAddZ(argList, "--set=20181119-152800F_20181119-152152D");
+        strLstAddZ(argList, "--repo1-retention-full=4");    // High retention so only archives older than oldest full backup removed
+        strLstAddZ(argList, "--set=20201119-123456F_20201119-234567I");
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Set the log level to detail so archive expiration messages are seen
         harnessLogLevelSet(logLevelDetail);
+
+        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist");
+        harnessLogResult(
+            "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
+            "            HINT: run the info command and confirm the backup is listed\n"
+            "P00 DETAIL: archive retention on backup 20181119-152138F repo1: 9.4-1, start = 000000020000000000000001\n"
+            "P00 DETAIL: no archive to remove for repo1: 9.4-1\n"
+            "P00 DETAIL: archive retention on backup 20181119-152850F repo1: 12-2, start = 000000010000000000000002\n"
+            "P00 DETAIL: remove archive repo1: 12-2, start = 000000010000000000000001, stop = 000000010000000000000001");
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--set=" BOGUS_STR);
+
+        harnessCfgLoad(cfgCmdExpire, argList);
+        TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
+
+// CSHANG Maybe remove a duplicate test from above and just have these:
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire backup and dependent");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--repo1-retention-full=1");
+        strLstAddZ(argList, "--set=20181119-152800F_20181119-152152D");
+        harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire only backup and dependent");
         TEST_RESULT_BOOL(
@@ -1675,7 +1685,6 @@ testRun(void)
             "P00 DETAIL: archive retention on backup 20181119-152850F repo1: 12-2, start = 000000010000000000000002,"
             " stop = 000000010000000000000004\n"
             "P00 DETAIL: archive retention on backup 20181119-152900F repo1: 12-2, start = 000000010000000000000006\n"
-            "P00 DETAIL: remove archive repo1: 12-2, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00 DETAIL: remove archive repo1: 12-2, start = 000000010000000000000005, stop = 000000010000000000000005");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1763,7 +1772,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdExpire(), BackupSetInvalidError,
-            "full backup 20181119-152850F cannot be expired until another full backup has been created");
+            "full backup repo1: 20181119-152850F cannot be expired until another full backup has been created on this repo");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("allow adhoc expire on last full backup in prior db-id");
@@ -1798,7 +1807,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdExpire(), BackupSetInvalidError,
-            "full backup 20181119-152850F cannot be expired until another full backup has been created");
+            "full backup repo1: 20181119-152850F cannot be expired until another full backup has been created on this repo");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("adhoc dry-run");

@@ -121,8 +121,8 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned in
             {
                 THROW_FMT(
                     BackupSetInvalidError,
-                    "full backup %s on repo%u cannot be expired until another full backup has been created on this repo",
-                    strZ(backupLabel), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                    "full backup repo%u: %s cannot be expired until another full backup has been created on this repo",
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(backupLabel));
             }
         }
 
@@ -144,7 +144,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned in
             // backups that can be recovered through PITR until the next full backup is created. Same problem for differential
             // backups with retention-diff.
             LOG_WARN_FMT(
-                "expiring latest backup repo%u %s - the ability to perform point-in-time-recovery (PITR) may be affected\n"
+                "expiring latest backup repo%u: %s - the ability to perform point-in-time-recovery (PITR) may be affected\n"
                 "HINT: non-default settings for '%s'/'%s' (even in prior expires) can cause gaps in the WAL.",
                 cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(latestBackup),
                 cfgOptionIdxName(cfgOptRepoRetentionArchive, repoIdx), cfgOptionIdxName(cfgOptRepoRetentionArchiveType, repoIdx));
