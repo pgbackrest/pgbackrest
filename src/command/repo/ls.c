@@ -60,28 +60,20 @@ storageListRenderCallback(void *data, const StorageInfo *info)
         switch (info->type)
         {
             case storageTypeFile:
-            {
                 ioWrite(listData->write, BUFSTRDEF("file\""));
                 break;
-            }
 
             case storageTypeLink:
-            {
                 ioWrite(listData->write, BUFSTRDEF("link\""));
                 break;
-            }
 
             case storageTypePath:
-            {
                 ioWrite(listData->write, BUFSTRDEF("path\""));
                 break;
-            }
 
             case storageTypeSpecial:
-            {
                 ioWrite(listData->write, BUFSTRDEF("special\""));
                 break;
-            }
         }
 
         if (info->type == storageTypeFile)

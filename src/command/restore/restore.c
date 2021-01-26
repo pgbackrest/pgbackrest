@@ -867,11 +867,9 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
         // Special file types cannot exist in the manifest so just delete them
         case storageTypeSpecial:
-        {
             LOG_DETAIL_FMT("remove special file '%s'", strZ(pgPath));
             storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN_VOID();

@@ -433,10 +433,8 @@ lstSort(List *this, SortOrder sortOrder)
     switch (sortOrder)
     {
         case sortOrderAsc:
-        {
             qsort(this->list, this->listSize, this->itemSize, this->comparator);
             break;
-        }
 
         case sortOrderDesc:
         {

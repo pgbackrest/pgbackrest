@@ -110,22 +110,16 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
             }
 
             case storageTypeLink:
-            {
                 strCatFmt(data->content, "link, d=%s", strZ(info->linkDestination));
                 break;
-            }
 
             case storageTypePath:
-            {
                 strCatZ(data->content, "path");
                 break;
-            }
 
             case storageTypeSpecial:
-            {
                 strCatZ(data->content, "special");
                 break;
-            }
         }
 
         if (info->type != storageTypeSpecial)

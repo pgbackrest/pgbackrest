@@ -647,19 +647,15 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         // The link will be recreated during the backup if needed.
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeLink:
-        {
             storageRemoveP(storageRepoWrite(), backupPath);
             break;
-        }
 
         // Remove special files
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
-        {
             LOG_WARN_FMT("remove special file '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
             storageRemoveP(storageRepoWrite(), backupPath);
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN_VOID();

@@ -165,40 +165,28 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
     switch (code)
     {
         case INFO_STANZA_STATUS_CODE_OK:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OK_STR));
             break;
-        }
 
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR));
             break;
-        }
 
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR));
             break;
-        }
 
         case INFO_STANZA_STATUS_CODE_NO_BACKUP:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
             break;
-        }
 
         case INFO_STANZA_STATUS_CODE_MIXED:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_MESSAGE_MIXED_STR));
             break;
-        }
 
         case INFO_STANZA_STATUS_CODE_PG_MISMATCH:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR));
             break;
-        }
     }
 
     // Construct a specific lock part
@@ -230,28 +218,20 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo)
     switch (code)
     {
         case INFO_STANZA_STATUS_CODE_OK:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OK_STR));
             break;
-        }
 
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_PATH_STR));
             break;
-        }
 
         case INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR));
             break;
-        }
 
         case INFO_STANZA_STATUS_CODE_NO_BACKUP:
-        {
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN_VOID();

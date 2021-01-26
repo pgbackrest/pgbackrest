@@ -211,6 +211,28 @@ if (condition)
         valueThatUsesEntireLine2;
 }
                 </code-block>
+
+                <p>Braces should be added to <code>switch</code> statement cases that have a significant amount of code. As a general rule of thumb, if the code block in the <code>case</code> is large enough to have blank lines and/or multiple comments then it should be enclosed in braces.</p>
+
+                <code-block type="c">
+switch (int)
+{
+    case 1:
+        a = 2;
+        break;
+
+    case 2:
+    {
+        # Comment this more complex code
+        a = 1;
+        b = 2;
+
+        c = func(a, b);
+
+        break;
+    }
+}
+                </code-block>
             </section>
 
             <section id="hints-warnings-errors">

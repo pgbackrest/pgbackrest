@@ -117,10 +117,8 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
         }
 
         case storageTypeLink:
-        {
             strCatFmt(data->content, "link, d=%s", strZ(info->linkDestination));
             break;
-        }
 
         case storageTypePath:
         {
@@ -145,10 +143,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
         }
 
         case storageTypeSpecial:
-        {
             THROW_FMT(AssertError, "unexpected special file '%s'", strZ(info->name));
-            break;
-        }
     }
 
     strCatZ(data->content, "}\n");
