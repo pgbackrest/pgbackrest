@@ -31,22 +31,16 @@ exitSignalName(SignalType signalType)
     switch (signalType)
     {
         case signalTypeHup:
-        {
             name = "HUP";
             break;
-        }
 
         case signalTypeInt:
-        {
             name = "INT";
             break;
-        }
 
         case signalTypeTerm:
-        {
             name = "TERM";
             break;
-        }
 
         case signalTypeNone:
             THROW(AssertError, "no name for signal none");

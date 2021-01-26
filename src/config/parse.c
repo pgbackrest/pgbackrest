@@ -597,40 +597,28 @@ sizeQualifierToMultiplier(char qualifier)
     switch (qualifier)
     {
         case 'b':
-        {
             result = 1;
             break;
-        }
 
         case 'k':
-        {
             result = 1024;
             break;
-        }
 
         case 'm':
-        {
             result = 1024 * 1024;
             break;
-        }
 
         case 'g':
-        {
             result = 1024 * 1024 * 1024;
             break;
-        }
 
         case 't':
-        {
             result = 1024LL * 1024LL * 1024LL * 1024LL;
             break;
-        }
 
         case 'p':
-        {
             result = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
             break;
-        }
 
         default:
             THROW_FMT(AssertError, "'%c' is not a valid size qualifier", qualifier);

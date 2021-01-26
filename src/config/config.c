@@ -257,22 +257,16 @@ cfgCommandRoleStr(ConfigCommandRole commandRole)
             break;
 
         case cfgCmdRoleAsync:
-        {
             result = CONFIG_COMMAND_ROLE_ASYNC_STR;
             break;
-        }
 
         case cfgCmdRoleLocal:
-        {
             result = CONFIG_COMMAND_ROLE_LOCAL_STR;
             break;
-        }
 
         case cfgCmdRoleRemote:
-        {
             result = CONFIG_COMMAND_ROLE_REMOTE_STR;
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -523,18 +517,14 @@ cfgOptionDefaultValue(ConfigOption optionId)
     switch (cfgParseOptionType(optionId))
     {
         case cfgOptTypeBoolean:
-        {
             result = varNewBool(varBoolForce(defaultValue));
             break;
-        }
 
         case cfgOptTypeInteger:
         case cfgOptTypeSize:
         case cfgOptTypeTime:
-        {
             result = varNewInt64(varInt64Force(defaultValue));
             break;
-        }
 
         case cfgOptTypePath:
         case cfgOptTypeString:

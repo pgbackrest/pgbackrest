@@ -839,10 +839,8 @@ manifestBuildCallback(void *data, const StorageInfo *info)
         // Skip special files
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
-        {
             LOG_WARN_FMT("exclude special file '%s/%s' from backup", strZ(buildData.pgPath), strZ(info->name));
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN_VOID();

@@ -259,35 +259,35 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
                 switch (json[*jsonPos])
                 {
                     case '"':
-                            strCatChr(result, '"');
+                        strCatChr(result, '"');
                         break;
 
                     case '\\':
-                            strCatChr(result, '\\');
+                        strCatChr(result, '\\');
                         break;
 
                     case '/':
-                            strCatChr(result, '/');
+                        strCatChr(result, '/');
                         break;
 
                     case 'n':
-                            strCatChr(result, '\n');
+                        strCatChr(result, '\n');
                         break;
 
                     case 'r':
-                            strCatChr(result, '\r');
+                        strCatChr(result, '\r');
                         break;
 
                     case 't':
-                            strCatChr(result, '\t');
+                        strCatChr(result, '\t');
                         break;
 
                     case 'b':
-                            strCatChr(result, '\b');
+                        strCatChr(result, '\b');
                         break;
 
                     case 'f':
-                            strCatChr(result, '\f');
+                        strCatChr(result, '\f');
                         break;
 
                     default:
@@ -515,26 +515,20 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
     {
         // String
         case '"':
-        {
             result = varNewStr(jsonToStrInternal(json, jsonPos));
             break;
-        }
 
         // Integer
         case '-':
         case '0' ... '9':
-        {
             result = jsonToNumberInternal(json, jsonPos);
             break;
-        }
 
         // Boolean
         case 't':
         case 'f':
-        {
             result = varNewBool(jsonToBoolInternal(json, jsonPos));
             break;
-        }
 
         // Null
         case 'n':
@@ -549,24 +543,18 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
 
         // Array
         case '[':
-        {
             result = varNewVarLst(jsonToVarLstInternal(json, jsonPos));
             break;
-        }
 
         // Object
         case '{':
-        {
             result = varNewKv(jsonToKvInternal(json, jsonPos));
             break;
-        }
 
         // Object
         default:
-        {
             THROW_FMT(JsonFormatError, "invalid type at '%s'", json + *jsonPos);
             break;
-        }
     }
 
     jsonConsumeWhiteSpace(json, jsonPos);
@@ -705,46 +693,32 @@ jsonFromStrInternal(String *json, const String *string)
                     switch (stringChr)
                     {
                         case '"':
-                        {
                             strCatZ(json, "\\\"");
                             break;
-                        }
 
                         case '\\':
-                        {
                             strCatZ(json, "\\\\");
                             break;
-                        }
 
                         case '\n':
-                        {
                             strCatZ(json, "\\n");
                             break;
-                        }
 
                         case '\r':
-                        {
                             strCatZ(json, "\\r");
                             break;
-                        }
 
                         case '\t':
-                        {
                             strCatZ(json, "\\t");
                             break;
-                        }
 
                         case '\b':
-                        {
                             strCatZ(json, "\\b");
                             break;
-                        }
 
                         case '\f':
-                        {
                             strCatZ(json, "\\f");
                             break;
-                        }
                     }
 
                     break;
@@ -823,10 +797,8 @@ jsonFromKvInternal(const KeyValue *kv)
                 switch (varType(value))
                 {
                     case varTypeKeyValue:
-                    {
                         strCat(result, jsonFromKvInternal(kvDup(varKv(value))));
                         break;
-                    }
 
                     case varTypeVariantList:
                     {
@@ -878,16 +850,12 @@ jsonFromKvInternal(const KeyValue *kv)
 
                     // String
                     case varTypeString:
-                    {
                         jsonFromStrInternal(result, varStr(value));
                         break;
-                    }
 
                     default:
-                    {
                         strCat(result, varStrForce(value));
                         break;
-                    }
                 }
             }
         }
