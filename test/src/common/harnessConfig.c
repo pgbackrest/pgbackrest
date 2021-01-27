@@ -28,7 +28,7 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     // Free objects in storage helper
     storageHelperFree();
 
-    configParse(argListSize, argList, false);
+    configParse(storageLocal(), argListSize, argList, false);
     cfgLoadUpdateOption();
 
     // Use a static exec-id for testing if it is not set explicitly

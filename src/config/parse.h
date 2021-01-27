@@ -6,12 +6,13 @@ Parse Configuration
 
 #include "config/config.h"
 #include "config/parse.auto.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Parse the command-line arguments and config file to produce final config data
-void configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel);
+void configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel);
 
 // Parse option name and return option info
 typedef struct CfgParseOptionResult

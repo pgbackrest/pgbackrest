@@ -371,7 +371,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse config from command line and config file
-        configParse(argListSize, argList, true);
+        configParse(storageLocal(), argListSize, argList, true);
 
         // Check that only repo1 is configured. This is temporary until the multi-repo support is finalized.
         if (cfgCommandRole() == cfgCmdRoleDefault && cfgOptionGroupValid(cfgOptGrpRepo) &&
