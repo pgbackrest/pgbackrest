@@ -1546,7 +1546,7 @@
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=full
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>expire full backup set\: {[backup-full-first]}|archive retention on backup {[backup-full-second]}|remove archive</exe-highlight>
+                    <exe-highlight>expire full backup set repo1\: {[backup-full-first]}|archive retention on backup {[backup-full-second]}|remove archive</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -1591,7 +1591,7 @@
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=diff
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>expire diff backup set: {[backup-diff-second]}</exe-highlight>
+                    <exe-highlight>expire diff backup set repo1: {[backup-diff-second]}</exe-highlight>
                 </execute>
             </execute-list>
         </section>
