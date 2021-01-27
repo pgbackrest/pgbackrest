@@ -6,7 +6,9 @@ C Test Harness Internal
 
 #include <stdbool.h>
 
+#ifdef HRN_FEATURE_STRING
 #include "common/type/stringList.h"
+#endif
 
 #include "common/harnessTest.h"
 
@@ -44,7 +46,11 @@ void hrnTestResultBool(int actual, int expected);
 void hrnTestResultDouble(double actual, double expected);
 void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation);
 void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation);
+
+#ifdef HRN_FEATURE_STRING
 void hrnTestResultStringList(const StringList *actual, const void *expected, HarnessTestResultOperation operation);
+#endif
+
 void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation);
 void hrnTestResultUInt64Int64(uint64_t actual, int64_t expected, HarnessTestResultOperation operation);
 void hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultOperation operation);

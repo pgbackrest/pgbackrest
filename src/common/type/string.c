@@ -95,6 +95,20 @@ strNew(const char *string)
 }
 
 /**********************************************************************************************************************************/
+String *strNewDbl(double value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DOUBLE, value);
+    FUNCTION_TEST_END();
+
+    char working[CVT_BASE10_BUFFER_SIZE];
+
+    cvtDoubleToZ(value, working, sizeof(working));
+
+    FUNCTION_TEST_RETURN(strNew(working));
+}
+
+/**********************************************************************************************************************************/
 String *
 strNewBuf(const Buffer *buffer)
 {

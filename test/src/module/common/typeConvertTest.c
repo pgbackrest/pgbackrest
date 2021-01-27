@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Convert Base Data Types
+Test Convert C Types
 ***********************************************************************************************************************************/
 #include "common/stackTrace.h"
 
@@ -44,8 +44,6 @@ testRun(void)
 
         TEST_RESULT_UINT(cvtDoubleToZ(999.1234, buffer, STACK_TRACE_PARAM_MAX), 8, "convert double to string");
         TEST_RESULT_Z(buffer, "999.1234", "    check buffer");
-
-        TEST_RESULT_STR_Z(cvtDoubleToStr(999.1), "999.1", "convert double to string");
 
         TEST_RESULT_UINT(cvtDoubleToZ(999999999.123456, buffer, STACK_TRACE_PARAM_MAX), 16, "convert double to string");
         TEST_RESULT_Z(buffer, "999999999.123456", "    check buffer");

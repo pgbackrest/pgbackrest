@@ -293,10 +293,18 @@ Macros to return function results (or void)
 /***********************************************************************************************************************************
 Function Test Macros
 
-In debug builds these macros will update the stack trace with function names and parameters but not log.  In production builds all
-test macros are compiled out (except for return statements).
+In debug builds these macros will update the stack trace with function names and parameters but will not log. In production builds
+all test macros are compiled out (except for return statements).
+
+Ignore DEBUG_TEST_TRACE_MACRO if NDEBUG is defined because the underlying functions that support the macros will not be present.
 ***********************************************************************************************************************************/
+#ifndef NDEBUG
 #ifdef DEBUG_TEST_TRACE
+    #define DEBUG_TEST_TRACE_MACRO
+#endif // DEBUG_TEST_TRACE
+#endif // NDEBUG
+
+#ifdef DEBUG_TEST_TRACE_MACRO
     #define FUNCTION_TEST_BEGIN()                                                                                                  \
         if (stackTraceTest())                                                                                                      \
         {                                                                                                                          \
@@ -341,6 +349,6 @@ test macros are compiled out (except for return statements).
     #define FUNCTION_TEST_RETURN(result)                                                                                           \
         return result
     #define FUNCTION_TEST_RETURN_VOID()
-#endif
+#endif // DEBUG_TEST_TRACE_MACRO
 
 #endif
