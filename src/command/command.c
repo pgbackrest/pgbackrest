@@ -130,8 +130,7 @@ cmdOption(void)
                                 else if (cfgParseOptionType(optionId) == cfgOptTypeTime)
                                 {
                                     valueList = strLstNew();
-                                    strLstAdd(
-                                        valueList, cvtDoubleToStr((double)cfgOptionIdxInt64(optionId, optionIdx) / MSEC_PER_SEC));
+                                    strLstAdd(valueList, strNewDbl((double)cfgOptionIdxInt64(optionId, optionIdx) / MSEC_PER_SEC));
                                 }
                                 // Else only one value
                                 else

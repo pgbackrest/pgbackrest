@@ -21,7 +21,7 @@ repository will be invalid unless migration functions are written.
 #define REPOSITORY_FORMAT                                           5
 
 /***********************************************************************************************************************************
-Software version.  Currently this value is maintained in Version.pm and updated by test.pl.
+Software version
 ***********************************************************************************************************************************/
 #define PROJECT_VERSION                                             "2.32dev"
 

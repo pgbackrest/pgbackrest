@@ -368,10 +368,8 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             }
 
             case hrnServerCmdDone:
-            {
                 done = true;
                 break;
-            }
 
             case hrnServerCmdExpect:
             {
@@ -409,19 +407,13 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             }
 
             case hrnServerCmdReply:
-            {
                 ioWrite(ioSessionIoWrite(serverSession), BUFSTR(varStr(data)));
                 ioWriteFlush(ioSessionIoWrite(serverSession));
-
                 break;
-            }
 
             case hrnServerCmdSleep:
-            {
                 sleepMSec(varUInt64Force(data));
-
                 break;
-            }
         }
     }
     while (!done);

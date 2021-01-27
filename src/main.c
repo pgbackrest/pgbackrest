@@ -141,139 +141,105 @@ main(int argListSize, const char *argList[])
                 // Check command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdCheck:
-                {
                     cmdCheck();
                     break;
-                }
 
                 // Expire command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdExpire:
-                {
                     cmdExpire();
                     break;
-                }
 
                 // Help command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdHelp:
                 case cfgCmdNone:
-                {
                     THROW(AssertError, "'help' and 'none' commands should have been handled already");
-                }
 
                 // Info command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdInfo:
-                {
                     cmdInfo();
                     break;
-                }
 
                 // Repository create command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoCreate:
-                {
                     cmdRepoCreate();
                     break;
-                }
 
                 // Repository get file command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoGet:
-                {
                     result = cmdStorageGet();
                     break;
-                }
 
                 // Repository list paths/files command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoLs:
-                {
                     cmdStorageList();
                     break;
-                }
 
                 // Repository put file command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoPut:
-                {
                     cmdStoragePut();
                     break;
-                }
 
                 // Repository remove paths/files command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoRm:
-                {
                     cmdStorageRemove();
                     break;
-                }
 
                 // Restore command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRestore:
-                {
                     cmdRestore();
                     break;
-                }
 
                 // Stanza create command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaCreate:
-                {
                     cmdStanzaCreate();
                     break;
-                }
 
                 // Stanza delete command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaDelete:
-                {
                     cmdStanzaDelete();
                     break;
-                }
 
                 // Stanza upgrade command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaUpgrade:
-                {
                     cmdStanzaUpgrade();
                     break;
-                }
 
                 // Start command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStart:
-                {
                     cmdStart();
                     break;
-                }
 
                 // Stop command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStop:
-                {
                     cmdStop();
                     break;
-                }
 
                 // Verify command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdVerify:
-                {
                     cmdVerify();
                     break;
-                }
 
                 // Display version
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdVersion:
-                {
                     printf(PROJECT_NAME " " PROJECT_VERSION "\n");
                     fflush(stdout);
                     break;
-                }
             }
         }
     }

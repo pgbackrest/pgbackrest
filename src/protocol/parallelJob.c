@@ -241,22 +241,16 @@ protocolParallelJobToConstZ(ProtocolParallelJobState state)
     switch (state)
     {
         case protocolParallelJobStatePending:
-        {
             result = "pending";
             break;
-        }
 
         case protocolParallelJobStateRunning:
-        {
             result = "running";
             break;
-        }
 
         case protocolParallelJobStateDone:
-        {
             result = "done";
             break;
-        }
     }
 
     return result;

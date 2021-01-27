@@ -45,74 +45,52 @@ String *hrnPackToStr(PackRead *read)
                 THROW_FMT(AssertError, "invalid type %s", strZ(pckTypeToStr(type)));
 
             case pckTypeArray:
-            {
                 pckReadArrayBeginP(read, .id = id);
                 strCatFmt(result, "[%s]", strZ(hrnPackToStr(read)));
                 pckReadArrayEndP(read);
                 break;
-            }
 
             case pckTypeBool:
-            {
                 strCatZ(result, cvtBoolToConstZ(pckReadBoolP(read, .id = id)));
                 break;
-            }
 
             case pckTypeBin:
-            {
                 strCatFmt(result, "%s", strZ(bufHex(pckReadBinP(read, .id = id))));
                 break;
-            }
 
             case pckTypeI32:
-            {
                 strCatFmt(result, "%d", pckReadI32P(read, .id = id));
                 break;
-            }
 
             case pckTypeI64:
-            {
                 strCatFmt(result, "%" PRId64, pckReadI64P(read, .id = id));
                 break;
-            }
 
             case pckTypeObj:
-            {
                 pckReadObjBeginP(read, .id = id);
                 strCatFmt(result, "{%s}", strZ(hrnPackToStr(read)));
                 pckReadObjEndP(read);
                 break;
-            }
 
             case pckTypePtr:
-            {
                 strCatFmt(result, "%p", pckReadPtrP(read, .id = id));
                 break;
-            }
 
             case pckTypeStr:
-            {
                 strCatFmt(result, "%s", strZ(pckReadStrP(read, .id = id)));
                 break;
-            }
 
             case pckTypeTime:
-            {
                 strCatFmt(result, "%" PRId64, (int64_t)pckReadTimeP(read, .id = id));
                 break;
-            }
 
             case pckTypeU32:
-            {
                 strCatFmt(result, "%u", pckReadU32P(read, .id = id));
                 break;
-            }
 
             case pckTypeU64:
-            {
                 strCatFmt(result, "%" PRIu64, pckReadU64P(read, .id = id));
                 break;
-            }
         }
 
         first = false;

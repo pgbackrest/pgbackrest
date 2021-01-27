@@ -148,16 +148,12 @@ testResponse(IoWrite *write, TestResponseParam param)
     switch (param.code)
     {
         case 200:
-        {
             strCatZ(response, "OK");
             break;
-        }
 
         case 403:
-        {
             strCatZ(response, "Forbidden");
             break;
-        }
     }
 
     // End header

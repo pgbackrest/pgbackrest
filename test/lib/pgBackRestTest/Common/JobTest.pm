@@ -343,38 +343,33 @@ sub run
 
                 # Generate list of harness files
                 # ------------------------------------------------------------------------------------------------------------------
+                my $hTest = (testDefModuleTest($self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}));
                 my $strRepoCopyTestSrcHarnessPath = $strRepoCopyTestSrcPath . '/common';
 
-                my @stryHarnessFile;
+                my @stryHarnessFile = ('common/harnessTest');
 
-                foreach my $strFile (sort(keys(%{$self->{oStorageTest}->manifest($strRepoCopyTestSrcHarnessPath)})))
+                foreach my $strFile (@{$hTest->{&TESTDEF_HARNESS}})
                 {
-                    # Skip . and header files
-                    next if $strFile eq '.' || $strFile =~ /\.h$/;
-
-                    push(@stryHarnessFile, "common/" . substr($strFile, 0, length($strFile) - 2));
+                    push(@stryHarnessFile, "common/harness" . ucfirst($strFile));
                 }
 
                 # Generate list of core files (files to be tested/included in this unit will be excluded)
                 # ------------------------------------------------------------------------------------------------------------------
-                my $hTest = (testDefModuleTest($self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}));
                 my $hTestCoverage = $hTest->{&TESTDEF_COVERAGE};
 
                 my @stryCoreFile;
 
-                foreach my $strFile (sort(keys(%{$self->{oStorageTest}->manifest($strRepoCopySrcPath)})))
+                foreach my $strFile (@{$hTest->{&TESTDEF_CORE}})
                 {
-                    my $strFileNoExt = substr($strFile, 0, length($strFile) - 2);
-
                     # Skip all files except .c files (including .auto.c and .vendor.c)
-                    next if $strFile !~ /(?<!\.auto)\.c$/ || $strFile !~ /(?<!\.vendor)\.c$/;
+                    next if $strFile !~ /(?<!\.auto)$/ || $strFile !~ /(?<!\.vendor)$/;
 
-                    # ??? Skip main for now until the function can be renamed to allow unit testing
-                    next if $strFile =~ /main\.c$/;
+                    # Skip if no C file exists
+                    next if !$self->{oStorageTest}->exists("${strRepoCopySrcPath}/${strFile}.c");
 
-                    if (!defined($hTestCoverage->{$strFileNoExt}) && !grep(/^$strFileNoExt$/, @{$hTest->{&TESTDEF_INCLUDE}}))
+                    if (!defined($hTestCoverage->{$strFile}) && !grep(/^$strFile$/, @{$hTest->{&TESTDEF_INCLUDE}}))
                     {
-                        push(@stryCoreFile, "${strFileNoExt}");
+                        push(@stryCoreFile, $strFile);
                     }
                 }
 
@@ -386,7 +381,7 @@ sub run
                     "\n" .
                     "SRCS = test.c \\\n" .
                     "\t" . join('.c ', @stryHarnessFile) . ".c \\\n" .
-                    "\t" . join('.c ', @stryCoreFile) . ".c\n" .
+                    (@stryCoreFile > 0 ? "\t" . join('.c ', @stryCoreFile) . ".c\n" : '').
                     "\n" .
                     ".build/test.o: CFLAGS += \$(CFLAGS_TEST)\n" .
                     "\n" .

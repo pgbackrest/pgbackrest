@@ -134,19 +134,15 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
 
         // Try again after waiting for read ready
         case SSL_ERROR_WANT_READ:
-        {
             ioReadReadyP(ioSessionIoRead(this->ioSession), .error = true);
             result = 0;
             break;
-        }
 
         // Try again after waiting for write ready
         case SSL_ERROR_WANT_WRITE:
-        {
             ioWriteReadyP(ioSessionIoWrite(this->ioSession), .error = true);
             result = 0;
             break;
-        }
 
         // A syscall failed (this usually indicates unexpected eof)
         case SSL_ERROR_SYSCALL:

@@ -122,22 +122,16 @@ const String *backupTypeStr(BackupType type)
     switch (type)
     {
         case backupTypeFull:
-        {
             result = BACKUP_TYPE_FULL_STR;
             break;
-        }
 
         case backupTypeDiff:
-        {
             result = BACKUP_TYPE_DIFF_STR;
             break;
-        }
 
         case backupTypeIncr:
-        {
             result = BACKUP_TYPE_INCR_STR;
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN(result);

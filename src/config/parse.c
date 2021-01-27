@@ -16,7 +16,6 @@ Command and Option Parse
 #include "common/regExp.h"
 #include "config/config.intern.h"
 #include "config/parse.h"
-#include "storage/helper.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -597,40 +596,28 @@ sizeQualifierToMultiplier(char qualifier)
     switch (qualifier)
     {
         case 'b':
-        {
             result = 1;
             break;
-        }
 
         case 'k':
-        {
             result = 1024;
             break;
-        }
 
         case 'm':
-        {
             result = 1024 * 1024;
             break;
-        }
 
         case 'g':
-        {
             result = 1024 * 1024 * 1024;
             break;
-        }
 
         case 't':
-        {
             result = 1024LL * 1024LL * 1024LL * 1024LL;
             break;
-        }
 
         case 'p':
-        {
             result = 1024LL * 1024LL * 1024LL * 1024LL * 1024LL;
             break;
-        }
 
         default:
             THROW_FMT(AssertError, "'%c' is not a valid size qualifier", qualifier);
@@ -755,12 +742,14 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
 
 static String *
 cfgFileLoad(                                                        // NOTE: Passing defaults to enable more complete test coverage
+    const Storage *storage,                                         // !!!
     const ParseOption *optionList,                                  // All options and their current settings
     const String *optConfigDefault,                                 // Current default for --config option
     const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
     const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM_P(PARSE_OPTION, optionList);
         FUNCTION_LOG_PARAM(STRING, optConfigDefault);
         FUNCTION_LOG_PARAM(STRING, optConfigIncludePathDefault);
@@ -825,7 +814,7 @@ cfgFileLoad(                                                        // NOTE: Pas
             configFileName = optConfigDefault;
 
         // Load the config file
-        Buffer *buffer = storageGetP(storageNewReadP(storageLocal(), configFileName, .ignoreMissing = !configRequired));
+        Buffer *buffer = storageGetP(storageNewReadP(storage, configFileName, .ignoreMissing = !configRequired));
 
         // Convert the contents of the file buffer to the config string object
         if (buffer != NULL)
@@ -833,7 +822,7 @@ cfgFileLoad(                                                        // NOTE: Pas
         else if (strEq(configFileName, optConfigDefaultCurrent))
         {
             // If config is current default and it was not found, attempt to load the config file from the old default location
-            buffer = storageGetP(storageNewReadP(storageLocal(), origConfigDefault, .ignoreMissing = !configRequired));
+            buffer = storageGetP(storageNewReadP(storage, origConfigDefault, .ignoreMissing = !configRequired));
 
             if (buffer != NULL)
                 result = strNewBuf(buffer);
@@ -860,7 +849,7 @@ cfgFileLoad(                                                        // NOTE: Pas
 
         // Get a list of conf files from the specified path -error on missing directory if the option was passed on the command line
         StringList *list = storageListP(
-            storageLocal(), configIncludePath, .expression = STRDEF(".+\\.conf$"), .errorOnMissing = configIncludeRequired,
+            storage, configIncludePath, .expression = STRDEF(".+\\.conf$"), .errorOnMissing = configIncludeRequired,
             .nullOnMissing = !configIncludeRequired);
 
         // If conf files are found, then add them to the config string
@@ -875,7 +864,7 @@ cfgFileLoad(                                                        // NOTE: Pas
                     &result,
                     storageGetP(
                         storageNewReadP(
-                            storageLocal(), strNewFmt("%s/%s", strZ(configIncludePath), strZ(strLstGet(list, listIdx))),
+                            storage, strNewFmt("%s/%s", strZ(configIncludePath), strZ(strLstGet(list, listIdx))),
                             .ignoreMissing = true)));
             }
         }
@@ -889,11 +878,13 @@ cfgFileLoad(                                                        // NOTE: Pas
 logic to this critical path code.
 ***********************************************************************************************************************************/
 void
-configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
+configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(UINT, argListSize);
         FUNCTION_LOG_PARAM(CHARPY, argList);
+        FUNCTION_LOG_PARAM(BOOL, resetLogLevel);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -1217,7 +1208,7 @@ configParse(unsigned int argListSize, const char *argList[], bool resetLogLevel)
             // ---------------------------------------------------------------------------------------------------------------------
             // Load the configuration file(s)
             String *configString = cfgFileLoad(
-                parseOptionList, STR(cfgParseOptionDefault(config->command, cfgOptConfig)),
+                storage, parseOptionList, STR(cfgParseOptionDefault(config->command, cfgOptConfig)),
                 STR(cfgParseOptionDefault(config->command, cfgOptConfigIncludePath)), PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
 
             if (configString != NULL)
