@@ -51,16 +51,8 @@ unit:
 
         depend:
           - common/debug
-          - common/type/convert
           - common/memContext
           - common/stackTrace
-          - common/type/buffer
-          - common/type/keyValue
-          - common/type/list
-          - common/type/string
-          - common/type/stringList
-          - common/type/variant
-          - common/type/variantList
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stack-trace
@@ -68,6 +60,13 @@ unit:
 
         coverage:
           - common/stackTrace
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-convert
+        total: 11
+
+        coverage:
+          - common/type/convert
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: assert-off
@@ -106,13 +105,6 @@ unit:
           - common/type/convert
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-convert
-        total: 11
-
-        coverage:
-          - common/type/convert
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
         total: 3
 
@@ -127,6 +119,13 @@ unit:
         coverage:
           - common/type/string
           - common/type/stringList
+
+        depend:
+          - common/type/buffer
+          - common/type/keyValue
+          - common/type/list
+          - common/type/variant
+          - common/type/variantList
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-list

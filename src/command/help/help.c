@@ -134,7 +134,7 @@ helpRenderValue(const Variant *value, ConfigOptionType type)
         result = resultTemp;
     }
     else if (type == cfgOptTypeTime)
-        result = cvtDoubleToStr((double)varInt64(value) / MSEC_PER_SEC);
+        result = strNewDbl((double)varInt64(value) / MSEC_PER_SEC);
     else
         result = varStrForce(value);
     }
