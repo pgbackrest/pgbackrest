@@ -162,6 +162,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("expireBackup()"))
     {
+// CSHANG This entire test does not change code coverage and may be redundant - see if there is a test where we test the infoBackup and such. Or maybe take this as an opportunity to have an encrypted repo? NO this doesn't really read the manifest and the info is not on disk
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest file removal");
 
