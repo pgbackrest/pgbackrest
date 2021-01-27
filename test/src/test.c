@@ -86,12 +86,12 @@ main(int argListSize, const char *argList[])
     int result = 0;
 
     // Initialize statistics
-#ifdef HRN_FEATURE_STAT
+#if defined(HRN_INTEST_STAT) || defined(HRN_FEATURE_STAT)
     statInit();
 #endif
 
     // Use aggressive keep-alive settings for testing
-#ifdef HRN_FEATURE_SOCKET
+#if defined(HRN_INTEST_SOCKET) || defined(HRN_FEATURE_SOCKET)
     sckInit(false, true, 2, 5, 5);
 #endif
 

@@ -18,9 +18,6 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // Initialize socket options
-    sckInit(false, true, 2, 5, 5);
-
     // *****************************************************************************************************************************
     if (testBegin("Socket Common"))
     {
