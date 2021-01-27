@@ -10,7 +10,6 @@
 # Most options can be set for modules and tests (test option will override module option if both are set):
 #     * db - determines if the test will be run against multiple db versions
 #     * define - defines for C code (will also be applied to the test harness)
-#     * define-test - defines for the test harness
 #     * debugUnitSuppress - don't define DEBUG_UNIT for unit tests -- this is used to test unit test debugging macros
 #     * binReq - is the pgbackrest binary required for this test?
 #     * containerReq - is this test required to run in a container?
@@ -19,6 +18,13 @@
 #     * coverage - a list of code modules that the test provides coverage for. A code module may be covered by multiple tests. That
 #         means you must run all the tests by providing the --run option multiple times to get full coverage on the code module. If
 #         a code module contains only data it should be marked noCode (e.g. - help/help.auto.c: noCode).
+#     * feature - Defines a feature that is now available in the harness. For example, the "error" feature defines HRN_FEATURE_ERROR
+#         used to automatically check for errors in later tests. The common/error test is not able to access this error handling
+#         because it is used to implement the error handling, so it must do error testing in a more primitive way.
+#     * harness - Adds a harness module that contains functions to aid in testing. For example, the "log" harness includes the
+#         common/harnessLog module to aid in expect log testing.
+#     * depend - Source modules that this test depends on that have not already been included in prior tests via coverage. Ideally
+#         this option would never be used because it is essentially documenting cross-dependencies in the code.
 #     * total - total runs in the test
 #     * vm - VMs that the test will be run on
 #     * include - modules to include directly into test.c (all files in coverage are automatically included)
@@ -37,107 +43,23 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: error
         total: 8
-        define-test: -DNO_ERROR -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
+        feature: error
 
         coverage:
           - common/error
           - common/error.auto: noCode
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: assert-on
-        total: 1
-        define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
-
-        coverage:
-          - common/assert: noCode
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: assert-off
-        total: 1
-        define: -DNDEBUG
-        define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
-        debugUnitSuppress: true
-
-        coverage:
-          - common/assert: noCode
+        depend:
+          - common/debug
+          - common/memContext
+          - common/stackTrace
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stack-trace
         total: 4
-        define-test: -DNO_LOG -DNO_STACK_TRACE -DNO_MEM_CONTEXT
 
         coverage:
           - common/stackTrace
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: mem-context
-        total: 7
-        define-test: -DNO_MEM_CONTEXT -DNO_LOG -DNO_STAT
-
-        coverage:
-          - common/memContext
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: time
-        total: 3
-        define-test: -DNO_ERROR -DNO_LOG
-
-        coverage:
-          - common/time
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: fork
-        total: 1
-        define-test: -DNO_LOG
-
-        coverage:
-          - common/fork
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: log
-        total: 5
-        define-test: -DNO_LOG
-
-        coverage:
-          - common/log
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: debug-off
-        total: 2
-        define: -DNDEBUG
-        define-test: -DNO_LOG
-        debugUnitSuppress: true
-
-        coverage:
-          - common/debug
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: debug-on
-        total: 4
-
-        coverage:
-          - common/debug
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: lock
-        total: 2
-
-        coverage:
-          - common/lock
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: exit
-        total: 3
-
-        coverage:
-          - common/exit
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: wait
-        total: 1
-
-        coverage:
-          - common/wait
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert
@@ -147,11 +69,63 @@ unit:
           - common/type/convert
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-object
+      - name: assert-off
+        total: 1
+        define: -DNDEBUG
+        debugUnitSuppress: true
+
+        coverage:
+          - common/assert: noCode
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: debug-off
+        total: 2
+        define: -DNDEBUG
+        debugUnitSuppress: true
+
+        coverage:
+          - common/debug
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: assert-on
         total: 1
 
         coverage:
-          - common/type/object: noCode
+          - common/assert: noCode
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: mem-context
+        total: 7
+        feature: memContext
+
+        coverage:
+          - common/memContext
+
+        depend:
+          - common/type/convert
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: time
+        total: 3
+
+        coverage:
+          - common/time
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-string
+        total: 26
+        feature: string
+
+        coverage:
+          - common/type/string
+          - common/type/stringList
+
+        depend:
+          - common/type/buffer
+          - common/type/keyValue
+          - common/type/list
+          - common/type/variant
+          - common/type/variantList
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-list
@@ -159,14 +133,6 @@ unit:
 
         coverage:
           - common/type/list
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-string
-        total: 26
-
-        coverage:
-          - common/type/string
-          - common/type/stringList
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-buffer
@@ -184,11 +150,49 @@ unit:
           - common/type/variantList
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-pack
+      - name: reg-exp
+        total: 3
+
+        coverage:
+          - common/regExp
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: log
+        total: 5
+        feature: log
+        harness: log
+
+        coverage:
+          - common/log
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: debug-on
+        total: 4
+        feature: debug
+
+        coverage:
+          - common/debug
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: fork
         total: 1
 
         coverage:
-          - common/type/pack
+          - common/fork
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: wait
+        total: 1
+
+        coverage:
+          - common/wait
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-object
+        total: 1
+
+        coverage:
+          - common/type/object: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-mcv
@@ -221,6 +225,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stat
         total: 1
+        feature: STAT
 
         coverage:
           - common/stat
@@ -252,8 +257,28 @@ unit:
           - common/io/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-pack
+        total: 1
+        harness: pack
+
+        coverage:
+          - common/type/pack
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: crypto
+        total: 3
+
+        coverage:
+          - common/crypto/cipherBlock
+          - common/crypto/common
+          - common/crypto/hash
+          - common/crypto/md5.vendor
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
         total: 5
+        feature: SOCKET
+        harness: server
 
         coverage:
           - common/io/client
@@ -282,6 +307,36 @@ unit:
           - common/io/http/session
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: exec
+        total: 1
+
+        coverage:
+          - common/exec
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: encode
+        total: 1
+
+        coverage:
+          - common/encode
+          - common/encode/base64
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: ini
+        total: 4
+
+        coverage:
+          - common/ini
+
+        depend:
+          - storage/posix/read
+          - storage/posix/storage
+          - storage/posix/write
+          - storage/read
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: compress
         total: 5
 
@@ -301,43 +356,60 @@ unit:
           - common/compress/helper
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: crypto
+      - name: exit
         total: 3
+        harness: config
 
         coverage:
-          - common/crypto/cipherBlock
-          - common/crypto/common
-          - common/crypto/hash
-          - common/crypto/md5.vendor
+          - common/exit
+
+        depend:
+          - command/backup/pageChecksum
+          - common/lock
+          - config/config
+          - config/parse
+          - config/exec
+          - config/load
+          - config/protocol
+          - command/command
+          - postgres/interface
+          - postgres/interface/page
+          - postgres/interface/v083
+          - postgres/interface/v084
+          - postgres/interface/v090
+          - postgres/interface/v091
+          - postgres/interface/v092
+          - postgres/interface/v093
+          - postgres/interface/v094
+          - postgres/interface/v095
+          - postgres/interface/v096
+          - postgres/interface/v100
+          - postgres/interface/v110
+          - postgres/interface/v120
+          - postgres/interface/v130
+          - protocol/client
+          - protocol/command
+          - protocol/helper
+          - protocol/server
+          - storage/azure/read
+          - storage/azure/storage
+          - storage/azure/write
+          - storage/cifs/storage
+          - storage/helper
+          - storage/remote/read
+          - storage/remote/protocol
+          - storage/remote/storage
+          - storage/remote/write
+          - storage/s3/read
+          - storage/s3/storage
+          - storage/s3/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: exec
-        total: 1
+      - name: lock
+        total: 2
 
         coverage:
-          - common/exec
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: encode
-        total: 1
-
-        coverage:
-          - common/encode
-          - common/encode/base64
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: reg-exp
-        total: 3
-
-        coverage:
-          - common/regExp
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: ini
-        total: 4
-
-        coverage:
-          - common/ini
+          - common/lock
 
   # ********************************************************************************************************************************
   - name: postgres
@@ -346,6 +418,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: client
         total: 1
+        harness: pq
 
         coverage:
           - postgres/client
@@ -404,6 +477,21 @@ unit:
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: posix
+        total: 21
+        feature: STORAGE
+        harness: storage
+
+        coverage:
+          - storage/posix/read
+          - storage/posix/storage
+          - storage/posix/write
+          - storage/helper
+          - storage/read
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: azure
         total: 3
 
@@ -428,19 +516,6 @@ unit:
 
         include:
           - storage/storage
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: posix
-        total: 21
-
-        coverage:
-          - storage/posix/read
-          - storage/posix/storage
-          - storage/posix/write
-          - storage/helper
-          - storage/read
-          - storage/storage
-          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
@@ -502,6 +577,7 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info
         total: 3
+        harness: info
 
         coverage:
           - info/info
@@ -521,18 +597,21 @@ unit:
           - info/infoArchive
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-backup
-        total: 3
-
-        coverage:
-          - info/infoBackup
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest
         total: 6
 
         coverage:
           - info/manifest
+
+        depend:
+          - command/backup/common
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: info-backup
+        total: 3
+
+        coverage:
+          - info/infoBackup
 
   # ********************************************************************************************************************************
   - name: db
@@ -553,6 +632,15 @@ unit:
   - name: command
 
     test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: control
+        total: 3
+
+        coverage:
+          - command/control/common
+          - command/control/start
+          - command/control/stop
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-common
         total: 9
@@ -583,28 +671,17 @@ unit:
           - command/archive/push/push
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: backup-common
-        total: 3
+      - name: stanza
+        total: 4
 
         coverage:
-          - command/backup/common
-          - command/backup/pageChecksum
+          - command/stanza/common
+          - command/stanza/create
+          - command/stanza/upgrade
+          - command/stanza/delete
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: backup
-        total: 10
-        binReq: true
-
-        coverage:
-          - command/backup/backup
-          - command/backup/common
-          - command/backup/file
-          - command/backup/protocol
-
-        include:
-          - info/info
-          - info/manifest
-          - storage/storage
+        depend:
+          - command/check/common
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: check
@@ -621,15 +698,6 @@ unit:
 
         coverage:
           - command/command
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: control
-        total: 3
-
-        coverage:
-          - command/control/common
-          - command/control/start
-          - command/control/stop
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: expire
@@ -657,13 +725,6 @@ unit:
           - command/info/info
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: local
-        total: 1
-
-        coverage:
-          - command/local/local
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
         total: 1
 
@@ -686,14 +747,28 @@ unit:
           - info/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: stanza
-        total: 4
+      - name: backup-common
+        total: 3
 
         coverage:
-          - command/stanza/common
-          - command/stanza/create
-          - command/stanza/upgrade
-          - command/stanza/delete
+          - command/backup/common
+          - command/backup/pageChecksum
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: backup
+        total: 10
+        binReq: true
+
+        coverage:
+          - command/backup/backup
+          - command/backup/common
+          - command/backup/file
+          - command/backup/protocol
+
+        include:
+          - info/info
+          - info/manifest
+          - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
@@ -719,6 +794,13 @@ unit:
           - command/verify/file
           - command/verify/protocol
           - command/verify/verify
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: local
+        total: 1
+
+        coverage:
+          - command/local/local
 
 # **********************************************************************************************************************************
 # Integration tests

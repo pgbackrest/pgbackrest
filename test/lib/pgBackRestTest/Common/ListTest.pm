@@ -171,7 +171,7 @@ sub testListGet
                                         &TEST_VM => $strTestOS,
                                         &TEST_C => coalesce($hTest->{&TESTDEF_C}, $hModule->{&TESTDEF_C}, false),
                                         &TEST_CDEF => $hTest->{&TESTDEF_DEFINE},
-                                        &TEST_CTESTDEF => $hTest->{&TESTDEF_DEFINE_TEST},
+                                        &TEST_CTESTDEF => $hTest->{&TESTDEF_FEATURE},
                                         &TEST_DEBUG_UNIT_SUPPRESS => $hTest->{&TEST_DEBUG_UNIT_SUPPRESS},
                                         &TEST_CONTAINER => defined($hTest->{&TESTDEF_CONTAINER}) ?
                                             $hTest->{&TESTDEF_CONTAINER} : $hModule->{&TESTDEF_CONTAINER},

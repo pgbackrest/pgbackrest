@@ -4,22 +4,7 @@ C Debug Harness
 #ifndef TEST_COMMON_HARNESS_DEBUG_H
 #define TEST_COMMON_HARNESS_DEBUG_H
 
-#ifdef NO_STACK_TRACE
-    #define FUNCTION_HARNESS_INIT(exe)
-    #define FUNCTION_HARNESS_STACK_TRACE_LINE_SET(lineNo)
-    #define FUNCTION_HARNESS_BEGIN()
-    #define FUNCTION_HARNESS_PARAM(typeMacroPrefix, param)
-    #define FUNCTION_HARNESS_PARAM_P(typeMacroPrefix, param)
-    #define FUNCTION_HARNESS_PARAM_PP(typeMacroPrefix, param)
-    #define FUNCTION_HARNESS_END()
-    #define FUNCTION_HARNESS_VOID()
-    #define FUNCTION_HARNESS_ASSERT(condition)
-
-    #define FUNCTION_HARNESS_RESULT(typeMacroPrefix, result)                                                                       \
-        return result
-
-    #define FUNCTION_HARNESS_RESULT_VOID();
-#else
+#ifdef HRN_FEATURE_DEBUG
     #include "common/debug.h"
 
     #ifdef WITH_BACKTRACE
@@ -75,6 +60,21 @@ C Debug Harness
 
     #define FUNCTION_HARNESS_RESULT_VOID()                                                                                         \
         STACK_TRACE_POP(false);
+#else
+    #define FUNCTION_HARNESS_INIT(exe)
+    #define FUNCTION_HARNESS_STACK_TRACE_LINE_SET(lineNo)
+    #define FUNCTION_HARNESS_BEGIN()
+    #define FUNCTION_HARNESS_PARAM(typeMacroPrefix, param)
+    #define FUNCTION_HARNESS_PARAM_P(typeMacroPrefix, param)
+    #define FUNCTION_HARNESS_PARAM_PP(typeMacroPrefix, param)
+    #define FUNCTION_HARNESS_END()
+    #define FUNCTION_HARNESS_VOID()
+    #define FUNCTION_HARNESS_ASSERT(condition)
+
+    #define FUNCTION_HARNESS_RESULT(typeMacroPrefix, result)                                                                       \
+        return result
+
+    #define FUNCTION_HARNESS_RESULT_VOID();
 #endif
 
 #endif

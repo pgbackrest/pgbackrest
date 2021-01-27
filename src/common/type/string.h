@@ -64,6 +64,9 @@ String *strNew(const char *string);
 // but only the data before the NULL character will be used as a string.
 String *strNewBuf(const Buffer *buffer);
 
+// Create a new string by converting the double value
+String *strNewDbl(double value);
+
 // Create a new string from a format string with parameters (i.e. sprintf)
 String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
 

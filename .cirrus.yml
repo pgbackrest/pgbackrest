@@ -35,8 +35,8 @@ macos_catalina_task:
     PERL5LIB: /usr/local/opt/perl5/lib/perl5
 
   install_script:
-      - brew install -q openssl@1.1 libpq libxml2 cpanm
-      - cpanm --local-lib=/usr/local/opt/perl5 install YAML
+    - brew install -q openssl@1.1 libpq libxml2 cpanm
+    - cpanm --local-lib=/usr/local/opt/perl5 install YAML
 
   script:
     - ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup --test=archive-get --test=archive-push

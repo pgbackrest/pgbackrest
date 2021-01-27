@@ -22,9 +22,12 @@ The test code is included directly so it can freely interact with the included C
 #include <string.h>
 #include <sys/stat.h>
 
-#ifndef NO_ERROR
-    #include "common/debug.h"
+#ifdef HRN_FEATURE_ERROR
     #include "common/error.h"
+#endif
+
+#ifdef HRN_FEATURE_DEBUG
+    #include "common/debug.h"
 #endif
 
 // Path where the test is running
@@ -36,12 +39,12 @@ The test code is included directly so it can freely interact with the included C
 #include "common/harnessDebug.h"
 #include "common/harnessTest.intern.h"
 
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     #include "common/harnessLog.h"
     void harnessLogLevelDefaultSet(LogLevel logLevel);
 #endif
 
-#ifndef NO_MEM_CONTEXT
+#ifdef HRN_FEATURE_MEMCONTEXT
     #include "common/memContext.h"
 #endif
 
@@ -54,7 +57,7 @@ Includes that are not generally used by tests
 
 #include "common/io/socket/common.h"
 
-#ifndef NO_STAT
+#ifdef HRN_FEATURE_STAT
     #include "common/stat.h"
 #endif
 
@@ -83,12 +86,14 @@ main(int argListSize, const char *argList[])
     int result = 0;
 
     // Initialize statistics
-#ifndef NO_STAT
+#ifdef HRN_FEATURE_STAT
     statInit();
 #endif
 
     // Use aggressive keep-alive settings for testing
+#ifdef HRN_FEATURE_SOCKET
     sckInit(false, true, 2, 5, 5);
+#endif
 
     // Set neutral umask for testing
     umask(0000);
@@ -112,7 +117,7 @@ main(int argListSize, const char *argList[])
         "{[C_TEST_REPO_PATH]}");    // Path with a copy of the repository
 
     // Set default test log level
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     harnessLogLevelDefaultSet({[C_LOG_LEVEL_TEST]});
 #endif
 
@@ -120,7 +125,7 @@ main(int argListSize, const char *argList[])
     //      run, selected
     {[C_TEST_LIST]}
 
-#ifndef NO_ERROR
+#ifdef HRN_FEATURE_ERROR
     TRY_BEGIN()
     {
         TRY_BEGIN()
@@ -128,7 +133,7 @@ main(int argListSize, const char *argList[])
 #endif
             // Run the tests
             testRun();
-#ifndef NO_ERROR
+#ifdef HRN_FEATURE_ERROR
         }
         CATCH_ANY()
         {
@@ -149,7 +154,7 @@ main(int argListSize, const char *argList[])
 
         printf("\nTESTS COMPLETED SUCCESSFULLY\n");
         fflush(stdout);
-#ifndef NO_ERROR
+#ifdef HRN_FEATURE_ERROR
     }
     CATCH_ANY()
     {
@@ -171,7 +176,7 @@ main(int argListSize, const char *argList[])
         fflush(stderr);
         result = errorCode();
     }
-#ifndef NO_MEM_CONTEXT
+#ifdef HRN_FEATURE_MEMCONTEXT
     FINALLY()
     {
         memContextFree(memContextTop());

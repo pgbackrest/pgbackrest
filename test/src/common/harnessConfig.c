@@ -28,7 +28,7 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     // Free objects in storage helper
     storageHelperFree();
 
-    configParse(argListSize, argList, false);
+    configParse(storageLocal(), argListSize, argList, false);
     cfgLoadUpdateOption();
 
     // Use a static exec-id for testing if it is not set explicitly
@@ -37,7 +37,7 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
 
     // Set dry-run mode for storage and logging
     storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_STORAGE
     harnessLogDryRunSet(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
 #endif
 
