@@ -61,7 +61,7 @@ static struct HarnessTestLocal
 /***********************************************************************************************************************************
 Extern functions
 ***********************************************************************************************************************************/
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     void harnessLogInit(void);
     void harnessLogFinal(void);
 #endif
@@ -161,7 +161,7 @@ testBegin(const char *name)
 
     if (testList[testRun - 1].selected)
     {
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
         if (!testFirst)
         {
             // Make sure there is nothing untested left in the log
@@ -208,7 +208,7 @@ testBegin(const char *name)
         testRunSub = 1;
         timeMSecBegin = testTimeMSec();
 
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
         // Initialize logging
         harnessLogInit();
 #endif
@@ -229,7 +229,7 @@ hrnComplete(void)
 {
     FUNCTION_HARNESS_VOID();
 
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     // Make sure there is nothing untested left in the log
     harnessLogFinal();
 #endif
@@ -646,6 +646,8 @@ void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResul
     hrnTestResultEnd();
 }
 
+#ifdef HRN_FEATURE_STRING
+
 void
 hrnTestResultStringList(const StringList *actual, const void *expected, HarnessTestResultOperation operation)
 {
@@ -658,6 +660,8 @@ hrnTestResultStringList(const StringList *actual, const void *expected, HarnessT
 
     hrnTestResultZ(strZ(strCatZ(strLstJoin(actual, "\n"), "\n")), expected, operation);
 }
+
+#endif
 
 void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation)
 {

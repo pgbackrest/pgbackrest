@@ -15,8 +15,6 @@ Log Test Harness
 #include "common/harnessDebug.h"
 #include "common/harnessTest.h"
 
-#ifndef NO_LOG
-
 /***********************************************************************************************************************************
 Expose log internal data for unit testing/debugging
 ***********************************************************************************************************************************/
@@ -436,5 +434,3 @@ harnessLogFinal(void)
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
-
-#endif

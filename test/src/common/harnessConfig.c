@@ -37,7 +37,7 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
 
     // Set dry-run mode for storage and logging
     storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_STORAGE
     harnessLogDryRunSet(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
 #endif
 
