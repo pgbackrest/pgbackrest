@@ -50,16 +50,18 @@ unit:
           - common/error.auto: noCode
 
         depend:
-          - common/debug
-          - common/memContext
           - common/stackTrace
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stack-trace
         total: 4
+        feature: stackTrace
 
         coverage:
           - common/stackTrace
+
+        depend:
+          - common/debug
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert

@@ -17,8 +17,6 @@ testRun(void)
         const String *statTlsClient = STRDEF("tls.client");
         const String *statHttpSession = STRDEF("http.session");
 
-        TEST_RESULT_VOID(statInit(), "init stats");
-
         TEST_RESULT_UINT(lstSize(statLocalData.stat), 0, "stat list is empty");
 
         TEST_RESULT_VOID(statInc(statTlsClient), "inc tls.client");
