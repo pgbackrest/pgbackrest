@@ -2129,12 +2129,9 @@ testRun(void)
             "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F_20181119-152155I repo1: 9.4-1,"
             " start = 000000010000000000000007, stop = 000000010000000000000007\n"
             "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F repo1: 9.4-1, start = 000000010000000000000009\n"
-            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000001,"
-            " stop = 000000010000000000000003\n"
-            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000005,"
-            " stop = 000000010000000000000005\n"
-            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000008,"
-            " stop = 000000010000000000000008");
+            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000001, stop = 000000010000000000000003\n"
+            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000005, stop = 000000010000000000000005\n"
+            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000008, stop = 000000010000000000000008");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo1-retention-archive-type=diff");
@@ -2163,14 +2160,10 @@ testRun(void)
             " stop = 000000010000000000000009\n"
             "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F_20181119-152600D repo1: 9.4-1,"
             " start = 000000010000000000000011\n"
-            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000001,"
-            " stop = 000000010000000000000003\n"
-            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000005,"
-            " stop = 000000010000000000000005\n"
-            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000008,"
-            " stop = 000000010000000000000008\n"
-            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000010,"
-            " stop = 000000010000000000000010");
+            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000001, stop = 000000010000000000000003\n"
+            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000005, stop = 000000010000000000000005\n"
+            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000008, stop = 000000010000000000000008\n"
+            "P00 DETAIL: [DRY-RUN] remove archive repo1: 9.4-1, start = 000000010000000000000010, stop = 000000010000000000000010");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire oldest full");

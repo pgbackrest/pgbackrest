@@ -283,6 +283,7 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigne
         FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
+
     ASSERT(infoBackup != NULL);
     ASSERT(minTimestamp > 0);
 
@@ -357,8 +358,8 @@ logExpire(ArchiveExpired *archiveExpire, String *archiveId, unsigned int repoIdx
     {
         // Force out any remaining message
         LOG_DETAIL_FMT(
-            "remove archive repo%u: %s, start = %s, stop = %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
-            strZ(archiveId), strZ(archiveExpire->start), strZ(archiveExpire->stop));
+            "remove archive repo%u: %s, start = %s, stop = %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(archiveId),
+            strZ(archiveExpire->start), strZ(archiveExpire->stop));
 
         archiveExpire->start = NULL;
     }
@@ -619,7 +620,8 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                         archiveExpireMax = strDup(archiveRange.start);
 
                                     LOG_DETAIL_FMT(
-                                        "archive retention on backup %s repo%u: %s, start = %s%s", strZ(backupData->backupLabel), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(archiveId), strZ(archiveRange.start),
+                                        "archive retention on backup %s repo%u: %s, start = %s%s", strZ(backupData->backupLabel),
+                                        cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(archiveId), strZ(archiveRange.start),
                                         archiveRange.stop != NULL ? strZ(strNewFmt(", stop = %s", strZ(archiveRange.stop))) : "");
 
                                     // Add the archive range to the list
@@ -730,8 +732,9 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                             // Log if no archive was expired
                             if (archiveExpire.total == 0)
                             {
-                                LOG_DETAIL_FMT("no archive to remove for repo%u: %s",
-                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(archiveId));
+                                LOG_DETAIL_FMT(
+                                    "no archive to remove for repo%u: %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                                    strZ(archiveId));
                             }
                             // Log if there is more to log
                             else
@@ -764,8 +767,8 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                     }
 
                                     LOG_DETAIL_FMT(
-                                        "remove history file repo%u: %s, file = %s",
-                                        cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(archiveId), strZ(historyFile));
+                                        "remove history file repo%u: %s, file = %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                                        strZ(archiveId), strZ(historyFile));
                                 }
                             }
 
