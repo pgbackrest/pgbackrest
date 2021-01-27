@@ -258,6 +258,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("THROW_SYS_ERROR() and THROW_SYS_ERROR_FMT()"))
     {
+        THROW_ON_SYS_ERROR(false, AssertError, "no error");
         THROW_ON_SYS_ERROR_FMT(false, AssertError, "no error");
 
         TRY_BEGIN()
