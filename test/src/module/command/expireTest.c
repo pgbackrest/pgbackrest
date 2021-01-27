@@ -555,7 +555,8 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=4");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "archive retention set, retention type default, no current backups");
+        TEST_RESULT_VOID(
+            removeExpiredArchive(infoBackup, false, 0), "archive retention set, retention type default, no current backups");
         harnessLogResult(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
             " of space\n"
@@ -667,7 +668,8 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=3");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=3");
+        TEST_RESULT_VOID(
+            removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=3");
 
         TEST_RESULT_STRLST_STR(
             strLstSort(storageListP(
@@ -691,7 +693,8 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=2");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=2");
+        TEST_RESULT_VOID(
+            removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=2");
 
         TEST_RESULT_STRLST_STR(
             strLstSort(storageListP(
@@ -716,7 +719,8 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive=1");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=1");
+        TEST_RESULT_VOID(
+            removeExpiredArchive(infoBackup, false, 0), "archive retention type = full (default), repo1-retention-archive=1");
 
         TEST_RESULT_STRLST_STR(
             strLstSort(storageListP(
@@ -985,7 +989,8 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
-        harnessLogResult(strZ(strNewFmt("P00   INFO: remove archive path repo1: %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
+        harnessLogResult(
+            strZ(strNewFmt("P00   INFO: remove archive path repo1: %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
@@ -1729,8 +1734,8 @@ testRun(void)
                 strZ(backupStanzaPath)))),
             true, "latest and resumable removed");
         harnessLogResult(
-            "P00   WARN: expiring latest backup repo1: 20181119-152900F - the ability to perform point-in-time-recovery (PITR) may be"
-            " affected\n"
+            "P00   WARN: expiring latest backup repo1: 20181119-152900F - the ability to perform point-in-time-recovery (PITR) may"
+            " be affected\n"
             "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
             " (even in prior expires) can cause gaps in the WAL.\n"
             "P00   INFO: expire adhoc backup repo1: 20181119-152900F\n"
@@ -1848,7 +1853,8 @@ testRun(void)
 
         String *adhocBackupLabel = strNew("20181119-152850F_20181119-152252D");
         TEST_RESULT_UINT(expireAdhocBackup(infoBackup, adhocBackupLabel, 0), 1, "adhoc expire last dependent backup");
-        TEST_RESULT_VOID(removeExpiredBackup(infoBackup, adhocBackupLabel, 0), "code coverage: removeExpireBackup with no manifests");
+        TEST_RESULT_VOID(
+            removeExpiredBackup(infoBackup, adhocBackupLabel, 0), "code coverage: removeExpireBackup with no manifests");
         harnessLogResult(
             "P00   WARN: [DRY-RUN] expiring latest backup repo1: 20181119-152850F_20181119-152252D - the ability to perform"
             " point-in-time-recovery (PITR) may be affected\n"
@@ -1958,8 +1964,8 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest with resumable possibly based on it");
         harnessLogResult(
-            "P00   WARN: expiring latest backup repo1: 20181119-152850F_20181119-152252D - the ability to perform point-in-time-recovery"
-            " (PITR) may be affected\n"
+            "P00   WARN: expiring latest backup repo1: 20181119-152850F_20181119-152252D - the ability to perform"
+            " point-in-time-recovery (PITR) may be affected\n"
             "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
             " (even in prior expires) can cause gaps in the WAL.\n"
             "P00   INFO: expire adhoc backup repo1: 20181119-152850F_20181119-152252D\n"
