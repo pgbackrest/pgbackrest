@@ -63,6 +63,8 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
 - archive retention on 2 repos - each different
 - adhoc expire (think this is already done where repo not set so searches and finds)
 */
+
+// CSHANG MUST add more details to the command reference guide on how expire works. I don't think we have enough detail there. I also don't think people will understand that if they run it manually, say for adhoc expire, that any retention policies they hve set will still be performed. Maybe it's not an issue, but I think the command is sparse in its description.
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -162,7 +164,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("expireBackup()"))
     {
-// CSHANG This entire test does not change code coverage and may be redundant - see if there is a test where we test the infoBackup and such. Or maybe take this as an opportunity to have an encrypted repo? NO this doesn't really read the manifest and the info is not on disk
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest file removal");
 
@@ -859,7 +860,7 @@ testRun(void)
         // Copy the repo to another repo
         TEST_SYSTEM_FMT("mkdir %s/repo2", testPath());
         TEST_SYSTEM_FMT("cp -r %s/repo/* %s/repo2/", testPath(), testPath());
- // CSHANG Here should probably change to have different retention on the 2 repos, and see if one is expired and the other not?
+
         // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
@@ -913,12 +914,21 @@ testRun(void)
             "P00   INFO: remove expired backup repo1: 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire command - dry run: archive and backups not removed");
+        TEST_TITLE("expire command - multi-repo, dry run: archive and backups not removed");
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
-        strLstAddZ(argList, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchiveType, 2, "diff");
+
+        argList2 = strLstDup(argList);
+        strLstAddZ(argList2, "--dry-run");
+        harnessCfgLoad(cfgCmdExpire, argList2);
+
+        harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) - log expired backups and archive path to remove");
         TEST_RESULT_BOOL(
@@ -933,6 +943,18 @@ testRun(void)
             storageExistsP(
                 storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)))),
             true, "backup not removed");
+
+        /* backup.info (repo1 and repo2) prior to expire
+        9.4-1:
+        20181119-152800F=backup-archive-start:000000020000000000000002,backup-archive-stop:000000020000000000000002
+        20181119-152800F_20181119-152152D=backup-archive-start:000000020000000000000004,backup-archive-stop:000000020000000000000005
+        20181119-152800F_20181119-152155I=backup-archive-start:000000020000000000000007,backup-archive-stop:000000020000000000000007
+        20181119-152800F_20181119-152252D=backup-archive-start:000000020000000000000009,backup-archive-stop:000000020000000000000009
+        10-2:
+        20181119-152900F=backup-archive-start:000000010000000000000003,backup-archive-stop:000000010000000000000004
+        20181119-152900F_20181119-152500I=backup-archive-start:000000010000000000000006,backup-archive-stop:000000010000000000000006
+        */
+
         harnessLogResult(strZ(strNewFmt(
             "P00   INFO: [DRY-RUN] expire full backup set repo1: 20181119-152800F, 20181119-152800F_20181119-152152D, "
             "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
@@ -940,15 +962,27 @@ testRun(void)
             "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152800F_20181119-152152D\n"
             "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152800F\n"
-            "P00   INFO: [DRY-RUN] remove archive path repo1: %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
+            "P00   INFO: [DRY-RUN] remove archive path repo1: %s/%s/9.4-1\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F repo1: 10-2, start = 000000010000000000000003\n"
+            "P00 DETAIL: [DRY-RUN] no archive to remove for repo1: 10-2\n"
+            "P00   INFO: [DRY-RUN] expire diff backup set repo2: 20181119-152800F_20181119-152152D,"
+            " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] remove expired backup repo2: 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] remove expired backup repo2: 20181119-152800F_20181119-152152D\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F repo2: 9.4-1, start = 000000020000000000000002,"
+            " stop = 000000020000000000000002\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F_20181119-152252D repo2: 9.4-1,"
+            " start = 000000020000000000000009\n"
+            "P00 DETAIL: [DRY-RUN] remove archive repo2: 9.4-1, start = 000000020000000000000004,"
+            " stop = 000000020000000000000007\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F repo2: 10-2, start = 000000010000000000000003\n"
+            "P00 DETAIL: [DRY-RUN] no archive to remove for repo2: 10-2", testPath(), strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire via backup command - archive and backups removed");
+        TEST_TITLE("expire command - multi-repo, archive and backups removed");
 
-        argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=1");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        harnessCfgLoad(cfgCmdBackup, argList);
+        // Rerun previous test without dry-run and through the backup command
+        harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire backups and remove archive path");
         TEST_RESULT_BOOL(
@@ -962,13 +996,55 @@ testRun(void)
             "P00   INFO: remove expired backup repo1: 20181119-152800F_20181119-152155I\n"
             "P00   INFO: remove expired backup repo1: 20181119-152800F_20181119-152152D\n"
             "P00   INFO: remove expired backup repo1: 20181119-152800F\n"
-            "P00   INFO: remove archive path repo1: %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
+            "P00   INFO: remove archive path repo1: %s/%s/9.4-1\n"
+            "P00 DETAIL: archive retention on backup 20181119-152900F repo1: 10-2, start = 000000010000000000000003\n"
+            "P00 DETAIL: no archive to remove for repo1: 10-2\n"
+            "P00   INFO: expire diff backup set repo2: 20181119-152800F_20181119-152152D,"
+            " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup repo2: 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup repo2: 20181119-152800F_20181119-152152D\n"
+            "P00 DETAIL: archive retention on backup 20181119-152800F repo2: 9.4-1, start = 000000020000000000000002,"
+            " stop = 000000020000000000000002\n"
+            "P00 DETAIL: archive retention on backup 20181119-152800F_20181119-152252D repo2: 9.4-1,"
+            " start = 000000020000000000000009\n"
+            "P00 DETAIL: remove archive repo2: 9.4-1, start = 000000020000000000000004,"
+            " stop = 000000020000000000000007\n"
+            "P00 DETAIL: archive retention on backup 20181119-152900F repo2: 10-2, start = 000000010000000000000003\n"
+            "P00 DETAIL: no archive to remove for repo2: 10-2", testPath(), strZ(archiveStanzaPath))));
 
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup.info updated on disk");
         TEST_RESULT_STRLST_Z(
             strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
             "20181119-152900F\n20181119-152900F_20181119-152500I\n", "remaining current backups correct");
+
+        harnessLogLevelReset();
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire command - multi-repo, adhoc not found");
+
+        hrnCfgArgRawZ(argList, cfgOptSet, "20201119-123456F_20201119-234567I");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on any repo");
+        harnessLogResult(
+            "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
+            "            HINT: run the info command and confirm the backup is listed");
+// CSHANG
+        // Rerun on single repo
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on any repo");
+        harnessLogResult(
+            "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
+            "            HINT: run the info command and confirm the backup is listed");
+
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--set=" BOGUS_STR);
+
+        harnessCfgLoad(cfgCmdExpire, argList);
+        TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - archive removed");
@@ -1611,38 +1687,41 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid backup label");
 // CSHANG Should probably perform this test with 2 repos and not set a repo so it acts on both for retention
-        StringList *argList = strLstDup(argListBase);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "4");
-        hrnCfgArgRawZ(argList, cfgOptSet, "20201119-123456F_20201119-234567I");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        // StringList *argList = strLstDup(argListBase);
+        // hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "4");
+        // hrnCfgArgRawZ(argList, cfgOptSet, "20201119-123456F_20201119-234567I");
+        // harnessCfgLoad(cfgCmdExpire, argList);
+        //
+        // // Set the log level to detail so archive expiration messages are seen
+        // harnessLogLevelSet(logLevelDetail);
+        //
+        // // High retention set so only archives older than oldest full are removed
+        // TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist");
+        // harnessLogResult(
+        //     "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
+        //     "            HINT: run the info command and confirm the backup is listed\n"
+        //     "P00 DETAIL: archive retention on backup 20181119-152138F repo1: 9.4-1, start = 000000020000000000000001\n"
+        //     "P00 DETAIL: no archive to remove for repo1: 9.4-1\n"
+        //     "P00 DETAIL: archive retention on backup 20181119-152850F repo1: 12-2, start = 000000010000000000000002\n"
+        //     "P00 DETAIL: remove archive repo1: 12-2, start = 000000010000000000000001, stop = 000000010000000000000001");
 
-        // Set the log level to detail so archive expiration messages are seen
-        harnessLogLevelSet(logLevelDetail);
-
-        // High retention set so only archives older than oldest full are removed
-        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist");
-        harnessLogResult(
-            "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
-            "            HINT: run the info command and confirm the backup is listed\n"
-            "P00 DETAIL: archive retention on backup 20181119-152138F repo1: 9.4-1, start = 000000020000000000000001\n"
-            "P00 DETAIL: no archive to remove for repo1: 9.4-1\n"
-            "P00 DETAIL: archive retention on backup 20181119-152850F repo1: 12-2, start = 000000010000000000000002\n"
-            "P00 DETAIL: remove archive repo1: 12-2, start = 000000010000000000000001, stop = 000000010000000000000001");
-
-        argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--set=" BOGUS_STR);
-
-        harnessCfgLoad(cfgCmdExpire, argList);
-        TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
+        // StringList *argList = strLstDup(argListAvoidWarn);
+        // strLstAddZ(argList, "--set=" BOGUS_STR);
+        //
+        // harnessCfgLoad(cfgCmdExpire, argList);
+        // TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
 
 // CSHANG Maybe remove a duplicate test from above and just have these:
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup and dependent");
 
-        argList = strLstDup(argListBase);
+        StringList *argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--set=20181119-152800F_20181119-152152D");
         harnessCfgLoad(cfgCmdExpire, argList);
+
+        // Set the log level to detail so archive expiration messages are seen
+        harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire only backup and dependent");
         TEST_RESULT_BOOL(
@@ -1675,6 +1754,7 @@ testRun(void)
             "P00 DETAIL: archive retention on backup 20181119-152850F repo1: 12-2, start = 000000010000000000000002,"
             " stop = 000000010000000000000004\n"
             "P00 DETAIL: archive retention on backup 20181119-152900F repo1: 12-2, start = 000000010000000000000006\n"
+            "P00 DETAIL: remove archive repo1: 12-2, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00 DETAIL: remove archive repo1: 12-2, start = 000000010000000000000005, stop = 000000010000000000000005");
 
         //--------------------------------------------------------------------------------------------------------------------------
