@@ -59,12 +59,10 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
 
     return result;
 }
-/* CSHANG TODO: Figure out which tests need to be updated for multi-repo AND make sure to tests on encrypted repo
-- archive retention on 2 repos - each different
-- adhoc expire (think this is already done where repo not set so searches and finds)
+/* CSHANG TODO:
+- MUST create on enryption repo with manifest to ensure testing properly on encrypted repo
+- MUST add more details to the command reference guide on how expire works. I don't think we have enough detail there. I also don't think people will understand that if they run it manually, say for adhoc expire, that any retention policies they have set will still be performed and, in the case of adhoc, that the latest backup CAN be removed (unless it is the only backup). Maybe it's not an issue, but I think the command is sparse in its description.
 */
-
-// CSHANG MUST add more details to the command reference guide on how expire works. I don't think we have enough detail there. I also don't think people will understand that if they run it manually, say for adhoc expire, that any retention policies they hve set will still be performed. Maybe it's not an issue, but I think the command is sparse in its description.
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -981,10 +979,10 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, archive and backups removed");
 
-        // Rerun previous test without dry-run and through the backup command
+        // Rerun previous test without dry-run
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(cmdExpire(), "via backup command: expire backups and remove archive path");
+        TEST_RESULT_VOID(cmdExpire(), "expire backups and remove archive path");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1")),
             false, "archive path removed");
@@ -1021,25 +1019,42 @@ testRun(void)
         harnessLogLevelReset();
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire command - multi-repo, adhoc not found");
+        TEST_TITLE("expire command - multi-repo, adhoc");
 
-        hrnCfgArgRawZ(argList, cfgOptSet, "20201119-123456F_20201119-234567I");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        // With multi-repo config from previous test, adhoc expire on backup that doesn't exist
+        argList2 = strLstDup(argList);
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20201119-123456F_20201119-234567I");
+        harnessCfgLoad(cfgCmdExpire, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on any repo");
         harnessLogResult(
             "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
             "            HINT: run the info command and confirm the backup is listed");
-// CSHANG
+
         // Rerun on single repo
-        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
+        harnessCfgLoad(cfgCmdExpire, argList2);
 
-        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on any repo");
+        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on requested repo");
         harnessLogResult(
             "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
             "            HINT: run the info command and confirm the backup is listed");
 
+        // With multiple repos, adhoc expire backup found on first repo
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F_20181119-152500I");
+        hrnCfgArgRawBool(argList, cfgOptDryRun, true);
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "label format OK and found on first repo");
+        harnessLogResult(
+            "P00   WARN: [DRY-RUN] expiring latest backup repo1: 20181119-152900F_20181119-152500I - the ability to perform"
+            " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
+            " expires) can cause gaps in the WAL.\n"
+            "P00   INFO: [DRY-RUN] expire adhoc backup repo1: 20181119-152900F_20181119-152500I\n"
+            "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152900F_20181119-152500I");
+
+        // Incorrect backup label format provided
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--set=" BOGUS_STR);
 
@@ -1052,7 +1067,8 @@ testRun(void)
         archiveGenerate(storageTest, archiveStanzaPath, 1, 1, "9.4-1", "0000000100000000");
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
         harnessLogResult(
@@ -1684,34 +1700,6 @@ testRun(void)
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "9.4-1", "0000000200000000");
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "12-2", "0000000100000000");
 
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("invalid backup label");
-// CSHANG Should probably perform this test with 2 repos and not set a repo so it acts on both for retention
-        // StringList *argList = strLstDup(argListBase);
-        // hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "4");
-        // hrnCfgArgRawZ(argList, cfgOptSet, "20201119-123456F_20201119-234567I");
-        // harnessCfgLoad(cfgCmdExpire, argList);
-        //
-        // // Set the log level to detail so archive expiration messages are seen
-        // harnessLogLevelSet(logLevelDetail);
-        //
-        // // High retention set so only archives older than oldest full are removed
-        // TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist");
-        // harnessLogResult(
-        //     "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
-        //     "            HINT: run the info command and confirm the backup is listed\n"
-        //     "P00 DETAIL: archive retention on backup 20181119-152138F repo1: 9.4-1, start = 000000020000000000000001\n"
-        //     "P00 DETAIL: no archive to remove for repo1: 9.4-1\n"
-        //     "P00 DETAIL: archive retention on backup 20181119-152850F repo1: 12-2, start = 000000010000000000000002\n"
-        //     "P00 DETAIL: remove archive repo1: 12-2, start = 000000010000000000000001, stop = 000000010000000000000001");
-
-        // StringList *argList = strLstDup(argListAvoidWarn);
-        // strLstAddZ(argList, "--set=" BOGUS_STR);
-        //
-        // harnessCfgLoad(cfgCmdExpire, argList);
-        // TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
-
-// CSHANG Maybe remove a duplicate test from above and just have these:
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup and dependent");
 

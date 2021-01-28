@@ -110,7 +110,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned in
     {
         // Get a list of all full backups with most recent in position 0
         StringList *fullList = strLstSort(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
-// CSHANG Do we need to check across all repos and allow them to expire it even though it is the only backup on this repo? I think adhoc is a special case anyway - that users are probably only using it during development, so they're used to the limitation. I think if we want to check over all repos (and only if --repo not specified) then that should be a separate feature.
+
         // If the requested backup to expire is the latest full backup
         if (strCmp(strLstGet(fullList, 0), backupLabel) == 0)
         {
