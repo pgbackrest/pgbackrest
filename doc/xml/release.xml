@@ -39,6 +39,7 @@
                     <release-item>
                         <commit subject="Partial multi-repository implementation."/>
                         <commit subject="Improve info command text output and --set handling."/>
+                        <commit subject="Update expire command log messages with repo prefix."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>

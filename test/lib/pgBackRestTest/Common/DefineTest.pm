@@ -188,7 +188,10 @@ sub testDefLoad
                     push(@{$hTestDefHash->{$strModule}{$strTest}{&TESTDEF_HARNESS}}, @stryHarnessFile);
 
                     # Add test defines
-                    $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_FEATURE} = $strTestDefine;
+                    $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_FEATURE} =
+                        (defined($hModuleTest->{&TESTDEF_FEATURE}) ?
+                            "-DHRN_INTEST_" . uc($hModuleTest->{&TESTDEF_FEATURE}) . ' ' : '') .
+                        $strTestDefine;
 
                     if (defined($hModuleTest->{&TESTDEF_FEATURE}))
                     {

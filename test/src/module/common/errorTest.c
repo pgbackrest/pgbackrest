@@ -45,6 +45,17 @@ testTryRecurse(void)
 }                                                                   // {uncoverable - function throws error, never returns}
 
 /***********************************************************************************************************************************
+Test error handler
+***********************************************************************************************************************************/
+static unsigned int testErrorHandlerTryDepth;
+
+static void
+testErrorHandler(unsigned int tryDepth)
+{
+    testErrorHandlerTryDepth = tryDepth;
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -103,6 +114,16 @@ testRun(void)
         volatile bool catchDone = false;
         volatile bool finallyDone = false;
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("set error handler");
+
+        static const ErrorHandlerFunction testErrorHandlerList[] = {testErrorHandler};
+        errorHandlerSet(testErrorHandlerList, sizeof(testErrorHandlerList) / sizeof(ErrorHandlerFunction));
+
+        assert(errorContext.handlerList[0] == testErrorHandler);
+        assert(errorContext.handlerTotal == 1);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         assert(errorTryDepth() == 0);
 
         TRY_BEGIN()
@@ -131,6 +152,8 @@ testRun(void)
                 }
                 CATCH(AssertError)
                 {
+                    assert(testErrorHandlerTryDepth == 3);
+
                     // Finally below should run even though this error has been rethrown
                     RETHROW();
                 }
@@ -142,6 +165,8 @@ testRun(void)
             }
             CATCH_ANY()
             {
+                assert(testErrorHandlerTryDepth == 2);
+
                 RETHROW();
             }
             TRY_END();
@@ -152,6 +177,7 @@ testRun(void)
         }
         CATCH(RuntimeError)
         {
+            assert(testErrorHandlerTryDepth == 1);
             assert(errorTryDepth() == 1);
             assert(errorContext.tryList[1].state == errorStateCatch);
             assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);

@@ -42,6 +42,10 @@ Main
 int
 main(int argListSize, const char *argList[])
 {
+    // Set stack trace and mem context error cleanup handlers
+    static const ErrorHandlerFunction errorHandlerList[] = {stackTraceClean, memContextClean};
+    errorHandlerSet(errorHandlerList, sizeof(errorHandlerList) / sizeof(ErrorHandlerFunction));
+
 #ifdef WITH_BACKTRACE
     stackTraceInit(argList[0]);
 #endif

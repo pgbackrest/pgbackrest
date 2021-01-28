@@ -871,9 +871,11 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchiveType, 2, "diff");
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        harnessCfgLoad(cfgCmdBackup, argList);
+
+        StringList *argList2 = strLstDup(argList);
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
+        strLstAdd(argList2, strNewFmt("--pg1-path=%s/pg", testPath()));
+        harnessCfgLoad(cfgCmdBackup, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
@@ -896,24 +898,9 @@ testRun(void)
             "P00   INFO: remove expired backup repo2: 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire command requires repo option");
-
-        argList = strLstDup(argListBase);
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "3");
-
-        TEST_ERROR_FMT(
-            harnessCfgLoad(cfgCmdExpire, argList), OptionRequiredError, "expire command requires option: repo\n"
-            "HINT: this command requires a specific repository to operate on");
-
-        //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - no dry run");
 
         // Add to previous list and specify repo
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAddZ(argList, "--repo1-retention-diff=3");
-        strLstAddZ(argList, "--repo1-retention-archive=2");
-        strLstAddZ(argList, "--repo1-retention-archive-type=diff");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdExpire, argList);
 
@@ -992,7 +979,8 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
-        harnessLogResult(strZ(strNewFmt("P00   INFO: remove archive path repo1: %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
+        harnessLogResult(
+            strZ(strNewFmt("P00   INFO: remove archive path repo1: %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
@@ -1622,15 +1610,16 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid backup label");
-
+// CSHANG Should probably perform this test with 2 repos and not set a repo so it acts on both for retention
         StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=4");    // High retention so only archives older than oldest full backup removed
-        strLstAddZ(argList, "--set=20201119-123456F_20201119-234567I");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "4");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20201119-123456F_20201119-234567I");
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Set the log level to detail so archive expiration messages are seen
         harnessLogLevelSet(logLevelDetail);
 
+        // High retention set so only archives older than oldest full are removed
         TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist");
         harnessLogResult(
             "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
@@ -1864,7 +1853,8 @@ testRun(void)
 
         String *adhocBackupLabel = strNew("20181119-152850F_20181119-152252D");
         TEST_RESULT_UINT(expireAdhocBackup(infoBackup, adhocBackupLabel, 0), 1, "adhoc expire last dependent backup");
-        TEST_RESULT_VOID(removeExpiredBackup(infoBackup, adhocBackupLabel, 0), "code coverage: removeExpireBackup with no manifests");
+        TEST_RESULT_VOID(
+            removeExpiredBackup(infoBackup, adhocBackupLabel, 0), "code coverage: removeExpireBackup with no manifests");
         harnessLogResult(
             "P00   WARN: [DRY-RUN] expiring latest backup repo1: 20181119-152850F_20181119-152252D - the ability to perform"
             " point-in-time-recovery (PITR) may be affected\n"

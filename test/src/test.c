@@ -61,6 +61,10 @@ Includes that are not generally used by tests
     #include "common/stat.h"
 #endif
 
+#ifdef HRN_IN_STACKTRACE
+    #include "common/stackTrace.h"
+#endif
+
 /***********************************************************************************************************************************
 main - run the tests
 ***********************************************************************************************************************************/
@@ -85,13 +89,27 @@ main(int argListSize, const char *argList[])
 
     int result = 0;
 
+#ifdef HRN_FEATURE_ERROR
+    static const ErrorHandlerFunction handlerList[] =
+    {
+#if defined(HRN_INTEST_STACKTRACE) || defined(HRN_FEATURE_STACKTRACE)
+        stackTraceClean,
+#endif
+#if defined(HRN_INTEST_MEMCONTEXT) || defined(HRN_FEATURE_MEMCONTEXT)
+        memContextClean,
+#endif
+    };
+
+    errorHandlerSet(handlerList, sizeof(handlerList) / sizeof(ErrorHandlerFunction));
+#endif
+
     // Initialize statistics
-#ifdef HRN_FEATURE_STAT
+#if defined(HRN_INTEST_STAT) || defined(HRN_FEATURE_STAT)
     statInit();
 #endif
 
     // Use aggressive keep-alive settings for testing
-#ifdef HRN_FEATURE_SOCKET
+#if defined(HRN_INTEST_SOCKET) || defined(HRN_FEATURE_SOCKET)
     sckInit(false, true, 2, 5, 5);
 #endif
 

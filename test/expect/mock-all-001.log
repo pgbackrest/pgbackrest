@@ -2603,14 +2603,14 @@ expire full=1 (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo1-retention-full=1 --repo=1  --stanza=db expire
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=1 --stanza=db
-P00   INFO: expire full backup set: [BACKUP-FULL-2], [BACKUP-INCR-2], [BACKUP-DIFF-1], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-2], [BACKUP-DIFF-3]
-P00   INFO: remove expired backup [BACKUP-DIFF-3]
-P00   INFO: remove expired backup [BACKUP-DIFF-2]
-P00   INFO: remove expired backup [BACKUP-INCR-4]
-P00   INFO: remove expired backup [BACKUP-INCR-3]
-P00   INFO: remove expired backup [BACKUP-DIFF-1]
-P00   INFO: remove expired backup [BACKUP-INCR-2]
-P00   INFO: remove expired backup [BACKUP-FULL-2]
+P00   INFO: expire full backup set repo1: [BACKUP-FULL-2], [BACKUP-INCR-2], [BACKUP-DIFF-1], [BACKUP-INCR-3], [BACKUP-INCR-4], [BACKUP-DIFF-2], [BACKUP-DIFF-3]
+P00   INFO: remove expired backup repo1: [BACKUP-DIFF-3]
+P00   INFO: remove expired backup repo1: [BACKUP-DIFF-2]
+P00   INFO: remove expired backup repo1: [BACKUP-INCR-4]
+P00   INFO: remove expired backup repo1: [BACKUP-INCR-3]
+P00   INFO: remove expired backup repo1: [BACKUP-DIFF-1]
+P00   INFO: remove expired backup repo1: [BACKUP-INCR-2]
+P00   INFO: remove expired backup repo1: [BACKUP-FULL-2]
 P00   INFO: expire command end: completed successfully
 
 diff backup - add file (db-primary host)
