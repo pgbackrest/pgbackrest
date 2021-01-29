@@ -311,8 +311,10 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR_FMT(
-            cmdArchiveGet(), FileMissingError,
-            "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
+            cmdArchiveGet(), RepoInvalidError,
+            "unable to find a valid repo:\n"
+            "repo1: [FileMissingError] unable to load info file '%s/archive/test1/archive.info' or"
+                " '%s/archive/test1/archive.info.copy':\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
@@ -332,8 +334,10 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_ERROR_FMT(
-            cmdArchiveGet(), FileMissingError,
-            "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
+            cmdArchiveGet(), RepoInvalidError,
+            "unable to find a valid repo:\n"
+            "repo1: [FileMissingError] unable to load info file '%s/archive/test1/archive.info' or"
+                " '%s/archive/test1/archive.info.copy':\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
@@ -442,8 +446,10 @@ testRun(void)
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         TEST_ERROR(
-            cmdArchiveGet(), ArchiveMismatchError,
-            "unable to retrieve the archive id for database version '11' and system-id '18072658121562454734'");
+            cmdArchiveGet(), RepoInvalidError,
+            "unable to find a valid repo:\n"
+            "repo1: [ArchiveMismatchError] unable to retrieve the archive id for database version '11' and system-id"
+                " '18072658121562454734'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg version does not match archive.info");
@@ -453,8 +459,10 @@ testRun(void)
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0x8888888888888888}));
 
         TEST_ERROR(
-            cmdArchiveGet(), ArchiveMismatchError,
-            "unable to retrieve the archive id for database version '10' and system-id '9838263505978427528'");
+            cmdArchiveGet(), RepoInvalidError,
+            "unable to find a valid repo:\n"
+            "repo1: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+                " '9838263505978427528'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file is missing");

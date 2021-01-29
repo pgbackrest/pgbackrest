@@ -52,13 +52,12 @@ typedef struct ArchiveFileMap
     List *actualList;                                               // Actual files
 } ArchiveFileMap;
 
-// typedef struct ArchiveRepoError
-// {
-//     unsigned int repoIdx;                                           // Repo where the error occurred
-//     const ErrorType *errorType;                                     // Error type if there was an error
-//     const String *errorFile;                                        // Error file if there was an error
-//     const String *errorMessage;                                     // Error message if there was an error
-// } ArchiveRepoError;
+typedef struct ArchiveRepoError
+{
+    unsigned int repoIdx;                                           // Repo where the error occurred
+    const ErrorType *type;                                          // Error type if there was an error
+    const String *message;                                          // Error message if there was an error
+} ArchiveRepoError;
 
 typedef struct ArchiveGetCheckResult
 {
@@ -317,7 +316,11 @@ archiveGetCheck(const StringList *archiveRequestList)
     ASSERT(archiveRequestList != NULL);
     ASSERT(strLstSize(archiveRequestList) > 0);
 
-    ArchiveGetCheckResult result = {.archiveFileMapList = lstNewP(sizeof(ArchiveFileMap))};
+    ArchiveGetCheckResult result =
+    {
+        .archiveFileMapList = lstNewP(sizeof(ArchiveFileMap)),
+        .repoErrorList = lstNewP(sizeof(ArchiveRepoError)),
+    };
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -394,25 +397,64 @@ archiveGetCheck(const StringList *archiveRequestList)
                     }
                 }
 
-                // Add repo to list
-                lstAdd(cache, &cacheRepo);
-
                 // Error if no archive id was found -- this indicates a mismatch with the current cluster
-                // !!! THIS NEEDS TO BE A REPO LEVEL ERROR
                 if (lstEmpty(cacheRepo.archiveList))
                 {
-                    THROW_FMT(
-                        ArchiveMismatchError,
-                        "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
-                        strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId);
+                    MEM_CONTEXT_BEGIN(lstMemContext(result.repoErrorList))
+                    {
+                        lstAdd(
+                            result.repoErrorList,
+                            &(ArchiveRepoError)
+                            {
+                                .repoIdx = repoIdx,
+                                .type = &ArchiveMismatchError,
+                                .message = strNewFmt(
+                                    "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
+                                    strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId),
+                            });
+                    }
+                    MEM_CONTEXT_END();
                 }
+                // Else add repo to list
+                else
+                    lstAdd(cache, &cacheRepo);
             }
             CATCH_ANY()
             {
-                // !!! THIS NEEDS TO BE A REPO LEVEL ERROR
-                RETHROW();
+                MEM_CONTEXT_BEGIN(lstMemContext(result.repoErrorList))
+                {
+                    lstAdd(
+                        result.repoErrorList,
+                        &(ArchiveRepoError)
+                        {
+                            .repoIdx = repoIdx,
+                            .type = errorType(),
+                            .message = strNew(errorMessage()),
+                        });
+                }
+                MEM_CONTEXT_END();
             }
             TRY_END();
+        }
+
+        // Error if there are no repos to check
+        if (lstEmpty(cache))
+        {
+            ASSERT(!lstEmpty(result.repoErrorList));
+
+            // Format message
+            String *message = strNew("");
+
+            for (unsigned int errorIdx = 0; errorIdx < lstSize(result.repoErrorList); errorIdx++)
+            {
+                ArchiveRepoError *error = lstGet(result.repoErrorList, errorIdx);
+
+                strCatFmt(
+                    message, "\nrepo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, error->repoIdx),
+                    errorTypeName(error->type), strZ(error->message));
+            }
+
+            THROW_FMT(RepoInvalidError, "unable to find a valid repo:%s", strZ(message));
         }
 
         // Find files in the list
