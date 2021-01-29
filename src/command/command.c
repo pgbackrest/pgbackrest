@@ -50,7 +50,7 @@ cmdOption(void)
                 // Add command parameters if they exist
                 const StringList *commandParamList = cfgCommandParam();
 
-                if (strLstSize(commandParamList) != 0)
+                if (!strLstEmpty(commandParamList))
                 {
                     strCatFmt(cmdOptionStr, " [");
 
@@ -215,7 +215,7 @@ cmdEnd(int code, const String *errorMessage)
             // Output statistics if there are any
             const KeyValue *statKv = statToKv();
 
-            if (varLstSize(kvKeyList(statKv)) > 0)
+            if (!varLstEmpty(kvKeyList(statKv)))
                 LOG_DETAIL_FMT("statistics: %s", strZ(jsonFromKv(statKv)));
 
             // Basic info on command end

@@ -37,7 +37,7 @@ cmdStorageRemove(void)
         {
             bool recurse = cfgOptionBool(cfgOptRecurse);
 
-            if (!recurse && strLstSize(storageListP(storageRepo(), path)) > 0)
+            if (!recurse && !strLstEmpty(storageListP(storageRepo(), path)))
                 THROW(OptionInvalidError, CFGOPT_RECURSE " option must be used to delete non-empty path");
 
             storagePathRemoveP(storageRepoWrite(), path, .recurse = recurse);

@@ -101,7 +101,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderDesc);
 
-        if (strLstSize(backupList) > 0)
+        if (!strLstEmpty(backupList))
             backupLabelLatest = strLstGet(backupList, 0);
 
         // Get the newest history
@@ -109,7 +109,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
             storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
             sortOrderDesc);
 
-        if (strLstSize(historyYearList) > 0)
+        if (!strLstEmpty(historyYearList))
         {
             const StringList *historyList = strLstSort(
                 storageListP(
@@ -121,7 +121,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                         strZ(compressTypeStr(compressTypeGz)))),
                 sortOrderDesc);
 
-            if (strLstSize(historyList) > 0)
+            if (!strLstEmpty(historyList))
             {
                 const String *historyLabelLatest = strLstGet(historyList, 0);
 
@@ -683,7 +683,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderDesc);
 
-        if (strLstSize(backupList) > 0)
+        if (!strLstEmpty(backupList))
         {
             const String *backupLabel = strLstGet(backupList, 0);
             const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
@@ -1166,7 +1166,7 @@ backupJobResult(
                         {
                             // Format the page checksum errors
                             checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
-                            ASSERT(varLstSize(checksumPageErrorList) > 0);
+                            ASSERT(!varLstEmpty(checksumPageErrorList));
 
                             String *error = strNew("");
                             unsigned int errorTotalMin = 0;
@@ -1472,7 +1472,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
 
-            if (lstSize(queue) > 0)
+            if (!lstEmpty(queue))
             {
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
@@ -1657,7 +1657,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 #ifdef DEBUG
         // Ensure that all processing queues are empty
         for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData.queueList); queueIdx++)
-            ASSERT(lstSize(*(List **)lstGet(jobData.queueList, queueIdx)) == 0);
+            ASSERT(lstEmpty(*(List **)lstGet(jobData.queueList, queueIdx)));
 #endif
 
         // Remove files from the manifest that were removed during the backup.  This must happen after processing to avoid

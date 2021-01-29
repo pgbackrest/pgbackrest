@@ -652,7 +652,7 @@ void
 hrnTestResultStringList(const StringList *actual, const void *expected, HarnessTestResultOperation operation)
 {
     // Return NULL if list is empty
-    if (strLstSize(actual) == 0)
+    if (strLstEmpty(actual))
     {
         hrnTestResultZ(NULL, expected, operation);
         return;

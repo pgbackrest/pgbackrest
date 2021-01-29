@@ -211,7 +211,7 @@ testRun(void)
 
         TEST_LOG_FMT("remove completed in %ums", (unsigned int)(timeMSec() - timeBegin));
 
-        CHECK(lstSize(list) == 0);
+        CHECK(lstEmpty(list));
     }
 
     // *****************************************************************************************************************************

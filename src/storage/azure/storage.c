@@ -137,7 +137,7 @@ storageAzureAuth(
             if (query != NULL)
             {
                 StringList *queryKeyList = httpQueryList(query);
-                ASSERT(strLstSize(queryKeyList) > 0);
+                ASSERT(!strLstEmpty(queryKeyList));
 
                 for (unsigned int queryKeyIdx = 0; queryKeyIdx < strLstSize(queryKeyList); queryKeyIdx++)
                 {

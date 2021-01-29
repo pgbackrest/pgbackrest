@@ -328,12 +328,14 @@ testRun(void)
         TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "new empty");
 
         TEST_RESULT_INT(varLstSize(varVarLst(listVar)), 0, "    empty size");
+        TEST_RESULT_BOOL(varLstEmpty(varVarLst(listVar)), true, "    empty");
         TEST_RESULT_PTR(varVarLst(NULL), NULL, "get null var list");
 
         TEST_RESULT_PTR(varLstAdd(varVarLst(listVar), varNewBool(true)), varVarLst(listVar), "    add bool");
         TEST_RESULT_PTR(varLstAdd(varVarLst(listVar), varNewInt(55)), varVarLst(listVar), "    add int");
 
         TEST_RESULT_INT(varLstSize(varVarLst(listVar)), 2, "    size with items");
+        TEST_RESULT_BOOL(varLstEmpty(varVarLst(listVar)), false, "    not empty");
 
         TEST_RESULT_BOOL(varBool(varLstGet(varVarLst(listVar), 0)), true, "    get bool");
         TEST_RESULT_INT(varInt(varLstGet(varVarLst(listVar), 1)), 55, "    get int");

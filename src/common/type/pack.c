@@ -937,7 +937,7 @@ pckReadEnd(PackRead *this)
     ASSERT(this != NULL);
 
     // Read object end markers
-    while (lstSize(this->tagStack) > 0)
+    while (!lstEmpty(this->tagStack))
     {
         // Make sure we are at the end of the container
         unsigned int id = UINT_MAX - 1;
