@@ -222,7 +222,9 @@ testRun(void)
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:!!!FIXME archive\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1:!!!FIXME archive\n"
             "P00   WARN: could not get 000000010000000200000000 from the archive (will be retried):"
-                " [45] duplicates found for WAL segment 000000010000000200000000: !!!FIXME\n"
+                " [45] duplicates found for WAL segment 000000010000000200000000:\n"
+            "            repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_LIST(
@@ -494,7 +496,9 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchiveGet(), ArchiveDuplicateError,
-            "duplicates found for WAL segment 01ABCDEF01ABCDEF01ABCDEF: !!!FIXME\n"
+            "duplicates found for WAL segment 01ABCDEF01ABCDEF01ABCDEF:\n"
+            "repo1: 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                ", 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", NULL);

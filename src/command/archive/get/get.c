@@ -240,14 +240,40 @@ archiveGetFind(
                 // If there is more than one unique hash then there are duplicates
                 if (strLstSize(hashList) > 1)
                 {
+                    // Build list of duplicates
+                    unsigned int repoKeyLast = 0;
+                    String *message = strNew("");
+                    bool first = true;
+
+                    for (unsigned int matchIdx = 0; matchIdx < lstSize(matchList); matchIdx++)
+                    {
+                        ArchiveGetFile *file = lstGet(matchList, matchIdx);
+                        unsigned int repoKey = cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx);
+
+                        if (repoKey != repoKeyLast)
+                        {
+                            strCatFmt(message, "\nrepo%u:", repoKey);
+                            repoKeyLast = repoKey;
+                            first = true;
+                        }
+
+                        if (first)
+                            first = false;
+                        else
+                            strCatChr(message, ',');
+
+                        strCatFmt(message, " %s", strZ(file->file));
+                    }
+
+                    // Set as global error since processing cannot continue past this segment
                     MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
                     {
                         getCheckResult->errorType = &ArchiveDuplicateError;
                         getCheckResult->errorFile = strDup(archiveFileRequest);
                         getCheckResult->errorMessage = strNewFmt(
-                            "duplicates found for WAL segment %s: %s\n"
+                            "duplicates found for WAL segment %s:%s\n"
                                 "HINT: are multiple primaries archiving to this stanza?",
-                            strZ(archiveFileRequest), "!!!FIXME");
+                            strZ(archiveFileRequest), strZ(message));
                     }
                     MEM_CONTEXT_END();
 
