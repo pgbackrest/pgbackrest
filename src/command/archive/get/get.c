@@ -127,7 +127,7 @@ archiveGetFind(
 
             for (unsigned int archiveIdx = 0; archiveIdx < lstSize(cacheRepo->archiveList); archiveIdx++)
             {
-                ArchiveGetFindCacheArchive *cacheArchive = lstGet(cacheRepo->archiveList, repoIdx);
+                ArchiveGetFindCacheArchive *cacheArchive = lstGet(cacheRepo->archiveList, archiveIdx);
 
                 // If a WAL segment search among the possible file names
                 if (isSegment)
@@ -184,18 +184,22 @@ archiveGetFind(
 
                     for (unsigned int segmentIdx = 0; segmentIdx < strLstSize(segmentList); segmentIdx++)
                     {
-                        lstAdd(
-                            matchList,
-                            &(ArchiveGetFile)
-                            {
-                                .file = strNewFmt(
-                                    "%s/%s/%s", strZ(cacheArchive->archiveId), strZ(path),
-                                    strZ(strLstGet(segmentList, segmentIdx))),
-                                .repoIdx = repoIdx,
-                                .archiveId = cacheArchive->archiveId,
-                                .cipherType = cacheRepo->cipherType,
-                                .cipherPassArchive = cacheRepo->cipherPassArchive,
-                            });
+                        MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+                        {
+                            lstAdd(
+                                matchList,
+                                &(ArchiveGetFile)
+                                {
+                                    .file = strNewFmt(
+                                        "%s/%s/%s", strZ(cacheArchive->archiveId), strZ(path),
+                                        strZ(strLstGet(segmentList, segmentIdx))),
+                                    .repoIdx = repoIdx,
+                                    .archiveId = cacheArchive->archiveId,
+                                    .cipherType = cacheRepo->cipherType,
+                                    .cipherPassArchive = cacheRepo->cipherPassArchive,
+                                });
+                        }
+                        MEM_CONTEXT_END();
                     }
                 }
                 // Else if not a WAL segment, see if it exists in the archive dir
@@ -203,16 +207,20 @@ archiveGetFind(
                     storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId),
                     strZ(archiveFileRequest))))
                 {
-                    lstAdd(
-                        matchList,
-                        &(ArchiveGetFile)
-                        {
-                            .file = strNewFmt("%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest)),
-                            .repoIdx = repoIdx,
-                            .archiveId = cacheArchive->archiveId,
-                            .cipherType = cacheRepo->cipherType,
-                            .cipherPassArchive = cacheRepo->cipherPassArchive,
-                        });
+                    MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+                    {
+                        lstAdd(
+                            matchList,
+                            &(ArchiveGetFile)
+                            {
+                                .file = strNewFmt("%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest)),
+                                .repoIdx = repoIdx,
+                                .archiveId = cacheArchive->archiveId,
+                                .cipherType = cacheRepo->cipherType,
+                                .cipherPassArchive = cacheRepo->cipherPassArchive,
+                            });
+                    }
+                    MEM_CONTEXT_END();
                 }
             }
         }
@@ -384,8 +392,11 @@ archiveGetCheck(const StringList *archiveRequestList)
         // Find files in the list
         for (unsigned int archiveRequestIdx = 0; archiveRequestIdx < strLstSize(archiveRequestList); archiveRequestIdx++)
         {
-            if (!archiveGetFind(strLstGet(archiveRequestList, archiveRequestIdx), &result, cache, false))
+            if (!archiveGetFind(
+                    strLstGet(archiveRequestList, archiveRequestIdx), &result, cache, strLstSize(archiveRequestList) == 1))
+            {
                 break;
+            }
         }
     }
     MEM_CONTEXT_TEMP_END();
