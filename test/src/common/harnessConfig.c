@@ -28,6 +28,19 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     // Free objects in storage helper
     storageHelperFree();
 
+    // Log parameters
+    hrnTestLogPrefix(__LINE__, true);
+
+    printf("config load:");
+
+    for (unsigned int argIdx = 0; argIdx < argListSize; argIdx++)
+        printf(" %s", argList[argIdx]);
+
+    printf("\n");
+
+    fflush(stdout);
+
+    // Parse and update
     configParse(storageLocal(), argListSize, argList, false);
     cfgLoadUpdateOption();
 
