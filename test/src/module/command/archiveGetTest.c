@@ -108,18 +108,17 @@ testRun(void)
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("global error on invalid executable");
+        TEST_TITLE("error on no segments");
 
-        argList = strLstNew();
-        strLstAddZ(argList, "pgbackrest-bogus");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
-        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test2");
-        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
-        strLstAddZ(argList, "0000000100000001000000FE");
-        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+        argList = strLstDup(argBaseList);
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+
+        TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
+
+        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no segments to find");
 
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
@@ -132,37 +131,6 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
-
-        HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FE-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
-
-        TEST_ERROR(
-            cmdArchiveGetAsync(), ExecuteError,
-            "local-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': [2] No such file or directory");
-
-        harnessLogResult(
-            "P00   INFO: get 1 WAL file(s) from archive: 0000000100000001000000FE");
-
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/global.error")))),
-            "102\nlocal-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': "
-                "[2] No such file or directory",
-            "check global error");
-
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on no segments");
-
-        argList = strLstDup(argBaseList);
-        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
-
-        TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
-
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("no segments to find");
 
         strLstAddZ(argList, "000000010000000100000001");
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
@@ -260,6 +228,37 @@ testRun(void)
         TEST_STORAGE_LIST(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN,
             "0000000100000001000000FE\n0000000100000001000000FF\n000000010000000200000000.error\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("global error on invalid executable");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "pgbackrest-bogus");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test2");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
+        strLstAddZ(argList, "0000000100000001000000FE");
+        strLstAddZ(argList, "0000000100000001000000FF");
+        strLstAddZ(argList, "000000010000000200000000");
+        harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
+
+        TEST_ERROR(
+            cmdArchiveGetAsync(), ExecuteError,
+            "local-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': [2] No such file or directory");
+
+        harnessLogResult(
+            "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000");
+
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/global.error")))),
+            "102\nlocal-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': "
+                "[2] No such file or directory",
+            "check global error");
+
+        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
     }
 
     // *****************************************************************************************************************************
@@ -512,8 +511,9 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
-            "2={\"db-id\":10000000000000000000,\"db-version\":\"11\"}\n"
-            "3={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
+            "3={\"db-id\":10000000000000000000,\"db-version\":\"11\"}\n"
+            "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
@@ -525,17 +525,17 @@ testRun(void)
         TEST_TITLE("get from current db-id");
 
         HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-3/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-4/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-3 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-4 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-3/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-4/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get partial");
@@ -546,7 +546,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storageRepoWrite(),
-            STORAGE_REPO_ARCHIVE "/10-3/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            STORAGE_REPO_ARCHIVE "/10-4/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             buffer);
 
         argList = strLstDup(argBaseList);
@@ -556,12 +556,12 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the repo1:10-3 archive");
+        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the repo1:10-4 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(),
-            STORAGE_REPO_ARCHIVE "/10-3/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            STORAGE_REPO_ARCHIVE "/10-4/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get missing history");
