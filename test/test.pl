@@ -642,7 +642,8 @@ eval
             }
 
             executeTest(
-                "rm -rf ${strTestPath}/temp ${strTestPath}/test-* ${strTestPath}/data-*" . ($bDev ? '' : " ${strTestPath}/gcov-*"));
+                "chmod 700 -R ${strTestPath}/test-* && rm -rf ${strTestPath}/temp ${strTestPath}/test-* ${strTestPath}/data-*" .
+                    ($bDev ? '' : " ${strTestPath}/gcov-*"));
             $oStorageTest->pathCreate("${strTestPath}/temp", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
             # Remove old lcov dirs -- do it this way so the dirs stay open in finder/explorer, etc.

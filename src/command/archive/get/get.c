@@ -50,6 +50,7 @@ typedef struct ArchiveFileMap
 {
     const String *request;                                          // Archive file requested by archive_command
     List *actualList;                                               // Actual files
+    List *repoErrorList;                                            // Repo errors
 } ArchiveFileMap;
 
 typedef struct ArchiveRepoError
@@ -119,69 +120,97 @@ archiveGetFind(
         // List to hold matches for the requested file
         List *matchList = lstNewP(sizeof(ArchiveGetFile));
 
+        // List to hold repo errors
+        List *repoErrorList = lstNewP(sizeof(ArchiveRepoError));
+
         // Check each repo/archiveId combination
-        for (unsigned int repoIdx = 0; repoIdx < lstSize(cache); repoIdx++)
+        for (unsigned int repoCacheIdx = 0; repoCacheIdx < lstSize(cache); repoCacheIdx++)
         {
-            ArchiveGetFindCache *cacheRepo = lstGet(cache, repoIdx);
+            ArchiveGetFindCache *cacheRepo = lstGet(cache, repoCacheIdx);
 
-            for (unsigned int archiveIdx = 0; archiveIdx < lstSize(cacheRepo->archiveList); archiveIdx++)
+            TRY_BEGIN()
             {
-                ArchiveGetFindCacheArchive *cacheArchive = lstGet(cacheRepo->archiveList, archiveIdx);
-
-                // If a WAL segment search among the possible file names
-                if (isSegment)
+                for (unsigned int archiveCacheIdx = 0; archiveCacheIdx < lstSize(cacheRepo->archiveList); archiveCacheIdx++)
                 {
-                    StringList *segmentList = NULL;
+                    ArchiveGetFindCacheArchive *cacheArchive = lstGet(cacheRepo->archiveList, archiveCacheIdx);
 
-                    // If a single file is requested then optimize by adding a restrictive expression to reduce network bandwidth
-                    if (single)
+                    // If a WAL segment then search among the possible file names
+                    if (isSegment)
                     {
-                        segmentList = storageListP(
-                            storageRepoIdx(repoIdx),
-                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
-                            .expression = strNewFmt(
-                                "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(archiveFileRequest, 0, 24)),
-                                    walIsPartial(archiveFileRequest) ? WAL_SEGMENT_PARTIAL_EXT : ""));
-                    }
-                    // Else multiple files will be requested so cache list results
-                    else
-                    {
-                        // Partial files cannot be in a list with multiple requests
-                        ASSERT(!walIsPartial(archiveFileRequest));
+                        StringList *segmentList = NULL;
 
-                        // If the path does not exist in the cache then fetch it
-                        const ArchiveGetFindCachePath *cachePath = lstFind(cacheArchive->pathList, &path);
-
-                        if (cachePath == NULL)
+                        // If a single file is requested then optimize by adding a restrictive expression to reduce network bandwidth
+                        if (single)
                         {
-                            MEM_CONTEXT_BEGIN(lstMemContext(cache))
+                            segmentList = storageListP(
+                                storageRepoIdx(cacheRepo->repoIdx),
+                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
+                                .expression = strNewFmt(
+                                    "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(archiveFileRequest, 0, 24)),
+                                        walIsPartial(archiveFileRequest) ? WAL_SEGMENT_PARTIAL_EXT : ""));
+                        }
+                        // Else multiple files will be requested so cache list results
+                        else
+                        {
+                            // Partial files cannot be in a list with multiple requests
+                            ASSERT(!walIsPartial(archiveFileRequest));
+
+                            // If the path does not exist in the cache then fetch it
+                            const ArchiveGetFindCachePath *cachePath = lstFind(cacheArchive->pathList, &path);
+
+                            if (cachePath == NULL)
                             {
-                                cachePath = lstAdd(
-                                    cacheArchive->pathList,
-                                    &(ArchiveGetFindCachePath)
+                                MEM_CONTEXT_BEGIN(lstMemContext(cache))
+                                {
+                                    cachePath = lstAdd(
+                                        cacheArchive->pathList,
+                                        &(ArchiveGetFindCachePath)
+                                        {
+                                            .path = strDup(path),
+                                            .fileList = storageListP(
+                                                storageRepoIdx(cacheRepo->repoIdx),
+                                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
+                                                .expression = strNewFmt(
+                                                    "^%s[0-F]{8}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(path))),
+                                        });
+                                }
+                                MEM_CONTEXT_END();
+                            }
+
+                            // Get a list of all WAL segments that match
+                            segmentList = strLstNew();
+
+                            for (unsigned int fileIdx = 0; fileIdx < strLstSize(cachePath->fileList); fileIdx++)
+                            {
+                                if (strBeginsWith(strLstGet(cachePath->fileList, fileIdx), archiveFileRequest))
+                                    strLstAdd(segmentList, strLstGet(cachePath->fileList, fileIdx));
+                            }
+                        }
+
+                        for (unsigned int segmentIdx = 0; segmentIdx < strLstSize(segmentList); segmentIdx++)
+                        {
+                            MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+                            {
+                                lstAdd(
+                                    matchList,
+                                    &(ArchiveGetFile)
                                     {
-                                        .path = strDup(path),
-                                        .fileList = storageListP(
-                                            storageRepoIdx(repoIdx),
-                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
-                                            .expression = strNewFmt(
-                                                "^%s[0-F]{8}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(path))),
+                                        .file = strNewFmt(
+                                            "%s/%s/%s", strZ(cacheArchive->archiveId), strZ(path),
+                                            strZ(strLstGet(segmentList, segmentIdx))),
+                                        .repoIdx = cacheRepo->repoIdx,
+                                        .archiveId = cacheArchive->archiveId,
+                                        .cipherType = cacheRepo->cipherType,
+                                        .cipherPassArchive = cacheRepo->cipherPassArchive,
                                     });
                             }
                             MEM_CONTEXT_END();
                         }
-
-                        // Get a list of all WAL segments that match
-                        segmentList = strLstNew();
-
-                        for (unsigned int fileIdx = 0; fileIdx < strLstSize(cachePath->fileList); fileIdx++)
-                        {
-                            if (strBeginsWith(strLstGet(cachePath->fileList, fileIdx), archiveFileRequest))
-                                strLstAdd(segmentList, strLstGet(cachePath->fileList, fileIdx));
-                        }
                     }
-
-                    for (unsigned int segmentIdx = 0; segmentIdx < strLstSize(segmentList); segmentIdx++)
+                    // Else if not a WAL segment, see if it exists in the archive dir
+                    else if (storageExistsP(
+                        storageRepoIdx(cacheRepo->repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId),
+                        strZ(archiveFileRequest))))
                     {
                         MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
                         {
@@ -189,10 +218,8 @@ archiveGetFind(
                                 matchList,
                                 &(ArchiveGetFile)
                                 {
-                                    .file = strNewFmt(
-                                        "%s/%s/%s", strZ(cacheArchive->archiveId), strZ(path),
-                                        strZ(strLstGet(segmentList, segmentIdx))),
-                                    .repoIdx = repoIdx,
+                                    .file = strNewFmt("%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest)),
+                                    .repoIdx = cacheRepo->repoIdx,
                                     .archiveId = cacheArchive->archiveId,
                                     .cipherType = cacheRepo->cipherType,
                                     .cipherPassArchive = cacheRepo->cipherPassArchive,
@@ -201,30 +228,52 @@ archiveGetFind(
                         MEM_CONTEXT_END();
                     }
                 }
-                // Else if not a WAL segment, see if it exists in the archive dir
-                else if (storageExistsP(
-                    storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId),
-                    strZ(archiveFileRequest))))
-                {
-                    MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
-                    {
-                        lstAdd(
-                            matchList,
-                            &(ArchiveGetFile)
-                            {
-                                .file = strNewFmt("%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest)),
-                                .repoIdx = repoIdx,
-                                .archiveId = cacheArchive->archiveId,
-                                .cipherType = cacheRepo->cipherType,
-                                .cipherPassArchive = cacheRepo->cipherPassArchive,
-                            });
-                    }
-                    MEM_CONTEXT_END();
-                }
             }
+            CATCH_ANY()
+            {
+                MEM_CONTEXT_BEGIN(lstMemContext(repoErrorList))
+                {
+                    lstAdd(
+                        repoErrorList,
+                        &(ArchiveRepoError)
+                        {
+                            .repoIdx = cacheRepo->repoIdx,
+                            .type = errorType(),
+                            .message = strNew(errorMessage()),
+                        });
+                }
+                MEM_CONTEXT_END();
+            }
+            TRY_END();
         }
 
-        if (!lstEmpty(matchList))
+        // If all repos errored out then set the global error
+        if (lstSize(repoErrorList) == lstSize(cache))
+        {
+            // Set as global error since processing cannot continue past this segment
+            MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+            {
+                // Format message
+                String *message = strNew("unable to find a valid repo:");
+
+                for (unsigned int errorIdx = 0; errorIdx < lstSize(repoErrorList); errorIdx++)
+                {
+                    ArchiveRepoError *error = lstGet(repoErrorList, errorIdx);
+
+                    strCatFmt(
+                        message, "\nrepo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, error->repoIdx),
+                        errorTypeName(error->type), strZ(error->message));
+                }
+
+                getCheckResult->errorType = &RepoInvalidError;
+                getCheckResult->errorFile = strDup(archiveFileRequest);
+                getCheckResult->errorMessage = message;
+            }
+            MEM_CONTEXT_END();
+
+        }
+        // Else if a file was found
+        else if (!lstEmpty(matchList))
         {
             bool error = false;
 
@@ -288,6 +337,7 @@ archiveGetFind(
                     {
                         .request = strDup(archiveFileRequest),
                         .actualList = lstNewP(sizeof(ArchiveGetFile)),
+                        .repoErrorList = lstMove(repoErrorList, memContextCurrent()),
                     };
 
                     for (unsigned int matchIdx = 0; matchIdx < lstSize(matchList); matchIdx++)
@@ -340,14 +390,14 @@ archiveGetCheck(const StringList *archiveRequestList)
                 ArchiveGetFindCache cacheRepo =
                 {
                     .repoIdx = repoIdx,
-                    .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                    .cipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
                     .archiveList = lstNewP(sizeof(ArchiveGetFindCacheArchive)),
                 };
 
                 // Attempt to load the archive info file
                 InfoArchive *info = infoArchiveLoadFile(
                     storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cacheRepo.cipherType,
-                    cfgOptionStrNull(cfgOptRepoCipherPass));
+                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
                 MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
                 {
@@ -720,12 +770,34 @@ cmdArchiveGet(void)
             if (checkResult.errorType != NULL)
                 THROW_CODE(errorTypeCode(checkResult.errorType), strZ(checkResult.errorMessage));
 
+            // Output repo errors as warnings since at least one repo must have been found
+            for (unsigned int errorIdx = 0; errorIdx < lstSize(checkResult.repoErrorList); errorIdx++)
+            {
+                ArchiveRepoError *error = lstGet(checkResult.repoErrorList, errorIdx);
+
+                LOG_WARN_FMT(
+                    "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, error->repoIdx), errorTypeName(error->type),
+                    strZ(error->message));
+            }
+
             // Get the archive file
             if (!lstEmpty(checkResult.archiveFileMapList))
             {
                 ASSERT(lstSize(checkResult.archiveFileMapList) == 1);
 
-                const ArchiveGetFile *file = lstGet(((ArchiveFileMap *)lstGet(checkResult.archiveFileMapList, 0))->actualList, 0);
+                const ArchiveFileMap *fileMap = lstGet(checkResult.archiveFileMapList, 0);
+
+                // Output repo errors as warnings since at least one repo must have been found for the file
+                for (unsigned int errorIdx = 0; errorIdx < lstSize(fileMap->repoErrorList); errorIdx++)
+                {
+                    ArchiveRepoError *error = lstGet(fileMap->repoErrorList, errorIdx);
+
+                    LOG_WARN_FMT(
+                        "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, error->repoIdx), errorTypeName(error->type),
+                        strZ(error->message));
+                }
+
+                const ArchiveGetFile *file = lstGet(fileMap->actualList, 0);
 
                 archiveGetFile(storageLocalWrite(), file->file, walDestination, false, file->cipherType, file->cipherPassArchive);
 
@@ -771,7 +843,6 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
         protocolCommandParamAdd(command, VARSTR(file->file));
         protocolCommandParamAdd(command, VARUINT(file->cipherType));
         protocolCommandParamAdd(command, VARSTR(file->cipherPassArchive));
-
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(archiveFileMap.request), command));
     }

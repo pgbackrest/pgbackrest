@@ -602,7 +602,7 @@ testRun(void)
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYHISTORY\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("get compressed and encrypted WAL segment");
+        TEST_TITLE("get compressed and encrypted WAL segment with invalid repo");
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
@@ -623,7 +623,7 @@ testRun(void)
         // Add encryption options
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        // hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus"); !!! BRING THIS BACK SO ERROR IS LOGGED
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH_REPO "-bogus");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
@@ -636,11 +636,58 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
+        harnessLogResult(
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info'"
+                " or '" TEST_PATH_REPO "-bogus/archive/test1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info'"
+                " for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info.copy'"
+                " for read\n"
+            "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
+                " archiving scheme.\n"
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n");
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo1 has info but bad permissions");
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+
+        storagePathCreateP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult(
+            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-1"
+                "/01ABCDEF01ABCDEF': [13] Permission denied\n"
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
+
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("all repos have info but bad permissions");
+
+        TEST_SYSTEM_FMT("chmod 400 %s", strZ(storagePathP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"))));
+
+        TEST_ERROR(
+            cmdArchiveGet(), RepoInvalidError,
+            "unable to find a valid repo:\n"
+            "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-1/01ABCDEF01ABCDEF': [13] Permission denied\n"
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test1/10-1/01ABCDEF01ABCDEF': [13] Permission denied");
+
+        TEST_SYSTEM_FMT("chmod 700 %s", strZ(storagePathP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"))));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call protocol function directly");
