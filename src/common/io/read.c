@@ -158,7 +158,7 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
             }
 
             // Process the input buffer (or flush if NULL)
-            if (this->input == NULL || bufUsed(this->input) > 0)
+            if (this->input == NULL || !bufEmpty(this->input))
                 ioFilterGroupProcess(this->filterGroup, this->input, buffer);
 
             // Stop if not blocking -- we don't need to fill the buffer as long as we got some data

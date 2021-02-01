@@ -221,7 +221,7 @@ storageWriteAzureClose(THIS_VOID)
             if (this->blockIdList != NULL)
             {
                 // If there is anything left in the block buffer then write it
-                if (bufUsed(this->blockBuffer) > 0)
+                if (!bufEmpty(this->blockBuffer))
                     storageWriteAzureBlockAsync(this);
 
                 // Complete prior async request, if any

@@ -219,7 +219,7 @@ storageWriteS3Close(THIS_VOID)
             if (this->uploadId != NULL)
             {
                 // If there is anything left in the part buffer then write it
-                if (bufUsed(this->partBuffer) > 0)
+                if (!bufEmpty(this->partBuffer))
                     storageWriteS3PartAsync(this);
 
                 // Complete prior async request, if any

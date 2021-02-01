@@ -314,7 +314,7 @@ archiveGetCheck(const StringList *archiveRequestList)
     FUNCTION_LOG_END();
 
     ASSERT(archiveRequestList != NULL);
-    ASSERT(strLstSize(archiveRequestList) > 0);
+    ASSERT(!strLstEmpty(archiveRequestList));
 
     ArchiveGetCheckResult result =
     {
@@ -565,7 +565,7 @@ cmdArchiveGet(void)
 
         if (strLstSize(commandParam) != 2)
         {
-            if (strLstSize(commandParam) == 0)
+            if (strLstEmpty(commandParam))
                 THROW(ParamRequiredError, "WAL segment to get required");
 
             if (strLstSize(commandParam) == 1)
@@ -636,7 +636,7 @@ cmdArchiveGet(void)
                     StringList *queue = storageListP(
                         storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .expression = WAL_SEGMENT_REGEXP_STR, .errorOnMissing = true);
 
-                    if (strLstSize(queue) > 0)
+                    if (!strLstEmpty(queue))
                     {
                         // Get size of the WAL segment
                         uint64_t walSegmentSize = storageInfoP(storageLocal(), walDestination).size;
@@ -760,7 +760,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
     // Get a new job if there are any left
     ArchiveGetCheckResult *checkResult = data;
 
-    if (!lstEmpty(checkResult->archiveFileMapList) > 0)
+    if (!lstEmpty(checkResult->archiveFileMapList))
     {
         const ArchiveFileMap archiveFileMap = *((ArchiveFileMap *)lstGet(checkResult->archiveFileMapList, 0));
         const ArchiveGetFile *file = lstGet(archiveFileMap.actualList, 0);

@@ -431,7 +431,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
                 .nullOnMissing = true);
 
             // If there are results
-            if (list != NULL && strLstSize(list) > 0)
+            if (list != NULL && !strLstEmpty(list))
             {
                 // Error if there is more than one match
                 if (strLstSize(list) > 1)

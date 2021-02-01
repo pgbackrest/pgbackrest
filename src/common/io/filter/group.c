@@ -235,7 +235,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 
     ASSERT(this != NULL);
     ASSERT(this->opened && !this->closed);
-    ASSERT(input == NULL || bufUsed(input) > 0);
+    ASSERT(input == NULL || !bufEmpty(input));
     ASSERT(!this->flushing || input == NULL);
     ASSERT(output != NULL);
     ASSERT(bufRemains(output) > 0);

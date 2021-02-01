@@ -137,7 +137,7 @@ storageAzureAuth(
             if (query != NULL)
             {
                 StringList *queryKeyList = httpQueryList(query);
-                ASSERT(strLstSize(queryKeyList) > 0);
+                ASSERT(!strLstEmpty(queryKeyList));
 
                 for (unsigned int queryKeyIdx = 0; queryKeyIdx < strLstSize(queryKeyList); queryKeyIdx++)
                 {
@@ -224,7 +224,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         // Set content length
         httpHeaderAdd(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-            param.content == NULL || bufUsed(param.content) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+            param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
         // Calculate content-md5 header if there is content
         if (param.content != NULL)

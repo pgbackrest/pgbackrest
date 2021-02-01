@@ -79,6 +79,8 @@ testRun(void)
         {
             list = lstNewP(sizeof(int));
 
+            TEST_RESULT_BOOL(lstEmpty(list), true, "list empty");
+
             TEST_ERROR(lstGetLast(list), AssertError, "cannot get last from list with no values");
             TEST_ERROR(lstRemoveLast(list), AssertError, "cannot remove last from list with no values");
 
@@ -96,6 +98,7 @@ testRun(void)
 
         // Check the size
         TEST_RESULT_INT(lstSize(list), 9, "list size");
+        TEST_RESULT_BOOL(lstEmpty(list), false, "list not empty");
 
         // Read them back and check values
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)

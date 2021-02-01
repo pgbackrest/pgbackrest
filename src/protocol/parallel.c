@@ -268,7 +268,7 @@ protocolParallelDone(ProtocolParallel *this)
     ASSERT(this->state != protocolParallelJobStatePending);
 
     // If there are no jobs left then we are done
-    if (this->state != protocolParallelJobStateDone && lstSize(this->jobList) == 0)
+    if (this->state != protocolParallelJobStateDone && lstEmpty(this->jobList))
         this->state = protocolParallelJobStateDone;
 
     FUNCTION_LOG_RETURN(BOOL, this->state == protocolParallelJobStateDone);

@@ -306,7 +306,7 @@ helpRender(void)
             strCatFmt(result, " - '%s' command", commandName);
 
             // If no additional params then this is command help
-            if (strLstSize(cfgCommandParam()) == 0)
+            if (strLstEmpty(cfgCommandParam()))
             {
                 // Output command summary and description
                 strCatFmt(

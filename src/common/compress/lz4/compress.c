@@ -93,7 +93,7 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
     Buffer *result = output;
 
     // Is an internal buffer required to hold the compressed data?
-    if (bufUsed(this->buffer) > 0 || required >= bufRemains(output))
+    if (!bufEmpty(this->buffer) || required >= bufRemains(output))
     {
         // Reallocate buffer if it is not large enough
         if (required >= bufRemains(this->buffer))

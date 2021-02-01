@@ -102,6 +102,13 @@ void bufUsedInc(Buffer *this, size_t inc);
 void bufUsedSet(Buffer *this, size_t used);
 void bufUsedZero(Buffer *this);
 
+// Is the buffer empty?
+__attribute__((always_inline)) static inline bool
+bufEmpty(const Buffer *this)
+{
+    return bufUsed(this) == 0;
+}
+
 // Remaining space in the buffer
 __attribute__((always_inline)) static inline size_t
 bufRemains(const Buffer *this)
