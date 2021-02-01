@@ -29,17 +29,20 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     storageHelperFree();
 
     configParse(storageLocal(), argListSize, argList, false);
+
+    // Parse config
+    configParse(storageLocal(), argListSize, argList, false);
+
+    // Set dry-run mode for storage and logging
+    harnessLogDryRunSet(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
+    storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
+
+    // Apply special option rules
     cfgLoadUpdateOption();
 
     // Use a static exec-id for testing if it is not set explicitly
     if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
         cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTRDEF("1-test"));
-
-    // Set dry-run mode for storage and logging
-    storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
-#ifdef HRN_FEATURE_STORAGE
-    harnessLogDryRunSet(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
-#endif
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
