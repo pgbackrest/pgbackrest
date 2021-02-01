@@ -839,7 +839,7 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
             }
         }
     }
-
+// CSHANG Is there a bug here? We are not updating the latest link!
     // Remove non-current backups from disk
     for (; backupIdx < strLstSize(backupList); backupIdx++)
     {
@@ -919,13 +919,10 @@ cmdExpire(void)
             // If a backupLabel was set, then attempt to expire the requested backup
             if (adhocBackupLabel != NULL)
             {
-                if (!adhocBackupFound)
+                if (infoBackupDataByLabel(infoBackup, adhocBackupLabel) != NULL)
                 {
-                    if (infoBackupDataByLabel(infoBackup, adhocBackupLabel) != NULL)
-                    {
-                        adhocBackupFound = true;
-                        expireAdhocBackup(infoBackup, adhocBackupLabel, repoIdx);
-                    }
+                    adhocBackupFound = true;
+                    expireAdhocBackup(infoBackup, adhocBackupLabel, repoIdx);
                 }
 
                 // If the adhoc backup was not found and this was the last repo to check, then log a warning but continue to process
