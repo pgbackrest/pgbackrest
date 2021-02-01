@@ -267,7 +267,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
     ASSERT(bufRemains(destination) > 0);
 
     // Copy already buffered bytes
-    if (this->buffer != NULL && bufUsed(this->buffer) > 0)
+    if (this->buffer != NULL && !bufEmpty(this->buffer))
     {
         if (bufRemains(destination) >= bufUsed(this->buffer))
         {
@@ -289,7 +289,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
     }
     else
     {
-        ASSERT(this->buffer == NULL || bufUsed(this->buffer) == 0);
+        ASSERT(this->buffer == NULL || bufEmpty(this->buffer));
 
         // Determine how much space is required in the output buffer
         Buffer *outputActual = destination;
@@ -339,7 +339,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
         bufUsedInc(outputActual, destinationSizeActual);
 
         // Copy from buffer to destination if needed
-        if (this->buffer != NULL && bufUsed(this->buffer) > 0)
+        if (this->buffer != NULL && !bufEmpty(this->buffer))
             cipherBlockProcess(this, source, destination);
     }
 
@@ -392,7 +392,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
     FUNCTION_LOG_END();
 
     ASSERT(pass != NULL);
-    ASSERT(bufUsed(pass) > 0);
+    ASSERT(!bufEmpty(pass));
 
     // Init crypto subsystem
     cryptoInit();

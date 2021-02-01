@@ -273,7 +273,7 @@ archiveDbList(
     StringList *walDir = strLstSort(
         storageListP(storageRepo, archivePath, .expression = WAL_SEGMENT_DIR_REGEXP_STR), sortOrderAsc);
 
-    if (strLstSize(walDir) > 0)
+    if (!strLstEmpty(walDir))
     {
         // Not every WAL dir has WAL files so check each
         for (unsigned int idx = 0; idx < strLstSize(walDir); idx++)
@@ -284,7 +284,7 @@ archiveDbList(
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
 
             // If wal segments are found, get the oldest one as the archive start
-            if (strLstSize(list) > 0)
+            if (!strLstEmpty(list))
             {
                 // Sort the list from oldest to newest to get the oldest starting WAL archived for this DB
                 list = strLstSort(list, sortOrderAsc);
@@ -302,7 +302,7 @@ archiveDbList(
                 .expression = WAL_SEGMENT_FILE_REGEXP_STR);
 
             // If wal segments are found, get the newest one as the archive stop
-            if (strLstSize(list) > 0)
+            if (!strLstEmpty(list))
             {
                 // Sort the list from newest to oldest to get the newest ending WAL archived for this DB
                 list = strLstSort(list, sortOrderDesc);
@@ -468,10 +468,10 @@ backupListAdd(
             }
         }
 
-        kvPut(varKv(backupInfo), BACKUP_KEY_LINK_VAR, (varLstSize(linkSection) > 0 ? varNewVarLst(linkSection) : NULL));
+        kvPut(varKv(backupInfo), BACKUP_KEY_LINK_VAR, (!varLstEmpty(linkSection) ? varNewVarLst(linkSection) : NULL));
         kvPut(
             varKv(backupInfo), BACKUP_KEY_TABLESPACE_VAR,
-            (varLstSize(tablespaceSection) > 0 ? varNewVarLst(tablespaceSection) : NULL));
+            (!varLstEmpty(tablespaceSection) ? varNewVarLst(tablespaceSection) : NULL));
 
         // Get the list of files with an error in the page checksum
         VariantList *checksumPageErrorList = varLstNew();
@@ -486,7 +486,7 @@ backupListAdd(
 
         kvPut(
             varKv(backupInfo), BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR,
-            (varLstSize(checksumPageErrorList) > 0 ? varNewVarLst(checksumPageErrorList) : NULL));
+            (!varLstEmpty(checksumPageErrorList) ? varNewVarLst(checksumPageErrorList) : NULL));
 
         manifestFree(manifest);
     }
@@ -806,7 +806,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
 
             strCatZ(resultStr, "            database list:");
 
-            if (varLstSize(dbSection) == 0)
+            if (varLstEmpty(dbSection))
                 strCatZ(resultStr, " none\n");
             else
             {
@@ -1035,7 +1035,7 @@ formatTextDb(
             formatTextBackup(dbGroupInfo, resultCurrent);
             displayCurrent = true;
         }
-        else if (dbGroupInfo->archiveMin != NULL || varLstSize(dbGroupInfo->backupList) > 0)
+        else if (dbGroupInfo->archiveMin != NULL || !varLstEmpty(dbGroupInfo->backupList))
         {
             strCatZ(resultStr, "\n    db (prior)");
             formatTextBackup(dbGroupInfo, resultStr);
@@ -1185,7 +1185,7 @@ infoRender(void)
             if (stanza != NULL)
             {
                 // If a specific stanza was requested and it is not on this repo, then stanzaExists flag will be reset to false
-                if (strLstSize(stanzaNameList) == 0 || !strLstExists(stanzaNameList, stanza))
+                if (strLstEmpty(stanzaNameList) || !strLstExists(stanzaNameList, stanza))
                     stanzaExists = false;
 
                 // Narrow the list to only the requested stanza
@@ -1246,14 +1246,14 @@ infoRender(void)
         String *resultStr = strNew("");
 
         // If the backup storage exists, then search for and process any stanzas
-        if (lstSize(stanzaRepoList) > 0)
+        if (!lstEmpty(stanzaRepoList))
             infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxStart, repoIdxMax);
 
         // Format text output
         if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
         {
             // Process any stanza directories
-            if  (varLstSize(infoList) > 0)
+            if  (!varLstEmpty(infoList))
             {
                 for (unsigned int stanzaIdx = 0; stanzaIdx < varLstSize(infoList); stanzaIdx++)
                 {
@@ -1344,7 +1344,7 @@ infoRender(void)
                     }
 
                     // Get the current database for this stanza
-                    if (varLstSize(kvGetList(stanzaInfo, STANZA_KEY_DB_VAR)) > 0)
+                    if (!varLstEmpty(kvGetList(stanzaInfo, STANZA_KEY_DB_VAR)))
                     {
                         InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
 

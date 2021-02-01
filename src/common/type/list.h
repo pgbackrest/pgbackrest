@@ -104,6 +104,13 @@ List *lstRemoveLast(List *this);
 // Return list size
 unsigned int lstSize(const List *this);
 
+// Is the list empty?
+__attribute__((always_inline)) static inline bool
+lstEmpty(const List *this)
+{
+    return lstSize(this) == 0;
+}
+
 // List sort
 List *lstSort(List *this, SortOrder sortOrder);
 

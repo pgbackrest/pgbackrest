@@ -544,7 +544,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
 
     // If there is a WAL range for this archiveID, get the last one. If there is no timeline change then continue updating the last
     // WAL range.
-    if (lstSize(archiveIdResult->walRangeList) != 0 &&
+    if (!lstEmpty(archiveIdResult->walRangeList) &&
         strEq(
             strSubN(((VerifyWalRange *)lstGetLast(archiveIdResult->walRangeList))->stop, 0, 8),
             strSubN(strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE), 0, 8)))
@@ -653,12 +653,12 @@ verifyArchive(void *data)
     VerifyJobData *jobData = data;
 
     // Process archive files, if any
-    while (strLstSize(jobData->archiveIdList) > 0)
+    while (!strLstEmpty(jobData->archiveIdList))
     {
         result = NULL;
 
         // Add archiveId to the result list if the list is empty or the last processed is not equal to the current archiveId
-        if (lstSize(jobData->archiveIdResultList) == 0 ||
+        if (lstEmpty(jobData->archiveIdResultList) ||
             !strEq(
                 ((VerifyArchiveResult *)lstGetLast(jobData->archiveIdResultList))->archiveId, strLstGet(jobData->archiveIdList, 0)))
         {
@@ -691,7 +691,7 @@ verifyArchive(void *data)
         }
 
         // If there are WAL paths then get the file lists
-        if (strLstSize(jobData->walPathList) > 0)
+        if (!strLstEmpty(jobData->walPathList))
         {
             // Get the archive id info for the current (last) archive id being processed
             VerifyArchiveResult *archiveResult = lstGetLast(jobData->archiveIdResultList);
@@ -701,7 +701,7 @@ verifyArchive(void *data)
                 String *walPath = strLstGet(jobData->walPathList, 0);
 
                 // Get the WAL files for the first item in the WAL paths list and initialize WAL info and ranges
-                if (strLstSize(jobData->walFileList) == 0)
+                if (strLstEmpty(jobData->walFileList))
                 {
                     // Free the old WAL file list
                     strLstFree(jobData->walFileList);
@@ -717,7 +717,7 @@ verifyArchive(void *data)
                     }
                     MEM_CONTEXT_END();
 
-                    if (strLstSize(jobData->walFileList) > 0)
+                    if (!strLstEmpty(jobData->walFileList))
                     {
                         if (archiveResult->pgWalInfo.size == 0)
                         {
@@ -743,7 +743,7 @@ verifyArchive(void *data)
                 }
 
                 // If there are WAL files, then verify them
-                if (strLstSize(jobData->walFileList) > 0)
+                if (!strLstEmpty(jobData->walFileList))
                 {
                     do
                     {
@@ -768,13 +768,13 @@ verifyArchive(void *data)
                         strLstRemoveIdx(jobData->walFileList, 0);
 
                         // If this is the last file to process for this timeline, then remove the path
-                        if (strLstSize(jobData->walFileList) == 0)
+                        if (strLstEmpty(jobData->walFileList))
                             strLstRemoveIdx(jobData->walPathList, 0);
 
                         // Return to process the job found
                         break;
                     }
-                    while (strLstSize(jobData->walFileList) > 0);
+                    while (!strLstEmpty(jobData->walFileList));
                 }
                 else
                 {
@@ -789,10 +789,10 @@ verifyArchive(void *data)
                 if (result != NULL)
                     break;
             }
-            while (strLstSize(jobData->walPathList) > 0);
+            while (!strLstEmpty(jobData->walPathList));
 
             // If this is the last timeline to process for this archiveId, then remove the archiveId
-            if (strLstSize(jobData->walPathList) == 0)
+            if (strLstEmpty(jobData->walPathList))
                 strLstRemoveIdx(jobData->archiveIdList, 0);
 
             // If a file was sent to be processed then break so can process it
@@ -825,13 +825,13 @@ verifyBackup(void *data)
     VerifyJobData *jobData = data;
 
     // Process backup files, if any
-    while (strLstSize(jobData->backupList) > 0)
+    while (!strLstEmpty(jobData->backupList))
     {
         result = NULL;
 
         // If result list is empty or the last processed is not equal to the backup being processed, then intialize the backup
         // data and results
-        if (lstSize(jobData->backupResultList) == 0 ||
+        if (lstEmpty(jobData->backupResultList) ||
             !strEq(((VerifyBackupResult *)lstGetLast(jobData->backupResultList))->backupLabel, strLstGet(jobData->backupList, 0)))
         {
             MEM_CONTEXT_BEGIN(lstMemContext(jobData->backupResultList))
@@ -1058,7 +1058,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
             result = protocolParallelJobMove(verifyArchive(data), memContextPrior());
 
             // Set the backupProcessing flag if the archive processing is finished so backup processing can begin immediately after
-            jobData->backupProcessing = strLstSize(jobData->archiveIdList) == 0;
+            jobData->backupProcessing = strLstEmpty(jobData->archiveIdList);
         }
 
         if (jobData->backupProcessing)
@@ -1150,7 +1150,7 @@ verifySetBackupCheckArchive(
     {
         // If there are backups, set the last backup as current if it is not in backup.info - if it is, then it is complete, else
         // it will be checked later
-        if (strLstSize(backupList) > 0)
+        if (!strLstEmpty(backupList))
         {
             // Get the last backup as current if it is not in backup.info current list
             String *backupLabel = strLstGet(backupList, strLstSize(backupList) - 1);
@@ -1167,7 +1167,7 @@ verifySetBackupCheckArchive(
         }
 
         // If there are archive directories on disk, make sure they are in the database history list
-        if (strLstSize(archiveIdList) > 0)
+        if (!strLstEmpty(archiveIdList))
         {
             StringList *archiveIdHistoryList = strLstNew();
 
@@ -1258,7 +1258,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
     String *result = strNew("Results:");
 
     // Render archive results
-    if (lstSize(archiveIdResultList) == 0)
+    if (lstEmpty(archiveIdResultList))
         strCatZ(result, "\n  archiveId: none found");
     else
     {
@@ -1311,7 +1311,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
     }
 
     // Render backup results
-    if (lstSize(backupResultList) == 0)
+    if (lstEmpty(backupResultList))
         strCatZ(result, "\n  backup: none found");
     else
     {
@@ -1468,15 +1468,15 @@ verifyProcess(unsigned int *errorTotal)
                 sortOrderAsc);
 
             // Only begin processing if there are some archives or backups in the repo
-            if (strLstSize(jobData.archiveIdList) > 0 || strLstSize(jobData.backupList) > 0)
+            if (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList))
             {
                 // Warn if there are no archives or there are no backups in the repo so that the callback need not try to
                 // distinguish between having processed all of the list or if the list was missing in the first place
-                if (strLstSize(jobData.archiveIdList) == 0 || strLstSize(jobData.backupList) == 0)
-                    LOG_WARN_FMT("no %s exist in the repo", strLstSize(jobData.archiveIdList) == 0 ? "archives" : "backups");
+                if (strLstEmpty(jobData.archiveIdList) || strLstEmpty(jobData.backupList))
+                    LOG_WARN_FMT("no %s exist in the repo", strLstEmpty(jobData.archiveIdList) ? "archives" : "backups");
 
                 // If there are no archives to process, then set the processing flag to skip to processing the backups
-                if (strLstSize(jobData.archiveIdList) == 0)
+                if (strLstEmpty(jobData.archiveIdList))
                     jobData.backupProcessing = true;
 
                 // Set current backup if there is one and verify the archive history on disk is in the database history

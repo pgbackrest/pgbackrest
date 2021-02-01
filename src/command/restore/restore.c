@@ -1207,7 +1207,7 @@ restoreSelectiveExpression(Manifest *manifest)
             strLstSort(dbList, sortOrderAsc);
 
             // If no databases were found then this backup is not a valid cluster
-            if (strLstSize(dbList) == 0)
+            if (strLstEmpty(dbList))
                 THROW(FormatError, "no databases found for selective restore\nHINT: is this a valid cluster?");
 
             // Log databases found
@@ -1981,7 +1981,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx);
 
-            if (lstSize(queue) > 0)
+            if (!lstEmpty(queue))
             {
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 

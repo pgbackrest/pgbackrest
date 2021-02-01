@@ -680,7 +680,7 @@ strPathAbsolute(const String *this, const String *base)
             StringList *baseList = strLstNewSplit(base, FSLASH_STR);
             StringList *pathList = strLstNewSplit(this, FSLASH_STR);
 
-            while (strLstSize(pathList) > 0)
+            while (!strLstEmpty(pathList))
             {
                 const String *pathPart = strLstGet(pathList, 0);
 
