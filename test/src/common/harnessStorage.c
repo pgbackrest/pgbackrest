@@ -234,7 +234,7 @@ const char *
 hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param)
 {
     // Empty if buffer is NULL
-    String *log = strNew(buffer == NULL || bufUsed(buffer) == 0 ? "(empty) " : "");
+    String *log = strNew(buffer == NULL || bufEmpty(buffer) ? "(empty) " : "");
 
     // Add compression detail
     if (param.compressType != compressTypeNone)

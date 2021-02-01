@@ -451,7 +451,7 @@ xmlDocumentNewBuf(const Buffer *buffer)
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
-    ASSERT(bufUsed(buffer) > 0);
+    ASSERT(!bufEmpty(buffer));
 
     FUNCTION_TEST_RETURN(xmlDocumentNewC(bufPtrConst(buffer), bufUsed(buffer)));
 }

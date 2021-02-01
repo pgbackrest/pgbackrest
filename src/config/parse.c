@@ -853,7 +853,7 @@ cfgFileLoad(                                                        // NOTE: Pas
             .nullOnMissing = !configIncludeRequired);
 
         // If conf files are found, then add them to the config string
-        if (list != NULL && strLstSize(list) > 0)
+        if (list != NULL && !strLstEmpty(list))
         {
             // Sort the list for reproducibility only -- order does not matter
             strLstSort(list, sortOrderAsc);

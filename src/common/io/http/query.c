@@ -268,7 +268,7 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
         {
             const StringList *keyList = httpQueryList(this);
 
-            if (strLstSize(keyList) > 0)
+            if (!strLstEmpty(keyList))
             {
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {

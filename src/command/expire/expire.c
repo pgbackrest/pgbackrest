@@ -427,7 +427,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 
             // Expire archives. If no backups were found or the number of backups found is not enough to satify archive retention
             // then preserve current archive logs - too soon to expire them.
-            if (strLstSize(globalBackupRetentionList) > 0 && archiveRetention <= strLstSize(globalBackupRetentionList))
+            if (!strLstEmpty(globalBackupRetentionList) && archiveRetention <= strLstSize(globalBackupRetentionList))
             {
                 // Attempt to load the archive info file
                 InfoArchive *infoArchive = infoArchiveLoadFile(
@@ -515,7 +515,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                         }
 
                         // If no backup to retain was found
-                        if (strLstSize(localBackupRetentionList) == 0)
+                        if (strLstEmpty(localBackupRetentionList))
                         {
                             // If this is not the current database, then delete the archive directory else do nothing since the
                             // current DB archive directory must not be deleted
@@ -560,7 +560,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 
                         // If no local backups were found as part of retention then set the backup archive retention to the newest
                         // backup so that the database is fully recoverable (can be recovered from the last backup through pitr)
-                        if (strLstSize(localBackupArchiveRetentionList) == 0)
+                        if (strLstEmpty(localBackupArchiveRetentionList))
                         {
                             strLstAdd(
                                 localBackupArchiveRetentionList,

@@ -242,7 +242,7 @@ cryptoHashOne(const String *type, const Buffer *message)
     {
         IoFilter *hash = cryptoHashNew(type);
 
-        if (bufUsed(message) > 0)
+        if (!bufEmpty(message))
             ioFilterProcessIn(hash, message);
 
         const Buffer *buffer = cryptoHash((CryptoHash *)ioFilterDriver(hash));

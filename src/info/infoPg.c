@@ -185,7 +185,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
         this->info = infoNewLoad(read, infoPgLoadCallback, &loadData);
 
         // History must include at least one item or the file is corrupt
-        CHECK(lstSize(this->history) > 0);
+        CHECK(!lstEmpty(this->history));
 
         // If the current id was not found then the file is corrupt
         CHECK(loadData.currentId > 0);

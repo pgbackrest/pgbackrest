@@ -38,6 +38,13 @@ VariantList *varLstMove(VariantList *this, MemContext *parentNew);
 // List size
 unsigned int varLstSize(const VariantList *this);
 
+// Is the list empty?
+__attribute__((always_inline)) static inline bool
+varLstEmpty(const VariantList *this)
+{
+    return varLstSize(this) == 0;
+}
+
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
