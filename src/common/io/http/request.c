@@ -295,7 +295,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     }
 
     // Add response content, if any
-    if (bufUsed(httpResponseContent(response)) > 0)
+    if (!bufEmpty(httpResponseContent(response)))
     {
         strCatZ(error, "\n*** Response Content ***:\n");
         strCat(error, strNewBuf(httpResponseContent(response)));

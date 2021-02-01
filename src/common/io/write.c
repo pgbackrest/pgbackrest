@@ -106,7 +106,7 @@ ioWrite(IoWrite *this, const Buffer *buffer)
     ASSERT(this->opened && !this->closed);
 
     // Only write if there is data to write
-    if (buffer != NULL && bufUsed(buffer) > 0)
+    if (buffer != NULL && !bufEmpty(buffer))
     {
         do
         {
@@ -209,7 +209,7 @@ ioWriteFlush(IoWrite *this)
     ASSERT(this->opened && !this->closed);
     ASSERT(!this->filterGroupSet);
 
-    if (bufUsed(this->output) > 0)
+    if (!bufEmpty(this->output))
     {
         this->interface.write(this->driver, this->output);
         bufUsedZero(this->output);
@@ -235,7 +235,7 @@ ioWriteClose(IoWrite *this)
         ioFilterGroupProcess(this->filterGroup, NULL, this->output);
 
         // Write data if the buffer is full or if this is the last buffer to be written
-        if (bufRemains(this->output) == 0 || (ioFilterGroupDone(this->filterGroup) && bufUsed(this->output) > 0))
+        if (bufRemains(this->output) == 0 || (ioFilterGroupDone(this->filterGroup) && !bufEmpty(this->output)))
         {
             this->interface.write(this->driver, this->output);
             bufUsedZero(this->output);

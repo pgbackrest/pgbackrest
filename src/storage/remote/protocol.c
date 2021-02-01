@@ -214,7 +214,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 {
                     ioRead(fileRead, buffer);
 
-                    if (bufUsed(buffer) > 0)
+                    if (!bufEmpty(buffer))
                     {
                         ioWriteStrLine(protocolServerIoWrite(server), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
                         ioWrite(protocolServerIoWrite(server), buffer);
