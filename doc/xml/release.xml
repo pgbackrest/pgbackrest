@@ -30,6 +30,8 @@
                         <release-item-contributor-list>
                             <release-item-contributor id="stefan.fercot"/>
                             <release-item-reviewer id="david.steele"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="michael.banck"/>
                         </release-item-contributor-list>
 
                         <p>Add <br-setting>archive-mode-check</br-setting> option.</p>
@@ -9384,6 +9386,11 @@
         <contributor id="mibiio">
             <contributor-name-display>mibiio</contributor-name-display>
             <contributor-id type="github">mibiio</contributor-id>
+        </contributor>
+
+        <contributor id="michael.banck">
+            <contributor-name-display>Michael Banck</contributor-name-display>
+            <contributor-id type="github">mbanck</contributor-id>
         </contributor>
 
         <contributor id="michael.paquier">
