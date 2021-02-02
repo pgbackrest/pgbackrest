@@ -123,13 +123,14 @@ archiveGetFind(
         // List to hold repo errors
         List *repoErrorList = lstNewP(sizeof(ArchiveRepoError));
 
-        // Check each repo/archiveId combination
+        // Check each repo
         for (unsigned int repoCacheIdx = 0; repoCacheIdx < lstSize(cache); repoCacheIdx++)
         {
             ArchiveGetFindCache *cacheRepo = lstGet(cache, repoCacheIdx);
 
             TRY_BEGIN()
             {
+                // Check each archiveId
                 for (unsigned int archiveCacheIdx = 0; archiveCacheIdx < lstSize(cacheRepo->archiveList); archiveCacheIdx++)
                 {
                     ArchiveGetFindCacheArchive *cacheArchive = lstGet(cacheRepo->archiveList, archiveCacheIdx);
@@ -139,7 +140,7 @@ archiveGetFind(
                     {
                         StringList *segmentList = NULL;
 
-                        // If a single file is requested then optimize by adding a restrictive expression to reduce network bandwidth
+                        // If a single file is requested then optimize by adding a restrictive expression to reduce bandwidth
                         if (single)
                         {
                             segmentList = storageListP(
@@ -368,7 +369,7 @@ archiveGetCheck(const StringList *archiveRequestList)
 
     ArchiveGetCheckResult result =
     {
-        .archiveFileMapList = lstNewP(sizeof(ArchiveFileMap)),
+        .archiveFileMapList = lstNewP(sizeof(ArchiveFileMap), .comparator = lstComparatorStr),
         .repoErrorList = lstNewP(sizeof(ArchiveRepoError)),
     };
 
@@ -516,6 +517,8 @@ archiveGetCheck(const StringList *archiveRequestList)
                 break;
             }
         }
+
+        lstSort(result.archiveFileMapList, sortOrderAsc);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -755,7 +758,6 @@ cmdArchiveGet(void)
             // Log that the file was not found
             if (result == 1)
                 LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
-
         }
         // Else perform synchronous get
         else
@@ -819,6 +821,12 @@ cmdArchiveGet(void)
 }
 
 /**********************************************************************************************************************************/
+typedef struct ArchiveGetAsyncData
+{
+    const List *archiveFileMapList;                                 // List of wal segments to process
+    unsigned int archiveFileIdx;                                    // Current index in the list to be processed
+} ArchiveGetAsyncData;
+
 static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -830,21 +838,21 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
     (void)clientIdx;
 
     // Get a new job if there are any left
-    ArchiveGetCheckResult *checkResult = data;
+    ArchiveGetAsyncData *jobData = data;
 
-    if (!lstEmpty(checkResult->archiveFileMapList))
+    if (jobData->archiveFileIdx < lstSize(jobData->archiveFileMapList))
     {
-        const ArchiveFileMap archiveFileMap = *((ArchiveFileMap *)lstGet(checkResult->archiveFileMapList, 0));
-        const ArchiveGetFile *file = lstGet(archiveFileMap.actualList, 0);
-        lstRemoveIdx(checkResult->archiveFileMapList, 0);
+        const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
+        const ArchiveGetFile *file = lstGet(archiveFileMap->actualList, 0);
+        jobData->archiveFileIdx++;
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
-        protocolCommandParamAdd(command, VARSTR(archiveFileMap.request));
+        protocolCommandParamAdd(command, VARSTR(archiveFileMap->request));
         protocolCommandParamAdd(command, VARSTR(file->file));
         protocolCommandParamAdd(command, VARUINT(file->cipherType));
         protocolCommandParamAdd(command, VARSTR(file->cipherPassArchive));
 
-        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(archiveFileMap.request), command));
+        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(archiveFileMap->request), command));
     }
 
     FUNCTION_TEST_RETURN(NULL);
@@ -875,6 +883,21 @@ cmdArchiveGetAsync(void)
             // Check for archive files
             ArchiveGetCheckResult checkResult = archiveGetCheck(cfgCommandParam());
 
+            // Output repo errors as warnings since at least one repo must have been found
+            String *archiveFileWarn = strNew("");
+
+            for (unsigned int errorIdx = 0; errorIdx < lstSize(checkResult.repoErrorList); errorIdx++)
+            {
+                ArchiveRepoError *error = lstGet(checkResult.repoErrorList, errorIdx);
+
+                String *message = strNewFmt(
+                    "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, error->repoIdx), errorTypeName(error->type),
+                    strZ(error->message));
+
+                LOG_WARN(strZ(message));
+                strCatFmt(archiveFileWarn, "\n%s", strZ(message));
+            }
+
             // If any files are missing get the first one (used to construct the "unable to find" warning)
             const String *archiveFileMissing = NULL;
 
@@ -885,8 +908,10 @@ cmdArchiveGetAsync(void)
             if (!lstEmpty(checkResult.archiveFileMapList))
             {
                 // Create the parallel executor
+                ArchiveGetAsyncData jobData = {.archiveFileMapList = checkResult.archiveFileMapList};
+
                 ProtocolParallel *parallelExec = protocolParallelNew(
-                    cfgOptionUInt64(cfgOptProtocolTimeout) / 2, archiveGetAsyncCallback, &checkResult);
+                    cfgOptionUInt64(cfgOptProtocolTimeout) / 2, archiveGetAsyncCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                     protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));

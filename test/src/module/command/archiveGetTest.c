@@ -181,13 +181,23 @@ testRun(void)
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("multiple segments where some are missing or errored");
+        TEST_TITLE("multiple segments where some are missing or errored and mismatched repo");
+
+        hrnCfgArgKeyRawZ(argBaseList, cfgOptRepoPath, 2, TEST_PATH_REPO "2");
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "0000000100000001000000FE");
         strLstAddZ(argList, "0000000100000001000000FF");
         strLstAddZ(argList, "000000010000000200000000");
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}\n");
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FE-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
@@ -202,6 +212,8 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
+            "P00   WARN: repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+                " '18072658121562454734'\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:!!!FIXME archive\n"
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
 
@@ -219,6 +231,8 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
+            "P00   WARN: repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+                " '18072658121562454734'\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:!!!FIXME archive\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1:!!!FIXME archive\n"
             "P00   WARN: could not get 000000010000000200000000 from the archive (will be retried):"
