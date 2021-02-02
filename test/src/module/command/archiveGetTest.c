@@ -218,11 +218,24 @@ testRun(void)
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
 
         TEST_STORAGE_LIST(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "0000000100000001000000FE\n0000000100000001000000FF.ok\n",
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN,
+            "0000000100000001000000FE\n0000000100000001000000FE.ok\n0000000100000001000000FF.ok\n",
             .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on duplicates now that no segments are missing");
+        TEST_TITLE("error on duplicates now that no segments are missing, repo with bad perms");
+
+        // Fix repo 2 archive info but break archive path
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
+
+        storagePathCreateP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
+        TEST_SYSTEM_FMT("chmod 400 %s", strZ(storagePathP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"))));
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FF-efefefefefefefefefefefefefefefefefefefef");
@@ -231,9 +244,11 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P00   WARN: repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
-                " '18072658121562454734'\n"
+            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
+                "/0000000100000001': [13] Permission denied\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:!!!FIXME archive\n"
+            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
+                "/0000000100000001': [13] Permission denied\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1:!!!FIXME archive\n"
             "P00   WARN: could not get 000000010000000200000000 from the archive (will be retried):"
                 " [45] duplicates found for WAL segment 000000010000000200000000:\n"
@@ -243,7 +258,9 @@ testRun(void)
 
         TEST_STORAGE_LIST(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN,
-            "0000000100000001000000FE\n0000000100000001000000FF\n000000010000000200000000.error\n", .remove = true);
+            "0000000100000001000000FE\n0000000100000001000000FE.ok\n0000000100000001000000FF\n0000000100000001000000FF.ok\n"
+                "000000010000000200000000.error\n",
+            .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("global error on invalid executable");
@@ -408,11 +425,16 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "SHOULD-BE-A-REAL-WAL-FILE");
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "0\nwarning about x");
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002", "SHOULD-BE-A-REAL-WAL-FILE");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
 
-        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive asynchronously"), "check log");
+        TEST_RESULT_VOID(
+            harnessLogResult(
+                "P00   WARN: warning about x\n"
+                "P00   INFO: found 000000010000000100000001 in the archive asynchronously"),
+            "check log");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
 

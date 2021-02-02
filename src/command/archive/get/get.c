@@ -647,18 +647,20 @@ cmdArchiveGet(void)
 
             do
             {
-                // Check for errors or missing files.  For archive-get ok indicates that the process succeeded but there is no WAL
-                // file to download.
+                // Check if the WAL segment is already in the queue
+                found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
+
+                // Check for errors or missing files. For archive-get ok indicates that the process succeeded but there is no WAL
+                // file to download, or that there was a warning.
                 if (archiveAsyncStatus(archiveModeGet, walSegment, throwOnError))
                 {
                     storageRemoveP(
                         storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s" STATUS_EXT_OK, strZ(walSegment)),
                         .errorOnMissing = true);
-                    break;
-                }
 
-                // Check if the WAL segment is already in the queue
-                found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
+                    if (!found)
+                        break;
+                }
 
                 // If found then move the WAL segment to the destination directory
                 if (found)
@@ -884,7 +886,7 @@ cmdArchiveGetAsync(void)
             ArchiveGetCheckResult checkResult = archiveGetCheck(cfgCommandParam());
 
             // Output repo errors as warnings since at least one repo must have been found
-            String *archiveFileWarn = strNew("");
+            String *repoWarn = strNew("");
 
             for (unsigned int errorIdx = 0; errorIdx < lstSize(checkResult.repoErrorList); errorIdx++)
             {
@@ -895,7 +897,7 @@ cmdArchiveGetAsync(void)
                     strZ(error->message));
 
                 LOG_WARN(strZ(message));
-                strCatFmt(archiveFileWarn, "\n%s", strZ(message));
+                strCatFmt(repoWarn, "\n%s", strZ(message));
             }
 
             // If any files are missing get the first one (used to construct the "unable to find" warning)
@@ -931,11 +933,32 @@ cmdArchiveGetAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
+                            const String *archiveFile = varStr(protocolParallelJobKey(job));
+                            const ArchiveFileMap *archiveFileMap = lstFind(checkResult.archiveFileMapList, &archiveFile);
+                            ASSERT(archiveFileMap != NULL);
+
+                            String *archiveFileWarn = strDup(repoWarn);
+
+                            for (unsigned int errorIdx = 0; errorIdx < lstSize(archiveFileMap->repoErrorList); errorIdx++)
+                            {
+                                ArchiveRepoError *error = lstGet(archiveFileMap->repoErrorList, errorIdx);
+
+                                String *message = strNewFmt(
+                                    "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, error->repoIdx),
+                                    errorTypeName(error->type), strZ(error->message));
+
+                                LOG_WARN(strZ(message));
+                                strCatFmt(archiveFileWarn, "\n%s", strZ(message));
+                            }
+
                             LOG_DETAIL_PID_FMT(
                                 processId,
                                 FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
                                 cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
                                 "!!!FIXME");
+
+                            if (strSize(archiveFileWarn) > 0)
+                                archiveAsyncStatusOkWrite(archiveModeGet, archiveFile, strTrim(archiveFileWarn));
                         }
                         // Else the job errored
                         else
