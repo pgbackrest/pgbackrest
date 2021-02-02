@@ -839,7 +839,7 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
             }
         }
     }
-// CSHANG Is there a bug here? We are not updating the latest link!
+
     // Remove non-current backups from disk
     for (; backupIdx < strLstSize(backupList); backupIdx++)
     {

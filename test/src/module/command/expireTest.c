@@ -59,10 +59,7 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
 
     return result;
 }
-/* CSHANG TODO:
-- MUST create on enryption repo with manifest to ensure testing properly on encrypted repo
-- MUST add more details to the command reference guide on how expire works. I don't think we have enough detail there. I also don't think people will understand that if they run it manually, say for adhoc expire, that any retention policies they have set will still be performed and, in the case of adhoc, that the latest backup CAN be removed (unless it is the only backup). Maybe it's not an issue, but I think the command is sparse in its description.
-*/
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -1017,7 +1014,7 @@ testRun(void)
             "20181119-152900F\n20181119-152900F_20181119-152500I\n", "remaining current backups correct");
 
         harnessLogLevelReset();
-// CSHANG May need to change this if we decide that the --set option should look at all repos...
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, adhoc");
 
@@ -1039,20 +1036,21 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
             "            HINT: run the info command and confirm the backup is listed");
-// CSHANG Add repo=1 here and confirm only on repo1 removed?
-        // With multiple repos, adhoc expire backup only on first repo
-        // hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F_20181119-152500I");
-        // hrnCfgArgRawBool(argList, cfgOptDryRun, true);
-        // harnessCfgLoad(cfgCmdExpire, argList);
-        //
-        // TEST_RESULT_VOID(cmdExpire(), "label format OK and found on first repo");
-        // harnessLogResult(
-        //     "P00   WARN: [DRY-RUN] expiring latest backup repo1: 20181119-152900F_20181119-152500I - the ability to perform"
-        //     " point-in-time-recovery (PITR) may be affected\n"
-        //     "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
-        //     " expires) can cause gaps in the WAL.\n"
-        //     "P00   INFO: [DRY-RUN] expire adhoc backup repo1: 20181119-152900F_20181119-152500I\n"
-        //     "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152900F_20181119-152500I");
+
+        // With multiple repos, adhoc expire backup only on one repo
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F_20181119-152500I");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawBool(argList, cfgOptDryRun, true);
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "label format OK and expired on specified repo");
+        harnessLogResult(
+            "P00   WARN: [DRY-RUN] expiring latest backup repo1: 20181119-152900F_20181119-152500I - the ability to perform"
+            " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
+            " expires) can cause gaps in the WAL.\n"
+            "P00   INFO: [DRY-RUN] expire adhoc backup repo1: 20181119-152900F_20181119-152500I\n"
+            "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152900F_20181119-152500I");
 
         // Incorrect backup label format provided
         argList = strLstDup(argListAvoidWarn);
@@ -1930,12 +1928,16 @@ testRun(void)
             " (even in prior expires) can cause gaps in the WAL.\n"
             "P00   INFO: [DRY-RUN] expire adhoc backup repo1: 20181119-152850F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152850F_20181119-152252D");
-// CSHANG Maybe this can be multi-repo with encryption
+
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("resumable possibly based on adhoc expire backup, multi-repo");
+        TEST_TITLE("resumable possibly based on adhoc expire backup, multi-repo, encryption");
 
         argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--set=20181119-152850F_20181119-152252D");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152850F_20181119-152252D");
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Create backup.info
@@ -2047,9 +2049,8 @@ testRun(void)
         storagePathCreateP(storageLocalWrite(), repo2ArchiveStanzaPath);
         storagePathCreateP(storageLocalWrite(), repo2BackupStanzaPath);
 
-        String *repo2ArchiveInfoFileName = strNewFmt("%s/archive.info", strZ(repo2ArchiveStanzaPath)); // CSHANG May not need
         HRN_INFO_PUT(
-            storageTest, strZ(repo2ArchiveInfoFileName),
+            storageTest, strZ(strNewFmt("%s/archive.info", strZ(repo2ArchiveStanzaPath))),
             "[cipher]\n"
             "cipher-pass=\"" TEST_CIPHER_PASS_ARCHIVE "\"\n"
             "\n"
@@ -2085,25 +2086,40 @@ testRun(void)
         HRN_INFO_PUT(
             storageTest, strZ(strNewFmt("%s/20181119-152850F_20181200-152252D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
             strZ(repo2BackupStanzaPath))), strZ(manifestContent), .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
-// CSHANG - No this needs to be updated. We also haven't updated the latest link in the repo1...
-        // Create "latest" symlink
-        const String *latestLink = storagePathP(storageTest, strNewFmt("%s/latest", strZ(repo2BackupStanzaPath)));
+
+        // archives to repo2
+        archiveGenerate(storageTest, repo2ArchiveStanzaPath, 2, 10, "12-2", "0000000100000000");
+
+        // Create "latest" symlink, repo2
+        latestLink = storagePathP(storageTest, strNewFmt("%s/latest", strZ(repo2BackupStanzaPath)));
         THROW_ON_SYS_ERROR_FMT(
-            symlink(strZ(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel), strZ(latestLink)) == -1,
-            FileOpenError, "unable to create symlink '%s' to '%s'", strZ(latestLink),
-            strZ(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel));
+            symlink("20181119-152850F_20181200-152252D", strZ(latestLink)) == -1,
+            FileOpenError, "unable to create symlink '%s' to '%s'", strZ(latestLink), "20181119-152850F_20181200-152252D");
 
-        // TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest with resumable possibly based on it");
-        // harnessLogResult(
-        //     "P00   WARN: expiring latest backup repo1: 20181119-152850F_20181119-152252D - the ability to perform"
-        //     " point-in-time-recovery (PITR) may be affected\n"
-        //     "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
-        //     " (even in prior expires) can cause gaps in the WAL.\n"
-        //     "P00   INFO: expire adhoc backup repo1: 20181119-152850F_20181119-152252D\n"
-        //     "P00   INFO: remove expired backup repo1: 20181119-152850F_20181119-152252D\n"
-        //     "P00 DETAIL: archive retention on backup 20181119-152850F repo1: 12-2, start = 000000010000000000000002\n"
-        //     "P00 DETAIL: no archive to remove for repo1: 12-2");
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest with resumable possibly based on it");
+        harnessLogResult(
+            "P00   WARN: expiring latest backup repo1: 20181119-152850F_20181119-152252D - the ability to perform"
+            " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type'"
+            " (even in prior expires) can cause gaps in the WAL.\n"
+            "P00   INFO: expire adhoc backup repo1: 20181119-152850F_20181119-152252D\n"
+            "P00   INFO: remove expired backup repo1: 20181119-152850F_20181119-152252D\n"
+            "P00 DETAIL: archive retention on backup 20181119-152850F repo1: 12-2, start = 000000010000000000000002\n"
+            "P00 DETAIL: no archive to remove for repo1: 12-2\n"
+            "P00   WARN: expiring latest backup repo2: 20181119-152850F_20181119-152252D - the ability to perform"
+            " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo2-retention-archive'/'repo2-retention-archive-type'"
+            " (even in prior expires) can cause gaps in the WAL.\n"
+            "P00   INFO: expire adhoc backup repo2: 20181119-152850F_20181119-152252D\n"
+            "P00   INFO: remove expired backup repo2: 20181119-152850F_20181119-152252D\n"
+            "P00 DETAIL: archive retention on backup 20181119-152850F repo2: 12-2, start = 000000010000000000000002\n"
+            "P00 DETAIL: no archive to remove for repo2: 12-2");
 
+        TEST_RESULT_STR(storageInfoP(storageRepoIdx(1), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
+            STRDEF("20181119-152850F"), "latest link updated, repo2");
+
+        // Cleanup
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
         harnessLogLevelReset();
     }
 
@@ -2324,20 +2340,6 @@ testRun(void)
 
         harnessLogLevelReset();
     }
-// CSHANG May not need this
-    // // *****************************************************************************************************************************
-    // if (testBegin("cmdExpire() - multi-repo, encryption"))
-    // {
-    //     //--------------------------------------------------------------------------------------------------------------------------
-    //     TEST_TITLE("repo2 encrypted");
-    //
-    //     // Create encrypted repo2
-    //     String *repo2archivePath =  strNewFmt("%s/repo2/archive", testPath());
-    //     String *repo2backupPath =  strNewFmt("%s/repo2/backup", testPath());
-    //     storagePathCreateP(storageLocalWrite(), strNewFmt("%s/db", strZ(repo2archivePath)));
-    //     storagePathCreateP(storageLocalWrite(), strNewFmt("%s/db", strZ(repo2backupPath)));
-    //
-    // }
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
