@@ -212,7 +212,8 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P00   WARN: repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+            "P00   WARN: some repositories were invalid or encountered errors:\n"
+            "            repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
                 " '18072658121562454734'\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:!!!FIXME archive\n"
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
@@ -244,10 +245,12 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
+            "P00   WARN: some repositories were invalid or encountered errors for 0000000100000001000000FE:\n"
+            "            repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
                 "/0000000100000001': [13] Permission denied\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:!!!FIXME archive\n"
-            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
+            "P00   WARN: some repositories were invalid or encountered errors for 0000000100000001000000FF:\n"
+            "            repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
                 "/0000000100000001': [13] Permission denied\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1:!!!FIXME archive\n"
             "P00   WARN: could not get 000000010000000200000000 from the archive (will be retried):"
@@ -673,7 +676,8 @@ testRun(void)
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
         harnessLogResult(
-            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info'"
+            "P00   WARN: some repositories were invalid or encountered errors:\n"
+            "            repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info'"
                 " or '" TEST_PATH_REPO "-bogus/archive/test1/archive.info.copy':\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info'"
                 " for read\n"
@@ -706,7 +710,8 @@ testRun(void)
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
         harnessLogResult(
-            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-1"
+            "P00   WARN: " REPO_INVALID_OR_ERR_MSG " for 01ABCDEF01ABCDEF01ABCDEF:\n"
+            "            repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-1"
                 "/01ABCDEF01ABCDEF': [13] Permission denied\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
 
@@ -720,8 +725,10 @@ testRun(void)
         TEST_ERROR(
             cmdArchiveGet(), RepoInvalidError,
             "unable to find a valid repo:\n"
-            "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-1/01ABCDEF01ABCDEF': [13] Permission denied\n"
-            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test1/10-1/01ABCDEF01ABCDEF': [13] Permission denied");
+            "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-1"
+                "/01ABCDEF01ABCDEF': [13] Permission denied\n"
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test1/10-1/01ABCDEF01ABCDEF':"
+                " [13] Permission denied");
 
         TEST_SYSTEM_FMT("chmod 700 %s", strZ(storagePathP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"))));
 
