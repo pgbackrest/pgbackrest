@@ -465,11 +465,12 @@ testRun(void)
             checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), FeatureNotSupportedError,
             "archive_mode=always not supported");
 
-		// archive-mode-check=false
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("disable archive_mode=always check");
+
         strLstAddZ(argList, "--no-archive-mode-check");
         harnessCfgLoad(cfgCmdCheck, argList);
-        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config --no-archive-mode-check");
+        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "check");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
     }

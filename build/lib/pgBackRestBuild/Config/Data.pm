@@ -2849,8 +2849,13 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => true,
         &CFGDEF_COMMAND =>
         {
-            &CFGCMD_BACKUP => => {},
+            &CFGCMD_BACKUP => {},
             &CFGCMD_CHECK => {},
+        },
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_ARCHIVE_CHECK,
+            &CFGDEF_DEPEND_LIST => [true],
         },
         &CFGDEF_COMMAND_ROLE =>
         {

@@ -79,7 +79,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
             }
 
             // Error if archive_mode = always unless check is disabled (support has not been added yet)
-            if (strCmpZ(dbArchiveMode(dbObject), "always") == 0 && cfgOptionBool(cfgOptArchiveModeCheck))
+            if (cfgOptionBool(cfgOptArchiveModeCheck) && strCmpZ(dbArchiveMode(dbObject), "always") == 0)
             {
                 THROW(FeatureNotSupportedError, "archive_mode=always not supported");
             }

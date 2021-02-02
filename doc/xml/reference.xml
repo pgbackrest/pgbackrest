@@ -744,15 +744,17 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - ARCHIVE-MODE-CHECK -->
+                    <!-- ======================================================================================================= -->
                     <config-key id="archive-mode-check" name="Check Archive Mode">
                         <summary>Check the <postgres/> <setting>archive_mode</setting> setting.</summary>
 
-                        <text>Enabled by default, this option prevent <postgres/> <setting>archive_mode=always</setting>.
+                        <text>Enabled by default, this option disallows <postgres/> <setting>archive_mode=always</setting>.
 
-                        WAL segments pushed from a standby server might be logically the same as WAL segments pushed from the primary, but not have the same checksum. It is then recommended to disable archiving from multiple sources to avoid conflicts.</text>
+                        WAL segments pushed from a standby server might be logically the same as WAL segments pushed from the primary but have different checksums. Disabling archiving from multiple sources is recommended to avoid conflicts.
 
-                        <example>y</example>
+                        <admonition type="caution">If this option is disabled then it is critical to ensure that only one archiver is writing to the repository via the <cmd>archive-push</cmd> command.</admonition></text>
+
+                        <example>n</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - BACKUP-STANDBY KEY -->

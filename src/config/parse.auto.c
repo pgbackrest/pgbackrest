@@ -447,6 +447,12 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgOptArchiveCheck,
+                "1"
+            ),
+
             PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
         ),
     ),
@@ -10470,7 +10476,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveAsync,
     cfgOptArchiveGetQueueMax,
     cfgOptArchiveMode,
-    cfgOptArchiveModeCheck,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
@@ -10549,6 +10554,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptType,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
+    cfgOptArchiveModeCheck,
     cfgOptForce,
     cfgOptPgDatabase,
     cfgOptPgHost,
