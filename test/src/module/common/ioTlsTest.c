@@ -503,7 +503,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stastistics exist");
 
-        TEST_RESULT_BOOL(varLstSize(kvKeyList(statToKv())) > 0, true, "check");
+        TEST_RESULT_BOOL(varLstEmpty(kvKeyList(statToKv())), false, "check");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

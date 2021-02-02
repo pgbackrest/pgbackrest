@@ -481,7 +481,7 @@ cmdArchivePushAsync(void)
             jobData.walFileList = archivePushProcessList(jobData.walPath);
 
             // The archive-push:async command should not have been called unless there are WAL files to process
-            if (strLstSize(jobData.walFileList) == 0)
+            if (strLstEmpty(jobData.walFileList))
                 THROW(AssertError, "no WAL files to process");
 
             LOG_INFO_FMT(

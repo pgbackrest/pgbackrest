@@ -67,8 +67,8 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
     // empty StringList will be returned; in such a case, the directory will attempt to be deleted (this is OK).
     if (archiveList != NULL || backupList != NULL)
     {
-        bool archiveNotEmpty = (archiveList != NULL && strLstSize(archiveList) > 0) ? true : false;
-        bool backupNotEmpty = (backupList != NULL && strLstSize(backupList) > 0) ? true : false;
+        bool archiveNotEmpty = (archiveList != NULL && !strLstEmpty(archiveList)) ? true : false;
+        bool backupNotEmpty = (backupList != NULL && !strLstEmpty(backupList)) ? true : false;
 
         // If something exists in either directory, then remove
         if (archiveNotEmpty || backupNotEmpty)

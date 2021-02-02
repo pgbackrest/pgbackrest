@@ -805,7 +805,7 @@ jsonFromKvInternal(const KeyValue *kv)
                         // If the array is empty, then do not add formatting, else process the array.
                         if (varVarLst(value) == NULL)
                             strCat(result, NULL_STR);
-                        else if (varLstSize(varVarLst(value)) == 0)
+                        else if (varLstEmpty(varVarLst(value)))
                             strCatZ(result, "[]");
                         else
                         {
@@ -942,7 +942,7 @@ jsonFromVar(const Variant *var)
             const VariantList *vl = varVarLst(var);
 
             // If not an empty array
-            if (varLstSize(vl) > 0)
+            if (!varLstEmpty(vl))
             {
                 strCatZ(jsonStr, "[");
 

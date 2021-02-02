@@ -937,7 +937,7 @@ pckReadEnd(PackRead *this)
     ASSERT(this != NULL);
 
     // Read object end markers
-    while (lstSize(this->tagStack) > 0)
+    while (!lstEmpty(this->tagStack))
     {
         // Make sure we are at the end of the container
         unsigned int id = UINT_MAX - 1;
@@ -1055,7 +1055,7 @@ pckWriteBuffer(PackWrite *this, const Buffer *buffer)
         else
         {
             // Flush the internal buffer if it has data
-            if (bufUsed(this->buffer) > 0)
+            if (!bufEmpty(this->buffer))
             {
                 ioWrite(this->write, this->buffer);
                 bufUsedZero(this->buffer);
@@ -1322,10 +1322,10 @@ pckWriteBin(PackWrite *this, const Buffer *value, PckWriteBinParam param)
         ASSERT(value != NULL);
 
         // Write buffer size if > 0
-        pckWriteTag(this, pckTypeBin, param.id, bufUsed(value) > 0);
+        pckWriteTag(this, pckTypeBin, param.id, !bufEmpty(value));
 
         // Write buffer data if size > 0
-        if (bufUsed(value) > 0)
+        if (!bufEmpty(value))
         {
             pckWriteUInt64Internal(this, bufUsed(value));
             pckWriteBuffer(this, value);
@@ -1562,7 +1562,7 @@ pckWriteEnd(PackWrite *this)
     // If writing to io flush the internal buffer
     if (this->write != NULL)
     {
-        if (bufUsed(this->buffer) > 0)
+        if (!bufEmpty(this->buffer))
             ioWrite(this->write, this->buffer);
     }
     // Else resize the external buffer to trim off extra space added during processing

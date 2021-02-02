@@ -77,6 +77,13 @@ StringList *strLstRemoveIdx(StringList *this, unsigned int listIdx);
 // List size
 unsigned int strLstSize(const StringList *this);
 
+// Is the list empty?
+__attribute__((always_inline)) static inline bool
+strLstEmpty(const StringList *this)
+{
+    return strLstSize(this) == 0;
+}
+
 // List sort
 StringList *strLstSort(StringList *this, SortOrder sortOrder);
 
