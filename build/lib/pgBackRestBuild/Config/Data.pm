@@ -294,6 +294,7 @@ use constant CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                          => 'archive-
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPT_ARCHIVE_CHECK                                   => 'archive-check';
 use constant CFGOPT_ARCHIVE_COPY                                    => 'archive-copy';
+use constant CFGOPT_ARCHIVE_MODE_CHECK                              => 'archive-mode-check';
 use constant CFGOPT_BACKUP_STANDBY                                  => 'backup-standby';
 use constant CFGOPT_CHECKSUM_PAGE                                   => 'checksum-page';
 use constant CFGOPT_EXCLUDE                                         => 'exclude';
@@ -2834,6 +2835,22 @@ my %hConfigDefine =
                     &CFGDEF_DEPEND_LIST => [true],
                 }
             }
+        },
+        &CFGDEF_COMMAND_ROLE =>
+        {
+            &CFGCMD_ROLE_DEFAULT => {},
+        },
+    },
+
+    &CFGOPT_ARCHIVE_MODE_CHECK =>
+    {
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_COMMAND =>
+        {
+            &CFGCMD_BACKUP => => {},
+            &CFGCMD_CHECK => {},
         },
         &CFGDEF_COMMAND_ROLE =>
         {

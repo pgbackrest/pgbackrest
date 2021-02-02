@@ -434,6 +434,26 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("archive-mode-check"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("archive-push-queue-max"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
         PARSE_RULE_OPTION_REQUIRED(false),
@@ -6479,6 +6499,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveMode,
     },
 
+    // archive-mode-check option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "archive-mode-check",
+        .val = PARSE_OPTION_FLAG | cfgOptArchiveModeCheck,
+    },
+    {
+        .name = "no-archive-mode-check",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveModeCheck,
+    },
+    {
+        .name = "reset-archive-mode-check",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveModeCheck,
+    },
+
     // archive-push-queue-max option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -10435,6 +10470,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveAsync,
     cfgOptArchiveGetQueueMax,
     cfgOptArchiveMode,
+    cfgOptArchiveModeCheck,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
