@@ -11,6 +11,7 @@ Archive Get File
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Copy a file from the archive to the specified destination
 typedef struct ArchiveGetFile
 {
     const String *file;                                             // File in the repo (with path, checksum, ext, etc.)
@@ -20,11 +21,13 @@ typedef struct ArchiveGetFile
     const String *cipherPassArchive;                                // Repo archive cipher pass
 } ArchiveGetFile;
 
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Copy a file from the archive to the specified destination
-void archiveGetFile(
+typedef struct ArchiveGetFileResult
+{
+    unsigned int actualIdx;                                         // Index of the file from actual list that was retrieved
+    String *warn;                                                   // Warnings from a successful operation
+} ArchiveGetFileResult;
+
+ArchiveGetFileResult archiveGetFile(
     const Storage *storage, const String *request, const List *actualList, const String *walDestination, bool durable);
 
 #endif

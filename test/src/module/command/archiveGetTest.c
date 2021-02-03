@@ -176,7 +176,7 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01 DETAIL: found 000000010000000100000001 in the repo1:!!!FIXME archive");
+            "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
 
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001\n", .remove = true);
 
@@ -215,7 +215,7 @@ testRun(void)
             "P00   WARN: some repositories were invalid or encountered errors:\n"
             "            repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
                 " '18072658121562454734'\n"
-            "P01 DETAIL: found 0000000100000001000000FE in the repo1:!!!FIXME archive\n"
+            "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
 
         TEST_STORAGE_LIST(
@@ -248,11 +248,11 @@ testRun(void)
             "P00   WARN: some repositories were invalid or encountered errors for 0000000100000001000000FE:\n"
             "            repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
                 "/0000000100000001': [13] Permission denied\n"
-            "P01 DETAIL: found 0000000100000001000000FE in the repo1:!!!FIXME archive\n"
+            "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
             "P00   WARN: some repositories were invalid or encountered errors for 0000000100000001000000FF:\n"
             "            repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
                 "/0000000100000001': [13] Permission denied\n"
-            "P01 DETAIL: found 0000000100000001000000FF in the repo1:!!!FIXME archive\n"
+            "P01 DETAIL: found 0000000100000001000000FF in the repo1:10-1 archive\n"
             "P00   WARN: could not get 000000010000000200000000 from the archive (will be retried):"
                 " [45] duplicates found for WAL segment 000000010000000200000000:\n"
             "            repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
@@ -765,7 +765,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             archiveGetProtocol(PROTOCOL_COMMAND_ARCHIVE_GET_STR, paramList, server), true, "protocol archive get");
 
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "check result");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,null]}\n", "check result");
         TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF\n");
 
         bufUsedSet(serverWrite, 0);

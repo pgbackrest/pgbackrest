@@ -17,7 +17,7 @@ Archive Get File
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-void archiveGetFile(
+ArchiveGetFileResult archiveGetFile(
     const Storage *storage, const String *request, const List *actualList, const String *walDestination, bool durable)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -31,6 +31,8 @@ void archiveGetFile(
     ASSERT(request != NULL);
     ASSERT(actualList != NULL && !lstEmpty(actualList));
     ASSERT(walDestination != NULL);
+
+    ArchiveGetFileResult result = {0};
 
     // Is the file compressible during the copy?
     bool compressible = true;
@@ -73,5 +75,5 @@ void archiveGetFile(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }

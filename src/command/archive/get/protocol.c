@@ -62,10 +62,14 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
                     });
             }
 
-            archiveGetFile(
+            ArchiveGetFileResult fileResult = archiveGetFile(
                 storageSpoolWrite(), request, actualList, strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(request)), true);
 
-            protocolServerResponse(server, NULL);
+            VariantList *result = varLstNew();
+            varLstAdd(result, varNewUInt(fileResult.actualIdx));
+            varLstAdd(result, varNewStr(fileResult.warn));
+
+            protocolServerResponse(server, varNewVarLst(result));
         }
         else
             found = false;

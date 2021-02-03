@@ -731,22 +731,27 @@ cmdArchiveGet(void)
             // Get the archive file
             if (!lstEmpty(checkResult.archiveFileMapList))
             {
+                // There can only be one file mapping since only one file was requested
                 ASSERT(lstSize(checkResult.archiveFileMapList) == 1);
-
                 const ArchiveFileMap *fileMap = lstGet(checkResult.archiveFileMapList, 0);
 
                 // Output repo errors as warnings since at least one repo must have been found for the file
                 if (fileMap->repoWarn != NULL)
                     LOG_WARN_FMT(REPO_INVALID_OR_ERR_MSG " for %s:\n%s", strZ(fileMap->request), strZ(fileMap->repoWarn));
 
-                const ArchiveGetFile *file = lstGet(fileMap->actualList, 0);
+                // Get the file
+                ArchiveGetFileResult fileResult =
+                    archiveGetFile(storageLocalWrite(), fileMap->request, fileMap->actualList, walDestination, false);
 
-                archiveGetFile(storageLocalWrite(), file->file, fileMap->actualList, walDestination, false);
+                // !!! WARN GOES HERE
 
                 // If there was no error then the file existed
+                ArchiveGetFile *file = lstGet(fileMap->actualList, fileResult.actualIdx);
+                ASSERT(file != NULL);
+
                 LOG_INFO_FMT(
                     FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
-                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)), strZ(file->archiveId));
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(file->repoIdx)), strZ(file->archiveId));
 
                 result = 0;
             }
@@ -866,35 +871,40 @@ cmdArchiveGetAsync(void)
 
                         // Get wal segment name and archive file map
                         const String *walSegment = varStr(protocolParallelJobKey(job));
-                        const ArchiveFileMap *archiveFileMap = lstFind(checkResult.archiveFileMapList, &walSegment);
-                        ASSERT(archiveFileMap != NULL);
+                        const ArchiveFileMap *fileMap = lstFind(checkResult.archiveFileMapList, &walSegment);
+                        ASSERT(fileMap != NULL);
 
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            if (checkResult.repoWarn != NULL || archiveFileMap->repoWarn != NULL)
+                            if (checkResult.repoWarn != NULL || fileMap->repoWarn != NULL)
                             {
                                 String *warning = strNewFmt(REPO_INVALID_OR_ERR_MSG " for '%s':", strZ(walSegment));
 
                                 if (checkResult.repoWarn != NULL)
                                     strCatFmt(warning, "\n%s", strZ(checkResult.repoWarn));
 
-                                if (archiveFileMap->repoWarn != NULL)
+                                if (fileMap->repoWarn != NULL)
                                 {
-                                    strCatFmt(warning, "\n%s", strZ(archiveFileMap->repoWarn));
+                                    strCatFmt(warning, "\n%s", strZ(fileMap->repoWarn));
                                     LOG_WARN_FMT(
                                         REPO_INVALID_OR_ERR_MSG " for %s:\n%s", strZ(walSegment),
-                                        strZ(archiveFileMap->repoWarn));
+                                        strZ(fileMap->repoWarn));
                                 }
 
                                 archiveAsyncStatusOkWrite(archiveModeGet, walSegment, warning);
                             }
 
+                            // Get the actual file retrieved
+                            const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
+                            ArchiveGetFile *file = lstGet(fileMap->actualList, varUIntForce(varLstGet(fileResult, 0)));
+                            ASSERT(file != NULL);
+
                             LOG_DETAIL_PID_FMT(
                                 processId,
                                 FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
-                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
-                                "!!!FIXME");
+                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(file->repoIdx)),
+                                strZ(file->archiveId));
                         }
                         // Else the job errored
                         else
