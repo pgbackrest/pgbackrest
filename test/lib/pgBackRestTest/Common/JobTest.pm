@@ -289,7 +289,7 @@ sub run
                 # Generate Makefile.param
                 my $strMakefileParam =
                     "CFLAGS =" .
-                        " \\\n\t-Werror -Wfatal-errors" .
+                        " \\\n\t-Werror -Wfatal-errors -g" .
                         ($self->{bProfile} ? " \\\n\t-pg" : '') .
                         (vmArchBits($self->{oTest}->{&TEST_VM}) == 32 ? " \\\n\t-D_FILE_OFFSET_BITS=64" : '') .
                         ($self->{bDebug} ? '' : " \\\n\t-DNDEBUG") .
