@@ -39,19 +39,10 @@ Constants for log messages that are used multiple times to keep them consistent
 /***********************************************************************************************************************************
 Check for a list of archive files in the repository
 ***********************************************************************************************************************************/
-typedef struct ArchiveGetFile
-{
-    const String *file;                                             // File in the repo (with path, checksum, ext, etc.)
-    unsigned int repoIdx;                                           // Repo idx
-    const String *archiveId;                                        // Repo archive id
-    CipherType cipherType;                                          // Repo cipher type
-    const String *cipherPassArchive;                                // Repo archive cipher pass
-} ArchiveGetFile;
-
 typedef struct ArchiveFileMap
 {
     const String *request;                                          // Archive file requested by archive_command
-    List *actualList;                                               // Actual files
+    List *actualList;                                               // Actual files in various repos/archiveIds
     String *repoWarn;                                               // Repo warnings
 } ArchiveFileMap;
 
@@ -750,7 +741,7 @@ cmdArchiveGet(void)
 
                 const ArchiveGetFile *file = lstGet(fileMap->actualList, 0);
 
-                archiveGetFile(storageLocalWrite(), file->file, walDestination, false, file->cipherType, file->cipherPassArchive);
+                archiveGetFile(storageLocalWrite(), file->file, fileMap->actualList, walDestination, false);
 
                 // If there was no error then the file existed
                 LOG_INFO_FMT(
@@ -792,14 +783,22 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
     if (jobData->archiveFileIdx < lstSize(jobData->archiveFileMapList))
     {
         const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
-        const ArchiveGetFile *file = lstGet(archiveFileMap->actualList, 0);
         jobData->archiveFileIdx++;
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
         protocolCommandParamAdd(command, VARSTR(archiveFileMap->request));
-        protocolCommandParamAdd(command, VARSTR(file->file));
-        protocolCommandParamAdd(command, VARUINT(file->cipherType));
-        protocolCommandParamAdd(command, VARSTR(file->cipherPassArchive));
+
+        // Add actual files to get
+        for (unsigned int actualIdx = 0; actualIdx < lstSize(archiveFileMap->actualList); actualIdx++)
+        {
+            const ArchiveGetFile *actual = lstGet(archiveFileMap->actualList, actualIdx);
+
+            protocolCommandParamAdd(command, VARSTR(actual->file));
+            protocolCommandParamAdd(command, VARUINT(actual->repoIdx));
+            protocolCommandParamAdd(command, VARSTR(actual->archiveId));
+            protocolCommandParamAdd(command, VARUINT(actual->cipherType));
+            protocolCommandParamAdd(command, VARSTR(actual->cipherPassArchive));
+        }
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(archiveFileMap->request), command));
     }
@@ -861,21 +860,21 @@ cmdArchiveGetAsync(void)
 
                     for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                     {
-                        // Get the job and job key
+                        // Get the job
                         ProtocolParallelJob *job = protocolParallelResult(parallelExec);
                         unsigned int processId = protocolParallelJobProcessId(job);
+
+                        // Get wal segment name and archive file map
                         const String *walSegment = varStr(protocolParallelJobKey(job));
+                        const ArchiveFileMap *archiveFileMap = lstFind(checkResult.archiveFileMapList, &walSegment);
+                        ASSERT(archiveFileMap != NULL);
 
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            const String *archiveFile = varStr(protocolParallelJobKey(job));
-                            const ArchiveFileMap *archiveFileMap = lstFind(checkResult.archiveFileMapList, &archiveFile);
-                            ASSERT(archiveFileMap != NULL);
-
                             if (checkResult.repoWarn != NULL || archiveFileMap->repoWarn != NULL)
                             {
-                                String *warning = strNewFmt(REPO_INVALID_OR_ERR_MSG " for '%s':", strZ(archiveFile));
+                                String *warning = strNewFmt(REPO_INVALID_OR_ERR_MSG " for '%s':", strZ(walSegment));
 
                                 if (checkResult.repoWarn != NULL)
                                     strCatFmt(warning, "\n%s", strZ(checkResult.repoWarn));
@@ -884,11 +883,11 @@ cmdArchiveGetAsync(void)
                                 {
                                     strCatFmt(warning, "\n%s", strZ(archiveFileMap->repoWarn));
                                     LOG_WARN_FMT(
-                                        REPO_INVALID_OR_ERR_MSG " for %s:\n%s", strZ(archiveFile),
+                                        REPO_INVALID_OR_ERR_MSG " for %s:\n%s", strZ(walSegment),
                                         strZ(archiveFileMap->repoWarn));
                                 }
 
-                                archiveAsyncStatusOkWrite(archiveModeGet, archiveFile, warning);
+                                archiveAsyncStatusOkWrite(archiveModeGet, walSegment, warning);
                             }
 
                             LOG_DETAIL_PID_FMT(

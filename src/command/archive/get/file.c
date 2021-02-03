@@ -17,21 +17,19 @@ Archive Get File
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-void
-archiveGetFile(
-    const Storage *storage, const String *archiveFile, const String *walDestination, bool durable, CipherType cipherType,
-    const String *cipherPassArchive)
+void archiveGetFile(
+    const Storage *storage, const String *request, const List *actualList, const String *walDestination, bool durable)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, archiveFile);
+        FUNCTION_LOG_PARAM(STRING, request);
+        FUNCTION_LOG_PARAM(LIST, actualList);
         FUNCTION_LOG_PARAM(STRING, walDestination);
         FUNCTION_LOG_PARAM(BOOL, durable);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPassArchive);
     FUNCTION_LOG_END();
 
-    ASSERT(archiveFile != NULL);
+    ASSERT(request != NULL);
+    ASSERT(actualList != NULL && !lstEmpty(actualList));
     ASSERT(walDestination != NULL);
 
     // Is the file compressible during the copy?
@@ -40,22 +38,25 @@ archiveGetFile(
     // Test for stop file
     lockStopTest();
 
+    // !!! GET DATA FROM FIRST POSITION UNTIL THERE IS A LOOP
+    ArchiveGetFile *actual = lstGet(actualList, 0);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         StorageWrite *destination = storageNewWriteP(
             storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable, .noAtomic = !durable);
 
         // If there is a cipher then add the decrypt filter
-        if (cipherType != cipherTypeNone)
+        if (actual->cipherType != cipherTypeNone)
         {
             ioFilterGroupAdd(
                 ioWriteFilterGroup(storageWriteIo(destination)),
-                cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPassArchive), NULL));
+                cipherBlockNew(cipherModeDecrypt, actual->cipherType, BUFSTR(actual->cipherPassArchive), NULL));
             compressible = false;
         }
 
         // If file is compressed then add the decompression filter
-        CompressType compressType = compressTypeFromName(archiveFile);
+        CompressType compressType = compressTypeFromName(actual->file);
 
         if (compressType != compressTypeNone)
         {
@@ -65,7 +66,9 @@ archiveGetFile(
 
         // Copy the file
         storageCopyP(
-            storageNewReadP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveFile)), .compressible = compressible),
+            storageNewReadP(
+                storageRepoIdx(actual->repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(actual->file)),
+                .compressible = compressible),
             destination);
     }
     MEM_CONTEXT_TEMP_END();

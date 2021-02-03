@@ -757,6 +757,8 @@ testRun(void)
         varLstAdd(paramList, varNewStrZ("01ABCDEF01ABCDEF01ABCDEF"));
         varLstAdd(
             paramList, varNewStrZ("10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
+        varLstAdd(paramList, varNewUInt(1));
+        varLstAdd(paramList, varNewStrZ("10-1"));
         varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));
         varLstAdd(paramList, varNewStrZ(TEST_CIPHER_PASS_ARCHIVE));
 
