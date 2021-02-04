@@ -4,6 +4,7 @@ Storage Test Harness
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
@@ -195,6 +196,22 @@ hrnStorageListLog(const Storage *storage, const char *path, HrnStorageListParam 
         strNewFmt(
             "list%s %u file%s in '%s'", param.remove ? "/remove": "", strLstSize(list), strLstSize(list) == 1 ? "" : "s",
             strZ(storagePathP(storage, STR(path)))));
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageMode(const int line, const Storage *const storage, mode_t mode, const char *const path)
+{
+    hrnTestLogPrefix(line, true);
+    hrnTestResultBegin(__func__, line, false);
+
+    const char *const pathFull = strZ(storagePathP(storage, STR(path)));
+    printf("chmod '%04o' on '%s'\n", mode, pathFull);
+    fflush(stdout);
+
+    THROW_ON_SYS_ERROR_FMT(chmod(pathFull, mode) == -1, FileModeError, "unable to set mode on '%s'", pathFull);
+
+    hrnTestResultEnd();
 }
 
 /**********************************************************************************************************************************/

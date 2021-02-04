@@ -153,8 +153,8 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01   WARN: could not get 000000010000000100000001 from the archive (will be retried):"
-                " [29] raised from local-1 protocol: unexpected eof in compressed data");
+            "P01   WARN: [FileReadError] raised from local-1 protocol: unable to get 000000010000000100000001:\n"
+            "            repo1: [FormatError] unexpected eof in compressed data");
 
         TEST_STORAGE_LIST(
             storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.error\n000000010000000100000001.pgbackrest.tmp\n");
@@ -236,7 +236,7 @@ testRun(void)
             "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
 
         storagePathCreateP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
-        TEST_SYSTEM_FMT("chmod 400 %s", strZ(storagePathP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"))));
+        HRN_STORAGE_MODE(storageRepoIdxWrite(1), 0400, STORAGE_REPO_ARCHIVE "/10-1");
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FF-efefefefefefefefefefefefefefefefefefefef");
@@ -253,8 +253,7 @@ testRun(void)
             "            repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
                 "/0000000100000001': [13] Permission denied\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1:10-1 archive\n"
-            "P00   WARN: could not get 000000010000000200000000 from the archive (will be retried):"
-                " [45] duplicates found for WAL segment 000000010000000200000000:\n"
+            "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
             "            repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
                 ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "            HINT: are multiple primaries archiving to this stanza?");
@@ -700,18 +699,18 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
-            "db-id=1\n"
+            "db-id=2\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
 
-        storagePathCreateP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
+        storagePathCreateP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_ARCHIVE "/10-2"), .mode = 0400);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
         harnessLogResult(
             "P00   WARN: " REPO_INVALID_OR_ERR_MSG " for 01ABCDEF01ABCDEF01ABCDEF:\n"
-            "            repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-1"
+            "            repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-2"
                 "/01ABCDEF01ABCDEF': [13] Permission denied\n"
             "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
 
@@ -720,17 +719,50 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("all repos have info but bad permissions");
 
-        TEST_SYSTEM_FMT("chmod 400 %s", strZ(storagePathP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"))));
+        HRN_STORAGE_MODE(storageRepoIdxWrite(1), 0400, STORAGE_REPO_ARCHIVE "/10-1");
 
         TEST_ERROR(
             cmdArchiveGet(), RepoInvalidError,
             "unable to find a valid repo:\n"
-            "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-1"
+            "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-2"
                 "/01ABCDEF01ABCDEF': [13] Permission denied\n"
             "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test1/10-1/01ABCDEF01ABCDEF':"
                 " [13] Permission denied");
 
-        TEST_SYSTEM_FMT("chmod 700 %s", strZ(storagePathP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"))));
+        HRN_STORAGE_MODE(storageRepoIdxWrite(0), 0700, STORAGE_REPO_ARCHIVE "/10-2");
+        HRN_STORAGE_MODE(storageRepoIdxWrite(1), 0700, STORAGE_REPO_ARCHIVE "/10-1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unable to get from one repo");
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/10-2/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz", NULL);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult(
+            "P00   WARN: " REPO_INVALID_OR_ERR_MSG " for 01ABCDEF01ABCDEF01ABCDEF:\n"
+            "            repo1: [FormatError] unexpected eof in compressed data\n"
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unable to get from all repos");
+
+        HRN_STORAGE_MODE(
+            storageRepoIdxWrite(1), 0000,
+            STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
+
+        TEST_ERROR(
+            cmdArchiveGet(), FileReadError,
+            "unable to get 01ABCDEF01ABCDEF01ABCDEF:\n"
+            "repo1: [FormatError] unexpected eof in compressed data\n"
+            "repo2: [FileOpenError] unable to open file '" TEST_PATH_REPO "/archive/test1/10-1/01ABCDEF01ABCDEF"
+                "/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz' for read: [13] Permission denied");
+
+        HRN_STORAGE_MODE(
+            storageRepoIdxWrite(1), 0700,
+            STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call protocol function directly");

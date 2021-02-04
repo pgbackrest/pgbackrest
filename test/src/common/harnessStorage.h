@@ -37,6 +37,14 @@ StringList *hrnStorageList(const Storage *storage, const char *path, HrnStorageL
 const char *hrnStorageListLog(const Storage *storage, const char *path, HrnStorageListParam param);
 
 /***********************************************************************************************************************************
+Change the mode of a path/file
+***********************************************************************************************************************************/
+#define HRN_STORAGE_MODE(storage, mode, path)                                                                                      \
+    hrnStorageMode(__LINE__, storage, mode, path)
+
+void hrnStorageMode(const int line, const Storage *const storage, mode_t mode, const char *const path);
+
+/***********************************************************************************************************************************
 Put a file with optional compression and/or encryption
 ***********************************************************************************************************************************/
 typedef struct HrnStoragePutParam

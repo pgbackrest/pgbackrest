@@ -32,7 +32,6 @@ Constants for log messages that are used multiple times to keep them consistent
 #define FOUND_IN_ARCHIVE_MSG                                        "found %s in the archive"
 #define FOUND_IN_REPO_ARCHIVE_MSG                                   "found %s in the repo%u:%s archive"
 #define UNABLE_TO_FIND_IN_ARCHIVE_MSG                               "unable to find %s in the archive"
-#define COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG                         "could not get %s from the archive (will be retried):"
 #define UNABLE_TO_FIND_VALID_REPO_MSG                               "unable to find a valid repo"
 #define REPO_INVALID_OR_ERR_MSG                                     "some repositories were invalid or encountered errors"
 
@@ -743,7 +742,9 @@ cmdArchiveGet(void)
                 ArchiveGetFileResult fileResult =
                     archiveGetFile(storageLocalWrite(), fileMap->request, fileMap->actualList, walDestination, false);
 
-                // !!! WARN GOES HERE
+                // File warnings
+                if (fileResult.warn)
+                    LOG_WARN_FMT(REPO_INVALID_OR_ERR_MSG " for %s:\n%s", strZ(fileMap->request), strZ(fileResult.warn));
 
                 // If there was no error then the file existed
                 ArchiveGetFile *file = lstGet(fileMap->actualList, fileResult.actualIdx);
@@ -910,9 +911,8 @@ cmdArchiveGetAsync(void)
                         else
                         {
                             LOG_WARN_PID_FMT(
-                                processId,
-                                COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG " [%d] %s", strZ(walSegment),
-                                protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
+                                processId, "[%s] %s", errorTypeName(errorTypeFromCode(protocolParallelJobErrorCode(job))),
+                                strZ(protocolParallelJobErrorMessage(job)));
 
                             archiveAsyncStatusErrorWrite(
                                 archiveModeGet, walSegment, protocolParallelJobErrorCode(job),
@@ -929,9 +929,7 @@ cmdArchiveGetAsync(void)
             // need to fetch as many valid files as possible before throwing an error.
             if (checkResult.errorType != NULL)
             {
-                LOG_WARN_FMT(
-                    COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG " [%d] %s", strZ(checkResult.errorFile),
-                    errorTypeCode(checkResult.errorType), strZ(checkResult.errorMessage));
+                LOG_WARN_FMT("[%s] %s", errorTypeName(checkResult.errorType), strZ(checkResult.errorMessage));
 
                 archiveAsyncStatusErrorWrite(
                     archiveModeGet, checkResult.errorFile, errorTypeCode(checkResult.errorType), checkResult.errorMessage);

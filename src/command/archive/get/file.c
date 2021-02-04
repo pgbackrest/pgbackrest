@@ -34,46 +34,81 @@ ArchiveGetFileResult archiveGetFile(
 
     ArchiveGetFileResult result = {0};
 
-    // Is the file compressible during the copy?
-    bool compressible = true;
-
     // Test for stop file
     lockStopTest();
 
-    // !!! GET DATA FROM FIRST POSITION UNTIL THERE IS A LOOP
-    ArchiveGetFile *actual = lstGet(actualList, 0);
+    // Check all files in the actual list and return as soon as one is copied
+    bool copied = false;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    for (unsigned int actualIdx = 0; actualIdx < lstSize(actualList); actualIdx++)
     {
-        StorageWrite *destination = storageNewWriteP(
-            storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable, .noAtomic = !durable);
+        ArchiveGetFile *actual = lstGet(actualList, actualIdx);
 
-        // If there is a cipher then add the decrypt filter
-        if (actual->cipherType != cipherTypeNone)
+        // Is the file compressible during the copy?
+        bool compressible = true;
+
+        TRY_BEGIN()
         {
-            ioFilterGroupAdd(
-                ioWriteFilterGroup(storageWriteIo(destination)),
-                cipherBlockNew(cipherModeDecrypt, actual->cipherType, BUFSTR(actual->cipherPassArchive), NULL));
-            compressible = false;
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                StorageWrite *destination = storageNewWriteP(
+                    storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable,
+                    .noAtomic = !durable);
+
+                // If there is a cipher then add the decrypt filter
+                if (actual->cipherType != cipherTypeNone)
+                {
+                    ioFilterGroupAdd(
+                        ioWriteFilterGroup(storageWriteIo(destination)),
+                        cipherBlockNew(cipherModeDecrypt, actual->cipherType, BUFSTR(actual->cipherPassArchive), NULL));
+                    compressible = false;
+                }
+
+                // If file is compressed then add the decompression filter
+                CompressType compressType = compressTypeFromName(actual->file);
+
+                if (compressType != compressTypeNone)
+                {
+                    ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), decompressFilter(compressType));
+                    compressible = false;
+                }
+
+                // Copy the file
+                storageCopyP(
+                    storageNewReadP(
+                        storageRepoIdx(actual->repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(actual->file)),
+                        .compressible = compressible),
+                    destination);
+            }
+            MEM_CONTEXT_TEMP_END();
+
+            // File was successfully copied
+            result.actualIdx = actualIdx;
+            copied = true;
         }
-
-        // If file is compressed then add the decompression filter
-        CompressType compressType = compressTypeFromName(actual->file);
-
-        if (compressType != compressTypeNone)
+        CATCH_ANY()
         {
-            ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), decompressFilter(compressType));
-            compressible = false;
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.warn = strCatFmt(
+                    result.warn == NULL ? strNew("") : strCatChr(result.warn, '\n'), "repo%u: [%s] %s",
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, actual->repoIdx), errorTypeName(errorType()), errorMessage());
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
+        TRY_END();
 
-        // Copy the file
-        storageCopyP(
-            storageNewReadP(
-                storageRepoIdx(actual->repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(actual->file)),
-                .compressible = compressible),
-            destination);
+        // Stop on success
+        if (copied)
+            break;
     }
-    MEM_CONTEXT_TEMP_END();
+
+    // If no file was successfully copied then error
+    if (!copied)
+    {
+        ASSERT(result.warn != NULL);
+        THROW_FMT(FileReadError, "unable to get %s:\n%s", strZ(request), strZ(result.warn));
+    }
 
     FUNCTION_LOG_RETURN_STRUCT(result);
 }
