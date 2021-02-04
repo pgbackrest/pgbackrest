@@ -283,7 +283,6 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigne
         FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
-
     ASSERT(infoBackup != NULL);
     ASSERT(minTimestamp > 0);
 
