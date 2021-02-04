@@ -32,7 +32,7 @@ ArchiveGetFileResult archiveGetFile(
     ASSERT(actualList != NULL && !lstEmpty(actualList));
     ASSERT(walDestination != NULL);
 
-    ArchiveGetFileResult result = {0};
+    ArchiveGetFileResult result = {.warnList = strLstNew()};
 
     // Test for stop file
     lockStopTest();
@@ -90,9 +90,11 @@ ArchiveGetFileResult archiveGetFile(
         {
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result.warn = strCatFmt(
-                    result.warn == NULL ? strNew("") : strCatChr(result.warn, '\n'), "repo%u: [%s] %s",
-                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, actual->repoIdx), errorTypeName(errorType()), errorMessage());
+                strLstAdd(
+                    result.warnList,
+                    strNewFmt(
+                        "repo%u: %s [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, actual->repoIdx), strZ(actual->file),
+                        errorTypeName(errorType()), errorMessage()));
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -106,8 +108,8 @@ ArchiveGetFileResult archiveGetFile(
     // If no file was successfully copied then error
     if (!copied)
     {
-        ASSERT(result.warn != NULL);
-        THROW_FMT(FileReadError, "unable to get %s:\n%s", strZ(request), strZ(result.warn));
+        ASSERT(!strLstEmpty(result.warnList));
+        THROW_FMT(FileReadError, "unable to get %s:\n%s", strZ(request), strZ(strLstJoin(result.warnList, "\n")));
     }
 
     FUNCTION_LOG_RETURN_STRUCT(result);

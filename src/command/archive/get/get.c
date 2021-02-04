@@ -32,7 +32,7 @@ Constants for log messages that are used multiple times to keep them consistent
 #define FOUND_IN_ARCHIVE_MSG                                        "found %s in the archive"
 #define FOUND_IN_REPO_ARCHIVE_MSG                                   "found %s in the repo%u:%s archive"
 #define UNABLE_TO_FIND_IN_ARCHIVE_MSG                               "unable to find %s in the archive"
-#define UNABLE_TO_FIND_VALID_REPO_MSG                               "unable to find a valid repo"
+#define UNABLE_TO_FIND_VALID_REPO_MSG                               "unable to find a valid repository"
 #define REPO_INVALID_OR_ERR_MSG                                     "some repositories were invalid or encountered errors"
 
 /***********************************************************************************************************************************
@@ -42,27 +42,34 @@ typedef struct ArchiveFileMap
 {
     const String *request;                                          // Archive file requested by archive_command
     List *actualList;                                               // Actual files in various repos/archiveIds
-    String *repoWarn;                                               // Repo warnings
+    StringList *warnList;                                           // Warnings that need to be reported by the async process
 } ArchiveFileMap;
 
 typedef struct ArchiveGetCheckResult
 {
     List *archiveFileMapList;                                       // List of mapped archive files, i.e. found in the repo
-    String *repoWarn;                                               // Repo warnings
 
     // Global error that affects all repos
     const ErrorType *errorType;                                     // Error type if there was an error
     const String *errorFile;                                        // Error file if there was an error
     const String *errorMessage;                                     // Error message if there was an error
+    const StringList *warnList;                                     // Warnings that need to be reported by the async process
 } ArchiveGetCheckResult;
 
 // Helper to append errors to an error message
-static String *
-archiveGetErrorAppend(String *prior, unsigned int repoIdx, const ErrorType *type, const String *message)
+static void
+archiveGetErrorAppend(StringList *warnList, bool log, unsigned int repoIdx, const ErrorType *type, const String *message)
 {
-    return strCatFmt(
-        prior == NULL ? strNew("") : strCatChr(prior, '\n'), "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
-        errorTypeName(type), strZ(message));
+    const String *warn = strNewFmt(
+        "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(type), strZ(message));
+
+    if (!strLstExists(warnList, warn))
+    {
+        if (log)
+            LOG_WARN(strZ(warn));
+
+        strLstAdd(warnList, warn);
+    }
 }
 
 // Helper to find a single archive file in the repository using a cache to speed up the process and minimize storageListP() calls
@@ -84,16 +91,18 @@ typedef struct ArchiveGetFindCache
     CipherType cipherType;                                          // Repo cipher type
     const String *cipherPassArchive;                                // Repo archive cipher pass
     List *archiveList;
+    StringList *warnList;                                           // Track repo warnings so each is only reported once
 } ArchiveGetFindCache;
 
 static bool
 archiveGetFind(
-    const String *archiveFileRequest, ArchiveGetCheckResult *getCheckResult, List *cache, bool single)
+    const String *archiveFileRequest, ArchiveGetCheckResult *getCheckResult, List *cache, const StringList *warnList, bool single)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, archiveFileRequest);
         FUNCTION_LOG_PARAM_P(VOID, getCheckResult);
         FUNCTION_LOG_PARAM(LIST, cache);
+        FUNCTION_LOG_PARAM(STRING_LIST, warnList);
         FUNCTION_LOG_PARAM(BOOL, single);
     FUNCTION_LOG_END();
 
@@ -114,8 +123,10 @@ archiveGetFind(
         // List to hold matches for the requested file
         List *matchList = lstNewP(sizeof(ArchiveGetFile));
 
-        // String to hold repo errors
-        String *repoErrorMessage = NULL;
+        // List of file level warnings
+        StringList *fileWarnList = strLstDup(warnList);
+
+        // Errored repo total to track if all repos errored
         unsigned int repoErrorTotal = 0;
 
         // Check each repo
@@ -228,7 +239,8 @@ archiveGetFind(
             CATCH_ANY()
             {
                 repoErrorTotal++;
-                repoErrorMessage = archiveGetErrorAppend(repoErrorMessage, cacheRepo->repoIdx, errorType(), STR(errorMessage()));
+                archiveGetErrorAppend(cacheRepo->warnList, true, cacheRepo->repoIdx, errorType(), STR(errorMessage()));
+                archiveGetErrorAppend(fileWarnList, false, cacheRepo->repoIdx, errorType(), STR(errorMessage()));
             }
             TRY_END();
         }
@@ -236,14 +248,15 @@ archiveGetFind(
         // If all repos errored out then set the global error
         if (repoErrorTotal == lstSize(cache))
         {
-            ASSERT(repoErrorMessage != NULL);
+            ASSERT(!strLstEmpty(fileWarnList));
 
             // Set as global error since processing cannot continue past this segment
             MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
             {
                 getCheckResult->errorType = &RepoInvalidError;
                 getCheckResult->errorFile = strDup(archiveFileRequest);
-                getCheckResult->errorMessage = strNewFmt(UNABLE_TO_FIND_VALID_REPO_MSG ":\n%s", strZ(repoErrorMessage));
+                getCheckResult->errorMessage = strNewFmt(UNABLE_TO_FIND_VALID_REPO_MSG);
+                getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
             }
             MEM_CONTEXT_END();
 
@@ -298,6 +311,7 @@ archiveGetFind(
                             "duplicates found for WAL segment %s:%s\n"
                                 "HINT: are multiple primaries archiving to this stanza?",
                             strZ(archiveFileRequest), strZ(message));
+                        getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
                     }
                     MEM_CONTEXT_END();
 
@@ -313,7 +327,7 @@ archiveGetFind(
                     {
                         .request = strDup(archiveFileRequest),
                         .actualList = lstNewP(sizeof(ArchiveGetFile)),
-                        .repoWarn = strDup(repoErrorMessage),
+                        .warnList = strLstMove(fileWarnList, memContextCurrent()),
                     };
 
                     for (unsigned int matchIdx = 0; matchIdx < lstSize(matchList); matchIdx++)
@@ -346,8 +360,8 @@ archiveGetCheck(const StringList *archiveRequestList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // String to hold repo errors
-        String *repoErrorMessage = NULL;
+        // List of warnings
+        StringList *warnList = strLstNew();
 
         // Get pg control info
         PgControl controlInfo = pgControlFromFile(storagePg());
@@ -368,6 +382,7 @@ archiveGetCheck(const StringList *archiveRequestList)
                     .repoIdx = repoIdx,
                     .cipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
                     .archiveList = lstNewP(sizeof(ArchiveGetFindCacheArchive)),
+                    .warnList = strLstNew(),
                 };
 
                 // Attempt to load the archive info file
@@ -426,8 +441,8 @@ archiveGetCheck(const StringList *archiveRequestList)
                 // Error if no archive id was found -- this indicates a mismatch with the current cluster
                 if (lstEmpty(cacheRepo.archiveList))
                 {
-                    repoErrorMessage = archiveGetErrorAppend(
-                        repoErrorMessage, repoIdx, &ArchiveMismatchError,
+                    archiveGetErrorAppend(
+                        warnList, true, repoIdx, &ArchiveMismatchError,
                         strNewFmt(
                             "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
                             strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId));
@@ -438,7 +453,7 @@ archiveGetCheck(const StringList *archiveRequestList)
             }
             CATCH_ANY()
             {
-                repoErrorMessage = archiveGetErrorAppend(repoErrorMessage, repoIdx, errorType(), STR(errorMessage()));
+                archiveGetErrorAppend(warnList, true, repoIdx, errorType(), STR(errorMessage()));
             }
             TRY_END();
         }
@@ -446,28 +461,39 @@ archiveGetCheck(const StringList *archiveRequestList)
         // Error if there are no repos to check
         if (lstEmpty(cache))
         {
-            ASSERT(repoErrorMessage != NULL);
-            THROW_FMT(RepoInvalidError, UNABLE_TO_FIND_VALID_REPO_MSG ":\n%s", strZ(repoErrorMessage));
-        }
+            ASSERT(!strLstEmpty(warnList));
 
-        // Any remaining errors will be reported as warnings since at least one repo is valid
-        MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
-        {
-            result.repoWarn = strDup(repoErrorMessage);
-        }
-        MEM_CONTEXT_END();
-
-        // Find files in the list
-        for (unsigned int archiveRequestIdx = 0; archiveRequestIdx < strLstSize(archiveRequestList); archiveRequestIdx++)
-        {
-            if (!archiveGetFind(
-                    strLstGet(archiveRequestList, archiveRequestIdx), &result, cache, strLstSize(archiveRequestList) == 1))
+            // Set as global error since processing cannot continue past this segment
+            MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
             {
-                break;
+                result.errorType = &RepoInvalidError;
+                result.errorMessage = strNew(UNABLE_TO_FIND_VALID_REPO_MSG);
+                result.warnList = strLstMove(warnList, memContextCurrent());
             }
+            MEM_CONTEXT_END();
         }
+        else
+        {
+            // Any remaining errors will be reported as warnings since at least one repo is valid
+            MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
+            {
+                result.warnList = strLstMove(warnList, memContextCurrent());
+            }
+            MEM_CONTEXT_END();
 
-        lstSort(result.archiveFileMapList, sortOrderAsc);
+            // Find files in the list
+            for (unsigned int archiveRequestIdx = 0; archiveRequestIdx < strLstSize(archiveRequestList); archiveRequestIdx++)
+            {
+                if (!archiveGetFind(
+                        strLstGet(archiveRequestList, archiveRequestIdx), &result, cache, warnList,
+                        strLstSize(archiveRequestList) == 1))
+                {
+                    break;
+                }
+            }
+
+            lstSort(result.archiveFileMapList, sortOrderAsc);
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -723,10 +749,6 @@ cmdArchiveGet(void)
             if (checkResult.errorType != NULL)
                 THROW_CODE(errorTypeCode(checkResult.errorType), strZ(checkResult.errorMessage));
 
-            // Output repo errors as warnings since at least one repo must have been found
-            if (checkResult.repoWarn != NULL)
-                LOG_WARN_FMT(REPO_INVALID_OR_ERR_MSG ":\n%s", strZ(checkResult.repoWarn));
-
             // Get the archive file
             if (!lstEmpty(checkResult.archiveFileMapList))
             {
@@ -734,17 +756,13 @@ cmdArchiveGet(void)
                 ASSERT(lstSize(checkResult.archiveFileMapList) == 1);
                 const ArchiveFileMap *fileMap = lstGet(checkResult.archiveFileMapList, 0);
 
-                // Output repo errors as warnings since at least one repo must have been found for the file
-                if (fileMap->repoWarn != NULL)
-                    LOG_WARN_FMT(REPO_INVALID_OR_ERR_MSG " for %s:\n%s", strZ(fileMap->request), strZ(fileMap->repoWarn));
-
                 // Get the file
                 ArchiveGetFileResult fileResult =
                     archiveGetFile(storageLocalWrite(), fileMap->request, fileMap->actualList, walDestination, false);
 
                 // File warnings
-                if (fileResult.warn)
-                    LOG_WARN_FMT(REPO_INVALID_OR_ERR_MSG " for %s:\n%s", strZ(fileMap->request), strZ(fileResult.warn));
+                for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
+                    LOG_WARN(strZ(strLstGet(fileResult.warnList, warnIdx)));
 
                 // If there was no error then the file existed
                 ArchiveGetFile *file = lstGet(fileMap->actualList, fileResult.actualIdx);
@@ -837,10 +855,6 @@ cmdArchiveGetAsync(void)
             // Check for archive files
             ArchiveGetCheckResult checkResult = archiveGetCheck(cfgCommandParam());
 
-            // Output repo errors as warnings since at least one repo must have been found
-            if (checkResult.repoWarn != NULL)
-                LOG_WARN_FMT(REPO_INVALID_OR_ERR_MSG ":\n%s", strZ(checkResult.repoWarn));
-
             // If any files are missing get the first one (used to construct the "unable to find" warning)
             const String *archiveFileMissing = NULL;
 
@@ -878,28 +892,28 @@ cmdArchiveGetAsync(void)
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            if (checkResult.repoWarn != NULL || fileMap->repoWarn != NULL)
-                            {
-                                String *warning = strNewFmt(REPO_INVALID_OR_ERR_MSG " for '%s':", strZ(walSegment));
-
-                                if (checkResult.repoWarn != NULL)
-                                    strCatFmt(warning, "\n%s", strZ(checkResult.repoWarn));
-
-                                if (fileMap->repoWarn != NULL)
-                                {
-                                    strCatFmt(warning, "\n%s", strZ(fileMap->repoWarn));
-                                    LOG_WARN_FMT(
-                                        REPO_INVALID_OR_ERR_MSG " for %s:\n%s", strZ(walSegment),
-                                        strZ(fileMap->repoWarn));
-                                }
-
-                                archiveAsyncStatusOkWrite(archiveModeGet, walSegment, warning);
-                            }
-
                             // Get the actual file retrieved
                             const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
                             ArchiveGetFile *file = lstGet(fileMap->actualList, varUIntForce(varLstGet(fileResult, 0)));
                             ASSERT(file != NULL);
+
+                            // File warnings
+                            StringList *fileWarnList = strLstNewVarLst(varVarLst(varLstGet(fileResult, 1)));
+
+                            for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
+                                LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
+
+                            // Build warnings for status file
+                            String *warning = strNew("");
+
+                            if (!strLstEmpty(fileMap->warnList))
+                                strCatFmt(warning, "%s", strZ(strLstJoin(fileMap->warnList, "\n")));
+
+                            if (!strLstEmpty(fileWarnList))
+                                strCatFmt(warning, "%s%s", strSize(warning) == 0 ? "" : "\n", strZ(strLstJoin(fileWarnList, "\n")));
+
+                            if (strSize(warning) != 0)
+                                archiveAsyncStatusOkWrite(archiveModeGet, walSegment, warning);
 
                             LOG_DETAIL_PID_FMT(
                                 processId,
@@ -931,14 +945,25 @@ cmdArchiveGetAsync(void)
             {
                 LOG_WARN_FMT("[%s] %s", errorTypeName(checkResult.errorType), strZ(checkResult.errorMessage));
 
+                String *message = strDup(checkResult.errorMessage);
+
+                if (!strLstEmpty(checkResult.warnList))
+                    strCatFmt(message, "\n%s", strZ(strLstJoin(checkResult.warnList, "\n")));
+
                 archiveAsyncStatusErrorWrite(
-                    archiveModeGet, checkResult.errorFile, errorTypeCode(checkResult.errorType), checkResult.errorMessage);
+                    archiveModeGet, checkResult.errorFile, errorTypeCode(checkResult.errorType), message);
             }
             // Else log a warning if any files were missing
             else if (archiveFileMissing != NULL)
             {
                 LOG_DETAIL_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(archiveFileMissing));
-                archiveAsyncStatusOkWrite(archiveModeGet, archiveFileMissing, NULL);
+
+                String *message = NULL;
+
+                if (!strLstEmpty(checkResult.warnList))
+                    message = strLstJoin(checkResult.warnList, "\n");
+
+                archiveAsyncStatusOkWrite(archiveModeGet, archiveFileMissing, message);
             }
         }
         // On any global error write a single error file to cover all unprocessed files

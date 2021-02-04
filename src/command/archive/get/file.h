@@ -24,7 +24,7 @@ typedef struct ArchiveGetFile
 typedef struct ArchiveGetFileResult
 {
     unsigned int actualIdx;                                         // Index of the file from actual list that was retrieved
-    String *warn;                                                   // Warnings from a successful operation
+    StringList *warnList;                                           // Warnings from a successful operation
 } ArchiveGetFileResult;
 
 ArchiveGetFileResult archiveGetFile(

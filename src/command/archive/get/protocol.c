@@ -67,7 +67,7 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
 
             VariantList *result = varLstNew();
             varLstAdd(result, varNewUInt(fileResult.actualIdx));
-            varLstAdd(result, varNewStr(fileResult.warn));
+            varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.warnList)));
 
             protocolServerResponse(server, varNewVarLst(result));
         }

@@ -171,6 +171,20 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 }
 
 /**********************************************************************************************************************************/
+void
+testStorageGet(const int line, const Storage *const storage, const char *const file, const char *const expected)
+{
+    hrnTestLogPrefix(line, true);
+    hrnTestResultBegin(__func__, line, false);
+
+    const String *const fileFull = storagePathP(storage, STR(file));
+    printf("test content of '%s'\n", strZ(fileFull));
+    fflush(stdout);
+
+    hrnTestResultZ(strZ(strNewBuf(storageGetP(storageNewReadP(storage, fileFull)))), expected, harnessTestResultOperationEq);
+}
+
+/**********************************************************************************************************************************/
 StringList *
 hrnStorageList(const Storage *storage, const char *path, HrnStorageListParam param)
 {

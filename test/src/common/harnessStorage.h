@@ -17,6 +17,14 @@ Check file exists
     TEST_RESULT_BOOL(storageExistsP(storage, STR(file)), true, "file exists '%s'", strZ(storagePathP(storage, STR(file))))
 
 /***********************************************************************************************************************************
+Get a file and test it against the specified content
+***********************************************************************************************************************************/
+#define TEST_STORAGE_GET(storage, file, content)                                                                                   \
+    testStorageGet(__LINE__, storage, file, content)
+
+void testStorageGet(const int line, const Storage *const storage, const char *const file, const char *const expected);
+
+/***********************************************************************************************************************************
 List files in a path and optionally remove them
 ***********************************************************************************************************************************/
 typedef struct HrnStorageListParam
