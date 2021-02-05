@@ -1349,10 +1349,12 @@
             </command>
 
             <!-- OPERATION - REPO-GET COMMAND -->
-            <command id="repo-get" name="Repository Get File">
-                <summary>Get a file from the repository.</summary>
+            <command id="repo-get" name="Repository Get">
+                <summary>Get files from a repository.</summary>
 
-                <text>Similar to the unix <cmd>cat</cmd> command but options are different.</text>
+                <text>Similar to the unix <cmd>cat</cmd> command but works on any supported repository type. This command is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
+
+                If the repository is encrypted then <cmd>repo-get</cmd> will automatically decrypt the file. Files are not automatically decompressed but the output can be piped through the appropriate decompression command, e.g. <id>gzip -d</id>.</text>
 
                 <option-list>
                     <!-- OPERATION - REPO-GET COMMAND - IGNORE-MISSING OPTION -->
