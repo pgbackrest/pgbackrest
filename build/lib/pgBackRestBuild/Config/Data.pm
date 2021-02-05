@@ -638,7 +638,6 @@ my $rhCommandDefine =
 
     &CFGCMD_REPO_LS =>
     {
-        &CFGDEF_INTERNAL => true,
         &CFGDEF_LOG_FILE => false,
         &CFGDEF_LOG_LEVEL_DEFAULT => DEBUG,
         &CFGDEF_PARAMETER_ALLOWED => true,
