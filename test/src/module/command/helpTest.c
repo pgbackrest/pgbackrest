@@ -34,6 +34,8 @@ testRun(void)
         "    expire          Expire backups that exceed retention.\n"
         "    help            Get help.\n"
         "    info            Retrieve information about backups.\n"
+        "    repo-get        Get files from a repository.\n"
+        "    repo-ls         List files in a repository.\n"
         "    restore         Restore a database cluster.\n"
         "    stanza-create   Create the required stanza data.\n"
         "    stanza-delete   Delete a stanza.\n"

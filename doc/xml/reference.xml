@@ -1307,7 +1307,9 @@
             <command id="expire" name="Expire">
                 <summary>Expire backups that exceed retention.</summary>
 
-                <text><backrest/> does backup rotation but is not concerned with when the backups were created.  If two full backups are configured for retention, <backrest/> will keep two full backups no matter whether they occur two hours or two weeks apart.</text>
+                <text><backrest/> does full backup rotation based on the retention type which can be a count or a time period. When a count is specified, then expiration is not concerned with when the backups were created but with how many must be retained. Differential and Incremental backups are count-based but will always be expired when the backup they depend on is expired. See sections <link page="user-guide" section="/retention/full">Full Backup Retention</link> and <link page="user-guide" section="/retention/diff">Differential Backup Retention</link> for details and examples. Archived WAL is retained by default for backups that have not expired, however, although not recommended, this schedule can be modified per repository with the retention-archive options. See section <link page="user-guide" section="/retention/archive">Archive Retention</link> for details and examples.
+
+                The <cmd>expire</cmd> command is run automatically after each successful backup and can also be run by the user. When run by the user, expiration will occur as defined by the retention settings for each configured repository. Expiration can also be limited by the user to a specific backup set with the <br-option>--set</br-option> option. It should be noted that the archive retention schedule will be checked and performed any time the <cmd>expire</cmd> command is run.</text>
 
                 <option-list>
                     <!-- OPERATION - EXPIRE COMMAND - SET OPTION -->
@@ -1349,10 +1351,12 @@
             </command>
 
             <!-- OPERATION - REPO-GET COMMAND -->
-            <command id="repo-get" name="Repository Get File">
-                <summary>Get a file from the repository.</summary>
+            <command id="repo-get" name="Repository Get">
+                <summary>Get files from a repository.</summary>
 
-                <text>Similar to the unix <cmd>cat</cmd> command but options are different.</text>
+                <text>Similar to the unix <cmd>cat</cmd> command but works on any supported repository type. This command is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
+
+                If the repository is encrypted then <cmd>repo-get</cmd> will automatically decrypt the file. Files are not automatically decompressed but the output can be piped through the appropriate decompression command, e.g. <id>gzip -d</id>.</text>
 
                 <option-list>
                     <!-- OPERATION - REPO-GET COMMAND - IGNORE-MISSING OPTION -->
@@ -1377,10 +1381,12 @@
             </command>
 
             <!-- OPERATION - REPO-LS COMMAND -->
-            <command id="repo-ls" name="Repository List Paths/Files">
-                <summary>List paths/files in the repository.</summary>
+            <command id="repo-ls" name="Repository List">
+                <summary>List files in a repository.</summary>
 
-                <text>Similar to the unix <cmd>ls</cmd> command but options and output are different.  Only information provided by repository storage drivers is available: <id>name</id>, <id>type</id>, <id>size</id>, (modify) <id>time</id>, and <id>destination</id> (for drivers that support links).</text>
+                <text>Similar to the unix <cmd>ls</cmd> command but works on any supported repository type. This command is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
+
+                The default text output prints one file name per line. JSON output is available by specifying <br-option>--output=json</br-option>.</text>
 
                 <option-list>
                     <!-- OPERATION - LS COMMAND - FILTER OPTION -->
@@ -1389,7 +1395,7 @@
 
                         <text>The filter is applied against the file/path names before they are output.</text>
 
-                        <example>(F|D|I)$</example>
+                        <example>"(F|D|I)$"</example>
                     </option>
 
                     <!-- OPERATION - LS COMMAND - OUTPUT OPTION -->
@@ -1400,6 +1406,13 @@
                         <ul>
                             <li><id>text</id> - Simple list with one file/link/path name on each line.</li>
                             <li><id>json</id> - Detailed file/link/path information in JSON format.</li>
+                        </ul>In JSON format the available fields are:
+                        <ul>
+                            <li><id>name</id> - file/link/path name (and partial path when recursing).</li>
+                            <li><id>type</id> - <id>file</id>, <id>path</id>, or <id>link</id>.</li>
+                            <li><id>size</id> - size in bytes (files only).</li>
+                            <li><id>time</id> - time last modified (files only).</li>
+                            <li><id>destination</id> - link destination (links only).</li>
                         </ul></text>
 
                         <example>json</example>
