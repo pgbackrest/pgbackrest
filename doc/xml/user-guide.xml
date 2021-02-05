@@ -1510,6 +1510,8 @@
 
         <p>Generally it is best to retain as many backups as possible to provide a greater window for <link section="/pitr">Point-in-Time Recovery</link>, but practical concerns such as disk space must also be considered.  Retention options remove older backups once they are no longer needed.</p>
 
+        <cmd-description key="expire"/>
+
         <!-- SECTION => RETENTION - FULL -->
         <section id="full">
             <title>Full Backup Retention</title>
