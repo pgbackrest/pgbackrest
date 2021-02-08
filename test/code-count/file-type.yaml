@@ -19,10 +19,6 @@ build/lib/pgBackRestBuild/Config/BuildHelp.pm:
   class: build
   type: perl
 
-build/lib/pgBackRestBuild/Config/BuildHelp.pm:
-  class: build
-  type: perl
-
 build/lib/pgBackRestBuild/Config/BuildParse.pm:
   class: build
   type: perl
@@ -1087,6 +1083,14 @@ src/common/type/object.h:
   class: core
   type: c/h
 
+src/common/type/pack.c:
+  class: core
+  type: c
+
+src/common/type/pack.h:
+  class: core
+  type: c/h
+
 src/common/type/param.h:
   class: core
   type: c/h
@@ -1607,6 +1611,10 @@ src/version.h:
   class: core
   type: c/h
 
+test/ci.pl:
+  class: test/harness
+  type: perl
+
 test/container.yaml:
   class: test/harness
   type: yaml
@@ -1835,6 +1843,14 @@ test/src/common/harnessLog.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessPack.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPack.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessPq.c:
   class: test/harness
   type: c
@@ -2055,6 +2071,10 @@ test/src/module/common/typeObjectTest.c:
   class: test/module
   type: c
 
+test/src/module/common/typePackTest.c:
+  class: test/module
+  type: c
+
 test/src/module/common/typeStringTest.c:
   class: test/module
   type: c
@@ -2164,9 +2184,5 @@ test/src/test.c:
   type: c
 
 test/test.pl:
-  class: test/harness
-  type: perl
-
-test/travis.pl:
   class: test/harness
   type: perl
