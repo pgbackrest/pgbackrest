@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.32dev" title="UNDER DEVELOPMENT">
+        <release date="2021-02-08" version="2.32" title="Repository Commands">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -54,7 +54,7 @@
                             <release-item-reviewer id="michael.banck"/>
                         </release-item-contributor-list>
 
-                        <p>Add <br-setting>archive-mode-check</br-setting> option.</p>
+                        <p>Add <setting>archive-mode-check</setting> option.</p>
                     </release-item>
                 </release-feature-list>
 
@@ -6157,7 +6157,7 @@
                             <release-item-contributor id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Fixed the <cmd>backup</cmd> command so the <br-setting>backup-standby</br-setting> option is reset (and the backup proceeds on the primary) if the standby is not configured and/or reachable.</p>
+                        <p>Fixed the <cmd>backup</cmd> command so the <setting>backup-standby</setting> option is reset (and the backup proceeds on the primary) if the standby is not configured and/or reachable.</p>
                     </release-item>
 
                     <release-item>
@@ -6209,7 +6209,7 @@
             <release-doc-list>
                 <release-bug-list>
                     <release-item>
-                        <p>Changed invalid <setting>max-archive-mb</setting> option in configuration reference to <br-setting>archive-queue-max</br-setting>.</p>
+                        <p>Changed invalid <setting>max-archive-mb</setting> option in configuration reference to <setting>archive-queue-max</setting>.</p>
                     </release-item>
 
                     <release-item>
