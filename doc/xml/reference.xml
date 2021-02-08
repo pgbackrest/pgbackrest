@@ -1520,7 +1520,7 @@
                 <summary>Restore a database cluster.</summary>
 
                 <text>This command is generally run manually, but there are instances where it might be automated.</text>
-
+<!-- CSHANG Above text needs to be updated. Also, may need to do same tactic we used with info and expire to put into user-guide. THIS STATEMENT IS ACTUALLY FLIPPED SO REMOVE and put in what command -->
                 <option-list>
                     <!-- OPERATION - RESTORE COMMAND - SET OPTION -->
                     <option id="set" name="Set">
