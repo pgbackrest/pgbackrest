@@ -541,7 +541,8 @@ static void hrnTestResultDiff(const char *actual, const char *expected)
     }
 }
 
-void hrnTestResultBool(int actual, int expected)
+void
+hrnTestResultBool(int actual, int expected)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -566,7 +567,8 @@ void hrnTestResultBool(int actual, int expected)
     hrnTestResultEnd();
 }
 
-void hrnTestResultDouble(double actual, double expected)
+void
+hrnTestResultDouble(double actual, double expected)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -584,7 +586,8 @@ void hrnTestResultDouble(double actual, double expected)
     hrnTestResultEnd();
 }
 
-void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation)
+void
+hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -615,7 +618,8 @@ void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOpera
     hrnTestResultEnd();
 }
 
-void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation)
+void
+hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -663,7 +667,8 @@ hrnTestResultStringList(const StringList *actual, const void *expected, HarnessT
 
 #endif
 
-void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation)
+void
+hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -694,7 +699,8 @@ void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOp
     hrnTestResultEnd();
 }
 
-void hrnTestResultUInt64Int64(uint64_t actual, int64_t expected, HarnessTestResultOperation operation)
+void
+hrnTestResultUInt64Int64(uint64_t actual, int64_t expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -712,7 +718,8 @@ void hrnTestResultUInt64Int64(uint64_t actual, int64_t expected, HarnessTestResu
     }
 }
 
-void hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultOperation operation)
+void
+hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
