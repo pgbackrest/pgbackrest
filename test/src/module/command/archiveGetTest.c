@@ -384,7 +384,7 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
             "P00   WARN: " TEST_WARN1 "\n"
             "P01   WARN: " TEST_WARN2 "\n"
-            "P01 DETAIL: found 000000010000000200000000 in the repo1:10-1 archive");
+            "P01 DETAIL: found 000000010000000200000000 in the repo2:10-1 archive");
 
         TEST_STORAGE_GET(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok", "0\n" TEST_WARN1 "\n" TEST_WARN2);
         TEST_STORAGE_LIST(
@@ -786,7 +786,6 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH_REPO "-bogus");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -886,6 +885,19 @@ testRun(void)
         HRN_STORAGE_MODE(
             storageRepoIdxWrite(1), 0700,
             STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo is specified so invalid repo is skipped");
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult(
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call protocol function directly");

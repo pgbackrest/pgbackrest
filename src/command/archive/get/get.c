@@ -369,9 +369,12 @@ archiveGetCheck(const StringList *archiveRequestList)
         // Build list of repos/archiveIds where WAL may be found
         List *cache = lstNewP(sizeof(ArchiveGetFindCache));
 
-        // !!! NEEDS TO BE ORDERED WITH DEFAULT FIRST
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
+            // If a repo was specified then skip all other repos
+            if (cfgOptionTest(cfgOptRepo) && cfgOptionUInt(cfgOptRepo) != cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx))
+                continue;
+
             TRY_BEGIN()
             {
                 // Get the repo storage in case it is remote and encryption settings need to be pulled down
@@ -769,8 +772,8 @@ cmdArchiveGet(void)
                 ASSERT(file != NULL);
 
                 LOG_INFO_FMT(
-                    FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
-                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(file->repoIdx)), strZ(file->archiveId));
+                    FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment), cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx),
+                    strZ(file->archiveId));
 
                 result = 0;
             }
@@ -916,10 +919,8 @@ cmdArchiveGetAsync(void)
                                 archiveAsyncStatusOkWrite(archiveModeGet, walSegment, warning);
 
                             LOG_DETAIL_PID_FMT(
-                                processId,
-                                FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
-                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(file->repoIdx)),
-                                strZ(file->archiveId));
+                                processId, FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
+                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx), strZ(file->archiveId));
                         }
                         // Else the job errored
                         else
