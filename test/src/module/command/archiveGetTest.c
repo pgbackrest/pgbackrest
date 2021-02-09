@@ -167,8 +167,8 @@ testRun(void)
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error",
             "103\n"
             "unable to find a valid repository\n"
-            "repo1: [PathOpenError] unable to list file info for path '/home/vagrant/test/test-0/repo/archive/test2/10-1"
-                "/0000000100000001': [13] Permission denied",
+            "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test2/10-1/0000000100000001':"
+                " [13] Permission denied",
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
