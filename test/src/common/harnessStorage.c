@@ -218,16 +218,30 @@ hrnStorageListLog(const Storage *storage, const char *path, HrnStorageListParam 
 
 /**********************************************************************************************************************************/
 void
-hrnStorageMode(const int line, const Storage *const storage, mode_t mode, const char *const path)
+hrnStorageMode(const int line, const Storage *const storage, const char *const path, HrnStorageModeParam param)
 {
     hrnTestLogPrefix(line, true);
     hrnTestResultBegin(__func__, line, false);
 
     const char *const pathFull = strZ(storagePathP(storage, STR(path)));
-    printf("chmod '%04o' on '%s'\n", mode, pathFull);
+
+    // If no mode specified then default the mode based on the file type
+    if (param.mode == 0)
+    {
+        struct stat statFile;
+
+        THROW_ON_SYS_ERROR_FMT(stat(pathFull, &statFile) == -1, FileOpenError, "unable to stat '%s'", pathFull);
+
+        if (S_ISDIR(statFile.st_mode))
+            param.mode = STORAGE_MODE_PATH_DEFAULT;
+        else
+            param.mode = STORAGE_MODE_FILE_DEFAULT;
+    }
+
+    printf("chmod '%04o' on '%s'\n", param.mode, pathFull);
     fflush(stdout);
 
-    THROW_ON_SYS_ERROR_FMT(chmod(pathFull, mode) == -1, FileModeError, "unable to set mode on '%s'", pathFull);
+    THROW_ON_SYS_ERROR_FMT(chmod(pathFull, param.mode) == -1, FileModeError, "unable to set mode on '%s'", pathFull);
 
     hrnTestResultEnd();
 }

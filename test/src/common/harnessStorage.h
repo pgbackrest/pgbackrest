@@ -22,11 +22,13 @@ Get a file and test it against the specified content
 typedef struct TestStorageGetParam
 {
     VAR_PARAM_HEADER;
-    bool remove;
+    bool remove;                                                    // Remove file after testing?
 } TestStorageGetParam;
 
 #define TEST_STORAGE_GET(storage, file, content, ...)                                                                              \
     testStorageGet(__LINE__, storage, file, content, (TestStorageGetParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define TEST_STORAGE_GET_EMPTY(storage, file, ...)                                                                                 \
+    TEST_STORAGE_GET(storage, file, "", __VA_ARGS__)
 
 void testStorageGet(
     const int line, const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param);
@@ -54,10 +56,16 @@ const char *hrnStorageListLog(const Storage *storage, const char *path, HrnStora
 /***********************************************************************************************************************************
 Change the mode of a path/file
 ***********************************************************************************************************************************/
-#define HRN_STORAGE_MODE(storage, mode, path)                                                                                      \
-    hrnStorageMode(__LINE__, storage, mode, path)
+typedef struct HrnStorageModeParam
+{
+    VAR_PARAM_HEADER;
+    mode_t mode;                                                    // Mode to set -- reset to default if not provided
+} HrnStorageModeParam;
 
-void hrnStorageMode(const int line, const Storage *const storage, mode_t mode, const char *const path);
+#define HRN_STORAGE_MODE(storage, path, ...)                                                                                       \
+    hrnStorageMode(__LINE__, storage, path, (HrnStorageModeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void hrnStorageMode(const int line, const Storage *const storage, const char *const path, HrnStorageModeParam param);
 
 /***********************************************************************************************************************************
 Put a file with optional compression and/or encryption

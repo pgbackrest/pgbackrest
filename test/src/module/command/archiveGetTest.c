@@ -147,7 +147,7 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P00 DETAIL: unable to find 000000010000000100000001 in the archive");
 
-        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -172,7 +172,7 @@ testRun(void)
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
-        HRN_STORAGE_MODE(storageRepoIdxWrite(0), 0700, STORAGE_REPO_ARCHIVE "/10-1");
+        HRN_STORAGE_MODE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-1");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid compressed segment");
@@ -215,7 +215,7 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
 
-        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -249,7 +249,7 @@ testRun(void)
             "repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
                 " unexpected eof in compressed data",
             .remove = true);
-        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_STORAGE_REMOVE(
@@ -286,7 +286,7 @@ testRun(void)
             "repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
                 " unexpected eof in compressed data",
             .remove = true);
-        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_STORAGE_REMOVE(
@@ -336,7 +336,7 @@ testRun(void)
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok", "0\n" TEST_WARN, .remove = true);
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok", "0\n" TEST_WARN, .remove = true);
-        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", "", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         #undef TEST_WARN
@@ -378,10 +378,10 @@ testRun(void)
                 ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
-        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", "", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", .remove = true);
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok", "0\n" TEST_WARN1, .remove = true);
-        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF", "", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF", .remove = true);
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok", "0\n" TEST_WARN1, .remove = true);
         TEST_STORAGE_GET(
@@ -395,7 +395,7 @@ testRun(void)
             .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
-        HRN_STORAGE_MODE(storageRepoIdxWrite(1), 0700, STORAGE_REPO_ARCHIVE "/10-1");
+        HRN_STORAGE_MODE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1");
 
         #undef TEST_WARN1
         #undef TEST_WARN2
@@ -474,7 +474,7 @@ testRun(void)
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok", "0\n" TEST_WARN1 "\n" TEST_WARN2,
             .remove = true);
-        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000", "", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_STORAGE_REMOVE(
@@ -959,7 +959,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("all repos have info but bad permissions");
 
-        HRN_STORAGE_MODE(storageRepoIdxWrite(1), 0400, STORAGE_REPO_ARCHIVE "/10-1");
+        HRN_STORAGE_MODE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1", .mode = 0400);
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
@@ -969,8 +969,8 @@ testRun(void)
             "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test1/10-1"
                 "/01ABCDEF01ABCDEF': [13] Permission denied");
 
-        HRN_STORAGE_MODE(storageRepoIdxWrite(0), 0700, STORAGE_REPO_ARCHIVE "/10-2");
-        HRN_STORAGE_MODE(storageRepoIdxWrite(1), 0700, STORAGE_REPO_ARCHIVE "/10-1");
+        HRN_STORAGE_MODE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-2");
+        HRN_STORAGE_MODE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("unable to get from one repo");
@@ -990,8 +990,8 @@ testRun(void)
         TEST_TITLE("unable to get from all repos");
 
         HRN_STORAGE_MODE(
-            storageRepoIdxWrite(1), 0000,
-            STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
+            storageRepoIdxWrite(1),
+            STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz", .mode = 0200);
 
         TEST_ERROR(
             cmdArchiveGet(), FileReadError,
@@ -1003,7 +1003,7 @@ testRun(void)
                     "-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz' for read: [13] Permission denied");
 
         HRN_STORAGE_MODE(
-            storageRepoIdxWrite(1), 0700,
+            storageRepoIdxWrite(1),
             STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
 
         // -------------------------------------------------------------------------------------------------------------------------
