@@ -5542,6 +5542,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (
                 "azure",
                 "cifs",
+                "gcs",
                 "posix",
                 "s3"
             ),

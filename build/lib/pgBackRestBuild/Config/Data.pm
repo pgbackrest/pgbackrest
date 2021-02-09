@@ -363,6 +363,7 @@ use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_REPO_TYPE_AZURE                              => 'azure';
 use constant CFGOPTVAL_REPO_TYPE_CIFS                               => 'cifs';
+use constant CFGOPTVAL_REPO_TYPE_GCS                                => 'gcs';
 use constant CFGOPTVAL_REPO_TYPE_POSIX                              => 'posix';
 use constant CFGOPTVAL_REPO_TYPE_S3                                 => 's3';
 
@@ -2470,6 +2471,7 @@ my %hConfigDefine =
         [
             &CFGOPTVAL_REPO_TYPE_AZURE,
             &CFGOPTVAL_REPO_TYPE_CIFS,
+            &CFGOPTVAL_REPO_TYPE_GCS,
             &CFGOPTVAL_REPO_TYPE_POSIX,
             &CFGOPTVAL_REPO_TYPE_S3,
         ],

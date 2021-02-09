@@ -494,6 +494,22 @@ unit:
           - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: gcs
+        total: 3
+
+        # !!! NEEDS TO BE COVERAGE
+        include:
+          - storage/gcs/read
+          - storage/gcs/storage
+          - storage/gcs/write
+          - storage/helper
+
+        # !!! NEEDED?
+        # include:
+        #   - storage/storage
+        #   - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: azure
         total: 3
 
