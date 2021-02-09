@@ -373,13 +373,6 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         // Parse config from command line and config file
         configParse(storageLocal(), argListSize, argList, true);
 
-        // Check that only repo1 is configured. This is temporary until the multi-repo support is finalized.
-        if (cfgCommandRole() == cfgCmdRoleDefault && cfgOptionGroupValid(cfgOptGrpRepo) &&
-            (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
-        {
-            THROW_FMT(OptionInvalidValueError, "only repo1 may be configured");
-        }
-
         // Initialize dry-run mode for storage when valid for the current command
         storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
 

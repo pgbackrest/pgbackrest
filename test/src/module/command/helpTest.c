@@ -188,6 +188,7 @@ testRun(void)
             "\n",
             "Repository Options:\n"
             "\n"
+            "  --repo                           set repository\n"
             "  --repo-azure-account             azure repository account\n"
             "  --repo-azure-ca-file             azure repository TLS CA file\n"
             "  --repo-azure-ca-path             azure repository TLS CA path\n"

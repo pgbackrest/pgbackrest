@@ -616,13 +616,14 @@
         <backrest-config host="{[azure-setup-host]}" file="{[backrest-config-demo]}" owner="{[azure-setup-config-owner]}">
             <title>Configure <proper>Azure</proper></title>
 
-            <backrest-config-option section="global" key="repo1-type">azure</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/{[azure-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-account">{[azure-account]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo1-azure-key-type">{[azure-key-type]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-key">{[azure-key]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-container">{[azure-container]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo1-azure-host">blob.core.windows.net</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-type">azure</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-path">/{[azure-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-account">{[azure-account]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo{[azure-setup-repo-id]}-azure-key-type">{[azure-key-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-key">{[azure-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-container">{[azure-container]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo{[azure-setup-repo-id]}-azure-host">blob.core.windows.net</backrest-config-option>
+            <backrest-config-option if="'{[azure-all]}' ne 'y'" section="global" key="repo{[azure-setup-repo-id]}-retention-full">4</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -636,11 +637,11 @@
             </execute>
 
             <execute user="{[azure-setup-user]}" if="'{[azure-setup-create-container]}' eq 'y'" show='n'>
-                <exe-cmd>{[project-exe]} repo-create</exe-cmd>
+                <exe-cmd>{[project-exe]} --repo={[azure-setup-repo-id]} repo-create</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>Shared access signatures may be used by setting the <br-option>repo1-azure-key-type</br-option> option to <id>sas</id> and the <br-option>repo1-azure-key</br-option> option to the shared access signature token.</p>
+        <p>Shared access signatures may be used by setting the <br-option>repo{[azure-setup-repo-id]}-azure-key-type</br-option> option to <id>sas</id> and the <br-option>repo{[azure-setup-repo-id]}-azure-key</br-option> option to the shared access signature token.</p>
     </block-define>
 
     <!-- ======================================================================================================================= -->
@@ -650,13 +651,14 @@
         <backrest-config host="{[s3-setup-host]}" file="{[backrest-config-demo]}" owner="{[s3-setup-config-owner]}">
             <title>Configure <proper>S3</proper></title>
 
-            <backrest-config-option section="global" key="repo1-type">s3</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/{[s3-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key">{[s3-key]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key-secret">{[s3-key-secret]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-type">s3</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-path">/{[s3-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-key">{[s3-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-key-secret">{[s3-key-secret]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-bucket">{[s3-bucket]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-region">{[s3-region]}</backrest-config-option>
+            <backrest-config-option if="'{[s3-all]}' ne 'y'" section="global" key="repo{[s3-setup-repo-id]}-retention-full">4</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -670,7 +672,7 @@
             </execute>
 
             <execute user="{[s3-setup-user]}" if="'{[s3-setup-create-bucket]}' eq 'y'" show='n'>
-                <exe-cmd>{[project-exe]} repo-create</exe-cmd>
+                <exe-cmd>{[project-exe]} --repo={[s3-setup-repo-id]} repo-create</exe-cmd>
             </execute>
         </execute-list>
 
@@ -1005,6 +1007,8 @@
 
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
+
+            <p>Multiple repositories may also be configured. See <link section="/multi-repo">Multiple Repositories</link> for details.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -1012,6 +1016,7 @@
             <title>Azure-Compatible Object Store Support</title>
 
             <block id="azure-setup">
+                <block-variable-replace key="azure-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="azure-setup-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="azure-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -2111,10 +2116,24 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="multi-repo">
+        <title>Multiple Repositories</title>
+
+        <p>Multiple repositories may be configured as demonstrated in <link section="/s3-support">S3 Support</link>. A potential benefit is the ability to have a local repository for fast restores and a remote repository for redundancy.</p>
+
+        <p>Some commands, e.g. <cmd>stanza-create</cmd>/<cmd>stanza-update</cmd>, will automatically work with all configured repositories while others, e.g. <link section="/delete-stanza">stanza-delete</link>, will require a repository to be specified using the <br-option>repo</br-option> option. See the <link url="command.html">command reference</link> for details on which commands require the repository to be specified.</p>
+
+        <p>Note that the <br-option>repo</br-option> option is not required when only <br-option>repo1</br-option> is configured in order to maintain backward compatibility. However, the <br-option>repo</br-option> option <i>is</i> required when a single repo is configured as, e.g. <br-option>repo2</br-option>. This is to prevent command breakage if a new repository is added later.</p>
+
+        <p>The <cmd>archive-push</cmd> command will always push WAL to the archive in all configured repositories but backups will need to be scheduled individually for each repository. In many cases this is desirable since backup types and retention will vary by repository. Likewise, restores must specify a repository. It is generally better to specify a repository for restores that has low latency/cost even if that means more recovery time. Only restore testing can determine which repository will be most efficient.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="azure-support" if="'{[azure-all]}' ne 'y'" depend="/quickstart/configure-archiving">
         <title>Azure-Compatible Object Store Support</title>
 
         <block id="azure-setup">
+            <block-variable-replace key="azure-setup-repo-id">2</block-variable-replace>
             <block-variable-replace key="azure-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="azure-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="azure-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -2138,25 +2157,28 @@
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
             <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
-                    --log-level-console=info backup</exe-cmd>
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=2
+                    --log-level-console=info backup
+                </exe-cmd>
                 <exe-highlight>no prior backup exists|full backup size</exe-highlight>
             </execute>
         </execute-list>
     </section>
 
     <!-- SECTION => S3-SUPPORT -->
-    <section id="s3-support" if="'{[s3-all]}' ne 'y'" depend="/quickstart/configure-archiving">
+    <section id="s3-support" if="'{[s3-all]}' ne 'y'" depend="/azure-support">
         <title>S3-Compatible Object Store Support</title>
 
         <block id="s3-setup">
+            <block-variable-replace key="s3-setup-repo-id">3</block-variable-replace>
             <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
             <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
         </block>
 
-        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible. If the role is associated with an instance in <proper>AWS</proper> then <backrest/> will automatically retrieve temporary credentials when <br-option>repo1-s3-key-type=auto</br-option>, which means that keys do not need to be explicitly set in <file>{[backrest-config-demo]}</file>.</p>
+        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible. If the role is associated with an instance in <proper>AWS</proper> then <backrest/> will automatically retrieve temporary credentials when <br-option>repo3-s3-key-type=auto</br-option>, which means that keys do not need to be explicitly set in <file>{[backrest-config-demo]}</file>.</p>
 
         <p>This sample <proper>Amazon S3</proper> policy will restrict all reads and writes to the bucket and repository path.</p>
 
@@ -2232,7 +2254,7 @@
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
             <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=3
                     --log-level-console=info backup</exe-cmd>
                 <exe-highlight>no prior backup exists|full backup size</exe-highlight>
             </execute>
@@ -2240,7 +2262,7 @@
     </section>
 
     <!-- SECTION => REPOSITORY HOST -->
-    <section id="delete-stanza" depend="/quickstart/create-stanza">
+    <section id="delete-stanza"  depend="/s3-support">
         <title>Delete a Stanza</title>
 
         <cmd-description key="stanza-delete"/>
@@ -2263,10 +2285,13 @@
         </execute-list>
 
         <execute-list host="{[host-pg1]}">
-            <title>Delete the stanza</title>
+            <title>Delete the stanza from one repository</title>
 
             <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-delete</exe-cmd>
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=3
+                    {[dash]}-log-level-console=info stanza-delete
+                </exe-cmd>
                 <exe-highlight>completed successfully</exe-highlight>
             </execute>
 

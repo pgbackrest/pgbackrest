@@ -1185,6 +1185,19 @@
                     <example>y</example>
                 </option>
 
+                <!-- =========================================================================================================== -->
+                <option id="repo" section="repository" name="Set Repository">
+                    <summary>Set repository.</summary>
+
+                    <text>Set the repository for a command to operate on.
+
+                    For example, this option may be used to perform a restore from a specific repository, rather than letting <backrest/> choose.
+
+                    Note that some commands, e.g. <cmd>archive-push</cmd>, are intended to operate on all repositories and will ignore this option.</text>
+
+                    <example>1</example>
+                </option>
+
                 <!-- OPERATION - GENERAL - STANZA OPTION -->
                 <option id="stanza" name="Stanza">
                     <summary>Defines the stanza.</summary>
@@ -1605,7 +1618,7 @@
 
                 For machine-readable output use <br-option>--output=json</br-option>.  The JSON output contains far more information than the text output and is kept stable unless a bug is found.
 
-                Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option.  The stanza '<id>status</id>' gives a brief indication of the stanza's health.  If this is '<id>ok</id>' then <backrest/> is functioning normally.  The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive.  Note that there may be gaps due to archive retention policies or other reasons.
+                Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories. In this case the state of the stanza will be detailed on additional lines per repository. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>--repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.
 
                 The '<id>backup/expire running</id>' message will appear beside the '<id>status</id>' information if one of those commands is currently running on the host.
 
@@ -1852,7 +1865,9 @@
                     <li>Shut down the <postgres/> cluster associated with the stanza (or use --force to override).</li>
                     <li>Run the <cmd>stop</cmd> command on the repository host.</li>
                     <li>Run the <cmd>stanza-delete</cmd> command on the repository host.</li>
-                </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files and/or environment variables.</text>
+                </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files and/or environment variables.
+
+                A stanza may only be deleted from one repository at a time. To delete the stanza from multiple repositories, repeat the <cmd>stanza-delete</cmd> command for each repository while specifying the <br-option>repo</br-option> option.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
