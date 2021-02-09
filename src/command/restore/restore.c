@@ -2086,6 +2086,37 @@ typedef struct RestoreBackupData
     time_t backupTimestampStop;                                     // Backup set stop time
 } RestoreBackupData;
 
+#define FUNCTION_LOG_RESTORE_BACKUP_DATA_TYPE                                                                                      \
+    RestoreBackupData
+#define FUNCTION_LOG_RESTORE_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                         \
+    objToLog(&value, "RestoreBackupData", buffer, bufferSize)
+
+// Helper function for restoreBackupData
+static void
+restoreBackupSet(
+    RestoreBackupData restoreBackup, const String *backupLabel, time_t backupTimestampStop, unsigned int repoIdx,
+    const String *backupCipherPass)
+{ // CSHANG Should this be FUNCTION_LOG or FUNCTION_TEST?
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(RESTORE_BACKUP_DATA, restoreBackup);
+        FUNCTION_LOG_PARAM(STRING, backupLabel);
+        FUNCTION_LOG_PARAM(TIME, backupTimestampStop);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
+        FUNCTION_LOG_PARAM(STRING, backupCipherPass);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_PRIOR_BEGIN()
+    {
+        restoreBackup.backupSet = strDup(backupLabel);
+        restoreBackup.backupTimestampStop = backupTimestampStop;
+        restoreBackup.repoIdx = repoIdx;
+        restoreBackup.repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+        restoreBackup.backupCipherPass = strDup(backupCipherPass);
+    }
+    MEM_CONTEXT_PRIOR_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 static RestoreBackupData
 restoreBackupData(unsigned int repoIdxStart, unsigned int repoIdxMax)
@@ -2163,15 +2194,9 @@ restoreBackupData(unsigned int repoIdxStart, unsigned int repoIdxMax)
                         // If the end of the backup is before the target time, then select this backup
                         if (backupData.backupTimestampStop < timeTargetEpoch)
                         {
-                            MEM_CONTEXT_PRIOR_BEGIN()
-                            {
-                                result.backupSet = strDup(backupData.backupLabel);
-                                result.backupTimestampStop = backupData.backupTimestampStop;
-                                result.repoIdx = repoIdx;
-                                result.repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
-                                result.backupCipherPass = strDup(infoPgCipherPass(infoBackupPg(infoBackup)));
-                            }
-                            MEM_CONTEXT_PRIOR_END();
+                            restoreBackupSet(
+                                result, backupData.backupLabel, backupData.backupTimestampStop, repoIdx,
+                                infoPgCipherPass(infoBackupPg(infoBackup)));
 
                             found = true;
                             break;
@@ -2189,15 +2214,9 @@ restoreBackupData(unsigned int repoIdxStart, unsigned int repoIdxMax)
                         // If a backup was not yet set then set the latest from this repo as the backup that might be used
                         if (result.backupSet == NULL)
                         {
-                            MEM_CONTEXT_PRIOR_BEGIN()
-                            {
-                                result.backupSet = strDup(latestBackup.backupLabel);
-                                result.backupTimestampStop = latestBackup.backupTimestampStop;
-                                result.repoIdx = repoIdx;
-                                result.repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
-                                result.backupCipherPass = strDup(infoPgCipherPass(infoBackupPg(infoBackup)));
-                            }
-                            MEM_CONTEXT_PRIOR_END();
+                            restoreBackupSet(
+                                result, latestBackup.backupLabel, latestBackup.backupTimestampStop, repoIdx,
+                                infoPgCipherPass(infoBackupPg(infoBackup)));
                         }
                         else
                         {
@@ -2205,15 +2224,9 @@ restoreBackupData(unsigned int repoIdxStart, unsigned int repoIdxMax)
                             // latest on this repo and continue searching for the best backup set to use
                             if (result.backupTimestampStop < latestBackup.backupTimestampStop)
                             {
-                                MEM_CONTEXT_PRIOR_BEGIN()
-                                {
-                                    result.backupSet = strDup(latestBackup.backupLabel);
-                                    result.backupTimestampStop = latestBackup.backupTimestampStop;
-                                    result.repoIdx = repoIdx;
-                                    result.repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
-                                    result.backupCipherPass = strDup(infoPgCipherPass(infoBackupPg(infoBackup)));
-                                }
-                                MEM_CONTEXT_PRIOR_END();
+                                restoreBackupSet(
+                                    result, latestBackup.backupLabel, latestBackup.backupTimestampStop, repoIdx,
+                                    infoPgCipherPass(infoBackupPg(infoBackup)));
                             }
                         }
                     }
@@ -2223,15 +2236,9 @@ restoreBackupData(unsigned int repoIdxStart, unsigned int repoIdxMax)
                     // If the recovery type was not time (or provided time was not valid), then use the latest backup from this repo
                     InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
 
-                    MEM_CONTEXT_PRIOR_BEGIN()
-                    {
-                        result.backupSet = strDup(latestBackup.backupLabel);
-                        result.backupTimestampStop = latestBackup.backupTimestampStop;
-                        result.repoIdx = repoIdx;
-                        result.repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
-                        result.backupCipherPass = strDup(infoPgCipherPass(infoBackupPg(infoBackup)));
-                    }
-                    MEM_CONTEXT_PRIOR_END();
+                    restoreBackupSet(
+                        result, latestBackup.backupLabel, latestBackup.backupTimestampStop, repoIdx,
+                        infoPgCipherPass(infoBackupPg(infoBackup)));
 
                     break;
                 }
@@ -2243,15 +2250,9 @@ restoreBackupData(unsigned int repoIdxStart, unsigned int repoIdxMax)
                 {
                     if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSetRequested))
                     {
-                        MEM_CONTEXT_PRIOR_BEGIN()
-                        {
-                            result.backupSet = strDup(backupSetRequested);
-                            result.backupTimestampStop = infoBackupData(infoBackup, backupIdx).backupTimestampStop;
-                            result.repoIdx = repoIdx;
-                            result.repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
-                            result.backupCipherPass = strDup(infoPgCipherPass(infoBackupPg(infoBackup)));
-                        }
-                        MEM_CONTEXT_PRIOR_END();
+                        restoreBackupSet(
+                            result, backupSetRequested, infoBackupData(infoBackup, backupIdx).backupTimestampStop, repoIdx,
+                            infoPgCipherPass(infoBackupPg(infoBackup)));
 
                         break;
                     }
