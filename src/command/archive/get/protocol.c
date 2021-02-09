@@ -62,6 +62,7 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
                     });
             }
 
+            // Return result
             ArchiveGetFileResult fileResult = archiveGetFile(
                 storageSpoolWrite(), request, actualList, strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(request)), true);
 
