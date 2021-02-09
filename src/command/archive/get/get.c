@@ -30,7 +30,7 @@ Archive Get Command
 Constants for log messages that are used multiple times to keep them consistent
 ***********************************************************************************************************************************/
 #define FOUND_IN_ARCHIVE_MSG                                        "found %s in the archive"
-#define FOUND_IN_REPO_ARCHIVE_MSG                                   "found %s in the repo%u:%s archive"
+#define FOUND_IN_REPO_ARCHIVE_MSG                                   "found %s in the repo%u: %s archive"
 #define UNABLE_TO_FIND_IN_ARCHIVE_MSG                               "unable to find %s in the archive"
 #define UNABLE_TO_FIND_VALID_REPO_MSG                               "unable to find a valid repository"
 #define REPO_INVALID_OR_ERR_MSG                                     "some repositories were invalid or encountered errors"
@@ -249,6 +249,8 @@ archiveGetFind(
         }
 
         // If all repos errored out then set the global error since processing cannot continue past this segment
+        ASSERT(repoErrorTotal <= lstSize(cacheRepoList));
+
         if (repoErrorTotal == lstSize(cacheRepoList))
         {
             ASSERT(!strLstEmpty(fileWarnList));

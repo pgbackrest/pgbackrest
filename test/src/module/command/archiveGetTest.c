@@ -213,7 +213,7 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
+            "P01 DETAIL: found 000000010000000100000001 in the repo1: 10-1 archive");
 
         TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
@@ -241,7 +241,7 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P01   WARN: repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
                 " [FormatError] unexpected eof in compressed data\n"
-            "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
+            "P01 DETAIL: found 000000010000000100000001 in the repo1: 10-1 archive");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok",
@@ -278,7 +278,7 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P01   WARN: repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
                 " [FormatError] unexpected eof in compressed data\n"
-            "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
+            "P01 DETAIL: found 000000010000000100000001 in the repo1: 10-1 archive");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok",
@@ -329,7 +329,7 @@ testRun(void)
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
             "P00   WARN: " TEST_WARN "\n"
-            "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
+            "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
 
         TEST_STORAGE_GET(
@@ -371,8 +371,8 @@ testRun(void)
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
             "P00   WARN: " TEST_WARN1 "\n"
             "P00   WARN: " TEST_WARN2 "\n"
-            "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
-            "P01 DETAIL: found 0000000100000001000000FF in the repo1:10-1 archive\n"
+            "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
+            "P01 DETAIL: found 0000000100000001000000FF in the repo1: 10-1 archive\n"
             "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
             "            repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
                 ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
@@ -469,7 +469,7 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
             "P00   WARN: " TEST_WARN1 "\n"
             "P01   WARN: " TEST_WARN2 "\n"
-            "P01 DETAIL: found 000000010000000200000000 in the repo2:10-1 archive");
+            "P01 DETAIL: found 000000010000000200000000 in the repo2: 10-1 archive");
 
         TEST_STORAGE_GET(
             storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok", "0\n" TEST_WARN1 "\n" TEST_WARN2,
@@ -771,7 +771,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-1 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
@@ -810,7 +810,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-1 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
 
@@ -822,7 +822,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-4 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-4 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
@@ -849,7 +849,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the repo1:10-4 archive");
+        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the repo1: 10-4 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
@@ -877,7 +877,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 00000001.history in the repo1:10-1 archive");
+        harnessLogResult("P00   INFO: found 00000001.history in the repo1: 10-1 archive");
 
         TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYHISTORY")).size, 7, "check size");
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYHISTORY\n", .remove = true);
@@ -928,7 +928,7 @@ testRun(void)
             "            HINT: has a stanza-create been performed?\n"
             "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
                 " archiving scheme.\n"
-            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
@@ -952,7 +952,7 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-2"
                 "/01ABCDEF01ABCDEF': [13] Permission denied\n"
-            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
 
@@ -984,7 +984,7 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: repo1: 10-2/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
                 " [FormatError] unexpected eof in compressed data\n"
-            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("unable to get from all repos");
@@ -1017,7 +1017,7 @@ testRun(void)
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
         harnessLogResult(
-            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call protocol function directly");

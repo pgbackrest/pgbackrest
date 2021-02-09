@@ -86,6 +86,7 @@ ArchiveGetFileResult archiveGetFile(
             result.actualIdx = actualIdx;
             copied = true;
         }
+        // Log errors as warnings and continue
         CATCH_ANY()
         {
             MEM_CONTEXT_PRIOR_BEGIN()
