@@ -105,7 +105,10 @@ testRun(void)
 
         TEST_ERROR(cmdArchiveGetAsync(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/global.error",
+            "72\narchive-get command must be run on the PostgreSQL host", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on no segments");
@@ -115,7 +118,10 @@ testRun(void)
 
         TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/global.error", "96\nat least one wal segment is required",
+            .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no segments to find");
@@ -141,7 +147,8 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P00 DETAIL: unable to find 000000010000000100000001 in the archive");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.ok\n", .remove = true);
+        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on path permission");
@@ -156,7 +163,14 @@ testRun(void)
                 "/0000000100000001': [13] Permission denied\n"
             "P00   WARN: [RepoInvalidError] unable to find a valid repository");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.error\n");
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error",
+            "103\n"
+            "unable to find a valid repository\n"
+            "repo1: [PathOpenError] unable to list file info for path '/home/vagrant/test/test-0/repo/archive/test2/10-1"
+                "/0000000100000001': [13] Permission denied",
+            .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         HRN_STORAGE_MODE(storageRepoIdxWrite(0), 0700, STORAGE_REPO_ARCHIVE "/10-1");
 
@@ -174,9 +188,14 @@ testRun(void)
             "            repo1: 10-1/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
                 " [FormatError] unexpected eof in compressed data");
 
-        TEST_STORAGE_LIST(
-            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.error\n000000010000000100000001.pgbackrest.tmp\n");
-        TEST_STORAGE_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error");
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error",
+            "42\n"
+            "raised from local-1 protocol: unable to get 000000010000000100000001:\n"
+            "repo1: 10-1/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
+                " unexpected eof in compressed data",
+            .remove = true);
+        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.pgbackrest.tmp\n");
 
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
@@ -196,7 +215,8 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001\n", .remove = true);
+        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("single segment with one invalid file");
@@ -224,13 +244,50 @@ testRun(void)
             "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
 
         TEST_STORAGE_GET(
-            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok",
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok",
             "0\n"
             "repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
-                " unexpected eof in compressed data");
-        TEST_STORAGE_LIST(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001\n000000010000000100000001.ok\n",
+                " unexpected eof in compressed data",
             .remove = true);
+        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        TEST_STORAGE_REMOVE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single segment with one invalid file");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
+            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+
+        harnessLogResult(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
+            "P01   WARN: repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
+                " [FormatError] unexpected eof in compressed data\n"
+            "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
+
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok",
+            "0\n"
+            "repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
+                " unexpected eof in compressed data",
+            .remove = true);
+        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
@@ -275,12 +332,12 @@ testRun(void)
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
 
-        TEST_STORAGE_GET(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok", "0\n" TEST_WARN);
-        TEST_STORAGE_GET(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok", "0\n" TEST_WARN);
-        TEST_STORAGE_LIST(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN,
-            "0000000100000001000000FE\n0000000100000001000000FE.ok\n0000000100000001000000FF.ok\n",
-            .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok", "0\n" TEST_WARN, .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok", "0\n" TEST_WARN, .remove = true);
+        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", "", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         #undef TEST_WARN
 
@@ -303,12 +360,17 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
 
+        #define TEST_WARN1                                                                                                         \
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"                     \
+                "/0000000100000001': [13] Permission denied"
+        #define TEST_WARN2                                                                                                         \
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"                     \
+                "/0000000100000002': [13] Permission denied"
+
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
-                "/0000000100000001': [13] Permission denied\n"
-            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"
-                "/0000000100000002': [13] Permission denied\n"
+            "P00   WARN: " TEST_WARN1 "\n"
+            "P00   WARN: " TEST_WARN2 "\n"
             "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
             "P01 DETAIL: found 0000000100000001000000FF in the repo1:10-1 archive\n"
             "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
@@ -316,13 +378,27 @@ testRun(void)
                 ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
-        TEST_STORAGE_LIST(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN,
-            "0000000100000001000000FE\n0000000100000001000000FE.ok\n0000000100000001000000FF\n0000000100000001000000FF.ok\n"
-                "000000010000000200000000.error\n",
+        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", "", .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok", "0\n" TEST_WARN1, .remove = true);
+        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF", "", .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok", "0\n" TEST_WARN1, .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
+            "45\n"
+            "duplicates found for WAL segment 000000010000000200000000:\n"
+            "repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 10-1/0000000100000002"
+                "/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "HINT: are multiple primaries archiving to this stanza?\n"
+            TEST_WARN2,
             .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         HRN_STORAGE_MODE(storageRepoIdxWrite(1), 0700, STORAGE_REPO_ARCHIVE "/10-1");
+
+        #undef TEST_WARN1
+        #undef TEST_WARN2
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on duplicates");
@@ -340,7 +416,16 @@ testRun(void)
                 ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000200000000.error\n", .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
+            "45\n"
+            "duplicates found for WAL segment 000000010000000200000000:\n"
+            "repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 10-1/0000000100000002"
+                "/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "HINT: are multiple primaries archiving to this stanza?",
+            .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
         TEST_STORAGE_REMOVE(
@@ -386,10 +471,45 @@ testRun(void)
             "P01   WARN: " TEST_WARN2 "\n"
             "P01 DETAIL: found 000000010000000200000000 in the repo2:10-1 archive");
 
-        TEST_STORAGE_GET(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok", "0\n" TEST_WARN1 "\n" TEST_WARN2);
-        TEST_STORAGE_LIST(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000200000000\n000000010000000200000000.ok\n",
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok", "0\n" TEST_WARN1 "\n" TEST_WARN2,
             .remove = true);
+        TEST_STORAGE_GET(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000", "", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        TEST_STORAGE_REMOVE(
+            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error with warnings");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1),
+            STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+
+        #define TEST_WARN3                                                                                                         \
+            "repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"                    \
+                " [FormatError] unexpected eof in compressed data"
+
+        harnessLogResult(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
+            "P00   WARN: " TEST_WARN1 "\n"
+            "P01   WARN: [FileReadError] raised from local-1 protocol: unable to get 000000010000000200000000:\n"
+            "            " TEST_WARN2 "\n"
+            "            " TEST_WARN3);
+
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
+            "42\n"
+            "raised from local-1 protocol: unable to get 000000010000000200000000:\n"
+            TEST_WARN2 "\n"
+            TEST_WARN3 "\n"
+            TEST_WARN1,
+            .remove = true);
+        TEST_STORAGE_LIST(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000200000000.pgbackrest.tmp\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("global error on invalid executable");

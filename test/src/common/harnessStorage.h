@@ -19,10 +19,17 @@ Check file exists
 /***********************************************************************************************************************************
 Get a file and test it against the specified content
 ***********************************************************************************************************************************/
-#define TEST_STORAGE_GET(storage, file, content)                                                                                   \
-    testStorageGet(__LINE__, storage, file, content)
+typedef struct TestStorageGetParam
+{
+    VAR_PARAM_HEADER;
+    bool remove;
+} TestStorageGetParam;
 
-void testStorageGet(const int line, const Storage *const storage, const char *const file, const char *const expected);
+#define TEST_STORAGE_GET(storage, file, content, ...)                                                                              \
+    testStorageGet(__LINE__, storage, file, content, (TestStorageGetParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void testStorageGet(
+    const int line, const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param);
 
 /***********************************************************************************************************************************
 List files in a path and optionally remove them

@@ -172,7 +172,8 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 
 /**********************************************************************************************************************************/
 void
-testStorageGet(const int line, const Storage *const storage, const char *const file, const char *const expected)
+testStorageGet(
+    const int line, const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param)
 {
     hrnTestLogPrefix(line, true);
     hrnTestResultBegin(__func__, line, false);
@@ -182,6 +183,9 @@ testStorageGet(const int line, const Storage *const storage, const char *const f
     fflush(stdout);
 
     hrnTestResultZ(strZ(strNewBuf(storageGetP(storageNewReadP(storage, fileFull)))), expected, harnessTestResultOperationEq);
+
+    if (param.remove)
+        storageRemoveP(storage, fileFull, .errorOnMissing = true);
 }
 
 /**********************************************************************************************************************************/
