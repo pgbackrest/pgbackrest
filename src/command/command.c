@@ -13,7 +13,7 @@ Common Command Routines
 #include "common/time.h"
 #include "common/type/json.h"
 #include "config/config.intern.h"
-#include "config/define.h"
+#include "config/parse.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -50,7 +50,7 @@ cmdOption(void)
                 // Add command parameters if they exist
                 const StringList *commandParamList = cfgCommandParam();
 
-                if (strLstSize(commandParamList) != 0)
+                if (!strLstEmpty(commandParamList))
                 {
                     strCatFmt(cmdOptionStr, " [");
 
@@ -76,7 +76,7 @@ cmdOption(void)
                     // Skip the option if not valid for this command.  Generally only one command runs at a time, but sometimes
                     // commands are chained together (e.g. backup and expire) and the second command may not use all the options of
                     // the first command.  Displaying them is harmless but might cause confusion.
-                    if (!cfgOptionValid(optionId) || !cfgDefOptionValid(cfgCommand(), optionId))
+                    if (!cfgOptionValid(optionId) || !cfgParseOptionValid(cfgCommand(), cfgCommandRole(), optionId))
                         continue;
 
                     // Loop through option indexes
@@ -94,10 +94,10 @@ cmdOption(void)
                         else if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
                         {
                             // Don't show redacted options
-                            if (cfgDefOptionSecure(optionId))
+                            if (cfgParseOptionSecure(optionId))
                                 strCatFmt(cmdOptionStr, " --%s=<redacted>", cfgOptionIdxName(optionId, optionIdx));
                             // Output boolean option
-                            else if (cfgDefOptionType(optionId) == cfgDefOptTypeBoolean)
+                            else if (cfgParseOptionType(optionId) == cfgOptTypeBoolean)
                                 strCatFmt(cmdOptionStr, " --%s", cfgOptionIdxName(optionId, optionIdx));
                             // Output other options
                             else
@@ -105,7 +105,7 @@ cmdOption(void)
                                 StringList *valueList = NULL;
 
                                 // Generate the values of hash options
-                                if (cfgDefOptionType(optionId) == cfgDefOptTypeHash)
+                                if (cfgParseOptionType(optionId) == cfgOptTypeHash)
                                 {
                                     valueList = strLstNew();
 
@@ -122,9 +122,15 @@ cmdOption(void)
                                     }
                                 }
                                 // Generate values for list options
-                                else if (cfgDefOptionType(optionId) == cfgDefOptTypeList)
+                                else if (cfgParseOptionType(optionId) == cfgOptTypeList)
                                 {
                                     valueList = strLstNewVarLst(cfgOptionIdxLst(optionId, optionIdx));
+                                }
+                                // Generate time value
+                                else if (cfgParseOptionType(optionId) == cfgOptTypeTime)
+                                {
+                                    valueList = strLstNew();
+                                    strLstAdd(valueList, strNewDbl((double)cfgOptionIdxInt64(optionId, optionIdx) / MSEC_PER_SEC));
                                 }
                                 // Else only one value
                                 else
@@ -209,7 +215,7 @@ cmdEnd(int code, const String *errorMessage)
             // Output statistics if there are any
             const KeyValue *statKv = statToKv();
 
-            if (varLstSize(kvKeyList(statKv)) > 0)
+            if (!varLstEmpty(kvKeyList(statKv)))
                 LOG_DETAIL_FMT("statistics: %s", strZ(jsonFromKv(statKv)));
 
             // Basic info on command end

@@ -11,8 +11,7 @@
         <variable key="github-url-issues">{[github-url-base]}/issues</variable>
         <variable key="github-url-release">{[github-url-base]}/archive/release</variable>
         <variable key="github-url-license">{[github-url-master]}/LICENSE</variable>
-        <variable key="github-url-wiki">{[github-url-base]}/wiki</variable>
-        <variable key="github-url-wiki-backlog">{[github-url-wiki]}#backlog</variable>
+        <variable key="github-url-projects">{[github-url-base]}/projects</variable>
 
         <variable key="backrest-url-base">http://www.pgbackrest.org</variable>
         <variable key="backrest-page-user-guide-index">user-guide-index</variable>
@@ -161,7 +160,7 @@
 
         <p>Contributions to <backrest/> are always welcome!
 
-        Code fixes or new features can be submitted via pull requests.  Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>.  You may want to check the <link url="{[github-url-wiki-backlog]}">Feature Backlog</link> to see if your suggestion has already been submitted.
+        Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>. You may want to check the <link url="{[github-url-projects]}">Project Boards</link> to see if your suggestion has already been submitted.
 
         Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>.  Please provide as much information as possible to aid in determining the cause of the problem.
 

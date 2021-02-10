@@ -341,7 +341,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --archive-async" .
-            ($strStorage eq POSIX ? " --repo-type=cifs" : '') . " --archive-timeout=5 ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
+            ($strStorage eq POSIX ? " --repo-type=cifs" : '') . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
             {oLogTest => $self->expect()});
 
         # Check that the destination file exists

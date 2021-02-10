@@ -60,28 +60,20 @@ storageListRenderCallback(void *data, const StorageInfo *info)
         switch (info->type)
         {
             case storageTypeFile:
-            {
                 ioWrite(listData->write, BUFSTRDEF("file\""));
                 break;
-            }
 
             case storageTypeLink:
-            {
                 ioWrite(listData->write, BUFSTRDEF("link\""));
                 break;
-            }
 
             case storageTypePath:
-            {
                 ioWrite(listData->write, BUFSTRDEF("path\""));
                 break;
-            }
 
             case storageTypeSpecial:
-            {
                 ioWrite(listData->write, BUFSTRDEF("special\""));
                 break;
-            }
         }
 
         if (info->type == storageTypeFile)
@@ -194,8 +186,7 @@ cmdStorageList(void)
     {
         TRY_BEGIN()
         {
-            storageListRender(
-                ioFdWriteNew(STRDEF("stdout"), STDOUT_FILENO, (TimeMSec)(cfgOptionDbl(cfgOptIoTimeout) * 1000)));
+            storageListRender(ioFdWriteNew(STRDEF("stdout"), STDOUT_FILENO, cfgOptionUInt64(cfgOptIoTimeout)));
         }
         // Ignore write errors because it's possible (even likely) that this output is being piped to something like head which
         // will exit when it gets what it needs and leave us writing to a broken pipe.  It would be better to just ignore the broken

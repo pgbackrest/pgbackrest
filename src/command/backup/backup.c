@@ -101,7 +101,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderDesc);
 
-        if (strLstSize(backupList) > 0)
+        if (!strLstEmpty(backupList))
             backupLabelLatest = strLstGet(backupList, 0);
 
         // Get the newest history
@@ -109,7 +109,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
             storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
             sortOrderDesc);
 
-        if (strLstSize(historyYearList) > 0)
+        if (!strLstEmpty(historyYearList))
         {
             const StringList *historyList = strLstSort(
                 storageListP(
@@ -121,7 +121,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
                         strZ(compressTypeStr(compressTypeGz)))),
                 sortOrderDesc);
 
-            if (strLstSize(historyList) > 0)
+            if (!strLstEmpty(historyList))
             {
                 const String *historyLabelLatest = strLstGet(historyList, 0);
 
@@ -647,19 +647,15 @@ void backupResumeCallback(void *data, const StorageInfo *info)
         // The link will be recreated during the backup if needed.
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeLink:
-        {
             storageRemoveP(storageRepoWrite(), backupPath);
             break;
-        }
 
         // Remove special files
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
-        {
             LOG_WARN_FMT("remove special file '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
             storageRemoveP(storageRepoWrite(), backupPath);
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -687,70 +683,77 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderDesc);
 
-        if (strLstSize(backupList) > 0)
+        if (!strLstEmpty(backupList))
         {
             const String *backupLabel = strLstGet(backupList, 0);
             const String *manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
-            // Resumable backups have a copy of the manifest but no main
-            if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))) &&
-                !storageExistsP(storageRepo(), manifestFile))
+            // Resumable backups do not have backup.manifest
+            if (!storageExistsP(storageRepo(), manifestFile))
             {
                 bool usable = false;
-                const String *reason = STRDEF("resume is disabled");
+                const String *reason = STRDEF("partially deleted by prior resume or invalid");
                 Manifest *manifestResume = NULL;
 
-                // Attempt to read the manifest file in the resumable backup to see if it can be used.  If any error at all occurs
-                // then the backup will be considered unusable and a resume will not be attempted.
-                if (cfgOptionBool(cfgOptResume))
+                // Resumable backups must have backup.manifest.copy
+                if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
                 {
-                    reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
+                    reason = STRDEF("resume is disabled");
 
-                    TRY_BEGIN()
+                    // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
+                    // occurs then the backup will be considered unusable and a resume will not be attempted.
+                    if (cfgOptionBool(cfgOptResume))
                     {
-                        manifestResume = manifestLoadFile(
-                            storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassBackup);
-                        const ManifestData *manifestResumeData = manifestData(manifestResume);
+                        reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
 
-                        // Check pgBackRest version. This allows the resume implementation to be changed with each version of
-                        // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the cost.
-                        if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
+                        TRY_BEGIN()
                         {
-                            reason = strNewFmt(
-                                "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
-                                strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
+                            manifestResume = manifestLoadFile(
+                                storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassBackup);
+                            const ManifestData *manifestResumeData = manifestData(manifestResume);
+
+                            // Check pgBackRest version. This allows the resume implementation to be changed with each version of
+                            // pgBackRest at the expense of users losing a resumable back after an upgrade, which seems worth the
+                            // cost.
+                            if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
+                            {
+                                reason = strNewFmt(
+                                    "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
+                                    strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
+                            }
+                            // Check backup type because new backup label must be the same type as resume backup label
+                            else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
+                            {
+                                reason = strNewFmt(
+                                    "new backup type '%s' does not match resumable backup type '%s'",
+                                    strZ(cfgOptionStr(cfgOptType)), strZ(backupTypeStr(manifestResumeData->backupType)));
+                            }
+                            // Check prior backup label ??? Do we really care about the prior backup label?
+                            else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
+                            {
+                                reason = strNewFmt(
+                                    "new prior backup label '%s' does not match resumable prior backup label '%s'",
+                                    manifestResumeData->backupLabelPrior ? strZ(manifestResumeData->backupLabelPrior) : "<undef>",
+                                    manifestData(manifest)->backupLabelPrior ?
+                                        strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
+                            }
+                            // Check compression. Compression can't be changed between backups so resume won't work either.
+                            else if (
+                                manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
+                            {
+                                reason = strNewFmt(
+                                    "new compression '%s' does not match resumable compression '%s'",
+                                    strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
+                                    strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
+                            }
+                            else
+                                usable = true;
                         }
-                        // Check backup type because new backup label must be the same type as resume backup label
-                        else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
+                        CATCH_ANY()
                         {
-                            reason = strNewFmt(
-                                "new backup type '%s' does not match resumable backup type '%s'", strZ(cfgOptionStr(cfgOptType)),
-                                strZ(backupTypeStr(manifestResumeData->backupType)));
                         }
-                        // Check prior backup label ??? Do we really care about the prior backup label?
-                        else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
-                        {
-                            reason = strNewFmt(
-                                "new prior backup label '%s' does not match resumable prior backup label '%s'",
-                                manifestResumeData->backupLabelPrior ? strZ(manifestResumeData->backupLabelPrior) : "<undef>",
-                                manifestData(manifest)->backupLabelPrior ?
-                                    strZ(manifestData(manifest)->backupLabelPrior) : "<undef>");
-                        }
-                        // Check compression. Compression can't be changed between backups so resume won't work either.
-                        else if (manifestResumeData->backupOptionCompressType != compressTypeEnum(cfgOptionStr(cfgOptCompressType)))
-                        {
-                            reason = strNewFmt(
-                                "new compression '%s' does not match resumable compression '%s'",
-                                strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
-                                strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
-                        }
-                        else
-                            usable = true;
+                        TRY_END();
                     }
-                    CATCH_ANY()
-                    {
-                    }
-                    TRY_END();
                 }
 
                 // If the backup is usable then return the manifest
@@ -836,11 +839,6 @@ typedef struct BackupStartResult
     VariantList *tablespaceList;
 } BackupStartResult;
 
-#define FUNCTION_LOG_BACKUP_START_RESULT_TYPE                                                                                      \
-    BackupStartResult
-#define FUNCTION_LOG_BACKUP_START_RESULT_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(&value, "BackupStartResult", buffer, bufferSize)
-
 static BackupStartResult
 backupStart(BackupData *backupData)
 {
@@ -904,7 +902,7 @@ backupStart(BackupData *backupData)
             if (cfgOptionBool(cfgOptBackupStandby))
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
-                dbReplayWait(backupData->dbStandby, result.lsn, (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
+                dbReplayWait(backupData->dbStandby, result.lsn, cfgOptionUInt64(cfgOptArchiveTimeout));
                 LOG_INFO_FMT("replay on the standby reached %s", strZ(result.lsn));
 
                 // The standby db object won't be used anymore so free it
@@ -917,7 +915,7 @@ backupStart(BackupData *backupData)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BACKUP_START_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /***********************************************************************************************************************************
@@ -1011,11 +1009,6 @@ typedef struct BackupStopResult
     time_t timestamp;
 } BackupStopResult;
 
-#define FUNCTION_LOG_BACKUP_STOP_RESULT_TYPE                                                                                       \
-    BackupStopResult
-#define FUNCTION_LOG_BACKUP_STOP_RESULT_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(&value, "BackupStopResult", buffer, bufferSize)
-
 static BackupStopResult
 backupStop(BackupData *backupData, Manifest *manifest)
 {
@@ -1056,7 +1049,7 @@ backupStop(BackupData *backupData, Manifest *manifest)
     else
         result.timestamp = backupTime(backupData, false);
 
-    FUNCTION_LOG_RETURN(BACKUP_STOP_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /***********************************************************************************************************************************
@@ -1173,7 +1166,7 @@ backupJobResult(
                         {
                             // Format the page checksum errors
                             checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
-                            ASSERT(varLstSize(checksumPageErrorList) > 0);
+                            ASSERT(!varLstEmpty(checksumPageErrorList));
 
                             String *error = strNew("");
                             unsigned int errorTotalMin = 0;
@@ -1479,7 +1472,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
 
-            if (lstSize(queue) > 0)
+            if (!lstEmpty(queue))
             {
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
@@ -1599,7 +1592,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 
         // Create the parallel executor
         ProtocolParallel *parallelExec = protocolParallelNew(
-            (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, backupJobCallback, &jobData);
+            cfgOptionUInt64(cfgOptProtocolTimeout) / 2, backupJobCallback, &jobData);
 
         // First client is always on the primary
         protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, backupData->pgIdxPrimary, 1));
@@ -1664,7 +1657,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 #ifdef DEBUG
         // Ensure that all processing queues are empty
         for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData.queueList); queueIdx++)
-            ASSERT(lstSize(*(List **)lstGet(jobData.queueList, queueIdx)) == 0);
+            ASSERT(lstEmpty(*(List **)lstGet(jobData.queueList, queueIdx)));
 #endif
 
         // Remove files from the manifest that were removed during the backup.  This must happen after processing to avoid
@@ -1774,7 +1767,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                 // Find the actual wal segment file in the archive
                 const String *archiveFile = walSegmentFind(
-                    storageRepo(), archiveId, walSegment,  (TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
+                    storageRepo(), archiveId, walSegment,  cfgOptionUInt64(cfgOptArchiveTimeout));
 
                 if (cfgOptionBool(cfgOptArchiveCopy))
                 {
@@ -1911,7 +1904,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
         // used by us since symlinks are not supported on all storage types.
         // -------------------------------------------------------------------------------------------------------------------------
-        backupLinkLatest(backupLabel);
+        backupLinkLatest(backupLabel, cfgOptionGroupIdxDefault(cfgOptGrpRepo));
 
         // Add manifest and save backup.info (infoBackupSaveFile() is responsible for proper syncing)
         // -------------------------------------------------------------------------------------------------------------------------

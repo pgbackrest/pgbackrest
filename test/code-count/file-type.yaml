@@ -15,7 +15,7 @@ build/lib/pgBackRestBuild/Config/Build.pm:
   class: build
   type: perl
 
-build/lib/pgBackRestBuild/Config/BuildDefine.pm:
+build/lib/pgBackRestBuild/Config/BuildHelp.pm:
   class: build
   type: perl
 
@@ -362,6 +362,10 @@ src/command/expire/expire.c:
 src/command/expire/expire.h:
   class: core
   type: c/h
+
+src/command/help/help.auto.c:
+  class: core/auto
+  type: c
 
 src/command/help/help.c:
   class: core
@@ -1079,6 +1083,14 @@ src/common/type/object.h:
   class: core
   type: c/h
 
+src/common/type/pack.c:
+  class: core
+  type: c
+
+src/common/type/pack.h:
+  class: core
+  type: c/h
+
 src/common/type/param.h:
   class: core
   type: c/h
@@ -1163,22 +1175,6 @@ src/config/config.intern.h:
   class: core
   type: c/h
 
-src/config/define.auto.c:
-  class: core/auto
-  type: c
-
-src/config/define.auto.h:
-  class: core/auto
-  type: c/h
-
-src/config/define.c:
-  class: core
-  type: c
-
-src/config/define.h:
-  class: core
-  type: c/h
-
 src/config/exec.c:
   class: core
   type: c
@@ -1198,6 +1194,10 @@ src/config/load.h:
 src/config/parse.auto.c:
   class: core/auto
   type: c
+
+src/config/parse.auto.h:
+  class: core/auto
+  type: c/h
 
 src/config/parse.c:
   class: core
@@ -1611,6 +1611,10 @@ src/version.h:
   class: core
   type: c/h
 
+test/ci.pl:
+  class: test/harness
+  type: perl
+
 test/container.yaml:
   class: test/harness
   type: yaml
@@ -1839,6 +1843,14 @@ test/src/common/harnessLog.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessPack.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPack.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessPq.c:
   class: test/harness
   type: c
@@ -2059,6 +2071,10 @@ test/src/module/common/typeObjectTest.c:
   class: test/module
   type: c
 
+test/src/module/common/typePackTest.c:
+  class: test/module
+  type: c
+
 test/src/module/common/typeStringTest.c:
   class: test/module
   type: c
@@ -2080,10 +2096,6 @@ test/src/module/common/userTest.c:
   type: c
 
 test/src/module/common/waitTest.c:
-  class: test/module
-  type: c
-
-test/src/module/config/defineTest.c:
   class: test/module
   type: c
 
@@ -2172,9 +2184,5 @@ test/src/test.c:
   type: c
 
 test/test.pl:
-  class: test/harness
-  type: perl
-
-test/travis.pl:
   class: test/harness
   type: perl

@@ -34,7 +34,6 @@ Variant type
 typedef enum
 {
     varTypeBool,
-    varTypeDouble,
     varTypeInt,
     varTypeInt64,
     varTypeKeyValue,
@@ -52,7 +51,6 @@ typedef enum
 Constructors
 ***********************************************************************************************************************************/
 Variant *varNewBool(bool data);
-Variant *varNewDbl(double data);
 Variant *varNewInt(int data);
 Variant *varNewInt64(int64_t data);
 
@@ -82,9 +80,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 bool varBool(const Variant *this);
 bool varBoolForce(const Variant *this);
-
-double varDbl(const Variant *this);
-double varDblForce(const Variant *this);
 
 int varInt(const Variant *this);
 int varIntForce(const Variant *this);
@@ -127,15 +122,6 @@ typedef struct VariantBoolConst
     VARIANT_COMMON
     const VARIANT_BOOL_COMMON
 } VariantBoolConst;
-
-#define VARIANT_DOUBLE_COMMON                                                                                                      \
-    double data;                                                    /* Double data */
-
-typedef struct VariantDoubleConst
-{
-    VARIANT_COMMON
-    const VARIANT_DOUBLE_COMMON
-} VariantDoubleConst;
 
 #define VARIANT_INT_COMMON                                                                                                         \
     int data;                                                       /* Signed integer data */
@@ -195,10 +181,6 @@ By convention all variant constant identifiers are appended with _VAR.
 // Create a Bool Variant constant inline from a bool
 #define VARBOOL(dataParam)                                                                                                         \
     ((const Variant *)&(const VariantBoolConst){.type = varTypeBool, .data = dataParam})
-
-// Create a Double Variant constant inline from a double
-#define VARDBL(dataParam)                                                                                                          \
-    ((const Variant *)&(const VariantDoubleConst){.type = varTypeDouble, .data = dataParam})
 
 // Create an Int Variant constant inline from an int
 #define VARINT(dataParam)                                                                                                          \

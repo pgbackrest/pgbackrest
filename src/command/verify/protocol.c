@@ -43,7 +43,7 @@ verifyProtocol(const String *command, const VariantList *paramList, ProtocolServ
                 varUInt64(varLstGet(paramList, 2)),                                                 // File size
                 varStr(varLstGet(paramList, 3)));                                                   // Cipher pass
 
-            protocolServerResponse(server, varNewInt(result));
+            protocolServerResponse(server, VARUINT(result));
         }
         else
             found = false;

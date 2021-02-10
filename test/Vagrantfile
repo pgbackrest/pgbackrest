@@ -70,12 +70,13 @@ Vagrant.configure(2) do |config|
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Perl Modules' && date
-            apt-get install -y libdbd-pg-perl libxml-checker-perl libyaml-libyaml-perl
+            apt-get install -y libdbd-pg-perl libxml-checker-perl libyaml-perl
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Build Tools' && date
             apt-get install -y devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev \
-                 libxml2-dev liblz4-dev liblz4-tool libpq-dev valgrind lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev
+                 libxml2-dev liblz4-dev liblz4-tool libpq-dev valgrind lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev \
+                 pkg-config
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Docker' && date
@@ -85,10 +86,6 @@ Vagrant.configure(2) do |config|
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Dev Utilities' && date
             apt-get install -y vim htop jq
-
-            #-----------------------------------------------------------------------------------------------------------------------
-            echo '/tmp/pgbackrest owned by root so tests do not use it' && date
-            mkdir -p 700 /tmp/pgbackrest
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'create link to repo in old location to make the transition less painful' && date
@@ -139,7 +136,7 @@ Vagrant.configure(2) do |config|
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Install Build Tools' && date
 
-            pkg install -y git postgresql-libpqxx pkgconf libxml2 gmake
+            pkg install -y git postgresql-libpqxx pkgconf libxml2 gmake perl5 p5-YAML rsync
 
             #-----------------------------------------------------------------------------------------------------------------------
             echo 'Build End' && date
@@ -148,16 +145,16 @@ Vagrant.configure(2) do |config|
 
     # MacOS
     #
-    # Basic environment to build pgBackRest using homebrew installed in the local user account.
+    # Basic environment to build/test pgBackRest using homebrew installed in the local user account.
     #-------------------------------------------------------------------------------------------------------------------------------
-    # cd ~
-    # mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
-    # homebrew/bin/brew install libpq libxml2
+    # mkdir ~/homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C ~/homebrew
+    # ~/homebrew/bin/brew install -q libpq libxml2 cpanm
+    # ~/homebrew/bin/cpanm --force --local-lib=~/homebrew/perl5 install YAML XML::Checker::Parser
+    #
     # export LDFLAGS="-L${HOME?}/homebrew/opt/openssl@1.1/lib -L${HOME?}/homebrew/opt/libpq/lib -L${HOME?}/homebrew/opt/libxml2/lib"
     # export CPPFLAGS="-I${HOME?}/homebrew/opt/openssl@1.1/include -I/${HOME?}/homebrew/opt/libpq/include"
     # export CPPFLAGS="${CPPFLAGS?} -I${HOME?}/homebrew/opt/libxml2/include/libxml2"
-    #
-    # cd [repo]/src && ./configure && make
+    # export PERL5LIB=~/homebrew/perl5/lib/perl5"${PERL5LIB:+:${PERL5LIB}}"
 
     # Don't share the default vagrant folder
     config.vm.synced_folder ".", "/vagrant", disabled: true

@@ -95,6 +95,20 @@ strNew(const char *string)
 }
 
 /**********************************************************************************************************************************/
+String *strNewDbl(double value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(DOUBLE, value);
+    FUNCTION_TEST_END();
+
+    char working[CVT_BASE10_BUFFER_SIZE];
+
+    cvtDoubleToZ(value, working, sizeof(working));
+
+    FUNCTION_TEST_RETURN(strNew(working));
+}
+
+/**********************************************************************************************************************************/
 String *
 strNewBuf(const Buffer *buffer)
 {
@@ -666,7 +680,7 @@ strPathAbsolute(const String *this, const String *base)
             StringList *baseList = strLstNewSplit(base, FSLASH_STR);
             StringList *pathList = strLstNewSplit(this, FSLASH_STR);
 
-            while (strLstSize(pathList) > 0)
+            while (!strLstEmpty(pathList))
             {
                 const String *pathPart = strLstGet(pathList, 0);
 

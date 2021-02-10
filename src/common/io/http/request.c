@@ -265,7 +265,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     // Output request headers
     const StringList *requestHeaderList = httpHeaderList(this->header);
 
-    if (strLstSize(requestHeaderList) > 0)
+    if (!strLstEmpty(requestHeaderList))
     {
         strCatZ(error, "\n*** Request Headers ***:");
 
@@ -283,7 +283,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     const HttpHeader *responseHeader = httpResponseHeader(response);
     const StringList *responseHeaderList = httpHeaderList(responseHeader);
 
-    if (strLstSize(responseHeaderList) > 0)
+    if (!strLstEmpty(responseHeaderList))
     {
         strCatZ(error, "\n*** Response Headers ***:");
 
@@ -295,7 +295,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     }
 
     // Add response content, if any
-    if (bufUsed(httpResponseContent(response)) > 0)
+    if (!bufEmpty(httpResponseContent(response)))
     {
         strCatZ(error, "\n*** Response Content ***:\n");
         strCat(error, strNewBuf(httpResponseContent(response)));

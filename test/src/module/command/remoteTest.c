@@ -139,6 +139,7 @@ testRun(void)
                 strLstAddZ(argList, "--stanza=test");
                 strLstAddZ(argList, "--process=0");
                 strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());

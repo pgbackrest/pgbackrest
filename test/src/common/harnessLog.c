@@ -15,8 +15,6 @@ Log Test Harness
 #include "common/harnessDebug.h"
 #include "common/harnessTest.h"
 
-#ifndef NO_LOG
-
 /***********************************************************************************************************************************
 Expose log internal data for unit testing/debugging
 ***********************************************************************************************************************************/
@@ -364,7 +362,7 @@ harnessLogResult(const char *expected)
     if (strcmp(harnessLogBuffer, expected) != 0)
     {
         THROW_FMT(
-            AssertError, "\n\nactual log:\n\n%s\n\nbut diff is (- remove from expected, + add to expected):\n\n%s",
+            AssertError, "\nACTUAL LOG:\n\n%s\n\nBUT DIFF FROM EXPECTED IS (- remove from expected, + add to expected):\n\n%s",
             harnessLogBuffer, hrnDiff(expected, harnessLogBuffer));
     }
 
@@ -436,5 +434,3 @@ harnessLogFinal(void)
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
-
-#endif

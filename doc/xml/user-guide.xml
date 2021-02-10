@@ -685,7 +685,7 @@
         <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="mcr.microsoft.com/azure-storage/azurite" os="{[os-type]}" option="-v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio:RELEASE.2020-05-06T23-23-25Z" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="minio/minio" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last.  For example, the <link section="/backup">Backup</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section.  Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -1510,6 +1510,8 @@
 
         <p>Generally it is best to retain as many backups as possible to provide a greater window for <link section="/pitr">Point-in-Time Recovery</link>, but practical concerns such as disk space must also be considered.  Retention options remove older backups once they are no longer needed.</p>
 
+        <cmd-description key="expire"/>
+
         <!-- SECTION => RETENTION - FULL -->
         <section id="full">
             <title>Full Backup Retention</title>
@@ -1546,7 +1548,7 @@
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=full
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>expire full backup set\: {[backup-full-first]}|archive retention on backup {[backup-full-second]}|remove archive</exe-highlight>
+                    <exe-highlight>expire full backup set repo1\: {[backup-full-first]}|archive retention on backup {[backup-full-second]}|remove archive</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -1591,7 +1593,7 @@
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=diff
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>expire diff backup set: {[backup-diff-second]}</exe-highlight>
+                    <exe-highlight>expire diff backup set repo1: {[backup-diff-second]}</exe-highlight>
                 </execute>
             </execute-list>
         </section>
@@ -3150,7 +3152,7 @@
                 </execute>
                 <execute user="postgres" output="y">
                     <exe-cmd>cat /var/log/pgbackrest/demo-archive-get-async.log</exe-cmd>
-                    <exe-highlight>found [0-F]{24} in the archive</exe-highlight>
+                    <exe-highlight>found [0-F]{24} in the .* archive</exe-highlight>
                 </execute>
             </execute-list>
         </section>

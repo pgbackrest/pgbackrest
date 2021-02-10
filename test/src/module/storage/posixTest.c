@@ -268,7 +268,7 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0777, "    check mode");
         TEST_RESULT_STR(info.linkDestination, NULL, "    check link destination");
         TEST_RESULT_STR_Z(info.user, "root", "    check user");
-        TEST_RESULT_STR_Z(info.group, "root", "    check group");
+        TEST_RESULT_STR_Z(info.group, strEqZ(info.group, "wheel") ? "wheel" : "root", "    check group");
 
         storageRemoveP(storageTest, linkName, .errorOnMissing = true);
 
@@ -455,17 +455,16 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, strNew(".aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstSort(storageListP(storageTest, NULL), sortOrderAsc), ", "),
-            ".aaa.txt"
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageTest, NULL), sortOrderAsc), ".aaa.txt\n"
 #ifdef TEST_CONTAINER_REQUIRED
-            ", noperm"
+            "noperm\n"
 #endif // TEST_CONTAINER_REQUIRED
             , "dir list");
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, strNew("bbb.txt")), BUFSTRDEF("bbb")), "write bbb.text");
-        TEST_RESULT_STR_Z(strLstJoin(storageListP(storageTest, NULL, .expression = strNew("^bbb")), ", "), "bbb.txt", "dir list");
+        TEST_RESULT_STRLST_Z(storageListP(storageTest, NULL, .expression = strNew("^bbb")), "bbb.txt\n", "dir list");
     }
 
     // *****************************************************************************************************************************

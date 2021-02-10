@@ -15,7 +15,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("strNew(), strNewBuf(), strNewN(), strEmpty(), strZ(), strZNull(), strSize(), and strFree()"))
+    if (testBegin("strNew(), strNewBuf(), strNewDbl(), strNewN(), strEmpty(), strZ(), strZNull(), strSize(), and strFree()"))
     {
         // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
         // knowing about it
@@ -43,6 +43,11 @@ testRun(void)
         bufUsedSet(buffer, 8);
 
         TEST_RESULT_STR_Z(strNewBuf(buffer), "12345678", "new string from buffer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new from double");
+
+        TEST_RESULT_STR_Z(strNewDbl(999.1), "999.1", "new");
 
         // -------------------------------------------------------------------------------------------------------------------------
         string = strNewFmt("formatted %s %04d", "string", 1);
@@ -331,10 +336,12 @@ testRun(void)
         TEST_RESULT_BOOL(strLstExistsZ(list, NULL), false, "check null exists");
         TEST_RESULT_VOID(strLstAddIfMissing(list, STRDEF("item1")), "add item 1 again");
         TEST_RESULT_UINT(strLstSize(list), 1, "check size");
+        TEST_RESULT_BOOL(strLstEmpty(list), false, "    not empty");
 
         TEST_RESULT_BOOL(strLstRemove(list, STRDEF("item1")), true, "remove item 1");
         TEST_RESULT_BOOL(strLstRemove(list, STRDEF("item1")), false, "remove item 1 fails");
         TEST_RESULT_UINT(strLstSize(list), 0, "    check size");
+        TEST_RESULT_BOOL(strLstEmpty(list), true, "    empty");
     }
 
     // *****************************************************************************************************************************

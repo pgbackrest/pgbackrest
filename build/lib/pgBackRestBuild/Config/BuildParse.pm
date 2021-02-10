@@ -27,13 +27,18 @@ use pgBackRestBuild::Config::Data;
 ####################################################################################################################################
 use constant BLDLCL_FILE_DEFINE                                     => 'parse';
 
-use constant BLDLCL_DATA_OPTION                                     => '01-dataOption';
-use constant BLDLCL_DATA_OPTION_RESOLVE                             => '01-dataOptionResolve';
+use constant BLDLCL_ENUM_OPTION_TYPE                                => '01-enumOptionType';
+
+use constant BLDLCL_DATA_COMMAND                                    => '01-dataCommand';
+use constant BLDLCL_DATA_OPTION_GROUP                               => '01-dataOptionGroup';
+use constant BLDLCL_DATA_OPTION                                     => '02-dataOption';
+use constant BLDLCL_DATA_OPTION_GETOPT                              => '03-dataOptionGetOpt';
+use constant BLDLCL_DATA_OPTION_RESOLVE                             => '04-dataOptionResolve';
 
 ####################################################################################################################################
 # Definitions for constants and data to build
 ####################################################################################################################################
-my $strSummary = 'Option Parse Definition';
+my $strSummary = 'Config Parse Rules';
 
 my $rhBuild =
 {
@@ -43,11 +48,35 @@ my $rhBuild =
         {
             &BLD_SUMMARY => $strSummary,
 
+            &BLD_ENUM =>
+            {
+                &BLDLCL_ENUM_OPTION_TYPE =>
+                {
+                    &BLD_SUMMARY => 'Option type',
+                    &BLD_NAME => 'ConfigOptionType',
+                },
+            },
+
             &BLD_DATA =>
             {
+                &BLDLCL_DATA_COMMAND =>
+                {
+                    &BLD_SUMMARY => 'Command parse data',
+                },
+
+                &BLDLCL_DATA_OPTION_GROUP =>
+                {
+                    &BLD_SUMMARY => 'Option group parse data',
+                },
+
                 &BLDLCL_DATA_OPTION =>
                 {
                     &BLD_SUMMARY => 'Option parse data',
+                },
+
+                &BLDLCL_DATA_OPTION_GETOPT =>
+                {
+                    &BLD_SUMMARY => 'Option data for getopt_long()',
                 },
 
                 &BLDLCL_DATA_OPTION_RESOLVE =>
@@ -60,15 +89,354 @@ my $rhBuild =
 };
 
 ####################################################################################################################################
+# Generate enum names
+####################################################################################################################################
+sub buildConfigDefineOptionTypeEnum
+{
+    return bldEnum('cfgOptType', shift);
+}
+
+push @EXPORT, qw(buildConfigDefineOptionTypeEnum);
+
+sub buildConfigCommandRoleEnum
+{
+    return bldEnum('cfgCmdRole', shift);
+}
+
+####################################################################################################################################
+# Helper functions for building optional option data
+####################################################################################################################################
+sub renderAllowList
+{
+    my $ryAllowList = shift;
+    my $bCommandIndent = shift;
+
+    my $strIndent = $bCommandIndent ? '    ' : '';
+
+    return
+        "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST\n" .
+        "${strIndent}            (\n" .
+        "${strIndent}                " . join(",\n${strIndent}                ", bldQuoteList($ryAllowList)) .
+        "\n" .
+        "${strIndent}            ),\n";
+}
+
+sub renderDepend
+{
+    my $rhDepend = shift;
+    my $bCommandIndent = shift;
+
+    my $strIndent = $bCommandIndent ? '    ' : '';
+
+    my $strDependOption = $rhDepend->{&CFGDEF_DEPEND_OPTION};
+    my $ryDependList = $rhDepend->{&CFGDEF_DEPEND_LIST};
+
+    if (defined($ryDependList))
+    {
+        my @stryQuoteList;
+
+        foreach my $strItem (@{$ryDependList})
+        {
+            push(@stryQuoteList, "\"${strItem}\"");
+        }
+
+        return
+            "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST\n" .
+            "${strIndent}            (\n" .
+            "${strIndent}                " . buildConfigOptionEnum($strDependOption) . ",\n" .
+            "${strIndent}                " . join(",\n${strIndent}                ", bldQuoteList($ryDependList)) .
+            "\n" .
+            "${strIndent}            ),\n";
+    }
+
+    return
+        "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_DEPEND(" . buildConfigOptionEnum($strDependOption) . "),\n";
+}
+
+sub renderOptional
+{
+    my $rhOptional = shift;
+    my $bCommand = shift;
+    my $strCommand = shift;
+    my $strOption = shift;
+
+    my $strIndent = $bCommand ? '    ' : '';
+    my $strBuildSourceOptional;
+    my $bSingleLine = false;
+
+    if (defined($rhOptional->{&CFGDEF_ALLOW_LIST}))
+    {
+        $strBuildSourceOptional .=
+            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
+            renderAllowList($rhOptional->{&CFGDEF_ALLOW_LIST}, $bCommand);
+
+        $bSingleLine = false;
+    }
+
+    if (defined($rhOptional->{&CFGDEF_ALLOW_RANGE}))
+    {
+        my @fyRange = @{$rhOptional->{&CFGDEF_ALLOW_RANGE}};
+
+        my $iMultiplier = $rhOptional->{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ? 1000 : 1;
+
+        $strBuildSourceOptional =
+            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
+            "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_ALLOW_RANGE(" . ($fyRange[0] * $iMultiplier) . ', ' .
+            ($fyRange[1] * $iMultiplier) . "),\n";
+
+        $bSingleLine = true;
+    }
+
+    if (defined($rhOptional->{&CFGDEF_DEPEND}))
+    {
+        $strBuildSourceOptional .=
+            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
+            renderDepend($rhOptional->{&CFGDEF_DEPEND}, $bCommand);
+
+        $bSingleLine = defined($rhOptional->{&CFGDEF_DEPEND}{&CFGDEF_DEPEND_LIST}) ? false : true;
+    }
+
+    if (defined($rhOptional->{&CFGDEF_DEFAULT}))
+    {
+        $strBuildSourceOptional .=
+            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
+            "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(" .
+            ($rhOptional->{&CFGDEF_DEFAULT_LITERAL} ? '' : '"') .
+            (defined($rhOptional->{&CFGDEF_TYPE}) && $rhOptional->{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ?
+                $rhOptional->{&CFGDEF_DEFAULT} * 1000 : $rhOptional->{&CFGDEF_DEFAULT}) .
+            ($rhOptional->{&CFGDEF_DEFAULT_LITERAL} ? '' : '"') .
+            "),\n";
+
+        $bSingleLine = true;
+    }
+
+    if ($bCommand && defined($rhOptional->{&CFGDEF_REQUIRED}))
+    {
+        $strBuildSourceOptional .=
+            (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
+            "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_REQUIRED(" .
+                ($rhOptional->{&CFGDEF_REQUIRED} ? 'true' : 'false') . "),\n";
+
+        $bSingleLine = true;
+    }
+
+    return $strBuildSourceOptional;
+}
+
+####################################################################################################################################
 # Build configuration constants and data
 ####################################################################################################################################
 sub buildConfigParse
 {
-    # Build option parse list
-    #-------------------------------------------------------------------------------------------------------------------------------
-    my $rhConfigDefine = cfgDefine();
+    # Build option type enum
+    # ------------------------------------------------------------------------------------------------------------------------------
+    my $rhEnum = $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_ENUM}{&BLDLCL_ENUM_OPTION_TYPE};
+
+    foreach my $strOptionType (cfgDefineOptionTypeList())
+    {
+        # Build C enum
+        my $strOptionTypeEnum = buildConfigDefineOptionTypeEnum($strOptionType);
+        push(@{$rhEnum->{&BLD_LIST}}, $strOptionTypeEnum);
+    };
+
+    # Build command parse data
+    # ------------------------------------------------------------------------------------------------------------------------------
+    my $rhCommandDefine = cfgDefineCommand();
 
     my $strBuildSource =
+        "static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =\n" .
+        "{";
+
+    foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
+    {
+        my $rhCommand = $rhCommandDefine->{$strCommand};
+
+        # Build command data
+        $strBuildSource .=
+            "\n" .
+            "    //" . (qw{-} x 126) . "\n" .
+            "    PARSE_RULE_COMMAND\n" .
+            "    (\n" .
+            "        PARSE_RULE_COMMAND_NAME(\"${strCommand}\"),\n";
+
+        if ($rhCommand->{&CFGDEF_PARAMETER_ALLOWED})
+        {
+            $strBuildSource .=
+                "        PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),\n";
+        }
+
+        $strBuildSource .=
+            "\n" .
+            "        PARSE_RULE_COMMAND_ROLE_VALID_LIST\n" .
+            "        (\n";
+
+        foreach my $strCommandRole (sort(keys(%{$rhCommand->{&CFGDEF_COMMAND_ROLE}})))
+        {
+            $strBuildSource .=
+                "            PARSE_RULE_COMMAND_ROLE(" . buildConfigCommandRoleEnum($strCommandRole) . ")\n";
+        }
+
+        $strBuildSource .=
+            "        ),\n";
+
+        $strBuildSource .=
+            "    ),\n";
+    };
+
+    $strBuildSource .=
+        "};\n";
+
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_COMMAND}{&BLD_SOURCE} = $strBuildSource;
+
+    # Build option group parse data
+    # ------------------------------------------------------------------------------------------------------------------------------
+    my $rhOptionGroupDefine = cfgDefineOptionGroup();
+
+    $strBuildSource =
+        "static const ParseRuleOptionGroup parseRuleOptionGroup[CFG_OPTION_GROUP_TOTAL] =\n" .
+        "{";
+
+    foreach my $strGroup (sort(keys(%{$rhOptionGroupDefine})))
+    {
+        $strBuildSource .=
+            "\n" .
+            "    //" . (qw{-} x 126) . "\n" .
+            "    PARSE_RULE_OPTION_GROUP\n" .
+            "    (\n" .
+            "        PARSE_RULE_OPTION_GROUP_NAME(\"" . $strGroup . "\"),\n" .
+            "    ),\n";
+    }
+
+    $strBuildSource .=
+        "};\n";
+
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION_GROUP}{&BLD_SOURCE} = $strBuildSource;
+
+    # Build option parse data
+    # ------------------------------------------------------------------------------------------------------------------------------
+    my $rhConfigDefine = cfgDefine();
+
+    $strBuildSource =
+        "static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =\n" .
+        "{";
+
+    foreach my $strOption (sort(keys(%{$rhConfigDefine})))
+    {
+        my $rhOption = $rhConfigDefine->{$strOption};
+
+        $strBuildSource .=
+            "\n" .
+            "    // " . (qw{-} x 125) . "\n" .
+            "    PARSE_RULE_OPTION\n" .
+            "    (\n" .
+            "        PARSE_RULE_OPTION_NAME(\"${strOption}\"),\n" .
+            "        PARSE_RULE_OPTION_TYPE(" . buildConfigDefineOptionTypeEnum($rhOption->{&CFGDEF_TYPE}) . "),\n" .
+            "        PARSE_RULE_OPTION_REQUIRED(" . ($rhOption->{&CFGDEF_REQUIRED} ? 'true' : 'false') . "),\n" .
+            "        PARSE_RULE_OPTION_SECTION(cfgSection" .
+                (defined($rhOption->{&CFGDEF_SECTION}) ? ucfirst($rhOption->{&CFGDEF_SECTION}) : 'CommandLine') .
+                "),\n";
+
+        if ($rhOption->{&CFGDEF_SECURE})
+        {
+            $strBuildSource .=
+                "        PARSE_RULE_OPTION_SECURE(true),\n";
+        }
+
+        if ($rhOption->{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH || $rhOption->{&CFGDEF_TYPE} eq CFGDEF_TYPE_LIST)
+        {
+            $strBuildSource .=
+                "        PARSE_RULE_OPTION_MULTI(true),\n";
+        }
+
+        # Build group info
+        # --------------------------------------------------------------------------------------------------------------------------
+        if ($rhOption->{&CFGDEF_GROUP})
+        {
+            $strBuildSource .=
+                "        PARSE_RULE_OPTION_GROUP_MEMBER(true),\n" .
+                "        PARSE_RULE_OPTION_GROUP_ID(" . buildConfigOptionGroupEnum($rhOption->{&CFGDEF_GROUP}) . "),\n";
+        }
+
+        # Build command role valid lists
+        #---------------------------------------------------------------------------------------------------------------------------
+        my $strBuildSourceSub = "";
+
+        foreach my $strCommandRole (CFGCMD_ROLE_DEFAULT, CFGCMD_ROLE_ASYNC, CFGCMD_ROLE_LOCAL, CFGCMD_ROLE_REMOTE)
+        {
+            $strBuildSourceSub = "";
+
+            foreach my $strCommand (cfgDefineCommandList())
+            {
+                if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}))
+                {
+                    if (defined($rhOption->{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}{$strCommandRole}))
+                    {
+                        $strBuildSourceSub .=
+                            "            PARSE_RULE_OPTION_COMMAND(" . buildConfigCommandEnum($strCommand) . ")\n";
+                    }
+                }
+            }
+
+            if ($strBuildSourceSub ne "")
+            {
+                $strBuildSource .=
+                    "\n" .
+                    "        PARSE_RULE_OPTION_COMMAND_ROLE_" . uc($strCommandRole) . "_VALID_LIST\n" .
+                    "        (\n" .
+                    $strBuildSourceSub .
+                    "        ),\n";
+            }
+        }
+
+        # Render optional data and command overrides
+        # --------------------------------------------------------------------------------------------------------------------------
+        my $strBuildSourceOptional = renderOptional($rhOption, false);
+
+        foreach my $strCommand (cfgDefineCommandList())
+        {
+            my $strBuildSourceOptionalCommand;
+            my $rhCommand = $rhOption->{&CFGDEF_COMMAND}{$strCommand};
+
+            if (defined($rhCommand))
+            {
+                $strBuildSourceOptionalCommand = renderOptional($rhCommand, true, $strCommand, $strOption);
+
+                if (defined($strBuildSourceOptionalCommand))
+                {
+                    $strBuildSourceOptional .=
+                        (defined($strBuildSourceOptional) ? "\n" : '') .
+                        "            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE\n" .
+                        "            (\n" .
+                        "                PARSE_RULE_OPTION_OPTIONAL_COMMAND(" . buildConfigCommandEnum($strCommand) . "),\n" .
+                        "\n" .
+                        $strBuildSourceOptionalCommand .
+                        "            )\n";
+                }
+            }
+        }
+
+        if (defined($strBuildSourceOptional))
+        {
+            $strBuildSource .=
+                "\n" .
+                "        PARSE_RULE_OPTION_OPTIONAL_LIST\n" .
+                "        (\n" .
+                $strBuildSourceOptional .
+                "        ),\n";
+        }
+
+        $strBuildSource .=
+            "    ),\n";
+    }
+
+    $strBuildSource .=
+        "};\n";
+
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION}{&BLD_SOURCE} = $strBuildSource;
+
+    # Build option list for getopt_long()
+    #-------------------------------------------------------------------------------------------------------------------------------
+    $strBuildSource =
         "static const struct option optionList[] =\n" .
         "{";
 
@@ -186,7 +554,7 @@ sub buildConfigParse
         "    }\n" .
         "};\n";
 
-    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION}{&BLD_SOURCE} = $strBuildSource;
+    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_DEFINE}{&BLD_DATA}{&BLDLCL_DATA_OPTION_GETOPT}{&BLD_SOURCE} = $strBuildSource;
 
     # Build option resolve order list.  This allows the option validation in C to take place in a single pass.
     #

@@ -22,20 +22,29 @@ The test code is included directly so it can freely interact with the included C
 #include <string.h>
 #include <sys/stat.h>
 
-#ifndef NO_ERROR
-    #include "common/debug.h"
+#ifdef HRN_FEATURE_ERROR
     #include "common/error.h"
 #endif
+
+#ifdef HRN_FEATURE_DEBUG
+    #include "common/debug.h"
+#endif
+
+// Path where the test is running
+#define TEST_PATH                                                   "{[C_TEST_PATH]}"
+
+// Path to source -- used to construct __FILENAME__ tests
+#define TEST_PGB_PATH                                               "{[C_TEST_PGB_PATH]}"
 
 #include "common/harnessDebug.h"
 #include "common/harnessTest.intern.h"
 
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     #include "common/harnessLog.h"
     void harnessLogLevelDefaultSet(LogLevel logLevel);
 #endif
 
-#ifndef NO_MEM_CONTEXT
+#ifdef HRN_FEATURE_MEMCONTEXT
     #include "common/memContext.h"
 #endif
 
@@ -48,8 +57,12 @@ Includes that are not generally used by tests
 
 #include "common/io/socket/common.h"
 
-#ifndef NO_STAT
+#ifdef HRN_FEATURE_STAT
     #include "common/stat.h"
+#endif
+
+#ifdef HRN_IN_STACKTRACE
+    #include "common/stackTrace.h"
 #endif
 
 /***********************************************************************************************************************************
@@ -76,13 +89,29 @@ main(int argListSize, const char *argList[])
 
     int result = 0;
 
+#ifdef HRN_FEATURE_ERROR
+    static const ErrorHandlerFunction handlerList[] =
+    {
+#if defined(HRN_INTEST_STACKTRACE) || defined(HRN_FEATURE_STACKTRACE)
+        stackTraceClean,
+#endif
+#if defined(HRN_INTEST_MEMCONTEXT) || defined(HRN_FEATURE_MEMCONTEXT)
+        memContextClean,
+#endif
+    };
+
+    errorHandlerSet(handlerList, sizeof(handlerList) / sizeof(ErrorHandlerFunction));
+#endif
+
     // Initialize statistics
-#ifndef NO_STAT
+#if defined(HRN_INTEST_STAT) || defined(HRN_FEATURE_STAT)
     statInit();
 #endif
 
     // Use aggressive keep-alive settings for testing
+#if defined(HRN_INTEST_SOCKET) || defined(HRN_FEATURE_SOCKET)
     sckInit(false, true, 2, 5, 5);
+#endif
 
     // Set neutral umask for testing
     umask(0000);
@@ -106,7 +135,7 @@ main(int argListSize, const char *argList[])
         "{[C_TEST_REPO_PATH]}");    // Path with a copy of the repository
 
     // Set default test log level
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     harnessLogLevelDefaultSet({[C_LOG_LEVEL_TEST]});
 #endif
 
@@ -114,7 +143,7 @@ main(int argListSize, const char *argList[])
     //      run, selected
     {[C_TEST_LIST]}
 
-#ifndef NO_ERROR
+#ifdef HRN_FEATURE_ERROR
     TRY_BEGIN()
     {
         TRY_BEGIN()
@@ -122,7 +151,7 @@ main(int argListSize, const char *argList[])
 #endif
             // Run the tests
             testRun();
-#ifndef NO_ERROR
+#ifdef HRN_FEATURE_ERROR
         }
         CATCH_ANY()
         {
@@ -143,7 +172,7 @@ main(int argListSize, const char *argList[])
 
         printf("\nTESTS COMPLETED SUCCESSFULLY\n");
         fflush(stdout);
-#ifndef NO_ERROR
+#ifdef HRN_FEATURE_ERROR
     }
     CATCH_ANY()
     {
@@ -165,7 +194,7 @@ main(int argListSize, const char *argList[])
         fflush(stderr);
         result = errorCode();
     }
-#ifndef NO_MEM_CONTEXT
+#ifdef HRN_FEATURE_MEMCONTEXT
     FINALLY()
     {
         memContextFree(memContextTop());
