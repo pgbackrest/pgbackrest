@@ -897,9 +897,7 @@ cmdExpire(void)
 
             // If the label format is invalid, then error
             if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), adhocBackupLabel))
-            {
                 THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strZ(adhocBackupLabel));
-            }
         }
 
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)

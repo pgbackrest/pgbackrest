@@ -939,17 +939,6 @@ testRun(void)
                 storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)))),
             true, "backup not removed");
 
-        /* backup.info (repo1 and repo2) prior to expire
-        9.4-1:
-        20181119-152800F=backup-archive-start:000000020000000000000002,backup-archive-stop:000000020000000000000002
-        20181119-152800F_20181119-152152D=backup-archive-start:000000020000000000000004,backup-archive-stop:000000020000000000000005
-        20181119-152800F_20181119-152155I=backup-archive-start:000000020000000000000007,backup-archive-stop:000000020000000000000007
-        20181119-152800F_20181119-152252D=backup-archive-start:000000020000000000000009,backup-archive-stop:000000020000000000000009
-        10-2:
-        20181119-152900F=backup-archive-start:000000010000000000000003,backup-archive-stop:000000010000000000000004
-        20181119-152900F_20181119-152500I=backup-archive-start:000000010000000000000006,backup-archive-stop:000000010000000000000006
-        */
-
         harnessLogResult(strZ(strNewFmt(
             "P00   INFO: [DRY-RUN] expire full backup set repo1: 20181119-152800F, 20181119-152800F_20181119-152152D, "
             "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
