@@ -155,6 +155,7 @@ testRun(void)
     {
         const String *repoFileReferenceFull = strNew("20190509F");
         const String *repoFile1 = strNew("pg_data/testfile");
+        unsigned int repoIdx = 0;
 
         // Start a protocol server to test the protocol directly
         Buffer *serverWrite = bufNew(8192);
@@ -178,7 +179,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("sparse-zero"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("sparse-zero"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             false, "zero sparse 1TB file");
@@ -186,7 +187,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("normal-zero"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("normal-zero"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, false, false, NULL),
             true, "zero-length file");
@@ -204,7 +205,7 @@ testRun(void)
 
         TEST_ERROR(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeGz, strNew("normal"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, strNew("normal"),
                 strNew("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, false, false, strNew("badpass")),
             ChecksumError,
@@ -219,7 +220,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeGz, strNew("normal"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, strNew("normal"),
                 strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, false, false, strNew("badpass")),
             true, "copy file");
@@ -242,7 +243,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta missing");
@@ -254,7 +255,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             false, "sha1 delta existing");
@@ -263,7 +264,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 1557432155, true, true, NULL),
             false, "sha1 delta force existing");
@@ -273,7 +274,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, size differs");
@@ -284,7 +285,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
@@ -296,7 +297,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, content differs");
@@ -307,14 +308,14 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, timestamp differs");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 1557432153, true, true, NULL),
             true, "delta force existing, timestamp after copy time");
@@ -324,7 +325,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             false, "sha1 delta existing, content differs");
@@ -333,6 +334,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
+        varLstAdd(paramList, varNewUInt(repoIdx));
         varLstAdd(paramList, varNewStr(repoFileReferenceFull));
         varLstAdd(paramList, varNewUInt(compressTypeNone));
         varLstAdd(paramList, varNewStrZ("protocol"));
@@ -364,6 +366,7 @@ testRun(void)
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
+        varLstAdd(paramList, varNewUInt(repoIdx));
         varLstAdd(paramList, varNewStr(repoFileReferenceFull));
         varLstAdd(paramList, varNewUInt(compressTypeNone));
         varLstAdd(paramList, varNewStrZ("protocol"));
@@ -517,14 +520,18 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when no backups are present");
 
-        InfoBackup *infoBackup = infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO_DB)));
-        TEST_ERROR_FMT(restoreBackupSet(infoBackup), BackupSetInvalidError, "no backup sets to restore");
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+        TEST_ERROR_FMT(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
+        TEST_RESULT_LOG("P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid backup set");
 
-        infoBackup = infoBackupNewLoad(
-            ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB)));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            TEST_RESTORE_BACKUP_INFO
+            "\n"
+            TEST_RESTORE_BACKUP_INFO_DB);
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -533,14 +540,11 @@ testRun(void)
         strLstAddZ(argList, "--set=BOGUS");
         harnessCfgLoad(cfgCmdRestore, argList);
 
-        TEST_ERROR(restoreBackupSet(infoBackup), BackupSetInvalidError, "backup set BOGUS is not valid");
+        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "backup set BOGUS is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("target time");
         setenv("TZ", "UTC", true);
-
-        infoBackup = infoBackupNewLoad(
-            ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB)));
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -550,8 +554,10 @@ testRun(void)
         strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-
-        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212803D", "backup set found");
+// CSHANG - should probably make sure the time chosen is valid, or expand this to multi-repo
+        RestoreBackupData backupData = {0};
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212803D", "backup set found");
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -561,8 +567,9 @@ testRun(void)
         strLstAddZ(argList, "--target=2016-12-19 16:27:30-0500");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-
-        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212918I", "default to latest backup set");
+// CSHANG - should probably make sure the time chosen is valid, or expand this to multi-repo
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "default to latest backup set");
         TEST_RESULT_LOG(
             "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', latest backup set will be"
             " used");
@@ -575,8 +582,9 @@ testRun(void)
         strLstAddZ(argList, "--target=Tue, 15 Nov 1994 12:45:26");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-
-        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212918I", "time invalid format, default latest");
+// CSHANG - should probably make sure the time chosen is valid, or expand this to multi-repo
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "time invalid format, default latest");
         TEST_RESULT_LOG(
             "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
             " latest backup set will be used\n"
@@ -1784,7 +1792,7 @@ testRun(void)
             storageWriteIo(
                 storageNewWriteP(storageRepoWrite(),
                 strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
-
+// CSHANG ExecuteError: local-1 process terminated unexpectedly on signal 11
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
