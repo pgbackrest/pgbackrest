@@ -36,6 +36,15 @@ restoreProtocol(const String *command, const VariantList *paramList, ProtocolSer
     {
         if (strEq(command, PROTOCOL_COMMAND_RESTORE_FILE_STR))
         {
+// CSHANG remove
+if (varLstGet(paramList, 0) == NULL) THROW(RuntimeError, "repoFile is NULL");
+if (varLstGet(paramList, 2) == NULL) THROW(RuntimeError, "repoFileReference is NULL");
+if (varLstGet(paramList, 4) == NULL) THROW(RuntimeError, "pgFile is NULL");
+if (varLstGet(paramList, 5) == NULL) THROW(RuntimeError, "pgFileChecksum is NULL");
+if (varLstGet(paramList, 10) == NULL) THROW(RuntimeError, "pgFileUser is NULL");
+if (varLstGet(paramList, 11) == NULL) THROW(RuntimeError, "pgFileGroup is NULL");
+if (varLstGet(paramList, 15) == NULL) THROW(RuntimeError, "cipherSubPass is NULL");
+
             protocolServerResponse(
                 server,
                 VARBOOL(
