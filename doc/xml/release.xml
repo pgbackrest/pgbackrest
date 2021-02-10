@@ -14,6 +14,17 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.33dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="michael.schout"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow custom <setting>config-path</setting> default with <id>./configure --with-configdir</id>.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <commit subject="Enhance expire command multi-repo support."/>
@@ -9450,6 +9461,11 @@
         <contributor id="michael.renner">
             <contributor-name-display>Michael Renner</contributor-name-display>
             <contributor-id type="github">terrorobe</contributor-id>
+        </contributor>
+
+        <contributor id="michael.schout">
+            <contributor-name-display>Michael Schout</contributor-name-display>
+            <contributor-id type="github">mschout</contributor-id>
         </contributor>
 
         <contributor id="michael.vitale">
