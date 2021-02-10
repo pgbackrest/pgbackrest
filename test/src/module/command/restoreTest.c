@@ -1792,11 +1792,11 @@ testRun(void)
             storageWriteIo(
                 storageNewWriteP(storageRepoWrite(),
                 strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
-// CSHANG ExecuteError: local-1 process terminated unexpectedly on signal 11
+
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F\n"
+            "P00   INFO: repo1: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/ts/1' exists\n"
             "P00 DETAIL: update mode for '{[path]}/pg' to 0700\n"
@@ -1906,7 +1906,7 @@ testRun(void)
         cmdRestore();
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F\n"
+            "P00   INFO: repo1: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
@@ -1963,7 +1963,7 @@ testRun(void)
         cmdRestore();
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F\n"
+            "P00   INFO: repo1: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
@@ -2276,7 +2276,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
+            "P00   INFO: repo1: restore backup set 20161219-212741F_20161219-212918I\n"
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
@@ -2385,7 +2385,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
+            "P00   INFO: repo2: restore backup set 20161219-212741F_20161219-212918I\n"
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"

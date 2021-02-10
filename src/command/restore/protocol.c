@@ -36,12 +36,11 @@ restoreProtocol(const String *command, const VariantList *paramList, ProtocolSer
     {
         if (strEq(command, PROTOCOL_COMMAND_RESTORE_FILE_STR))
         {
-if (varUInt(varLstGet(paramList, 1)) != 0 ) THROW_FMT(RuntimeError, "FILE %s, FILEREF %s, REPOIDX = %u", strZ(varStr(varLstGet(paramList, 0))), strZ(varStr(varLstGet(paramList, 2))), varUInt(varLstGet(paramList, 1)));
             protocolServerResponse(
                 server,
                 VARBOOL(
                     restoreFile(
-                        varStr(varLstGet(paramList, 0)), varUInt(varLstGet(paramList, 1)), varStr(varLstGet(paramList, 2)),
+                        varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varStr(varLstGet(paramList, 2)),
                         (CompressType)varUIntForce(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
                         varStr(varLstGet(paramList, 5)), varBoolForce(varLstGet(paramList, 6)), varUInt64(varLstGet(paramList, 7)),
                         (time_t)varInt64Force(varLstGet(paramList, 8)),

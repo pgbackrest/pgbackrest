@@ -7,7 +7,6 @@ Restore Command
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdio.h> // CSHANG remove
 
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
@@ -2108,7 +2107,6 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
                 // Create restore job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
-printf("JOBDATA->REPOIDX %u\n", jobData->repoIdx);fflush(stdout);
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARUINT(jobData->repoIdx));
                 protocolCommandParamAdd(
@@ -2186,8 +2184,7 @@ cmdRestore(void)
 
         // Log the backup set to restore
         LOG_INFO_FMT(
-            "restore backup set %s from repo%u", strZ(backupData.backupSet),
-            cfgOptionGroupIdxToKey(cfgOptGrpRepo, backupData.repoIdx));
+            "repo%u: restore backup set %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, backupData.repoIdx), strZ(backupData.backupSet));
 
         // Map manifest
         restoreManifestMap(jobData.manifest);
