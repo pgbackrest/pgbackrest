@@ -1673,6 +1673,7 @@ testRun(void)
     {
         const String *pgPath = strNewFmt("%s/pg", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *repoPath2 = strNewFmt("%s/repo2", testPath());
 
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
@@ -1710,7 +1711,8 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--set=20161219-212741F");
         harnessCfgLoad(cfgCmdRestore, argList);
@@ -1751,7 +1753,8 @@ testRun(void)
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "797e375b924134687cbf9eacd37a4355f3d825e4"});
             storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_84_STR "\n"));
+                storageNewWriteP(
+                    storageRepoIdxWrite(1), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_84_STR "\n"));
 
             // pg_tblspc/1
             manifestTargetAdd(
@@ -1790,13 +1793,22 @@ testRun(void)
         manifestSave(
             manifest,
             storageWriteIo(
-                storageNewWriteP(storageRepoWrite(),
+                storageNewWriteP(storageRepoIdxWrite(1),
                 strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: restore backup set 20161219-212741F\n"
+            "P00   WARN: repo1: [FileMissingError] unable to load info file"
+            " '/home/vagrant/test/test-0/repo2/backup/test1/backup.info' or"
+            " '/home/vagrant/test/test-0/repo2/backup/test1/backup.info.copy':\n"
+            "            FileMissingError: unable to open missing file '/home/vagrant/test/test-0/repo2/backup/test1/backup.info'"
+            " for read\n"
+            "            FileMissingError: unable to open missing file"
+            " '/home/vagrant/test/test-0/repo2/backup/test1/backup.info.copy' for read\n"
+            "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "P00   INFO: repo2: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/ts/1' exists\n"
             "P00 DETAIL: update mode for '{[path]}/pg' to 0700\n"

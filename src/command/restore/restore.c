@@ -7,6 +7,7 @@ Restore Command
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdio.h>  // CSHANG remove
 
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
