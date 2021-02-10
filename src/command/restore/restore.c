@@ -2108,7 +2108,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
                 // Create restore job
                 ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
-
+printf("JOBDATA->REPOIDX %u\n", jobData->repoIdx);fflush(stdout);
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARUINT(jobData->repoIdx));
                 protocolCommandParamAdd(
