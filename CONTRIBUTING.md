@@ -12,7 +12,7 @@ pgbackrest-dev => Install development tools
 ```
 sudo apt-get install rsync git devscripts build-essential valgrind lcov autoconf \
        autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config \
-       libxml-checker-perl libyaml-libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool \
+       libxml-checker-perl libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool \
        zstd libzstd-dev bzip2 libbz2-dev
 ```
 
@@ -44,7 +44,6 @@ pgbackrest/test/test.pl --vm=none --dry-run
 --- output ---
 
     P00   INFO: test begin - log level info
-    P00   INFO: check version info
     P00   INFO: builds required: bin
 --> P00   INFO: 68 tests selected
                 
@@ -71,32 +70,33 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        run 001 - waitNew(), waitMore, and waitFree()
-            l0018 -     expect AssertError: assertion 'waitTime <= 999999000' failed
-            l0021 - 0ms wait
-            l0025 -     new wait
-            l0026 -         check remaining time
-            l0027 -         check wait time
-            l0028 -         check sleep time
-            l0029 -         check sleep prev time
-            l0030 -         no wait more
-            l0033 -     new wait = 0.2 sec
-            l0034 -         check remaining time
-            l0035 -         check wait time
-            l0036 -         check sleep time
-            l0037 -         check sleep prev time
-            l0038 -         check begin time
-            l0044 -         lower range check
-            l0045 -         upper range check
-            l0047 -         free wait
-            l0052 -     new wait = 1.1 sec
-            l0053 -         check wait time
-            l0054 -         check sleep time
-            l0055 -         check sleep prev time
-            l0056 -         check begin time
-            l0062 -         lower range check
-            l0063 -         upper range check
-            l0065 -         free wait
+        run 1 - waitNew(), waitMore, and waitFree()
+            l0018     expect AssertError: assertion 'waitTime <= 999999000' failed
+        
+        run 1/1 ------------- l0021 0ms wait
+            l0025     new wait
+            l0026         check remaining time
+            l0027         check wait time
+            l0028         check sleep time
+            l0029         check sleep prev time
+            l0030         no wait more
+            l0033     new wait = 0.2 sec
+            l0034         check remaining time
+            l0035         check wait time
+            l0036         check sleep time
+            l0037         check sleep prev time
+            l0038         check begin time
+            l0044         lower range check
+            l0045         upper range check
+            l0047         free wait
+            l0052     new wait = 1.1 sec
+            l0053         check wait time
+            l0054         check sleep time
+            l0055         check sleep prev time
+            l0056         check begin time
+            l0062         lower range check
+            l0063         upper range check
+            l0065         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     

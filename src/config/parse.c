@@ -742,7 +742,7 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
 
 static String *
 cfgFileLoad(                                                        // NOTE: Passing defaults to enable more complete test coverage
-    const Storage *storage,                                         // !!!
+    const Storage *storage,                                         // Storage to load configs
     const ParseOption *optionList,                                  // All options and their current settings
     const String *optConfigDefault,                                 // Current default for --config option
     const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
