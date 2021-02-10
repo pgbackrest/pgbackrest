@@ -876,14 +876,14 @@ cmdExpire(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Initialize the repo index
-        unsigned int repoIdxStart = 0;
-        unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
+        unsigned int repoIdxMin = 0;
+        unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1;
 
         // If the repo was specified then set index to the array location and max to loop only once
         if (cfgOptionTest(cfgOptRepo))
         {
-            repoIdxStart = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
-            repoIdxMax = repoIdxStart + 1;
+            repoIdxMin = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
+            repoIdxMax = repoIdxMin;
         }
 
         // Get the backup label if specified
@@ -902,7 +902,7 @@ cmdExpire(void)
             }
         }
 
-        for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
+        for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             // Get the repo storage in case it is remote and encryption settings need to be pulled down
             const Storage *storageRepo = storageRepoIdx(repoIdx);
@@ -926,7 +926,7 @@ cmdExpire(void)
 
                 // If the adhoc backup was not found and this was the last repo to check, then log a warning but continue to process
                 // the expiration based on retention
-                if (!adhocBackupFound && repoIdx == repoIdxMax - 1)
+                if (!adhocBackupFound && repoIdx == repoIdxMax)
                 {
                     LOG_WARN_FMT(
                         "backup %s does not exist\nHINT: run the info command and confirm the backup is listed",
