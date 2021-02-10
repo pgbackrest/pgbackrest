@@ -878,7 +878,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE),
         ),
     ),
 
@@ -948,7 +948,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH),
         ),
     ),
 
@@ -1018,7 +1018,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(CFGOPTDEF_CONFIG_PATH),
         ),
     ),
 
@@ -2359,7 +2359,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
             PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptPgHost),
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE),
         ),
     ),
 
@@ -2390,7 +2390,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
             PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptPgHost),
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH),
         ),
     ),
 
@@ -2421,7 +2421,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
             PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptPgHost),
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(CFGOPTDEF_CONFIG_PATH),
         ),
     ),
 
@@ -4044,7 +4044,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
             PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost),
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/pgbackrest.conf"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE),
         ),
     ),
 
@@ -4090,7 +4090,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
             PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost),
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest/conf.d"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH),
         ),
     ),
 
@@ -4136,7 +4136,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
             PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptRepoHost),
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("/etc/pgbackrest"),
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(CFGOPTDEF_CONFIG_PATH),
         ),
     ),
 
