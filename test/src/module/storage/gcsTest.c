@@ -222,17 +222,13 @@ testRun(void)
         httpQueryAdd(query, STRDEF("project"), STRDEF("pgbackrest-dev"));
 
         TEST_RESULT_VOID(storageGcsAuth(storage, HTTP_VERB_GET_STR, STRDEF("/storage/v1/b"), query, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(httpHeaderToLog(header), "{content-length: '0', host: 'storage.googleapis.com'}", "check headers");
+        // TEST_RESULT_STR_Z(httpHeaderToLog(header), "{content-length: '0', host: 'storage.googleapis.com'}", "check headers");
         // TEST_RESULT_STR_Z(
         //     httpQueryToLog(query),
         //     "{X-Goog-Algorithm: 'GOOG4-RSA-SHA256'"
         //         ", X-Goog-Credential: 'service@pgbackrest-dev.iam.gserviceaccount.com/20210211/auto/storage/goog4_request'"
         //         ", X-Goog-Date: '20210211T170800Z', X-Goog-Expires: '3600', X-Goog-SignedHeaders: 'content-length;host'}",
         //     "check query");
-
-        HttpRequest *request = httpRequestNewP(storage->httpClient, HTTP_VERB_GET_STR, STRDEF("/storage/v1/b"), .query = query, .header = header);
-        HttpResponse *response = httpRequestResponse(request, true);
-        THROW_FMT(AssertError, "RESPONSE IS %s", strZ(strNewBuf(httpResponseContent(response))));
 
         // // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("auth with md5 and query");

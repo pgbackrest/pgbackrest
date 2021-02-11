@@ -145,9 +145,9 @@ storageGcsAuth(
             strCatZ(requestCanonical, "UNSIGNED-PAYLOAD");
 
             // Generate string to sign
-            const String *stringToSign = strNewFmt(
-                "GOOG4-RSA-SHA256\n%s\n%.8s/auto/storage/goog4_request\n%s", strZ(dateTime), strZ(dateTime),
-                strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(requestCanonical)))));
+            // const String *stringToSign = strNewFmt(
+            //     "GOOG4-RSA-SHA256\n%s\n%.8s/auto/storage/goog4_request\n%s", strZ(dateTime), strZ(dateTime),
+            //     strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(requestCanonical)))));
 
             // Sign with RSA key
             cryptoInit();
@@ -163,29 +163,118 @@ storageGcsAuth(
 
             RSA *rsaKey = EVP_PKEY_get1_RSA(privateKey);
 
-            Buffer *signature = bufNew((size_t)RSA_size(rsaKey));
-            unsigned int signatureLen = 0;
+            // Set query parameters
+            // httpQueryAdd(query, STRDEF("X-Goog-Algorithm"), STRDEF("GOOG4-RSA-SHA256"));
+            // httpQueryAdd(
+            //     query, STRDEF("X-Goog-Credential"),
+            //     strNewFmt("%s/%.8s/auto/storage/goog4_request", strZ(credential), strZ(dateTime)));
+            // httpQueryAdd(query, STRDEF("X-Goog-Date"), dateTime);
+            // httpQueryAdd(query, STRDEF("X-Goog-Expires"), STRDEF("3600"));
+            // httpQueryAdd(query, STRDEF("X-Goog-SignedHeaders"), headerCanonical);
+            // httpQueryAdd(query, STRDEF("X-Goog-X-Goog-Signature"), bufHex(signature));
 
-            cryptoError(
-                !RSA_sign(
-                    NID_sha256, (unsigned char *)strZ(stringToSign), (unsigned int)strSize(stringToSign), bufPtr(signature),
-                    &signatureLen, rsaKey),
-                "unable to sign");
-            ASSERT((size_t)signatureLen == bufSize(signature));
-            bufUsedSet(signature, bufSize(signature));
+            time_t timeBegin = time(NULL);
+
+            String *claim = strNewFmt(
+                "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read_write\","
+                "\"aud\":\"https://oauth2.googleapis.com/token\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
+                strZ(credential), (uint64_t)timeBegin + 3600, (uint64_t)timeBegin);
+
+            char claimBase64[2048];
+            encodeToStr(encodeBase64, (unsigned char *)strZ(claim), strSize(claim), claimBase64);
+
+            for (unsigned int charIdx = 0; charIdx <= sizeof(claimBase64); charIdx++)
+            {
+                if (claimBase64[charIdx] == 0)
+                    break;
+
+                switch (claimBase64[charIdx])
+                {
+                    case '+':
+                        claimBase64[charIdx] = '-';
+                        break;
+
+                    case '/':
+                        claimBase64[charIdx] = '_';
+                        break;
+
+                    case '=':
+                        claimBase64[charIdx] = '\0';
+                        break;
+                }
+            }
+
+            String *jwt = strNewFmt("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.%s", claimBase64);
+            // Buffer *jwtHash = cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(jwt));
+
+            // THROW_FMT(AssertError, "JWT SIZE IS %zu: %s", strSize(jwt), strZ(jwt));
+
+            Buffer *signature = bufNew((size_t)RSA_size(rsaKey));
+            size_t signatureLen = 0;
+
+            EVP_MD_CTX* m_RSASignCtx = EVP_MD_CTX_create();
+            EVP_PKEY* priKey  = EVP_PKEY_new();
+            EVP_PKEY_assign_RSA(priKey, rsaKey);
+            cryptoError(EVP_DigestSignInit(m_RSASignCtx,NULL, EVP_sha256(), NULL,priKey) <= 0, "init");
+            cryptoError(EVP_DigestSignUpdate(m_RSASignCtx, (unsigned char *)strZ(jwt), (unsigned int)strSize(jwt)) <= 0, "update");
+            cryptoError(EVP_DigestSignFinal(m_RSASignCtx, NULL, &signatureLen) <=0, "final1");
+            cryptoError(EVP_DigestSignFinal(m_RSASignCtx, bufPtr(signature), &signatureLen) <= 0, "final2");
+            EVP_MD_CTX_free(m_RSASignCtx);
+
+            // cryptoError(
+            //     !RSA_sign(
+            //         NID_sha256WithRSAEncryption, (unsigned char *)strZ(jwt), (unsigned int)strSize(jwt), bufPtr(signature),
+            //         &signatureLen, rsaKey),
+            //     "unable to sign");
+            // ASSERT((size_t)signatureLen == bufSize(signature));
+            // bufUsedSet(signature, bufSize(signature));
 
             RSA_free(rsaKey);
             EVP_PKEY_free(privateKey);
 
-            // Set query parameters
-            httpQueryAdd(query, STRDEF("X-Goog-Algorithm"), STRDEF("GOOG4-RSA-SHA256"));
-            httpQueryAdd(
-                query, STRDEF("X-Goog-Credential"),
-                strNewFmt("%s/%.8s/auto/storage/goog4_request", strZ(credential), strZ(dateTime)));
-            httpQueryAdd(query, STRDEF("X-Goog-Date"), dateTime);
-            httpQueryAdd(query, STRDEF("X-Goog-Expires"), STRDEF("3600"));
-            httpQueryAdd(query, STRDEF("X-Goog-SignedHeaders"), headerCanonical);
-            httpQueryAdd(query, STRDEF("X-Goog-X-Goog-Signature"), bufHex(signature));
+            char signatureBase64[2048];
+            encodeToStr(encodeBase64, bufPtr(signature), bufSize(signature), signatureBase64);
+
+            // THROW_FMT(AssertError, "SIG: %s", signatureBase64);
+
+            for (unsigned int charIdx = 0; charIdx <= sizeof(signatureBase64); charIdx++)
+            {
+                if (signatureBase64[charIdx] == 0)
+                    break;
+
+                switch (signatureBase64[charIdx])
+                {
+                    case '+':
+                        signatureBase64[charIdx] = '-';
+                        break;
+
+                    case '/':
+                        signatureBase64[charIdx] = '_';
+                        break;
+
+                    case '=':
+                        signatureBase64[charIdx] = '\0';
+                        break;
+                }
+            }
+
+        strCatFmt(jwt, ".%s", signatureBase64);
+
+        // THROW_FMT(AssertError, "JWT: %s", strZ(jwt));
+
+        HttpClient *authClient = httpClientNew(
+            tlsClientNew(sckClientNew(STRDEF("oauth2.googleapis.com"), 443, 10000), STRDEF("oauth2.googleapis.com"), 10000, true, false, false), 10000);
+
+        String *content = strNewFmt("grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s", strZ(jwt));
+
+        HttpHeader *header = httpHeaderNew(NULL);
+        httpHeaderAdd(header, HTTP_HEADER_HOST_STR, STRDEF("oauth2.googleapis.com"));
+        httpHeaderAdd(header, STRDEF("Content-Type"), STRDEF("application/x-www-form-urlencoded"));
+        httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
+
+        HttpRequest *request = httpRequestNewP(authClient, HTTP_VERB_POST_STR, STRDEF("/token"), NULL, .header = header, .content = BUFSTR(content));
+        HttpResponse *response = httpRequestResponse(request, true);
+        THROW_FMT(AssertError, "RESPONSE IS %s", strZ(strNewBuf(httpResponseContent(response))));
 
         //
         // // Generate canonical query
