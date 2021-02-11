@@ -267,8 +267,8 @@ restoreBackupSet(void)
         const String *backupSetRequested = NULL;
         time_t timeTargetEpoch = 0;
 
-        // If the set option was not provided by the user but a time to recover to was set, then we will need to search for a
-        // backup set that satisfies the time condition, else we will use the backup provided
+        // If the set option was not provided by the user but a time to recover was set, then we will need to search for a backup
+        // set that satisfies the time condition, else we will use the backup provided
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
             if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
@@ -311,7 +311,7 @@ restoreBackupSet(void)
                 continue;
             }
 
-            // If a backup set was not specified, then see if a time to recover to was requested
+            // If a backup set was not specified, then see if a time to recover was requested
             if (backupSetRequested == NULL)
             {
                 // If the recovery type is time, attempt to determine the backup set
@@ -388,15 +388,15 @@ restoreBackupSet(void)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
             else if (timeTargetEpoch != 0 && lstSize(backupCandidateList) > 0)
             {
-                LOG_WARN_FMT(
-                    "unable to find backup set with stop time less than '%s', latest backup set will be used",
-                    strZ(cfgOptionStr(cfgOptTarget)));
-
                 // Since the repos were scanned in priority order, use the first candidate found
                 result = restoreBackupData(
                     ((RestoreBackupData *)lstGet(backupCandidateList, 0))->backupSet,
                     ((RestoreBackupData *)lstGet(backupCandidateList, 0))->repoIdx,
                     ((RestoreBackupData *)lstGet(backupCandidateList, 0))->backupCipherPass);
+
+                LOG_WARN_FMT(
+                    "unable to find backup set with stop time less than '%s', repo%u: latest backup set will be used",
+                    strZ(cfgOptionStr(cfgOptTarget)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, result.repoIdx));
             }
             else
                 THROW(BackupSetInvalidError, "no backup set found to restore");

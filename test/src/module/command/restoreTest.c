@@ -546,50 +546,150 @@ testRun(void)
         TEST_TITLE("target time");
         setenv("TZ", "UTC", true);
 
+        const String *repoPath2 = strNewFmt("%s/repo2", testPath());
+
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-// CSHANG - should probably make sure the time chosen is valid, or expand this to multi-repo
+
+        // Write out backup.info with no current backups to repo1
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+
         RestoreBackupData backupData = {0};
         TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
         TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212803D", "backup set found");
+        TEST_RESULT_UINT(backupData.repoIdx, 1, "backup set found, repo2");
+        TEST_RESULT_LOG("P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore");
+
+        // Switch repo paths and confirm same result but on repo1
+        argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        strLstAddZ(argList, "--type=time");
+        strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
+
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212803D", "backup set found");
+        TEST_RESULT_UINT(backupData.repoIdx, 0, "backup set found, repo1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("target time, multi repo, latest used");
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=2016-12-19 16:27:30-0500");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-// CSHANG - should probably make sure the time chosen is valid, or expand this to multi-repo
+
+        #define TEST_RESTORE_BACKUP_INFO_NEWEST                                                                                    \
+            "[backup:current]\n"                                                                                                   \
+            "20201212-201243F={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                               \
+            "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","          \
+            "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159776,\"backup-info-size\":26897030,"             \
+            "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1607803000,\"backup-timestamp-stop\":1607803963,"      \
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"                    \
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,"   \
+            "\"option-online\":true}\n"
+
+        // Write out backup.info with current backup newest to repo2 but still does not satisfy time requirement, so repo1 chosen
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
+            TEST_RESTORE_BACKUP_INFO_NEWEST
+            "\n"
+            TEST_RESTORE_BACKUP_INFO_DB);
+
         TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
         TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "default to latest backup set");
+        TEST_RESULT_UINT(backupData.repoIdx, 0, "repo1 chosen because of priority order");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', latest backup set will be"
-            " used");
+            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', repo1: latest backup set"
+            " will be used");
+
+        // Request repo2 - latest frm repo2 will be chosen
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20201212-201243F", "default to latest backup set");
+        TEST_RESULT_UINT(backupData.repoIdx, 1, "repo2 chosen because repo option set");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', repo2: latest backup set"
+            " will be used");
+
+        // Switch paths so newest on repo1
+        argList = strLstNew();
+        strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
+        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        strLstAddZ(argList, "--type=time");
+        strLstAddZ(argList, "--target=2016-12-19 16:27:30-0500");
+
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20201212-201243F", "default to latest backup set");
+        TEST_RESULT_UINT(backupData.repoIdx, 0, "repo1 chosen because of priority order");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', repo1: latest backup set"
+            " will be used");
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=Tue, 15 Nov 1994 12:45:26");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-// CSHANG - should probably make sure the time chosen is valid, or expand this to multi-repo
+
         TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
         TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "time invalid format, default latest");
+        TEST_RESULT_UINT(backupData.repoIdx, 0, "repo1 chosen because of priority order");
         TEST_RESULT_LOG(
             "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
             " latest backup set will be used\n"
             "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
             " (+/- HH or HHMM or HH:MM) - if timezone is omitted, local time is assumed (for UTC use +00)");
+        // CSHANG THIS TEST DID NOT HELP
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("target time, multi repo, no candidates found");
+        //
+        // argList = strLstNew();
+        // strLstAddZ(argList, "--stanza=test1");
+        // strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        // hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        // strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        // strLstAddZ(argList, "--type=time");
+        // strLstAddZ(argList, "--target=Tue, 15 Nov 1994 12:45:26");
+        //
+        // // Write out backup.info with no current backups to repo1 and repo2
+        // HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+        // HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+        //
+        // TEST_ERROR_FMT(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
+        // TEST_RESULT_LOG(
+        //     "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
+        //     " latest backup set will be used\n"
+        //     "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
+        //     " (+/- HH or HHMM or HH:MM) - if timezone is omitted, local time is assumed (for UTC use +00)\n"
+        //     "P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore\n"
+        //     "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
     }
 
     // *****************************************************************************************************************************
