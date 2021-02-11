@@ -1705,7 +1705,7 @@ testRun(void)
         storagePutP(
             storageNewWriteP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
             harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB));
-
+// CSHANG See about making all of these multi-repo and specifying --repo option in at least one
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore without delta");
 
@@ -1799,13 +1799,11 @@ testRun(void)
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
+            strZ(strNewFmt(
             "P00   WARN: repo1: [FileMissingError] unable to load info file"
-            " '/home/vagrant/test/test-0/repo2/backup/test1/backup.info' or"
-            " '/home/vagrant/test/test-0/repo2/backup/test1/backup.info.copy':\n"
-            "            FileMissingError: unable to open missing file '/home/vagrant/test/test-0/repo2/backup/test1/backup.info'"
-            " for read\n"
-            "            FileMissingError: unable to open missing file"
-            " '/home/vagrant/test/test-0/repo2/backup/test1/backup.info.copy' for read\n"
+            " '%s/repo2/backup/test1/backup.info' or '%s/repo2/backup/test1/backup.info.copy':\n"
+            "            FileMissingError: unable to open missing file '%s/repo2/backup/test1/backup.info' for read\n"
+            "            FileMissingError: unable to open missing file '%s/repo2/backup/test1/backup.info.copy' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
             "P00   INFO: repo2: restore backup set 20161219-212741F\n"
@@ -1816,14 +1814,14 @@ testRun(void)
             "P00 DETAIL: create path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
             "P00 DETAIL: create path '{[path]}/pg/pg_tblspc/1/16384'\n"
-            "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00   INFO: write {[path]}/pg/recovery.conf\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '{[path]}/pg/global'");
+            "P00 DETAIL: sync path '{[path]}/pg/global'", testPath(), testPath(), testPath(), testPath())));
 
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
         storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .errorOnMissing = true);

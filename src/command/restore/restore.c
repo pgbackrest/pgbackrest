@@ -214,7 +214,6 @@ typedef struct RestoreBackupData
     CipherType repoCipherType;                                      // Repo encryption type (0 = none)
     const String *backupCipherPass;                                 // Passphrase of backup files if repo is encrypted (else NULL)
     const String *backupSet;                                        // Backup set to restore
-    time_t backupTimestampStop;                                     // Backup set stop time
 } RestoreBackupData;
 
 #define FUNCTION_LOG_RESTORE_BACKUP_DATA_TYPE                                                                                      \
@@ -224,7 +223,7 @@ typedef struct RestoreBackupData
 
 // Helper function for restoreBackupSet
 static RestoreBackupData
-restoreBackupData(const String *backupLabel, time_t backupTimestampStop, unsigned int repoIdx, const String *backupCipherPass)
+restoreBackupData(const String *backupLabel, unsigned int repoIdx, const String *backupCipherPass)
 {
     ASSERT(backupLabel != NULL);
 
@@ -233,7 +232,6 @@ restoreBackupData(const String *backupLabel, time_t backupTimestampStop, unsigne
     MEM_CONTEXT_PRIOR_BEGIN()
     {
         restoreBackup.backupSet = strDup(backupLabel);
-        restoreBackup.backupTimestampStop = backupTimestampStop;
         restoreBackup.repoIdx = repoIdx;
         restoreBackup.repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
         restoreBackup.backupCipherPass = strDup(backupCipherPass);
@@ -262,6 +260,9 @@ restoreBackupSet(void)
             repoIdxMin = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
             repoIdxMax = repoIdxMin;
         }
+
+        // Initialize a backup candidate list
+        List *backupCandidateList = lstNewP(sizeof(RestoreBackupData));
 
         const String *backupSetRequested = NULL;
         time_t timeTargetEpoch = 0;
@@ -330,8 +331,7 @@ restoreBackupSet(void)
                             found = true;
 
                             result = restoreBackupData(
-                                backupData.backupLabel, backupData.backupTimestampStop, repoIdx,
-                                infoPgCipherPass(infoBackupPg(infoBackup)));
+                                backupData.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                             break;
                         }
                     }
@@ -347,20 +347,10 @@ restoreBackupSet(void)
                         // If a backup was not yet set then set the latest from this repo as the backup that might be used
                         if (result.backupSet == NULL)
                         {
-                            result = restoreBackupData(
-                                latestBackup.backupLabel, latestBackup.backupTimestampStop, repoIdx,
-                                infoPgCipherPass(infoBackupPg(infoBackup)));
-                        }
-                        else
-                        {
-                            // If what is currently stored as latest is older than the latest on this repo, then update to the
-                            // latest on this repo and continue searching for the best backup set to use
-                            if (result.backupTimestampStop < latestBackup.backupTimestampStop)
-                            {
-                                result = restoreBackupData(
-                                    latestBackup.backupLabel, latestBackup.backupTimestampStop, repoIdx,
-                                    infoPgCipherPass(infoBackupPg(infoBackup)));
-                            }
+                            RestoreBackupData candidate = restoreBackupData(
+                                latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
+
+                            lstAdd(backupCandidateList, &candidate);
                         }
                     }
                 }
@@ -369,9 +359,7 @@ restoreBackupSet(void)
                     // If the recovery type was not time (or time provided was not valid), then use the latest backup from this repo
                     InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
 
-                    result = restoreBackupData(
-                        latestBackup.backupLabel, latestBackup.backupTimestampStop, repoIdx,
-                        infoPgCipherPass(infoBackupPg(infoBackup)));
+                    result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                     break;
                 }
             }
@@ -382,9 +370,7 @@ restoreBackupSet(void)
                 {
                     if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSetRequested))
                     {
-                        result = restoreBackupData(
-                            backupSetRequested, infoBackupData(infoBackup, backupIdx).backupTimestampStop, repoIdx,
-                            infoPgCipherPass(infoBackupPg(infoBackup)));
+                        result = restoreBackupData(backupSetRequested, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                         break;
                     }
                 }
@@ -395,19 +381,25 @@ restoreBackupSet(void)
             }
         }
 
-        // If still no backup set to use after checking all the repos required to be checked, then error
+        // Still no backup set to use after checking all the repos required to be checked?
         if (result.backupSet == NULL)
         {
             if (backupSetRequested != NULL)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
+            else if (timeTargetEpoch != 0 && lstSize(backupCandidateList) > 0)
+            {
+                LOG_WARN_FMT(
+                    "unable to find backup set with stop time less than '%s', latest backup set will be used",
+                    strZ(cfgOptionStr(cfgOptTarget)));
+
+                // Since the repos were scanned in priority order, use the first candidate found
+                result = restoreBackupData(
+                    ((RestoreBackupData *)lstGet(backupCandidateList, 0))->backupSet,
+                    ((RestoreBackupData *)lstGet(backupCandidateList, 0))->repoIdx,
+                    ((RestoreBackupData *)lstGet(backupCandidateList, 0))->backupCipherPass);
+            }
             else
                 THROW(BackupSetInvalidError, "no backup set found to restore");
-        }
-        else if (timeTargetEpoch != 0 && result.backupTimestampStop >= timeTargetEpoch)
-        {
-            LOG_WARN_FMT(
-                "unable to find backup set with stop time less than '%s', latest backup set will be used",
-                strZ(cfgOptionStr(cfgOptTarget)));
         }
     }
     MEM_CONTEXT_TEMP_END();
