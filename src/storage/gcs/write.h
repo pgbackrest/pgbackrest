@@ -10,6 +10,6 @@ GCS Storage File Write
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageWrite *storageWriteGcsNew(StorageGcs *storage, const String *name, uint64_t fileId, size_t blockSize);
+StorageWrite *storageWriteGcsNew(StorageGcs *storage, const String *name, size_t blockSize);
 
 #endif

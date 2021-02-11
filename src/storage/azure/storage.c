@@ -764,7 +764,7 @@ storageAzureNew(
             .container = strDup(container),
             .account = strDup(account),
             .blockSize = blockSize,
-            .host = host == NULL ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : host,
+            .host = host == NULL ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : strDup(host),
             .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 

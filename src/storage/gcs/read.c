@@ -55,21 +55,23 @@ storageReadGcsOpen(THIS_VOID)
 
     bool result = false;
 
-    // Request the file
-    MEM_CONTEXT_BEGIN(this->memContext)
-    {
-        this->httpResponse = storageGcsRequestP(
-            this->storage, HTTP_VERB_GET_STR, .uri = this->interface.name, .allowMissing = true, .contentIo = true);
-    }
-    MEM_CONTEXT_END();
+    THROW(AssertError, "NOT YET IMPLEMENTED");
 
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
-    }
-    // Else error unless ignore missing
-    else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strZ(this->interface.name));
+    // // Request the file
+    // MEM_CONTEXT_BEGIN(this->memContext)
+    // {
+    //     this->httpResponse = storageGcsRequestP(
+    //         this->storage, HTTP_VERB_GET_STR, .uri = this->interface.name, .allowMissing = true, .contentIo = true);
+    // }
+    // MEM_CONTEXT_END();
+    //
+    // if (httpResponseCodeOk(this->httpResponse))
+    // {
+    //     result = true;
+    // }
+    // // Else error unless ignore missing
+    // else if (!this->interface.ignoreMissing)
+    //     THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

@@ -17,12 +17,12 @@ Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageGcsKeyTypeShared,
-    storageGcsKeyTypeSas,
+    storageGcsKeyTypeNone,
+    storageGcsKeyTypeService,
 } StorageGcsKeyType;
 
-#define STORAGE_GCS_KEY_TYPE_SHARED                                 "shared"
-#define STORAGE_GCS_KEY_TYPE_SAS                                    "sas"
+#define STORAGE_GCS_KEY_TYPE_NONE                                   "none"
+#define STORAGE_GCS_KEY_TYPE_SERVICE                                "service"
 
 /***********************************************************************************************************************************
 Defaults
@@ -33,8 +33,8 @@ Defaults
 Constructors
 ***********************************************************************************************************************************/
 Storage *storageGcsNew(
-    const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *host,
+    const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
+    const String *project, StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *host,
     const String *endpoint, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif

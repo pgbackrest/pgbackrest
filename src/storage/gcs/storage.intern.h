@@ -15,16 +15,17 @@ typedef struct StorageGcs StorageGcs;
 /***********************************************************************************************************************************
 GCS query tokens
 ***********************************************************************************************************************************/
-#define GCS_QUERY_COMP                                              "comp"
-    STRING_DECLARE(GCS_QUERY_COMP_STR);
-#define GCS_QUERY_RESTYPE                                           "restype"
-    STRING_DECLARE(GCS_QUERY_RESTYPE_STR);
-#define GCS_QUERY_VALUE_CONTAINER                                   "container"
-    STRING_DECLARE(GCS_QUERY_VALUE_CONTAINER_STR);
+// #define GCS_QUERY_COMP                                              "comp"
+//     STRING_DECLARE(GCS_QUERY_COMP_STR);
+// #define GCS_QUERY_RESTYPE                                           "restype"
+//     STRING_DECLARE(GCS_QUERY_RESTYPE_STR);
+// #define GCS_QUERY_VALUE_CONTAINER                                   "container"
+//     STRING_DECLARE(GCS_QUERY_VALUE_CONTAINER_STR);
 
 /***********************************************************************************************************************************
 Perform an GCS Request
 ***********************************************************************************************************************************/
+/*
 // Perform async request
 typedef struct StorageGcsRequestAsyncParam
 {
@@ -68,7 +69,7 @@ typedef struct StorageGcsRequestParam
     storageGcsRequest(this, verb, (StorageGcsRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 HttpResponse *storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam param);
-
+*/
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
