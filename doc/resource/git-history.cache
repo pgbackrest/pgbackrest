@@ -1,5 +1,716 @@
 [
     {
+        "commit": "aadc9e2fe6ac54783e61c1ff1660feea4d7b1da0",
+        "date": "2021-02-08 09:08:16 -0500",
+        "subject": "v2.32: Repository Commands"
+    },
+    {
+        "commit": "d350d1cc2139038d6f45cfcb5b59a5dc5994d269",
+        "date": "2021-02-05 11:48:07 -0500",
+        "subject": "Improve expire command documentation."
+    },
+    {
+        "commit": "b65c370346948708af6f762770836aa27b1acf86",
+        "date": "2021-02-05 10:39:03 -0500",
+        "subject": "Add repo-get command."
+    },
+    {
+        "commit": "218cd078a65f4cf15191cc9232eda8d576523592",
+        "date": "2021-02-05 10:07:43 -0500",
+        "subject": "Add repo-ls command."
+    },
+    {
+        "commit": "73f61a1f60856d6d7a05d36458981c46222cf3cf",
+        "date": "2021-02-04 17:24:42 -0500",
+        "subject": "Add missed comment."
+    },
+    {
+        "commit": "9154d730308f4bf7a37e4a7c513d45b845d2a2cd",
+        "date": "2021-02-02 17:05:55 -0500",
+        "subject": "Add -g accidentally removed in 4e8d469f.",
+        "body": "The tests all run fine without debug info but gdb and valgrind are a lot less useful without it."
+    },
+    {
+        "commit": "4b46115345c8eddaa658bc2051dba30676444fef",
+        "date": "2021-02-02 13:43:14 -0500",
+        "subject": "Add archive-mode-check option.",
+        "body": "This option disallows the PostgreSQL archive_mode=always setting and disabling it allows the setting."
+    },
+    {
+        "commit": "101bf5d11466990092530709e419e83b0d9ce4d4",
+        "date": "2021-02-01 14:50:22 -0500",
+        "subject": "Log configuration parameters in config test harness.",
+        "body": "This makes it easier to find the current configuration in tests."
+    },
+    {
+        "commit": "9baf5d7da7bc7107584c613ccf8ef7192d304ef5",
+        "date": "2021-02-01 14:42:22 -0500",
+        "subject": "Set dry-run before updating options in config test harness.",
+        "body": "This is the same order that is used in cfgLoad() so apply it here as well.\n\nAlso remove vestigial HRN_FEATURE_STORAGE define."
+    },
+    {
+        "commit": "67d444b9e8673aafa6c68ef14e8a7352dda9571e",
+        "date": "2021-02-01 09:22:01 -0500",
+        "subject": "Add bufEmpty().",
+        "body": "This seems more readable than bufUsed() == 0, just like 7d6c0319."
+    },
+    {
+        "commit": "7d6c0319f0cafa1b0ac0d62db57f3970290b40e2",
+        "date": "2021-01-29 14:27:56 -0500",
+        "subject": "Add lstEmpty(), strLstEmpty(), and varLstEmpty().",
+        "body": "This seems more readable than lst*Size() == 0.\n\nHopefully this will also eliminate usage of lst*Size() > 0/lst*Size() != 0 variants for the inverse."
+    },
+    {
+        "commit": "5281e314221538ca2c09a36cd0a3110458457dbe",
+        "date": "2021-01-27 17:25:13 -0500",
+        "subject": "Add configurable error handlers.",
+        "body": "The stackTrace and memContext error handlers were hard-coded which made testing the error module in isolation impossible.\n\nMaking the error handlers configurable also makes adding new ones in the future easier."
+    },
+    {
+        "commit": "8e9f04cc3290f378b90120243b3694dfb113fe16",
+        "date": "2021-01-27 16:54:41 -0500",
+        "subject": "Add HRN_INTEST_* define to indicate when a test is being run.",
+        "body": "This is useful for initialization that needs to be done for the test and all subsequent tests.\n\nUse the new defines to implement initialization for sockets and statistics."
+    },
+    {
+        "commit": "d5b919e65772557f98a211a1e1628c8192053df2",
+        "date": "2021-01-27 16:33:01 -0500",
+        "subject": "Update expire command log messages with repo prefix.",
+        "body": "In preparation for multi-repo support, a repo tag is added in this commit to the expire command log and error messages. This change also affects the expect logs and the user-guide. The format of the tag is \"repoX:\" where X is the repo key used in the configuration.\r\n\r\nUntil multi-repo support has been completed, this tag will always be \"repo1:\"."
+    },
+    {
+        "commit": "5d34bf3f38ff8ce3f88c8aed6c6ff01eb929d62b",
+        "date": "2021-01-27 11:50:10 -0500",
+        "subject": "Move cvtDoubleToStr() to strNewDbl().",
+        "body": "This is a more logical location and it reduces the dependencies required to compile the common/convert module."
+    },
+    {
+        "commit": "87eb081a8f7bf35f7f993316a17d5d42ad225176",
+        "date": "2021-01-27 10:57:42 -0500",
+        "subject": "Make unit test builds incremental based on coverage in prior tests.",
+        "body": "When building tests only include files covered by the current test or by prior tests. This increases performance (less compilation and linking) and also helps detect cross-dependencies in the code. Since there are currently cross-dependencies the depend option is used to document them and allow compilation. The idea is to resolve them incrementally over time.\n\nAdd the harness option to include harness modules when the minimum requirements for compilation are met.\n\nAdd the feature option to indicate which features are now available in the harness (based on source modules already tested). This allows conditional compilation in harness modules when some features are not yet available."
+    },
+    {
+        "commit": "73a8e91868f80b21e35685966aec343cca6a9c7a",
+        "date": "2021-01-27 10:29:23 -0500",
+        "subject": "Disable DEBUG_TEST_TRACE when NDEBUG defined.",
+        "body": "The underlying functions used by the FUNCTION_TEST*() macros will not be able when NDEBUG is defined so disable them.\n\nIt would be better to change #ifndef NDEBUG to #ifdef DEBUG_TEST_TRACE where needed to bring these into alignment but that will be a larger effort best undertaken separately."
+    },
+    {
+        "commit": "088df03355be88150e8a91c9d51dd73c895f5e4c",
+        "date": "2021-01-26 19:59:14 -0500",
+        "subject": "Fix indentation in .cirrus.yml."
+    },
+    {
+        "commit": "14f2b41bdaf44eb697b80cbdf58289235234bb74",
+        "date": "2021-01-26 19:58:28 -0500",
+        "subject": "Fix .editorconfig indent for yaml files."
+    },
+    {
+        "commit": "59e57c7231488006e5a3681dc72c9328d1998450",
+        "date": "2021-01-26 19:55:20 -0500",
+        "subject": "Remove storageLocal() dependency from common/parse module.",
+        "body": "storageLocal() requires the storage helper which is a huge dependency for this module.\n\nPass in a storage object instead."
+    },
+    {
+        "commit": "468507843f0217f5eb7e9ba437691f4b6dcdb760",
+        "date": "2021-01-26 19:34:39 -0500",
+        "subject": "Replace storageLocal() with storageTest in postgres/interface test."
+    },
+    {
+        "commit": "77823af53db1e8efb43def926e5b5e63d989c8c4",
+        "date": "2021-01-26 19:31:48 -0500",
+        "subject": "Add test in common/error module.",
+        "body": "This is required for coverage when the common/error module is run with just the source files required to make it run, rather than all source files as we do now.\n\nLikely something in the harness is providing coverage, but cover it explicitly so the coverage won't be lost if the harness changes."
+    },
+    {
+        "commit": "85ad1aa2be9a2702dbcd923bb1a4e08abc4c7445",
+        "date": "2021-01-26 12:47:52 -0500",
+        "subject": "Remove version comment left over from Perl."
+    },
+    {
+        "commit": "456a300bb703024df46cbc34746649c7b54181b2",
+        "date": "2021-01-26 12:10:24 -0500",
+        "subject": "Remove too-verbose braces in switch statements.",
+        "body": "The original intention was to enclose complex code in braces but somehow braces got propagated almost everywhere.\n\nDocument the standard for braces in switch statements and update the code to reflect the standard."
+    },
+    {
+        "commit": "f669da7dcc228da2167b6ad1966a9c035506553f",
+        "date": "2021-01-26 11:25:29 -0500",
+        "subject": "Use minio latest in documentation and integration tests.",
+        "body": "At one time Minio had stability problems with latest but that appears to be resolved for the last year or so.\n\nUse latest so we'll know if something breaks since Minio is frequently used in production."
+    },
+    {
+        "commit": "2e60b937097313be135bce551b59e3f6b9ebb51a",
+        "date": "2021-01-26 11:21:36 -0500",
+        "subject": "Add backup verification to internal verify command.",
+        "body": "This is phase 2 of verify command development (phase 1 was processing the archives and phase 3 will be reconciling the archives and backups). In this phase the backups are verified by verifying each file listed in the manifest for the backup and creating a result set with the list of invalid files, if any. A summary is then rendered.\r\n\r\nUnit tests have been added and duplicate tests have been removed."
+    },
+    {
+        "commit": "5d48dd2fb3717167062acf7c157d0caffb77b2e4",
+        "date": "2021-01-25 11:33:41 -0500",
+        "subject": "Use explicit characters instead of Posix class in restore expression.",
+        "body": "It is not clear how portable/supported the Posix character classes are. This way seems simpler and more portable.\n\nUpdated from 5c98157b."
+    },
+    {
+        "commit": "e251ec574a29b9137defc0f493bc84ce5b82014a",
+        "date": "2021-01-25 11:14:28 -0500",
+        "subject": "Add note about removing configuration to stanza-delete documentation."
+    },
+    {
+        "commit": "00fac1c0d18aef6c29067bb00500abc5867f702c",
+        "date": "2021-01-25 09:19:05 -0500",
+        "subject": "Improve info command text output and --set handling.",
+        "body": "The info command provides total sizes for files in the backup on the database as well as the repository. The text output and associated user documentation has been updated to provide more clarity regarding the sizes being displayed.\n\nIn addition, the info command is updated to allow a user to optionally specify the repository when requesting a specific backup set. In this case, the text output will reflect the status of the stanza, the cipher types and archive min/max over all the repositories instead of a single repository when the repo option is specified."
+    },
+    {
+        "commit": "8e48308b0b4110cc11276231c4dee2067ca54e38",
+        "date": "2021-01-24 18:30:14 -0500",
+        "subject": "Add XML::Checker::Parser to MacOS Perl modules."
+    },
+    {
+        "commit": "ee71eb28c4ea7986cfd86cd00a9cd30cd058669a",
+        "date": "2021-01-24 16:27:00 -0500",
+        "subject": "Add .editorconfig to help enforce project style."
+    },
+    {
+        "commit": "4e8d469f4d02e0956fcbafc54e762252c8964513",
+        "date": "2021-01-24 16:24:14 -0500",
+        "subject": "Use configure to generate Makefile variables for unit tests.",
+        "body": "The unit test Makefile generation was a hodge-podge of constants and rules based on distros/versions that easily got out of date and did not work on an unknown system. All of this dates from the mixed Perl/C unit test implementation.\n\nInstead use configure to generate most of the important Makefile variables, which allows the unit tests to run on multiple platforms, e.g. MacOS and FreeBSD.\n\nThere is plenty of work to be done here and not all the unit tests work on MacOS and FreeBSD for various reasons.\n\nAs a POC update the MacOS and FreeBSD tests on Cirrus-CI to run a few command unit tests."
+    },
+    {
+        "commit": "ef2dc6d3f4fe10251e5ed67375723ec20b87e096",
+        "date": "2021-01-24 15:48:32 -0500",
+        "subject": "Add chmod to make file removal after tests more reliable.",
+        "body": "MacOS does not allow files to be removed recursively unless the owner has write and execute permissions on all the directories.\n\nSome tests leave the permissions in a bad state so fix them up before trying to delete."
+    },
+    {
+        "commit": "04e84da0effa5d3be312c123e5203a9ebc1d04d3",
+        "date": "2021-01-24 15:35:40 -0500",
+        "subject": "Allow the make command to be configured for test.pl."
+    },
+    {
+        "commit": "aafd2f528d0536f4a83cb7086b55bb6ff1e6d89c",
+        "date": "2021-01-24 15:29:10 -0500",
+        "subject": "Cast constants explicitly in command/backupCommon test.",
+        "body": "Clang was not clear that these constants should be uint64_t.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "d922cb6b8e3995cf0303184e2a2c24ed36f2d56b",
+        "date": "2021-01-24 15:25:02 -0500",
+        "subject": "Add wheel as possible group name in storage/posix test.",
+        "body": "Some platforms use wheel as the group for symlinks instead of root."
+    },
+    {
+        "commit": "88e54ee6c7156da4359134cfb2838925d16bc315",
+        "date": "2021-01-24 15:22:29 -0500",
+        "subject": "More reliable log expect in common/log test.",
+        "body": "The exact message is platform dependent so get the platform error to use in the expect.\n\nIt doesn't matter what the message is as long as there is an error and it is logged."
+    },
+    {
+        "commit": "cbccae05b8619019a17dd8bfe2fca8cc7f7cb098",
+        "date": "2021-01-24 15:18:02 -0500",
+        "subject": "Skip lz4 in performance/storage test when it is not present."
+    },
+    {
+        "commit": "fda105ebd18f050d8071f62add2933ecbff8b8a7",
+        "date": "2021-01-24 15:15:50 -0500",
+        "subject": "Add casts to performance/storage test for 32-bit architectures."
+    },
+    {
+        "commit": "d2057c53bd91ffb96d46d4ee71cc8029d30d6d49",
+        "date": "2021-01-24 15:06:38 -0500",
+        "subject": "Use YAML::Any module instead of YAML::XS in Perl.",
+        "body": "YAML::XS requires libyaml so it not as portable as pure Perl versions of YAML.\n\nInstead of using YAML:PP just use the general YAML::Any module which uses whatever is installed. We are not concerned about performance for YAML so whatever works is fine."
+    },
+    {
+        "commit": "ea0dc8c2cb5c7e6e9d4b09b4fbf451b2d30bfdc8",
+        "date": "2021-01-24 13:39:13 -0500",
+        "subject": "Add header required for test harness to compile on FreeBSD."
+    },
+    {
+        "commit": "5c98157bce2ae74a11c04cc6ecc01cd067fadb9a",
+        "date": "2021-01-24 11:46:55 -0500",
+        "subject": "Use [[:blank:]] instead of \\s for leading space matching in restore.",
+        "body": "This is more accurate since we don't really want lf/cr anyway, though the lines have already been split so that's not possible in this code for lf.\n\nFound on MacOS M1. FreeBSD also seems to be fine with the new expression."
+    },
+    {
+        "commit": "3b05f77d083d03c34f47a2372e7eeb684ad5b655",
+        "date": "2021-01-24 09:08:26 -0500",
+        "subject": "Add optional warnings to configure.",
+        "body": "These warnings do not exist on all compilers/versions but are useful when present."
+    },
+    {
+        "commit": "4a83ca4f78c75e905b4b84aff1529ba91213c4dc",
+        "date": "2021-01-24 08:55:13 -0500",
+        "subject": "Remove semicolons from TEST_RESULT*() macros.",
+        "body": "These prevented the macros from being used in single line statements (e.g. if-else).\n\nAlso fix some missing semicolons in macro invocations."
+    },
+    {
+        "commit": "5cb9f166ecf191891f7defcb41d03f4b0ea93475",
+        "date": "2021-01-24 08:23:59 -0500",
+        "subject": "Add stderr to unit test error messages.",
+        "body": "Messages on stderr were being lost due to the error suppression used to customize the error message.\n\nAlso update the formatting to be more informative and concise."
+    },
+    {
+        "commit": "f95850c546ae6c5407eb0b1682362101d5e77c95",
+        "date": "2021-01-24 08:12:31 -0500",
+        "subject": "Fix logical -> bitwise boolean operator in backup unit test.",
+        "body": "This unset more than the storageFeatureCompress flag but the test was not affected.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "a7d32259cf00565986d065c93be25dc82bb1a024",
+        "date": "2021-01-24 08:05:31 -0500",
+        "subject": "Avoid NULL pointer arithmetic in MemContext unit test.",
+        "body": "Similar to b23a2a0b. In this case add 1 to avoid a NULL pointer.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "fe8ef3197e85ff30950867254cba15b9112f34bd",
+        "date": "2021-01-24 07:58:07 -0500",
+        "subject": "Add MacOS error messages to RegExp unit test."
+    },
+    {
+        "commit": "483695cac6508b03b621742eef9940f4c1fe0bc9",
+        "date": "2021-01-22 13:16:48 -0500",
+        "subject": "Don't pass --ignore-missing-args to rsync on MacOS.",
+        "body": "MacOS has a very old version of rsync that does not support this option.\n\nRather than require a newer version of rsync exclude the option since the plan is to remove the requirement for it."
+    },
+    {
+        "commit": "708c3e9135d69a2d7ac670fe8efbc4ff08b95fa5",
+        "date": "2021-01-22 12:52:30 -0500",
+        "subject": "Move version check against release notes to release.pl.",
+        "body": "This is a more appropriate place for the check and means test.pl can avoid loading any XML files if --no-gen is specified.\n\nThe XML::Checker::Parser module originally selected for XML in Perl is not very portable so the requirement reduces the number of platforms where tests can be run."
+    },
+    {
+        "commit": "fdf1c299f90ccc3b02758af072a58e5d20eaf2c1",
+        "date": "2021-01-22 11:51:36 -0500",
+        "subject": "Remove unused VerifyFileResult struct."
+    },
+    {
+        "commit": "b23a2a0baf51b27c3c02fc99074fb033ad61d4dd",
+        "date": "2021-01-22 10:48:22 -0500",
+        "subject": "Use uintptr_t in ASSERT_ALLOC_VALID() to avoid pointer arithmetic.",
+        "body": "Clang justifiably complains about pointer arithmetic on a known NULL value during testing. We know this is fine but use uintptr_t to silence the warnings.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "185a508f44bbb4cf939658424c2bdb8012cfcb0f",
+        "date": "2021-01-22 09:50:29 -0500",
+        "subject": "Add format attribute to stackTraceFmt().",
+        "body": "Let the compiler know this is a printf-style function so a non-literal format is allowed.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "a5ebaab249764ccb0727b481d4f7a65512117b34",
+        "date": "2021-01-22 09:16:36 -0500",
+        "subject": "Use enum for signalType in exitSignalName().",
+        "body": "This should have been an enum all along but was somehow missed.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "547b297387b2097e457c2893beefc1cb1d3ccd1d",
+        "date": "2021-01-22 09:04:28 -0500",
+        "subject": "Use uint variant to store enum in verifyProtocol().",
+        "body": "Avoid the need for a cast by using a matching type.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "8d883ea76b2e4d48bea3772367ca3e3257434a07",
+        "date": "2021-01-21 18:30:24 -0500",
+        "subject": "Fix return type for PQresultStatus().",
+        "body": "Found on MacOS M1."
+    },
+    {
+        "commit": "bc25e9bf056b7082a1e69a7a59affb1b61ae6f51",
+        "date": "2021-01-21 17:36:33 -0500",
+        "subject": "Change variant to uint when building option lists.",
+        "body": "Enums are uints on most platforms so this works without casting.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "0869b8afffed2664331a68f72194648593dc7b45",
+        "date": "2021-01-21 17:29:24 -0500",
+        "subject": "Cast result of cfgParseOptionId() to int.",
+        "body": "It would probably make more sense to add an \"invalid\" enum value, but at least fix the cast for now. The function was originally designed to interface with Perl which required -1 in this case.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "3f72eca90954e26cb060037b97aada4f6f323ccf",
+        "date": "2021-01-21 17:26:12 -0500",
+        "subject": "Remove useless casts of vsnprintf() return value.",
+        "body": "The return value is not checked because we are happy with a truncated result in this case, which is guaranteed by passing the buffer size.\n\nFound on MacOS M1."
+    },
+    {
+        "commit": "6a992a5884976555c20754d57b7ea1f1c30b7b5e",
+        "date": "2021-01-21 17:23:24 -0500",
+        "subject": "Add missing mode_t casts.",
+        "body": "Found on MacOS M1 where mode_t is short."
+    },
+    {
+        "commit": "4b3200961ed8aca74e2fb47feff40b9206fd59b4",
+        "date": "2021-01-21 17:20:13 -0500",
+        "subject": "Fix cast for timeval.tv_usec.",
+        "body": "Found testing on MacOS M1."
+    },
+    {
+        "commit": "6f529155b673fc5c04a51e6d2549655fe2667f3a",
+        "date": "2021-01-21 17:17:03 -0500",
+        "subject": "Remove useless assignment."
+    },
+    {
+        "commit": "f32eb9b94ecf01d12f53a1bd6addeba81e811d7f",
+        "date": "2021-01-21 15:21:50 -0500",
+        "subject": "Partial multi-repository implementation.",
+        "body": "Multi-repository implementations for the archive-push, check, info, stanza-create, stanza-upgrade, and stanza-delete commands.\r\n\r\nMulti-repo configuration is disabled so there should be no behavioral changes between these commands and their current single-repo implementations.\r\n\r\nMulti-repo documentation and integration tests are still in the multi-repo development branch. All unit tests work as multi-repo since they are able to bypass the configuration restrictions."
+    },
+    {
+        "commit": "1333748550d61b98c83f0ea1e730ff8360328a8c",
+        "date": "2021-01-21 14:20:39 -0500",
+        "subject": "Fix incorrect variable in parameter logging."
+    },
+    {
+        "commit": "d3d484b27c8f9b695ef283a789796751cba43531",
+        "date": "2021-01-21 11:59:19 -0500",
+        "subject": "Use standard environment variable format in hrnCfgEnv*().",
+        "body": "The option portion was not being capitalized or replacing - with _.\n\nThe parser does not care, but in cases where we have mixed hrnCfgEnv*()/setenv() calls the env variable might not get cleared, which can lead to funny test results."
+    },
+    {
+        "commit": "4e56948128878cbeb8ac6faf89d65aae644679bc",
+        "date": "2021-01-19 12:07:05 -0500",
+        "subject": "Compensate for numeric auto conversion in newer Perls."
+    },
+    {
+        "commit": "d9fae0984853173f9f867f2eaf640a21e424ec32",
+        "date": "2021-01-19 11:59:47 -0500",
+        "subject": "Remove errant todo comment.",
+        "body": "The test is not a duplicate of the one above because it adds the archive-async option."
+    },
+    {
+        "commit": "a1365b26d4c2383eaacea3714eeb521435ca79aa",
+        "date": "2021-01-18 23:41:09 -0500",
+        "subject": "Remove duplicate mkdir for /tmp/pgbackrest in Vagrantfile."
+    },
+    {
+        "commit": "8322dfd7af97e307b952cfb37e6a65b65f55be0f",
+        "date": "2021-01-18 23:39:14 -0500",
+        "subject": "Add pkg-config package to Vagrantfile.",
+        "body": "Newer Ubuntu versions do not install this package by default."
+    },
+    {
+        "commit": "49582c13cfbb49736cc50d333ec74e5be1b9388e",
+        "date": "2021-01-18 23:05:55 -0500",
+        "subject": "Use test lock path in archive-get test.",
+        "body": "The default lock path should fail since the test VM gives ownership of /tmp to root.\n\nFor some reason this was not working as expected under u18 but it fails under u20."
+    },
+    {
+        "commit": "065b5f93aec471b4ac5c189520eb354a3d078b5f",
+        "date": "2021-01-15 10:56:51 -0500",
+        "subject": "Improve test coverage list handling.",
+        "body": "All unit tests now require full coverage so the \"full\" keyword is obsolete and has been removed.\n\nThe covered code modules are simply listed, with only \"no code\" modules annotated."
+    },
+    {
+        "commit": "a8fb285756853bbe2f7b2e88bc817236d23b7ed8",
+        "date": "2021-01-15 10:15:52 -0500",
+        "subject": "Improve archive-get performance.",
+        "body": "Check that archive files exist in the main process instead of the local process. This means that the archive.info file only needs to be loaded once per execution rather than once per file to get.\r\n\r\nStop looking when a file is missing or in error. PostgreSQL will never request anything past the missing file so there is no point in getting them. This also reduces \"unable to find\" logging in the async process.\r\n\r\nCache results of storageList() when looking for multiple files to reduce storage I/O.\r\n\r\nLook for all requested archive files in the archive-id where the first file is found. They may not all be there, but this reduces the number of list calls. If subsequent files are in another archive id they will be found on the next archive-get call."
+    },
+    {
+        "commit": "38583b6414d8d55c92a25a1d32c4bc9457b912c4",
+        "date": "2021-01-15 08:59:16 -0500",
+        "subject": "Add cfgOptionValid() check to assert in cfgOptionIdxTest().",
+        "body": "Skip the rest of the assert if the option is not valid since this function is intended to work with invalid options."
+    },
+    {
+        "commit": "7f263dceb7aee6c8d43313ac954d279868be3661",
+        "date": "2021-01-15 08:30:56 -0500",
+        "subject": "Fix inverted cfgOption*() calls.",
+        "body": "These currently work because repoIdx is always 0."
+    },
+    {
+        "commit": "298cc4d5e5d79b400beac4b70352e625e56b0ed6",
+        "date": "2021-01-14 10:39:25 -0500",
+        "subject": "Remove non-conforming periods and reformat some comments."
+    },
+    {
+        "commit": "c2c702c09d4ac3ea858d0450695a789c999b99da",
+        "date": "2021-01-13 17:32:42 -0500",
+        "subject": "Add co7 package to support llvm.",
+        "body": "This is required for new package versions.\n\nAlso remove the obsolete 9.2 package and update the supported versions list."
+    },
+    {
+        "commit": "a57e0be395146aa13d136b583a015c8077adbadd",
+        "date": "2021-01-13 13:01:40 -0500",
+        "subject": "Add duplicate WAL test to synchronous archive-get."
+    },
+    {
+        "commit": "22fd223fc393908f6f0d5f0a64ee8f93317ce24e",
+        "date": "2021-01-13 10:24:47 -0500",
+        "subject": "Improve logging in archive-get command.",
+        "body": "Append \"asynchronously\" to messages when the async process fetched the file (not in the actual async process log, though).\n\nAdd \"repo1\" to make it clear what archive we are talking about. This is not very useful by itself but soon we'll be able to add the archive id, which is very useful.\n\nAdd constants for messages that are used multiple times to ensure they stay consistent."
+    },
+    {
+        "commit": "c6aaf66e9d8c83ba7443bcce145802b1147a4daf",
+        "date": "2021-01-13 07:49:47 -0500",
+        "subject": "Add FUNCTION_LOG_RETURN_STRUCT() and update where appropriate.",
+        "body": "The FUNCTION_LOG_RETURN() macro requires logging macros (e.g. FUNCTION_LOG_*_TYPE and FUNCTION_LOG_*_FORMAT) when returning a struct but these macros don't deliver much value since they only output the name of the struct rather than the contents. A copy of the struct is also made during this operation, which is wasteful.\n\nFUNCTION_LOG_RETURN_STRUCT() does not make a copy of the struct and does not require any logging macros. Returned structures are logged as \"struct\" but this could be made more accurate using __typeof in the future.\n\nStructures as parameters are not addressed here and work as before, i.e. they require logging macros."
+    },
+    {
+        "commit": "b21ed979821b247ed50ccd48c515ed3d742dc9da",
+        "date": "2021-01-12 18:47:19 -0500",
+        "subject": "Check for missing files in queueNeed().",
+        "body": "Missing files would indicate that another process is running on the same spool path, which would be a very bad thing.\n\nThis check doesn't cost any additional I/O so it seems like a good idea."
+    },
+    {
+        "commit": "aae6f06bcf69794e843486bb88c490f180d5f2e5",
+        "date": "2021-01-12 18:20:28 -0500",
+        "subject": "Add tests for the archive-get command.",
+        "body": "Provide additional coverage for less common use cases."
+    },
+    {
+        "commit": "aeee83044d97555723fdc6039be1c4d51e329d28",
+        "date": "2021-01-12 12:38:32 -0500",
+        "subject": "Fix resume after partial delete of backup by prior resume.",
+        "body": "If files other than backup.manifest.copy were left in a backup path by a prior resume then the next resume would skip the backup rather than removing it. Since the backup path still existed, it would be found during backup label generation and cause an error if it appeared to be later than the new backup label. This occurred if the skipped backup was full.\r\n\r\nThe error was only likely on object stores such as S3 because of the order of file deletion. Posix file systems delete from the bottom up because directories containing files cannot be deleted. Object stores do not have directories so files are deleted in whatever order they are provided by the list command. However, the issue can be reproduced on a Posix file system by manually deleting backup.manifest.copy from a resumable backup path.\r\n\r\nFix the issue by removing the resumable backup if it has no manifest files. Also add a new warning message for this condition.\r\n\r\nNote that this issue could be resolved by running expire or a new full backup."
+    },
+    {
+        "commit": "96fd678662775032254906ed7365fad5c223ab74",
+        "date": "2021-01-11 15:15:25 -0500",
+        "subject": "Add job-retry and job-retry-interval options.",
+        "body": "These options specify the number of local worker job retries and the retry interval after one immediate retry.\r\n\r\nThere is some value in allowing retries to be specified by the user but for the most part these options are for suppressing retries during testing, which can save a lot of time. The bug introduced in d1d25c7 and fixed in 8b86d5e also suggests it is better not to use retries in tests.\r\n\r\nRemove the default delayed retries for archive-get/archive-push, leaving only the immediate retry. These commands are retried by PostgreSQL so it doesn't make sense to do too many retries internally.\r\n\r\nThese options are currently internal."
+    },
+    {
+        "commit": "8b86d5ea7a7dcdfaa087f1de05d4b1332235124d",
+        "date": "2021-01-11 11:34:03 -0500",
+        "subject": "Restore storageRepo() call in archiveGetProtocol().",
+        "body": "This call was removed by d1d25c71, which worked for archivePushProtocol() and verifyProtocol() since the encryption options are passed from the main process.\n\narchiveGetProtocol() still retrieves these options in the local process so the repo storage must be loaded first."
+    },
+    {
+        "commit": "f35d69c1c73719caaa5b6222ea6a836b84f933d5",
+        "date": "2021-01-08 16:48:32 -0500",
+        "subject": "Refactor common/archiveGet unit test.",
+        "body": "The test was pretty old and written in stages during the migration, so storage use was a bit archaic and the organization was poor.\n\nUpdate using the new storage macros and reorganize the tests to provide better coverage."
+    },
+    {
+        "commit": "8567b7f733ce821dad8955a8086209e9b592ebf2",
+        "date": "2021-01-08 16:29:56 -0500",
+        "subject": "Make archive-get locality error generate a global.error file.",
+        "body": "Moving this error into the try block ensures that a global.error file is generated, which will be seen by archive-get."
+    },
+    {
+        "commit": "7d3d6ecbe1e04d577687e8d4da7465c40f211344",
+        "date": "2021-01-08 16:14:26 -0500",
+        "subject": "Add storage test macros for common operations.",
+        "body": "The macros should make it much easier to write complex tests, especially when compression and encryption are involved.\n\nUpdate the command/archiveGet test to show how the new macros are used."
+    },
+    {
+        "commit": "97c260bb56b14842e5fa272b6f5ef54cbc880dcb",
+        "date": "2021-01-08 12:49:33 -0500",
+        "subject": "Add TEST_RESULT_STRLST_*() unit test macros.",
+        "body": "This avoids the need for strLstJoin() when testing lists.\n\nLists are \\n delimited (rather than command or pipe) so that non-trivial lists can be more easily diff'd."
+    },
+    {
+        "commit": "1ef36b403235320269bc4a4f232ff0157447f351",
+        "date": "2021-01-08 10:54:17 -0500",
+        "subject": "Add clarifications to unit test string diff messages."
+    },
+    {
+        "commit": "17e29eb1bdeb0fd70516eb1f835e3b87062923ca",
+        "date": "2021-01-08 10:45:26 -0500",
+        "subject": "Improve formatting of unit test titles.",
+        "body": "Add separation and some visual cues to help identify the start of a test.\n\nAlso add a counter which can be used to search for a specific test, which is useful if there is a lot of debug output to search through."
+    },
+    {
+        "commit": "dc0284412bf17cfc65218702f081dfca6da0b9a6",
+        "date": "2021-01-08 10:35:26 -0500",
+        "subject": "Add test paths for pg, repo, and spool.",
+        "body": "These may be used as standard locations for these paths in tests."
+    },
+    {
+        "commit": "6bdbcdc7fe9edf51979ec082cf6616e978dc2b6e",
+        "date": "2021-01-08 10:32:57 -0500",
+        "subject": "Create TEST_PATH define in test.c.",
+        "body": "This allows paths to be constructed without using sprintf(), which makes the tests simpler and faster."
+    },
+    {
+        "commit": "ca9c1707f020ee52348d488352e2a27fc16e14ec",
+        "date": "2021-01-06 11:36:42 -0500",
+        "subject": "Remove forks from command/archive-get test.",
+        "body": "These were required to deal with the legacy Perl code being unable to load new options between tests.\n\nThe C code does not have this issue so remove the forks and update process ids in the log tests."
+    },
+    {
+        "commit": "6e7a3eb38391b17fd82fccb4def1fae72532de4f",
+        "date": "2021-01-05 18:11:28 -0500",
+        "subject": "Remove archive-timeout from test in mock/archive.",
+        "body": "No timeout is expected here but the small timeout prevents errors from being thrown.\n\nThis is not a bug since the error would be thrown on the next archive-get call but it does make the tests harder to debug when there is an error.\n\nIt is not clear why there was a timeout here at all. It is likely cruft from a prior test or a copy/paste error."
+    },
+    {
+        "commit": "656e7112965ddb2fb31234f3bf7cc9d979f6d4af",
+        "date": "2021-01-05 15:14:16 -0500",
+        "subject": "Remove duplicate tests from command/infoTest.",
+        "body": "Tests that are duplicated are being removed from the info command unit tests. Specifically tests where the only thing different was whether a lock was held or not which affects only the status display. Removing these tests will reduce churn in the upcoming multi-repo support."
+    },
+    {
+        "commit": "a7491182dccade65fa84fc40524cac878b32caa3",
+        "date": "2021-01-04 09:18:17 -0500",
+        "subject": "Set build-max to 2 for Github actions.",
+        "body": "Github runners only provide 2 virtual CPUs so the default build-max of 4 is not ideal."
+    },
+    {
+        "commit": "9345fe4cb2e85d2a1273bfb072ccf7a427399350",
+        "date": "2021-01-03 13:56:37 -0500",
+        "subject": "Update LICENSE.txt and PostgreSQL copyright for 2020."
+    },
+    {
+        "commit": "af17bc4b6d249d29617085aae696d630fcffac98",
+        "date": "2020-12-31 15:34:07 -0500",
+        "subject": "Update test to work with different collations.",
+        "body": "The data returned by the protocol has not been sorted yet so it is vulnerable to differences in collation.\n\nMultiple records are not needed for this test so limit it to one path to solve this issue."
+    },
+    {
+        "commit": "0e1612cda16ddad3fa537351b8ef23a4912367d0",
+        "date": "2020-12-31 12:29:11 -0500",
+        "subject": "Remove explicit command lists where they equal the default.",
+        "body": "This reduces noise in the file and new commands will automatically get these options."
+    },
+    {
+        "commit": "108038292c1aa96a261c152d8b7995a20ae01f51",
+        "date": "2020-12-31 12:13:20 -0500",
+        "subject": "Audit options valid for expire command."
+    },
+    {
+        "commit": "0acfcb669e7458ccc518d9fc1c704772be914c76",
+        "date": "2020-12-31 11:10:48 -0500",
+        "subject": "Audit options valid for start/stop commands."
+    },
+    {
+        "commit": "82a75268c1cc7bef2eedacec1c8464e26da00804",
+        "date": "2020-12-31 10:22:09 -0500",
+        "subject": "Remove option exclusions now handled by command role validity.",
+        "body": "These options were explicitly excluded because it was possible for them to be mangled by SSH if they contained spaces.\n\nThey are now excluded by command role validity rules."
+    },
+    {
+        "commit": "09fdde359c8b70653fcafe9ad39fcb25bdbc672b",
+        "date": "2020-12-31 10:08:58 -0500",
+        "subject": "Limit pg option validity and make it command-line only.",
+        "body": "The pg option only has one current usage, to let the backup local know which pg index it should copy files from.\n\nThere are other possible uses for this option, but they need thought, tests, and documentation."
+    },
+    {
+        "commit": "951cfa9e900a5ff98acc2a9ce8df9d83e0314862",
+        "date": "2020-12-31 08:12:35 -0500",
+        "subject": "Remove repo option.",
+        "body": "This option was added in advance of the multi-repo functionality but it has no purpose and it is not clear what the validity rules should be.\n\nThe option will be added back when multi-repo functionality is committed."
+    },
+    {
+        "commit": "e3762945c2344d6d2f8fa727cbbc40e87300e75c",
+        "date": "2020-12-30 17:33:33 -0500",
+        "subject": "Call storageRemoteInfoParse() in prior context to avoid dups.",
+        "body": "This results in fewer data duplications and makes the code less fragile since new data add in storageRemoteInfoParse() does not need to be added to an additional list for duplication."
+    },
+    {
+        "commit": "cc901632337ed9d50801037e1a31ad66ade6ad21",
+        "date": "2020-12-30 16:17:56 -0500",
+        "subject": "Add empty archive array to info command JSON when stanza is missing.",
+        "body": "There is an inconsistency when the JSON is output for the case when a stanza is requested and it does not exist in the repo. This was the only case where the archive array was not added to the JSON. Adding it will simplify the upcoming multi-repo support code.\r\n\r\nAlso, a redundant test was removed rather than updating it for this case."
+    },
+    {
+        "commit": "9bf7dbf6a2684c529da501eb95a1426ebb5d64ca",
+        "date": "2020-12-30 16:03:49 -0500",
+        "subject": "Do not pass pg-local/repo-local to a remote process.",
+        "body": "This was a hack to prevent the remote from loading host settings, which is now handled by option validity for command roles.\n\nThese options are still useful so don't remove them, but do leave them internal for now."
+    },
+    {
+        "commit": "141466875f42f2dc09567efbcf757ad1000e715c",
+        "date": "2020-12-30 10:51:26 -0500",
+        "subject": "Remove redundant command list in repo-s3-key option.",
+        "body": "Use the repo-type command list as similar repo options do."
+    },
+    {
+        "commit": "abb8ebe58b7a1325dd95d967347d221e2b196ba3",
+        "date": "2020-12-29 15:49:37 -0500",
+        "subject": "Limit option validity by command role.",
+        "body": "Building on 23f5712, limit option validity by role. This is mostly for options that weren't needed for certain roles but were harmless. However, the upcoming multi repository functionality requires the granularity implemented here.\r\n\r\nThe remote role benefits since host options can automatically excluded when building the options. Also, many options that are only required for the default role (e.g. repo-retention-full) no longer need to be passed in tests for other roles."
+    },
+    {
+        "commit": "26e81785d92775c6643e800644c6a73d01e54b53",
+        "date": "2020-12-28 15:22:21 -0500",
+        "subject": "Update unit tests for stricter option validity.",
+        "body": "Some tests used options in contexts that are currently valid but are not correct usage, i.e. usage of internal options for the default role.\n\nUpdate these tests in advance of the option validity becoming stricter."
+    },
+    {
+        "commit": "23f5712d022ab34d370b7832813a597088842ca2",
+        "date": "2020-12-28 09:43:23 -0500",
+        "subject": "Allow option validity to be determined by command role.",
+        "body": "Validity by command was not granular enough so numerous options needed be marked internal so users would not stumble across them. Options were also needlessly being passed to roles that had no use for them.\r\n\r\nIntroduce per-role validity lists that depend on what roles are valid per command. Also add a check to ensure that only valid roles are used with a command.\r\n\r\nThis commit adds the functionality but does not introduce any new behavior, i.e. all options are valid for all roles that the command is valid for. A subsequent commit will introduce the new role restrictions to make the changes easier to audit."
+    },
+    {
+        "commit": "715fa7a2f1f52dd1a82bb9ff3b0261ae046b1240",
+        "date": "2020-12-28 08:51:22 -0500",
+        "subject": "Fix indentation error preventing pull requests from being tested."
+    },
+    {
+        "commit": "9e9e7c4a0d59b9dbcdaaefb5b5a2cf51621ef64a",
+        "date": "2020-12-17 09:32:31 -0500",
+        "subject": "Move all parse-related rules to parse module.",
+        "body": "Data required for parsing was spread between the config and defined modules, mostly for historical reasons because the same data was used by Perl.\n\nRequiring all the parse rules to be accessed with function interfaces makes the code more complicated and new rules harder to implement.\n\nInstead, move the data to the parse module so in the most complex cases no interface functions are needed. This reduces the total amount of code and paves the way for more complex parse rules."
+    },
+    {
+        "commit": "f520ecc89a211dbbe22a38c0b887e910bc1f866b",
+        "date": "2020-12-16 15:59:36 -0500",
+        "subject": "Move help data from define.auto.c/config.auto.c to a pack.",
+        "body": "The help data can be represented more compactly in a pack and this separates data needed for help from data needed for parsing, freeing each to have a more appropriate representation."
+    },
+    {
+        "commit": "996de0a3e6901219a84e7c1a20636835daf606a4",
+        "date": "2020-12-16 11:33:51 -0500",
+        "subject": "Remove cfgCmdNone from CFG_COMMAND_TOTAL.",
+        "body": "cfgCmdNone is used to indicate a missing or invalid command so should not be used in the total used for command process."
+    },
+    {
+        "commit": "558ff1e55587645ba033e30f147e56fe444b1276",
+        "date": "2020-12-16 09:59:48 -0500",
+        "subject": "Always advance id when pack field is NULL.",
+        "body": "This was done in the internal versions but not the user-facing function. That meant the field had to be explicitly read after determining it was NULL, which is wasteful.\n\nSince there is only one behavior now, remove pckReadDefaultNull() and move the logic to pckReadNullInternal()."
+    },
+    {
+        "commit": "39963f6aa5f86648da6cc6b36f856585654af28c",
+        "date": "2020-12-14 14:37:23 -0500",
+        "subject": "Remove cfgDefOptionIndexTotal().",
+        "body": "This function was only used in one place, which was better served by cfgOptionGroupIdxTotal()."
+    },
+    {
+        "commit": "7f66ba5762703af2b5ddaa504d092685184ec7c8",
+        "date": "2020-12-10 17:58:59 -0500",
+        "subject": "Remove deprecated option from command/archive-push unit test."
+    },
+    {
+        "commit": "7429aca8fa4269e1370cc31283688b97b0848769",
+        "date": "2020-12-09 17:26:52 -0500",
+        "subject": "Remove redundant distro specification."
+    },
+    {
+        "commit": "d01669aa58cfabeeff859819334b697984e69988",
+        "date": "2020-12-09 15:19:01 -0500",
+        "subject": "Move most tests to Github Actions.",
+        "body": "Testing on Travis-CI has been getting slower (from ~18 minutes to 3-6 hours) and the travis-ci.org service will be terminated at the end of the year. Moving to travis-ci.com is an option but the quotas are too low for our purposes.\n\nInstead use Github Actions, which does not currently have quotas, and runs our current tests with just a few tweaks.\n\nThis still leaves multi-architecture tests on Travis-CI but we may be able to run those and stay within the new quotas.\n\nAlso fix a minor bug in restoreTest.c exposed by Github Actions using a different name for the user and group."
+    },
+    {
+        "commit": "8361a97482c9b481863cf0d7300936a7d3dbe9df",
+        "date": "2020-12-09 12:05:14 -0500",
+        "subject": "Add pack type.",
+        "body": "The pack type is an architecture-independent format for serializing data compactly, inspired by ProtocolBuffers and Avro.\r\n\r\nAlso add ioReadSmall(), which is optimized for small binary reads, similar to ioReadLineParam()."
+    },
+    {
+        "commit": "87996558d2cc12d3795709cf07e9c36ebb21e127",
+        "date": "2020-12-09 08:59:51 -0500",
+        "subject": "Replace double type with time in config module.",
+        "body": "The C code does not use doubles to represent seconds like the Perl code did so time can be represented as an integer which reduces the number of data types that config has to understand.\r\n\r\nAlso remove Variant doubles since they are no longer used.\r\n\r\nNote that not all double code was removed since we still need to display times to the user in seconds and it is possible for the times to be fractional. In the future this will likely be simplified by storing the original user input and using that value when the time needs to be displayed."
+    },
+    {
+        "commit": "a137c6baaa17341ff4c9c85fe5954bbc02f47540",
+        "date": "2020-12-07 11:26:34 -0500",
+        "subject": "Update install-sh, config.guess, and config.sub to latest versions."
+    },
+    {
+        "commit": "ab0500789e762d3a8cedf3c692c2646ea8db9cd6",
+        "date": "2020-12-07 11:13:45 -0500",
+        "subject": "Begin v2.32 development."
+    },
+    {
         "commit": "e116b535e6ad21248c00a6d0d948575ed06c6e38",
         "date": "2020-12-07 09:55:00 -0500",
         "subject": "v2.31: Minor Bug Fixes and Improvements"

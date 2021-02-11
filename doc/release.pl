@@ -225,9 +225,7 @@ eval
 
             # Generate coverage summary
             &log(INFO, "Generate Coverage Summary");
-            executeTest(
-                "${strTestExe} --vm=f32 --no-valgrind --clean --no-optimize --vm-max=3 --coverage-summary",
-                {bShowOutputAsync => true});
+            executeTest("${strTestExe} --vm=f32 --no-valgrind --clean --vm-max=2 --coverage-summary", {bShowOutputAsync => true});
         }
 
         # Remove permanent cache file
