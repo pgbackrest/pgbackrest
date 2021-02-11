@@ -5,6 +5,10 @@ GCS Storage
 
 #include <string.h>
 
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "common/encode.h"
@@ -71,6 +75,7 @@ struct StorageGcs
 
     const String *bucket;                                           // Bucket to store data in
     const String *project;                                          // Project
+    StorageGcsKeyType keyType;                                      // Auth key type
     // const String *sharedKey;                                        // Shared key
     // const HttpQuery *sasKey;                                        // SAS key
     const String *host;                                             // Host name
@@ -101,93 +106,142 @@ storageGcsAuth(
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
     ASSERT(uri != NULL);
+    ASSERT(query != NULL);
     ASSERT(dateTime != NULL);
     ASSERT(httpHeader != NULL);
-    // ASSERT(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR) != NULL);
-    //
-    // MEM_CONTEXT_TEMP_BEGIN()
-    // {
-    //     // Host header is required for both types of authentication
-    //     httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->host);
-    //
-    //     // Shared key authentication
-    //     if (this->sharedKey != NULL)
-    //     {
-    //         // Set required headers
-    //         httpHeaderPut(httpHeader, HTTP_HEADER_DATE_STR, dateTime);
-    //         httpHeaderPut(httpHeader, GCS_HEADER_VERSION_STR, GCS_HEADER_VERSION_VALUE_STR);
-    //
-    //         // Generate canonical headers
-    //         String *headerCanonical = strNew("");
-    //         StringList *headerKeyList = httpHeaderList(httpHeader);
-    //
-    //         for (unsigned int headerKeyIdx = 0; headerKeyIdx < strLstSize(headerKeyList); headerKeyIdx++)
-    //         {
-    //             const String *headerKey = strLstGet(headerKeyList, headerKeyIdx);
-    //
-    //             if (!strBeginsWithZ(headerKey, "x-ms-"))
-    //                 continue;
-    //
-    //             strCatFmt(headerCanonical, "%s:%s\n", strZ(headerKey), strZ(httpHeaderGet(httpHeader, headerKey)));
-    //         }
-    //
-    //         // Generate canonical query
-    //         String *queryCanonical = strNew("");
-    //
-    //         if (query != NULL)
-    //         {
-    //             StringList *queryKeyList = httpQueryList(query);
-    //             ASSERT(!strLstEmpty(queryKeyList));
-    //
-    //             for (unsigned int queryKeyIdx = 0; queryKeyIdx < strLstSize(queryKeyList); queryKeyIdx++)
-    //             {
-    //                 const String *queryKey = strLstGet(queryKeyList, queryKeyIdx);
-    //
-    //                 strCatFmt(queryCanonical, "\n%s:%s", strZ(queryKey), strZ(httpQueryGet(query, queryKey)));
-    //             }
-    //         }
-    //
-    //         // Generate string to sign
-    //         const String *contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
-    //         const String *contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
-    //
-    //         const String *stringToSign = strNewFmt(
-    //             "%s\n"                                                  // verb
-    //             "\n"                                                    // content-encoding
-    //             "\n"                                                    // content-language
-    //             "%s\n"                                                  // content-length
-    //             "%s\n"                                                  // content-md5
-    //             "\n"                                                    // content-type
-    //             "%s\n"                                                  // date
-    //             "\n"                                                    // If-Modified-Since
-    //             "\n"                                                    // If-Match
-    //             "\n"                                                    // If-None-Match
-    //             "\n"                                                    // If-Unmodified-Since
-    //             "\n"                                                    // range
-    //             "%s"                                                    // Canonicalized headers
-    //             "/%s%s"                                                 // Canonicalized account/uri
-    //             "%s",                                                   // Canonicalized query
-    //             strZ(verb), strEq(contentLength, ZERO_STR) ? "" : strZ(contentLength), contentMd5 == NULL ? "" : strZ(contentMd5),
-    //             strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(uri), strZ(queryCanonical));
-    //
-    //         // Generate authorization header
-    //         Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strZ(this->sharedKey)));
-    //         decodeToBin(encodeBase64, strZ(this->sharedKey), bufPtr(keyBin));
-    //         bufUsedSet(keyBin, bufSize(keyBin));
-    //
-    //         char authHmacBase64[45];
-    //         encodeToStr(
-    //             encodeBase64, bufPtr(cryptoHmacOne(HASH_TYPE_SHA256_STR, keyBin, BUFSTR(stringToSign))),
-    //             HASH_TYPE_SHA256_SIZE, authHmacBase64);
-    //
-    //         httpHeaderPut(
-    //             httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account), authHmacBase64));
-    //     }
-    //     // SAS authentication
-    //     else
-    //         httpQueryMerge(query, this->sasKey);
-    // }
-    // MEM_CONTEXT_TEMP_END();
+    ASSERT(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR) != NULL);
+
+    // !!! TEMP WHILE I FIGURE THIS OUT
+    const String *credential = STRDEF("service@pgbackrest-dev.iam.gserviceaccount.com");
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Host header is required for authentication
+        httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->host);
+
+        // Service key authentication
+        if (this->keyType == storageGcsKeyTypeService)
+        {
+            // Generate canonical request starting with verb and uri
+            String *requestCanonical = strNewFmt("%s\n%s\n", strZ(verb), strZ(uri));
+
+            // !!! For now query string is empty
+            strCatZ(requestCanonical, "\n");
+
+            // Add canonical headers
+            StringList *headerKeyList = httpHeaderList(httpHeader);
+
+            for (unsigned int headerKeyIdx = 0; headerKeyIdx < strLstSize(headerKeyList); headerKeyIdx++)
+            {
+                const String *headerKey = strLstGet(headerKeyList, headerKeyIdx);
+                strCatFmt(requestCanonical, "%s:%s\n", strZ(headerKey), strZ(httpHeaderGet(httpHeader, headerKey)));
+            }
+
+            // Add signed headers
+            String *headerCanonical = strLstJoin(httpHeaderList(httpHeader), ";");
+            strCatFmt(requestCanonical, "\n%s\n", strZ(headerCanonical));
+
+            // Add payload checksum !!! EMPTY FOR NOW
+            strCatZ(requestCanonical, "UNSIGNED-PAYLOAD");
+
+            // Generate string to sign
+            const String *stringToSign = strNewFmt(
+                "GOOG4-RSA-SHA256\n%s\n%.8s/auto/storage/goog4_request\n%s", strZ(dateTime), strZ(dateTime),
+                strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(requestCanonical)))));
+
+            // Sign with RSA key
+            cryptoInit();
+
+            const char keyBuffer[] = "DUDE";
+
+            BIO *bo = BIO_new(BIO_s_mem());
+            BIO_write(bo, keyBuffer, sizeof(keyBuffer));
+
+            EVP_PKEY *privateKey = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
+            cryptoError(privateKey == NULL, "unable to read PEM");
+            BIO_free(bo);
+
+            RSA *rsaKey = EVP_PKEY_get1_RSA(privateKey);
+
+            Buffer *signature = bufNew((size_t)RSA_size(rsaKey));
+            unsigned int signatureLen = 0;
+
+            cryptoError(
+                !RSA_sign(
+                    NID_sha256, (unsigned char *)strZ(stringToSign), (unsigned int)strSize(stringToSign), bufPtr(signature),
+                    &signatureLen, rsaKey),
+                "unable to sign");
+            ASSERT((size_t)signatureLen == bufSize(signature));
+            bufUsedSet(signature, bufSize(signature));
+
+            RSA_free(rsaKey);
+            EVP_PKEY_free(privateKey);
+
+            // Set query parameters
+            httpQueryAdd(query, STRDEF("X-Goog-Algorithm"), STRDEF("GOOG4-RSA-SHA256"));
+            httpQueryAdd(
+                query, STRDEF("X-Goog-Credential"),
+                strNewFmt("%s/%.8s/auto/storage/goog4_request", strZ(credential), strZ(dateTime)));
+            httpQueryAdd(query, STRDEF("X-Goog-Date"), dateTime);
+            httpQueryAdd(query, STRDEF("X-Goog-Expires"), STRDEF("3600"));
+            httpQueryAdd(query, STRDEF("X-Goog-SignedHeaders"), headerCanonical);
+            httpQueryAdd(query, STRDEF("X-Goog-X-Goog-Signature"), bufHex(signature));
+
+        //
+        // // Generate canonical query
+        // String *queryCanonical = strNew("");
+        //
+        // if (query != NULL)
+        // {
+        //     StringList *queryKeyList = httpQueryList(query);
+        //     ASSERT(!strLstEmpty(queryKeyList));
+        //
+        //     for (unsigned int queryKeyIdx = 0; queryKeyIdx < strLstSize(queryKeyList); queryKeyIdx++)
+        //     {
+        //         const String *queryKey = strLstGet(queryKeyList, queryKeyIdx);
+        //
+        //         strCatFmt(queryCanonical, "\n%s:%s", strZ(queryKey), strZ(httpQueryGet(query, queryKey)));
+        //     }
+        // }
+        //
+        // // Generate string to sign
+        // const String *contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
+        // const String *contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
+        //
+        // const String *stringToSign = strNewFmt(
+        //     "%s\n"                                                  // verb
+        //     "\n"                                                    // content-encoding
+        //     "\n"                                                    // content-language
+        //     "%s\n"                                                  // content-length
+        //     "%s\n"                                                  // content-md5
+        //     "\n"                                                    // content-type
+        //     "%s\n"                                                  // date
+        //     "\n"                                                    // If-Modified-Since
+        //     "\n"                                                    // If-Match
+        //     "\n"                                                    // If-None-Match
+        //     "\n"                                                    // If-Unmodified-Since
+        //     "\n"                                                    // range
+        //     "%s"                                                    // Canonicalized headers
+        //     "/%s%s"                                                 // Canonicalized account/uri
+        //     "%s",                                                   // Canonicalized query
+        //     strZ(verb), strEq(contentLength, ZERO_STR) ? "" : strZ(contentLength), contentMd5 == NULL ? "" : strZ(contentMd5),
+        //     strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(uri), strZ(queryCanonical));
+        //
+        // // Generate authorization header
+        // Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strZ(this->sharedKey)));
+        // decodeToBin(encodeBase64, strZ(this->sharedKey), bufPtr(keyBin));
+        // bufUsedSet(keyBin, bufSize(keyBin));
+        //
+        // char authHmacBase64[45];
+        // encodeToStr(
+        //     encodeBase64, bufPtr(cryptoHmacOne(HASH_TYPE_SHA256_STR, keyBin, BUFSTR(stringToSign))),
+        //     HASH_TYPE_SHA256_SIZE, authHmacBase64);
+        //
+        // httpHeaderPut(
+        //     httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account), authHmacBase64));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -772,6 +826,7 @@ storageGcsNew(
             .interface = storageInterfaceGcs,
             .bucket = strDup(bucket),
             .project = strDup(project),
+            .keyType = keyType,
             .blockSize = blockSize,
             .host = host == NULL ? strDup(endpoint) : strDup(host),
             // .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),

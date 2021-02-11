@@ -12,10 +12,10 @@ Test GCS Storage
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-// #define TEST_ACCOUNT                                                "account"
-//     STRING_STATIC(TEST_ACCOUNT_STR,                                 TEST_ACCOUNT);
-// #define TEST_CONTAINER                                              "container"
-//     STRING_STATIC(TEST_CONTAINER_STR,                               TEST_CONTAINER);
+#define TEST_PROJECT                                                "project"
+    STRING_STATIC(TEST_PROJECT_STR,                                 TEST_PROJECT);
+#define TEST_BUCKET                                                 "bucket"
+    STRING_STATIC(TEST_BUCKET_STR,                                  TEST_BUCKET);
 // #define TEST_KEY_SAS                                                "?sig=key"
 //     STRING_STATIC(TEST_KEY_SAS_STR,                                 TEST_KEY_SAS);
 // #define TEST_KEY_SHARED                                             "YXpLZXk="
@@ -201,30 +201,39 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageGcsAuth()"))
     {
-        // StorageGcs *storage = NULL;
-        // HttpHeader *header = NULL;
-        // const String *dateTime = STRDEF("Sun, 21 Jun 2020 12:46:19 GMT");
-        //
-        // TEST_ASSIGN(
-        //     storage,
-        //     (StorageGcs *)storageDriver(
-        //         storageGcsNew(
-        //             STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageGcsKeyTypeShared,
-        //             TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), 443, 1000, true, NULL, NULL)),
-        //     "new gcs storage - shared key");
-        //
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("minimal auth");
-        //
-        // header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
-        //
-        // TEST_RESULT_VOID(storageGcsAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path"), NULL, dateTime, header), "auth");
+        StorageGcs *storage = NULL;
+        HttpHeader *header = NULL;
+        HttpQuery *query = NULL;
+        const String *dateTime = STRDEF("20210211T192800Z");
+
+        TEST_ASSIGN(
+            storage,
+            (StorageGcs *)storageDriver(
+                storageGcsNew(
+                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService,
+                    STRDEF("!!!FILE"), 16, NULL, STRDEF("storage.googleapis.com"), 443, 1000, true, NULL, NULL)),
+            "new gcs storage - shared key");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("minimal auth");
+
+        header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+        query = httpQueryNewP();
+        httpQueryAdd(query, STRDEF("project"), STRDEF("pgbackrest-dev"));
+
+        TEST_RESULT_VOID(storageGcsAuth(storage, HTTP_VERB_GET_STR, STRDEF("/storage/v1/b"), query, dateTime, header), "auth");
+        TEST_RESULT_STR_Z(httpHeaderToLog(header), "{content-length: '0', host: 'storage.googleapis.com'}", "check headers");
         // TEST_RESULT_STR_Z(
-        //     httpHeaderToLog(header),
-        //     "{authorization: 'SharedKey account:edqgT7EhsiIN3q6Al2HCZlpXr2D5cJFavr2ZCkhG9R8=', content-length: '0'"
-        //         ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', host: 'account.blob.core.windows.net', x-ms-version: '2019-02-02'}",
-        //     "check headers");
-        //
+        //     httpQueryToLog(query),
+        //     "{X-Goog-Algorithm: 'GOOG4-RSA-SHA256'"
+        //         ", X-Goog-Credential: 'service@pgbackrest-dev.iam.gserviceaccount.com/20210211/auto/storage/goog4_request'"
+        //         ", X-Goog-Date: '20210211T170800Z', X-Goog-Expires: '3600', X-Goog-SignedHeaders: 'content-length;host'}",
+        //     "check query");
+
+        HttpRequest *request = httpRequestNewP(storage->httpClient, HTTP_VERB_GET_STR, STRDEF("/storage/v1/b"), .query = query, .header = header);
+        HttpResponse *response = httpRequestResponse(request, true);
+        THROW_FMT(AssertError, "RESPONSE IS %s", strZ(strNewBuf(httpResponseContent(response))));
+
         // // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("auth with md5 and query");
         //
