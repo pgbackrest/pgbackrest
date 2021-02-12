@@ -250,8 +250,8 @@ testRun(void)
         //         (StorageGcs *)storageDriver(
         //             storageGcsNew(
         //                 STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService,
-        //                 STRDEF("/backrest/test/scratch.gcs.json"), TEST_CHUNK_SIZE, NULL, TEST_ENDPOINT_STR, TEST_PORT,
-        //                 TEST_TIMEOUT, true, NULL, NULL))),
+        //                 strNewFmt("/home/%s/pgbackrest/test/scratch.gcs.json", testUser()), TEST_CHUNK_SIZE, NULL,
+        //                 TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL))),
         //     "", "authentication token");
 
         // -------------------------------------------------------------------------------------------------------------------------
