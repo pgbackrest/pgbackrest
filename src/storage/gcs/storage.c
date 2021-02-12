@@ -75,6 +75,7 @@ struct StorageGcs
     // StringList *headerRedactList;                                   // List of headers to redact from logging
     // StringList *queryRedactList;                                    // List of query keys to redact from logging
 
+    bool write;                                                     // Storage is writable
     const String *bucket;                                           // Bucket to store data in
     const String *project;                                          // Project
     StorageGcsKeyType keyType;                                      // Auth key type
@@ -90,10 +91,11 @@ struct StorageGcs
 };
 
 /***********************************************************************************************************************************
-Generate authorization header and add it to the supplied header list
+Get authentication header for service keys
 
-Based on the documentation at https://docs.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key
+Based on the documentation at https://developers.google.com/identity/protocols/oauth2/service-account#httprest
 ***********************************************************************************************************************************/
+// Helper to convert base64 encoding to base64url
 static String *
 storageGcsEncodeBase64Url(const Buffer *source)
 {
@@ -124,18 +126,29 @@ storageGcsEncodeBase64Url(const Buffer *source)
     return strNew((char *)bufPtr(base64));
 }
 
+// Helper to construct a JSON Web Token
 static String *
-storageGcsJwt(StorageGcs *this)
+storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+        FUNCTION_TEST_PARAM(TIME, timeBegin);
     FUNCTION_TEST_END();
 
+    // Static header
     String *result = strNew("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Sign with RSA key
+        // Add claim
+        String *claim = strNewFmt(
+            "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\","
+            "\"aud\":\"https://oauth2.googleapis.com/token\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
+            strZ(this->credential), this->write ? "_write" : "_only", (uint64_t)timeBegin + 3600, (uint64_t)timeBegin);
+
+        strCat(result, storageGcsEncodeBase64Url(BUFSTR(claim)));
+
+        // Sign with RSA key !!! NEED TO MAKE SURE OPENSSL STUFF GETS FREED ON ERROR
         cryptoInit();
 
         BIO *bo = BIO_new(BIO_s_mem());
@@ -145,21 +158,12 @@ storageGcsJwt(StorageGcs *this)
         cryptoError(privateKey == NULL, "unable to read PEM");
         BIO_free(bo);
 
-        time_t timeBegin = time(NULL);
-
-        // !!! Make this read-only when storage is read-only
-        String *claim = strNewFmt(
-            "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read_write\","
-            "\"aud\":\"https://oauth2.googleapis.com/token\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
-            strZ(this->credential), (uint64_t)timeBegin + 3600, (uint64_t)timeBegin);
-
-        strCat(result, storageGcsEncodeBase64Url(BUFSTR(claim)));
-
-        size_t signatureLen = 0;
-
         EVP_MD_CTX *sign = EVP_MD_CTX_create();
         cryptoError(EVP_DigestSignInit(sign, NULL, EVP_sha256(), NULL, privateKey) <= 0, "unable to init");
-        cryptoError(EVP_DigestSignUpdate(sign, (unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0, "unable to update");
+        cryptoError(
+            EVP_DigestSignUpdate(sign, (unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0, "unable to update");
+
+        size_t signatureLen = 0;
         cryptoError(EVP_DigestSignFinal(sign, NULL, &signatureLen) <= 0, "unable to get size");
 
         Buffer *signature = bufNew(signatureLen);
@@ -173,6 +177,7 @@ storageGcsJwt(StorageGcs *this)
 #endif
         EVP_PKEY_free(privateKey);
 
+        // Add signature
         strCatChr(result, '.');
         strCat(result, storageGcsEncodeBase64Url(signature));
     }
@@ -199,7 +204,8 @@ storageGcsAuthToken(StorageGcs *this)
             10000, true, false, false), 10000);
 
         String *content = strNewFmt(
-            "grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s", strZ(storageGcsJwt(this)));
+            "grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s",
+            strZ(storageGcsAuthJwt(this, time(NULL))));
 
         HttpHeader *header = httpHeaderNew(NULL);
         httpHeaderAdd(header, HTTP_HEADER_HOST_STR, STRDEF("oauth2.googleapis.com"));
@@ -210,9 +216,28 @@ storageGcsAuthToken(StorageGcs *this)
             authClient, HTTP_VERB_POST_STR, STRDEF("/token"), NULL, .header = header, .content = BUFSTR(content));
         HttpResponse *response = httpRequestResponse(request, true);
 
+        KeyValue *kvResponse = jsonToKv(strNewBuf(httpResponseContent(response)));
+
+        // Check for an error
+        const String *error = varStr(kvGet(kvResponse, VARSTRDEF("error")));
+
+        if (error != NULL)
+        {
+            const String *description = varStr(kvGet(kvResponse, VARSTRDEF("error_description")));
+
+            THROW_FMT(FormatError, "unable to get authentication token: [%s] %s", strZ(error), strZNull(description));
+        }
+
+        // Check for token
+        const String *tokenType = varStr(kvGet(kvResponse, VARSTRDEF("token_type")));
+        const String *token = varStr(kvGet(kvResponse, VARSTRDEF("access_token")));
+
+        if (tokenType == NULL || token == NULL)
+            THROW(FormatError, "unable to find authentication token in response");
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = strNewBuf(httpResponseContent(response));
+            result = strNewFmt("%s %s", strZ(tokenType), strZ(token));
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -221,6 +246,9 @@ storageGcsAuthToken(StorageGcs *this)
     FUNCTION_TEST_RETURN(result);
 }
 
+/***********************************************************************************************************************************
+Generate authorization header and add it to the supplied header list
+***********************************************************************************************************************************/
 static void
 storageGcsAuth(
     StorageGcs *this, const String *verb, const String *uri, HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
@@ -840,6 +868,7 @@ storageGcsNew(
         {
             .memContext = MEM_CONTEXT_NEW(),
             .interface = storageInterfaceGcs,
+            .write = write,
             .bucket = strDup(bucket),
             .project = strDup(project),
             .keyType = keyType,
@@ -849,8 +878,7 @@ storageGcsNew(
             // .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 
-        Storage *storageLocal = storagePosixNewP(FSLASH_STR);
-        KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storageLocal, key))));
+        KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
         driver->credential = varStr(kvGet(kvKey, VARSTRDEF("client_email")));
         driver->privateKey = varStr(kvGet(kvKey, VARSTRDEF("private_key")));
 

@@ -14,12 +14,51 @@ Constants
 ***********************************************************************************************************************************/
 #define TEST_PROJECT                                                "project"
     STRING_STATIC(TEST_PROJECT_STR,                                 TEST_PROJECT);
+#define TEST_ENDPOINT                                               "storage.googleapis.com"
+    STRING_STATIC(TEST_ENDPOINT_STR,                                TEST_ENDPOINT);
+#define TEST_PORT                                                   443
+#define TEST_TIMEOUT                                                1000
+#define TEST_CHUNK_SIZE                                             16
 #define TEST_BUCKET                                                 "bucket"
     STRING_STATIC(TEST_BUCKET_STR,                                  TEST_BUCKET);
-// #define TEST_KEY_SAS                                                "?sig=key"
-//     STRING_STATIC(TEST_KEY_SAS_STR,                                 TEST_KEY_SAS);
-// #define TEST_KEY_SHARED                                             "YXpLZXk="
-//     STRING_STATIC(TEST_KEY_SHARED_STR,                              TEST_KEY_SHARED);
+#define TEST_KEY_FILE                                               TEST_PATH "/key.json"
+    STRING_STATIC(TEST_KEY_FILE_STR,                                TEST_KEY_FILE);
+
+#define TEST_KEY                                                                                                                   \
+    "{\n"                                                                                                                          \
+    "\"type\": \"service_account\",\n"                                                                                             \
+    "\"project_id\": \"project\",\n"                                                                                               \
+    "\"private_key\": "                                                                                                            \
+        "\"-----BEGIN RSA PRIVATE KEY-----\\n"                                                                                     \
+        "MIIEoQIBAAKCAQBV5Mryv79tXBKXfUWeSRHWmm+i5pGNgkMMRWiENGfqsrQxBFmR\\n"                                                      \
+        "rPfVBcqfr5f7kKvOoUe772aAhJTiZNmeEPpN27Zn+0PsbDzXAS2BrEZUyynKaTDa\\n"                                                      \
+        "kuw5MirBWVYWgIyjI0Y9airX3sSp9oxqrW0fpCxaApyYRAizzwQgcfw4ynhEp6Tn\\n"                                                      \
+        "cBhVqkt3+lPB3I2Hhr/er+QmTll+xzKiqzZ2K8EXfiWprYMjttknL/+dgLWYF3I4\\n"                                                      \
+        "weT5LxEohrzTgf3DyW3WIFulsqEGnNFRPGfwnPjZ0p//8zQ9vIvkCd/y7Tlz1Gvp\\n"                                                      \
+        "BIPybgOgq/Xtac+HlvgRMWbDf5GmWHpKfG2zAgMBAAECggEAP/U9qcReJnCI54TA\\n"                                                      \
+        "cjy2q7YTqplFiLmWc2y7hrX/KyQmSNmUWIUThevqFT4LTadMR3CQmcCJ8ujGdE3k\\n"                                                      \
+        "PW8m8xLHoGXZDhMKuo6F9CjztfASDkaFujvs6ioQ7Cg5kkfmcROzGcgUXuniRyzv\\n"                                                      \
+        "IgBBYW4+GEgZksgWMs3TpNU7mo1MaTFfvs69N6kZLvkTffNOQWPGnBLxwP/SFbn6\\n"                                                      \
+        "4Z28s4xWXLyWuAvOUQtasAewgqdVpvh4ICpj5gTQiuFZ8pXKfzVj7OZEa5YkPawa\\n"                                                      \
+        "cFxuHlr9VJmkimy3uepQFFlzEvq9hwjkv3gAWypOK8U5wXplkq2/nN08AdrqXh+O\\n"                                                      \
+        "xr4yAQKBgQCVYOvdcnM0nFAwQHgO8PIwlKNEr2dGMDW+kVJ9+OHFn4dE3A0c4/9D\\n"                                                      \
+        "LYlAZ4BdzikI1PDL6WaCODosanI8BQ2FQSb2eue7MZhvKa3cnCiPxLLeX5/Dxsy2\\n"                                                      \
+        "sd5b8cfDbWH6xPzBium79a+CTI99W2iQG4JR4KfRn4RSsvu5mdGJSQKBgQCTM6aU\\n"                                                      \
+        "rPrlXoB1vV9W0zrgSBJGToqEVzMyO3Ocg2I102fVJ7OTfdHN/sXKzEOFjb+gQ9UR\\n"                                                      \
+        "89rx3BsMnOqCt1/WkxYchvtDh0SVIy9KgcHusX2D0TO8TowKL4eDuEsjK9RZXWRy\\n"                                                      \
+        "FnERE9qofnrzwDsgIUcU7WgL1B+b/IsETuZbGwKBgEqZ/vG3aOXLcxjF+a+skafF\\n"                                                      \
+        "c8yntPIOvaiQtxwGoeqqg0nWhA37p84K/dLWXft7LG8muaN8yx8ZqaPo/WgQNfJo\\n"                                                      \
+        "2WabdwO7/x71N8lHi9JRL+ty4j1KGY7cQeq1U0i8ZgRxQLIACD9Asghm5/p5Hj1q\\n"                                                      \
+        "H6l4gxdjjRgoHyNQOJ9RAoGAJytkVUWeUbCO4EWu++yjSxECg+DcbRDDF8fIIMq5\\n"                                                      \
+        "NHd3trmkyEd/r5/uw+MMyJoKdrv2E5vfE+Ks8/NBV90xzGhBRwAIFlUFQ+Yj7GCQ\\n"                                                      \
+        "2VIzgwMFEEOacg9psPw2Sjqce9clJlKgbZnp4lIdp4TsdsVEI+Z0fElKy/gsic3w\\n"                                                      \
+        "8CcCgYB8cslQm0hr8hkNQoa2B1h/N6VnjegKRzz2xgS51t703ki3u9R3c5SjhW8j\\n"                                                      \
+        "TuMS9w277P2ZBz38orc6lKbWg2GMrmsJfC9jgXkFi7NiZRdKl+DYcIMvNSZTR6j7\\n"                                                      \
+        "DIo7CEz9TZW8QMM+VAt4pJTWo4Sy7iM2n0ZTFSGbBHboXHXnXQ==\\n"                                                                  \
+        "-----END RSA PRIVATE KEY-----\\n\",\n"                                                                                    \
+    "\"client_email\": \"service@project.iam.gserviceaccount.com\",\n"                                                             \
+    "\"token_uri\": \"https://oauth2.googleapis.com/token\"\n"                                                                     \
+    "}\n"
 
 /***********************************************************************************************************************************
 Helper to build test requests
@@ -169,6 +208,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))
     {
@@ -199,35 +240,71 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageGcsAuth()"))
+    if (testBegin("storageGcsAuth*()"))
     {
+        StorageGcs *storage = NULL;
+
         // !!! HACKY WAY TO GET A BEARER TOKEN FOR TESTING AT THE COMMAND LINE
         // TEST_RESULT_STR_Z(
         //     storageGcsAuthToken(
         //         (StorageGcs *)storageDriver(
         //             storageGcsNew(
-        //                 STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService,
-        //                 STRDEF("/backrest/test/scratch.gcs.json"), 16, NULL, STRDEF("storage.googleapis.com"), 443, 1000, true,
-        //                 NULL, NULL))),
+        //                 STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService,
+        //                 STRDEF("/backrest/test/scratch.gcs.json"), TEST_CHUNK_SIZE, NULL, TEST_ENDPOINT_STR, TEST_PORT,
+        //                 TEST_TIMEOUT, true, NULL, NULL))),
         //     "", "authentication token");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // StorageGcs *storage = NULL;
-        // HttpHeader *header = NULL;
-        // HttpQuery *query = NULL;
-        // const String *dateTime = STRDEF("20210211T192800Z");
-        //
-        // TEST_ASSIGN(
-        //     storage,
-        //     (StorageGcs *)storageDriver(
-        //         storageGcsNew(
-        //             STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService,
-        //             STRDEF("/backrest/test/scratch.gcs.json"), 16, NULL, STRDEF("storage.googleapis.com"), 443, 1000, true, NULL,
-        //             NULL)),
-        //     "new gcs storage - shared key");
+        TEST_TITLE("jwt read-only");
+
+        HRN_STORAGE_PUT_Z(storageTest, TEST_KEY_FILE, TEST_KEY);
+
+        TEST_ASSIGN(
+            storage,
+            (StorageGcs *)storageDriver(
+                storageGcsNew(
+                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR,
+                    TEST_CHUNK_SIZE, NULL, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
+            "read-only gcs storage - service key");
+
+        TEST_RESULT_STR_Z(
+            storageGcsAuthJwt(storage, 1613138142),
+            "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlQHByb2plY3QuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJzY29wZSI6Imh0d"
+            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX29ubHkiLCJhdWQiOiJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS9"
+            "0b2tlbiIsImV4cCI6MTYxMzE0MTc0MiwiaWF0IjoxNjEzMTM4MTQyfQ.CphPa6w6AzaQ61sO2B0EO8zbCk_wBMcxiOyTZPcNnEIb7SpbAe5dM7UCbK_Hcd"
+            "F0VTASP3h06vhPhAcJCn0gvyAnzThg0nJddCgFUnYjMqmLjSNkI-yteQwsOpYEMletE73c9dnMYawIjqGSUKND9d_q8fjtYlpAXjczu5jmSax3YMAHacWZ"
+            "GMauR0oMiDbIgqFgAcAuneSYbFQW-hKrQ30DlRkbcsvHxpAOxnUfzUo65OC4wSzUaCAy85LzrxWEjTtaI6L6YrvP0qyICe__uyV-uvKaOUBvM_pY4uJEqD"
+            "MP8S2uA2E76Tf2MJ_NcIYV0xR7XhqlmTSkc4YqZKBFoQ",
+            "jwt");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("jwt read/write");
+
+        HRN_STORAGE_PUT_Z(storageTest, TEST_KEY_FILE, TEST_KEY);
+
+        TEST_ASSIGN(
+            storage,
+            (StorageGcs *)storageDriver(
+                storageGcsNew(
+                    STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR,
+                    TEST_CHUNK_SIZE, NULL, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
+            "read/write gcs storage - service key");
+
+        TEST_RESULT_STR_Z(
+            storageGcsAuthJwt(storage, 1613138142),
+            "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlQHByb2plY3QuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJzY29wZSI6Imh0d"
+            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwiYXVkIjoiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20"
+            "vdG9rZW4iLCJleHAiOjE2MTMxNDE3NDIsImlhdCI6MTYxMzEzODE0Mn0.KGDLo5EXM4__7b8dBYKjOJMNAJau02i6quQn4ZqJ_3YBU6ruMV66yY2YjukGC"
+            "0BSxDPcYBLsKK7TnDPrJRGLXqoS50X45BAGa5gCApReSjieO3BKgH_Eqf9vOauBgjzXVugj5PP3dw886_VeuQqt4pNAEZruj2qBTKCnrYcYM9i5UV-A0Cl"
+            "pov7dTnhGu7ROkFlJ62n_Skl-v48DEVjWGmLyAVE30dIu0niWHvybG9pIfENHlnF1fWUhIbIGm4dFmcJBlNpTBv8cIhA0Y_zriEUAN3hMqFfFXMPjRUqOU"
+            "n1xbG88ranOuk9XS4CRrzH4Cv1wgjO4Wdk_S-8poZ6N1A",
+            "jwt");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("minimal auth");
+        // HttpHeader *header = NULL;
+        // HttpQuery *query = NULL;
+        // const String *dateTime = STRDEF("20210211T192800Z");
         //
         // header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
         // query = httpQueryNewP();
