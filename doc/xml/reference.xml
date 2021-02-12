@@ -1191,9 +1191,7 @@
 
                     <text>Set the repository for a command to operate on.
 
-                    For example, this option may be used to perform a restore from a specific repository, rather than letting <backrest/> choose.
-
-                    Note that some commands, e.g. <cmd>archive-push</cmd>, are intended to operate on all repositories and will ignore this option.</text>
+                    For example, this option may be used to perform a restore from a specific repository, rather than letting <backrest/> choose.</text>
 
                     <example>1</example>
                 </option>
