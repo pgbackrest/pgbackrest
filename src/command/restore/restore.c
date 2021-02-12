@@ -7,7 +7,6 @@ Restore Command
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdio.h>  // CSHANG remove
 
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
@@ -344,14 +343,11 @@ restoreBackupSet(void)
                     {
                         InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
 
-                        // If a backup was not yet set then set the latest from this repo as the backup that might be used
-                        if (result.backupSet == NULL)
-                        {
-                            RestoreBackupData candidate = restoreBackupData(
-                                latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
+                        // If a backup was not yet found then set the latest from this repo as the backup that might be used
+                        RestoreBackupData candidate = restoreBackupData(
+                            latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
 
-                            lstAdd(backupCandidateList, &candidate);
-                        }
+                        lstAdd(backupCandidateList, &candidate);
                     }
                 }
                 else
