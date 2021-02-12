@@ -1517,8 +1517,10 @@
             <command id="restore" name="Restore">
                 <summary>Restore a database cluster.</summary>
 
-                <text>This command is generally run manually, but there are instances where it might be automated.</text>
-<!-- CSHANG Above text needs to be updated. Also, may need to do same tactic we used with info and expire to put into user-guide. THIS STATEMENT IS ACTUALLY FLIPPED SO REMOVE and put in what command -->
+                <text>The restore command automatically defaults to selecting the latest backup from the first repository where backups exist. The order in which the repositories are checked is dictated by the <file>pgbackrest.conf</file> (e.g. repo1 will be checked before repo2). To select from a specific repository, the <br-option>{[dash]}-repo</br-option> option can be passed (e.g. <br-option>{[dash]}-repo=1</br-option>). The <br-option>{[dash]}-set</br-option> option can be passed if a backup other than the latest is desired.
+
+                For PITR, <br-option>{[dash]}-type=time</br-option> must be provided and the target time passed with the <br-option>{[dash]}-target</br-option> option. If a backup is not specified via the <br-option>{[dash]}-set</br-option> option, then the configured repositories will be checked, in order, for a backup that contains the requested time. If no backup can be found, the latest backup from the first repository containing backups will be used. See <link page="user-guide" section="/pitr">Point-in-Time Recovery</link> for more details and examples.</text>
+
                 <option-list>
                     <!-- OPERATION - RESTORE COMMAND - SET OPTION -->
                     <option id="set" name="Set">
