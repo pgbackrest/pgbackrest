@@ -190,13 +190,12 @@ testRun(void)
                 BUFSTRDEF(BOGUS_STR)), "full1 put extra file");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, full2Path), "full2 empty");
 
-
-        TEST_RESULT_VOID(expireBackup(infoBackup, full1), "expire backup with both manifest files");
+        TEST_RESULT_VOID(expireBackup(infoBackup, full1, 0), "expire backup with both manifest files");
         TEST_RESULT_BOOL(
             (strLstSize(storageListP(storageTest, full1Path)) && strLstExistsZ(storageListP(storageTest, full1Path), "bogus")),
             true, "full1 - only manifest files removed");
 
-        TEST_RESULT_VOID(expireBackup(infoBackup, full2), "expire backup with no manifest - does not error");
+        TEST_RESULT_VOID(expireBackup(infoBackup, full2, 0), "expire backup with no manifest - does not error");
 
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
@@ -868,9 +867,11 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchiveType, 2, "diff");
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        harnessCfgLoad(cfgCmdBackup, argList);
+
+        StringList *argList2 = strLstDup(argList);
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
+        strLstAdd(argList2, strNewFmt("--pg1-path=%s/pg", testPath()));
+        harnessCfgLoad(cfgCmdBackup, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
@@ -893,24 +894,9 @@ testRun(void)
             "P00   INFO: remove expired backup repo2: 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire command requires repo option");
-
-        argList = strLstDup(argListBase);
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "3");
-
-        TEST_ERROR_FMT(
-            harnessCfgLoad(cfgCmdExpire, argList), OptionRequiredError, "expire command requires option: repo\n"
-            "HINT: this command requires a specific repository to operate on");
-
-        //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - no dry run");
 
         // Add to previous list and specify repo
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAddZ(argList, "--repo1-retention-diff=3");
-        strLstAddZ(argList, "--repo1-retention-archive=2");
-        strLstAddZ(argList, "--repo1-retention-archive-type=diff");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdExpire, argList);
 
@@ -923,12 +909,21 @@ testRun(void)
             "P00   INFO: remove expired backup repo1: 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire command - dry run: archive and backups not removed");
+        TEST_TITLE("expire command - multi-repo, dry run: archive and backups not removed");
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
-        strLstAddZ(argList, "--dry-run");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchiveType, 2, "diff");
+
+        argList2 = strLstDup(argList);
+        strLstAddZ(argList2, "--dry-run");
+        harnessCfgLoad(cfgCmdExpire, argList2);
+
+        harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) - log expired backups and archive path to remove");
         TEST_RESULT_BOOL(
@@ -943,6 +938,7 @@ testRun(void)
             storageExistsP(
                 storageTest, strNewFmt("%s/20181119-152800F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)))),
             true, "backup not removed");
+
         harnessLogResult(strZ(strNewFmt(
             "P00   INFO: [DRY-RUN] expire full backup set repo1: 20181119-152800F, 20181119-152800F_20181119-152152D, "
             "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
@@ -950,17 +946,29 @@ testRun(void)
             "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152800F_20181119-152152D\n"
             "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152800F\n"
-            "P00   INFO: [DRY-RUN] remove archive path repo1: %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
+            "P00   INFO: [DRY-RUN] remove archive path repo1: %s/%s/9.4-1\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F repo1: 10-2, start = 000000010000000000000003\n"
+            "P00 DETAIL: [DRY-RUN] no archive to remove for repo1: 10-2\n"
+            "P00   INFO: [DRY-RUN] expire diff backup set repo2: 20181119-152800F_20181119-152152D,"
+            " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] remove expired backup repo2: 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] remove expired backup repo2: 20181119-152800F_20181119-152152D\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F repo2: 9.4-1, start = 000000020000000000000002,"
+            " stop = 000000020000000000000002\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152800F_20181119-152252D repo2: 9.4-1,"
+            " start = 000000020000000000000009\n"
+            "P00 DETAIL: [DRY-RUN] remove archive repo2: 9.4-1, start = 000000020000000000000004,"
+            " stop = 000000020000000000000007\n"
+            "P00 DETAIL: [DRY-RUN] archive retention on backup 20181119-152900F repo2: 10-2, start = 000000010000000000000003\n"
+            "P00 DETAIL: [DRY-RUN] no archive to remove for repo2: 10-2", testPath(), strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire via backup command - archive and backups removed");
+        TEST_TITLE("expire command - multi-repo, archive and backups removed");
 
-        argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--repo1-retention-archive=1");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        harnessCfgLoad(cfgCmdBackup, argList);
+        // Rerun previous test without dry-run
+        harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(cmdExpire(), "via backup command: expire backups and remove archive path");
+        TEST_RESULT_VOID(cmdExpire(), "expire backups and remove archive path");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(archiveStanzaPath), "9.4-1")),
             false, "archive path removed");
@@ -972,7 +980,21 @@ testRun(void)
             "P00   INFO: remove expired backup repo1: 20181119-152800F_20181119-152155I\n"
             "P00   INFO: remove expired backup repo1: 20181119-152800F_20181119-152152D\n"
             "P00   INFO: remove expired backup repo1: 20181119-152800F\n"
-            "P00   INFO: remove archive path repo1: %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
+            "P00   INFO: remove archive path repo1: %s/%s/9.4-1\n"
+            "P00 DETAIL: archive retention on backup 20181119-152900F repo1: 10-2, start = 000000010000000000000003\n"
+            "P00 DETAIL: no archive to remove for repo1: 10-2\n"
+            "P00   INFO: expire diff backup set repo2: 20181119-152800F_20181119-152152D,"
+            " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup repo2: 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: remove expired backup repo2: 20181119-152800F_20181119-152152D\n"
+            "P00 DETAIL: archive retention on backup 20181119-152800F repo2: 9.4-1, start = 000000020000000000000002,"
+            " stop = 000000020000000000000002\n"
+            "P00 DETAIL: archive retention on backup 20181119-152800F_20181119-152252D repo2: 9.4-1,"
+            " start = 000000020000000000000009\n"
+            "P00 DETAIL: remove archive repo2: 9.4-1, start = 000000020000000000000004,"
+            " stop = 000000020000000000000007\n"
+            "P00 DETAIL: archive retention on backup 20181119-152900F repo2: 10-2, start = 000000010000000000000003\n"
+            "P00 DETAIL: no archive to remove for repo2: 10-2", testPath(), strZ(archiveStanzaPath))));
 
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup.info updated on disk");
@@ -980,13 +1002,60 @@ testRun(void)
             strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
             "20181119-152900F\n20181119-152900F_20181119-152500I\n", "remaining current backups correct");
 
+        harnessLogLevelReset();
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire command - multi-repo, adhoc");
+
+        // With multi-repo config from previous test, adhoc expire on backup that doesn't exist
+        argList2 = strLstDup(argList);
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20201119-123456F_20201119-234567I");
+        harnessCfgLoad(cfgCmdExpire, argList2);
+
+        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on any repo");
+        harnessLogResult(
+            "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
+            "            HINT: run the info command and confirm the backup is listed");
+
+        // Rerun on single repo
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
+        harnessCfgLoad(cfgCmdExpire, argList2);
+
+        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on requested repo");
+        harnessLogResult(
+            "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
+            "            HINT: run the info command and confirm the backup is listed");
+
+        // With multiple repos, adhoc expire backup only on one repo
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F_20181119-152500I");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawBool(argList, cfgOptDryRun, true);
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "label format OK and expired on specified repo");
+        harnessLogResult(
+            "P00   WARN: [DRY-RUN] expiring latest backup repo1: 20181119-152900F_20181119-152500I - the ability to perform"
+            " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
+            " expires) can cause gaps in the WAL.\n"
+            "P00   INFO: [DRY-RUN] expire adhoc backup repo1: 20181119-152900F_20181119-152500I\n"
+            "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152900F_20181119-152500I");
+
+        // Incorrect backup label format provided
+        argList = strLstDup(argListAvoidWarn);
+        strLstAddZ(argList, "--set=" BOGUS_STR);
+
+        harnessCfgLoad(cfgCmdExpire, argList);
+        TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - archive removed");
 
         archiveGenerate(storageTest, archiveStanzaPath, 1, 1, "9.4-1", "0000000100000000");
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
-        harnessCfgLoad(cfgCmdExpire, argList);
+        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
         harnessLogResult(
@@ -1619,20 +1688,6 @@ testRun(void)
         archiveGenerate(storageTest, archiveStanzaPath, 1, 10, "12-2", "0000000100000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("invalid backup label");
-
-        TEST_RESULT_UINT(
-            expireAdhocBackup(infoBackup, STRDEF("20201119-123456F_20201119-234567I"), 0), 0,
-            "label format OK but backup does not exist");
-        harnessLogResult(
-            "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
-            "            HINT: run the info command and confirm the backup is listed");
-
-        TEST_ERROR(
-            expireAdhocBackup(infoBackup, STRDEF(BOGUS_STR), 0), OptionInvalidValueError,
-            "'" BOGUS_STR "' is not a valid backup label format");
-
-        //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup and dependent");
 
         StringList *argList = strLstDup(argListBase);
@@ -1864,54 +1919,61 @@ testRun(void)
             "P00   INFO: [DRY-RUN] remove expired backup repo1: 20181119-152850F_20181119-152252D");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("resumable possibly based on adhoc expire backup");
+        TEST_TITLE("resumable possibly based on adhoc expire backup, multi-repo, encryption");
 
         argList = strLstDup(argListAvoidWarn);
-        strLstAddZ(argList, "--set=20181119-152850F_20181119-152252D");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152850F_20181119-152252D");
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         harnessCfgLoad(cfgCmdExpire, argList);
 
         // Create backup.info
-        storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
-            harnessInfoChecksumZ(
-                "[backup:current]\n"
-                "20181119-152850F={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
-                "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000004\","
-                "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
-                "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
-                "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "20181119-152850F_20181119-152252D={"
-                "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000006\","
-                "\"backup-archive-stop\":\"000000010000000000000007\",\"backup-info-repo-size\":2369186,"
-                "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
-                "\"backup-prior\":\"20181119-152850F\",\"backup-reference\":[\"20181119-152850F\"],"
-                "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
-                "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
-                "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-                "\n"
-                "[db]\n"
-                "db-catalog-version=201909212\n"
-                "db-control-version=1201\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"12\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                    "\"db-version\":\"9.4\"}\n"
-                "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"
-                    "\"db-version\":\"12\"}\n"));
+        #define TEST_BACKUP_CURRENT                                                                                                \
+            "[backup:current]\n"                                                                                                   \
+            "20181119-152850F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000004\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"           \
+            "20181119-152850F_20181119-152252D={"                                                                                  \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000006\","        \
+            "\"backup-archive-stop\":\"000000010000000000000007\",\"backup-info-repo-size\":2369186,"                              \
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"                   \
+            "\"backup-prior\":\"20181119-152850F\",\"backup-reference\":[\"20181119-152850F\"],"                                   \
+            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","                 \
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":false}\n"
+
+        #define TEST_BACKUP_DB                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db]\n"                                                                                                               \
+            "db-catalog-version=201909212\n"                                                                                       \
+            "db-control-version=1201\n"                                                                                            \
+            "db-id=2\n"                                                                                                            \
+            "db-system-id=6626363367545678089\n"                                                                                   \
+            "db-version=\"12\"\n"                                                                                                  \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"                 \
+                "\"db-version\":\"9.4\"}\n"                                                                                        \
+            "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"                \
+                "\"db-version\":\"12\"}\n"
+
+        String *backupInfoContent = strNew(
+            TEST_BACKUP_CURRENT
+            TEST_BACKUP_DB);
+        storagePutP(storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoContent));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
+            harnessInfoChecksum(backupInfoContent));
 
         // Adhoc backup and resumable backup manifests
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152850F_20181119-152252D/" BACKUP_MANIFEST_FILE,
-            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152850F_20181200-152252D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            strZ(backupStanzaPath))),
-            harnessInfoChecksumZ(
+        String *manifestContent = strNew(
                 "[backup]\n"
                 "backup-archive-start=\"000000010000000000000009\"\n"
                 "backup-label=null\n"
@@ -1958,9 +2020,70 @@ testRun(void)
                 "[target:path:default]\n"
                 "group=\"postgres\"\n"
                 "mode=\"0700\"\n"
-                "user=\"postgres\"\n"));
+                "user=\"postgres\"\n");
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152850F_20181119-152252D/" BACKUP_MANIFEST_FILE,
+            strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
+        storagePutP(
+            storageNewWriteP(storageTest, strNewFmt("%s/20181119-152850F_20181200-152252D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strZ(backupStanzaPath))), harnessInfoChecksum(manifestContent));
 
+        // archives to repo1
         archiveGenerate(storageTest, archiveStanzaPath, 2, 10, "12-2", "0000000100000000");
+
+        // Create encrypted repo2 with same data from repo1 and ensure results are reported the same. This will test that the
+        // manifest can be read on encrypted repos.
+        String *repo2ArchiveStanzaPath =  strNewFmt("%s/repo2/archive/db", testPath());
+        String *repo2BackupStanzaPath =  strNewFmt("%s/repo2/backup/db", testPath());
+        storagePathCreateP(storageLocalWrite(), repo2ArchiveStanzaPath);
+        storagePathCreateP(storageLocalWrite(), repo2BackupStanzaPath);
+
+        HRN_INFO_PUT(
+            storageTest, strZ(strNewFmt("%s/archive.info", strZ(repo2ArchiveStanzaPath))),
+            "[cipher]\n"
+            "cipher-pass=\"" TEST_CIPHER_PASS_ARCHIVE "\"\n"
+            "\n"
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}",
+            .cipherType = cipherTypeAes256Cbc);
+
+        backupInfoContent = strNew(
+            TEST_BACKUP_CURRENT
+            "\n"
+            "[cipher]\n"
+            "cipher-pass=\"somepass\"\n"
+            TEST_BACKUP_DB);
+
+        String *repo2BackupInfoFileName = strNewFmt("%s/backup.info", strZ(repo2BackupStanzaPath));
+        HRN_INFO_PUT(storageTest, strZ(repo2BackupInfoFileName), strZ(backupInfoContent), .cipherType = cipherTypeAes256Cbc);
+        HRN_INFO_PUT(
+            storageTest, strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(repo2BackupInfoFileName))), strZ(backupInfoContent),
+            .cipherType = cipherTypeAes256Cbc);
+
+        HRN_INFO_PUT(
+            storageTest, strZ(strNewFmt("%s/20181119-152850F/" BACKUP_MANIFEST_FILE, strZ(repo2BackupStanzaPath))),
+            "[backup]\nbackup-type=\"full\"\n", .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
+        HRN_INFO_PUT(
+            storageTest, strZ(strNewFmt("%s/20181119-152850F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(repo2BackupStanzaPath))),
+            "[backup]\nbackup-type=\"diff\"\n", .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
+        HRN_INFO_PUT(
+            storageTest, strZ(strNewFmt("%s/20181119-152850F_20181200-152252D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strZ(repo2BackupStanzaPath))), strZ(manifestContent), .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
+
+        // archives to repo2
+        archiveGenerate(storageTest, repo2ArchiveStanzaPath, 2, 10, "12-2", "0000000100000000");
+
+        // Create "latest" symlink, repo2
+        latestLink = storagePathP(storageTest, strNewFmt("%s/latest", strZ(repo2BackupStanzaPath)));
+        THROW_ON_SYS_ERROR_FMT(
+            symlink("20181119-152850F_20181200-152252D", strZ(latestLink)) == -1,
+            FileOpenError, "unable to create symlink '%s' to '%s'", strZ(latestLink), "20181119-152850F_20181200-152252D");
 
         TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest with resumable possibly based on it");
         harnessLogResult(
@@ -1971,8 +2094,21 @@ testRun(void)
             "P00   INFO: expire adhoc backup repo1: 20181119-152850F_20181119-152252D\n"
             "P00   INFO: remove expired backup repo1: 20181119-152850F_20181119-152252D\n"
             "P00 DETAIL: archive retention on backup 20181119-152850F repo1: 12-2, start = 000000010000000000000002\n"
-            "P00 DETAIL: no archive to remove for repo1: 12-2");
+            "P00 DETAIL: no archive to remove for repo1: 12-2\n"
+            "P00   WARN: expiring latest backup repo2: 20181119-152850F_20181119-152252D - the ability to perform"
+            " point-in-time-recovery (PITR) may be affected\n"
+            "            HINT: non-default settings for 'repo2-retention-archive'/'repo2-retention-archive-type'"
+            " (even in prior expires) can cause gaps in the WAL.\n"
+            "P00   INFO: expire adhoc backup repo2: 20181119-152850F_20181119-152252D\n"
+            "P00   INFO: remove expired backup repo2: 20181119-152850F_20181119-152252D\n"
+            "P00 DETAIL: archive retention on backup 20181119-152850F repo2: 12-2, start = 000000010000000000000002\n"
+            "P00 DETAIL: no archive to remove for repo2: 12-2");
 
+        TEST_RESULT_STR(storageInfoP(storageRepoIdx(1), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
+            STRDEF("20181119-152850F"), "latest link updated, repo2");
+
+        // Cleanup
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
         harnessLogLevelReset();
     }
 

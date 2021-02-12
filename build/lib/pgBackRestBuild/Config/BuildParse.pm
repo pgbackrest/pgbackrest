@@ -200,10 +200,12 @@ sub renderOptional
     {
         $strBuildSourceOptional .=
             (defined($strBuildSourceOptional) && !$bSingleLine ? "\n" : '') .
-            "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(\"" .
+            "${strIndent}            PARSE_RULE_OPTION_OPTIONAL_DEFAULT(" .
+            ($rhOptional->{&CFGDEF_DEFAULT_LITERAL} ? '' : '"') .
             (defined($rhOptional->{&CFGDEF_TYPE}) && $rhOptional->{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ?
                 $rhOptional->{&CFGDEF_DEFAULT} * 1000 : $rhOptional->{&CFGDEF_DEFAULT}) .
-            "\"),\n";
+            ($rhOptional->{&CFGDEF_DEFAULT_LITERAL} ? '' : '"') .
+            "),\n";
 
         $bSingleLine = true;
     }

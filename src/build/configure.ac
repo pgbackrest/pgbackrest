@@ -150,6 +150,10 @@ AC_CHECK_LIB(
             [AC_DEFINE(HAVE_LIBZST) AC_SUBST(LIBS, "${LIBS} -lzstd")])],
         [AC_MSG_ERROR([header file <zstd.h> is required])])])
 
+# Set configuration path
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["/etc/" PROJECT_BIN], [Path for configuration files])
+
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CONFIG_HEADERS([build.auto.h])

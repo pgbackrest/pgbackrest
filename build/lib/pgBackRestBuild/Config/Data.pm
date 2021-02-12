@@ -49,6 +49,9 @@
 #   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
 #   CFGDEF_COMMAND section. All boolean types require a default.
 #
+# CFGDEF_DEFAULT_LITERAL:
+#   If the default is a string output it as-is without quoting. This allows C defines to be used as defaults.
+#
 # CFGDEF_NEGATE:
 #   The option can be negated with "no" e.g. --no-compress.  This applies to options that are only valid on the command line (i.e.
 #   no config section defined) and if not specifically defined, the default is false.  All config file boolean options are
@@ -407,10 +410,6 @@ use constant CFGDEF_DEFAULT_BUFFER_SIZE_MIN                         => 16384;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MIN                      => 0;
 use constant CFGDEF_DEFAULT_COMPRESS_LEVEL_MAX                      => 9;
 
-use constant CFGDEF_DEFAULT_CONFIG_PATH                             => '/etc/' . PROJECT_EXE;
-use constant CFGDEF_DEFAULT_CONFIG                                  => CFGDEF_DEFAULT_CONFIG_PATH . '/' . PROJECT_CONF;
-use constant CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH                     => CFGDEF_DEFAULT_CONFIG_PATH . '/conf.d';
-
 use constant CFGDEF_DEFAULT_DB_TIMEOUT                              => 1800;
 use constant CFGDEF_DEFAULT_DB_TIMEOUT_MIN                          => WAIT_TIME_MINIMUM;
 use constant CFGDEF_DEFAULT_DB_TIMEOUT_MAX                          => 86400 * 7;
@@ -473,6 +472,8 @@ use constant CFGDEF_ALLOW_RANGE                                     => 'allow-ra
     push @EXPORT, qw(CFGDEF_ALLOW_RANGE);
 use constant CFGDEF_DEFAULT                                         => 'default';
     push @EXPORT, qw(CFGDEF_DEFAULT);
+use constant CFGDEF_DEFAULT_LITERAL                                 => 'default-literal';
+    push @EXPORT, qw(CFGDEF_DEFAULT_LITERAL);
 use constant CFGDEF_DEPEND                                          => 'depend';
     push @EXPORT, qw(CFGDEF_DEPEND);
 use constant CFGDEF_DEPEND_OPTION                                   => 'depend-option';
@@ -769,7 +770,8 @@ my %hConfigDefine =
     &CFGOPT_CONFIG =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
+        &CFGDEF_DEFAULT => "CFGOPTDEF_CONFIG_PATH \"/\" PROJECT_CONFIG_FILE",
+        &CFGDEF_DEFAULT_LITERAL => true,
         &CFGDEF_NEGATE => true,
     },
 
@@ -777,7 +779,8 @@ my %hConfigDefine =
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_CONFIG,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
+        &CFGDEF_DEFAULT => "CFGOPTDEF_CONFIG_PATH \"/\" PROJECT_CONFIG_INCLUDE_PATH",
+        &CFGDEF_DEFAULT_LITERAL => true,
         &CFGDEF_NEGATE => false,
     },
 
@@ -785,7 +788,8 @@ my %hConfigDefine =
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_CONFIG,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
+        &CFGDEF_DEFAULT => "CFGOPTDEF_CONFIG_PATH",
+        &CFGDEF_DEFAULT_LITERAL => true,
         &CFGDEF_NEGATE => false,
     },
 
@@ -2003,7 +2007,8 @@ my %hConfigDefine =
         &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
+        &CFGDEF_DEFAULT => "CFGOPTDEF_CONFIG_PATH \"/\" PROJECT_CONFIG_FILE",
+        &CFGDEF_DEFAULT_LITERAL => true,
         &CFGDEF_NAME_ALT =>
         {
             'backup-config' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
@@ -2025,14 +2030,16 @@ my %hConfigDefine =
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_REPO_HOST_CONFIG,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
+        &CFGDEF_DEFAULT => "CFGOPTDEF_CONFIG_PATH",
+        &CFGDEF_DEFAULT_LITERAL => true,
     },
 
     &CFGOPT_REPO_HOST_CONFIG_INCLUDE_PATH =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_REPO_HOST_CONFIG,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
+        &CFGDEF_DEFAULT => "CFGOPTDEF_CONFIG_PATH \"/\" PROJECT_CONFIG_INCLUDE_PATH",
+        &CFGDEF_DEFAULT_LITERAL => true,
     },
 
     &CFGOPT_REPO_HOST_PORT =>
@@ -3226,7 +3233,8 @@ my %hConfigDefine =
     &CFGOPT_PG_HOST_CONFIG =>
     {
         &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG,
+        &CFGDEF_DEFAULT => "CFGOPTDEF_CONFIG_PATH \"/\" PROJECT_CONFIG_FILE",
+        &CFGDEF_DEFAULT_LITERAL => true,
         &CFGDEF_REQUIRED => true,
         &CFGDEF_NAME_ALT =>
         {
@@ -3239,14 +3247,16 @@ my %hConfigDefine =
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_PATH,
+        &CFGDEF_DEFAULT => "CFGOPTDEF_CONFIG_PATH",
+        &CFGDEF_DEFAULT_LITERAL => true,
     },
 
     &CFGOPT_PG_HOST_CONFIG_INCLUDE_PATH =>
     {
         &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
         &CFGDEF_INHERIT => CFGOPT_PG_HOST_CMD,
-        &CFGDEF_DEFAULT => CFGDEF_DEFAULT_CONFIG_INCLUDE_PATH,
+        &CFGDEF_DEFAULT => "CFGOPTDEF_CONFIG_PATH \"/\" PROJECT_CONFIG_INCLUDE_PATH",
+        &CFGDEF_DEFAULT_LITERAL => true,
     },
 
     &CFGOPT_PG_HOST_PORT =>
