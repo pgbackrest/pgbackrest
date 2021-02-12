@@ -308,6 +308,7 @@ testRun(void)
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAFECAFECAF}, walBuffer1);
+        const char *walBuffer1Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer1)));
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
 
@@ -333,11 +334,10 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageExistsP(
                 storageRepoIdx(0),
-                STRDEF(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-846543046b7acc64e92f3b41e738fdd5b2331243.gz")),
+                strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)),
             true, "check repo for WAL file");
         TEST_STORAGE_REMOVE(
-            storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-846543046b7acc64e92f3b41e738fdd5b2331243.gz");
+            storageRepoIdxWrite(0), strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)));
 
         // Generate valid WAL and push them
         // -------------------------------------------------------------------------------------------------------------------------
@@ -350,7 +350,7 @@ testRun(void)
 
         // Check sha1 checksum against fixed values once to make sure they are not getting munged. After this we'll calculate them
         // directly from the buffers to reduce the cost of maintaining checksums.
-        const char *walBuffer1Sha1 = TEST_64BIT() ?
+        walBuffer1Sha1 = TEST_64BIT() ?
             (TEST_BIG_ENDIAN() ? "1c5f963d720bb199d7935dbd315447ea2ec3feb2" : "aae7591a1dbc58f21d0d004886075094f622e6dd") :
             "28a13fd8cf6fcd9f9a8108aed4c8bcc58040863a";
 
