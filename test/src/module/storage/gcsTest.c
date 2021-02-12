@@ -201,27 +201,39 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageGcsAuth()"))
     {
-        StorageGcs *storage = NULL;
-        HttpHeader *header = NULL;
-        HttpQuery *query = NULL;
-        const String *dateTime = STRDEF("20210211T192800Z");
-
-        TEST_ASSIGN(
-            storage,
-            (StorageGcs *)storageDriver(
-                storageGcsNew(
-                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService,
-                    STRDEF("!!!FILE"), 16, NULL, STRDEF("storage.googleapis.com"), 443, 1000, true, NULL, NULL)),
-            "new gcs storage - shared key");
+        // !!! HACKY WAY TO GET A BEARER TOKEN FOR TESTING AT THE COMMAND LINE
+        // TEST_RESULT_STR_Z(
+        //     storageGcsAuthToken(
+        //         (StorageGcs *)storageDriver(
+        //             storageGcsNew(
+        //                 STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService,
+        //                 STRDEF("/backrest/test/scratch.gcs.json"), 16, NULL, STRDEF("storage.googleapis.com"), 443, 1000, true,
+        //                 NULL, NULL))),
+        //     "", "authentication token");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("minimal auth");
+        // StorageGcs *storage = NULL;
+        // HttpHeader *header = NULL;
+        // HttpQuery *query = NULL;
+        // const String *dateTime = STRDEF("20210211T192800Z");
+        //
+        // TEST_ASSIGN(
+        //     storage,
+        //     (StorageGcs *)storageDriver(
+        //         storageGcsNew(
+        //             STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService,
+        //             STRDEF("/backrest/test/scratch.gcs.json"), 16, NULL, STRDEF("storage.googleapis.com"), 443, 1000, true, NULL,
+        //             NULL)),
+        //     "new gcs storage - shared key");
 
-        header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
-        query = httpQueryNewP();
-        httpQueryAdd(query, STRDEF("project"), STRDEF("pgbackrest-dev"));
-
-        TEST_RESULT_VOID(storageGcsAuth(storage, HTTP_VERB_GET_STR, STRDEF("/storage/v1/b"), query, dateTime, header), "auth");
+        // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("minimal auth");
+        //
+        // header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+        // query = httpQueryNewP();
+        // httpQueryAdd(query, STRDEF("project"), STRDEF("pgbackrest-dev"));
+        //
+        // TEST_RESULT_VOID(storageGcsAuth(storage, HTTP_VERB_GET_STR, STRDEF("/storage/v1/b"), query, dateTime, header), "auth");
         // TEST_RESULT_STR_Z(httpHeaderToLog(header), "{content-length: '0', host: 'storage.googleapis.com'}", "check headers");
         // TEST_RESULT_STR_Z(
         //     httpQueryToLog(query),

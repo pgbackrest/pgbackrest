@@ -20,11 +20,13 @@ GCS Storage
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/type/json.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/gcs/read.h"
 #include "storage/gcs/storage.intern.h"
 #include "storage/gcs/write.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Storage type
@@ -76,6 +78,8 @@ struct StorageGcs
     const String *bucket;                                           // Bucket to store data in
     const String *project;                                          // Project
     StorageGcsKeyType keyType;                                      // Auth key type
+    const String *credential;                                       // Credential !!!
+    const String *privateKey;                                       // Private key in PEM format
     // const String *sharedKey;                                        // Shared key
     // const HttpQuery *sasKey;                                        // SAS key
     const String *host;                                             // Host name
@@ -90,6 +94,133 @@ Generate authorization header and add it to the supplied header list
 
 Based on the documentation at https://docs.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key
 ***********************************************************************************************************************************/
+static String *
+storageGcsEncodeBase64Url(const Buffer *source)
+{
+    Buffer *base64 = bufNew(encodeToStrSize(encodeBase64, bufSize(source)) + 1);
+    encodeToStr(encodeBase64, bufPtrConst(source), bufSize(source), (char *)bufPtr(base64));
+
+    for (unsigned int charIdx = 0; charIdx <= bufSize(base64); charIdx++)
+    {
+        if (bufPtr(base64)[charIdx] == 0)
+            break;
+
+        switch (bufPtr(base64)[charIdx])
+        {
+            case '+':
+                bufPtr(base64)[charIdx] = '-';
+                break;
+
+            case '/':
+                bufPtr(base64)[charIdx] = '_';
+                break;
+
+            case '=':
+                bufPtr(base64)[charIdx] = '\0';
+                break;
+        }
+    }
+
+    return strNew((char *)bufPtr(base64));
+}
+
+static String *
+storageGcsJwt(StorageGcs *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+    FUNCTION_TEST_END();
+
+    String *result = strNew("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Sign with RSA key
+        cryptoInit();
+
+        BIO *bo = BIO_new(BIO_s_mem());
+        BIO_write(bo, strZ(this->privateKey), (int)strSize(this->privateKey));
+
+        EVP_PKEY *privateKey = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
+        cryptoError(privateKey == NULL, "unable to read PEM");
+        BIO_free(bo);
+
+        time_t timeBegin = time(NULL);
+
+        // !!! Make this read-only when storage is read-only
+        String *claim = strNewFmt(
+            "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read_write\","
+            "\"aud\":\"https://oauth2.googleapis.com/token\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
+            strZ(this->credential), (uint64_t)timeBegin + 3600, (uint64_t)timeBegin);
+
+        strCat(result, storageGcsEncodeBase64Url(BUFSTR(claim)));
+
+        size_t signatureLen = 0;
+
+        EVP_MD_CTX *sign = EVP_MD_CTX_create();
+        cryptoError(EVP_DigestSignInit(sign, NULL, EVP_sha256(), NULL, privateKey) <= 0, "unable to init");
+        cryptoError(EVP_DigestSignUpdate(sign, (unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0, "unable to update");
+        cryptoError(EVP_DigestSignFinal(sign, NULL, &signatureLen) <= 0, "unable to get size");
+
+        Buffer *signature = bufNew(signatureLen);
+
+        cryptoError(EVP_DigestSignFinal(sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+        EVP_MD_CTX_cleanup(sign);
+#else
+        EVP_MD_CTX_free(sign);
+#endif
+        EVP_PKEY_free(privateKey);
+
+        strCatChr(result, '.');
+        strCat(result, storageGcsEncodeBase64Url(signature));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+static String *
+storageGcsAuthToken(StorageGcs *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        HttpClient *authClient = httpClientNew(
+            tlsClientNew(sckClientNew(STRDEF("oauth2.googleapis.com"), 443, 10000), STRDEF("oauth2.googleapis.com"),
+            10000, true, false, false), 10000);
+
+        String *content = strNewFmt(
+            "grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s", strZ(storageGcsJwt(this)));
+
+        HttpHeader *header = httpHeaderNew(NULL);
+        httpHeaderAdd(header, HTTP_HEADER_HOST_STR, STRDEF("oauth2.googleapis.com"));
+        httpHeaderAdd(header, STRDEF("Content-Type"), STRDEF("application/x-www-form-urlencoded"));
+        httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
+
+        HttpRequest *request = httpRequestNewP(
+            authClient, HTTP_VERB_POST_STR, STRDEF("/token"), NULL, .header = header, .content = BUFSTR(content));
+        HttpResponse *response = httpRequestResponse(request, true);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strNewBuf(httpResponseContent(response));
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 static void
 storageGcsAuth(
     StorageGcs *this, const String *verb, const String *uri, HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
@@ -111,9 +242,6 @@ storageGcsAuth(
     ASSERT(httpHeader != NULL);
     ASSERT(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR) != NULL);
 
-    // !!! TEMP WHILE I FIGURE THIS OUT
-    const String *credential = STRDEF("service@pgbackrest-dev.iam.gserviceaccount.com");
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Host header is required for authentication
@@ -122,212 +250,11 @@ storageGcsAuth(
         // Service key authentication
         if (this->keyType == storageGcsKeyTypeService)
         {
-            // Generate canonical request starting with verb and uri
-            String *requestCanonical = strNewFmt("%s\n%s\n", strZ(verb), strZ(uri));
-
-            // !!! For now query string is empty
-            strCatZ(requestCanonical, "\n");
-
-            // Add canonical headers
-            StringList *headerKeyList = httpHeaderList(httpHeader);
-
-            for (unsigned int headerKeyIdx = 0; headerKeyIdx < strLstSize(headerKeyList); headerKeyIdx++)
-            {
-                const String *headerKey = strLstGet(headerKeyList, headerKeyIdx);
-                strCatFmt(requestCanonical, "%s:%s\n", strZ(headerKey), strZ(httpHeaderGet(httpHeader, headerKey)));
-            }
-
-            // Add signed headers
-            String *headerCanonical = strLstJoin(httpHeaderList(httpHeader), ";");
-            strCatFmt(requestCanonical, "\n%s\n", strZ(headerCanonical));
-
-            // Add payload checksum !!! EMPTY FOR NOW
-            strCatZ(requestCanonical, "UNSIGNED-PAYLOAD");
-
-            // Generate string to sign
-            // const String *stringToSign = strNewFmt(
-            //     "GOOG4-RSA-SHA256\n%s\n%.8s/auto/storage/goog4_request\n%s", strZ(dateTime), strZ(dateTime),
-            //     strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(requestCanonical)))));
-
-            // Sign with RSA key
-            cryptoInit();
-
-            const char keyBuffer[] = "DUDE";
-
-            BIO *bo = BIO_new(BIO_s_mem());
-            BIO_write(bo, keyBuffer, sizeof(keyBuffer));
-
-            EVP_PKEY *privateKey = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-            cryptoError(privateKey == NULL, "unable to read PEM");
-            BIO_free(bo);
-
-            RSA *rsaKey = EVP_PKEY_get1_RSA(privateKey);
-
-            // Set query parameters
-            // httpQueryAdd(query, STRDEF("X-Goog-Algorithm"), STRDEF("GOOG4-RSA-SHA256"));
-            // httpQueryAdd(
-            //     query, STRDEF("X-Goog-Credential"),
-            //     strNewFmt("%s/%.8s/auto/storage/goog4_request", strZ(credential), strZ(dateTime)));
-            // httpQueryAdd(query, STRDEF("X-Goog-Date"), dateTime);
-            // httpQueryAdd(query, STRDEF("X-Goog-Expires"), STRDEF("3600"));
-            // httpQueryAdd(query, STRDEF("X-Goog-SignedHeaders"), headerCanonical);
-            // httpQueryAdd(query, STRDEF("X-Goog-X-Goog-Signature"), bufHex(signature));
-
-            time_t timeBegin = time(NULL);
-
-            String *claim = strNewFmt(
-                "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read_write\","
-                "\"aud\":\"https://oauth2.googleapis.com/token\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
-                strZ(credential), (uint64_t)timeBegin + 3600, (uint64_t)timeBegin);
-
-            char claimBase64[2048];
-            encodeToStr(encodeBase64, (unsigned char *)strZ(claim), strSize(claim), claimBase64);
-
-            for (unsigned int charIdx = 0; charIdx <= sizeof(claimBase64); charIdx++)
-            {
-                if (claimBase64[charIdx] == 0)
-                    break;
-
-                switch (claimBase64[charIdx])
-                {
-                    case '+':
-                        claimBase64[charIdx] = '-';
-                        break;
-
-                    case '/':
-                        claimBase64[charIdx] = '_';
-                        break;
-
-                    case '=':
-                        claimBase64[charIdx] = '\0';
-                        break;
-                }
-            }
-
-            String *jwt = strNewFmt("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.%s", claimBase64);
-            // Buffer *jwtHash = cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(jwt));
-
-            // THROW_FMT(AssertError, "JWT SIZE IS %zu: %s", strSize(jwt), strZ(jwt));
-
-            Buffer *signature = bufNew((size_t)RSA_size(rsaKey));
-            size_t signatureLen = 0;
-
-            EVP_MD_CTX* m_RSASignCtx = EVP_MD_CTX_create();
-            EVP_PKEY* priKey  = EVP_PKEY_new();
-            EVP_PKEY_assign_RSA(priKey, rsaKey);
-            cryptoError(EVP_DigestSignInit(m_RSASignCtx,NULL, EVP_sha256(), NULL,priKey) <= 0, "init");
-            cryptoError(EVP_DigestSignUpdate(m_RSASignCtx, (unsigned char *)strZ(jwt), (unsigned int)strSize(jwt)) <= 0, "update");
-            cryptoError(EVP_DigestSignFinal(m_RSASignCtx, NULL, &signatureLen) <=0, "final1");
-            cryptoError(EVP_DigestSignFinal(m_RSASignCtx, bufPtr(signature), &signatureLen) <= 0, "final2");
-            EVP_MD_CTX_free(m_RSASignCtx);
-
-            // cryptoError(
-            //     !RSA_sign(
-            //         NID_sha256WithRSAEncryption, (unsigned char *)strZ(jwt), (unsigned int)strSize(jwt), bufPtr(signature),
-            //         &signatureLen, rsaKey),
-            //     "unable to sign");
-            // ASSERT((size_t)signatureLen == bufSize(signature));
-            // bufUsedSet(signature, bufSize(signature));
-
-            RSA_free(rsaKey);
-            EVP_PKEY_free(privateKey);
-
-            char signatureBase64[2048];
-            encodeToStr(encodeBase64, bufPtr(signature), bufSize(signature), signatureBase64);
-
-            // THROW_FMT(AssertError, "SIG: %s", signatureBase64);
-
-            for (unsigned int charIdx = 0; charIdx <= sizeof(signatureBase64); charIdx++)
-            {
-                if (signatureBase64[charIdx] == 0)
-                    break;
-
-                switch (signatureBase64[charIdx])
-                {
-                    case '+':
-                        signatureBase64[charIdx] = '-';
-                        break;
-
-                    case '/':
-                        signatureBase64[charIdx] = '_';
-                        break;
-
-                    case '=':
-                        signatureBase64[charIdx] = '\0';
-                        break;
-                }
-            }
-
-        strCatFmt(jwt, ".%s", signatureBase64);
-
-        // THROW_FMT(AssertError, "JWT: %s", strZ(jwt));
-
-        HttpClient *authClient = httpClientNew(
-            tlsClientNew(sckClientNew(STRDEF("oauth2.googleapis.com"), 443, 10000), STRDEF("oauth2.googleapis.com"), 10000, true, false, false), 10000);
-
-        String *content = strNewFmt("grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s", strZ(jwt));
-
-        HttpHeader *header = httpHeaderNew(NULL);
-        httpHeaderAdd(header, HTTP_HEADER_HOST_STR, STRDEF("oauth2.googleapis.com"));
-        httpHeaderAdd(header, STRDEF("Content-Type"), STRDEF("application/x-www-form-urlencoded"));
-        httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
-
-        HttpRequest *request = httpRequestNewP(authClient, HTTP_VERB_POST_STR, STRDEF("/token"), NULL, .header = header, .content = BUFSTR(content));
-        HttpResponse *response = httpRequestResponse(request, true);
-        THROW_FMT(AssertError, "RESPONSE IS %s", strZ(strNewBuf(httpResponseContent(response))));
-
-        //
-        // // Generate canonical query
-        // String *queryCanonical = strNew("");
-        //
-        // if (query != NULL)
-        // {
-        //     StringList *queryKeyList = httpQueryList(query);
-        //     ASSERT(!strLstEmpty(queryKeyList));
-        //
-        //     for (unsigned int queryKeyIdx = 0; queryKeyIdx < strLstSize(queryKeyList); queryKeyIdx++)
-        //     {
-        //         const String *queryKey = strLstGet(queryKeyList, queryKeyIdx);
-        //
-        //         strCatFmt(queryCanonical, "\n%s:%s", strZ(queryKey), strZ(httpQueryGet(query, queryKey)));
-        //     }
-        // }
-        //
-        // // Generate string to sign
-        // const String *contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
-        // const String *contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
-        //
-        // const String *stringToSign = strNewFmt(
-        //     "%s\n"                                                  // verb
-        //     "\n"                                                    // content-encoding
-        //     "\n"                                                    // content-language
-        //     "%s\n"                                                  // content-length
-        //     "%s\n"                                                  // content-md5
-        //     "\n"                                                    // content-type
-        //     "%s\n"                                                  // date
-        //     "\n"                                                    // If-Modified-Since
-        //     "\n"                                                    // If-Match
-        //     "\n"                                                    // If-None-Match
-        //     "\n"                                                    // If-Unmodified-Since
-        //     "\n"                                                    // range
-        //     "%s"                                                    // Canonicalized headers
-        //     "/%s%s"                                                 // Canonicalized account/uri
-        //     "%s",                                                   // Canonicalized query
-        //     strZ(verb), strEq(contentLength, ZERO_STR) ? "" : strZ(contentLength), contentMd5 == NULL ? "" : strZ(contentMd5),
-        //     strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(uri), strZ(queryCanonical));
-        //
-        // // Generate authorization header
-        // Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strZ(this->sharedKey)));
-        // decodeToBin(encodeBase64, strZ(this->sharedKey), bufPtr(keyBin));
-        // bufUsedSet(keyBin, bufSize(keyBin));
-        //
-        // char authHmacBase64[45];
-        // encodeToStr(
-        //     encodeBase64, bufPtr(cryptoHmacOne(HASH_TYPE_SHA256_STR, keyBin, BUFSTR(stringToSign))),
-        //     HASH_TYPE_SHA256_SIZE, authHmacBase64);
-        //
-        // httpHeaderPut(
-        //     httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account), authHmacBase64));
+            (void)verb; // !!! REMOVE WHEN USED
+            (void)uri; // !!! REMOVE WHEN USED
+            (void)query; // !!! REMOVE WHEN USED
+            (void)dateTime; // !!! REMOVE WHEN USED
+            (void)storageGcsAuthToken; // !!! REMOVE WHEN USED
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -916,10 +843,16 @@ storageGcsNew(
             .bucket = strDup(bucket),
             .project = strDup(project),
             .keyType = keyType,
+            .credential = strNew("service@pgbackrest-dev.iam.gserviceaccount.com"),
             .blockSize = blockSize,
             .host = host == NULL ? strDup(endpoint) : strDup(host),
             // .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
+
+        Storage *storageLocal = storagePosixNewP(FSLASH_STR);
+        KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storageLocal, key))));
+        driver->credential = varStr(kvGet(kvKey, VARSTRDEF("client_email")));
+        driver->privateKey = varStr(kvGet(kvKey, VARSTRDEF("private_key")));
 
         // Store shared key or parse sas query
         // if (keyType == storageGcsKeyTypeShared)
