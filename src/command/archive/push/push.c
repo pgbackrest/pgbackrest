@@ -378,7 +378,7 @@ cmdArchivePush(void)
 
                 // Push the file to the archive
                 String *warning = archivePushFile(
-                    walFile, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
+                    walFile, cfgOptionBool(cfgOptArchiveHeaderCheck), archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
                     compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoData);
 
                 // If a warning was returned then log it
@@ -427,6 +427,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
         protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile))));
+        protocolCommandParamAdd(command, VARBOOL(cfgOptionBool(cfgOptArchiveHeaderCheck)));
         protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.pgVersion));
         protocolCommandParamAdd(command, VARUINT64(jobData->archiveInfo.pgSystemId));
         protocolCommandParamAdd(command, VARSTR(walFile));

@@ -319,8 +319,32 @@ testRun(void)
                         " stanza version 11, system-id 18072658121562454734",
                     testPath())));
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push by ignoring the invalid header");
+
+        argListTemp = strLstDup(argList);
+        hrnCfgArgRawNegate(argListTemp, cfgOptArchiveHeaderCheck);
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
+        TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
+        harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageRepoIdx(0),
+                STRDEF(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-846543046b7acc64e92f3b41e738fdd5b2331243.gz")),
+            true, "check repo for WAL file");
+        TEST_STORAGE_REMOVE(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-846543046b7acc64e92f3b41e738fdd5b2331243.gz");
+
         // Generate valid WAL and push them
         // -------------------------------------------------------------------------------------------------------------------------
+        argListTemp = strLstDup(argList);
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
 
@@ -436,6 +460,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath())));
+        varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewUInt64(PG_VERSION_11));
         varLstAdd(paramList, varNewUInt64(0xFACEFACEFACEFACE));
         varLstAdd(paramList, varNewStrZ("000000010000000100000002"));

@@ -25,7 +25,7 @@ Functions
 ***********************************************************************************************************************************/
 // Copy a file from the source to the archive
 String *archivePushFile(
-    const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
-    int compressLevel, const ArchivePushFileRepoData *repoData);
+    const String *walSource, bool headerCheck, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
+    CompressType compressType, int compressLevel, const ArchivePushFileRepoData *repoData);
 
 #endif
