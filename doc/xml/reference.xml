@@ -746,9 +746,9 @@
 
                     <!-- ======================================================================================================= -->
                     <config-key id="archive-header-check" name="Check WAL Headers">
-                        <summary>Check PostgreSQL info WAL headers.</summary>
+                        <summary>Check PostgreSQL version/id in WAL headers.</summary>
 
-                        <text>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking the same info in <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> directory where <file>pg_control</file> is located.
+                        <text>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.
 
                         Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</text>
 
