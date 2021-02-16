@@ -777,7 +777,7 @@ testRun(void)
             "'/path1/path2//' cannot contain // for 'pg1-path' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("only reset log levels for default role");
+        TEST_TITLE("non-default roles should not modify log levels");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));

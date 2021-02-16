@@ -1108,8 +1108,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
         if (config->paramList != NULL && !config->help && !parseRuleCommand[config->command].parameterAllowed)
             THROW(ParamInvalidError, "command does not allow parameters");
 
-        // Enable logging for default commands so config file warnings will be output
-        if (config->commandRole == cfgCmdRoleDefault && resetLogLevel)
+        // Enable logging for default role so config file warnings will be output
+        if (resetLogLevel && config->commandRole == cfgCmdRoleDefault)
             logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 0, 1, false);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a
