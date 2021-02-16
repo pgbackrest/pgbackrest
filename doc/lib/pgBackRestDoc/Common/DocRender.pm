@@ -110,7 +110,8 @@ my $oRenderTag =
         'backrest' => [undef, ''],
         'proper' => ['\textnormal{\texttt{', '}}'],
         'postgres' => ['PostgreSQL', ''],
-        'admonition' => ["\n\\begin{leftbar}\n\\textit{\\textbf{", "}\n\\end{leftbar}\n"],
+        'admonition' =>
+            ["\n\\vspace{.5em}\\begin{leftbar}\n\\begin{sloppypar}\\textit{\\textbf{", "}\\end{sloppypar}\n\\end{leftbar}\n"],
     },
 
     'html' =>
