@@ -32,6 +32,7 @@ use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostDbCommonTest;
 use pgBackRestTest::Env::Host::HostDbTest;
 use pgBackRestTest::Env::Host::HostDbSyntheticTest;
+use pgBackRestTest::Env::Host::HostGcsTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 
 ####################################################################################################################################
@@ -65,6 +66,10 @@ sub setup
     elsif ($oConfigParam->{strStorage} eq AZURE)
     {
         $oHostObject = new pgBackRestTest::Env::Host::HostAzureTest();
+    }
+    elsif ($oConfigParam->{strStorage} eq GCS)
+    {
+        $oHostObject = new pgBackRestTest::Env::Host::HostGcsTest();
     }
 
     # Get host group
@@ -122,13 +127,13 @@ sub setup
         $oHostGroup->hostAdd($oHostDbStandby);
     }
 
-    # Finalize S3 server
+    # Finalize object server
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($oConfigParam->{strStorage} eq S3)
     {
         $oHostGroup->hostAdd($oHostObject, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
     }
-    elsif ($oConfigParam->{strStorage} eq AZURE)
+    else
     {
         $oHostGroup->hostAdd($oHostObject);
     }
@@ -162,7 +167,8 @@ sub setup
             ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
             ' --log-level-stderr=error' .
             ($oConfigParam->{strStorage} ne POSIX ? " --no-repo1-$oConfigParam->{strStorage}-verify-tls" .
-                " --repo1-$oConfigParam->{strStorage}-host=" . $oHostObject->ipGet() : ''),
+                " --repo1-$oConfigParam->{strStorage}-" . ($oConfigParam->{strStorage} eq GCS ? 'endpoint' : 'host') .
+                "=" . $oHostObject->ipGet() : ''),
         $oConfigParam->{strStorage} eq POSIX ? STORAGE_POSIX : STORAGE_OBJECT);
 
     # Create db-standby config

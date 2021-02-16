@@ -9,6 +9,7 @@ Repository Create Command
 #include "config/config.h"
 #include "storage/helper.h"
 #include "storage/azure/storage.intern.h"
+#include "storage/gcs/storage.intern.h"
 #include "storage/s3/storage.intern.h"
 
 /**********************************************************************************************************************************/
@@ -28,6 +29,13 @@ cmdRepoCreate(void)
             storageAzureRequestP(
                 (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR,
                 .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
+        }
+        else if (strEq(storageType(storageRepo()), STORAGE_GCS_TYPE_STR))
+        {
+            THROW_FMT(AssertError, "!!!NOT YET IMPLEMENTED!!!");
+            // storageGcsRequestP(
+            //     (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR,
+            //     .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
         }
     }
     MEM_CONTEXT_TEMP_END();

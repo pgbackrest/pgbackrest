@@ -30,6 +30,7 @@ use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Env::ArchiveInfo;
 use pgBackRestTest::Env::BackupInfo;
 use pgBackRestTest::Env::Host::HostAzureTest;
+use pgBackRestTest::Env::Host::HostGcsTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::Manifest;
@@ -78,6 +79,8 @@ use constant AZURE                                                  => 'azure';
     push @EXPORT, qw(AZURE);
 use constant CIFS                                                   => 'cifs';
     push @EXPORT, qw(CIFS);
+use constant GCS                                                    => 'gcs';
+    push @EXPORT, qw(GCS);
 use constant POSIX                                                  => STORAGE_POSIX;
     push @EXPORT, qw(POSIX);
 use constant S3                                                     => 's3';
@@ -1228,6 +1231,13 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-container'} = HOST_AZURE_CONTAINER;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-host'} = HOST_AZURE;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-verify-tls'} = 'n';
+        }
+        elsif ($oParam->{strStorage} eq GCS)
+        {
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = GCS;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-bucket'} = HOST_GCS_BUCKET;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-endpoint'} = HOST_GCS;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-verify-tls'} = 'n';
         }
 
         if ($iRepoTotal == 2)
