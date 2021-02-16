@@ -4308,6 +4308,14 @@ fi
 fi
 
 
+# Set configuration path
+# ----------------------------------------------------------------------------------------------------------------------------------
+
+cat >>confdefs.h <<_ACEOF
+#define CFGOPTDEF_CONFIG_PATH "/etc/" PROJECT_BIN
+_ACEOF
+
+
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
 ac_config_headers="$ac_config_headers build.auto.h"
@@ -5586,4 +5594,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 c101b90ac0cac36554f202f5cf4aff40c566d957
+# Generated from src/build/configure.ac sha1 af35157cc6b32faa6d20e46790a4ea22bd24ed3c
