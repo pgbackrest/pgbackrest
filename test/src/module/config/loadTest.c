@@ -76,13 +76,14 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptRepo, "3");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 4, "4");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 3, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, "/repo4");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "host2");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdExpire, argList), OptionInvalidValueError,
-            "local repo3 and repo4 paths are both '/var/lib/pgbackrest' but must be different");
+            harnessCfgLoad(cfgCmdRestore, argList), OptionInvalidValueError,
+            "local repo3 and repo4 paths are both '/repo4' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local default repo paths for cifs repo type must be different");

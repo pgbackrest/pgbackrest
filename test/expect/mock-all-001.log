@@ -489,7 +489,7 @@ restore delta, backup '[BACKUP-FULL-2]' - add and delete files (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all  --repo=1 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --exec-id=[EXEC-ID] --job-retry=0 --link-all --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --set=[BACKUP-FULL-2] --stanza=db
-P00   INFO: restore backup set [BACKUP-FULL-2]
+P00   INFO: repo1: restore backup set [BACKUP-FULL-2]
 P00   WARN: unknown user in backup manifest mapped to '[USER-2]'
 P00   WARN: unknown group in backup manifest mapped to '[GROUP-2]'
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base' exists
@@ -574,7 +574,7 @@ restore delta, backup '[BACKUP-FULL-2]' - fix permissions (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all --log-level-console=detail  --repo=1 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --exec-id=[EXEC-ID] --job-retry=0 --link-all --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --set=[BACKUP-FULL-2] --stanza=db
-P00   INFO: restore backup set [BACKUP-FULL-2]
+P00   INFO: repo1: restore backup set [BACKUP-FULL-2]
 P00   WARN: unknown user in backup manifest mapped to '[USER-1]'
 P00   WARN: unknown group in backup manifest mapped to '[GROUP-1]'
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base' exists
@@ -635,7 +635,7 @@ restore delta, backup '[BACKUP-FULL-2]' - fix broken symlink (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-FULL-2]  --link-all  --repo=1 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --exec-id=[EXEC-ID] --job-retry=0 --link-all --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --set=[BACKUP-FULL-2] --stanza=db
-P00   INFO: restore backup set [BACKUP-FULL-2]
+P00   INFO: repo1: restore backup set [BACKUP-FULL-2]
 P00   WARN: unknown user in backup manifest mapped to current user
 P00   WARN: unknown group in backup manifest mapped to current group
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base' exists
@@ -696,7 +696,7 @@ restore delta, force, backup '[BACKUP-FULL-2]' - restore links as directories (d
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --force --set=[BACKUP-FULL-2] --repo=1 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --exec-id=[EXEC-ID] --force --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --set=[BACKUP-FULL-2] --stanza=db
-P00   INFO: restore backup set [BACKUP-FULL-2]
+P00   INFO: repo1: restore backup set [BACKUP-FULL-2]
 P00   WARN: file link 'pg_hba.conf' will be restored as a file at the same location
 P00   WARN: contents of directory link 'pg_stat' will be restored in a directory at the same location
 P00   WARN: file link 'postgresql.conf' will be restored as a file at the same location
@@ -1392,7 +1392,7 @@ restore, backup '[BACKUP-DIFF-1]', remap - remap all paths (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --set=[BACKUP-DIFF-1] --repo=1 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base-2 --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --set=[BACKUP-DIFF-1] --stanza=db --tablespace-map=1=[TEST_PATH]/db-primary/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
-P00   INFO: restore backup set [BACKUP-DIFF-1]
+P00   INFO: repo1: restore backup set [BACKUP-DIFF-1]
 P00   INFO: remap data directory to '[TEST_PATH]/db-primary/db/base-2'
 P00   INFO: map tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-primary/db/tablespace/ts1-2'
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespace/ts2-2'
@@ -1477,7 +1477,7 @@ restore delta, backup '[BACKUP-DIFF-1]', remap - ensure file in tblspc root rema
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --set=[BACKUP-DIFF-1] --repo=1 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base-2 --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --set=[BACKUP-DIFF-1] --stanza=db --tablespace-map=1=[TEST_PATH]/db-primary/db/tablespace/ts1-2 --tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
-P00   INFO: restore backup set [BACKUP-DIFF-1]
+P00   INFO: repo1: restore backup set [BACKUP-DIFF-1]
 P00   INFO: remap data directory to '[TEST_PATH]/db-primary/db/base-2'
 P00   INFO: map tablespace 'pg_tblspc/1' to '[TEST_PATH]/db-primary/db/tablespace/ts1-2'
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespace/ts2-2'
@@ -2815,7 +2815,7 @@ restore delta, remap - selective restore 16384 (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --db-include=16384  --repo=1 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-include=16384 --delta --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base-2 --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
-P00   INFO: restore backup set [BACKUP-DIFF-4]
+P00   INFO: repo1: restore backup set [BACKUP-DIFF-4]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespace/ts2-2'
 P00 DETAIL: databases found for selective restore (1, 16384, 32768)
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base-2' exists
@@ -2879,7 +2879,7 @@ restore delta, remap - selective restore 32768 (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --delta --db-include=32768  --repo=1 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-include=32768 --delta --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base-2 --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db --tablespace-map=2=[TEST_PATH]/db-primary/db/tablespace/ts2-2
-P00   INFO: restore backup set [BACKUP-DIFF-4]
+P00   INFO: repo1: restore backup set [BACKUP-DIFF-4]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespace/ts2-2'
 P00 DETAIL: databases found for selective restore (1, 16384, 32768)
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base-2' exists
@@ -2953,7 +2953,7 @@ restore, remap - no tablespace remap (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --tablespace-map-all=../../tablespace  --repo=1 --stanza=db restore
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base-2/base --protocol-timeout=60 --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db --tablespace-map-all=../../tablespace
-P00   INFO: restore backup set [BACKUP-DIFF-4]
+P00   INFO: repo1: restore backup set [BACKUP-DIFF-4]
 P00   INFO: remap data directory to '[TEST_PATH]/db-primary/db/base-2/base'
 P00   INFO: map tablespace 'pg_tblspc/2' to '../../tablespace/ts2'
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base-2/base' exists
