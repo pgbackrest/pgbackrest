@@ -83,7 +83,7 @@ struct StorageGcs
     const String *privateKey;                                       // Private key in PEM format
     // const String *sharedKey;                                        // Shared key
     // const HttpQuery *sasKey;                                        // SAS key
-    const String *host;                                             // Host name
+    const String *endpoint;                                         // Endpoint
     size_t blockSize;                                               // Block size for multi-block upload
     // const String *uriPrefix;                                        // Account/container prefix
 
@@ -273,7 +273,7 @@ storageGcsAuth(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Host header is required for authentication
-        httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->host);
+        httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->endpoint);
 
         // Service key authentication
         if (this->keyType == storageGcsKeyTypeService)
@@ -831,19 +831,17 @@ static const StorageInterface storageInterfaceGcs =
 Storage *
 storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *project, StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *host,
-    const String *endpoint, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
+    StorageGcsKeyType keyType, const String *key, size_t blockSize,  const String *endpoint, unsigned int port, TimeMSec timeout,
+    bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
-        FUNCTION_TEST_PARAM(STRING, project);
         FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
-        FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(STRING, endpoint);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -854,8 +852,7 @@ storageGcsNew(
 
     ASSERT(path != NULL);
     ASSERT(bucket != NULL);
-    ASSERT(project != NULL);
-    ASSERT(key != NULL);
+    ASSERT(keyType == storageGcsKeyTypeNone || key != NULL);
     ASSERT(blockSize != 0);
 
     Storage *this = NULL;
@@ -870,17 +867,19 @@ storageGcsNew(
             .interface = storageInterfaceGcs,
             .write = write,
             .bucket = strDup(bucket),
-            .project = strDup(project),
             .keyType = keyType,
             .credential = strNew("service@pgbackrest-dev.iam.gserviceaccount.com"),
             .blockSize = blockSize,
-            .host = host == NULL ? strDup(endpoint) : strDup(host),
+            .endpoint = strDup(endpoint),
             // .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 
-        KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
-        driver->credential = varStr(kvGet(kvKey, VARSTRDEF("client_email")));
-        driver->privateKey = varStr(kvGet(kvKey, VARSTRDEF("private_key")));
+        if (key != NULL)
+        {
+            KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
+            driver->credential = varStr(kvGet(kvKey, VARSTRDEF("client_email")));
+            driver->privateKey = varStr(kvGet(kvKey, VARSTRDEF("private_key")));
+        }
 
         // Store shared key or parse sas query
         // if (keyType == storageGcsKeyTypeShared)
@@ -890,7 +889,8 @@ storageGcsNew(
 
         // Create the http client used to service requests
         driver->httpClient = httpClientNew(
-            tlsClientNew(sckClientNew(driver->host, port, timeout), driver->host, timeout, verifyPeer, caFile, caPath), timeout);
+            tlsClientNew(
+                sckClientNew(driver->endpoint, port, timeout), driver->endpoint, timeout, verifyPeer, caFile, caPath), timeout);
 
         // Create list of redacted headers
         // driver->headerRedactList = strLstNew();

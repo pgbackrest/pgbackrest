@@ -2319,7 +2319,6 @@ my %hConfigDefine =
         &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
         &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
-        &CFGDEF_SECURE => true,
         &CFGDEF_REQUIRED => true,
         &CFGDEF_DEPEND =>
         {

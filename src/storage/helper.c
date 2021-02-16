@@ -13,6 +13,7 @@ Storage Helper
 #include "protocol/helper.h"
 #include "storage/azure/storage.h"
 #include "storage/cifs/storage.h"
+#include "storage/gcs/storage.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
 #include "storage/s3/storage.h"
@@ -353,6 +354,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
     {
         const String *type = cfgOptionIdxStr(cfgOptRepoType, repoIdx);
 
+        // Use Azure storage
         if (strEqZ(type, STORAGE_AZURE_TYPE))
         {
             result = storageAzureNew(
@@ -372,6 +374,16 @@ storageRepoGet(unsigned int repoIdx, bool write)
             result = storageCifsNew(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
                 storageRepoPathExpression);
+        }
+        // Use GCS storage
+        else if (strEqZ(type, STORAGE_GCS_TYPE))
+        {
+            result = storageGcsNew(
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
+                cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx), storageGcsKeyTypeNone, NULL, STORAGE_GCS_BLOCKSIZE_MIN,
+                cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), cfgOptionIdxUInt(cfgOptRepoGcsPort, repoIdx), ioTimeoutMs(),
+                cfgOptionIdxBool(cfgOptRepoGcsVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoGcsCaFile, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoGcsCaPath, repoIdx));
         }
         // Use Posix storage
         else if (strEqZ(type, STORAGE_POSIX_TYPE))

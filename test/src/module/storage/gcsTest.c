@@ -12,8 +12,6 @@ Test GCS Storage
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define TEST_PROJECT                                                "project"
-    STRING_STATIC(TEST_PROJECT_STR,                                 TEST_PROJECT);
 #define TEST_ENDPOINT                                               "storage.googleapis.com"
     STRING_STATIC(TEST_ENDPOINT_STR,                                TEST_ENDPOINT);
 #define TEST_PORT                                                   443
@@ -213,30 +211,24 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))
     {
-        // // Test without the host option since that can't be run in a unit test without updating dns or /etc/hosts
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("storage with default options");
-        //
-        // StringList *argList = strLstNew();
-        // strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        // hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
-        // hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        // hrnCfgArgRawZ(argList, cfgOptRepoGcsContainer, TEST_CONTAINER);
-        // hrnCfgEnvRawZ(cfgOptRepoGcsAccount, TEST_ACCOUNT);
-        // hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_SHARED);
-        // harnessCfgLoad(cfgCmdArchivePush, argList);
-        //
-        // Storage *storage = NULL;
-        // TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
-        // TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
-        // TEST_RESULT_STR(((StorageGcs *)storage->driver)->account, TEST_ACCOUNT_STR, "    check account");
-        // TEST_RESULT_STR(((StorageGcs *)storage->driver)->container, TEST_CONTAINER_STR, "    check container");
-        // TEST_RESULT_STR(((StorageGcs *)storage->driver)->sharedKey, TEST_KEY_SHARED_STR, "    check key");
-        // TEST_RESULT_STR_Z(((StorageGcs *)storage->driver)->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
-        // TEST_RESULT_STR_Z(((StorageGcs *)storage->driver)->uriPrefix, "/" TEST_CONTAINER, "    check uri prefix");
-        // TEST_RESULT_UINT(((StorageGcs *)storage->driver)->blockSize, STORAGE_GCS_BLOCKSIZE_MIN, "    check block size");
-        // TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
-        // TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage with default options");
+
+        StringList *argList = strLstNew();
+        strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+        hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
+        harnessCfgLoad(cfgCmdArchivePush, argList);
+
+        Storage *storage = NULL;
+        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+        TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
+        TEST_RESULT_STR(((StorageGcs *)storage->driver)->bucket, TEST_BUCKET_STR, "    check bucket");
+        TEST_RESULT_STR_Z(((StorageGcs *)storage->driver)->endpoint, "storage.googleapis.com", "    check endpoint");
+        TEST_RESULT_UINT(((StorageGcs *)storage->driver)->blockSize, STORAGE_GCS_BLOCKSIZE_MIN, "    check block size");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
     }
 
     // *****************************************************************************************************************************
@@ -263,8 +255,8 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR,
-                    TEST_CHUNK_SIZE, NULL, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
+                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
             "read-only gcs storage - service key");
 
         TEST_RESULT_STR_Z(
@@ -286,8 +278,8 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR,
-                    TEST_CHUNK_SIZE, NULL, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
+                    STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
             "read/write gcs storage - service key");
 
         TEST_RESULT_STR_Z(
