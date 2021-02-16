@@ -548,8 +548,11 @@ eval
                         trim($strConfigure) . "\n\n# Generated from src/build/configure.ac sha1 ${strConfigureAcHash}\n";
 
                     # Remove unused options from help
-                    $strConfigure =~ s/^  --((?!bin).)*dir=DIR.*\n//mg;
-                    $strConfigure =~ s/^  --sbindir=DIR.*\n//mg;
+                    my $strDirList =
+                        "sbin|libexec|sysconf|sharedstate|localstate|runstate|lib|include|oldinclude|dataroot|data|info" .
+                        "|locale|man|doc|html|dvi|pdf|ps";
+
+                    $strConfigure =~ s/^  --(${strDirList})*dir=DIR.*\n//mg;
 
                     # Save into the src dir
                     $oStorageBackRest->put(
