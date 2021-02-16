@@ -270,6 +270,18 @@ use constant CFGOPT_REPO_AZURE_KEY_TYPE                             => CFGDEF_RE
 use constant CFGOPT_REPO_AZURE_PORT                                 => CFGDEF_REPO_AZURE . '-port';
 use constant CFGOPT_REPO_AZURE_VERIFY_TLS                           => CFGDEF_REPO_AZURE . '-verify-tls';
 
+# Repository GCS
+use constant CFGDEF_REPO_GCS                                        => CFGDEF_PREFIX_REPO . '-gcs';
+# use constant CFGOPT_REPO_GCS_PROJECT                                => CFGDEF_REPO_GCS . '-project'; // !!! NEEDED?
+use constant CFGOPT_REPO_GCS_CA_FILE                                => CFGDEF_REPO_GCS . '-ca-file';
+use constant CFGOPT_REPO_GCS_CA_PATH                                => CFGDEF_REPO_GCS . '-ca-path';
+use constant CFGOPT_REPO_GCS_BUCKET                                 => CFGDEF_REPO_GCS . '-bucket';
+use constant CFGOPT_REPO_GCS_ENDPOINT                               => CFGDEF_REPO_GCS . '-endpoint';
+# use constant CFGOPT_REPO_GCS_KEY                                    => CFGDEF_REPO_GCS . '-key'; // !!! WILL BE NEEDED
+use constant CFGOPT_REPO_GCS_KEY_TYPE                               => CFGDEF_REPO_GCS . '-key-type';
+use constant CFGOPT_REPO_GCS_PORT                                   => CFGDEF_REPO_GCS . '-port';
+use constant CFGOPT_REPO_GCS_VERIFY_TLS                             => CFGDEF_REPO_GCS . '-verify-tls';
+
 # Repository S3
 use constant CFGDEF_REPO_S3                                         => CFGDEF_PREFIX_REPO . '-s3';
 use constant CFGOPT_REPO_S3_KEY                                     => CFGDEF_REPO_S3 . '-key';
@@ -2299,6 +2311,85 @@ my %hConfigDefine =
         &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
         &CFGDEF_DEFAULT => true,
         &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_GCS_BUCKET =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_SECURE => true,
+        &CFGDEF_REQUIRED => true,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_GCS_KEY_TYPE,
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_GCS_CA_FILE =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_DEPEND => CFGOPT_REPO_GCS_BUCKET,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_GCS_CA_PATH =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
+        &CFGDEF_INHERIT => CFGOPT_REPO_GCS_CA_FILE,
+    },
+
+    &CFGOPT_REPO_GCS_ENDPOINT =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'storage.googleapis.com',
+        &CFGDEF_DEPEND => CFGOPT_REPO_GCS_BUCKET,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_GCS_KEY_TYPE =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'none',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'none',
+        ],
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
+            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_GCS],
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_GCS_PORT =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
+        &CFGDEF_DEFAULT => 443,
+        &CFGDEF_ALLOW_RANGE => [1, 65535],
+        &CFGDEF_DEPEND => CFGOPT_REPO_GCS_BUCKET,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_GCS_VERIFY_TLS =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
+        &CFGDEF_DEFAULT => true,
+        &CFGDEF_DEPEND => CFGOPT_REPO_GCS_BUCKET,
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 

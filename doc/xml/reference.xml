@@ -406,6 +406,74 @@
                         <example>n</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-bucket" name="GCS Repository Bucket">
+                        <summary>GCS repository container.</summary>
+
+                        <text>GCS container used to store the repository.
+
+                        <backrest/> repositories can be stored in the container root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other GCS-generated content can also be stored in the container.</text>
+
+                        <example>/pg-backup</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-ca-file" name="GCS Repository TLS CA File">
+                        <summary>GCS repository TLS CA file.</summary>
+
+                        <text>Use a CA file other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-ca-path" name="GCS Respository TLS CA Path">
+                        <summary>GCS repository TLS CA path.</summary>
+
+                        <text>Use a CA path other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-endpoint" name="GCS Repository Endpoint">
+                        <summary>GCS repository endpoint.</summary>
+
+                        <text>Endpoint used to connect to the storage service. May be updated to use a local GCS server or alternate endpoint.</text>
+
+                        <example>localhost</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-port" name="GCS Repository Server Port">
+                        <summary>GCS repository server port.</summary>
+
+                        <text>Port to use when connecting to the endpoint. This is typically used for testing.</text>
+
+                        <example>10000</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-key-type" name="GCS Repository Key Type">
+                        <summary>GCS repository key type.</summary>
+
+                        <text>The following types are supported for authorization:
+                        <ul>
+                            <li><id>none</id> - For local testing, e.g. <file>fakegcs</file>.</li>
+                        </ul></text>
+
+                        <example>none</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-verify-tls" name="GCS Repository Server Certificate Verify">
+                        <summary>GCS repository server certificate verify.</summary>
+
+                        <text>Disables verification of the GCS server certificate. This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
                     <config-key id="repo-host" name="Repository Host">
                         <summary>Repository host when operating remotely via SSH.</summary>
