@@ -6,6 +6,7 @@ Repository Create Command
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
 #include "config/config.h"
 #include "storage/helper.h"
 #include "storage/azure/storage.intern.h"
@@ -32,10 +33,11 @@ cmdRepoCreate(void)
         }
         else if (strEq(storageType(storageRepo()), STORAGE_GCS_TYPE_STR))
         {
-            THROW_FMT(AssertError, "!!!NOT YET IMPLEMENTED!!!");
-            // storageGcsRequestP(
-            //     (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR,
-            //     .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
+            KeyValue *kvContent = kvPut(kvNew(), VARSTRDEF("name"), VARSTR(cfgOptionStr(cfgOptRepoGcsBucket)));
+
+            storageGcsRequestP(
+                (StorageGcs *)storageDriver(storageRepoWrite()), HTTP_VERB_POST_STR, .noBucket = true,
+                .content = BUFSTR(jsonFromKv(kvContent)));
         }
     }
     MEM_CONTEXT_TEMP_END();

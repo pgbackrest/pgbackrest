@@ -72,7 +72,7 @@ struct StorageGcs
     STORAGE_COMMON_MEMBER;
     MemContext *memContext;
     HttpClient *httpClient;                                         // Http client to service requests
-    // StringList *headerRedactList;                                   // List of headers to redact from logging
+    StringList *headerRedactList;                                   // List of headers to redact from logging
     // StringList *queryRedactList;                                    // List of query keys to redact from logging
 
     bool write;                                                     // Storage is writable
@@ -251,7 +251,7 @@ Generate authorization header and add it to the supplied header list
 ***********************************************************************************************************************************/
 static void
 storageGcsAuth(
-    StorageGcs *this, const String *verb, const String *uri, HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
+    StorageGcs *this, const String *verb, const String *uri, const HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -265,7 +265,7 @@ storageGcsAuth(
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
     ASSERT(uri != NULL);
-    ASSERT(query != NULL);
+    // ASSERT(query != NULL);
     ASSERT(dateTime != NULL);
     ASSERT(httpHeader != NULL);
     ASSERT(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR) != NULL);
@@ -293,118 +293,128 @@ storageGcsAuth(
 /***********************************************************************************************************************************
 Process Gcs request
 ***********************************************************************************************************************************/
-// HttpRequest *
-// storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelDebug);
-//         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
-//         FUNCTION_LOG_PARAM(STRING, verb);
-//         FUNCTION_LOG_PARAM(STRING, param.uri);
-//         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
-//         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
-//         FUNCTION_LOG_PARAM(BUFFER, param.content);
-//     FUNCTION_LOG_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(verb != NULL);
-//
-//     HttpRequest *result = NULL;
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         // Prepend uri prefix
-//         param.uri = param.uri == NULL ? this->uriPrefix : strNewFmt("%s%s", strZ(this->uriPrefix), strZ(param.uri));
-//
-//         // Create header list and add content length
-//         HttpHeader *requestHeader = param.header == NULL ?
-//             httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
-//
-//         // Set content length
-//         httpHeaderAdd(
-//             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-//             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
-//
-//         // Calculate content-md5 header if there is content
-//         if (param.content != NULL)
-//         {
-//             char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-//             encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
-//             httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
-//         }
-//
-//         // Make a copy of the query so it can be modified
-//         HttpQuery *query =
-//             this->sasKey != NULL && param.query == NULL ?
-//                 httpQueryNewP(.redactList = this->queryRedactList) :
-//                 httpQueryDupP(param.query, .redactList = this->queryRedactList);
-//
-//         // Generate authorization header
-//         storageGcsAuth(this, verb, httpUriEncode(param.uri, true), query, httpDateFromTime(time(NULL)), requestHeader);
-//
-//         // Send request
-//         MEM_CONTEXT_PRIOR_BEGIN()
-//         {
-//             result = httpRequestNewP(
-//                 this->httpClient, verb, param.uri, .query = query, .header = requestHeader, .content = param.content);
-//         }
-//         MEM_CONTEXT_END();
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
-// }
-//
-// HttpResponse *
-// storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelDebug);
-//         FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
-//         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
-//         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
-//     FUNCTION_LOG_END();
-//
-//     ASSERT(request != NULL);
-//
-//     HttpResponse *result = NULL;
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         // Get response
-//         result = httpRequestResponse(request, !param.contentIo);
-//
-//         // Error if the request was not successful
-//         if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
-//             httpRequestError(request, result);
-//
-//         // Move response to the prior context
-//         httpResponseMove(result, memContextPrior());
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
-// }
-//
-// HttpResponse *
-// storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam param)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelDebug);
-//         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
-//         FUNCTION_LOG_PARAM(STRING, verb);
-//         FUNCTION_LOG_PARAM(STRING, param.uri);
-//         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
-//         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
-//         FUNCTION_LOG_PARAM(BUFFER, param.content);
-//         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
-//         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
-//     FUNCTION_LOG_END();
-//
-//     FUNCTION_LOG_RETURN(
-//         HTTP_RESPONSE,
-//         storageGcsResponseP(
-//             storageGcsRequestAsyncP(
-//                 this, verb, .uri = param.uri, .header = param.header, .query = param.query, .content = param.content),
-//             .allowMissing = param.allowMissing, .contentIo = param.contentIo));
-// }
+HttpRequest *
+storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_GCS, this);
+        FUNCTION_LOG_PARAM(STRING, verb);
+        FUNCTION_LOG_PARAM(BOOL, param.noBucket);
+        FUNCTION_LOG_PARAM(STRING, param.object);
+        FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
+        FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
+        FUNCTION_LOG_PARAM(BUFFER, param.content);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(verb != NULL);
+    ASSERT(!param.noBucket || param.object == NULL);
+
+    HttpRequest *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Generate URI
+        String *uri = strNew("/storage/v1/b");
+
+        if (!param.noBucket)
+            strCatFmt(uri, "/%s/o", strZ(this->bucket));
+
+        if (param.object != NULL)
+            strCatFmt(uri, "/%s", strZ(param.object));
+
+        // Create header list and add content length
+        HttpHeader *requestHeader = param.header == NULL ?
+            httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+
+        // Set content length
+        httpHeaderAdd(
+            requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
+            param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+
+        // Calculate content-md5 header if there is content
+        // if (param.content != NULL)
+        // {
+        //     char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
+        //     encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
+        //     httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
+        // }
+
+        // Make a copy of the query so it can be modified
+        // HttpQuery *query =
+        //     this->sasKey != NULL && param.query == NULL ?
+        //         httpQueryNewP(.redactList = this->queryRedactList) :
+        //         httpQueryDupP(param.query, .redactList = this->queryRedactList);
+
+        // Generate authorization header
+        storageGcsAuth(this, verb, httpUriEncode(uri, true), param.query, httpDateFromTime(time(NULL)), requestHeader);
+
+        // Send request
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = httpRequestNewP(
+                this->httpClient, verb, uri, .query = param.query, .header = requestHeader, .content = param.content);
+        }
+        MEM_CONTEXT_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
+}
+
+HttpResponse *
+storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
+        FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+    FUNCTION_LOG_END();
+
+    ASSERT(request != NULL);
+
+    HttpResponse *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get response
+        result = httpRequestResponse(request, !param.contentIo);
+
+        // Error if the request was not successful
+        if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
+            httpRequestError(request, result);
+
+        // Move response to the prior context
+        httpResponseMove(result, memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
+}
+
+HttpResponse *
+storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_GCS, this);
+        FUNCTION_LOG_PARAM(STRING, verb);
+        FUNCTION_LOG_PARAM(BOOL, param.noBucket);
+        FUNCTION_LOG_PARAM(STRING, param.object);
+        FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
+        FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
+        FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        HTTP_RESPONSE,
+        storageGcsResponseP(
+            storageGcsRequestAsyncP(
+                this, verb, .noBucket = param.noBucket, .object = param.object, .header = param.header, .query = param.query,
+                .content = param.content),
+            .allowMissing = param.allowMissing, .contentIo = param.contentIo));
+}
 
 /***********************************************************************************************************************************
 General function for listing files to be used by other list routines
@@ -586,7 +596,7 @@ storageGcsInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInt
     // }
 
     StorageInfo result = {.level = level, .exists = false};
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
@@ -662,7 +672,7 @@ storageGcsInfoList(
     ASSERT(path != NULL);
     ASSERT(callback != NULL);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
 
     // MEM_CONTEXT_TEMP_BEGIN()
     // {
@@ -789,7 +799,7 @@ storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfa
     // }
     // MEM_CONTEXT_TEMP_END();
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -812,7 +822,7 @@ storageGcsRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam para
 
     // storageGcsRequestP(this, HTTP_VERB_DELETE_STR, file, .allowMissing = true);
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -893,8 +903,8 @@ storageGcsNew(
                 sckClientNew(driver->endpoint, port, timeout), driver->endpoint, timeout, verifyPeer, caFile, caPath), timeout);
 
         // Create list of redacted headers
-        // driver->headerRedactList = strLstNew();
-        // strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
+        driver->headerRedactList = strLstNew();
+        strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
         // strLstAdd(driver->headerRedactList, HTTP_HEADER_DATE_STR);
 
         // Create list of redacted query keys

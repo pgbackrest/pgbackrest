@@ -36,6 +36,8 @@ use pgBackRestTest::Env::Manifest;
 ####################################################################################################################################
 use constant HOST_GCS_BUCKET                                        => 'gcsbucket';
     push @EXPORT, qw(HOST_GCS_BUCKET);
+use constant HOST_GCS_PORT                                          => 4443;
+    push @EXPORT, qw(HOST_GCS_PORT);
 
 ####################################################################################################################################
 # new
@@ -59,8 +61,8 @@ sub new
     my $strFakeCertPath = "${strProjectPath}/doc/resource/fake-cert";
 
     my $self = $class->SUPER::new(
-        HOST_GCS, 'test-' . testRunGet()->vmId() . '-' . HOST_GCS, 'fsouza/fake-gcs-server', 'root', 'u18', undef, '-p 443:4443',
-        undef, false);
+        HOST_GCS, 'test-' . testRunGet()->vmId() . '-' . HOST_GCS, 'fsouza/fake-gcs-server', 'root', 'u18', undef, undef, undef,
+        false);
     bless $self, $class;
 
     # Return from function and log return values if any

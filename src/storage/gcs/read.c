@@ -55,7 +55,7 @@ storageReadGcsOpen(THIS_VOID)
 
     bool result = false;
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
 
     // // Request the file
     // MEM_CONTEXT_BEGIN(this->memContext)

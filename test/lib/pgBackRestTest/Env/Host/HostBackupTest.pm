@@ -1237,6 +1237,7 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = GCS;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-bucket'} = HOST_GCS_BUCKET;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-endpoint'} = HOST_GCS;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-port'} = HOST_GCS_PORT;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-verify-tls'} = 'n';
         }
 

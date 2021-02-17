@@ -80,7 +80,7 @@ storageWriteGcsOpen(THIS_VOID)
     }
     MEM_CONTEXT_END();
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -196,7 +196,7 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
     // }
     // while (bytesTotal != bufUsed(buffer));
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -261,7 +261,7 @@ storageWriteGcsClose(THIS_VOID)
     //     MEM_CONTEXT_TEMP_END();
     // }
 
-    THROW(AssertError, "NOT YET IMPLEMENTED");
+    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
 
     FUNCTION_LOG_RETURN_VOID();
 }

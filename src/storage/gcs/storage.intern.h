@@ -25,12 +25,12 @@ GCS query tokens
 /***********************************************************************************************************************************
 Perform an GCS Request
 ***********************************************************************************************************************************/
-/*
 // Perform async request
 typedef struct StorageGcsRequestAsyncParam
 {
     VAR_PARAM_HEADER;
-    const String *uri;                                              // Request URI
+    bool noBucket;                                                  // Exclude bucket from the URI?
+    const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
@@ -57,7 +57,8 @@ HttpResponse *storageGcsResponse(HttpRequest *request, StorageGcsResponseParam p
 typedef struct StorageGcsRequestParam
 {
     VAR_PARAM_HEADER;
-    const String *uri;                                              // Request URI
+    bool noBucket;                                                  // Exclude bucket from the URI?
+    const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
@@ -69,7 +70,7 @@ typedef struct StorageGcsRequestParam
     storageGcsRequest(this, verb, (StorageGcsRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 HttpResponse *storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam param);
-*/
+
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
