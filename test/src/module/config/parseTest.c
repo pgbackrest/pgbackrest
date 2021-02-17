@@ -776,8 +776,9 @@ testRun(void)
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'/path1/path2//' cannot contain // for 'pg1-path' option");
 
-        // Local and remove commands should not modify log levels during parsing
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("local/remote roles should not modify log levels");
+
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         hrnCfgArgRawZ(argList, cfgOptPg, "2");
@@ -791,7 +792,7 @@ testRun(void)
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
-        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "load local config");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/2", "default pg-path");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleLocal, "    command role is local");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "    backup:local command does not require lock");
@@ -810,7 +811,7 @@ testRun(void)
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
-        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "load remote config");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load remote config");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleRemote, "    command role is remote");
         TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "    remote role name");
         TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
