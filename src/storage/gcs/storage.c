@@ -22,7 +22,6 @@ GCS Storage
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
-#include "common/type/xml.h"
 #include "storage/gcs/read.h"
 #include "storage/gcs/storage.intern.h"
 #include "storage/gcs/write.h"
@@ -44,8 +43,8 @@ GCS query tokens
 ***********************************************************************************************************************************/
 // STRING_STATIC(GCS_QUERY_MARKER_STR,                                 "marker");
 // STRING_EXTERN(GCS_QUERY_COMP_STR,                                   GCS_QUERY_COMP);
-// STRING_STATIC(GCS_QUERY_DELIMITER_STR,                              "delimiter");
-// STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
+STRING_STATIC(GCS_QUERY_DELIMITER_STR,                              "delimiter");
+STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 // STRING_EXTERN(GCS_QUERY_RESTYPE_STR,                                GCS_QUERY_RESTYPE);
 // STRING_STATIC(GCS_QUERY_SIG_STR,                                    "sig");
 //
@@ -300,6 +299,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
+        FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -315,13 +315,13 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Generate URI
-        String *uri = strNew("/storage/v1/b");
+        String *uri = strNewFmt("%s/storage/v1/b", param.upload ? "/upload" : "");
 
         if (!param.noBucket)
             strCatFmt(uri, "/%s/o", strZ(this->bucket));
 
         if (param.object != NULL)
-            strCatFmt(uri, "/%s", strZ(param.object));
+            strCat(uri, param.object);
 
         // Create header list and add content length
         HttpHeader *requestHeader = param.header == NULL ?
@@ -399,6 +399,7 @@ storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam p
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
+        FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -411,159 +412,210 @@ storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam p
         HTTP_RESPONSE,
         storageGcsResponseP(
             storageGcsRequestAsyncP(
-                this, verb, .noBucket = param.noBucket, .object = param.object, .header = param.header, .query = param.query,
-                .content = param.content),
+                this, verb, .noBucket = param.noBucket, .upload = param.upload, .object = param.object, .header = param.header,
+                .query = param.query, .content = param.content),
             .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 
 /***********************************************************************************************************************************
 General function for listing files to be used by other list routines
 ***********************************************************************************************************************************/
-// static void
-// storageGcsListInternal(
-//     StorageGcs *this, const String *path, const String *expression, bool recurse,
-//     void (*callback)(StorageGcs *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml),
-//     void *callbackData)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelDebug);
-//         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
-//         FUNCTION_LOG_PARAM(STRING, path);
-//         FUNCTION_LOG_PARAM(STRING, expression);
-//         FUNCTION_LOG_PARAM(BOOL, recurse);
-//         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-//         FUNCTION_LOG_PARAM_P(VOID, callbackData);
-//     FUNCTION_LOG_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(path != NULL);
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         // Build the base prefix by stripping off the initial /
-//         const String *basePrefix;
-//
-//         if (strSize(path) == 1)
-//             basePrefix = EMPTY_STR;
-//         else
-//             basePrefix = strNewFmt("%s/", strZ(strSub(path, 1)));
-//
-//         // Get the expression prefix when possible to limit initial results
-//         const String *expressionPrefix = regExpPrefix(expression);
-//
-//         // If there is an expression prefix then use it to build the query prefix, otherwise query prefix is base prefix
-//         const String *queryPrefix;
-//
-//         if (expressionPrefix == NULL)
-//             queryPrefix = basePrefix;
-//         else
-//         {
-//             if (strEmpty(basePrefix))
-//                 queryPrefix = expressionPrefix;
-//             else
-//                 queryPrefix = strNewFmt("%s%s", strZ(basePrefix), strZ(expressionPrefix));
-//         }
-//
-//         // Create query
-//         HttpQuery *query = httpQueryNewP();
-//
-//         // Add the delimiter to not recurse
-//         if (!recurse)
-//             httpQueryAdd(query, GCS_QUERY_DELIMITER_STR, FSLASH_STR);
-//
-//         // Add resource type
-//         httpQueryAdd(query, GCS_QUERY_RESTYPE_STR, GCS_QUERY_VALUE_CONTAINER_STR);
-//
-//         // Add list comp
-//         httpQueryAdd(query, GCS_QUERY_COMP_STR, GCS_QUERY_VALUE_LIST_STR);
-//
-//         // Don't specify empty prefix because it is the default
-//         if (!strEmpty(queryPrefix))
-//             httpQueryAdd(query, GCS_QUERY_PREFIX_STR, queryPrefix);
-//
-//         // Loop as long as a continuation marker returned
-//         HttpRequest *request = NULL;
-//
-//         do
-//         {
-//             // Use an inner mem context here because we could potentially be retrieving millions of files so it is a good idea to
-//             // free memory at regular intervals
-//             MEM_CONTEXT_TEMP_BEGIN()
-//             {
-//                 HttpResponse *response = NULL;
-//
-//                 // If there is an outstanding async request then wait for the response
-//                 if (request != NULL)
-//                 {
-//                     response = storageGcsResponseP(request);
-//
-//                     httpRequestFree(request);
-//                     request = NULL;
-//                 }
-//                 // Else get the response immediately from a sync request
-//                 else
-//                     response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query);
-//
-//                 XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
-//
-//                 // If a continuation marker exists then send an async request to get more data
-//                 const String *continuationMarker = xmlNodeContent(xmlNodeChild(xmlRoot, GCS_XML_TAG_NEXT_MARKER_STR, false));
-//
-//                 if (!strEq(continuationMarker, EMPTY_STR))
-//                 {
-//                     httpQueryPut(query, GCS_QUERY_MARKER_STR, continuationMarker);
-//
-//                     // Store request in the outer temp context
-//                     MEM_CONTEXT_PRIOR_BEGIN()
-//                     {
-//                         request = storageGcsRequestAsyncP(this, HTTP_VERB_GET_STR, .query = query);
-//                     }
-//                     MEM_CONTEXT_PRIOR_END();
-//                 }
-//
-//                 // Get subpath list
-//                 XmlNode *blobs = xmlNodeChild(xmlRoot, GCS_XML_TAG_BLOBS_STR, true);
-//                 XmlNodeList *blobPrefixList = xmlNodeChildList(blobs, GCS_XML_TAG_BLOB_PREFIX_STR);
-//
-//                 for (unsigned int blobPrefixIdx = 0; blobPrefixIdx < xmlNodeLstSize(blobPrefixList); blobPrefixIdx++)
-//                 {
-//                     const XmlNode *subPathNode = xmlNodeLstGet(blobPrefixList, blobPrefixIdx);
-//
-//                     // Get subpath name
-//                     const String *subPath = xmlNodeContent(xmlNodeChild(subPathNode, GCS_XML_TAG_NAME_STR, true));
-//
-//                     // Strip off base prefix and final /
-//                     subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
-//
-//                     // Add to list
-//                     callback(this, callbackData, subPath, storageTypePath, NULL);
-//                 }
-//
-//                 // Get file list
-//                 XmlNodeList *fileList = xmlNodeChildList(blobs, GCS_XML_TAG_BLOB_STR);
-//
-//                 for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
-//                 {
-//                     const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
-//
-//                     // Get file name
-//                     const String *file = xmlNodeContent(xmlNodeChild(fileNode, GCS_XML_TAG_NAME_STR, true));
-//
-//                     // Strip off the base prefix when present
-//                     file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
-//
-//                     // Add to list
-//                     callback(
-//                         this, callbackData, file, storageTypeFile, xmlNodeChild(fileNode, GCS_XML_TAG_PROPERTIES_STR, true));
-//                 }
-//             }
-//             MEM_CONTEXT_TEMP_END();
-//         }
-//         while (request != NULL);
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_LOG_RETURN_VOID();
-// }
+// Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t. This format is very nearly ISO-8601 except for the inclusion of
+// milliseconds, which are discarded here.
+static time_t
+storageGcsCvtTime(const String *time)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, time);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(
+        epochFromParts(
+            cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
+            cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
+            cvtZToInt(strZ(strSubN(time, 14, 2))), cvtZToInt(strZ(strSubN(time, 17, 2))), 0));
+}
+
+static void
+storageGcsInfoFile(StorageInfo *info, const KeyValue *file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+        FUNCTION_TEST_PARAM(KEY_VALUE, file);
+    FUNCTION_TEST_END();
+
+    info->size = cvtZToUInt64(strZ(varStr(kvGet(file, VARSTRDEF("size")))));
+    info->timeModified = storageGcsCvtTime(varStr(kvGet(file, VARSTRDEF("updated"))));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+storageGcsListInternal(
+    StorageGcs *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
+    StorageInfoListCallback callback, void *callbackData)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_GCS, this);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, level);
+        FUNCTION_LOG_PARAM(STRING, expression);
+        FUNCTION_LOG_PARAM(BOOL, recurse);
+        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+        FUNCTION_LOG_PARAM_P(VOID, callbackData);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the base prefix by stripping off the initial /
+        const String *basePrefix;
+
+        if (strSize(path) == 1)
+            basePrefix = EMPTY_STR;
+        else
+            basePrefix = strNewFmt("%s/", strZ(strSub(path, 1)));
+
+        // Get the expression prefix when possible to limit initial results
+        const String *expressionPrefix = regExpPrefix(expression);
+
+        // If there is an expression prefix then use it to build the query prefix, otherwise query prefix is base prefix
+        const String *queryPrefix;
+
+        if (expressionPrefix == NULL)
+            queryPrefix = basePrefix;
+        else
+        {
+            if (strEmpty(basePrefix))
+                queryPrefix = expressionPrefix;
+            else
+                queryPrefix = strNewFmt("%s%s", strZ(basePrefix), strZ(expressionPrefix));
+        }
+
+        // Create query
+        HttpQuery *query = httpQueryNewP();
+
+        // Add the delimiter to not recurse
+        if (!recurse)
+            httpQueryAdd(query, GCS_QUERY_DELIMITER_STR, FSLASH_STR);
+
+        // Don't specify empty prefix because it is the default
+        if (!strEmpty(queryPrefix))
+            httpQueryAdd(query, GCS_QUERY_PREFIX_STR, queryPrefix);
+
+        // Loop as long as a continuation marker returned
+        HttpRequest *request = NULL;
+
+        do
+        {
+            // Use an inner mem context here because we could potentially be retrieving millions of files so it is a good idea to
+            // free memory at regular intervals
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                HttpResponse *response = NULL;
+
+                // If there is an outstanding async request then wait for the response
+                if (request != NULL)
+                {
+                    response = storageGcsResponseP(request);
+
+                    httpRequestFree(request);
+                    request = NULL;
+                }
+                // Else get the response immediately from a sync request
+                else
+                    response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query);
+
+                KeyValue *content = jsonToKv(strNewBuf(httpResponseContent(response)));
+
+                // If next page token exists then send an async request to get more data
+                const String *nextPageToken = varStr(kvGet(content, VARSTRDEF("nextPageToken")));
+
+                if (nextPageToken != NULL)
+                {
+                    httpQueryPut(query, STRDEF("pageToken"), nextPageToken);
+
+                    // Store request in the outer temp context
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        request = storageGcsRequestAsyncP(this, HTTP_VERB_GET_STR, .query = query);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
+
+                // Get prefix list
+                const VariantList *prefixList = varVarLst(kvGet(content, VARSTRDEF("prefixes")));
+
+                if (prefixList != NULL)
+                {
+                    for (unsigned int prefixIdx = 0; prefixIdx < varLstSize(prefixList); prefixIdx++)
+                    {
+                        // Get path name
+                        StorageInfo info =
+                        {
+                            .level = level,
+                            .name = varStr(varLstGet(prefixList, prefixIdx)),
+                            .exists = true,
+                        };
+
+                        // Strip off base prefix and final /
+                        info.name = strSubN(info.name, strSize(basePrefix), strSize(info.name) - strSize(basePrefix) - 1);
+
+                        // Add basic level info if requested
+                        if (level >= storageInfoLevelBasic)
+                            info.type = storageTypePath;
+
+                        // Callback with info
+                        callback(callbackData, &info);
+                    }
+                }
+
+                // Get file list
+                const VariantList *fileList = varVarLst(kvGet(content, VARSTRDEF("items")));
+                CHECK(fileList != NULL);
+
+                for (unsigned int fileIdx = 0; fileIdx < varLstSize(fileList); fileIdx++)
+                {
+                    // THROW_FMT(AssertError, "!!!NOT YET IMPLEMENTED:\n%s", strZ(strNewBuf(httpResponseContent(response))));
+
+                    const KeyValue *file = varKv(varLstGet(fileList, fileIdx));
+                    CHECK(file != NULL);
+
+                    // Get file name
+                    StorageInfo info =
+                    {
+                        .level = level,
+                        .name = varStr(kvGet(file, VARSTRDEF("name"))),
+                        .exists = true,
+                    };
+
+                    CHECK(info.name != NULL);
+
+                    // Strip off the base prefix when present
+                    if (!strEmpty(basePrefix))
+                        info.name = strSub(info.name, strSize(basePrefix));
+
+                    // Add basic level info if requested
+                    if (level >= storageInfoLevelBasic)
+                    {
+                        info.type = storageTypeFile;
+                        storageGcsInfoFile(&info, file);
+                    }
+
+                    // Callback with info
+                    callback(callbackData, &info);
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+        while (request != NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /**********************************************************************************************************************************/
 static StorageInfo
@@ -582,76 +634,23 @@ storageGcsInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInt
     ASSERT(file != NULL);
 
     // // Attempt to get file info
-    // HttpResponse *httpResponse = storageGcsRequestP(this, HTTP_VERB_HEAD_STR, .uri = file, .allowMissing = true);
-    //
-    // // Does the file exist?
-    // StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
-    //
-    // // Add basic level info if requested and the file exists
-    // if (result.level >= storageInfoLevelBasic && result.exists)
-    // {
-    //     result.type = storageTypeFile;
-    //     result.size = cvtZToUInt64(strZ(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_CONTENT_LENGTH_STR)));
-    //     result.timeModified = httpDateToTime(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_LAST_MODIFIED_STR));
-    // }
+    HttpResponse *httpResponse = storageGcsRequestP(this, HTTP_VERB_GET_STR, .object = file, .allowMissing = true);
 
-    StorageInfo result = {.level = level, .exists = false};
-    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
+    // Does the file exist?
+    StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
+
+    // Add basic level info if requested and the file exists
+    if (result.level >= storageInfoLevelBasic && result.exists)
+    {
+        // THROW_FMT(AssertError, "!!!NOT YET IMPLEMENTED!!!: %s", strZ(strNewBuf(httpResponseContent(httpResponse))));
+        result.type = storageTypeFile;
+        storageGcsInfoFile(&result, jsonToKv(strNewBuf(httpResponseContent(httpResponse))));
+    }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
 
 /**********************************************************************************************************************************/
-// typedef struct StorageGcsInfoListData
-// {
-//     StorageInfoLevel level;                                         // Level of info to set
-//     StorageInfoListCallback callback;                               // User-supplied callback function
-//     void *callbackData;                                             // User-supplied callback data
-// } StorageGcsInfoListData;
-//
-// static void
-// storageGcsInfoListCallback(StorageGcs *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
-//         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-//         FUNCTION_TEST_PARAM(STRING, name);
-//         FUNCTION_TEST_PARAM(ENUM, type);
-//         FUNCTION_TEST_PARAM(XML_NODE, xml);
-//     FUNCTION_TEST_END();
-//
-//     (void)this;                                                     // Unused but still logged above for debugging
-//     ASSERT(callbackData != NULL);
-//     ASSERT(name != NULL);
-//
-//     StorageGcsInfoListData *data = (StorageGcsInfoListData *)callbackData;
-//
-//     StorageInfo info =
-//     {
-//         .name = name,
-//         .level = data->level,
-//         .exists = true,
-//     };
-//
-//     if (data->level >= storageInfoLevelBasic)
-//     {
-//         info.type = type;
-//
-//         // Add additional info for files
-//         if (type == storageTypeFile)
-//         {
-//             ASSERT(xml != NULL);
-//
-//             info.size =  cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(xml, GCS_XML_TAG_CONTENT_LENGTH_STR, true))));
-//             info.timeModified = httpDateToTime(xmlNodeContent(xmlNodeChild(xml, GCS_XML_TAG_LAST_MODIFIED_STR, true)));
-//         }
-//     }
-//
-//     data->callback(data->callbackData, &info);
-//
-//     FUNCTION_TEST_RETURN_VOID();
-// }
-
 static bool
 storageGcsInfoList(
     THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
@@ -672,14 +671,11 @@ storageGcsInfoList(
     ASSERT(path != NULL);
     ASSERT(callback != NULL);
 
-    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
-
-    // MEM_CONTEXT_TEMP_BEGIN()
-    // {
-    //     StorageGcsInfoListData data = {.level = level, .callback = callback, .callbackData = callbackData};
-    //     storageGcsListInternal(this, path, param.expression, false, storageGcsInfoListCallback, &data);
-    // }
-    // MEM_CONTEXT_TEMP_END();
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        storageGcsListInternal(this, path, level, param.expression, false, callback, callbackData);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -726,52 +722,50 @@ storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam 
 }
 
 /**********************************************************************************************************************************/
-// typedef struct StorageGcsPathRemoveData
-// {
-//     MemContext *memContext;                                         // Mem context to create requests in
-//     HttpRequest *request;                                           // Async remove request
-//     const String *path;                                             // Root path of remove
-// } StorageGcsPathRemoveData;
-//
-// static void
-// storageGcsPathRemoveCallback(StorageGcs *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
-// {
-//     FUNCTION_TEST_BEGIN();
-//         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
-//         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-//         FUNCTION_TEST_PARAM(STRING, name);
-//         FUNCTION_TEST_PARAM(ENUM, type);
-//         (void)xml;                                                  // Unused since no additional data needed for files
-//     FUNCTION_TEST_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(callbackData != NULL);
-//     ASSERT(name != NULL);
-//
-//     StorageGcsPathRemoveData *data = (StorageGcsPathRemoveData *)callbackData;
-//
-//     // Get response from prior async request
-//     if (data->request != NULL)
-//     {
-//         storageGcsResponseP(data->request, .allowMissing = true);
-//
-//         httpRequestFree(data->request);
-//         data->request = NULL;
-//     }
-//
-//     // Only delete files since paths don't really exist
-//     if (type == storageTypeFile)
-//     {
-//         MEM_CONTEXT_BEGIN(data->memContext)
-//         {
-//             data->request = storageGcsRequestAsyncP(
-//                 this, HTTP_VERB_DELETE_STR, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(name)));
-//         }
-//         MEM_CONTEXT_END();
-//     }
-//
-//     FUNCTION_TEST_RETURN_VOID();
-// }
+typedef struct StorageGcsPathRemoveData
+{
+    StorageGcs *this;                                               // Storage Object
+    MemContext *memContext;                                         // Mem context to create requests in
+    HttpRequest *request;                                           // Async remove request
+    const String *path;                                             // Root path of remove
+} StorageGcsPathRemoveData;
+
+static void
+storageGcsPathRemoveCallback(void *callbackData, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    ASSERT(callbackData != NULL);
+    ASSERT(info != NULL);
+
+    StorageGcsPathRemoveData *data = callbackData;
+
+    // Get response from prior async request
+    if (data->request != NULL)
+    {
+        storageGcsResponseP(data->request, .allowMissing = true);
+
+        httpRequestFree(data->request);
+        data->request = NULL;
+    }
+
+    // Only delete files since paths don't really exist
+    if (info->type == storageTypeFile)
+    {
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->request = storageGcsRequestAsyncP(
+                data->this, HTTP_VERB_DELETE_STR,
+                .object = strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(info->name)));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 static bool
 storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
@@ -788,18 +782,16 @@ storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfa
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    // MEM_CONTEXT_TEMP_BEGIN()
-    // {
-    //     StorageGcsPathRemoveData data = {.memContext = memContextCurrent(), .path = path};
-    //     storageGcsListInternal(this, path, NULL, true, storageGcsPathRemoveCallback, &data);
-    //
-    //     // Check response on last async request
-    //     if (data.request != NULL)
-    //         storageGcsResponseP(data.request, .allowMissing = true);
-    // }
-    // MEM_CONTEXT_TEMP_END();
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        StorageGcsPathRemoveData data = {.this = this, .memContext = memContextCurrent(), .path = path};
+        storageGcsListInternal(this, path, storageInfoLevelBasic, NULL, true, storageGcsPathRemoveCallback, &data);
 
-    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
+        // Check response on last async request
+        if (data.request != NULL)
+            storageGcsResponseP(data.request, .allowMissing = true);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -820,9 +812,7 @@ storageGcsRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam para
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
-    // storageGcsRequestP(this, HTTP_VERB_DELETE_STR, file, .allowMissing = true);
-
-    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
+    storageGcsRequestP(this, HTTP_VERB_DELETE_STR, .object = file, .allowMissing = true);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -917,8 +907,6 @@ storageGcsNew(
         this = storageNew(STORAGE_GCS_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
-
-    (void)storageGcsAuth; // !!! REMOVE WHEN USED
 
     FUNCTION_LOG_RETURN(STORAGE, this);
 }

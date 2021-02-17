@@ -47,7 +47,7 @@ typedef struct StorageWriteGcs
     HttpRequest *request;                                           // Async block upload request
     size_t blockSize;                                               // Size of blocks for multi-block upload
     Buffer *blockBuffer;                                            // Block buffer (stores data until blockSize is reached)
-    // StringList *blockIdList;                                        // List of uploaded block ids
+    StringList *blockIdList;                                        // List of uploaded block ids
 } StorageWriteGcs;
 
 /***********************************************************************************************************************************
@@ -79,8 +79,6 @@ storageWriteGcsOpen(THIS_VOID)
         this->blockBuffer = bufNew(this->blockSize);
     }
     MEM_CONTEXT_END();
-
-    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -176,27 +174,27 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
     ASSERT(this != NULL);
     ASSERT(this->blockBuffer != NULL);
 
-    // size_t bytesTotal = 0;
-    //
-    // // Continue until the write buffer has been exhausted
-    // do
-    // {
-    //     // Copy as many bytes as possible into the block buffer
-    //     size_t bytesNext = bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?
-    //         bufUsed(buffer) - bytesTotal : bufRemains(this->blockBuffer);
-    //     bufCatSub(this->blockBuffer, buffer, bytesTotal, bytesNext);
-    //     bytesTotal += bytesNext;
-    //
-    //     // If the block buffer is full then write it
-    //     if (bufRemains(this->blockBuffer) == 0)
-    //     {
-    //         storageWriteGcsBlockAsync(this);
-    //         bufUsedZero(this->blockBuffer);
-    //     }
-    // }
-    // while (bytesTotal != bufUsed(buffer));
+    size_t bytesTotal = 0;
 
-    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
+    // Continue until the write buffer has been exhausted
+    do
+    {
+        // Copy as many bytes as possible into the block buffer
+        size_t bytesNext = bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?
+            bufUsed(buffer) - bytesTotal : bufRemains(this->blockBuffer);
+        bufCatSub(this->blockBuffer, buffer, bytesTotal, bytesNext);
+        bytesTotal += bytesNext;
+
+        // If the block buffer is full then write it
+        if (bufRemains(this->blockBuffer) == 0)
+        {
+            THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
+            // storageWriteGcsBlockAsync(this);
+            bufUsedZero(this->blockBuffer);
+        }
+    }
+    while (bytesTotal != bufUsed(buffer));
+
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -215,53 +213,58 @@ storageWriteGcsClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    // // Close if the file has not already been closed
-    // if (this->blockBuffer != NULL)
-    // {
-    //     MEM_CONTEXT_TEMP_BEGIN()
-    //     {
-    //         // If a multi-block upload was started we need to finish that way
-    //         if (this->blockIdList != NULL)
-    //         {
-    //             // If there is anything left in the block buffer then write it
-    //             if (!bufEmpty(this->blockBuffer))
-    //                 storageWriteGcsBlockAsync(this);
-    //
-    //             // Complete prior async request, if any
-    //             storageWriteGcsBlock(this);
-    //
-    //             // Generate the xml block list
-    //             XmlDocument *blockXml = xmlDocumentNew(GCS_XML_TAG_BLOCK_LIST_STR);
-    //
-    //             for (unsigned int blockIdx = 0; blockIdx < strLstSize(this->blockIdList); blockIdx++)
-    //             {
-    //                 xmlNodeContentSet(
-    //                     xmlNodeAdd(xmlDocumentRoot(blockXml), GCS_XML_TAG_UNCOMMITTED_STR),
-    //                     strLstGet(this->blockIdList, blockIdx));
-    //             }
-    //
-    //             // Finalize the multi-block upload
-    //             storageGcsRequestP(
-    //                 this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
-    //                 .query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_COMP_STR, GCS_QUERY_VALUE_BLOCK_LIST_STR),
-    //                 .content = xmlDocumentBuf(blockXml));
-    //         }
-    //         // Else upload all the data in a single block
-    //         else
-    //         {
-    //             storageGcsRequestP(
-    //                 this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
-    //                 httpHeaderAdd(httpHeaderNew(NULL), GCS_HEADER_BLOB_TYPE_STR, GCS_HEADER_VALUE_BLOCK_BLOB_STR),
-    //                 .content = this->blockBuffer);
-    //         }
-    //
-    //         bufFree(this->blockBuffer);
-    //         this->blockBuffer = NULL;
-    //     }
-    //     MEM_CONTEXT_TEMP_END();
-    // }
+    // Close if the file has not already been closed
+    if (this->blockBuffer != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // If a multi-block upload was started we need to finish that way
+            if (this->blockIdList != NULL)
+            {
+                THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
+                // // If there is anything left in the block buffer then write it
+                // if (!bufEmpty(this->blockBuffer))
+                //     storageWriteGcsBlockAsync(this);
+                //
+                // // Complete prior async request, if any
+                // storageWriteGcsBlock(this);
+                //
+                // // Generate the xml block list
+                // XmlDocument *blockXml = xmlDocumentNew(GCS_XML_TAG_BLOCK_LIST_STR);
+                //
+                // for (unsigned int blockIdx = 0; blockIdx < strLstSize(this->blockIdList); blockIdx++)
+                // {
+                //     xmlNodeContentSet(
+                //         xmlNodeAdd(xmlDocumentRoot(blockXml), GCS_XML_TAG_UNCOMMITTED_STR),
+                //         strLstGet(this->blockIdList, blockIdx));
+                // }
+                //
+                // // Finalize the multi-block upload
+                // storageGcsRequestP(
+                //     this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
+                //     .query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_COMP_STR, GCS_QUERY_VALUE_BLOCK_LIST_STR),
+                //     .content = xmlDocumentBuf(blockXml));
+            }
+            // Else upload all the data in a single block
+            else
+            {
+                // HttpHeader *header = httpHeaderNew(NULL);
+                // httpHeaderAdd(header, STRDEF("content-type"), STRDEF("application/octet-stream"));
 
-    THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
+                HttpQuery *query = httpQueryNewP();
+                httpQueryAdd(query, STRDEF("name"), strSub(this->interface.name, 1));
+                httpQueryAdd(query, STRDEF("uploadType"), STRDEF("media"));
+
+                storageGcsRequestP(
+                    this->storage, HTTP_VERB_POST_STR, .upload = true, /*.header = header, */.query = query,
+                    .content = this->blockBuffer);
+            }
+
+            bufFree(this->blockBuffer);
+            this->blockBuffer = NULL;
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
