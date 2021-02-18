@@ -15,7 +15,7 @@ Constants
 #define TEST_ENDPOINT                                               "storage.googleapis.com"
     STRING_STATIC(TEST_ENDPOINT_STR,                                TEST_ENDPOINT);
 #define TEST_PORT                                                   443
-#define TEST_TIMEOUT                                                1000
+#define TEST_TIMEOUT                                                5000
 #define TEST_CHUNK_SIZE                                             16
 #define TEST_BUCKET                                                 "bucket"
     STRING_STATIC(TEST_BUCKET_STR,                                  TEST_BUCKET);
@@ -226,7 +226,7 @@ testRun(void)
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
         TEST_RESULT_STR(((StorageGcs *)storage->driver)->bucket, TEST_BUCKET_STR, "    check bucket");
         TEST_RESULT_STR_Z(((StorageGcs *)storage->driver)->endpoint, "storage.googleapis.com", "    check endpoint");
-        TEST_RESULT_UINT(((StorageGcs *)storage->driver)->blockSize, STORAGE_GCS_BLOCKSIZE_MIN, "    check block size");
+        TEST_RESULT_UINT(((StorageGcs *)storage->driver)->blockSize, STORAGE_GCS_CHUNKSIZE_MIN, "    check block size");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
     }
@@ -241,9 +241,9 @@ testRun(void)
         //     storageGcsAuthToken(
         //         (StorageGcs *)storageDriver(
         //             storageGcsNew(
-        //                 STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, TEST_PROJECT_STR, storageGcsKeyTypeService,
-        //                 strNewFmt("/home/%s/pgbackrest/test/scratch.gcs.json", testUser()), TEST_CHUNK_SIZE, NULL,
-        //                 TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL))),
+        //                 STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService,
+        //                 strNewFmt("/home/%s/pgbackrest/test/scratch.gcs.json", testUser()), TEST_CHUNK_SIZE, TEST_ENDPOINT_STR,
+        //                 TEST_PORT, TEST_TIMEOUT, true, NULL, NULL))),
         //     "", "authentication token");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -291,65 +291,36 @@ testRun(void)
             "pov7dTnhGu7ROkFlJ62n_Skl-v48DEVjWGmLyAVE30dIu0niWHvybG9pIfENHlnF1fWUhIbIGm4dFmcJBlNpTBv8cIhA0Y_zriEUAN3hMqFfFXMPjRUqOU"
             "n1xbG88ranOuk9XS4CRrzH4Cv1wgjO4Wdk_S-8poZ6N1A",
             "jwt");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("minimal auth");
-        // HttpHeader *header = NULL;
-        // HttpQuery *query = NULL;
-        // const String *dateTime = STRDEF("20210211T192800Z");
-        //
-        // header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
-        // query = httpQueryNewP();
-        // httpQueryAdd(query, STRDEF("project"), STRDEF("pgbackrest-dev"));
-        //
-        // TEST_RESULT_VOID(storageGcsAuth(storage, HTTP_VERB_GET_STR, STRDEF("/storage/v1/b"), query, dateTime, header), "auth");
-        // TEST_RESULT_STR_Z(httpHeaderToLog(header), "{content-length: '0', host: 'storage.googleapis.com'}", "check headers");
-        // TEST_RESULT_STR_Z(
-        //     httpQueryToLog(query),
-        //     "{X-Goog-Algorithm: 'GOOG4-RSA-SHA256'"
-        //         ", X-Goog-Credential: 'service@pgbackrest-dev.iam.gserviceaccount.com/20210211/auto/storage/goog4_request'"
-        //         ", X-Goog-Date: '20210211T170800Z', X-Goog-Expires: '3600', X-Goog-SignedHeaders: 'content-length;host'}",
-        //     "check query");
-
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("auth with md5 and query");
-        //
-        // header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("44"));
-        // httpHeaderAdd(header, HTTP_HEADER_CONTENT_MD5_STR, STRDEF("b64f49553d5c441652e95697a2c5949e"));
-        //
-        // HttpQuery *query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
-        //
-        // TEST_RESULT_VOID(storageGcsAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
-        // TEST_RESULT_STR_Z(
-        //     httpHeaderToLog(header),
-        //     "{authorization: 'SharedKey account:5qAnroLtbY8IWqObx8+UVwIUysXujsfWZZav7PrBON0=', content-length: '44'"
-        //         ", content-md5: 'b64f49553d5c441652e95697a2c5949e', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
-        //         ", host: 'account.blob.core.windows.net', x-ms-version: '2019-02-02'}",
-        //     "check headers");
-        //
-        // // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("SAS auth");
-        //
-        // TEST_ASSIGN(
-        //     storage,
-        //     (StorageGcs *)storageDriver(
-        //         storageGcsNew(
-        //             STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageGcsKeyTypeSas, TEST_KEY_SAS_STR,
-        //             16, NULL, STRDEF("blob.core.usgovcloudapi.net"), 443, 1000, true, NULL, NULL)),
-        //     "new gcs storage - sas key");
-        //
-        // query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
-        // header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("66"));
-        //
-        // TEST_RESULT_VOID(storageGcsAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
-        // TEST_RESULT_STR_Z(
-        //     httpHeaderToLog(header), "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
-        // TEST_RESULT_STR_Z(httpQueryRenderP(query), "a=b&sig=key", "check query");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
     {
+        // Storage *storage = NULL;
+        //
+        // TEST_ASSIGN(
+        //     storage,
+        //     storageGcsNew(
+        //         STRDEF("/"), true, NULL, STRDEF("pgbackrest-dev"), storageGcsKeyTypeToken,
+        //         STRDEF("x"),
+        //         STORAGE_GCS_CHUNKSIZE_MIN,
+        //         TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL),
+        //     "read/write gcs storage - token");
+        //
+        // Buffer *buffer = bufNewC("testme", 6);
+        //
+        // storagePutP(storageNewWriteP(storage, STRDEF("dude.txt")), buffer);
+        // TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storage, STRDEF("dude.txt"))), buffer), true, "read == write");
+        //
+        // buffer = bufNew(STORAGE_GCS_CHUNKSIZE_MIN * 2);
+        // bufUsedSet(buffer, bufSize(buffer));
+        //
+        // for (size_t chrIdx = 0; chrIdx < bufUsed(buffer); chrIdx++)
+        //     bufPtr(buffer)[chrIdx] = (unsigned char)(chrIdx % 94 + 32);
+        //
+        // storagePutP(storageNewWriteP(storage, STRDEF("dude2.txt")), buffer);
+        // TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storage, STRDEF("dude2.txt"))), buffer), true, "read == write");
+
         // HARNESS_FORK_BEGIN()
         // {
         //     HARNESS_FORK_CHILD_BEGIN(0, true)

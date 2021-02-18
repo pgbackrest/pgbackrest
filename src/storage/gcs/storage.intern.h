@@ -47,6 +47,7 @@ typedef struct StorageGcsResponseParam
 {
     VAR_PARAM_HEADER;
     bool allowMissing;                                              // Allow missing files (caller can check response code)
+    bool allowIncomplete;                                           // Allow incomplete resume (used for resumable upload)
     bool contentIo;                                                 // Is IoRead interface required to read content?
 } StorageGcsResponseParam;
 
@@ -65,6 +66,7 @@ typedef struct StorageGcsRequestParam
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
     bool allowMissing;                                              // Allow missing files (caller can check response code)
+    bool allowIncomplete;                                           // Allow incomplete resume (used for resumable upload)
     bool contentIo;                                                 // Is IoRead interface required to read content?
 } StorageGcsRequestParam;
 

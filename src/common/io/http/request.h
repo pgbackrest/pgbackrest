@@ -45,6 +45,8 @@ HTTP Constants
     STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
 #define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
     STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
+#define HTTP_HEADER_CONTENT_RANGE                                   "content-range"
+    STRING_DECLARE(HTTP_HEADER_CONTENT_RANGE_STR);
 #define HTTP_HEADER_DATE                                            "date"
     STRING_DECLARE(HTTP_HEADER_DATE_STR);
 #define HTTP_HEADER_ETAG                                            "etag"

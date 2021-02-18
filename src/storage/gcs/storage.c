@@ -79,6 +79,7 @@ struct StorageGcs
     const String *project;                                          // Project
     StorageGcsKeyType keyType;                                      // Auth key type
     const String *credential;                                       // Credential !!!
+    const String *token;                                            // Token
     const String *privateKey;                                       // Private key in PEM format
     // const String *sharedKey;                                        // Shared key
     // const HttpQuery *sasKey;                                        // SAS key
@@ -274,8 +275,13 @@ storageGcsAuth(
         // Host header is required for authentication
         httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->endpoint);
 
+        // Token authentication
+        if (this->keyType == storageGcsKeyTypeToken)
+        {
+            httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
+        }
         // Service key authentication
-        if (this->keyType == storageGcsKeyTypeService)
+        else if (this->keyType == storageGcsKeyTypeService)
         {
             (void)verb; // !!! REMOVE WHEN USED
             (void)uri; // !!! REMOVE WHEN USED
@@ -368,10 +374,12 @@ storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.allowIncomplete);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
     FUNCTION_LOG_END();
 
     ASSERT(request != NULL);
+    ASSERT(!param.allowMissing || !param.allowIncomplete);
 
     HttpResponse *result = NULL;
 
@@ -381,7 +389,8 @@ storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
         result = httpRequestResponse(request, !param.contentIo);
 
         // Error if the request was not successful
-        if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND))
+        if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND) &&
+            (!param.allowIncomplete || httpResponseCode(result) != 308 /* !!! MAKE REDIRECT? */))
             httpRequestError(request, result);
 
         // Move response to the prior context
@@ -405,6 +414,7 @@ storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam p
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.allowIncomplete);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
     FUNCTION_LOG_END();
 
@@ -414,7 +424,7 @@ storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam p
             storageGcsRequestAsyncP(
                 this, verb, .noBucket = param.noBucket, .upload = param.upload, .object = param.object, .header = param.header,
                 .query = param.query, .content = param.content),
-            .allowMissing = param.allowMissing, .contentIo = param.contentIo));
+            .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo));
 }
 
 /***********************************************************************************************************************************
@@ -868,18 +878,19 @@ storageGcsNew(
             .write = write,
             .bucket = strDup(bucket),
             .keyType = keyType,
-            .credential = strNew("service@pgbackrest-dev.iam.gserviceaccount.com"),
             .blockSize = blockSize,
             .endpoint = strDup(endpoint),
             // .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 
-        if (key != NULL)
+        if (keyType == storageGcsKeyTypeService)
         {
             KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
             driver->credential = varStr(kvGet(kvKey, VARSTRDEF("client_email")));
             driver->privateKey = varStr(kvGet(kvKey, VARSTRDEF("private_key")));
         }
+        else if (keyType == storageGcsKeyTypeToken)
+            driver->token = strDup(key);
 
         // Store shared key or parse sas query
         // if (keyType == storageGcsKeyTypeShared)
@@ -899,6 +910,7 @@ storageGcsNew(
 
         // Create list of redacted query keys
         // driver->queryRedactList = strLstNew();
+        // !!! REDACT UPLOAD ID
         // strLstAdd(driver->queryRedactList, GCS_QUERY_SIG_STR);
 
         // Generate starting file id

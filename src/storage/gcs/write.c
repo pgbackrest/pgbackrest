@@ -5,13 +5,16 @@ GCS Storage File Write
 
 #include <string.h>
 
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/encode.h"
+#include "common/io/filter/filter.intern.h"
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
+#include "common/type/keyValue.h"
 #include "common/type/object.h"
-#include "common/type/xml.h"
 #include "storage/gcs/write.h"
 #include "storage/write.intern.h"
 
@@ -44,10 +47,12 @@ typedef struct StorageWriteGcs
     StorageWriteInterface interface;                                // Interface
     StorageGcs *storage;                                            // Storage that created this object
 
-    HttpRequest *request;                                           // Async block upload request
-    size_t blockSize;                                               // Size of blocks for multi-block upload
-    Buffer *blockBuffer;                                            // Block buffer (stores data until blockSize is reached)
-    StringList *blockIdList;                                        // List of uploaded block ids
+    HttpRequest *request;                                           // Async chunk upload request
+    size_t chunkSize;                                               // Size of chunks for resumable upload
+    Buffer *chunkBuffer;                                            // Block buffer (stores data until chunkSize is reached)
+    const String *uploadId;                                         // Id for resumable upload
+    uint64_t uploadTotal;                                           // Total bytes uploaded
+    IoFilter *md5hash;                                              // MD5 hash of file
 } StorageWriteGcs;
 
 /***********************************************************************************************************************************
@@ -71,12 +76,13 @@ storageWriteGcsOpen(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->blockBuffer == NULL);
+    ASSERT(this->chunkBuffer == NULL);
 
-    // Allocate the block buffer
+    // Allocate the chunk buffer
     MEM_CONTEXT_BEGIN(this->memContext)
     {
-        this->blockBuffer = bufNew(this->blockSize);
+        this->chunkBuffer = bufNew(this->chunkSize);
+        this->md5hash = cryptoHashNew(HASH_TYPE_MD5_STR);
     }
     MEM_CONTEXT_END();
 
@@ -84,79 +90,149 @@ storageWriteGcsOpen(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Flush bytes to upload block
+Verify upload
 ***********************************************************************************************************************************/
-// static void
-// storageWriteGcsBlock(StorageWriteGcs *this)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelTrace);
-//         FUNCTION_LOG_PARAM(STORAGE_WRITE_GCS, this);
-//     FUNCTION_LOG_END();
-//
-//     ASSERT(this != NULL);
-//
-//     // If there is an outstanding async request then wait for the response. Since the part id has already been stored there is
-//     // nothing to do except make sure the request did not error.
-//     if (this->request != NULL)
-//     {
-//         storageGcsResponseP(this->request);
-//         httpRequestFree(this->request);
-//         this->request = NULL;
-//     }
-//
-//     FUNCTION_LOG_RETURN_VOID();
-// }
-//
-// static void
-// storageWriteGcsBlockAsync(StorageWriteGcs *this)
-// {
-//     FUNCTION_LOG_BEGIN(logLevelTrace);
-//         FUNCTION_LOG_PARAM(STORAGE_WRITE_GCS, this);
-//     FUNCTION_LOG_END();
-//
-//     ASSERT(this != NULL);
-//     ASSERT(this->blockBuffer != NULL);
-//     ASSERT(bufSize(this->blockBuffer) > 0);
-//
-//     MEM_CONTEXT_TEMP_BEGIN()
-//     {
-//         // Complete prior async request, if any
-//         storageWriteGcsBlock(this);
-//
-//         // Create the block id list
-//         if (this->blockIdList == NULL)
-//         {
-//             MEM_CONTEXT_BEGIN(this->memContext)
-//             {
-//                 this->blockIdList = strLstNew();
-//             }
-//             MEM_CONTEXT_END();
-//         }
-//
-//         // Generate block id. Combine the block number with the provided file id to create a (hopefully) unique block id that won't
-//         // overlap with any other process. This is to prevent another process from overwriting our blocks. If two processes are
-//         // writing against the same file then there may be problems anyway but we need to at least ensure the result is consistent,
-//         // i.e. we get all of one file or all of the other depending on who writes last.
-//         const String *blockId = strNewFmt("%016" PRIX64 "x%07u", this->fileId, strLstSize(this->blockIdList));
-//
-//         // Upload the block and add to block list
-//         HttpQuery *query = httpQueryNewP();
-//         httpQueryAdd(query, GCS_QUERY_COMP_STR, GCS_QUERY_VALUE_BLOCK_STR);
-//         httpQueryAdd(query, GCS_QUERY_BLOCK_ID_STR, blockId);
-//
-//         MEM_CONTEXT_BEGIN(this->memContext)
-//         {
-//             this->request = storageGcsRequestAsyncP(
-//                 this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .content = this->blockBuffer);
-//         }
-//         MEM_CONTEXT_END();
-//
-//         strLstAdd(this->blockIdList, blockId);
-//     }
-//     MEM_CONTEXT_TEMP_END();
-//
-//     FUNCTION_LOG_RETURN_VOID();
-// }
+static void
+storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_GCS, this);
+        FUNCTION_LOG_PARAM(HTTP_RESPONSE, response);
+    FUNCTION_LOG_END();
+
+    LOG_DETAIL_FMT("HEADER:\n%s\nRESPONSE:\n%s", strZ(httpHeaderToLog(httpResponseHeader(response))), strZ(strNewBuf(httpResponseContent(response)))); // !!! REMOVE THIS
+
+    KeyValue *content = jsonToKv(strNewBuf(httpResponseContent(response)));
+
+    // Get the md5 hash
+    const String *md5base64 = varStr(kvGet(content, VARSTRDEF("md5Hash")));
+    CHECK(md5base64 != NULL);
+
+    Buffer *md5 = bufNew(HASH_TYPE_M5_SIZE);
+    ASSERT(decodeToBinSize(encodeBase64, strZ(md5base64)) == bufSize(md5));
+
+    decodeToBin(encodeBase64, strZ(md5base64), bufPtr(md5));
+    bufUsedSet(md5, bufSize(md5));
+
+    const String *md5actual = bufHex(md5);
+    const String *md5expected = varStr(ioFilterResult(this->md5hash));
+
+    if (!strEq(md5actual, md5expected))
+    {
+        THROW_FMT(
+            FormatError, "expected md5 '%s' for '%s' but actual is '%s'", strZ(md5expected), strZ(this->interface.name),
+            strZ(md5actual));
+    }
+
+    // Get the size
+    // !!! SINCE SIZE IS NOT SUPPORTED BY FAKE-GCS, PERHAPS DO INFO INSTEAD
+    const String *sizeStr = varStr(kvGet(content, VARSTRDEF("size")));
+
+    if (sizeStr != NULL)
+    {
+        uint64_t size = cvtZToUInt64(strZ(sizeStr));
+
+        if (size != this->uploadTotal)
+        {
+            THROW_FMT(
+                FormatError, "expected size %" PRIu64 " for '%s' but actual is %" PRIu64, size, strZ(this->interface.name),
+                this->uploadTotal);
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Flush bytes to upload chunk
+***********************************************************************************************************************************/
+static void
+storageWriteGcsBlock(StorageWriteGcs *this, bool done)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_GCS, this);
+        FUNCTION_LOG_PARAM(BOOL, done);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // If there is an outstanding async request then wait for the response. Since the part id has already been stored there is
+    // nothing to do except make sure the request did not error.
+    if (this->request != NULL)
+    {
+        HttpResponse *response = storageGcsResponseP(this->request, .allowIncomplete = !done);
+
+        // If done then verify the md5 checksum
+        if (done)
+            storageWriteGcsVerify(this, response);
+
+        httpRequestFree(this->request);
+        this->request = NULL;
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+static void
+storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_GCS, this);
+        FUNCTION_LOG_PARAM(BOOL, done);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->chunkBuffer != NULL);
+    ASSERT(bufSize(this->chunkBuffer) > 0);
+    ASSERT(!done || this->uploadId != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Complete prior async request, if any
+        storageWriteGcsBlock(this, false);
+
+        // Build query
+        HttpQuery *query = httpQueryNewP();
+        httpQueryAdd(query, STRDEF("name"), strSub(this->interface.name, 1));
+        httpQueryAdd(query, STRDEF("uploadType"), STRDEF("resumable"));
+
+        // Get the session URI
+        if (this->uploadId == NULL)
+        {
+            HttpResponse *response = storageGcsRequestP(this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query);
+
+            MEM_CONTEXT_BEGIN(this->memContext)
+            {
+                // THROW_FMT(AssertError, "URI: %s", strZ(httpHeaderGet(httpResponseHeader(response), STRDEF("location"))));
+                this->uploadId = strDup(httpHeaderGet(httpResponseHeader(response), STRDEF("x-guploader-uploadid")));
+            }
+            MEM_CONTEXT_END();
+        }
+
+        // Upload the chunk
+        ioFilterProcessIn(this->md5hash, this->chunkBuffer);
+
+        HttpHeader *header = httpHeaderAdd(
+            httpHeaderNew(NULL), STRDEF(HTTP_HEADER_CONTENT_RANGE),
+            strNewFmt(
+                "bytes %" PRIu64 "-%" PRIu64 "/%s", this->uploadTotal, this->uploadTotal + bufUsed(this->chunkBuffer) - 1,
+                done ? strZ(strNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer))) : "*"));
+
+        httpQueryAdd(query, STRDEF("upload_id"), this->uploadId);
+
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->request = storageGcsRequestAsyncP(
+                this->storage, HTTP_VERB_PUT_STR, .upload = true, .header = header, .query = query, .content = this->chunkBuffer);
+        }
+        MEM_CONTEXT_END();
+
+        this->uploadTotal += bufUsed(this->chunkBuffer);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Write to internal buffer
@@ -172,26 +248,25 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->blockBuffer != NULL);
+    ASSERT(this->chunkBuffer != NULL);
 
     size_t bytesTotal = 0;
 
     // Continue until the write buffer has been exhausted
     do
     {
-        // Copy as many bytes as possible into the block buffer
-        size_t bytesNext = bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->blockBuffer);
-        bufCatSub(this->blockBuffer, buffer, bytesTotal, bytesNext);
-        bytesTotal += bytesNext;
-
-        // If the block buffer is full then write it
-        if (bufRemains(this->blockBuffer) == 0)
+        // If the chunk buffer is full then write it
+        if (bufRemains(this->chunkBuffer) == 0)
         {
-            THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
-            // storageWriteGcsBlockAsync(this);
-            bufUsedZero(this->blockBuffer);
+            storageWriteGcsBlockAsync(this, false);
+            bufUsedZero(this->chunkBuffer);
         }
+
+        // Copy as many bytes as possible into the chunk buffer
+        size_t bytesNext = bufRemains(this->chunkBuffer) > bufUsed(buffer) - bytesTotal ?
+            bufUsed(buffer) - bytesTotal : bufRemains(this->chunkBuffer);
+        bufCatSub(this->chunkBuffer, buffer, bytesTotal, bytesNext);
+        bytesTotal += bytesNext;
     }
     while (bytesTotal != bufUsed(buffer));
 
@@ -214,54 +289,41 @@ storageWriteGcsClose(THIS_VOID)
     ASSERT(this != NULL);
 
     // Close if the file has not already been closed
-    if (this->blockBuffer != NULL)
+    if (this->chunkBuffer != NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // If a multi-block upload was started we need to finish that way
-            if (this->blockIdList != NULL)
+            // If a multi-chunk upload was started we need to finish that way
+            if (this->uploadId != NULL)
             {
-                THROW(AssertError, "!!!NOT YET IMPLEMENTED!!!");
-                // // If there is anything left in the block buffer then write it
-                // if (!bufEmpty(this->blockBuffer))
-                //     storageWriteGcsBlockAsync(this);
-                //
-                // // Complete prior async request, if any
-                // storageWriteGcsBlock(this);
-                //
-                // // Generate the xml block list
-                // XmlDocument *blockXml = xmlDocumentNew(GCS_XML_TAG_BLOCK_LIST_STR);
-                //
-                // for (unsigned int blockIdx = 0; blockIdx < strLstSize(this->blockIdList); blockIdx++)
-                // {
-                //     xmlNodeContentSet(
-                //         xmlNodeAdd(xmlDocumentRoot(blockXml), GCS_XML_TAG_UNCOMMITTED_STR),
-                //         strLstGet(this->blockIdList, blockIdx));
-                // }
-                //
-                // // Finalize the multi-block upload
-                // storageGcsRequestP(
-                //     this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
-                //     .query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_COMP_STR, GCS_QUERY_VALUE_BLOCK_LIST_STR),
-                //     .content = xmlDocumentBuf(blockXml));
+                LOG_DEBUG_FMT("!!!GOT TO FINAL %" PRIu64, this->uploadTotal);
+
+                ASSERT(!bufEmpty(this->chunkBuffer));
+
+                // Write what is left in the chunk buffer
+                storageWriteGcsBlockAsync(this, true);
+                storageWriteGcsBlock(this, true);
             }
-            // Else upload all the data in a single block
+            // Else upload all the data in a single chunk
             else
             {
-                // HttpHeader *header = httpHeaderNew(NULL);
-                // httpHeaderAdd(header, STRDEF("content-type"), STRDEF("application/octet-stream"));
+                if (bufUsed(this->chunkBuffer))
+                    ioFilterProcessIn(this->md5hash, this->chunkBuffer);
 
                 HttpQuery *query = httpQueryNewP();
                 httpQueryAdd(query, STRDEF("name"), strSub(this->interface.name, 1));
                 httpQueryAdd(query, STRDEF("uploadType"), STRDEF("media"));
 
-                storageGcsRequestP(
-                    this->storage, HTTP_VERB_POST_STR, .upload = true, /*.header = header, */.query = query,
-                    .content = this->blockBuffer);
+                this->uploadTotal = bufUsed(this->chunkBuffer);
+
+                storageWriteGcsVerify(
+                    this,
+                    storageGcsRequestP(
+                        this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query, .content = this->chunkBuffer));
             }
 
-            bufFree(this->blockBuffer);
-            this->blockBuffer = NULL;
+            bufFree(this->chunkBuffer);
+            this->chunkBuffer = NULL;
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -271,12 +333,12 @@ storageWriteGcsClose(THIS_VOID)
 
 /**********************************************************************************************************************************/
 StorageWrite *
-storageWriteGcsNew(StorageGcs *storage, const String *name, size_t blockSize)
+storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_GCS, storage);
         FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(UINT64, blockSize);
+        FUNCTION_LOG_PARAM(UINT64, chunkSize);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -292,7 +354,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t blockSize)
         {
             .memContext = MEM_CONTEXT_NEW(),
             .storage = storage,
-            .blockSize = blockSize,
+            .chunkSize = chunkSize,
 
             .interface = (StorageWriteInterface)
             {

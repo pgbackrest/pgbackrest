@@ -19,6 +19,7 @@ typedef enum
 {
     storageGcsKeyTypeNone,
     storageGcsKeyTypeService,
+    storageGcsKeyTypeToken,
 } StorageGcsKeyType;
 
 #define STORAGE_GCS_KEY_TYPE_NONE                                   "none"
@@ -27,7 +28,7 @@ typedef enum
 /***********************************************************************************************************************************
 Defaults
 ***********************************************************************************************************************************/
-#define STORAGE_GCS_BLOCKSIZE_MIN                                   ((size_t)4 * 1024 * 1024)
+#define STORAGE_GCS_CHUNKSIZE_MIN                                   ((size_t)256 * 1024)
 
 /***********************************************************************************************************************************
 Constructors
