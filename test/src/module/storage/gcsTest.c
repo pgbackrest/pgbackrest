@@ -21,6 +21,8 @@ Constants
     STRING_STATIC(TEST_BUCKET_STR,                                  TEST_BUCKET);
 #define TEST_KEY_FILE                                               TEST_PATH "/key.json"
     STRING_STATIC(TEST_KEY_FILE_STR,                                TEST_KEY_FILE);
+#define TEST_TOKEN                                                  "token"
+    STRING_STATIC(TEST_TOKEN_STR,                                   TEST_TOKEN);
 
 #define TEST_KEY                                                                                                                   \
     "{\n"                                                                                                                          \
@@ -219,6 +221,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
+        hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, STORAGE_GCS_KEY_TYPE_TOKEN);
+        hrnCfgArgRawZ(argList, cfgOptRepoGcsKey, TEST_TOKEN);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         Storage *storage = NULL;
@@ -227,6 +231,7 @@ testRun(void)
         TEST_RESULT_STR(((StorageGcs *)storage->driver)->bucket, TEST_BUCKET_STR, "    check bucket");
         TEST_RESULT_STR_Z(((StorageGcs *)storage->driver)->endpoint, "storage.googleapis.com", "    check endpoint");
         TEST_RESULT_UINT(((StorageGcs *)storage->driver)->chunkSize, STORAGE_GCS_CHUNKSIZE_DEFAULT, "    check chunk size");
+        TEST_RESULT_STR(((StorageGcs *)storage->driver)->token, TEST_TOKEN_STR, "    check token");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
     }
@@ -296,21 +301,21 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
     {
-        Storage *storage = NULL;
-        size_t chunkSize = (size_t)256 * 1024;
-
-        TEST_ASSIGN(
-            storage,
-            storageGcsNew(
-                STRDEF("/"), true, NULL, STRDEF("pgbackrest-dev"), storageGcsKeyTypeToken,
-                STRDEF("Bearer ya29.c.Kp0B8weAIgxhqJB3W44aHM4hpOaqqMSyX2DBrp_aIci0al99ajbbTbp3h7hWUyrDz0IwcM6g84GoLsQf65_F2It8sOlVtoXNeiw8R6iKoJlP0h-bUZW69QXfu4VPSn42afpT_pHdef4o1lzzx-_4rEx1GvbkK1BQIcnte_QGs7XdkTwIu1AMm_-yMPV6KnRkRBzIbAiFPrlghIOvrzhnlQ"),
-                chunkSize, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL),
-            "read/write gcs storage - token");
-
-        Buffer *buffer = bufNewC("testme", 6);
-
-        storagePutP(storageNewWriteP(storage, STRDEF("archive/demo/dude.txt")), buffer);
-        TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storage, STRDEF("archive/demo/dude.txt"))), buffer), true, "read == write");
+        // Storage *storage = NULL;
+        // size_t chunkSize = (size_t)256 * 1024;
+        //
+        // TEST_ASSIGN(
+        //     storage,
+        //     storageGcsNew(
+        //         STRDEF("/"), true, NULL, STRDEF("pgbackrest-dev"), storageGcsKeyTypeToken,
+        //         STRDEF("x"),
+        //         chunkSize, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL),
+        //     "read/write gcs storage - token");
+        //
+        // Buffer *buffer = bufNewC("testme", 6);
+        //
+        // storagePutP(storageNewWriteP(storage, STRDEF("archive/demo/dude.txt")), buffer);
+        // TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storage, STRDEF("archive/demo/dude.txt"))), buffer), true, "read == write");
 
         // buffer = bufNew(chunkSize * 2);
         // bufUsedSet(buffer, bufSize(buffer));
