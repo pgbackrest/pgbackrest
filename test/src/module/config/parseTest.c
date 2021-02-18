@@ -777,7 +777,7 @@ testRun(void)
             "'/path1/path2//' cannot contain // for 'pg1-path' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("local/remote roles should not modify log levels");
+        TEST_TITLE("non-default roles should not modify log levels");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -816,6 +816,21 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "    remote role name");
         TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
         TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--log-level-stderr=info"));
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
+
+        logLevelStdOut = logLevelError;
+        logLevelStdErr = logLevelError;
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load async config");
+        TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleAsync, "    command role is async");
+        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
+        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+
         harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
