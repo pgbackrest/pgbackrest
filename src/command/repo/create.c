@@ -33,7 +33,7 @@ cmdRepoCreate(void)
         }
         else if (strEq(storageType(storageRepo()), STORAGE_GCS_TYPE_STR))
         {
-            KeyValue *kvContent = kvPut(kvNew(), VARSTRDEF("name"), VARSTR(cfgOptionStr(cfgOptRepoGcsBucket)));
+            KeyValue *kvContent = kvPut(kvNew(), GCS_JSON_NAME_VAR, VARSTR(cfgOptionStr(cfgOptRepoGcsBucket)));
 
             storageGcsRequestP(
                 (StorageGcs *)storageDriver(storageRepoWrite()), HTTP_VERB_POST_STR, .noBucket = true,

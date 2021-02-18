@@ -3,13 +3,10 @@ GCS Storage File Write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <string.h>
-
 #include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/encode.h"
 #include "common/io/filter/filter.intern.h"
-#include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/json.h"
@@ -19,24 +16,11 @@ GCS Storage File Write
 #include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
-GCS HTTP headers
-***********************************************************************************************************************************/
-// STRING_STATIC(GCS_HEADER_BLOB_TYPE_STR,                           "x-ms-blob-type");
-// STRING_STATIC(GCS_HEADER_VALUE_BLOCK_BLOB_STR,                    "BlockBlob");
-
-/***********************************************************************************************************************************
 GCS query tokens
 ***********************************************************************************************************************************/
-// STRING_STATIC(GCS_QUERY_BLOCK_ID_STR,                             "blockid");
-//
-// STRING_STATIC(GCS_QUERY_VALUE_BLOCK_STR,                          "block");
-// STRING_STATIC(GCS_QUERY_VALUE_BLOCK_LIST_STR,                     "blocklist");
-
-/***********************************************************************************************************************************
-XML tags
-***********************************************************************************************************************************/
-// STRING_STATIC(GCS_XML_TAG_BLOCK_LIST_STR,                         "BlockList");
-// STRING_STATIC(GCS_XML_TAG_UNCOMMITTED_STR,                        "Uncommitted");
+STRING_STATIC(GCS_QUERY_MEDIA_STR,                                  "media");
+STRING_STATIC(GCS_QUERY_UPLOAD_TYPE_STR,                            "uploadType");
+STRING_STATIC(GCS_QUERY_RESUMABLE_STR,                              "resumable");
 
 /***********************************************************************************************************************************
 Object type
@@ -100,12 +84,12 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
         FUNCTION_LOG_PARAM(HTTP_RESPONSE, response);
     FUNCTION_LOG_END();
 
-    LOG_DETAIL_FMT("HEADER:\n%s\nRESPONSE:\n%s", strZ(httpHeaderToLog(httpResponseHeader(response))), strZ(strNewBuf(httpResponseContent(response)))); // !!! REMOVE THIS
+    LOG_DETAIL_FMT("!!!HEADER:\n%s\nRESPONSE:\n%s", strZ(httpHeaderToLog(httpResponseHeader(response))), strZ(strNewBuf(httpResponseContent(response))));
 
     KeyValue *content = jsonToKv(strNewBuf(httpResponseContent(response)));
 
-    // Get the md5 hash
-    const String *md5base64 = varStr(kvGet(content, VARSTRDEF("md5Hash")));
+    // Check the md5 hash
+    const String *md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));
     CHECK(md5base64 != NULL);
 
     Buffer *md5 = bufNew(HASH_TYPE_M5_SIZE);
@@ -124,9 +108,8 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
             strZ(md5actual));
     }
 
-    // Get the size
-    // !!! SINCE SIZE IS NOT SUPPORTED BY FAKE-GCS, PERHAPS DO INFO INSTEAD
-    const String *sizeStr = varStr(kvGet(content, VARSTRDEF("size")));
+    // Check the size when available
+    const String *sizeStr = varStr(kvGet(content, GCS_JSON_SIZE_VAR));
 
     if (sizeStr != NULL)
     {
@@ -156,8 +139,7 @@ storageWriteGcsBlock(StorageWriteGcs *this, bool done)
 
     ASSERT(this != NULL);
 
-    // If there is an outstanding async request then wait for the response. Since the part id has already been stored there is
-    // nothing to do except make sure the request did not error.
+    // If there is an outstanding async request then wait for the response to ensure the request did not error
     if (this->request != NULL)
     {
         HttpResponse *response = storageGcsResponseP(this->request, .allowIncomplete = !done);
@@ -193,32 +175,34 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
 
         // Build query
         HttpQuery *query = httpQueryNewP();
-        httpQueryAdd(query, STRDEF("name"), strSub(this->interface.name, 1));
-        httpQueryAdd(query, STRDEF("uploadType"), STRDEF("resumable"));
+        httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->interface.name, 1));
+        httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_RESUMABLE_STR);
 
-        // Get the session URI
+        // Get the upload id
         if (this->uploadId == NULL)
         {
             HttpResponse *response = storageGcsRequestP(this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query);
 
             MEM_CONTEXT_BEGIN(this->memContext)
             {
-                // THROW_FMT(AssertError, "URI: %s", strZ(httpHeaderGet(httpResponseHeader(response), STRDEF("location"))));
-                this->uploadId = strDup(httpHeaderGet(httpResponseHeader(response), STRDEF("x-guploader-uploadid")));
+                this->uploadId = strDup(httpHeaderGet(httpResponseHeader(response), GCS_HEADER_UPLOAD_ID_STR));
+                CHECK(this->uploadId != NULL);
             }
             MEM_CONTEXT_END();
         }
 
-        // Upload the chunk
+        // Add data to md5 hash
         ioFilterProcessIn(this->md5hash, this->chunkBuffer);
 
+        // Upload the chunk
         HttpHeader *header = httpHeaderAdd(
-            httpHeaderNew(NULL), STRDEF(HTTP_HEADER_CONTENT_RANGE),
+            httpHeaderNew(NULL), HTTP_HEADER_CONTENT_RANGE_STR,
             strNewFmt(
-                "bytes %" PRIu64 "-%" PRIu64 "/%s", this->uploadTotal, this->uploadTotal + bufUsed(this->chunkBuffer) - 1,
+                HTTP_HEADER_CONTENT_RANGE_BYTES " %" PRIu64 "-%" PRIu64 "/%s", this->uploadTotal,
+                this->uploadTotal + bufUsed(this->chunkBuffer) - 1,
                 done ? strZ(strNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer))) : "*"));
 
-        httpQueryAdd(query, STRDEF("upload_id"), this->uploadId);
+        httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
@@ -293,11 +277,9 @@ storageWriteGcsClose(THIS_VOID)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // If a multi-chunk upload was started we need to finish that way
+            // If a multi-chunk upload was started then finish that way
             if (this->uploadId != NULL)
             {
-                LOG_DEBUG_FMT("!!!GOT TO FINAL %" PRIu64, this->uploadTotal);
-
                 ASSERT(!bufEmpty(this->chunkBuffer));
 
                 // Write what is left in the chunk buffer
@@ -307,12 +289,14 @@ storageWriteGcsClose(THIS_VOID)
             // Else upload all the data in a single chunk
             else
             {
+                // Add data to md5 hash
                 if (bufUsed(this->chunkBuffer))
                     ioFilterProcessIn(this->md5hash, this->chunkBuffer);
 
+                // Upload file
                 HttpQuery *query = httpQueryNewP();
-                httpQueryAdd(query, STRDEF("name"), strSub(this->interface.name, 1));
-                httpQueryAdd(query, STRDEF("uploadType"), STRDEF("media"));
+                httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->interface.name, 1));
+                httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_MEDIA_STR);
 
                 this->uploadTotal = bufUsed(this->chunkBuffer);
 

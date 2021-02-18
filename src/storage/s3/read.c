@@ -3,9 +3,6 @@ S3 Storage Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/read.intern.h"

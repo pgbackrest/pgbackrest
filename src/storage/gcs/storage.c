@@ -33,35 +33,27 @@ Storage type
 STRING_EXTERN(STORAGE_GCS_TYPE_STR,                                 STORAGE_GCS_TYPE);
 
 /***********************************************************************************************************************************
-GCS http headers
+HTTP headers
 ***********************************************************************************************************************************/
-// STRING_STATIC(GCS_HEADER_VERSION_STR,                               "x-ms-version");
-// STRING_STATIC(GCS_HEADER_VERSION_VALUE_STR,                         "2019-02-02");
+STRING_EXTERN(GCS_HEADER_UPLOAD_ID_STR,                             GCS_HEADER_UPLOAD_ID);
 
 /***********************************************************************************************************************************
-GCS query tokens
+Query tokens
 ***********************************************************************************************************************************/
-// STRING_STATIC(GCS_QUERY_MARKER_STR,                                 "marker");
-// STRING_EXTERN(GCS_QUERY_COMP_STR,                                   GCS_QUERY_COMP);
 STRING_STATIC(GCS_QUERY_DELIMITER_STR,                              "delimiter");
+STRING_EXTERN(GCS_QUERY_NAME_STR,                                   GCS_QUERY_NAME);
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
-// STRING_EXTERN(GCS_QUERY_RESTYPE_STR,                                GCS_QUERY_RESTYPE);
-// STRING_STATIC(GCS_QUERY_SIG_STR,                                    "sig");
-//
-// STRING_STATIC(GCS_QUERY_VALUE_LIST_STR,                             "list");
-// STRING_EXTERN(GCS_QUERY_VALUE_CONTAINER_STR,                        GCS_QUERY_VALUE_CONTAINER);
+STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
 
 /***********************************************************************************************************************************
-XML tags
+JSON tokens
 ***********************************************************************************************************************************/
-// STRING_STATIC(GCS_XML_TAG_BLOB_PREFIX_STR,                          "BlobPrefix");
-// STRING_STATIC(GCS_XML_TAG_BLOB_STR,                                 "Blob");
-// STRING_STATIC(GCS_XML_TAG_BLOBS_STR,                                "Blobs");
-// STRING_STATIC(GCS_XML_TAG_CONTENT_LENGTH_STR,                       "Content-Length");
-// STRING_STATIC(GCS_XML_TAG_LAST_MODIFIED_STR,                        "Last-Modified");
-// STRING_STATIC(GCS_XML_TAG_NEXT_MARKER_STR,                          "NextMarker");
-// STRING_STATIC(GCS_XML_TAG_NAME_STR,                                 "Name");
-// STRING_STATIC(GCS_XML_TAG_PROPERTIES_STR,                           "Properties");
+VARIANT_STRDEF_STATIC(GCS_JSON_CLIENT_EMAIL_VAR,                    "client_email");
+VARIANT_STRDEF_EXTERN(GCS_JSON_MD5_HASH_VAR,                        GCS_JSON_MD5_HASH);
+VARIANT_STRDEF_EXTERN(GCS_JSON_NAME_VAR,                            GCS_JSON_NAME);
+VARIANT_STRDEF_STATIC(GCS_JSON_PRIVATE_KEY_VAR,                     "private_key");
+VARIANT_STRDEF_EXTERN(GCS_JSON_SIZE_VAR,                            GCS_JSON_SIZE);
+VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                         "updated");
 
 /***********************************************************************************************************************************
 Object type
@@ -72,7 +64,7 @@ struct StorageGcs
     MemContext *memContext;
     HttpClient *httpClient;                                         // Http client to service requests
     StringList *headerRedactList;                                   // List of headers to redact from logging
-    // StringList *queryRedactList;                                    // List of query keys to redact from logging
+    StringList *queryRedactList;                                    // List of query keys to redact from logging
 
     bool write;                                                     // Storage is writable
     const String *bucket;                                           // Bucket to store data in
@@ -81,13 +73,8 @@ struct StorageGcs
     const String *credential;                                       // Credential !!!
     const String *token;                                            // Token
     const String *privateKey;                                       // Private key in PEM format
-    // const String *sharedKey;                                        // Shared key
-    // const HttpQuery *sasKey;                                        // SAS key
     const String *endpoint;                                         // Endpoint
-    size_t blockSize;                                               // Block size for multi-block upload
-    // const String *uriPrefix;                                        // Account/container prefix
-
-    // uint64_t fileId;                                                // Id to used to make file block identifiers unique
+    size_t chunkSize;                                               // Block size for multi-chunk upload
 };
 
 /***********************************************************************************************************************************
@@ -338,28 +325,17 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
-        // Calculate content-md5 header if there is content
-        // if (param.content != NULL)
-        // {
-        //     char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-        //     encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
-        //     httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
-        // }
-
         // Make a copy of the query so it can be modified
-        // HttpQuery *query =
-        //     this->sasKey != NULL && param.query == NULL ?
-        //         httpQueryNewP(.redactList = this->queryRedactList) :
-        //         httpQueryDupP(param.query, .redactList = this->queryRedactList);
+        HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Generate authorization header
-        storageGcsAuth(this, verb, httpUriEncode(uri, true), param.query, httpDateFromTime(time(NULL)), requestHeader);
+        storageGcsAuth(this, verb, httpUriEncode(uri, true), query, httpDateFromTime(time(NULL)), requestHeader);
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, uri, .query = param.query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, uri, .query = query, .header = requestHeader, .content = param.content);
         }
         MEM_CONTEXT_END();
     }
@@ -390,7 +366,7 @@ storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
 
         // Error if the request was not successful
         if (!httpResponseCodeOk(result) && (!param.allowMissing || httpResponseCode(result) != HTTP_RESPONSE_CODE_NOT_FOUND) &&
-            (!param.allowIncomplete || httpResponseCode(result) != 308 /* !!! MAKE REDIRECT? */))
+            (!param.allowIncomplete || httpResponseCode(result) != HTTP_RESPONSE_CODE_PERMANENT_REDIRECT))
             httpRequestError(request, result);
 
         // Move response to the prior context
@@ -454,8 +430,8 @@ storageGcsInfoFile(StorageInfo *info, const KeyValue *file)
         FUNCTION_TEST_PARAM(KEY_VALUE, file);
     FUNCTION_TEST_END();
 
-    info->size = cvtZToUInt64(strZ(varStr(kvGet(file, VARSTRDEF("size")))));
-    info->timeModified = storageGcsCvtTime(varStr(kvGet(file, VARSTRDEF("updated"))));
+    info->size = cvtZToUInt64(strZ(varStr(kvGet(file, GCS_JSON_SIZE_VAR))));
+    info->timeModified = storageGcsCvtTime(varStr(kvGet(file, GCS_JSON_UPDATED_VAR)));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -597,7 +573,7 @@ storageGcsListInternal(
                     StorageInfo info =
                     {
                         .level = level,
-                        .name = varStr(kvGet(file, VARSTRDEF("name"))),
+                        .name = varStr(kvGet(file, GCS_JSON_NAME_VAR)),
                         .exists = true,
                     };
 
@@ -652,7 +628,6 @@ storageGcsInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInt
     // Add basic level info if requested and the file exists
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
-        // THROW_FMT(AssertError, "!!!NOT YET IMPLEMENTED!!!: %s", strZ(strNewBuf(httpResponseContent(httpResponse))));
         result.type = storageTypeFile;
         storageGcsInfoFile(&result, jsonToKv(strNewBuf(httpResponseContent(httpResponse))));
     }
@@ -728,7 +703,7 @@ storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam 
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->blockSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->chunkSize));
 }
 
 /**********************************************************************************************************************************/
@@ -841,7 +816,7 @@ static const StorageInterface storageInterfaceGcs =
 Storage *
 storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    StorageGcsKeyType keyType, const String *key, size_t blockSize,  const String *endpoint, unsigned int port, TimeMSec timeout,
+    StorageGcsKeyType keyType, const String *key, size_t chunkSize,  const String *endpoint, unsigned int port, TimeMSec timeout,
     bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -851,7 +826,7 @@ storageGcsNew(
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_LOG_PARAM(SIZE, blockSize);
+        FUNCTION_LOG_PARAM(SIZE, chunkSize);
         FUNCTION_LOG_PARAM(STRING, endpoint);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -863,7 +838,7 @@ storageGcsNew(
     ASSERT(path != NULL);
     ASSERT(bucket != NULL);
     ASSERT(keyType == storageGcsKeyTypeNone || key != NULL);
-    ASSERT(blockSize != 0);
+    ASSERT(chunkSize != 0);
 
     Storage *this = NULL;
 
@@ -878,25 +853,20 @@ storageGcsNew(
             .write = write,
             .bucket = strDup(bucket),
             .keyType = keyType,
-            .blockSize = blockSize,
+            .chunkSize = chunkSize,
             .endpoint = strDup(endpoint),
-            // .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 
+        // Read data from file for service keys
         if (keyType == storageGcsKeyTypeService)
         {
             KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
-            driver->credential = varStr(kvGet(kvKey, VARSTRDEF("client_email")));
-            driver->privateKey = varStr(kvGet(kvKey, VARSTRDEF("private_key")));
+            driver->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
+            driver->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
         }
+        // Store the authentication token
         else if (keyType == storageGcsKeyTypeToken)
             driver->token = strDup(key);
-
-        // Store shared key or parse sas query
-        // if (keyType == storageGcsKeyTypeShared)
-        //     driver->sharedKey = key;
-        // else
-        //     driver->sasKey = httpQueryNewStr(key);
 
         // Create the http client used to service requests
         driver->httpClient = httpClientNew(
@@ -906,15 +876,11 @@ storageGcsNew(
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();
         strLstAdd(driver->headerRedactList, HTTP_HEADER_AUTHORIZATION_STR);
-        // strLstAdd(driver->headerRedactList, HTTP_HEADER_DATE_STR);
+        strLstAdd(driver->headerRedactList, GCS_HEADER_UPLOAD_ID_STR);
 
         // Create list of redacted query keys
-        // driver->queryRedactList = strLstNew();
-        // !!! REDACT UPLOAD ID
-        // strLstAdd(driver->queryRedactList, GCS_QUERY_SIG_STR);
-
-        // Generate starting file id
-        // cryptoRandomBytes((unsigned char *)&driver->fileId, sizeof(driver->fileId));
+        driver->queryRedactList = strLstNew();
+        strLstAdd(driver->queryRedactList, GCS_QUERY_UPLOAD_ID_STR);
 
         this = storageNew(STORAGE_GCS_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }

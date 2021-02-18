@@ -380,7 +380,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
         {
             result = storageGcsNew(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
-                cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx), storageGcsKeyTypeNone, NULL, STORAGE_GCS_CHUNKSIZE_MIN,
+                cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx), storageGcsKeyTypeNone, NULL, STORAGE_GCS_CHUNKSIZE_DEFAULT,
                 cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), cfgOptionIdxUInt(cfgOptRepoGcsPort, repoIdx), ioTimeoutMs(),
                 cfgOptionIdxBool(cfgOptRepoGcsVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoGcsCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoGcsCaPath, repoIdx));

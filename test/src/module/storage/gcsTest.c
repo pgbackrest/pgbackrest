@@ -226,7 +226,7 @@ testRun(void)
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
         TEST_RESULT_STR(((StorageGcs *)storage->driver)->bucket, TEST_BUCKET_STR, "    check bucket");
         TEST_RESULT_STR_Z(((StorageGcs *)storage->driver)->endpoint, "storage.googleapis.com", "    check endpoint");
-        TEST_RESULT_UINT(((StorageGcs *)storage->driver)->blockSize, STORAGE_GCS_CHUNKSIZE_MIN, "    check block size");
+        TEST_RESULT_UINT(((StorageGcs *)storage->driver)->chunkSize, STORAGE_GCS_CHUNKSIZE_DEFAULT, "    check chunk size");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
     }
@@ -297,14 +297,14 @@ testRun(void)
     if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
     {
         // Storage *storage = NULL;
+        // size_t chunkSize = (size_t)256 * 1024;
         //
         // TEST_ASSIGN(
         //     storage,
         //     storageGcsNew(
         //         STRDEF("/"), true, NULL, STRDEF("pgbackrest-dev"), storageGcsKeyTypeToken,
         //         STRDEF("x"),
-        //         STORAGE_GCS_CHUNKSIZE_MIN,
-        //         TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL),
+        //         chunkSize, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL),
         //     "read/write gcs storage - token");
         //
         // Buffer *buffer = bufNewC("testme", 6);
@@ -312,7 +312,7 @@ testRun(void)
         // storagePutP(storageNewWriteP(storage, STRDEF("dude.txt")), buffer);
         // TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storage, STRDEF("dude.txt"))), buffer), true, "read == write");
         //
-        // buffer = bufNew(STORAGE_GCS_CHUNKSIZE_MIN * 2);
+        // buffer = bufNew(chunkSize * 2);
         // bufUsedSet(buffer, bufSize(buffer));
         //
         // for (size_t chrIdx = 0; chrIdx < bufUsed(buffer); chrIdx++)
@@ -359,8 +359,8 @@ testRun(void)
         //         TEST_RESULT_STR_Z(driver->uriPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check uri prefix");
         //         TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
         //
-        //         // Tests need the block size to be 16
-        //         driver->blockSize = 16;
+        //         // Tests need the chunk size to be 16
+        //         driver->chunkSize = 16;
         //
         //         // -----------------------------------------------------------------------------------------------------------------
         //         TEST_TITLE("ignore missing file");
@@ -484,15 +484,15 @@ testRun(void)
         //         TEST_TITLE("write file in chunks with nothing left over on close");
         //
         //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000000&comp=block", .content = "1234567890123456");
+        //             service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCCx0000000&comp=chunk", .content = "1234567890123456");
         //         testResponseP(service);
         //
         //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000001&comp=block", .content = "7890123456789012");
+        //             service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCCx0000001&comp=chunk", .content = "7890123456789012");
         //         testResponseP(service);
         //
         //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?comp=blocklist",
+        //             service, HTTP_VERB_PUT, "/file.txt?comp=chunklist",
         //             .content =
         //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         //                 "<BlockList>"
@@ -511,15 +511,15 @@ testRun(void)
         //         TEST_TITLE("write file in chunks with something left over on close");
         //
         //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block", .content = "1234567890123456");
+        //             service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCDx0000000&comp=chunk", .content = "1234567890123456");
         //         testResponseP(service);
         //
         //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
+        //             service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCDx0000001&comp=chunk", .content = "7890");
         //         testResponseP(service);
         //
         //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?comp=blocklist",
+        //             service, HTTP_VERB_PUT, "/file.txt?comp=chunklist",
         //             .content =
         //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         //                 "<BlockList>"

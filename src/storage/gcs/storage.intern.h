@@ -13,14 +13,28 @@ typedef struct StorageGcs StorageGcs;
 #include "storage/gcs/storage.h"
 
 /***********************************************************************************************************************************
-GCS query tokens
+HTTP headers
 ***********************************************************************************************************************************/
-// #define GCS_QUERY_COMP                                              "comp"
-//     STRING_DECLARE(GCS_QUERY_COMP_STR);
-// #define GCS_QUERY_RESTYPE                                           "restype"
-//     STRING_DECLARE(GCS_QUERY_RESTYPE_STR);
-// #define GCS_QUERY_VALUE_CONTAINER                                   "container"
-//     STRING_DECLARE(GCS_QUERY_VALUE_CONTAINER_STR);
+#define GCS_HEADER_UPLOAD_ID                                        "x-guploader-uploadid"
+    STRING_DECLARE(GCS_HEADER_UPLOAD_ID_STR);
+
+/***********************************************************************************************************************************
+Query tokens
+***********************************************************************************************************************************/
+#define GCS_QUERY_NAME                                              "name"
+    STRING_DECLARE(GCS_QUERY_NAME_STR);
+#define GCS_QUERY_UPLOAD_ID                                         "upload_id"
+    STRING_DECLARE(GCS_QUERY_UPLOAD_ID_STR);
+
+/***********************************************************************************************************************************
+JSON tokens
+***********************************************************************************************************************************/
+#define GCS_JSON_MD5_HASH                                           "md5Hash"
+    VARIANT_DECLARE(GCS_JSON_MD5_HASH_VAR);
+#define GCS_JSON_NAME                                               "name"
+    VARIANT_DECLARE(GCS_JSON_NAME_VAR);
+#define GCS_JSON_SIZE                                               "size"
+    VARIANT_DECLARE(GCS_JSON_SIZE_VAR);
 
 /***********************************************************************************************************************************
 Perform an GCS Request
