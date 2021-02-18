@@ -70,7 +70,7 @@ struct StorageGcs
     const String *bucket;                                           // Bucket to store data in
     const String *project;                                          // Project
     StorageGcsKeyType keyType;                                      // Auth key type
-    const String *credential;                                       // Credential !!!
+    const String *credential;                                       // Credential (client email)
     const String *token;                                            // Token
     const String *privateKey;                                       // Private key in PEM format
     const String *endpoint;                                         // Endpoint
@@ -237,23 +237,14 @@ storageGcsAuthToken(StorageGcs *this)
 Generate authorization header and add it to the supplied header list
 ***********************************************************************************************************************************/
 static void
-storageGcsAuth(
-    StorageGcs *this, const String *verb, const String *uri, const HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
+storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
-        FUNCTION_TEST_PARAM(STRING, verb);
-        FUNCTION_TEST_PARAM(STRING, uri);
-        FUNCTION_TEST_PARAM(HTTP_QUERY, query);
-        FUNCTION_TEST_PARAM(STRING, dateTime);
         FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(verb != NULL);
-    ASSERT(uri != NULL);
-    // ASSERT(query != NULL);
-    ASSERT(dateTime != NULL);
     ASSERT(httpHeader != NULL);
     ASSERT(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR) != NULL);
 
@@ -270,11 +261,17 @@ storageGcsAuth(
         // Service key authentication
         else if (this->keyType == storageGcsKeyTypeService)
         {
-            (void)verb; // !!! REMOVE WHEN USED
-            (void)uri; // !!! REMOVE WHEN USED
-            (void)query; // !!! REMOVE WHEN USED
-            (void)dateTime; // !!! REMOVE WHEN USED
-            (void)storageGcsAuthToken; // !!! REMOVE WHEN USED
+            if (this->token == NULL)
+            {
+                // !!! THIS NEEDS TO REFRESH
+                MEM_CONTEXT_BEGIN(this->memContext)
+                {
+                    this->token = storageGcsAuthToken(this);
+                }
+                MEM_CONTEXT_END();
+            }
+
+            httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -314,7 +311,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
             strCatFmt(uri, "/%s/o", strZ(this->bucket));
 
         if (param.object != NULL)
-            strCat(uri, param.object);
+            strCatFmt(uri, "/%s", strZ(httpUriEncode(strSub(param.object, 1), false)));
 
         // Create header list and add content length
         HttpHeader *requestHeader = param.header == NULL ?
@@ -329,7 +326,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Generate authorization header
-        storageGcsAuth(this, verb, httpUriEncode(uri, true), query, httpDateFromTime(time(NULL)), requestHeader);
+        storageGcsAuth(this, requestHeader);
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -560,38 +557,38 @@ storageGcsListInternal(
 
                 // Get file list
                 const VariantList *fileList = varVarLst(kvGet(content, VARSTRDEF("items")));
-                CHECK(fileList != NULL);
 
-                for (unsigned int fileIdx = 0; fileIdx < varLstSize(fileList); fileIdx++)
+                if (fileList != NULL)
                 {
-                    // THROW_FMT(AssertError, "!!!NOT YET IMPLEMENTED:\n%s", strZ(strNewBuf(httpResponseContent(response))));
-
-                    const KeyValue *file = varKv(varLstGet(fileList, fileIdx));
-                    CHECK(file != NULL);
-
-                    // Get file name
-                    StorageInfo info =
+                    for (unsigned int fileIdx = 0; fileIdx < varLstSize(fileList); fileIdx++)
                     {
-                        .level = level,
-                        .name = varStr(kvGet(file, GCS_JSON_NAME_VAR)),
-                        .exists = true,
-                    };
+                        const KeyValue *file = varKv(varLstGet(fileList, fileIdx));
+                        CHECK(file != NULL);
 
-                    CHECK(info.name != NULL);
+                        // Get file name
+                        StorageInfo info =
+                        {
+                            .level = level,
+                            .name = varStr(kvGet(file, GCS_JSON_NAME_VAR)),
+                            .exists = true,
+                        };
 
-                    // Strip off the base prefix when present
-                    if (!strEmpty(basePrefix))
-                        info.name = strSub(info.name, strSize(basePrefix));
+                        CHECK(info.name != NULL);
 
-                    // Add basic level info if requested
-                    if (level >= storageInfoLevelBasic)
-                    {
-                        info.type = storageTypeFile;
-                        storageGcsInfoFile(&info, file);
+                        // Strip off the base prefix when present
+                        if (!strEmpty(basePrefix))
+                            info.name = strSub(info.name, strSize(basePrefix));
+
+                        // Add basic level info if requested
+                        if (level >= storageInfoLevelBasic)
+                        {
+                            info.type = storageTypeFile;
+                            storageGcsInfoFile(&info, file);
+                        }
+
+                        // Callback with info
+                        callback(callbackData, &info);
                     }
-
-                    // Callback with info
-                    callback(callbackData, &info);
                 }
             }
             MEM_CONTEXT_TEMP_END();
@@ -837,7 +834,7 @@ storageGcsNew(
 
     ASSERT(path != NULL);
     ASSERT(bucket != NULL);
-    ASSERT(keyType == storageGcsKeyTypeNone || key != NULL);
+    ASSERT(key != NULL);
     ASSERT(chunkSize != 0);
 
     Storage *this = NULL;

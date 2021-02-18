@@ -454,12 +454,22 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-key" name="GCS Repository Key">
+                        <summary>GCS repository key.</summary>
+
+                        <text>A token or service key file depending on the <br-option>repo-gcs-key-type</br-option> option.</text>
+
+                        <example>/etc/pgbackrest/gcs-key.json</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
                     <config-key id="repo-gcs-key-type" name="GCS Repository Key Type">
                         <summary>GCS repository key type.</summary>
 
                         <text>The following types are supported for authorization:
                         <ul>
-                            <li><id>none</id> - For local testing, e.g. <file>fakegcs</file>.</li>
+                            <li><id>service</id> - Service account from locally stored key.</li>
+                            <li><id>token</id> - For local testing, e.g. <file>fakegcs</file>.</li>
                         </ul></text>
 
                         <example>none</example>

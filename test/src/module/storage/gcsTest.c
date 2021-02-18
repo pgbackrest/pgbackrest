@@ -296,22 +296,22 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
     {
-        // Storage *storage = NULL;
-        // size_t chunkSize = (size_t)256 * 1024;
-        //
-        // TEST_ASSIGN(
-        //     storage,
-        //     storageGcsNew(
-        //         STRDEF("/"), true, NULL, STRDEF("pgbackrest-dev"), storageGcsKeyTypeToken,
-        //         STRDEF("x"),
-        //         chunkSize, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL),
-        //     "read/write gcs storage - token");
-        //
-        // Buffer *buffer = bufNewC("testme", 6);
-        //
-        // storagePutP(storageNewWriteP(storage, STRDEF("dude.txt")), buffer);
-        // TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storage, STRDEF("dude.txt"))), buffer), true, "read == write");
-        //
+        Storage *storage = NULL;
+        size_t chunkSize = (size_t)256 * 1024;
+
+        TEST_ASSIGN(
+            storage,
+            storageGcsNew(
+                STRDEF("/"), true, NULL, STRDEF("pgbackrest-dev"), storageGcsKeyTypeToken,
+                STRDEF("Bearer ya29.c.Kp0B8weAIgxhqJB3W44aHM4hpOaqqMSyX2DBrp_aIci0al99ajbbTbp3h7hWUyrDz0IwcM6g84GoLsQf65_F2It8sOlVtoXNeiw8R6iKoJlP0h-bUZW69QXfu4VPSn42afpT_pHdef4o1lzzx-_4rEx1GvbkK1BQIcnte_QGs7XdkTwIu1AMm_-yMPV6KnRkRBzIbAiFPrlghIOvrzhnlQ"),
+                chunkSize, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL),
+            "read/write gcs storage - token");
+
+        Buffer *buffer = bufNewC("testme", 6);
+
+        storagePutP(storageNewWriteP(storage, STRDEF("archive/demo/dude.txt")), buffer);
+        TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storage, STRDEF("archive/demo/dude.txt"))), buffer), true, "read == write");
+
         // buffer = bufNew(chunkSize * 2);
         // bufUsedSet(buffer, bufSize(buffer));
         //

@@ -36,6 +36,10 @@ use pgBackRestTest::Env::Manifest;
 ####################################################################################################################################
 use constant HOST_GCS_BUCKET                                        => 'gcsbucket';
     push @EXPORT, qw(HOST_GCS_BUCKET);
+use constant HOST_GCS_KEY                                           => 'testkey';
+    push @EXPORT, qw(HOST_GCS_KEY);
+use constant HOST_GCS_KEY_TYPE                                      => 'token';
+    push @EXPORT, qw(HOST_GCS_KEY_TYPE);
 use constant HOST_GCS_PORT                                          => 4443;
     push @EXPORT, qw(HOST_GCS_PORT);
 

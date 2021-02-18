@@ -209,7 +209,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            136
+#define CFG_OPTION_TOTAL                                            137
 
 /***********************************************************************************************************************************
 Command enum
@@ -337,6 +337,7 @@ typedef enum
     cfgOptRepoGcsCaFile,
     cfgOptRepoGcsCaPath,
     cfgOptRepoGcsEndpoint,
+    cfgOptRepoGcsKey,
     cfgOptRepoGcsKeyType,
     cfgOptRepoGcsPort,
     cfgOptRepoGcsVerifyTls,

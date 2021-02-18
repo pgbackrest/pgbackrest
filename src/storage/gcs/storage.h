@@ -17,13 +17,12 @@ Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageGcsKeyTypeNone,
     storageGcsKeyTypeService,
     storageGcsKeyTypeToken,
 } StorageGcsKeyType;
 
-#define STORAGE_GCS_KEY_TYPE_NONE                                   "none"
 #define STORAGE_GCS_KEY_TYPE_SERVICE                                "service"
+#define STORAGE_GCS_KEY_TYPE_TOKEN                                  "token"
 
 /***********************************************************************************************************************************
 Defaults
