@@ -133,7 +133,7 @@ sub setup
     {
         $oHostGroup->hostAdd($oHostObject, {rstryHostName => ['pgbackrest-dev.s3.amazonaws.com', 's3.amazonaws.com']});
     }
-    else
+    elsif ($oConfigParam->{strStorage} eq AZURE || $oConfigParam->{strStorage} eq GCS)
     {
         $oHostGroup->hostAdd($oHostObject);
     }
