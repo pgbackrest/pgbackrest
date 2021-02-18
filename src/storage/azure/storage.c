@@ -247,7 +247,8 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, param.uri, .query = query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, httpUriEncode(param.uri, true), .query = query, .header = requestHeader,
+                .content = param.content);
         }
         MEM_CONTEXT_END();
     }

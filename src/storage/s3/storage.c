@@ -417,7 +417,8 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, uri, .query = param.query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, httpUriEncode(uri, true), .query = param.query, .header = requestHeader,
+                .content = param.content);
         }
         MEM_CONTEXT_END();
     }
