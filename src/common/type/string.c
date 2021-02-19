@@ -140,6 +140,37 @@ strNewBuf(const Buffer *buffer)
 
 /**********************************************************************************************************************************/
 String *
+strNewEncode(EncodeType type, const Buffer *buffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+
+    // Check encoded size
+    size_t size = encodeToStrSize(type, bufUsed(buffer));
+    CHECK_SIZE(size);
+
+    // Create object
+    String *this = memNew(sizeof(String));
+
+    *this = (String)
+    {
+        .memContext = memContextCurrent(),
+        .size = (unsigned int)size,
+    };
+
+    // Allocate and encode buffer
+    this->buffer = memNew(this->size + 1);
+    encodeToStr(type, bufPtrConst(buffer), bufUsed(buffer), this->buffer);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+String *
 strNewFmt(const char *format, ...)
 {
     FUNCTION_TEST_BEGIN();
@@ -390,6 +421,33 @@ strCatChr(String *this, char cat)
     this->buffer[this->size++] = cat;
     this->buffer[this->size] = 0;
     this->extra--;
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+String *
+strCatEncode(String *this, EncodeType type, const Buffer *buffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+
+    // Ensure there is enough space to grow the string
+    size_t encodeSize = encodeToStrSize(type, bufUsed(buffer));
+    strResize(this, encodeSize);
+
+    // Append the encoded string
+    encodeToStr(type, bufPtrConst(buffer), bufUsed(buffer), this->buffer + this->size);
+
+    // Update size/extra
+    this->size += (unsigned int)encodeSize;
+    this->extra -= (unsigned int)encodeSize;
 
     FUNCTION_TEST_RETURN(this);
 }
