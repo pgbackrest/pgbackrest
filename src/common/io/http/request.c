@@ -108,7 +108,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                         String *requestStr =
                             strNewFmt(
                                 "%s %s%s%s " HTTP_VERSION CRLF_Z HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION CRLF_Z,
-                                strZ(this->verb), strZ(httpUriEncode(this->path, true)), this->query == NULL ? "" : "?",
+                                strZ(this->verb), strZ(this->path), this->query == NULL ? "" : "?",
                                 this->query == NULL ? "" : strZ(httpQueryRenderP(this->query)));
 
                         // Add headers
@@ -257,7 +257,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     // Output path/query
     strCatZ(error, ":\n*** Path/Query ***:");
 
-    strCatFmt(error, "\n%s", strZ(httpUriEncode(this->path, true)));
+    strCatFmt(error, "\n%s", strZ(this->path));
 
     if (this->query != NULL)
         strCatFmt(error, "?%s", strZ(httpQueryRenderP(this->query, .redact = true)));

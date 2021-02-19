@@ -234,6 +234,9 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
             httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
         }
 
+        // Encode path
+        const String *const path = httpUriEncode(param.path, true);
+
         // Make a copy of the query so it can be modified
         HttpQuery *query =
             this->sasKey != NULL && param.query == NULL ?
@@ -241,13 +244,13 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
                 httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Generate authorization header
-        storageAzureAuth(this, verb, httpUriEncode(param.path, true), query, httpDateFromTime(time(NULL)), requestHeader);
+        storageAzureAuth(this, verb, path, query, httpDateFromTime(time(NULL)), requestHeader);
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, param.path, .query = query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = param.content);
         }
         MEM_CONTEXT_END();
     }

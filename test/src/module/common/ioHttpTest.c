@@ -546,7 +546,7 @@ testRun(void)
                     response,
                     httpRequestResponse(
                         httpRequestNewP(
-                            client, strNew("GET"), strNew("/path/file 1.txt"),
+                            client, strNew("GET"), httpUriEncode(strNew("/path/file 1.txt"), true),
                             .header = httpHeaderAdd(httpHeaderNew(NULL), strNew("content-length"), strNew("30")),
                             .content = BUFSTRDEF("012345678901234567890123456789")), true),
                     "request");
@@ -570,7 +570,9 @@ testRun(void)
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ncontent-length:32\r\n\r\n01234567890123456789012345678901");
 
                 TEST_ASSIGN(
-                    response, httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/path/file 1.txt")), true),
+                    response,
+                    httpRequestResponse(
+                        httpRequestNewP(client, strNew("GET"), httpUriEncode(strNew("/path/file 1.txt"), true)), true),
                     "request");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)),  "01234567890123456789012345678901", "check response");
                 TEST_RESULT_UINT(httpResponseRead(response, bufNew(1), true), 0, "call internal read to check eof");
@@ -584,7 +586,9 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 TEST_ASSIGN(
-                    response, httpRequestResponse(httpRequestNewP(client, strNew("GET"), strNew("/path/file 1.txt")), false),
+                    response,
+                    httpRequestResponse(
+                        httpRequestNewP(client, strNew("GET"), httpUriEncode(strNew("/path/file 1.txt"), true)), false),
                     "request");
                 TEST_RESULT_PTR_NE(response->session, NULL, "session is busy");
                 TEST_ERROR(ioRead(httpResponseIoRead(response), bufNew(32)), FileReadError, "unexpected EOF reading HTTP content");

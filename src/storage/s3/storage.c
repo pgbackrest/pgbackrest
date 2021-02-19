@@ -407,9 +407,12 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
             this->signingKeyDate = YYYYMMDD_STR;
         }
 
+        // Encode path
+        path = httpUriEncode(path, true);
+
         // Generate authorization header
         storageS3Auth(
-            this, verb, httpUriEncode(path, true), param.query, storageS3DateTime(time(NULL)), requestHeader,
+            this, verb, path, param.query, storageS3DateTime(time(NULL)), requestHeader,
             param.content == NULL || bufEmpty(param.content) ?
                 HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, param.content)));
 
