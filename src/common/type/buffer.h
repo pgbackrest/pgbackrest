@@ -43,6 +43,10 @@ Buffer *bufNew(size_t size);
 // Create a new buffer from a C buffer
 Buffer *bufNewC(const void *buffer, size_t size);
 
+// Create a new buffer from a string encoded with the specified type
+Buffer *bufNewDecode(EncodeType type, const String *string);
+
+// Duplicate a buffer
 Buffer *bufDup(const Buffer *buffer);
 
 /***********************************************************************************************************************************

@@ -7,7 +7,6 @@ Azure Storage
 
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/encode.h"
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
@@ -71,7 +70,7 @@ struct StorageAzure
 
     const String *container;                                        // Container to store data in
     const String *account;                                          // Account
-    const String *sharedKey;                                        // Shared key
+    const Buffer *sharedKey;                                        // Shared key
     const HttpQuery *sasKey;                                        // SAS key
     const String *host;                                             // Host name
     size_t blockSize;                                               // Block size for multi-block upload
@@ -171,17 +170,9 @@ storageAzureAuth(
                 strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(path), strZ(queryCanonical));
 
             // Generate authorization header
-            Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strZ(this->sharedKey)));
-            decodeToBin(encodeBase64, strZ(this->sharedKey), bufPtr(keyBin));
-            bufUsedSet(keyBin, bufSize(keyBin));
-
-            char authHmacBase64[45];
-            encodeToStr(
-                encodeBase64, bufPtr(cryptoHmacOne(HASH_TYPE_SHA256_STR, keyBin, BUFSTR(stringToSign))),
-                HASH_TYPE_SHA256_SIZE, authHmacBase64);
-
             httpHeaderPut(
-                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account), authHmacBase64));
+                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account),
+                strZ(strNewEncode(encodeBase64, cryptoHmacOne(HASH_TYPE_SHA256_STR, this->sharedKey, BUFSTR(stringToSign))))));
         }
         // SAS authentication
         else
@@ -229,9 +220,9 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         // Calculate content-md5 header if there is content
         if (param.content != NULL)
         {
-            char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-            encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
-            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
+            httpHeaderAdd(
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
+                strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
         }
 
         // Encode path
@@ -773,7 +764,7 @@ storageAzureNew(
 
         // Store shared key or parse sas query
         if (keyType == storageAzureKeyTypeShared)
-            driver->sharedKey = key;
+            driver->sharedKey = bufNewDecode(encodeBase64, key);
         else
             driver->sasKey = httpQueryNewStr(key);
 

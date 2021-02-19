@@ -6,6 +6,8 @@ These high-level functions are preferred to the low-level functions for each enc
 #ifndef COMMON_ENCODE_H
 #define COMMON_ENCODE_H
 
+#include <stddef.h>
+
 /***********************************************************************************************************************************
 Encoding types
 ***********************************************************************************************************************************/
