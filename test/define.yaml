@@ -119,8 +119,6 @@ unit:
 
         coverage:
           - common/encode
-          - common/encode/base64
-          - common/encode/base64url
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
