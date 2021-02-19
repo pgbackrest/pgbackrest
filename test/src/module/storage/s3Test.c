@@ -28,11 +28,11 @@ typedef struct TestRequestParam
     const char *securityToken;
 } TestRequestParam;
 
-#define testRequestP(write, s3, verb, uri, ...)                                                                                    \
-    testRequest(write, s3, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define testRequestP(write, s3, verb, path, ...)                                                                                   \
+    testRequest(write, s3, verb, path, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
-testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, TestRequestParam param)
+testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, TestRequestParam param)
 {
     // Get security token from param
     const char *securityToken = param.securityToken == NULL ? NULL : param.securityToken;
@@ -50,7 +50,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     }
 
     // Add request
-    String *request = strNewFmt("%s %s HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n", verb, uri);
+    String *request = strNewFmt("%s %s HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n", verb, path);
 
     // Add authorization header when s3 service
     if (s3 != NULL)
@@ -471,7 +471,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH);
                 testResponseP(auth, .http = "1.0", .code = 301);
 
                 hrnServerScriptClose(auth);
@@ -479,7 +479,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
                     "HTTP request failed with 301:\n"
-                        "*** URI/Query ***:\n"
+                        "*** Path/Query ***:\n"
                         "/latest/meta-data/iam/security-credentials\n"
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
@@ -491,7 +491,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH);
                 testResponseP(auth, .http = "1.0", .code = 404);
 
                 hrnServerScriptClose(auth);
@@ -506,13 +506,13 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH);
                 testResponseP(auth, .http = "1.0", .content = strZ(credRole));
 
                 hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .code = 300);
 
                 hrnServerScriptClose(auth);
@@ -520,7 +520,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
                     "HTTP request failed with 300:\n"
-                        "*** URI/Query ***:\n"
+                        "*** Path/Query ***:\n"
                         "/latest/meta-data/iam/security-credentials/credrole\n"
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
@@ -532,7 +532,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .code = 404);
 
                 hrnServerScriptClose(auth);
@@ -548,7 +548,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .content = "{\"Code\":\"IAM role is not configured\"}");
 
                 hrnServerScriptClose(auth);
@@ -562,7 +562,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(
                     auth,
                     .content = strZ(
@@ -584,7 +584,7 @@ testRun(void)
                 TEST_ERROR(
                     ioReadOpen(storageReadIo(read)), ProtocolError,
                     "HTTP request failed with 303:\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/file.txt\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
@@ -608,7 +608,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(
                     auth,
                     .content = strZ(
@@ -782,7 +782,7 @@ testRun(void)
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
@@ -806,7 +806,7 @@ testRun(void)
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"

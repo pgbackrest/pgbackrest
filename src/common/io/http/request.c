@@ -45,7 +45,7 @@ struct HttpRequest
     MemContext *memContext;                                         // Mem context
     HttpClient *client;                                             // HTTP client
     const String *verb;                                             // HTTP verb (GET, POST, etc.)
-    const String *uri;                                              // HTTP URI
+    const String *path;                                             // HTTP path
     const HttpQuery *query;                                         // HTTP query
     const HttpHeader *header;                                       // HTTP headers
     const Buffer *content;                                          // HTTP content
@@ -57,7 +57,7 @@ OBJECT_DEFINE_MOVE(HTTP_REQUEST);
 OBJECT_DEFINE_FREE(HTTP_REQUEST);
 
 OBJECT_DEFINE_GET(Verb, const, HTTP_REQUEST, const String *, verb);
-OBJECT_DEFINE_GET(Uri, const, HTTP_REQUEST, const String *, uri);
+OBJECT_DEFINE_GET(Path, const, HTTP_REQUEST, const String *, path);
 OBJECT_DEFINE_GET(Query, const, HTTP_REQUEST, const HttpQuery *, query);
 OBJECT_DEFINE_GET(Header, const, HTTP_REQUEST, const HttpHeader *, header);
 
@@ -109,7 +109,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                         String *requestStr =
                             strNewFmt(
                                 "%s %s%s%s " HTTP_VERSION CRLF_Z HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION CRLF_Z,
-                                strZ(this->verb), strZ(this->uri), this->query == NULL ? "" : "?",
+                                strZ(this->verb), strZ(this->path), this->query == NULL ? "" : "?",
                                 this->query == NULL ? "" : strZ(httpQueryRenderP(this->query)));
 
                         // Add headers
@@ -182,19 +182,19 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 
 /**********************************************************************************************************************************/
 HttpRequest *
-httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRequestNewParam param)
+httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
         FUNCTION_LOG_PARAM(HTTP_CLIENT, client);
         FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, uri);
+        FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
     FUNCTION_LOG_END();
 
     ASSERT(verb != NULL);
-    ASSERT(uri != NULL);
+    ASSERT(path != NULL);
 
     HttpRequest *this = NULL;
 
@@ -207,7 +207,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRe
             .memContext = MEM_CONTEXT_NEW(),
             .client = client,
             .verb = strDup(verb),
-            .uri = strDup(uri),
+            .path = strDup(path),
             .query = httpQueryDupP(param.query),
             .header = param.header == NULL ? httpHeaderNew(NULL) : httpHeaderDup(param.header, NULL),
             .content = param.content == NULL ? NULL : bufDup(param.content),
@@ -255,10 +255,10 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     if (strSize(httpResponseReason(response)) > 0)
         strCatFmt(error, " (%s)", strZ(httpResponseReason(response)));
 
-    // Output uri/query
-    strCatZ(error, ":\n*** URI/Query ***:");
+    // Output path/query
+    strCatZ(error, ":\n*** Path/Query ***:");
 
-    strCatFmt(error, "\n%s", strZ(this->uri));
+    strCatFmt(error, "\n%s", strZ(this->path));
 
     if (this->query != NULL)
         strCatFmt(error, "?%s", strZ(httpQueryRenderP(this->query, .redact = true)));
@@ -310,7 +310,7 @@ String *
 httpRequestToLog(const HttpRequest *this)
 {
     return strNewFmt(
-        "{verb: %s, uri: %s, query: %s, header: %s, contentSize: %zu}", strZ(this->verb), strZ(this->uri),
+        "{verb: %s, path: %s, query: %s, header: %s, contentSize: %zu}", strZ(this->verb), strZ(this->path),
         this->query == NULL ? "null" : strZ(httpQueryToLog(this->query)), strZ(httpHeaderToLog(this->header)),
         this->content == NULL ? 0 : bufUsed(this->content));
 }

@@ -392,7 +392,7 @@ testRun(void)
                 MEM_CONTEXT_TEMP_END();
 
                 TEST_RESULT_STR_Z(httpRequestVerb(request), "GET", "check request verb");
-                TEST_RESULT_STR_Z(httpRequestUri(request), "/", "check request uri");
+                TEST_RESULT_STR_Z(httpRequestPath(request), "/", "check request path");
                 TEST_RESULT_STR_Z(
                     httpQueryRenderP(httpRequestQuery(request)), "name=%2Fpath%2FA%20Z.txt&type=test", "check request query");
                 TEST_RESULT_PTR_NE(httpRequestHeader(request), NULL, "check request headers");
@@ -489,7 +489,7 @@ testRun(void)
                 TEST_ERROR(
                     httpRequestError(request, response), ProtocolError,
                     "HTTP request failed with 404 (Not Found):\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -520,7 +520,7 @@ testRun(void)
                 TEST_ERROR(
                     httpRequestError(request, response), ProtocolError,
                     "HTTP request failed with 403:\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/?a=b\n"
                     "*** Request Headers ***:\n"
                     "hdr1: 1\n"

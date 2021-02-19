@@ -23,10 +23,10 @@ typedef struct StorageS3RequestAsyncParam
     const Buffer *content;                                          // Request content
 } StorageS3RequestAsyncParam;
 
-#define storageS3RequestAsyncP(this, verb, uri, ...)                                                                               \
-    storageS3RequestAsync(this, verb, uri, (StorageS3RequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageS3RequestAsyncP(this, verb, path, ...)                                                                              \
+    storageS3RequestAsync(this, verb, path, (StorageS3RequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param);
+HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param);
 
 // Get async response
 typedef struct StorageS3ResponseParam
@@ -51,10 +51,10 @@ typedef struct StorageS3RequestParam
     bool contentIo;                                                 // Is IoRead interface required to read content?
 } StorageS3RequestParam;
 
-#define storageS3RequestP(this, verb, uri, ...)                                                                                    \
-    storageS3Request(this, verb, uri, (StorageS3RequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageS3RequestP(this, verb, path, ...)                                                                                   \
+    storageS3Request(this, verb, path, (StorageS3RequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestParam param);
+HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging

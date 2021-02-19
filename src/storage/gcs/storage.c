@@ -304,14 +304,14 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Generate URI
-        String *uri = strNewFmt("%s/storage/v1/b", param.upload ? "/upload" : "");
+        // Generate path
+        String *path = strNewFmt("%s/storage/v1/b", param.upload ? "/upload" : "");
 
         if (!param.noBucket)
-            strCatFmt(uri, "/%s/o", strZ(this->bucket));
+            strCatFmt(path, "/%s/o", strZ(this->bucket));
 
         if (param.object != NULL)
-            strCatFmt(uri, "/%s", strZ(httpUriEncode(strSub(param.object, 1), false)));
+            strCatFmt(path, "/%s", strZ(httpUriEncode(strSub(param.object, 1), false)));
 
         // Create header list and add content length
         HttpHeader *requestHeader = param.header == NULL ?
@@ -332,7 +332,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, uri, .query = query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = param.content);
         }
         MEM_CONTEXT_END();
     }

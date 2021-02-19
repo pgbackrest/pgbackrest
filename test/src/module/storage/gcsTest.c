@@ -72,11 +72,11 @@ Helper to build test requests
 //     const char *blobType;
 // } TestRequestParam;
 //
-// /*#define testRequestP(write, verb, uri, ...)                                                                                        \*/
-//     testRequest(write, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+// /*#define testRequestP(write, verb, path, ...)                                                                                       \*/
+//     testRequest(write, verb, path, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 //
 // static void
-// testRequest(IoWrite *write, const char *verb, const char *uri, TestRequestParam param)
+// testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam param)
 // {
 //     String *request = strNewFmt("%s /" TEST_ACCOUNT "/" TEST_CONTAINER, verb);
 //
@@ -84,20 +84,20 @@ Helper to build test requests
 //     if (driver->sasKey != NULL)
 //     {
 //         HttpQuery *query = httpQueryNewP();
-//         StringList *uriQuery = strLstNewSplitZ(STR(uri), "?");
+//         StringList *pathQuery = strLstNewSplitZ(STR(path), "?");
 //
-//         if (strLstSize(uriQuery) == 2)
-//             query = httpQueryNewStr(strLstGet(uriQuery, 1));
+//         if (strLstSize(pathQuery) == 2)
+//             query = httpQueryNewStr(strLstGet(pathQuery, 1));
 //
 //         httpQueryMerge(query, driver->sasKey);
 //
-//         strCat(request, strLstGet(uriQuery, 0));
+//         strCat(request, strLstGet(pathQuery, 0));
 //         strCatZ(request, "?");
 //         strCat(request, httpQueryRenderP(query));
 //     }
-//     // Else just output URI as is
+//     // Else just output path as is
 //     else
-//         strCatZ(request, uri);
+//         strCatZ(request, path);
 //
 //     // Add HTTP version and user agent
 //     strCatZ(request, " HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
@@ -361,7 +361,7 @@ testRun(void)
         //
         //         driver = (StorageGcs *)storage->driver;
         //         TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
-        //         TEST_RESULT_STR_Z(driver->uriPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check uri prefix");
+        //         TEST_RESULT_STR_Z(driver->pathPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check path prefix");
         //         TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
         //
         //         // Tests need the chunk size to be 16
@@ -419,7 +419,7 @@ testRun(void)
         //         TEST_ERROR_FMT(
         //             ioReadOpen(storageReadIo(read)), ProtocolError,
         //             "HTTP request failed with 303:\n"
-        //             "*** URI/Query ***:\n"
+        //             "*** Path/Query ***:\n"
         //             "/account/container/file.txt\n"
         //             "*** Request Headers ***:\n"
         //             "authorization: <redacted>\n"
@@ -442,7 +442,7 @@ testRun(void)
         //         TEST_ERROR_FMT(
         //             storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
         //             "HTTP request failed with 403 (Forbidden):\n"
-        //             "*** URI/Query ***:\n"
+        //             "*** Path/Query ***:\n"
         //             "/account/container/file.txt\n"
         //             "*** Request Headers ***:\n"
         //             "authorization: <redacted>\n"
@@ -821,7 +821,7 @@ testRun(void)
         //         TEST_ERROR_FMT(
         //             storagePathRemoveP(storage, strNew("/"), .recurse = true), ProtocolError,
         //             "HTTP request failed with 403 (Forbidden):\n"
-        //             "*** URI/Query ***:\n"
+        //             "*** Path/Query ***:\n"
         //             "/account/container?comp=list&restype=container&sig=<redacted>\n"
         //             "*** Request Headers ***:\n"
         //             "content-length: 0\n"
