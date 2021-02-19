@@ -82,37 +82,6 @@ Get authentication header for service keys
 
 Based on the documentation at https://developers.google.com/identity/protocols/oauth2/service-account#httprest
 ***********************************************************************************************************************************/
-// Helper to convert base64 encoding to base64url
-static String *
-storageGcsEncodeBase64Url(const Buffer *source)
-{
-    Buffer *base64 = bufNew(encodeToStrSize(encodeBase64, bufSize(source)) + 1);
-    encodeToStr(encodeBase64, bufPtrConst(source), bufSize(source), (char *)bufPtr(base64));
-
-    for (unsigned int charIdx = 0; charIdx <= bufSize(base64); charIdx++)
-    {
-        if (bufPtr(base64)[charIdx] == 0)
-            break;
-
-        switch (bufPtr(base64)[charIdx])
-        {
-            case '+':
-                bufPtr(base64)[charIdx] = '-';
-                break;
-
-            case '/':
-                bufPtr(base64)[charIdx] = '_';
-                break;
-
-            case '=':
-                bufPtr(base64)[charIdx] = '\0';
-                break;
-        }
-    }
-
-    return strNew((char *)bufPtr(base64));
-}
-
 // Helper to construct a JSON Web Token
 static String *
 storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
@@ -128,12 +97,13 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Add claim
-        String *claim = strNewFmt(
-            "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\","
-            "\"aud\":\"https://oauth2.googleapis.com/token\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
-            strZ(this->credential), this->write ? "_write" : "_only", (uint64_t)timeBegin + 3600, (uint64_t)timeBegin);
-
-        strCat(result, storageGcsEncodeBase64Url(BUFSTR(claim)));
+        strCatEncode(
+            result, encodeBase64Url,
+            BUFSTR(
+                strNewFmt(
+                    "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\","
+                    "\"aud\":\"https://oauth2.googleapis.com/token\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
+                    strZ(this->credential), this->write ? "_write" : "_only", (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
 
         // Sign with RSA key !!! NEED TO MAKE SURE OPENSSL STUFF GETS FREED ON ERROR
         cryptoInit();
@@ -154,6 +124,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
         cryptoError(EVP_DigestSignFinal(sign, NULL, &signatureLen) <= 0, "unable to get size");
 
         Buffer *signature = bufNew(signatureLen);
+        bufUsedSet(signature, bufSize(signature));
 
         cryptoError(EVP_DigestSignFinal(sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
 
@@ -166,7 +137,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 
         // Add signature
         strCatChr(result, '.');
-        strCat(result, storageGcsEncodeBase64Url(signature));
+        strCatEncode(result, encodeBase64Url, signature);
     }
     MEM_CONTEXT_TEMP_END();
 
