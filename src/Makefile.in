@@ -63,6 +63,7 @@ SRCS = \
 	common/debug.c \
 	common/encode.c \
 	common/encode/base64.c \
+	common/encode/base64url.c \
 	common/error.c \
 	common/exec.c \
 	common/exit.c \

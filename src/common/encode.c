@@ -8,6 +8,7 @@ Binary to String Encode/Decode
 
 #include "common/encode.h"
 #include "common/encode/base64.h"
+#include "common/encode/base64url.h"
 #include "common/debug.h"
 #include "common/error.h"
 
@@ -30,6 +31,8 @@ encodeToStr(EncodeType encodeType, const unsigned char *source, size_t sourceSiz
 
     if (encodeType == encodeBase64)
         encodeToStrBase64(source, sourceSize, destination);
+    else if (encodeType == encodeBase64Url)
+        encodeToStrBase64Url(source, sourceSize, destination);
     else
         ENCODE_TYPE_INVALID_ERROR(encodeType);
 
@@ -49,6 +52,8 @@ encodeToStrSize(EncodeType encodeType, size_t sourceSize)
 
     if (encodeType == encodeBase64)
         destinationSize = encodeToStrSizeBase64(sourceSize);
+    else if (encodeType == encodeBase64Url)
+        destinationSize = encodeToStrSizeBase64Url(sourceSize);
     else
         ENCODE_TYPE_INVALID_ERROR(encodeType);
 
