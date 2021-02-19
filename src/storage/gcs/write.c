@@ -5,7 +5,6 @@ GCS Storage File Write
 
 #include "common/crypto/hash.h"
 #include "common/debug.h"
-#include "common/encode.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -92,7 +91,7 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
     const String *md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));
     CHECK(md5base64 != NULL);
 
-    const String *md5actual = bufHex(bufNewDecode(md5base64, encodeBase64));
+    const String *md5actual = bufHex(bufNewDecode(encodeBase64, md5base64));
     const String *md5expected = varStr(ioFilterResult(this->md5hash));
 
     if (!strEq(md5actual, md5expected))

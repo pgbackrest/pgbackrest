@@ -11,7 +11,6 @@ GCS Storage
 
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/encode.h"
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
