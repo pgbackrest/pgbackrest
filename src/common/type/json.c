@@ -254,7 +254,7 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
                     noEscapeSize = 0;
                 }
 
-                (*jsonPos)++;;
+                (*jsonPos)++;
 
                 switch (json[*jsonPos])
                 {
@@ -289,6 +289,22 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
                     case 'f':
                         strCatChr(result, '\f');
                         break;
+
+                    case 'u':
+                    {
+                        (*jsonPos)++;
+
+                        // We don't know how to decode anything except ASCII so fail if it looks like Unicode
+                        if (strncmp(json + *jsonPos, "00", 2) != 0)
+                            THROW_FMT(JsonFormatError, "unable to decode '%.4s'", json + *jsonPos);
+
+                        // Decode char
+                        (*jsonPos) += 2;
+                        strCatChr(result, (char)cvtZToUIntBase(strZ(strNewN(json + *jsonPos, 2)), 16));
+                        (*jsonPos) += 1;
+
+                        break;
+                    }
 
                     default:
                         THROW_FMT(JsonFormatError, "invalid escape character '%c'", json[*jsonPos]);
