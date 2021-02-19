@@ -59,7 +59,7 @@ storageReadAzureOpen(THIS_VOID)
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         this->httpResponse = storageAzureRequestP(
-            this->storage, HTTP_VERB_GET_STR, .uri = this->interface.name, .allowMissing = true, .contentIo = true);
+            this->storage, HTTP_VERB_GET_STR, .path = this->interface.name, .allowMissing = true, .contentIo = true);
     }
     MEM_CONTEXT_END();
 
