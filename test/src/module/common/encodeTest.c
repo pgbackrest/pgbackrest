@@ -40,9 +40,6 @@ testRun(void)
         TEST_RESULT_Z(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ0KAA==", "encode full string with \\r\\n and null");
         TEST_RESULT_UINT(encodeToStrSize(encodeBase64, strlen((char *)encode) + 1), strlen(destinationEncode), "check size");
 
-        TEST_ERROR(encodeToStr(999, encode, strlen((char *)encode), destinationEncode), AssertError, "invalid encode type 999");
-        TEST_ERROR(encodeToStrSize(999, strlen((char *)encode)), AssertError, "invalid encode type 999");
-
         // -------------------------------------------------------------------------------------------------------------------------
         unsigned char destinationDecode[256];
 
@@ -88,9 +85,8 @@ testRun(void)
         TEST_RESULT_INT(destinationDecode[1], 0xFF, "check for overrun");
         TEST_RESULT_UINT(decodeToBinSize(encodeBase64, decode), 1, "check size");
 
-        TEST_ERROR(decodeToBin(9999, decode, destinationDecode), AssertError, "invalid encode type 9999");
-        TEST_ERROR(decodeToBinSize(9999, decode), AssertError, "invalid encode type 9999");
-        TEST_ERROR(decodeToBin(encodeBase64, "cc$=", destinationDecode), FormatError, "base64 invalid character found at position 2");
+        TEST_ERROR(
+            decodeToBin(encodeBase64, "cc$=", destinationDecode), FormatError, "base64 invalid character found at position 2");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(decodeToBinValidate(encodeBase64, "c3"), FormatError, "base64 size 2 is not evenly divisible by 4");
@@ -99,13 +95,9 @@ testRun(void)
         TEST_ERROR(
             decodeToBinValidate(encodeBase64, "cc=c"), FormatError, "base64 last character must be '=' if second to last is");
 
-        TEST_ERROR(decodeToBinValidate(9999, "cc=c"), AssertError, "invalid encode type 9999");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(decodeToBinValid(encodeBase64, "CCCCCCCCCCC"), false, "base64 string not valid");
         TEST_RESULT_BOOL(decodeToBinValid(encodeBase64, "CCCCCCCCCCCC"), true, "base64 string valid");
-
-        TEST_ERROR(decodeToBinValid(9999, "CCCCCCCCCCCC"), AssertError, "invalid encode type 9999");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

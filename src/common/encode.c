@@ -11,10 +11,10 @@ Binary to String Encode/Decode
 #include "common/error.h"
 
 /***********************************************************************************************************************************
-Macro to handle invalid encode type errors
+Assert that encoding type is valid. This needs to be kept up to date with the last item in the enum.
 ***********************************************************************************************************************************/
-#define ENCODE_TYPE_INVALID_ERROR(encodeType)                                                                                      \
-    THROW_FMT(AssertError, "invalid encode type %u", encodeType);
+#define ASSERT_ENCODE_TYPE_VALID(type)                                                                                             \
+    ASSERT(type <= encodeBase64);
 
 /***********************************************************************************************************************************
 Base64 encoding/decoding
@@ -228,85 +228,101 @@ decodeToBinSizeBase64(const char *source)
 Generic encoding/decoding
 ***********************************************************************************************************************************/
 void
-encodeToStr(EncodeType encodeType, const unsigned char *source, size_t sourceSize, char *destination)
+encodeToStr(EncodeType type, const unsigned char *source, size_t sourceSize, char *destination)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, encodeType);
+        FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM_P(UCHARDATA, source);
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
         FUNCTION_TEST_PARAM_P(CHARDATA, destination);
     FUNCTION_TEST_END();
 
-    if (encodeType == encodeBase64)
-        encodeToStrBase64(source, sourceSize, destination);
-    else
-        ENCODE_TYPE_INVALID_ERROR(encodeType);
+    ASSERT_ENCODE_TYPE_VALID(type);
+
+    switch (type)
+    {
+        case encodeBase64:
+            encodeToStrBase64(source, sourceSize, destination);
+            break;
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 size_t
-encodeToStrSize(EncodeType encodeType, size_t sourceSize)
+encodeToStrSize(EncodeType type, size_t sourceSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, encodeType);
+        FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
     FUNCTION_TEST_END();
 
-    size_t destinationSize = 0;
+    ASSERT_ENCODE_TYPE_VALID(type);
 
-    if (encodeType == encodeBase64)
-        destinationSize = encodeToStrSizeBase64(sourceSize);
-    else
-        ENCODE_TYPE_INVALID_ERROR(encodeType);
+    size_t destinationSize = SIZE_MAX;
+
+    switch (type)
+    {
+        case encodeBase64:
+            destinationSize = encodeToStrSizeBase64(sourceSize);
+            break;
+    }
 
     FUNCTION_TEST_RETURN(destinationSize);
 }
 
 /**********************************************************************************************************************************/
 void
-decodeToBin(EncodeType encodeType, const char *source, unsigned char *destination)
+decodeToBin(EncodeType type, const char *source, unsigned char *destination)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, encodeType);
+        FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(STRINGZ, source);
         FUNCTION_TEST_PARAM_P(UCHARDATA, destination);
     FUNCTION_TEST_END();
 
-    if (encodeType == encodeBase64)
-        decodeToBinBase64(source, destination);
-    else
-        ENCODE_TYPE_INVALID_ERROR(encodeType);
+    ASSERT_ENCODE_TYPE_VALID(type);
+
+    switch (type)
+    {
+        case encodeBase64:
+            decodeToBinBase64(source, destination);
+            break;
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 size_t
-decodeToBinSize(EncodeType encodeType, const char *source)
+decodeToBinSize(EncodeType type, const char *source)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, encodeType);
+        FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(STRINGZ, source);
     FUNCTION_TEST_END();
 
-    size_t destinationSize = 0;
+    ASSERT_ENCODE_TYPE_VALID(type);
 
-    if (encodeType == encodeBase64)
-        destinationSize = decodeToBinSizeBase64(source);
-    else
-        ENCODE_TYPE_INVALID_ERROR(encodeType);
+    size_t destinationSize = SIZE_MAX;
+
+    switch (type)
+    {
+        case encodeBase64:
+            destinationSize = decodeToBinSizeBase64(source);
+            break;
+    }
 
     FUNCTION_TEST_RETURN(destinationSize);
 }
 
 /**********************************************************************************************************************************/
 bool
-decodeToBinValid(EncodeType encodeType, const char *source)
+decodeToBinValid(EncodeType type, const char *source)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, encodeType);
+        FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(STRINGZ, source);
     FUNCTION_TEST_END();
 
@@ -314,7 +330,7 @@ decodeToBinValid(EncodeType encodeType, const char *source)
 
     TRY_BEGIN()
     {
-        decodeToBinValidate(encodeType, source);
+        decodeToBinValidate(type, source);
     }
     CATCH(FormatError)
     {
@@ -327,17 +343,21 @@ decodeToBinValid(EncodeType encodeType, const char *source)
 
 /**********************************************************************************************************************************/
 void
-decodeToBinValidate(EncodeType encodeType, const char *source)
+decodeToBinValidate(EncodeType type, const char *source)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, encodeType);
+        FUNCTION_TEST_PARAM(ENUM, type);
         FUNCTION_TEST_PARAM(STRINGZ, source);
     FUNCTION_TEST_END();
 
-    if (encodeType == encodeBase64)
-        decodeToBinValidateBase64(source);
-    else
-        ENCODE_TYPE_INVALID_ERROR(encodeType);
+    ASSERT_ENCODE_TYPE_VALID(type);
+
+    switch (type)
+    {
+        case encodeBase64:
+            decodeToBinValidateBase64(source);
+            break;
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
