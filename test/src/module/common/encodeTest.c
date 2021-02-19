@@ -89,15 +89,13 @@ testRun(void)
             decodeToBin(encodeBase64, "cc$=", destinationDecode), FormatError, "base64 invalid character found at position 2");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(decodeToBinValidate(encodeBase64, "c3"), FormatError, "base64 size 2 is not evenly divisible by 4");
+        TEST_ERROR(decodeToBin(encodeBase64, "c3", destinationDecode), FormatError, "base64 size 2 is not evenly divisible by 4");
         TEST_ERROR(
-            decodeToBinValidate(encodeBase64, "c==="), FormatError, "base64 '=' character may only appear in last two positions");
+            decodeToBin(encodeBase64, "c===", destinationDecode), FormatError,
+            "base64 '=' character may only appear in last two positions");
         TEST_ERROR(
-            decodeToBinValidate(encodeBase64, "cc=c"), FormatError, "base64 last character must be '=' if second to last is");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(decodeToBinValid(encodeBase64, "CCCCCCCCCCC"), false, "base64 string not valid");
-        TEST_RESULT_BOOL(decodeToBinValid(encodeBase64, "CCCCCCCCCCCC"), true, "base64 string valid");
+            decodeToBin(encodeBase64, "cc=c", destinationDecode), FormatError,
+            "base64 last character must be '=' if second to last is");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
