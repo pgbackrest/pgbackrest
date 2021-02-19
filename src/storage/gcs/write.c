@@ -92,13 +92,7 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
     const String *md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));
     CHECK(md5base64 != NULL);
 
-    Buffer *md5 = bufNew(HASH_TYPE_M5_SIZE);
-    ASSERT(decodeToBinSize(encodeBase64, strZ(md5base64)) == bufSize(md5));
-
-    decodeToBin(encodeBase64, strZ(md5base64), bufPtr(md5));
-    bufUsedSet(md5, bufSize(md5));
-
-    const String *md5actual = bufHex(md5);
+    const String *md5actual = bufHex(strDecode(md5base64, encodeBase64));
     const String *md5expected = varStr(ioFilterResult(this->md5hash));
 
     if (!strEq(md5actual, md5expected))

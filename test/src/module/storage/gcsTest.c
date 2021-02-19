@@ -112,9 +112,9 @@ Helper to build test requests
 //     // Add md5
 //     if (param.content != NULL)
 //     {
-//         char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-//         encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content))), HASH_TYPE_M5_SIZE, md5Hash);
-//         strCatFmt(request, "content-md5:%s\r\n", md5Hash);
+//            strCatFmt(
+//                request, "content-md5:%s\r\n",
+//                strZ(strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content)))));
 //     }
 //
 //     // Add date
