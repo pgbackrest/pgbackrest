@@ -170,8 +170,8 @@ testBegin(const char *name)
             // Clear out the test directory so the next test starts clean
             char buffer[2048];
             snprintf(
-                buffer, sizeof(buffer), "%schmod -R 700 %s/" "*;%srm -rf %s/" "*", testContainer() ? "sudo " : "", testPath(),
-                testContainer() ? "sudo " : "", testPath());
+                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%srm -rf %s/" "*", testContainer() ? "sudo " : "",
+                testPath(), testContainer() ? "sudo " : "", testPath());
 
             if (system(buffer) != 0)
             {
@@ -182,7 +182,7 @@ testBegin(const char *name)
 
             // Clear out the data directory so the next test starts clean
             snprintf(
-                buffer, sizeof(buffer), "%schmod -R 700 %s/" "*;%srm -rf %s/" "*", testContainer() ? "sudo " : "",
+                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%srm -rf %s/" "*", testContainer() ? "sudo " : "",
                 testDataPath(), testContainer() ? "sudo " : "", testDataPath());
 
             if (system(buffer) != 0)
