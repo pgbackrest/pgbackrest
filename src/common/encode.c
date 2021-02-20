@@ -388,8 +388,8 @@ decodeToBin(EncodeType type, const char *source, unsigned char *destination)
             decodeToBinBase64(source, destination);
             break;
 
-        case encodeBase64Url:
-            THROW(AssertError, "unsupported");
+        default:
+            ASSERT_MSG("unsupported");
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -414,8 +414,8 @@ decodeToBinSize(EncodeType type, const char *source)
             destinationSize = decodeToBinSizeBase64(source);
             break;
 
-        case encodeBase64Url:
-            THROW(AssertError, "unsupported");
+        default:
+            ASSERT_MSG("unsupported");
     }
 
     FUNCTION_TEST_RETURN(destinationSize);
