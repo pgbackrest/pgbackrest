@@ -69,18 +69,34 @@ testRun(void)
             storageListP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), "0000000100000001000000FE\n", "check queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg >= 9.3 and ok/junk status files");
+
         walSegmentSize = 1024 * 1024;
         queueSize = walSegmentSize * 5;
 
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/junk", "JUNK");
+
+        // Bad OK file with wrong length (just to make sure this does not cause strSubN() issues)
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/AAA.ok", "0\nWARNING");
+
+        // OK file with warnings somehow left over from a prior run
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFD.ok", "0\nWARNING");
+
+        // Valid queued WAL segments (one with an OK file containing warnings)
         HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE", walSegmentBuffer);
         HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF", walSegmentBuffer);
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF.ok", "0\nWARNING2");
+
+        // Empty OK file indicating a WAL segment not found at the end of the queue
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000B00000000.ok");
 
         TEST_RESULT_STRLST_Z(
             queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11),
             "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal >= 9.3");
 
-        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000A00000FFE\n000000010000000A00000FFF\n");
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN,
+            "000000010000000A00000FFE\n000000010000000A00000FFF\n000000010000000A00000FFF.ok\n");
     }
 
     // *****************************************************************************************************************************
@@ -1053,7 +1069,8 @@ testRun(void)
             archiveGetProtocol(PROTOCOL_COMMAND_ARCHIVE_GET_STR, paramList, server), true, "protocol archive get");
 
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,[]]}\n", "check result");
-        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF\n");
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n");
 
         bufUsedSet(serverWrite, 0);
 

@@ -28,6 +28,6 @@ typedef struct ArchiveGetFileResult
 } ArchiveGetFileResult;
 
 ArchiveGetFileResult archiveGetFile(
-    const Storage *storage, const String *request, const List *actualList, const String *walDestination, bool durable);
+    const Storage *storage, const String *request, const List *actualList, const String *walDestination);
 
 #endif

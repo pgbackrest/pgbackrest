@@ -18,14 +18,13 @@ Archive Get File
 
 /**********************************************************************************************************************************/
 ArchiveGetFileResult archiveGetFile(
-    const Storage *storage, const String *request, const List *actualList, const String *walDestination, bool durable)
+    const Storage *storage, const String *request, const List *actualList, const String *walDestination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, request);
         FUNCTION_LOG_PARAM(LIST, actualList);
         FUNCTION_LOG_PARAM(STRING, walDestination);
-        FUNCTION_LOG_PARAM(BOOL, durable);
     FUNCTION_LOG_END();
 
     ASSERT(request != NULL);
@@ -52,8 +51,7 @@ ArchiveGetFileResult archiveGetFile(
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 StorageWrite *destination = storageNewWriteP(
-                    storage, walDestination, .noCreatePath = true, .noSyncFile = !durable, .noSyncPath = !durable,
-                    .noAtomic = !durable);
+                    storage, walDestination, .noCreatePath = true, .noSyncFile = true, .noSyncPath = true, .noAtomic = true);
 
                 // If there is a cipher then add the decrypt filter
                 if (actual->cipherType != cipherTypeNone)

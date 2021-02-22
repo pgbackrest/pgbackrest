@@ -11,6 +11,7 @@ Archive Get Protocol Handler
 #include "common/memContext.h"
 #include "config/config.h"
 #include "storage/helper.h"
+#include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -64,7 +65,8 @@ archiveGetProtocol(const String *command, const VariantList *paramList, Protocol
 
             // Return result
             ArchiveGetFileResult fileResult = archiveGetFile(
-                storageSpoolWrite(), request, actualList, strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(request)), true);
+                storageSpoolWrite(), request, actualList,
+                strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s." STORAGE_FILE_TEMP_EXT, strZ(request)));
 
             VariantList *result = varLstNew();
             varLstAdd(result, varNewUInt(fileResult.actualIdx));
