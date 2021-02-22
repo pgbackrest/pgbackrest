@@ -130,7 +130,7 @@ testRun(void)
             "passed (e.g. --repo=1). The --set option can be passed if a backup other than\n"
             "the latest is desired.\n"
             "\n"
-            "For PITR, --type=time must be provided and the target time passed with the\n"
+            "For PITR, --type=time must be provided and the target time specified with the\n"
             "--target option. If a backup is not specified via the --set option, then the\n"
             "configured repositories will be checked, in order, for a backup that contains\n"
             "the requested time. If no backup can be found, the latest backup from the first\n"
