@@ -400,6 +400,7 @@ archiveGetCheck(const StringList *archiveRequestList)
                     storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cacheRepo.cipherType,
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
+                // Copy cipher pass into the result list context once rather than making a copy per candidate file later
                 MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
                 {
                     cacheRepo.cipherPassArchive = strDup(infoArchiveCipherPass(info));
@@ -419,10 +420,10 @@ archiveGetCheck(const StringList *archiveRequestList)
                         const String *archiveId = infoPgArchiveId(infoArchivePg(info), pgIdx);
                         bool found = true;
 
-                        // If the archiveId is in the past make sure it has some files
+                        // If the archiveId is in the past make sure the path exists
                         if (pgIdx != 0)
                         {
-                            // Get list of files in the archive path
+                            // Get list of archiveId paths in the archive path
                             if (archivePathList == NULL)
                                 archivePathList = storageListP(storageRepoIdx(repoIdx), STORAGE_REPO_ARCHIVE_STR);
 
@@ -438,6 +439,7 @@ archiveGetCheck(const StringList *archiveRequestList)
                                 .pathList = lstNewP(sizeof(ArchiveGetFindCachePath), .comparator = lstComparatorStr),
                             };
 
+                            // Copy archiveId into the result list context once rather than making a copy per candidate file later
                             MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
                             {
                                 cacheArchive.archiveId = strDup(archiveId);
