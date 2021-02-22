@@ -939,8 +939,8 @@ cmdArchiveGetAsync(void)
                                 processId, FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
                                 cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx), strZ(file->archiveId));
 
-                            // Rename temp WAL segment to actual name. This is done after the ok file is written so if the ok file
-                            // has warnings it is guaranteed to exist before the foreground process the WAL segment.
+                            // Rename temp WAL segment to actual name. This is done after the ok file is written so the ok file is
+                            // guaranteed to exist before the foreground process finds the WAL segment.
                             storageMoveP(
                                 storageSpoolWrite(),
                                 storageNewReadP(
