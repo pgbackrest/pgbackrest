@@ -298,7 +298,7 @@ restoreBackupSet(void)
             }
             TRY_END();
 
-            // If unable to load the backup info file, then move on to next repo.
+            // If unable to load the backup info file, then move on to next repo
             if (infoBackup == NULL)
                 continue;
 
@@ -2158,8 +2158,8 @@ cmdRestore(void)
         RestoreJobData jobData = {.repoIdx = backupData.repoIdx};
 
         jobData.manifest = manifestLoadFile(
-            storageRepoIdx(backupData.repoIdx), strNewFmt(
-                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
+            storageRepoIdx(backupData.repoIdx),
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
             backupData.backupCipherPass);
 
         // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
