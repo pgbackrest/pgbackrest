@@ -710,8 +710,7 @@ storageGcsPathRemoveCallback(void *callbackData, const StorageInfo *info)
         MEM_CONTEXT_BEGIN(data->memContext)
         {
             data->request = storageGcsRequestAsyncP(
-                data->this, HTTP_VERB_DELETE_STR,
-                .object = strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(info->name)));
+                data->this, HTTP_VERB_DELETE_STR, .object = strNewFmt("%s/%s", strZ(data->path), strZ(info->name)));
         }
         MEM_CONTEXT_END();
     }
@@ -736,7 +735,13 @@ storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfa
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageGcsPathRemoveData data = {.this = this, .memContext = memContextCurrent(), .path = path};
+        StorageGcsPathRemoveData data =
+        {
+            .this = this,
+            .memContext = memContextCurrent(),
+            .path = strEq(path, FSLASH_STR) ? EMPTY_STR : path,
+        };
+
         storageGcsListInternal(this, path, storageInfoLevelBasic, NULL, true, storageGcsPathRemoveCallback, &data);
 
         // Check response on last async request
