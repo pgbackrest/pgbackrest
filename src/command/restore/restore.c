@@ -313,6 +313,9 @@ restoreBackupSet(void)
             // If a backup set was not specified, then see if a time to recover was requested
             if (backupSetRequested == NULL)
             {
+                // Get the latest backup
+                InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
+
                 // If the recovery type is time, attempt to determine the backup set
                 if (timeTargetEpoch != 0)
                 {
@@ -341,8 +344,6 @@ restoreBackupSet(void)
                         break;
                     else
                     {
-                        InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
-
                         // If a backup was not yet found then set the latest from this repo as the backup that might be used
                         RestoreBackupData candidate = restoreBackupData(
                             latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
@@ -353,8 +354,6 @@ restoreBackupSet(void)
                 else
                 {
                     // If the recovery type was not time (or time provided was not valid), then use the latest backup from this repo
-                    InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
-
                     result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                     break;
                 }
