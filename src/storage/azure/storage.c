@@ -307,13 +307,13 @@ General function for listing files to be used by other list routines
 ***********************************************************************************************************************************/
 static void
 storageAzureListInternal(
-    StorageAzure *this, const String *path, const String *expression, bool recurse,
-    void (*callback)(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml),
-    void *callbackData)
+    StorageAzure *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
+    StorageInfoListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
@@ -406,7 +406,7 @@ storageAzureListInternal(
                     MEM_CONTEXT_PRIOR_END();
                 }
 
-                // Get subpath list
+                // Get prefix list
                 XmlNode *blobs = xmlNodeChild(xmlRoot, AZURE_XML_TAG_BLOBS_STR, true);
                 XmlNodeList *blobPrefixList = xmlNodeChildList(blobs, AZURE_XML_TAG_BLOB_PREFIX_STR);
 
@@ -414,14 +414,23 @@ storageAzureListInternal(
                 {
                     const XmlNode *subPathNode = xmlNodeLstGet(blobPrefixList, blobPrefixIdx);
 
-                    // Get subpath name
-                    const String *subPath = xmlNodeContent(xmlNodeChild(subPathNode, AZURE_XML_TAG_NAME_STR, true));
+                    // Get path name
+                    StorageInfo info =
+                    {
+                        .level = level,
+                        .name = xmlNodeContent(xmlNodeChild(subPathNode, AZURE_XML_TAG_NAME_STR, true)),
+                        .exists = true,
+                    };
 
                     // Strip off base prefix and final /
-                    subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
+                    info.name = strSubN(info.name, strSize(basePrefix), strSize(info.name) - strSize(basePrefix) - 1);
 
-                    // Add to list
-                    callback(this, callbackData, subPath, storageTypePath, NULL);
+                    // Add type info if requested
+                    if (level >= storageInfoLevelType)
+                        info.type = storageTypePath;
+
+                    // Callback with info
+                    callback(callbackData, &info);
                 }
 
                 // Get file list
@@ -432,14 +441,30 @@ storageAzureListInternal(
                     const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
 
                     // Get file name
-                    const String *file = xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_NAME_STR, true));
+                    StorageInfo info =
+                    {
+                        .level = level,
+                        .name = xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_NAME_STR, true)),
+                        .exists = true,
+                    };
 
                     // Strip off the base prefix when present
-                    file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
+                    if (!strEmpty(basePrefix))
+                        info.name = strSub(info.name, strSize(basePrefix));
 
-                    // Add to list
-                    callback(
-                        this, callbackData, file, storageTypeFile, xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true));
+                    // Add basic info if requested (no need to add type info since file is default type)
+                    if (level >= storageInfoLevelBasic)
+                    {
+                        XmlNode *property = xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true);
+
+                        info.size = cvtZToUInt64(
+                            strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
+                        info.timeModified = httpDateToTime(
+                            xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
+                    }
+
+                    // Callback with info
+                    callback(callbackData, &info);
                 }
             }
             MEM_CONTEXT_TEMP_END();
@@ -473,10 +498,9 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
 
-    // Add basic level info if requested and the file exists
+    // Add basic level info if requested and the file exists (no need to add type info since file is default type)
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
-        result.type = storageTypeFile;
         result.size = cvtZToUInt64(strZ(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_CONTENT_LENGTH_STR)));
         result.timeModified = httpDateToTime(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_LAST_MODIFIED_STR));
     }
@@ -485,56 +509,6 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageAzureInfoListData
-{
-    StorageInfoLevel level;                                         // Level of info to set
-    StorageInfoListCallback callback;                               // User-supplied callback function
-    void *callbackData;                                             // User-supplied callback data
-} StorageAzureInfoListData;
-
-static void
-storageAzureInfoListCallback(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(XML_NODE, xml);
-    FUNCTION_TEST_END();
-
-    (void)this;                                                     // Unused but still logged above for debugging
-    ASSERT(callbackData != NULL);
-    ASSERT(name != NULL);
-
-    StorageAzureInfoListData *data = (StorageAzureInfoListData *)callbackData;
-
-    StorageInfo info =
-    {
-        .name = name,
-        .level = data->level,
-        .exists = true,
-    };
-
-    if (data->level >= storageInfoLevelBasic)
-    {
-        info.type = type;
-
-        // Add additional info for files
-        if (type == storageTypeFile)
-        {
-            ASSERT(xml != NULL);
-
-            info.size =  cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
-            info.timeModified = httpDateToTime(xmlNodeContent(xmlNodeChild(xml, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
-        }
-    }
-
-    data->callback(data->callbackData, &info);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 static bool
 storageAzureInfoList(
     THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
@@ -555,12 +529,7 @@ storageAzureInfoList(
     ASSERT(path != NULL);
     ASSERT(callback != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        StorageAzureInfoListData data = {.level = level, .callback = callback, .callbackData = callbackData};
-        storageAzureListInternal(this, path, param.expression, false, storageAzureInfoListCallback, &data);
-    }
-    MEM_CONTEXT_TEMP_END();
+    storageAzureListInternal(this, path, level, param.expression, false, callback, callbackData);
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -609,27 +578,23 @@ storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
 /**********************************************************************************************************************************/
 typedef struct StorageAzurePathRemoveData
 {
+    StorageAzure *this;                                             // Storage object
     MemContext *memContext;                                         // Mem context to create requests in
     HttpRequest *request;                                           // Async remove request
     const String *path;                                             // Root path of remove
 } StorageAzurePathRemoveData;
 
 static void
-storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
+storageAzurePathRemoveCallback(void *callbackData, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(ENUM, type);
-        (void)xml;                                                  // Unused since no additional data needed for files
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
     ASSERT(callbackData != NULL);
-    ASSERT(name != NULL);
 
-    StorageAzurePathRemoveData *data = (StorageAzurePathRemoveData *)callbackData;
+    StorageAzurePathRemoveData *data = callbackData;
 
     // Get response from prior async request
     if (data->request != NULL)
@@ -641,12 +606,13 @@ storageAzurePathRemoveCallback(StorageAzure *this, void *callbackData, const Str
     }
 
     // Only delete files since paths don't really exist
-    if (type == storageTypeFile)
+    if (info->type == storageTypeFile)
     {
         MEM_CONTEXT_BEGIN(data->memContext)
         {
             data->request = storageAzureRequestAsyncP(
-                this, HTTP_VERB_DELETE_STR, strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(name)));
+                data->this, HTTP_VERB_DELETE_STR,
+                strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(info->name)));
         }
         MEM_CONTEXT_END();
     }
@@ -671,8 +637,8 @@ storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageAzurePathRemoveData data = {.memContext = memContextCurrent(), .path = path};
-        storageAzureListInternal(this, path, NULL, true, storageAzurePathRemoveCallback, &data);
+        StorageAzurePathRemoveData data = {.this = this, .memContext = memContextCurrent(), .path = path};
+        storageAzureListInternal(this, path, storageInfoLevelType, NULL, true, storageAzurePathRemoveCallback, &data);
 
         // Check response on last async request
         if (data.request != NULL)
