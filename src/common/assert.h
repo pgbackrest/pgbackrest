@@ -31,9 +31,14 @@ Asserts are used in test code to ensure that certain conditions are true.  They 
     #else
         #define ASSERT_INLINE(condition)
     #endif
+
+    // Used when execution reaches an invalid location rather than an invalid condition
+    #define ASSERT_MSG(message)                                                                                                    \
+        THROW_FMT(AssertError, message);
 #else
     #define ASSERT(condition)
     #define ASSERT_INLINE(condition)
+    #define ASSERT_MSG(message)
 #endif
 
 /***********************************************************************************************************************************

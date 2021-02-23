@@ -10,7 +10,6 @@ Info Handler
 #include "common/type/convert.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
-#include "common/encode.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/ini.h"
 #include "common/log.h"

@@ -29,13 +29,13 @@ Perform an Azure Request
 typedef struct StorageAzureRequestAsyncParam
 {
     VAR_PARAM_HEADER;
-    const String *uri;                                              // Request URI
+    const String *path;                                             // Request path
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
 } StorageAzureRequestAsyncParam;
 
-#define storageAzureRequestAsyncP(this, verb, ...)                                                                            \
+#define storageAzureRequestAsyncP(this, verb, ...)                                                                                 \
     storageAzureRequestAsync(this, verb, (StorageAzureRequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 HttpRequest *storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureRequestAsyncParam param);
@@ -56,7 +56,7 @@ HttpResponse *storageAzureResponse(HttpRequest *request, StorageAzureResponsePar
 typedef struct StorageAzureRequestParam
 {
     VAR_PARAM_HEADER;
-    const String *uri;                                              // Request URI
+    const String *path;                                             // Request path
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
