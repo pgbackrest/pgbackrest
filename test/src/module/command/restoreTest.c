@@ -155,6 +155,7 @@ testRun(void)
     {
         const String *repoFileReferenceFull = strNew("20190509F");
         const String *repoFile1 = strNew("pg_data/testfile");
+        unsigned int repoIdx = 0;
 
         // Start a protocol server to test the protocol directly
         Buffer *serverWrite = bufNew(8192);
@@ -178,7 +179,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("sparse-zero"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("sparse-zero"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             false, "zero sparse 1TB file");
@@ -186,7 +187,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("normal-zero"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("normal-zero"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, false, false, NULL),
             true, "zero-length file");
@@ -204,7 +205,7 @@ testRun(void)
 
         TEST_ERROR(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeGz, strNew("normal"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, strNew("normal"),
                 strNew("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, false, false, strNew("badpass")),
             ChecksumError,
@@ -219,7 +220,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeGz, strNew("normal"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, strNew("normal"),
                 strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, false, false, strNew("badpass")),
             true, "copy file");
@@ -242,7 +243,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta missing");
@@ -254,7 +255,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             false, "sha1 delta existing");
@@ -263,7 +264,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 1557432155, true, true, NULL),
             false, "sha1 delta force existing");
@@ -273,7 +274,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, size differs");
@@ -284,7 +285,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
@@ -296,7 +297,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, content differs");
@@ -307,14 +308,14 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, timestamp differs");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 1557432153, true, true, NULL),
             true, "delta force existing, timestamp after copy time");
@@ -324,7 +325,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoFileReferenceFull, compressTypeNone, strNew("delta"),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             false, "sha1 delta existing, content differs");
@@ -333,6 +334,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
+        varLstAdd(paramList, varNewUInt(repoIdx));
         varLstAdd(paramList, varNewStr(repoFileReferenceFull));
         varLstAdd(paramList, varNewUInt(compressTypeNone));
         varLstAdd(paramList, varNewStrZ("protocol"));
@@ -364,6 +366,7 @@ testRun(void)
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(repoFile1));
+        varLstAdd(paramList, varNewUInt(repoIdx));
         varLstAdd(paramList, varNewStr(repoFileReferenceFull));
         varLstAdd(paramList, varNewUInt(compressTypeNone));
         varLstAdd(paramList, varNewStrZ("protocol"));
@@ -517,14 +520,18 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when no backups are present");
 
-        InfoBackup *infoBackup = infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO_DB)));
-        TEST_ERROR_FMT(restoreBackupSet(infoBackup), BackupSetInvalidError, "no backup sets to restore");
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+        TEST_ERROR_FMT(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
+        TEST_RESULT_LOG("P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid backup set");
 
-        infoBackup = infoBackupNewLoad(
-            ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB)));
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            TEST_RESTORE_BACKUP_INFO
+            "\n"
+            TEST_RESTORE_BACKUP_INFO_DB);
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -533,55 +540,154 @@ testRun(void)
         strLstAddZ(argList, "--set=BOGUS");
         harnessCfgLoad(cfgCmdRestore, argList);
 
-        TEST_ERROR(restoreBackupSet(infoBackup), BackupSetInvalidError, "backup set BOGUS is not valid");
+        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "backup set BOGUS is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("target time");
         setenv("TZ", "UTC", true);
 
-        infoBackup = infoBackupNewLoad(
-            ioBufferReadNew(harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB)));
+        const String *repoPath2 = strNewFmt("%s/repo2", testPath());
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=time");
         strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
 
         harnessCfgLoad(cfgCmdRestore, argList);
 
-        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212803D", "backup set found");
+        // Write out backup.info with no current backups to repo1
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
 
+        RestoreBackupData backupData = {0};
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212803D", "backup set found");
+        TEST_RESULT_UINT(backupData.repoIdx, 1, "backup set found, repo2");
+        TEST_RESULT_LOG("P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore");
+
+        // Switch repo paths and confirm same result but on repo1
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=time");
-        strLstAddZ(argList, "--target=2016-12-19 16:27:30-0500");
+        strLstAddZ(argList, "--target=2016-12-19 16:28:04-0500");
 
         harnessCfgLoad(cfgCmdRestore, argList);
 
-        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212918I", "default to latest backup set");
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212803D", "backup set found");
+        TEST_RESULT_UINT(backupData.repoIdx, 0, "backup set found, repo1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("target time, multi repo, latest used");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:27:30-0500");
+
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        #define TEST_RESTORE_BACKUP_INFO_NEWEST                                                                                    \
+            "[backup:current]\n"                                                                                                   \
+            "20201212-201243F={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                               \
+            "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","          \
+            "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159776,\"backup-info-size\":26897030,"             \
+            "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1607803000,\"backup-timestamp-stop\":1607803963,"      \
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"                    \
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,"   \
+            "\"option-online\":true}\n"
+
+        // Write out backup.info with current backup newest to repo2 but still does not satisfy time requirement, so repo1 chosen
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
+            TEST_RESTORE_BACKUP_INFO_NEWEST
+            "\n"
+            TEST_RESTORE_BACKUP_INFO_DB);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "default to latest backup set");
+        TEST_RESULT_UINT(backupData.repoIdx, 0, "repo1 chosen because of priority order");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', latest backup set will be"
-            " used");
+            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', repo1: latest backup set"
+            " will be used");
 
+        // Request repo2 - latest from repo2 will be chosen
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20201212-201243F", "default to latest backup set");
+        TEST_RESULT_UINT(backupData.repoIdx, 1, "repo2 chosen because repo option set");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', repo2: latest backup set"
+            " will be used");
+
+        // Switch paths so newest on repo1
         argList = strLstNew();
-        strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
-        strLstAddZ(argList, "--type=time");
-        strLstAddZ(argList, "--target=Tue, 15 Nov 1994 12:45:26");
+        hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:27:30-0500");
 
         harnessCfgLoad(cfgCmdRestore, argList);
 
-        TEST_RESULT_STR_Z(restoreBackupSet(infoBackup), "20161219-212741F_20161219-212918I", "time invalid format, default latest");
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20201212-201243F", "default to latest backup set");
+        TEST_RESULT_UINT(backupData.repoIdx, 0, "repo1 chosen because of priority order");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to find backup set with stop time less than '2016-12-19 16:27:30-0500', repo1: latest backup set"
+            " will be used");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "Tue, 15 Nov 1994 12:45:26");
+
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "time invalid format, default latest");
+        TEST_RESULT_UINT(backupData.repoIdx, 0, "repo1 chosen because of priority order");
         TEST_RESULT_LOG(
             "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
             " latest backup set will be used\n"
             "            HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone"
             " (+/- HH or HHMM or HH:MM) - if timezone is omitted, local time is assumed (for UTC use +00)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("target time, multi repo, no candidates found");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "time");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "2016-12-19 16:27:30-0500");
+
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        // Write out backup.info with no current backups to repo1 and repo2
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+        HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+
+        TEST_ERROR_FMT(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
+        TEST_RESULT_LOG(
+            "P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore\n"
+            "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
     }
 
     // *****************************************************************************************************************************
@@ -1665,6 +1771,7 @@ testRun(void)
     {
         const String *pgPath = strNewFmt("%s/pg", testPath());
         const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *repoPathEncrpyt = strNewFmt("%s/repo-encrypt", testPath());
 
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
@@ -1691,20 +1798,17 @@ testRun(void)
 
         TEST_ERROR(cmdRestore(), HostInvalidError, "restore command must be run on the PostgreSQL host");
 
-        // Write backup info
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePutP(
-            storageNewWriteP(storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR),
-            harnessInfoChecksumZ(TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("full restore without delta");
+        TEST_TITLE("full restore without delta, multi-repo");
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPathEncrpyt);
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--set=20161219-212741F");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         harnessCfgLoad(cfgCmdRestore, argList);
 
         #define TEST_LABEL                                          "20161219-212741F"
@@ -1743,7 +1847,13 @@ testRun(void)
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "797e375b924134687cbf9eacd37a4355f3d825e4"});
             storagePutP(
-                storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_84_STR "\n"));
+                storageNewWriteP(
+                    storageRepoIdxWrite(0), STRDEF(TEST_REPO_PATH PG_FILE_PGVERSION)), BUFSTRDEF(PG_VERSION_84_STR "\n"));
+
+            // Store the file also to the encrypted repo
+            HRN_STORAGE_PUT(
+                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, BUFSTRDEF(PG_VERSION_84_STR "\n"),
+                .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
             // pg_tblspc/1
             manifestTargetAdd(
@@ -1782,13 +1892,43 @@ testRun(void)
         manifestSave(
             manifest,
             storageWriteIo(
-                storageNewWriteP(storageRepoWrite(),
+                storageNewWriteP(storageRepoIdxWrite(0),
                 strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
+
+        // Read the manifest, set a cipher passphrase and store it to the encrypted repo
+        Manifest *manifestEncrypted = manifestLoadFile(
+            storageRepoIdxWrite(0), strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE), cipherTypeNone, NULL);
+        manifestCipherSubPassSet(manifestEncrypted, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
+
+        // Open file for write
+        IoWrite *write = storageWriteIo(
+            storageNewWriteP(
+                storageRepoIdxWrite(1),
+                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE)));
+
+        // Add encryption filter and save the encrypted manifest
+        #define TEST_CIPHER_PASS_MANIFEST "backpass"
+        cipherBlockFilterGroupAdd(
+            ioWriteFilterGroup(write), cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, 1)), cipherModeEncrypt,
+            STRDEF(TEST_CIPHER_PASS_MANIFEST));
+        manifestSave(manifestEncrypted, write);
+
+        // Write backup.info to the encrypted repo
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n[cipher]\ncipher-pass=\""
+            TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherType = cipherTypeAes256Cbc);
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F\n"
+            strZ(strNewFmt(
+            "P00   WARN: repo1: [FileMissingError] unable to load info file"
+            " '%s/repo/backup/test1/backup.info' or '%s/repo/backup/test1/backup.info.copy':\n"
+            "            FileMissingError: unable to open missing file '%s/repo/backup/test1/backup.info' for read\n"
+            "            FileMissingError: unable to open missing file '%s/repo/backup/test1/backup.info.copy' for read\n"
+            "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "P00   INFO: repo2: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/ts/1' exists\n"
             "P00 DETAIL: update mode for '{[path]}/pg' to 0700\n"
@@ -1796,14 +1936,14 @@ testRun(void)
             "P00 DETAIL: create path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
             "P00 DETAIL: create path '{[path]}/pg/pg_tblspc/1/16384'\n"
-            "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
             "P00   INFO: write {[path]}/pg/recovery.conf\n"
             "P00 DETAIL: sync path '{[path]}/pg'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '{[path]}/pg/global'");
+            "P00 DETAIL: sync path '{[path]}/pg/global'", testPath(), testPath(), testPath(), testPath())));
 
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
         storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .errorOnMissing = true);
@@ -1827,12 +1967,18 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
         strLstAdd(argList, strNewFmt("--repo1-path=%s", strZ(repoPath)));
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPathEncrpyt);
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--type=preserve");
         strLstAddZ(argList, "--set=20161219-212741F");
         strLstAddZ(argList, "--" CFGOPT_DELTA);
         strLstAddZ(argList, "--force");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         harnessCfgLoad(cfgCmdRestore, argList);
+
+        // Store backup.info to repo1 - repo1 will be selected because of the priority order
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
         // Make sure existing backup.manifest file is ignored
         storagePutP(storageNewWriteP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR), NULL);
@@ -1898,7 +2044,7 @@ testRun(void)
         cmdRestore();
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F\n"
+            "P00   INFO: repo1: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
@@ -1940,6 +2086,10 @@ testRun(void)
             strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF(PG_FILE_PGVERSION)))), "BOG\n",
             "check PG_VERSION was not restored");
 
+        // Cleanup
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+        storagePathRemoveP(storageRepoIdxWrite(1), NULL, .recurse = true);
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with force");
 
@@ -1955,7 +2105,7 @@ testRun(void)
         cmdRestore();
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F\n"
+            "P00   INFO: repo1: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/ts/1' exists\n"
             "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
@@ -2268,7 +2418,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
+            "P00   INFO: repo1: restore backup set 20161219-212741F_20161219-212918I\n"
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
@@ -2377,7 +2527,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            "P00   INFO: restore backup set 20161219-212741F_20161219-212918I\n"
+            "P00   INFO: repo2: restore backup set 20161219-212741F_20161219-212918I\n"
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"

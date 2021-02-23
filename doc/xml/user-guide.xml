@@ -1662,7 +1662,9 @@
     <section id="restore" depend="quickstart/perform-backup">
         <title>Restore</title>
 
-        <p>The Restore section introduces additional <cmd>restore</cmd> command features.</p>
+        <cmd-description key="restore"/>
+
+        <p>The following sections introduce additional <cmd>restore</cmd> command features.</p>
 
         <!-- ******************************************************************************************************************* -->
         <section id="ownership">
