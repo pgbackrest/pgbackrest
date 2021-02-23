@@ -6,7 +6,6 @@ S3 Storage
 #include <string.h>
 
 #include "common/crypto/hash.h"
-#include "common/encode.h"
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
@@ -74,7 +73,7 @@ Documentation for the response format is found at: https://docs.aws.amazon.com/A
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_CREDENTIAL_HOST_STR,                               "169.254.169.254");
 #define S3_CREDENTIAL_PORT                                          80
-#define S3_CREDENTIAL_URI                                           "/latest/meta-data/iam/security-credentials"
+#define S3_CREDENTIAL_PATH                                          "/latest/meta-data/iam/security-credentials"
 #define S3_CREDENTIAL_RENEW_SEC                                     (5 * 60)
 
 VARIANT_STRDEF_STATIC(S3_JSON_TAG_ACCESS_KEY_ID_VAR,                "AccessKeyId");
@@ -163,13 +162,13 @@ Based on the excellent documentation at http://docs.aws.amazon.com/AmazonS3/late
 ***********************************************************************************************************************************/
 static void
 storageS3Auth(
-    StorageS3 *this, const String *verb, const String *uri, const HttpQuery *query, const String *dateTime,
+    StorageS3 *this, const String *verb, const String *path, const HttpQuery *query, const String *dateTime,
     HttpHeader *httpHeader, const String *payloadHash)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_S3, this);
         FUNCTION_TEST_PARAM(STRING, verb);
-        FUNCTION_TEST_PARAM(STRING, uri);
+        FUNCTION_TEST_PARAM(STRING, path);
         FUNCTION_TEST_PARAM(HTTP_QUERY, query);
         FUNCTION_TEST_PARAM(STRING, dateTime);
         FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
@@ -177,7 +176,7 @@ storageS3Auth(
     FUNCTION_TEST_END();
 
     ASSERT(verb != NULL);
-    ASSERT(uri != NULL);
+    ASSERT(path != NULL);
     ASSERT(dateTime != NULL);
     ASSERT(httpHeader != NULL);
     ASSERT(payloadHash != NULL);
@@ -200,7 +199,7 @@ storageS3Auth(
         String *signedHeaders = NULL;
 
         String *canonicalRequest = strNewFmt(
-            "%s\n%s\n%s\n", strZ(verb), strZ(uri), query == NULL ? "" : strZ(httpQueryRenderP(query)));
+            "%s\n%s\n%s\n", strZ(verb), strZ(path), query == NULL ? "" : strZ(httpQueryRenderP(query)));
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
         {
@@ -278,19 +277,19 @@ storageS3CvtTime(const String *time)
 }
 
 HttpRequest *
-storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestAsyncParam param)
+storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, uri);
+        FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
-    ASSERT(uri != NULL);
+    ASSERT(path != NULL);
 
     HttpRequest *result = NULL;
 
@@ -306,14 +305,14 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
         // Calculate content-md5 header if there is content
         if (param.content != NULL)
         {
-            char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-            encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
-            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
+            httpHeaderAdd(
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
+                strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
         }
 
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
-            uri = strNewFmt("/%s%s", strZ(this->bucket), strZ(uri));
+            path = strNewFmt("/%s%s", strZ(this->bucket), strZ(path));
 
         // If temp crendentials will be expiring soon then renew them
         if (this->keyType == storageS3KeyTypeAuto && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
@@ -328,7 +327,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
             {
                 // Request the role
                 HttpRequest *request = httpRequestNewP(
-                    this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_URI), .header = credHeader);
+                    this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_PATH), .header = credHeader);
                 HttpResponse *response = httpRequestResponse(request, true);
 
                 // Not found likely means no role is associated with this instance
@@ -353,7 +352,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
 
             // Retrieve the temp credentials
             HttpRequest *request = httpRequestNewP(
-                this->credHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(this->credRole)),
+                this->credHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(this->credRole)),
                 .header = credHeader);
             HttpResponse *response = httpRequestResponse(request, true);
 
@@ -407,9 +406,12 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
             this->signingKeyDate = YYYYMMDD_STR;
         }
 
+        // Encode path
+        path = httpUriEncode(path, true);
+
         // Generate authorization header
         storageS3Auth(
-            this, verb, httpUriEncode(uri, true), param.query, storageS3DateTime(time(NULL)), requestHeader,
+            this, verb, path, param.query, storageS3DateTime(time(NULL)), requestHeader,
             param.content == NULL || bufEmpty(param.content) ?
                 HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, param.content)));
 
@@ -417,7 +419,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, uri, .query = param.query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = param.query, .header = requestHeader, .content = param.content);
         }
         MEM_CONTEXT_END();
     }
@@ -457,12 +459,12 @@ storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
 }
 
 HttpResponse *
-storageS3Request(StorageS3 *this, const String *verb, const String *uri, StorageS3RequestParam param)
+storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, uri);
+        FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
@@ -472,7 +474,7 @@ storageS3Request(StorageS3 *this, const String *verb, const String *uri, Storage
     FUNCTION_LOG_RETURN(
         HTTP_RESPONSE,
         storageS3ResponseP(
-            storageS3RequestAsyncP(this, verb, uri, .query = param.query, .content = param.content),
+            storageS3RequestAsyncP(this, verb, path, .query = param.query, .content = param.content),
             .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 

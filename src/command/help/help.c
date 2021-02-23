@@ -3,6 +3,7 @@ Help Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <ctype.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -359,9 +360,13 @@ helpRender(void)
                     {
                         ConfigOption optionId = varUInt(varLstGet(optionList, optionIdx));
 
-                        // Get option summary
-                        String *summary = strFirstLower(
-                            strNewN(strZ(optionData[optionId].summary), strSize(optionData[optionId].summary) - 1));
+                        // Get option summary and lower-case first letter if it does not appear to be part of an acronym
+                        String *summary = strNewN(strZ(optionData[optionId].summary), strSize(optionData[optionId].summary) - 1);
+                        ASSERT(strSize(summary) > 1);
+                        ASSERT(!isupper(strZ(summary)[1]));
+
+                        if (!isdigit(strZ(summary)[1]))
+                            strFirstLower(summary);
 
                         // Ouput current and default values if they exist
                         const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgParseOptionType(optionId));

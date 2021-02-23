@@ -1284,7 +1284,9 @@
             <command id="archive-get" name="Archive Get">
                 <summary>Get a WAL segment from the archive.</summary>
 
-                <text>WAL segments are required for restoring a <postgres/> cluster or maintaining a replica.</text>
+                <text>WAL segments are required for <postgres/> recovery or to maintain a replica.
+
+                When multiple repositories are configured, WAL will be fetched from the repositories in priority order (e.g. <id>repo1</id>, <id>repo2</id>, etc.). In general it is better if faster/cheaper storage has higher priority. If a repository is specified with the <br-option>--repo</br-option> option then only that repository will be searched.</text>
 
                 <command-example-list>
                     <command-example>

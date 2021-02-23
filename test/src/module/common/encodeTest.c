@@ -40,9 +40,6 @@ testRun(void)
         TEST_RESULT_Z(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ0KAA==", "encode full string with \\r\\n and null");
         TEST_RESULT_UINT(encodeToStrSize(encodeBase64, strlen((char *)encode) + 1), strlen(destinationEncode), "check size");
 
-        TEST_ERROR(encodeToStr(999, encode, strlen((char *)encode), destinationEncode), AssertError, "invalid encode type 999");
-        TEST_ERROR(encodeToStrSize(999, strlen((char *)encode)), AssertError, "invalid encode type 999");
-
         // -------------------------------------------------------------------------------------------------------------------------
         unsigned char destinationDecode[256];
 
@@ -88,24 +85,58 @@ testRun(void)
         TEST_RESULT_INT(destinationDecode[1], 0xFF, "check for overrun");
         TEST_RESULT_UINT(decodeToBinSize(encodeBase64, decode), 1, "check size");
 
-        TEST_ERROR(decodeToBin(9999, decode, destinationDecode), AssertError, "invalid encode type 9999");
-        TEST_ERROR(decodeToBinSize(9999, decode), AssertError, "invalid encode type 9999");
-        TEST_ERROR(decodeToBin(encodeBase64, "cc$=", destinationDecode), FormatError, "base64 invalid character found at position 2");
+        TEST_ERROR(
+            decodeToBin(encodeBase64, "cc$=", destinationDecode), FormatError, "base64 invalid character found at position 2");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(decodeToBinValidate(encodeBase64, "c3"), FormatError, "base64 size 2 is not evenly divisible by 4");
+        TEST_ERROR(decodeToBin(encodeBase64, "c3", destinationDecode), FormatError, "base64 size 2 is not evenly divisible by 4");
         TEST_ERROR(
-            decodeToBinValidate(encodeBase64, "c==="), FormatError, "base64 '=' character may only appear in last two positions");
+            decodeToBin(encodeBase64, "c===", destinationDecode), FormatError,
+            "base64 '=' character may only appear in last two positions");
         TEST_ERROR(
-            decodeToBinValidate(encodeBase64, "cc=c"), FormatError, "base64 last character must be '=' if second to last is");
+            decodeToBin(encodeBase64, "cc=c", destinationDecode), FormatError,
+            "base64 last character must be '=' if second to last is");
+    }
 
-        TEST_ERROR(decodeToBinValidate(9999, "cc=c"), AssertError, "invalid encode type 9999");
+    // *****************************************************************************************************************************
+    if (testBegin("base64url"))
+    {
+        TEST_TITLE("encode");
+
+        const unsigned char *encode = (const unsigned char *)"string_to_encode\r\n";
+        char destinationEncode[256];
+
+        encodeToStr(encodeBase64Url, encode, 1, destinationEncode);
+        TEST_RESULT_Z(destinationEncode, "cw", "1 character encode");
+        TEST_RESULT_UINT(encodeToStrSize(encodeBase64Url, 1), strlen(destinationEncode), "check size");
+
+        encodeToStr(encodeBase64Url, encode, 2, destinationEncode);
+        TEST_RESULT_Z(destinationEncode, "c3Q", "2 character encode");
+        TEST_RESULT_UINT(encodeToStrSize(encodeBase64Url, 2), strlen(destinationEncode), "check size");
+
+        encodeToStr(encodeBase64Url, encode, 3, destinationEncode);
+        TEST_RESULT_Z(destinationEncode, "c3Ry", "3 character encode");
+        TEST_RESULT_UINT(encodeToStrSize(encodeBase64Url, 3), strlen(destinationEncode), "check size");
+
+        encodeToStr(encodeBase64Url, encode, strlen((char *)encode) - 2, destinationEncode);
+        TEST_RESULT_Z(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ", "encode full string");
+        TEST_RESULT_UINT(encodeToStrSize(encodeBase64Url, strlen((char *)encode) - 2), strlen(destinationEncode), "check size");
+
+        encodeToStr(encodeBase64Url, encode, strlen((char *)encode), destinationEncode);
+        TEST_RESULT_Z(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ0K", "encode full string with \\r\\n");
+        TEST_RESULT_UINT(encodeToStrSize(encodeBase64Url, strlen((char *)encode)), strlen(destinationEncode), "check size");
+
+        encodeToStr(encodeBase64Url, encode, strlen((char *)encode) + 1, destinationEncode);
+        TEST_RESULT_Z(destinationEncode, "c3RyaW5nX3RvX2VuY29kZQ0KAA", "encode full string with \\r\\n and null");
+        TEST_RESULT_UINT(encodeToStrSize(encodeBase64Url, strlen((char *)encode) + 1), strlen(destinationEncode), "check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(decodeToBinValid(encodeBase64, "CCCCCCCCCCC"), false, "base64 string not valid");
-        TEST_RESULT_BOOL(decodeToBinValid(encodeBase64, "CCCCCCCCCCCC"), true, "base64 string valid");
+        TEST_TITLE("decode unsupported");
 
-        TEST_ERROR(decodeToBinValid(9999, "CCCCCCCCCCCC"), AssertError, "invalid encode type 9999");
+        unsigned char destinationDecode[256];
+
+        TEST_ERROR(decodeToBinSize(encodeBase64Url, "c3"), AssertError, "unsupported");
+        TEST_ERROR(decodeToBin(encodeBase64Url, "c3", destinationDecode), AssertError, "unsupported");
     }
 
     FUNCTION_HARNESS_RESULT_VOID();

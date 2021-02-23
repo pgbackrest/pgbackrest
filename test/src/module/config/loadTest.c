@@ -86,6 +86,18 @@ testRun(void)
             "local repo3 and repo4 paths are both '/repo4' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo can be specified for backup");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local default repo paths for cifs repo type must be different");
 
         argList = strLstNew();

@@ -65,10 +65,10 @@ typedef struct HttpRequestNewParam
     const Buffer *content;
 } HttpRequestNewParam;
 
-#define httpRequestNewP(client, verb, uri, ...)                                                                                    \
-    httpRequestNew(client, verb, uri, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define httpRequestNewP(client, verb, path, ...)                                                                                   \
+    httpRequestNew(client, verb, path, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRequestNewParam param);
+HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
 Functions
@@ -88,8 +88,8 @@ Getters/Setters
 // Request verb
 const String *httpRequestVerb(const HttpRequest *this);
 
-// Request URI
-const String *httpRequestUri(const HttpRequest *this);
+// Request path
+const String *httpRequestPath(const HttpRequest *this);
 
 // Request query
 const HttpQuery *httpRequestQuery(const HttpRequest *this);
