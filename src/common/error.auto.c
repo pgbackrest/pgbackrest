@@ -83,6 +83,7 @@ ERROR_DEFINE( 99, JsonFormatError, RuntimeError);
 ERROR_DEFINE(100, KernelError, RuntimeError);
 ERROR_DEFINE(101, ServiceError, RuntimeError);
 ERROR_DEFINE(102, ExecuteError, RuntimeError);
+ERROR_DEFINE(103, RepoInvalidError, RuntimeError);
 ERROR_DEFINE(104, CommandError, RuntimeError);
 ERROR_DEFINE(122, RuntimeError, RuntimeError);
 ERROR_DEFINE(123, InvalidError, RuntimeError);
@@ -170,6 +171,7 @@ static const ErrorType *errorTypeList[] =
     &KernelError,
     &ServiceError,
     &ExecuteError,
+    &RepoInvalidError,
     &CommandError,
     &RuntimeError,
     &InvalidError,

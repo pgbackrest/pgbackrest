@@ -4,6 +4,7 @@ Storage Test Harness
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
@@ -170,6 +171,24 @@ hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
 }
 
 /**********************************************************************************************************************************/
+void
+testStorageGet(
+    const int line, const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param)
+{
+    hrnTestLogPrefix(line, true);
+    hrnTestResultBegin(__func__, line, false);
+
+    const String *const fileFull = storagePathP(storage, STR(file));
+    printf("test content of '%s'\n", strZ(fileFull));
+    fflush(stdout);
+
+    hrnTestResultZ(strZ(strNewBuf(storageGetP(storageNewReadP(storage, fileFull)))), expected, harnessTestResultOperationEq);
+
+    if (param.remove)
+        storageRemoveP(storage, fileFull, .errorOnMissing = true);
+}
+
+/**********************************************************************************************************************************/
 StringList *
 hrnStorageList(const Storage *storage, const char *path, HrnStorageListParam param)
 {
@@ -195,6 +214,36 @@ hrnStorageListLog(const Storage *storage, const char *path, HrnStorageListParam 
         strNewFmt(
             "list%s %u file%s in '%s'", param.remove ? "/remove": "", strLstSize(list), strLstSize(list) == 1 ? "" : "s",
             strZ(storagePathP(storage, STR(path)))));
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageMode(const int line, const Storage *const storage, const char *const path, HrnStorageModeParam param)
+{
+    hrnTestLogPrefix(line, true);
+    hrnTestResultBegin(__func__, line, false);
+
+    const char *const pathFull = strZ(storagePathP(storage, STR(path)));
+
+    // If no mode specified then default the mode based on the file type
+    if (param.mode == 0)
+    {
+        struct stat statFile;
+
+        THROW_ON_SYS_ERROR_FMT(stat(pathFull, &statFile) == -1, FileOpenError, "unable to stat '%s'", pathFull);
+
+        if (S_ISDIR(statFile.st_mode))
+            param.mode = STORAGE_MODE_PATH_DEFAULT;
+        else
+            param.mode = STORAGE_MODE_FILE_DEFAULT;
+    }
+
+    printf("chmod '%04o' on '%s'\n", param.mode, pathFull);
+    fflush(stdout);
+
+    THROW_ON_SYS_ERROR_FMT(chmod(pathFull, param.mode) == -1, FileModeError, "unable to set mode on '%s'", pathFull);
+
+    hrnTestResultEnd();
 }
 
 /**********************************************************************************************************************************/
