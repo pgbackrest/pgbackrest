@@ -928,8 +928,8 @@ cmdExpire(void)
                         expireAdhocBackup(infoBackup, adhocBackupLabel, repoIdx);
                     }
 
-                    // If the adhoc backup was not found and this was the last repo to check, then log a warning but continue to process
-                    // the expiration based on retention
+                    // If the adhoc backup was not found and this was the last repo to check, then log a warning but continue to
+                    // process the expiration based on retention
                     if (!adhocBackupFound && repoIdx == repoIdxMax)
                     {
                         LOG_WARN_FMT(
@@ -942,8 +942,8 @@ cmdExpire(void)
                     // If time-based retention for full backups is set, then expire based on time period
                     if (timeBasedFullRetention)
                     {
-                        // If a time period was provided then run time-based expiration otherwise do nothing (the user has already been
-                        // warned by the config system that retention-full was not set)
+                        // If a time period was provided then run time-based expiration otherwise do nothing (the user has already
+                        // been warned by the config system that retention-full was not set)
                         if (cfgOptionIdxTest(cfgOptRepoRetentionFull, repoIdx))
                         {
                             expireTimeBasedBackup(
@@ -974,7 +974,8 @@ cmdExpire(void)
                     {
                         infoBackupSaveFile(
                             infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR,
-                            cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                            cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                            cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
                     }
 
                     // Remove all files on disk that are now expired
