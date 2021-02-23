@@ -40,14 +40,14 @@ restoreProtocol(const String *command, const VariantList *paramList, ProtocolSer
                 server,
                 VARBOOL(
                     restoreFile(
-                        varStr(varLstGet(paramList, 0)), varStr(varLstGet(paramList, 1)),
-                        (CompressType)varUIntForce(varLstGet(paramList, 2)), varStr(varLstGet(paramList, 3)),
-                        varStr(varLstGet(paramList, 4)), varBoolForce(varLstGet(paramList, 5)), varUInt64(varLstGet(paramList, 6)),
-                        (time_t)varInt64Force(varLstGet(paramList, 7)),
-                        (mode_t)cvtZToUIntBase(strZ(varStr(varLstGet(paramList, 8))), 8),
-                        varStr(varLstGet(paramList, 9)), varStr(varLstGet(paramList, 10)),
-                        (time_t)varInt64Force(varLstGet(paramList, 11)), varBoolForce(varLstGet(paramList, 12)),
-                        varBoolForce(varLstGet(paramList, 13)), varStr(varLstGet(paramList, 14)))));
+                        varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varStr(varLstGet(paramList, 2)),
+                        (CompressType)varUIntForce(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
+                        varStr(varLstGet(paramList, 5)), varBoolForce(varLstGet(paramList, 6)), varUInt64(varLstGet(paramList, 7)),
+                        (time_t)varInt64Force(varLstGet(paramList, 8)),
+                        (mode_t)cvtZToUIntBase(strZ(varStr(varLstGet(paramList, 9))), 8),
+                        varStr(varLstGet(paramList, 10)), varStr(varLstGet(paramList, 11)),
+                        (time_t)varInt64Force(varLstGet(paramList, 12)), varBoolForce(varLstGet(paramList, 13)),
+                        varBoolForce(varLstGet(paramList, 14)), varStr(varLstGet(paramList, 15)))));
         }
         else
             found = false;

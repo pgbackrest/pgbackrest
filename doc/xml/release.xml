@@ -41,6 +41,7 @@
                         <commit subject="Enhance expire command multi-repo support."/>
                         <commit subject="Expire continues if an error occurs processing a repository."/>
                         <commit subject="Add archive-get command multi-repo support."/>
+                        <commit subject="Enhance restore command multi-repo support."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
