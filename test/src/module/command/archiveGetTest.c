@@ -69,18 +69,34 @@ testRun(void)
             storageListP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), "0000000100000001000000FE\n", "check queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg >= 9.3 and ok/junk status files");
+
         walSegmentSize = 1024 * 1024;
         queueSize = walSegmentSize * 5;
 
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/junk", "JUNK");
+
+        // Bad OK file with wrong length (just to make sure this does not cause strSubN() issues)
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/AAA.ok", "0\nWARNING");
+
+        // OK file with warnings somehow left over from a prior run
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFD.ok", "0\nWARNING");
+
+        // Valid queued WAL segments (one with an OK file containing warnings)
         HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFE", walSegmentBuffer);
         HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF", walSegmentBuffer);
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000A00000FFF.ok", "0\nWARNING2");
+
+        // Empty OK file indicating a WAL segment not found at the end of the queue
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000B00000000.ok");
 
         TEST_RESULT_STRLST_Z(
             queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11),
             "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal >= 9.3");
 
-        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000A00000FFE\n000000010000000A00000FFF\n");
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN,
+            "000000010000000A00000FFE\n000000010000000A00000FFF\n000000010000000A00000FFF.ok\n");
     }
 
     // *****************************************************************************************************************************
@@ -105,7 +121,10 @@ testRun(void)
 
         TEST_ERROR(cmdArchiveGetAsync(), HostInvalidError, "archive-get command must be run on the PostgreSQL host");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/global.error",
+            "72\narchive-get command must be run on the PostgreSQL host", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on no segments");
@@ -115,7 +134,10 @@ testRun(void)
 
         TEST_ERROR(cmdArchiveGetAsync(), ParamInvalidError, "at least one wal segment is required");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/global.error", "96\nat least one wal segment is required",
+            .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no segments to find");
@@ -141,7 +163,32 @@ testRun(void)
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
             "P00 DETAIL: unable to find 000000010000000100000001 in the archive");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.ok\n", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on path permission");
+
+        storagePathCreateP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "get async");
+
+        harnessLogResult(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
+            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test2/10-1"
+                "/0000000100000001': [13] Permission denied\n"
+            "P00   WARN: [RepoInvalidError] unable to find a valid repository");
+
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error",
+            "103\n"
+            "unable to find a valid repository\n"
+            "repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test2/10-1/0000000100000001':"
+                " [13] Permission denied",
+            .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        HRN_STORAGE_MODE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-1");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid compressed segment");
@@ -153,12 +200,18 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01   WARN: could not get 000000010000000100000001 from the repo1:10-1 archive (will be retried):"
-                " [29] raised from local-1 protocol: unexpected eof in compressed data");
+            "P01   WARN: [FileReadError] raised from local-1 protocol: unable to get 000000010000000100000001:\n"
+            "            repo1: 10-1/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
+                " [FormatError] unexpected eof in compressed data");
 
-        TEST_STORAGE_LIST(
-            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.error\n000000010000000100000001.pgbackrest.tmp\n");
-        TEST_STORAGE_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error");
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error",
+            "42\n"
+            "raised from local-1 protocol: unable to get 000000010000000100000001:\n"
+            "repo1: 10-1/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
+                " unexpected eof in compressed data",
+            .remove = true);
+        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.pgbackrest.tmp\n");
 
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
@@ -176,18 +229,103 @@ testRun(void)
 
         harnessLogResult(
             "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
-            "P01 DETAIL: found 000000010000000100000001 in the repo1:10-1 archive");
+            "P01 DETAIL: found 000000010000000100000001 in the repo1: 10-1 archive");
 
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001\n", .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("multiple segments where some are missing or errored");
+        TEST_TITLE("single segment with one invalid file");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
+            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+
+        harnessLogResult(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
+            "P01   WARN: repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
+                " [FormatError] unexpected eof in compressed data\n"
+            "P01 DETAIL: found 000000010000000100000001 in the repo1: 10-1 archive");
+
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok",
+            "0\n"
+            "repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
+                " unexpected eof in compressed data",
+            .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        TEST_STORAGE_REMOVE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single segment with one invalid file");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
+            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+
+        harnessLogResult(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001\n"
+            "P01   WARN: repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz"
+                " [FormatError] unexpected eof in compressed data\n"
+            "P01 DETAIL: found 000000010000000100000001 in the repo1: 10-1 archive");
+
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok",
+            "0\n"
+            "repo1: 10-2/0000000100000001/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz [FormatError]"
+                " unexpected eof in compressed data",
+            .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        TEST_STORAGE_REMOVE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple segments where some are missing or errored and mismatched repo");
+
+        hrnCfgArgKeyRawZ(argBaseList, cfgOptRepoPath, 2, TEST_PATH_REPO "2");
 
         argList = strLstDup(argBaseList);
         strLstAddZ(argList, "0000000100000001000000FE");
         strLstAddZ(argList, "0000000100000001000000FF");
         strLstAddZ(argList, "000000010000000200000000");
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}\n");
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FE-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
@@ -200,36 +338,194 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
 
+        #define TEST_WARN                                                                                                          \
+            "repo2: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"              \
+                " '18072658121562454734'"
+
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
+            "P00   WARN: " TEST_WARN "\n"
+            "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
             "P00 DETAIL: unable to find 0000000100000001000000FF in the archive");
 
-        TEST_STORAGE_LIST(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "0000000100000001000000FE\n0000000100000001000000FF.ok\n",
-            .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok", "0\n" TEST_WARN, .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok", "0\n" TEST_WARN, .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        #undef TEST_WARN
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on duplicates now that no segments are missing");
+        TEST_TITLE("error on duplicates now that no segments are missing, repo with bad perms");
+
+        // Fix repo 2 archive info but break archive path
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n");
+
+        storagePathCreateP(storageRepoIdxWrite(1), STRDEF(STORAGE_REPO_ARCHIVE "/10-1"), .mode = 0400);
 
         HRN_STORAGE_PUT_EMPTY(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/0000000100000001000000FF-efefefefefefefefefefefefefefefefefefefef");
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
 
+        #define TEST_WARN1                                                                                                         \
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"                     \
+                "/0000000100000001': [13] Permission denied"
+        #define TEST_WARN2                                                                                                         \
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "2/archive/test2/10-1"                     \
+                "/0000000100000002': [13] Permission denied"
+
         harnessLogResult(
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000\n"
-            "P01 DETAIL: found 0000000100000001000000FE in the repo1:10-1 archive\n"
-            "P01 DETAIL: found 0000000100000001000000FF in the repo1:10-1 archive\n"
-            "P00   WARN: could not get 000000010000000200000000 from the repo1:10-1 archive (will be retried): "
-                "[45] duplicates found in the repo1:10-1 archive for WAL segment 000000010000000200000000: "
-                "000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, "
-                "000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            "P00   WARN: " TEST_WARN1 "\n"
+            "P00   WARN: " TEST_WARN2 "\n"
+            "P01 DETAIL: found 0000000100000001000000FE in the repo1: 10-1 archive\n"
+            "P01 DETAIL: found 0000000100000001000000FF in the repo1: 10-1 archive\n"
+            "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
+            "            repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "            HINT: are multiple primaries archiving to this stanza?");
 
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE.ok", "0\n" TEST_WARN1, .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF", .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF.ok", "0\n" TEST_WARN1, .remove = true);
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
+            "45\n"
+            "duplicates found for WAL segment 000000010000000200000000:\n"
+            "repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 10-1/0000000100000002"
+                "/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "HINT: are multiple primaries archiving to this stanza?\n"
+            TEST_WARN2,
+            .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        HRN_STORAGE_MODE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1");
+
+        #undef TEST_WARN1
+        #undef TEST_WARN2
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on duplicates");
+
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "000000010000000200000000");
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+
+        harnessLogResult(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
+            "P00   WARN: [ArchiveDuplicateError] duplicates found for WAL segment 000000010000000200000000:\n"
+            "            repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                ", 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "            HINT: are multiple primaries archiving to this stanza?");
+
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
+            "45\n"
+            "duplicates found for WAL segment 000000010000000200000000:\n"
+            "repo1: 10-1/0000000100000002/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, 10-1/0000000100000002"
+                "/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "HINT: are multiple primaries archiving to this stanza?",
+            .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        TEST_STORAGE_REMOVE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+        TEST_STORAGE_REMOVE(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("warn on invalid file");
+
+        hrnCfgArgKeyRawZ(argBaseList, cfgOptRepoPath, 3, TEST_PATH_REPO "3");
+
+        argList = strLstDup(argBaseList);
+        strLstAddZ(argList, "000000010000000200000000");
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleAsync, argList);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(2), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":18072658121562454734,\"db-version\":\"11\"}\n");
+        storagePathCreateP(storageRepoIdxWrite(2), STRDEF("10-1"), .mode = 0400);
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1),
+            STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+
+        #define TEST_WARN1                                                                                                         \
+            "repo3: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"              \
+                " '18072658121562454734'"
+        #define TEST_WARN2                                                                                                         \
+            "repo1: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"                    \
+                " [FormatError] unexpected eof in compressed data"
+
+        harnessLogResult(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
+            "P00   WARN: " TEST_WARN1 "\n"
+            "P01   WARN: " TEST_WARN2 "\n"
+            "P01 DETAIL: found 000000010000000200000000 in the repo2: 10-1 archive");
+
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.ok", "0\n" TEST_WARN1 "\n" TEST_WARN2,
+            .remove = true);
+        TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        TEST_STORAGE_REMOVE(
+            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error with warnings");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1),
+            STORAGE_REPO_ARCHIVE "/10-1/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
+
+        TEST_RESULT_VOID(cmdArchiveGetAsync(), "archive async");
+
+        #define TEST_WARN3                                                                                                         \
+            "repo2: 10-1/0000000100000002/000000010000000200000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"                    \
+                " [FormatError] unexpected eof in compressed data"
+
+        harnessLogResult(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000200000000\n"
+            "P00   WARN: " TEST_WARN1 "\n"
+            "P01   WARN: [FileReadError] raised from local-1 protocol: unable to get 000000010000000200000000:\n"
+            "            " TEST_WARN2 "\n"
+            "            " TEST_WARN3);
+
+        TEST_STORAGE_GET(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000200000000.error",
+            "42\n"
+            "raised from local-1 protocol: unable to get 000000010000000200000000:\n"
+            TEST_WARN2 "\n"
+            TEST_WARN3 "\n"
+            TEST_WARN1,
+            .remove = true);
         TEST_STORAGE_LIST(
-            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN,
-            "0000000100000001000000FE\n0000000100000001000000FF\n000000010000000200000000.error\n", .remove = true);
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000200000000.pgbackrest.tmp\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("global error on invalid executable");
@@ -310,19 +606,19 @@ testRun(void)
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR_FMT(
-            cmdArchiveGet(), FileMissingError,
-            "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured correctly in postgresql.conf?\n"
-            "HINT: has a stanza-create been performed?\n"
-            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
-                " scheme.",
-            strZ(cfgOptionStr(cfgOptRepoPath)), strZ(cfgOptionStr(cfgOptRepoPath)),
-            strZ(strNewFmt("%s/archive/test1/archive.info", strZ(cfgOptionStr(cfgOptRepoPath)))),
-            strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
+        TEST_ERROR_FMT(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
+
+        harnessLogResult(
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "/archive/test1/archive.info' or '"
+                TEST_PATH_REPO "/archive/test1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/archive/test1/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/archive/test1/archive.info.copy' for"
+                " read\n"
+            "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
+                " scheme.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstDup(argBaseList);
@@ -331,19 +627,19 @@ testRun(void)
         strLstAddZ(argList, "--archive-async");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR_FMT(
-            cmdArchiveGet(), FileMissingError,
-            "unable to load info file '%s/archive/test1/archive.info' or '%s/archive/test1/archive.info.copy':\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured correctly in postgresql.conf?\n"
-            "HINT: has a stanza-create been performed?\n"
-            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
-                " scheme.",
-            strZ(cfgOptionStr(cfgOptRepoPath)), strZ(cfgOptionStr(cfgOptRepoPath)),
-            strZ(strNewFmt("%s/archive/test1/archive.info", strZ(cfgOptionStr(cfgOptRepoPath)))),
-            strZ(strNewFmt("%s/archive/test1/archive.info.copy", strZ(cfgOptionStr(cfgOptRepoPath)))));
+        TEST_ERROR_FMT(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
+
+        harnessLogResult(
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "/archive/test1/archive.info' or '"
+                TEST_PATH_REPO "/archive/test1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/archive/test1/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "/archive/test1/archive.info.copy' for"
+                " read\n"
+            "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
+                " scheme.");
 
         // Make sure the process times out when there is nothing to get
         // -------------------------------------------------------------------------------------------------------------------------
@@ -390,11 +686,16 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001", "SHOULD-BE-A-REAL-WAL-FILE");
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "0\nwarning about x");
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000002", "SHOULD-BE-A-REAL-WAL-FILE");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "successful get");
 
-        TEST_RESULT_VOID(harnessLogResult("P00   INFO: found 000000010000000100000001 in the archive asynchronously"), "check log");
+        TEST_RESULT_VOID(
+            harnessLogResult(
+                "P00   WARN: warning about x\n"
+                "P00   INFO: found 000000010000000100000001 in the archive asynchronously"),
+            "check log");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
 
@@ -441,9 +742,11 @@ testRun(void)
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
-        TEST_ERROR(
-            cmdArchiveGet(), ArchiveMismatchError,
-            "unable to retrieve the archive id for database version '11' and system-id '18072658121562454734'");
+        TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
+
+        harnessLogResult(
+            "P00   WARN: repo1: [ArchiveMismatchError] unable to retrieve the archive id for database version '11' and system-id"
+                " '18072658121562454734'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg version does not match archive.info");
@@ -452,9 +755,11 @@ testRun(void)
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0x8888888888888888}));
 
-        TEST_ERROR(
-            cmdArchiveGet(), ArchiveMismatchError,
-            "unable to retrieve the archive id for database version '10' and system-id '9838263505978427528'");
+        TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
+
+        harnessLogResult(
+            "P00   WARN: repo1: [ArchiveMismatchError] unable to retrieve the archive id for database version '10' and system-id"
+                " '9838263505978427528'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file is missing");
@@ -482,7 +787,7 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-1 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
@@ -496,9 +801,9 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchiveGet(), ArchiveDuplicateError,
-            "duplicates found in the repo1:10-1 archive for WAL segment 01ABCDEF01ABCDEF01ABCDEF:"
-                " 01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,"
-                " 01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            "duplicates found for WAL segment 01ABCDEF01ABCDEF01ABCDEF:\n"
+            "repo1: 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                ", 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
             "HINT: are multiple primaries archiving to this stanza?");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", NULL);
@@ -515,12 +820,13 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
-            "2={\"db-id\":10000000000000000000,\"db-version\":\"11\"}\n"
-            "3={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}\n"
+            "3={\"db-id\":10000000000000000000,\"db-version\":\"11\"}\n"
+            "4={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-1 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-1 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
 
@@ -528,17 +834,17 @@ testRun(void)
         TEST_TITLE("get from current db-id");
 
         HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-3/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-4/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1:10-3 archive");
+        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo1: 10-4 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         TEST_STORAGE_REMOVE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-3/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-4/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get partial");
@@ -549,7 +855,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storageRepoWrite(),
-            STORAGE_REPO_ARCHIVE "/10-3/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            STORAGE_REPO_ARCHIVE "/10-4/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             buffer);
 
         argList = strLstDup(argBaseList);
@@ -559,12 +865,12 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the repo1:10-3 archive");
+        harnessLogResult("P00   INFO: found 000000010000000100000001.partial in the repo1: 10-4 archive");
 
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
         TEST_STORAGE_REMOVE(
             storageRepoWrite(),
-            STORAGE_REPO_ARCHIVE "/10-3/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            STORAGE_REPO_ARCHIVE "/10-4/000000010000000100000001.partial-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get missing history");
@@ -587,13 +893,13 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 00000001.history in the repo1:10-1 archive");
+        harnessLogResult("P00   INFO: found 00000001.history in the repo1: 10-1 archive");
 
         TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYHISTORY")).size, 7, "check size");
         TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYHISTORY\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("get compressed and encrypted WAL segment");
+        TEST_TITLE("get compressed and encrypted WAL segment with invalid repo");
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
@@ -614,9 +920,8 @@ testRun(void)
         // Add encryption options
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo-bogus");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH_REPO "-bogus");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -627,11 +932,108 @@ testRun(void)
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
-        harnessLogResult("P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2:10-1 archive");
+        harnessLogResult(
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info'"
+                " or '" TEST_PATH_REPO "-bogus/archive/test1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info'"
+                " for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH_REPO "-bogus/archive/test1/archive.info.copy'"
+                " for read\n"
+            "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
+                " archiving scheme.\n"
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
-        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n");
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF(TEST_PATH_PG "/pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo1 has info but bad permissions");
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=2\n"
+            "\n"
+            "[db:history]\n"
+            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+
+        storagePathCreateP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_ARCHIVE "/10-2"), .mode = 0400);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult(
+            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-2"
+                "/01ABCDEF01ABCDEF': [13] Permission denied\n"
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
+
+        TEST_STORAGE_LIST(storageTest, TEST_PATH_PG "/pg_wal", "RECOVERYXLOG\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("all repos have info but bad permissions");
+
+        HRN_STORAGE_MODE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1", .mode = 0400);
+
+        TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
+
+        harnessLogResult(
+            "P00   WARN: repo1: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "-bogus/archive/test1/10-2"
+                "/01ABCDEF01ABCDEF': [13] Permission denied\n"
+            "P00   WARN: repo2: [PathOpenError] unable to list file info for path '" TEST_PATH_REPO "/archive/test1/10-1"
+                "/01ABCDEF01ABCDEF': [13] Permission denied");
+
+        HRN_STORAGE_MODE(storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/10-2");
+        HRN_STORAGE_MODE(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/10-1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unable to get from one repo");
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/10-2/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz", NULL);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult(
+            "P00   WARN: repo1: 10-2/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"
+                " [FormatError] unexpected eof in compressed data\n"
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unable to get from all repos");
+
+        HRN_STORAGE_MODE(
+            storageRepoIdxWrite(1),
+            STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz", .mode = 0200);
+
+        TEST_ERROR(
+            cmdArchiveGet(), FileReadError,
+            "unable to get 01ABCDEF01ABCDEF01ABCDEF:\n"
+            "repo1: 10-2/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz [FormatError]"
+                " unexpected eof in compressed data\n"
+            "repo2: 10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz [FileOpenError]"
+                " unable to open file '" TEST_PATH_REPO "/archive/test1/10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF"
+                    "-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz' for read: [13] Permission denied");
+
+        HRN_STORAGE_MODE(
+            storageRepoIdxWrite(1),
+            STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo is specified so invalid repo is skipped");
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
+        harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        harnessLogResult(
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call protocol function directly");
@@ -658,14 +1060,17 @@ testRun(void)
         varLstAdd(paramList, varNewStrZ("01ABCDEF01ABCDEF01ABCDEF"));
         varLstAdd(
             paramList, varNewStrZ("10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
+        varLstAdd(paramList, varNewUInt(1));
+        varLstAdd(paramList, varNewStrZ("10-1"));
         varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));
         varLstAdd(paramList, varNewStrZ(TEST_CIPHER_PASS_ARCHIVE));
 
         TEST_RESULT_BOOL(
             archiveGetProtocol(PROTOCOL_COMMAND_ARCHIVE_GET_STR, paramList, server), true, "protocol archive get");
 
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "check result");
-        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF\n");
+        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,[]]}\n", "check result");
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n");
 
         bufUsedSet(serverWrite, 0);
 
