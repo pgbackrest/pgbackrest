@@ -6,8 +6,6 @@ Azure Storage File Write
 #include <string.h>
 
 #include "common/debug.h"
-#include "common/encode.h"
-#include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
@@ -148,7 +146,7 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             this->request = storageAzureRequestAsyncP(
-                this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name, .query = query, .content = this->blockBuffer);
+                this->storage, HTTP_VERB_PUT_STR, .path = this->interface.name, .query = query, .content = this->blockBuffer);
         }
         MEM_CONTEXT_END();
 
@@ -239,7 +237,7 @@ storageWriteAzureClose(THIS_VOID)
 
                 // Finalize the multi-block upload
                 storageAzureRequestP(
-                    this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
+                    this->storage, HTTP_VERB_PUT_STR, .path = this->interface.name,
                     .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_LIST_STR),
                     .content = xmlDocumentBuf(blockXml));
             }
@@ -247,7 +245,7 @@ storageWriteAzureClose(THIS_VOID)
             else
             {
                 storageAzureRequestP(
-                    this->storage, HTTP_VERB_PUT_STR, .uri = this->interface.name,
+                    this->storage, HTTP_VERB_PUT_STR, .path = this->interface.name,
                     httpHeaderAdd(httpHeaderNew(NULL), AZURE_HEADER_BLOB_TYPE_STR, AZURE_HEADER_VALUE_BLOCK_BLOB_STR),
                     .content = this->blockBuffer);
             }

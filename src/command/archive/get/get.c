@@ -564,7 +564,7 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
             // Get file from actual queue
             const String *file = strLstGet(actualQueue, actualQueueIdx);
 
-            // Does this file match a WAL segment we want to preserve?
+            // Does this match a file we want to preserve?
             if (strLstExists(idealQueue, file))
             {
                 strLstAdd(keepQueue, file);

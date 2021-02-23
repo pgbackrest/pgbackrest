@@ -7,7 +7,6 @@ Azure Storage
 
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/encode.h"
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
@@ -71,11 +70,11 @@ struct StorageAzure
 
     const String *container;                                        // Container to store data in
     const String *account;                                          // Account
-    const String *sharedKey;                                        // Shared key
+    const Buffer *sharedKey;                                        // Shared key
     const HttpQuery *sasKey;                                        // SAS key
     const String *host;                                             // Host name
     size_t blockSize;                                               // Block size for multi-block upload
-    const String *uriPrefix;                                        // Account/container prefix
+    const String *pathPrefix;                                       // Account/container prefix
 
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
 };
@@ -87,12 +86,12 @@ Based on the documentation at https://docs.microsoft.com/en-us/rest/api/storages
 ***********************************************************************************************************************************/
 static void
 storageAzureAuth(
-    StorageAzure *this, const String *verb, const String *uri, HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
+    StorageAzure *this, const String *verb, const String *path, HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
         FUNCTION_TEST_PARAM(STRING, verb);
-        FUNCTION_TEST_PARAM(STRING, uri);
+        FUNCTION_TEST_PARAM(STRING, path);
         FUNCTION_TEST_PARAM(HTTP_QUERY, query);
         FUNCTION_TEST_PARAM(STRING, dateTime);
         FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
@@ -100,7 +99,7 @@ storageAzureAuth(
 
     ASSERT(this != NULL);
     ASSERT(verb != NULL);
-    ASSERT(uri != NULL);
+    ASSERT(path != NULL);
     ASSERT(dateTime != NULL);
     ASSERT(httpHeader != NULL);
     ASSERT(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR) != NULL);
@@ -165,23 +164,15 @@ storageAzureAuth(
                 "\n"                                                    // If-Unmodified-Since
                 "\n"                                                    // range
                 "%s"                                                    // Canonicalized headers
-                "/%s%s"                                                 // Canonicalized account/uri
+                "/%s%s"                                                 // Canonicalized account/path
                 "%s",                                                   // Canonicalized query
                 strZ(verb), strEq(contentLength, ZERO_STR) ? "" : strZ(contentLength), contentMd5 == NULL ? "" : strZ(contentMd5),
-                strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(uri), strZ(queryCanonical));
+                strZ(dateTime), strZ(headerCanonical), strZ(this->account), strZ(path), strZ(queryCanonical));
 
             // Generate authorization header
-            Buffer *keyBin = bufNew(decodeToBinSize(encodeBase64, strZ(this->sharedKey)));
-            decodeToBin(encodeBase64, strZ(this->sharedKey), bufPtr(keyBin));
-            bufUsedSet(keyBin, bufSize(keyBin));
-
-            char authHmacBase64[45];
-            encodeToStr(
-                encodeBase64, bufPtr(cryptoHmacOne(HASH_TYPE_SHA256_STR, keyBin, BUFSTR(stringToSign))),
-                HASH_TYPE_SHA256_SIZE, authHmacBase64);
-
             httpHeaderPut(
-                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account), authHmacBase64));
+                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account),
+                strZ(strNewEncode(encodeBase64, cryptoHmacOne(HASH_TYPE_SHA256_STR, this->sharedKey, BUFSTR(stringToSign))))));
         }
         // SAS authentication
         else
@@ -201,7 +192,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, param.uri);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
@@ -214,8 +205,8 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Prepend uri prefix
-        param.uri = param.uri == NULL ? this->uriPrefix : strNewFmt("%s%s", strZ(this->uriPrefix), strZ(param.uri));
+        // Prepend path prefix
+        param.path = param.path == NULL ? this->pathPrefix : strNewFmt("%s%s", strZ(this->pathPrefix), strZ(param.path));
 
         // Create header list and add content length
         HttpHeader *requestHeader = param.header == NULL ?
@@ -229,10 +220,13 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         // Calculate content-md5 header if there is content
         if (param.content != NULL)
         {
-            char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-            encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, param.content)), HASH_TYPE_M5_SIZE, md5Hash);
-            httpHeaderAdd(requestHeader, HTTP_HEADER_CONTENT_MD5_STR, STR(md5Hash));
+            httpHeaderAdd(
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
+                strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
         }
+
+        // Encode path
+        const String *const path = httpUriEncode(param.path, true);
 
         // Make a copy of the query so it can be modified
         HttpQuery *query =
@@ -241,13 +235,13 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
                 httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Generate authorization header
-        storageAzureAuth(this, verb, httpUriEncode(param.uri, true), query, httpDateFromTime(time(NULL)), requestHeader);
+        storageAzureAuth(this, verb, path, query, httpDateFromTime(time(NULL)), requestHeader);
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, param.uri, .query = query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = param.content);
         }
         MEM_CONTEXT_END();
     }
@@ -292,7 +286,7 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, verb);
-        FUNCTION_LOG_PARAM(STRING, param.uri);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
@@ -304,7 +298,7 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
         HTTP_RESPONSE,
         storageAzureResponseP(
             storageAzureRequestAsyncP(
-                this, verb, .uri = param.uri, .header = param.header, .query = param.query, .content = param.content),
+                this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content),
             .allowMissing = param.allowMissing, .contentIo = param.contentIo));
 }
 
@@ -474,7 +468,7 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     ASSERT(file != NULL);
 
     // Attempt to get file info
-    HttpResponse *httpResponse = storageAzureRequestP(this, HTTP_VERB_HEAD_STR, .uri = file, .allowMissing = true);
+    HttpResponse *httpResponse = storageAzureRequestP(this, HTTP_VERB_HEAD_STR, .path = file, .allowMissing = true);
 
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
@@ -765,12 +759,12 @@ storageAzureNew(
             .account = strDup(account),
             .blockSize = blockSize,
             .host = host == NULL ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : host,
-            .uriPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
+            .pathPrefix = host == NULL ? strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
 
         // Store shared key or parse sas query
         if (keyType == storageAzureKeyTypeShared)
-            driver->sharedKey = key;
+            driver->sharedKey = bufNewDecode(encodeBase64, key);
         else
             driver->sasKey = httpQueryNewStr(key);
 
