@@ -11,14 +11,17 @@ Specify the level of information required when calling functions that return Sto
 ***********************************************************************************************************************************/
 typedef enum
 {
-    // The info type is determined by driver capabilities.  This mimics the prior behavior where drivers would always return as
-    // much information as they could.
+    // The info type is determined by driver capabilities. This mimics the prior behavior where drivers would always return as much
+    // information as they could.
     storageInfoLevelDefault = 0,
 
-    // Only test for existence.  All drivers support this type.
+    // Only test for existence. All drivers must support this level.
     storageInfoLevelExists,
 
-    // Basic information.  All drivers support this type.
+    // Include file type, e.g. storageTypeFile. All drivers must support this level.
+    storageInfoLevelType,
+
+    // Basic information. All drivers support this level.
     storageInfoLevelBasic,
 
     // Detailed information that is generally only available from filesystems such as Posix
