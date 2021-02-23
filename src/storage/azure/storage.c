@@ -593,6 +593,7 @@ storageAzurePathRemoveCallback(void *callbackData, const StorageInfo *info)
     FUNCTION_TEST_END();
 
     ASSERT(callbackData != NULL);
+    ASSERT(info != NULL);
 
     StorageAzurePathRemoveData *data = callbackData;
 
@@ -611,8 +612,7 @@ storageAzurePathRemoveCallback(void *callbackData, const StorageInfo *info)
         MEM_CONTEXT_BEGIN(data->memContext)
         {
             data->request = storageAzureRequestAsyncP(
-                data->this, HTTP_VERB_DELETE_STR,
-                strNewFmt("%s/%s", strEq(data->path, FSLASH_STR) ? "" : strZ(data->path), strZ(info->name)));
+                data->this, HTTP_VERB_DELETE_STR, strNewFmt("%s/%s", strZ(data->path), strZ(info->name)));
         }
         MEM_CONTEXT_END();
     }
@@ -637,7 +637,13 @@ storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageAzurePathRemoveData data = {.this = this, .memContext = memContextCurrent(), .path = path};
+        StorageAzurePathRemoveData data =
+        {
+            .this = this,
+            .memContext = memContextCurrent(),
+            .path = strEq(path, FSLASH_STR) ? EMPTY_STR : path,
+        };
+
         storageAzureListInternal(this, path, storageInfoLevelType, NULL, true, storageAzurePathRemoveCallback, &data);
 
         // Check response on last async request
