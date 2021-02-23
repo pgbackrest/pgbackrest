@@ -309,14 +309,12 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
             walSegmentQueueTotal = 2;
 
         // Build the ideal queue -- the WAL segments we want in the queue after the async process has run
-        StringList *idealQueue = walSegmentRange(walSegmentFirst, walSegmentSize, pgVersion, walSegmentQueueTotal);
+        StringList *idealQueue = strLstSort(
+            walSegmentRange(walSegmentFirst, walSegmentSize, pgVersion, walSegmentQueueTotal), sortOrderAsc);
 
         // Get the list of files actually in the queue
         StringList *actualQueue = strLstSort(
             storageListP(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .errorOnMissing = true), sortOrderAsc);
-
-        // Only preserve files that match the ideal queue. error/ok files are deleted so the async process can try again.
-        RegExp *regExpPreserve = regExpNew(strNewFmt("^(%s)$", strZ(strLstJoin(idealQueue, "|"))));
 
         // Build a list of WAL segments that are being kept so we can later make a list of what is needed
         StringList *keepQueue = strLstNew();
@@ -327,9 +325,10 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
             const String *file = strLstGet(actualQueue, actualQueueIdx);
 
             // Does this match a file we want to preserve?
-            if (regExpMatch(regExpPreserve, file))
+            if (strLstExists(idealQueue, file))
+            {
                 strLstAdd(keepQueue, file);
-
+            }
             // Else delete it
             else
                 storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(file)), .errorOnMissing = true);
