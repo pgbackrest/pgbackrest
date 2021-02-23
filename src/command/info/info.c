@@ -501,15 +501,15 @@ For each current backup in the backup.info file of the stanza, set the data for 
 ***********************************************************************************************************************************/
 static void
 backupList(
-    VariantList *backupSection, InfoStanzaRepo *stanzaData, const String *backupLabel, unsigned int repoIdxStart,
+    VariantList *backupSection, InfoStanzaRepo *stanzaData, const String *backupLabel, unsigned int repoIdxMin,
     unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);           // The section to add the backup data to
         FUNCTION_TEST_PARAM(INFO_STANZA_REPO, stanzaData);          // The data for the stanza
         FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup label to filter if requested by the user
-        FUNCTION_TEST_PARAM(UINT, repoIdxStart);                    // The start index of the repo array to begin checking
-        FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index beyond the last repo index to check
+        FUNCTION_TEST_PARAM(UINT, repoIdxMin);                      // The start index of the repo array to begin checking
+        FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index of the last repo to check
     FUNCTION_TEST_END();
 
     ASSERT(backupSection != NULL);
@@ -520,7 +520,7 @@ backupList(
     unsigned int backupTotalProcessed = 0;
 
     // Get the number of backups to be processed
-    for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
+    for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
     {
         InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
 
@@ -534,7 +534,7 @@ backupList(
         time_t backupNextTime = 0;
 
         // Backups are sorted for each repo, so iterate over the lists to create a single list ordered by backup-timestamp-stop
-        for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
+        for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
 
@@ -571,12 +571,12 @@ backupList(
 Set the stanza data for each stanza found in the repo
 ***********************************************************************************************************************************/
 static VariantList *
-stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int repoIdxStart, unsigned int repoIdxMax)
+stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int repoIdxMin, unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, stanzaRepoList);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
-        FUNCTION_TEST_PARAM(UINT, repoIdxStart);
+        FUNCTION_TEST_PARAM(UINT, repoIdxMin);
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
 
@@ -607,7 +607,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
 
         // Get the stanza for each requested repo
-        for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
+        for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
 
@@ -668,7 +668,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
             // Track the status over all repos if the status for the stanza has not already been determined
             if (stanzaStatusCode != INFO_STANZA_STATUS_CODE_PG_MISMATCH)
             {
-                if (repoIdx == repoIdxStart)
+                if (repoIdx == repoIdxMin)
                     stanzaStatusCode = repoData->stanzaStatus;
                 else
                 {
@@ -678,7 +678,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
             }
 
             // Track cipher type over all repos
-            if (repoIdx == repoIdxStart)
+            if (repoIdx == repoIdxMin)
                 stanzaCipherType = repoData->cipher;
             else
                 stanzaCipherType = stanzaCipherType != repoData->cipher ? INFO_STANZA_STATUS_CODE_MIXED : repoData->cipher;
@@ -694,7 +694,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         }
 
         // Get a sorted list of the data for all existing backups for this stanza over all repos
-        backupList(backupSection, stanzaData, backupLabel, repoIdxStart, repoIdxMax);
+        backupList(backupSection, stanzaData, backupLabel, repoIdxMin, repoIdxMax);
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
 
         static bool backupLockHeld = false;
@@ -1153,18 +1153,18 @@ infoRender(void)
             THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
 
         // Initialize the repo index
-        unsigned int repoIdxStart = 0;
-        unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
-        unsigned int repoTotal = repoIdxMax;
+        unsigned int repoIdxMin = 0;
+        unsigned int repoTotal = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
+        unsigned int repoIdxMax = repoTotal - 1;
 
         // If the repo was specified then set index to the array location and max to loop only once
         if (cfgOptionTest(cfgOptRepo))
         {
-            repoIdxStart = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
-            repoIdxMax = repoIdxStart + 1;
+            repoIdxMin = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
+            repoIdxMax = repoIdxMin;
         }
 
-        for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
+        for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             // Get the repo storage in case it is remote and encryption settings need to be pulled down
             const Storage *storageRepo = storageRepoIdx(repoIdx);
@@ -1247,7 +1247,7 @@ infoRender(void)
 
         // If the backup storage exists, then search for and process any stanzas
         if (!lstEmpty(stanzaRepoList))
-            infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxStart, repoIdxMax);
+            infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxMin, repoIdxMax);
 
         // Format text output
         if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
