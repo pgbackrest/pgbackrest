@@ -97,6 +97,9 @@ service: 101
 # An error while attempting to execute a binary
 execute: 102
 
+# The command encountered one or more errors
+command: 104
+
 # This error should not be thrown directly -- it serves as a parent for the C errors
 runtime: 122
 

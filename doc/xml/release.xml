@@ -39,6 +39,7 @@
                 <release-development-list>
                     <release-item>
                         <commit subject="Enhance expire command multi-repo support."/>
+                        <commit subject="Expire continues if an error occurs processing a repository."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
