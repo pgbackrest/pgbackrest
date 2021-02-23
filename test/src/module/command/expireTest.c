@@ -909,7 +909,7 @@ testRun(void)
             "P00   INFO: repo1: remove expired backup 20181119-152138F");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire command - multi-repo, continue to next repo after error");
+        TEST_TITLE("expire command - multi-repo errors, continue to next repo after error");
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
@@ -937,8 +937,53 @@ testRun(void)
                 storageNewWriteP(storageTest, strNewFmt("%s" INFO_COPY_EXT ".save", strZ(backupInfoFileName)))),
             "repo1: backup.info.copy moved to backup.info.copy.save");
 
+        // Rename archive.info file on repo2 to cause error
+        String *archiveInfoFileNameRepo2 = strNew("repo2/archive/db/archive.info");
+        TEST_RESULT_VOID(
+            storageMoveP(storageTest,
+                storageNewReadP(storageTest, archiveInfoFileNameRepo2),
+                storageNewWriteP(storageTest, strNewFmt("%s.save", strZ(archiveInfoFileNameRepo2)))),
+            "repo2: archive.info moved to archive.info.save");
+
         TEST_ERROR(
-            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered one or more errors, check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 2 error(s), check the log file for details");
+        harnessLogResult(
+            strZ(strNewFmt(
+                "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '%s/%s' or '%s/%s':\n"
+                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
+                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
+                "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
+                "            HINT: has a stanza-create been performed?\n"
+                "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
+                " 20181119-152800F_20181119-152155I\n"
+                "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
+                "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
+                "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '%s/%s' or '%s/%s':\n"
+                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
+                "            FileMissingError: unable to open missing file '%s/%s' for read\n"
+                "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+                "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+                "            HINT: has a stanza-create been performed?\n"
+                "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
+                " archiving scheme.",
+                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
+                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
+                testPath(), strZ(archiveInfoFileNameRepo2), testPath(),
+                strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))), testPath(), strZ(archiveInfoFileNameRepo2),
+                testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))))));
+
+        // Restore saved archive.info file
+        TEST_RESULT_VOID(
+            storageMoveP(storageTest,
+                storageNewReadP(storageTest, strNewFmt("%s.save", strZ(archiveInfoFileNameRepo2))),
+                storageNewWriteP(storageTest, archiveInfoFileNameRepo2)),
+            "repo2: archive.info.save moved to archive.info");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire command - multi-repo, continue to next repo after error");
+
+        TEST_ERROR(
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         harnessLogResult(
             strZ(strNewFmt(
                 "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '%s/%s' or '%s/%s':\n"
@@ -1413,7 +1458,7 @@ testRun(void)
         archiveGenerate(storageTest, archiveStanzaPath, 1, 7, "10-2", "0000000100000000");
 
         TEST_ERROR(
-            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered one or more errors, check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         harnessLogResult(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
@@ -1444,7 +1489,7 @@ testRun(void)
                 "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
 
         TEST_ERROR(
-            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered one or more errors, check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         harnessLogResult(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
 
@@ -1464,7 +1509,7 @@ testRun(void)
                 "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}"));
 
         TEST_ERROR(
-            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered one or more errors, check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         harnessLogResult(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
 
@@ -1869,7 +1914,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_ERROR(
-            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered one or more errors, check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         harnessLogResult(
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
             " this repo");
@@ -1906,7 +1951,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdExpire, argList);
 
         TEST_ERROR(
-            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered one or more errors, check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         harnessLogResult(
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
             " this repo");

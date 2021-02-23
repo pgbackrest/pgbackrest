@@ -907,7 +907,6 @@ cmdExpire(void)
             // Get the repo storage in case it is remote and encryption settings need to be pulled down
             const Storage *storageRepo = storageRepoIdx(repoIdx);
             InfoBackup *infoBackup = NULL;
-            bool repoError = false;
 
             bool timeBasedFullRetention = strEqZ(
                 cfgOptionIdxStr(cfgOptRepoRetentionFullType, repoIdx), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_TIME);
@@ -955,48 +954,32 @@ cmdExpire(void)
 
                     expireDiffBackup(infoBackup, repoIdx);
                 }
+
+                // Store the new backup info only if the dry-run mode is disabled
+                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                {
+                    infoBackupSaveFile(
+                        infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR,
+                        cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                        cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                }
+
+                // Remove all files on disk that are now expired
+                removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);
+                removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);
             }
             CATCH_ANY()
             {
                 LOG_ERROR_FMT(
                     errorTypeCode(errorType()), "repo%u: %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorMessage());
-                repoError = true;
-                errorTotal++;
+                errorTotal++;;
             }
             TRY_END();
-
-            if (!repoError)
-            {
-                TRY_BEGIN()
-                {
-                    // Store the new backup info only if the dry-run mode is disabled
-                    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                    {
-                        infoBackupSaveFile(
-                            infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR,
-                            cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
-                            cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
-                    }
-
-                    // Remove all files on disk that are now expired
-                    removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);
-                    removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);
-                }
-                CATCH_ANY()
-                {
-                    LOG_ERROR_FMT(
-                        errorTypeCode(errorType()), "repo%u: %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorMessage());
-
-                    // Last statement in loop, so only increment global error count
-                    errorTotal++;
-                }
-                TRY_END();
-            }
         }
 
         // Error if any errors encountered on one or more repos
         if (errorTotal > 0)
-            THROW(CommandError, CFGCMD_EXPIRE " command encountered one or more errors, check the log file for details");
+            THROW_FMT(CommandError, CFGCMD_EXPIRE " command encountered %u error(s), check the log file for details", errorTotal);
     }
     MEM_CONTEXT_TEMP_END();
 
