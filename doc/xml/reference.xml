@@ -1352,7 +1352,7 @@
             <command id="archive-get" name="Archive Get">
                 <summary>Get a WAL segment from the archive.</summary>
 
-                <text>WAL segments are required for restoring a <postgres/> cluster or maintaining a replica.</text>
+                <text>WAL segments are required for <postgres/> recovery or to maintain a replica.</text>
 
                 <command-example-list>
                     <command-example>
