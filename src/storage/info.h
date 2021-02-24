@@ -8,6 +8,9 @@ Storage Info
 
 /***********************************************************************************************************************************
 Specify the level of information required when calling functions that return StorageInfo
+
+Each level includes the level below it, i.e. level storageInfoLevelBasic includes storageInfoLevelType which includes
+storageInfoLevelExists.
 ***********************************************************************************************************************************/
 typedef enum
 {
