@@ -135,7 +135,7 @@ my $bClean;
 my $bCleanOnly;
 my $strLogLevel = lc(INFO);
 my $strLogLevelTest = lc(OFF);
-my $strLogLevelTestFile = lc(TRACE);
+my $strLogLevelTestFile = lc(DEBUG);
 my $bNoLogTimestamp = false;
 my $bVmOut = false;
 my @stryModule;
