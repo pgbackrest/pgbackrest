@@ -1214,7 +1214,9 @@
             <command id="backup" name="Backup">
                 <summary>Backup a database cluster.</summary>
 
-                <text><backrest/> does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.</text>
+                <text>When multiple repositories are configured, <backrest/> will backup to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.
+
+                <backrest/> does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.</text>
 
                 <option-list>
                     <!-- OPERATION - BACKUP COMMAND - TYPE OPTION -->

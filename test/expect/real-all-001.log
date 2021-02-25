@@ -14,11 +14,11 @@ check db - verify check command runs successfully (backup host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - fail on backup lock exists (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo=1 --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - repo1 (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --buffer-size=[BUFFER-SIZE] --repo=1 --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --buffer-size=[BUFFER-SIZE] --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -240,7 +240,7 @@ archive-copy=y
 start-fast=y
 
 full backup - with disabled expire-auto (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --repo1-retention-full=1 --no-expire-auto --repo=1 --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf  --repo1-retention-full=1 --no-expire-auto --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -366,11 +366,11 @@ restore_command = '[BACKREST-BIN] --config=[TEST_PATH]/db-standby/pgbackrest.con
 standby_mode = 'on'
 
 full backup - backup from standby, failure to access at least one standby (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --pg8-host=bogus --backup-standby --repo=1 --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --pg8-host=bogus --backup-standby --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 full backup - backup from standby (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=1 --backup-standby --repo=1 --type=full --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo1-retention-full=1 --backup-standby --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -488,7 +488,7 @@ check db - verify check command on standby (db-standby host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 diff backup - backup for adhoc expire (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo=1 --type=diff --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf
@@ -606,7 +606,7 @@ stop all stanzas (db-primary host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - attempt backup when stopped (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo=1 --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 start all stanzas (db-primary host)
@@ -614,7 +614,7 @@ start all stanzas (db-primary host)
 ------------------------------------------------------------------------------------------------------------------------------------
 
 incr backup - fail on archive_mode=always (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --repo=1 --stanza=db backup
+> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
 
 expire --set=[BACKUP-DIFF-1] (backup host)
