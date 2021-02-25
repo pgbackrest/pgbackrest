@@ -152,7 +152,10 @@ AC_CHECK_LIB(
 
 # Set configuration path
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["/etc/" PROJECT_BIN], [Path for configuration files])
+AC_ARG_WITH(
+    [configdir], [AS_HELP_STRING([--with-configdir=DIR], [default configuration path])],
+    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["${withval}"])],
+    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["/etc/" PROJECT_BIN])])
 
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
