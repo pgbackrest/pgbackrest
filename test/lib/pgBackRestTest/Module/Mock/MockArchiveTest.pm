@@ -139,7 +139,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('stanza create', {strOptionalParam => '--no-online'});
@@ -278,7 +278,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         # Restore the file to its original condition
         $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));
@@ -297,7 +297,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         # Restore the file to its original condition
         $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));

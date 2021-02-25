@@ -14,6 +14,28 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.33dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="lev.kokotov"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix option warnings breaking async <cmd>archive-get</cmd>/<cmd>archive-push</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="bsiara"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix stack overflow in cipher passphrase generation.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
@@ -28,9 +50,15 @@
                 <release-development-list>
                     <release-item>
                         <commit subject="Enhance expire command multi-repo support."/>
+                        <commit subject="Expire continues if an error occurs processing a repository."/>
+                        <commit subject="Add archive-get command multi-repo support."/>
+                        <commit subject="Enhance restore command multi-repo support."/>
+                        <commit subject="Refactor info command repoMin/Max."/>
+                        <commit subject="Remove restore default repo from integration tests."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Partial multi-repository implementation.</p>
@@ -9078,6 +9106,11 @@
             <contributor-id type="github">tigerfoot</contributor-id>
         </contributor>
 
+        <contributor id="bsiara">
+            <contributor-name-display>bsiara</contributor-name-display>
+            <contributor-id type="github">bsiara</contributor-id>
+        </contributor>
+
         <contributor id="camilo.aguilar">
             <contributor-name-display>Camilo Aguilar</contributor-name-display>
             <contributor-id type="github">c4milo</contributor-id>
@@ -9396,6 +9429,11 @@
         <contributor id="leonardo.gg.avellar">
             <contributor-name-display>Leonardo GG Avellar</contributor-name-display>
             <contributor-id type="github">L30Bola</contributor-id>
+        </contributor>
+
+        <contributor id="lev.kokotov">
+            <contributor-name-display>Lev Kokotov</contributor-name-display>
+            <contributor-id type="github">levkk</contributor-id>
         </contributor>
 
         <contributor id="loop-evgeny">

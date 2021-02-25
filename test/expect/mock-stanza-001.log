@@ -293,7 +293,7 @@ backrest-checksum="[CHECKSUM]"
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG] --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-path=[TEST_PATH]/db-primary/repo --stanza=db
-P00   INFO: found 000000010000000100000002 in the repo1:9.3-1 archive
+P00   INFO: found 000000010000000100000002 in the repo1: 9.3-1 archive
 P00   INFO: archive-get command end: completed successfully
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001
@@ -461,7 +461,7 @@ P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00   INFO: backup command end: completed successfully
 P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo=1 --repo1-path=[TEST_PATH]/db-primary/repo --repo1-retention-full=2 --stanza=db
-P00   INFO: remove archive path repo1: [TEST_PATH]/db-primary/repo/archive/db/9.3-1
+P00   INFO: repo1: remove archive path [TEST_PATH]/db-primary/repo/archive/db/9.3-1
 P00   INFO: expire command end: completed successfully
 
 + supplemental file: [TEST_PATH]/db-primary/pgbackrest.conf

@@ -39,6 +39,12 @@ use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
 
 ####################################################################################################################################
+# Error constants
+####################################################################################################################################
+use constant ERROR_REPO_INVALID                                     => 103;
+push @EXPORT, qw(ERROR_REPO_INVALID);
+
+####################################################################################################################################
 # Latest backup link constant
 ####################################################################################################################################
 use constant LINK_LATEST                                            => 'latest';
@@ -1739,7 +1745,7 @@ sub restore
             {name => 'bTablespace', optional => true},
             {name => 'strUser', optional => true},
             {name => 'strBackupExpected', optional => true},
-            {name => 'iRepo', optional => true, default => 1},
+            {name => 'iRepo', optional => true},
         );
 
     # Build link map options
@@ -1770,6 +1776,9 @@ sub restore
     my $oHostGroup = hostGroupGet();
     my $oHostBackup = defined($oHostGroup->hostGet(HOST_BACKUP, true)) ? $oHostGroup->hostGet(HOST_BACKUP) : $self;
 
+    # If the repo was not passed, then use repo1 as the repo for getting the expected manifest/backup
+    my $iRepoDefault = !defined($iRepo) ? 1 : $iRepo;
+
     # Load the expected manifest if it was not defined
     my $oExpectedManifest = undef;
 
@@ -1777,15 +1786,15 @@ sub restore
     # - which should be the backup passed as strBackupExpected. If it is not defined, then set it based on the strBackup passed.
     if (!defined($strBackupExpected))
     {
-        $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast($iRepo) : $strBackup;
+        $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast($iRepoDefault) : $strBackup;
     }
 
     if (!defined($rhExpectedManifest))
     {
         # Load the manifest from the backup expected to be chosen/processed by restore
         my $oExpectedManifest = new pgBackRestTest::Env::Manifest(
-            $self->repoBackupPath($strBackupExpected . qw{/} . FILE_MANIFEST, $iRepo),
-            {strCipherPass => $oHostBackup->cipherPassManifest(), oStorage => storageRepo({iRepo => $iRepo})});
+            $self->repoBackupPath($strBackupExpected . qw{/} . FILE_MANIFEST, $iRepoDefault),
+            {strCipherPass => $oHostBackup->cipherPassManifest(), oStorage => storageRepo({iRepo => $iRepoDefault})});
 
         $rhExpectedManifest = $oExpectedManifest->{oContent};
 
@@ -1853,7 +1862,8 @@ sub restore
         (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
         (defined($strTargetAction) && $strTargetAction ne 'pause' ? " --target-action=${strTargetAction}" : '') .
-        " --repo=${iRepo} --stanza=" . $self->stanza() . ' restore',
+        (defined($iRepo) ? " --repo=${iRepo}" : '') .
+        " --stanza=" . $self->stanza() . ' restore',
         {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()},
         $strUser);
@@ -1862,7 +1872,7 @@ sub restore
     {
         # Only compare restores in repo1. There is not a lot of value in comparing restores in other repos and it would require a
         # lot of changes to the Perl test harness.
-        if ($iRepo == 1)
+        if ($iRepoDefault == 1)
         {
             $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
         }
