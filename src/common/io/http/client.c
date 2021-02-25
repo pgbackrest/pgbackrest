@@ -78,7 +78,7 @@ httpClientOpen(HttpClient *this)
     HttpSession *result = NULL;
 
     // Check if there is a resuable session
-    if (lstSize(this->sessionReuseList) > 0)
+    if (!lstEmpty(this->sessionReuseList))
     {
         // Remove session from reusable list
         result = *(HttpSession **)lstGet(this->sessionReuseList, 0);

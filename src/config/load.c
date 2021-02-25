@@ -19,6 +19,8 @@ Configuration Load
 #include "config/config.intern.h"
 #include "config/load.h"
 #include "config/parse.h"
+#include "storage/cifs/storage.h"
+#include "storage/posix/storage.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -66,6 +68,46 @@ cfgLoadUpdateOption(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
+    // Make sure repo option is set for the default command role when it is not internal and more than one repo is configured or the
+    // first configured repo is not key 1. Filter out any commands where this does not apply.
+    if (!cfgCommandHelp() && cfgCommand() != cfgCmdInfo && cfgCommand() != cfgCmdExpire && cfgOptionValid(cfgOptRepo) &&
+        !cfgOptionTest(cfgOptRepo) && (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
+    {
+        THROW_FMT(
+            OptionRequiredError,
+            "%s command requires option: " CFGOPT_REPO "\n"
+            "HINT: this command requires a specific repository to operate on",
+            cfgCommandName(cfgCommand()));
+    }
+
+    // If there is more than one repo configured
+    if (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
+    {
+        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
+        {
+            // If the repo is local and either posix or cifs
+            if (!(cfgOptionIdxTest(cfgOptRepoHost, optionIdx)) &&
+                (strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), STORAGE_POSIX_TYPE_STR) ||
+                strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), STORAGE_CIFS_TYPE_STR)))
+            {
+                // Ensure a local repo does not have the same path as another local repo of the same type
+                for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+                {
+                    if (optionIdx != repoIdx && !(cfgOptionIdxTest(cfgOptRepoHost, repoIdx)) &&
+                        strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), cfgOptionIdxStr(cfgOptRepoType, repoIdx)) &&
+                        strEq(cfgOptionIdxStr(cfgOptRepoPath, optionIdx), cfgOptionIdxStr(cfgOptRepoPath, repoIdx)))
+                    {
+                        THROW_FMT(
+                            OptionInvalidValueError,
+                            "local repo%u and repo%u paths are both '%s' but must be different",
+                            cfgOptionGroupIdxToKey(cfgOptGrpRepo, optionIdx), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                            strZ(cfgOptionIdxStr(cfgOptRepoPath, repoIdx)));
+                    }
+                }
+            }
+        }
+    }
+
     // Set default for repo-host-cmd
     if (cfgOptionValid(cfgOptRepoHostCmd))
         cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
@@ -76,23 +118,26 @@ cfgLoadUpdateOption(void)
 
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
-        cfgOptionDbl(cfgOptProtocolTimeout) <= cfgOptionDbl(cfgOptDbTimeout))
+        cfgOptionInt64(cfgOptProtocolTimeout) <= cfgOptionInt64(cfgOptDbTimeout))
     {
         // If protocol-timeout is default then increase it to be greater than db-timeout
         if (cfgOptionSource(cfgOptProtocolTimeout) == cfgSourceDefault)
-            cfgOptionSet(cfgOptProtocolTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptDbTimeout) + 30));
+        {
+            cfgOptionSet(
+                cfgOptProtocolTimeout, cfgSourceDefault, VARINT64(cfgOptionInt64(cfgOptDbTimeout) + (int64_t)(30 * MSEC_PER_SEC)));
+        }
         else if (cfgOptionSource(cfgOptDbTimeout) == cfgSourceDefault)
         {
-            double dbTimeout = cfgOptionDbl(cfgOptProtocolTimeout) - 30;
+            int64_t dbTimeout = cfgOptionInt64(cfgOptProtocolTimeout) - (int64_t)(30 * MSEC_PER_SEC);
 
             // Normally the protocol time will be greater than 45 seconds so db timeout can be at least 15 seconds
-            if (dbTimeout >= 15)
+            if (dbTimeout >= (int64_t)(15 * MSEC_PER_SEC))
             {
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(dbTimeout));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARINT64(dbTimeout));
             }
             // But in some test cases the protocol timeout will be very small so make db timeout half of protocol timeout
             else
-                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARDBL(cfgOptionDbl(cfgOptProtocolTimeout) / 2));
+                cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARINT64(cfgOptionInt64(cfgOptProtocolTimeout) / 2));
         }
         else
         {
@@ -131,7 +176,7 @@ cfgLoadUpdateOption(void)
     }
 
     // Warn when repo-retention-full is not set on a configured repo
-    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFullType) && cfgCommandRole() == cfgCmdRoleDefault)
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepoRetentionFullType))
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
@@ -220,17 +265,20 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // Error if an S3 bucket name contains dots
-    if (cfgOptionGroupValid(cfgOptGrpRepo) && cfgOptionTest(cfgOptRepoS3Bucket) && cfgOptionBool(cfgOptRepoS3VerifyTls) &&
-        strChr(cfgOptionStr(cfgOptRepoS3Bucket), '.') != -1)
+    // For each possible repo, error if an S3 bucket name contains dots
+    for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
     {
-        THROW_FMT(
-            OptionInvalidValueError,
-            "'%s' is not valid for option '%s'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches."
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
-                "\nHINT: remove dots from the bucket name.",
-            strZ(cfgOptionStr(cfgOptRepoS3Bucket)), cfgOptionName(cfgOptRepoS3Bucket));
+        if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx) &&
+            strChr(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), '.') != -1)
+        {
+            THROW_FMT(
+                OptionInvalidValueError,
+                "'%s' is not valid for option '%s'"
+                    "\nHINT: RFC-2818 forbids dots in wildcard matches."
+                    "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
+                    "\nHINT: remove dots from the bucket name.",
+                strZ(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx)), cfgOptionIdxName(cfgOptRepoS3Bucket, repoIdx));
+        }
     }
 
     // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.
@@ -323,7 +371,14 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse config from command line and config file
-        configParse(argListSize, argList, true);
+        configParse(storageLocal(), argListSize, argList, true);
+
+        // Check that only repo1 is configured. This is temporary until the multi-repo support is finalized.
+        if (cfgCommandRole() == cfgCmdRoleDefault && cfgOptionGroupValid(cfgOptGrpRepo) &&
+            (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
+        {
+            THROW_FMT(OptionInvalidValueError, "only repo1 may be configured");
+        }
 
         // Initialize dry-run mode for storage when valid for the current command
         storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
@@ -355,7 +410,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
 
             // Set IO timeout
             if (cfgOptionValid(cfgOptIoTimeout))
-                ioTimeoutMsSet((TimeMSec)(cfgOptionDbl(cfgOptIoTimeout) * MSEC_PER_SEC));
+                ioTimeoutMsSet(cfgOptionUInt64(cfgOptIoTimeout));
 
             // Open the log file if this command logs to a file
             cfgLoadLogFile();

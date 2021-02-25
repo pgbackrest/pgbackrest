@@ -290,7 +290,7 @@ stackTracePop(const char *fileName, const char *functionName, bool test)
 /***********************************************************************************************************************************
 Stack trace format
 ***********************************************************************************************************************************/
-static size_t
+__attribute__((format(printf, 4, 5))) static size_t
 stackTraceFmt(char *buffer, size_t bufferSize, size_t bufferUsed, const char *format, ...)
 {
     va_list argumentList;

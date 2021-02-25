@@ -122,22 +122,16 @@ const String *backupTypeStr(BackupType type)
     switch (type)
     {
         case backupTypeFull:
-        {
             result = BACKUP_TYPE_FULL_STR;
             break;
-        }
 
         case backupTypeDiff:
-        {
             result = BACKUP_TYPE_DIFF_STR;
             break;
-        }
 
         case backupTypeIncr:
-        {
             result = BACKUP_TYPE_INCR_STR;
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -145,10 +139,11 @@ const String *backupTypeStr(BackupType type)
 
 /**********************************************************************************************************************************/
 void
-backupLinkLatest(const String *backupLabel)
+backupLinkLatest(const String *backupLabel, unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, backupLabel);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -156,12 +151,12 @@ backupLinkLatest(const String *backupLabel)
         // Create a symlink to the most recent backup if supported.  This link is purely informational for the user and is never
         // used by us since symlinks are not supported on all storage types.
         // -------------------------------------------------------------------------------------------------------------------------
-        const String *const latestLink = storagePathP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST));
+        const String *const latestLink = storagePathP(storageRepoIdx(repoIdx), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_LINK_LATEST));
 
         // Remove an existing latest link/file in case symlink capabilities have changed
-        storageRemoveP(storageRepoWrite(), latestLink);
+        storageRemoveP(storageRepoIdxWrite(repoIdx), latestLink);
 
-        if (storageFeature(storageRepoWrite(), storageFeatureSymLink))
+        if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeatureSymLink))
         {
             THROW_ON_SYS_ERROR_FMT(
                 symlink(strZ(backupLabel), strZ(latestLink)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'",
@@ -169,8 +164,8 @@ backupLinkLatest(const String *backupLabel)
         }
 
         // Sync backup path if required
-        if (storageFeature(storageRepoWrite(), storageFeaturePathSync))
-            storagePathSyncP(storageRepoWrite(), STORAGE_REPO_BACKUP_STR);
+        if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeaturePathSync))
+            storagePathSyncP(storageRepoIdxWrite(repoIdx), STORAGE_REPO_BACKUP_STR);
     }
     MEM_CONTEXT_TEMP_END();
 

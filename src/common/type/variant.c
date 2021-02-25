@@ -41,13 +41,6 @@ typedef struct VariantBool
     MemContext *memContext;
 } VariantBool;
 
-typedef struct VariantDouble
-{
-    VARIANT_COMMON
-    VARIANT_DOUBLE_COMMON
-    MemContext *memContext;
-} VariantDouble;
-
 typedef struct VariantInt
 {
     VARIANT_COMMON
@@ -103,7 +96,6 @@ Variant type names
 static const char *const variantTypeName[] =
 {
     "bool",                                                         // varTypeBool
-    "double",                                                       // varTypeDouble,
     "int",                                                          // varTypeInt
     "int64",                                                        // varTypeInt64
     "KeyValue",                                                     // varTypeKeyValue
@@ -128,28 +120,16 @@ varDup(const Variant *this)
         switch (this->type)
         {
             case varTypeBool:
-            {
                 result = varNewBool(varBool(this));
                 break;
-            }
-
-            case varTypeDouble:
-            {
-                result = varNewDbl(varDbl(this));
-                break;
-            }
 
             case varTypeInt:
-            {
                 result = varNewInt(varInt(this));
                 break;
-            }
 
             case varTypeInt64:
-            {
                 result = varNewInt64(varInt64(this));
                 break;
-            }
 
             case varTypeKeyValue:
             {
@@ -167,28 +147,20 @@ varDup(const Variant *this)
             }
 
             case varTypeString:
-            {
                 result = varNewStr(varStr(this));
                 break;
-            }
 
             case varTypeUInt:
-            {
                 result = varNewUInt(varUInt(this));
                 break;
-            }
 
             case varTypeUInt64:
-            {
                 result = varNewUInt64(varUInt64(this));
                 break;
-            }
 
             case varTypeVariantList:
-            {
                 result = varNewVarLst(varVarLst(this));
                 break;
-            }
         }
     }
 
@@ -215,46 +187,28 @@ varEq(const Variant *this1, const Variant *this2)
             switch (varType(this1))
             {
                 case varTypeBool:
-                {
                     result = varBool(this1) == varBool(this2);
                     break;
-                }
-
-                case varTypeDouble:
-                {
-                    result = varDbl(this1) == varDbl(this2);
-                    break;
-                }
 
                 case varTypeInt:
-                {
                     result = varInt(this1) == varInt(this2);
                     break;
-                }
 
                 case varTypeInt64:
-                {
                     result = varInt64(this1) == varInt64(this2);
                     break;
-                }
 
                 case varTypeString:
-                {
                     result = strEq(varStr(this1), varStr(this2));
                     break;
-                }
 
                 case varTypeUInt:
-                {
                     result = varUInt(this1) == varUInt(this2);
                     break;
-                }
 
                 case varTypeUInt64:
-                {
                     result = varUInt64(this1) == varUInt64(this2);
                     break;
-                }
 
                 default:
                     THROW_FMT(AssertError, "unable to test equality for %s", variantTypeName[this1->type]);
@@ -385,103 +339,6 @@ varBoolForce(const Variant *this)
 
 /**********************************************************************************************************************************/
 Variant *
-varNewDbl(double data)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DOUBLE, data);
-    FUNCTION_TEST_END();
-
-    // Allocate memory for the variant and set the type and data
-    VariantDouble *this = memNew(sizeof(VariantDouble));
-
-    *this = (VariantDouble)
-    {
-        .memContext = memContextCurrent(),
-        .type = varTypeDouble,
-        .data = data,
-    };
-
-    FUNCTION_TEST_RETURN((Variant *)this);
-}
-
-/**********************************************************************************************************************************/
-double
-varDbl(const Variant *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->type == varTypeDouble);
-
-    FUNCTION_TEST_RETURN(((VariantDouble *)this)->data);
-}
-
-double
-varDblForce(const Variant *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    double result = 0;
-
-    switch (this->type)
-    {
-        case varTypeBool:
-        {
-            result = varBool(this);
-            break;
-        }
-
-        case varTypeDouble:
-        {
-            result = varDbl(this);
-            break;
-        }
-
-        case varTypeInt:
-        {
-            result = varInt(this);
-            break;
-        }
-
-        case varTypeInt64:
-        {
-            result = (double)varInt64(this);
-            break;
-        }
-
-        case varTypeString:
-        {
-            result = cvtZToDouble(strZ(varStr(this)));
-            break;
-        }
-
-        case varTypeUInt:
-        {
-            result = (double)varUInt(this);
-            break;
-        }
-
-        case varTypeUInt64:
-        {
-            result = (double)varUInt64(this);
-            break;
-        }
-
-        default:
-            THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeDouble]);
-    }
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-Variant *
 varNewInt(int data)
 {
     FUNCTION_TEST_BEGIN();
@@ -529,16 +386,12 @@ varIntForce(const Variant *this)
     switch (this->type)
     {
         case varTypeBool:
-        {
             result = varBool(this);
             break;
-        }
 
         case varTypeInt:
-        {
             result = varInt(this);
             break;
-        }
 
         case varTypeInt64:
         {
@@ -555,10 +408,8 @@ varIntForce(const Variant *this)
         }
 
         case varTypeString:
-        {
             result = cvtZToInt(strZ(varStr(this)));
             break;
-        }
 
         case varTypeUInt:
         {
@@ -644,35 +495,25 @@ varInt64Force(const Variant *this)
     switch (this->type)
     {
         case varTypeBool:
-        {
             result = varBool(this);
             break;
-        }
 
         case varTypeInt:
-        {
             result = (int64_t)varInt(this);
             break;
-        }
 
         case varTypeInt64:
-        {
             result = varInt64(this);
             break;
-        }
 
         case varTypeString:
-        {
             result = cvtZToInt64(strZ(varStr(this)));
             break;
-        }
 
         case varTypeUInt:
-        {
             result = varUInt(this);
 
             break;
-        }
 
         case varTypeUInt64:
         {
@@ -747,10 +588,8 @@ varUIntForce(const Variant *this)
     switch (this->type)
     {
         case varTypeBool:
-        {
             result = varBool(this);
             break;
-        }
 
         case varTypeInt:
         {
@@ -787,10 +626,8 @@ varUIntForce(const Variant *this)
         }
 
         case varTypeUInt:
-        {
             result = varUInt(this);
             break;
-        }
 
         case varTypeUInt64:
         {
@@ -810,10 +647,8 @@ varUIntForce(const Variant *this)
         }
 
         case varTypeString:
-        {
             result = cvtZToUInt(strZ(varStr(this)));
             break;
-        }
 
         default:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt]);
@@ -871,10 +706,8 @@ varUInt64Force(const Variant *this)
     switch (this->type)
     {
         case varTypeBool:
-        {
             result = varBool(this);
             break;
-        }
 
         case varTypeInt:
         {
@@ -911,22 +744,16 @@ varUInt64Force(const Variant *this)
         }
 
         case varTypeString:
-        {
             result = cvtZToUInt64(strZ(varStr(this)));
             break;
-        }
 
         case varTypeUInt:
-        {
             result = varUInt(this);
             break;
-        }
 
         case varTypeUInt64:
-        {
             result = varUInt64(this);
             break;
-        }
 
         default:
             THROW_FMT(AssertError, "unable to force %s to %s", variantTypeName[this->type], variantTypeName[varTypeUInt64]);
@@ -1041,19 +868,8 @@ varStrForce(const Variant *this)
     switch (varType(this))
     {
         case varTypeBool:
-        {
             result = strNew(cvtBoolToConstZ(varBool(this)));
             break;
-        }
-
-        case varTypeDouble:
-        {
-            char working[CVT_BASE10_BUFFER_SIZE];
-
-            cvtDoubleToZ(varDbl(this), working, sizeof(working));
-            result = strNew(working);
-            break;
-        }
 
         case varTypeInt:
         {
@@ -1074,10 +890,8 @@ varStrForce(const Variant *this)
         }
 
         case varTypeString:
-        {
             result = strDup(varStr(this));
             break;
-        }
 
         case varTypeUInt:
         {
@@ -1159,25 +973,18 @@ varToLog(const Variant *this)
         switch (varType(this))
         {
             case varTypeString:
-            {
                 result = strToLog(varStr(this));
                 break;
-            }
 
             case varTypeKeyValue:
-            {
                 result = strNew("{KeyValue}");
                 break;
-            }
 
             case varTypeVariantList:
-            {
                 result = strNew("{VariantList}");
                 break;
-            }
 
             case varTypeBool:
-            case varTypeDouble:
             case varTypeInt:
             case varTypeInt64:
             case varTypeUInt:
@@ -1207,61 +1014,39 @@ varFree(Variant *this)
         switch (this->type)
         {
             case varTypeBool:
-            {
                 memContext = ((VariantBool *)this)->memContext;
                 break;
-            }
-
-            case varTypeDouble:
-            {
-                memContext = ((VariantDouble *)this)->memContext;
-                break;
-            }
 
             case varTypeInt:
-            {
                 memContext = ((VariantInt *)this)->memContext;
                 break;
-            }
 
             case varTypeInt64:
-            {
                 memContext = ((VariantInt64 *)this)->memContext;
                 break;
-            }
 
             case varTypeKeyValue:
-            {
                 memContext = ((VariantKeyValue *)this)->memContext;
                 kvFree(((VariantKeyValue *)this)->data);
                 break;
-            }
 
             case varTypeString:
-            {
                 memContext = ((VariantString *)this)->memContext;
                 strFree(((VariantString *)this)->data);
                 break;
-            }
 
             case varTypeUInt:
-            {
                 memContext = ((VariantUInt *)this)->memContext;
                 break;
-            }
 
             case varTypeUInt64:
-            {
                 memContext = ((VariantUInt64 *)this)->memContext;
                 break;
-            }
 
             case varTypeVariantList:
-            {
                 memContext = ((VariantVariantList *)this)->memContext;
                 varLstFree(((VariantVariantList *)this)->data);
                 break;
-            }
         }
 
         MEM_CONTEXT_BEGIN(memContext)

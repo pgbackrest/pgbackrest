@@ -146,7 +146,8 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewVar(varVarLst(jsonToVar(strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000)))));
+            pageChecksumNewVar(varVarLst(jsonToVar(
+                strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, (uint64_t)0xFACEFACE00000000)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);
@@ -176,7 +177,8 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            pageChecksumNewVar(varVarLst(jsonToVar(strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, 0xFACEFACE00000000)))));
+            pageChecksumNewVar(varVarLst(jsonToVar(
+                strNewFmt("[0,%u,%" PRIu64 "]", PG_SEGMENT_PAGE_DEFAULT, (uint64_t)0xFACEFACE00000000)))));
         ioWriteOpen(write);
         ioWrite(write, buffer);
         ioWriteClose(write);

@@ -52,6 +52,6 @@ BackupType backupType(const String *type);
 const String *backupTypeStr(BackupType type);
 
 // Create a symlink to the specified backup (if symlinks are supported)
-void backupLinkLatest(const String *backupLabel);
+void backupLinkLatest(const String *backupLabel, unsigned int repoIdx);
 
 #endif

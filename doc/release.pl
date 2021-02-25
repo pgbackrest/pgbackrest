@@ -36,6 +36,7 @@ use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
+use pgBackRestDoc::Custom::DocCustomRelease;
 use pgBackRestDoc::Html::DocHtmlSite;
 use pgBackRestDoc::Latex::DocLatex;
 use pgBackRestDoc::Markdown::DocMarkdown;
@@ -134,6 +135,17 @@ eval
     my $bDev = PROJECT_VERSION =~ /dev$/;
     my $strVersion = $bDev ? 'dev' : PROJECT_VERSION;
 
+    # Make sure version number matches the latest release
+    &log(INFO, "check version info");
+
+    my $strReleaseFile = dirname(dirname(abs_path($0))) . '/doc/xml/release.xml';
+    my $oRelease = (new pgBackRestDoc::Custom::DocCustomRelease(new pgBackRestDoc::Common::Doc($strReleaseFile)))->releaseLast();
+
+    if ($oRelease->paramGet('version') ne PROJECT_VERSION)
+    {
+        confess 'unable to find version ' . PROJECT_VERSION . " as the most recent release in ${strReleaseFile}";
+    }
+
     if ($bBuild)
     {
         if (!$bNoGen)
@@ -213,9 +225,7 @@ eval
 
             # Generate coverage summary
             &log(INFO, "Generate Coverage Summary");
-            executeTest(
-                "${strTestExe} --vm=f32 --no-valgrind --clean --no-optimize --vm-max=3 --coverage-summary",
-                {bShowOutputAsync => true});
+            executeTest("${strTestExe} --vm=f32 --no-valgrind --clean --vm-max=2 --coverage-summary", {bShowOutputAsync => true});
         }
 
         # Remove permanent cache file

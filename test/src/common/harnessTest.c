@@ -24,6 +24,7 @@ typedef struct TestData
 static TestData testList[TEST_LIST_SIZE];
 
 static int testRun = 0;
+static int testRunSub = 0;
 static int testTotal = 0;
 static bool testFirst = true;
 
@@ -60,7 +61,7 @@ static struct HarnessTestLocal
 /***********************************************************************************************************************************
 Extern functions
 ***********************************************************************************************************************************/
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     void harnessLogInit(void);
     void harnessLogFinal(void);
 #endif
@@ -160,7 +161,7 @@ testBegin(const char *name)
 
     if (testList[testRun - 1].selected)
     {
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
         if (!testFirst)
         {
             // Make sure there is nothing untested left in the log
@@ -168,7 +169,9 @@ testBegin(const char *name)
 
             // Clear out the test directory so the next test starts clean
             char buffer[2048];
-            snprintf(buffer, sizeof(buffer), "%srm -rf %s/" "*", testContainer() ? "sudo " : "", testPath());
+            snprintf(
+                buffer, sizeof(buffer), "%schmod -R 700 %s/" "*;%srm -rf %s/" "*", testContainer() ? "sudo " : "", testPath(),
+                testContainer() ? "sudo " : "", testPath());
 
             if (system(buffer) != 0)
             {
@@ -178,7 +181,9 @@ testBegin(const char *name)
             }
 
             // Clear out the data directory so the next test starts clean
-            snprintf(buffer, sizeof(buffer), "%srm -rf %s/" "*", testContainer() ? "sudo " : "", testDataPath());
+            snprintf(
+                buffer, sizeof(buffer), "%schmod -R 700 %s/" "*;%srm -rf %s/" "*", testContainer() ? "sudo " : "",
+                testDataPath(), testContainer() ? "sudo " : "", testDataPath());
 
             if (system(buffer) != 0)
             {
@@ -197,12 +202,13 @@ testBegin(const char *name)
         if (testRun != 1)
             printf("\n");
 
-        printf("run %03d - %s\n", testRun, name);
+        printf("run %d - %s\n", testRun, name);
         fflush(stdout);
 
+        testRunSub = 1;
         timeMSecBegin = testTimeMSec();
 
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
         // Initialize logging
         harnessLogInit();
 #endif
@@ -223,7 +229,7 @@ hrnComplete(void)
 {
     FUNCTION_HARNESS_VOID();
 
-#ifndef NO_LOG
+#ifdef HRN_FEATURE_LOG
     // Make sure there is nothing untested left in the log
     harnessLogFinal();
 #endif
@@ -402,6 +408,27 @@ hrnDiff(const char *expected, const char *actual)
 
 /**********************************************************************************************************************************/
 void
+hrnTestLogTitle(int lineNo)
+{
+    // Output run/test
+    char buffer[32];
+    int bufferSize = snprintf(buffer, sizeof(buffer), "%d/%d", testRun, testRunSub);
+
+    printf("\nrun %s ", buffer);
+
+    // Output dashes
+    for (int dashIdx = 0; dashIdx < 16 - bufferSize; dashIdx++)
+        putchar('-');
+
+    // Output line number
+    printf(" l%04d", lineNo);
+
+    // Increment testSub and reset log time
+    testRunSub++;
+}
+
+/**********************************************************************************************************************************/
+void
 hrnTestLogPrefix(int lineNo, bool padding)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -435,8 +462,8 @@ hrnTestLogPrefix(int lineNo, bool padding)
         harnessTestLocal.logLastBeginTime = currentTime;
     }
 
-    // Add number and padding
-    printf("l%04d - %s", lineNo, padding ? "    " : "");
+    // Add line number and padding
+    printf("l%04d %s", lineNo, padding ? "    " : "");
 
     FUNCTION_HARNESS_RESULT_VOID();
 }
@@ -498,7 +525,7 @@ static void hrnTestResultDiff(const char *actual, const char *expected)
 #else
             AssertError,
 #endif
-            "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF IS (- remove from expected, + add to expected):\n%s\n\n",
+            "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF FROM EXPECTED IS (- remove from expected, + add to expected):\n%s\n\n",
             harnessTestLocal.result.statement, actual, hrnDiff(expected, actual));
     }
     else
@@ -514,7 +541,8 @@ static void hrnTestResultDiff(const char *actual, const char *expected)
     }
 }
 
-void hrnTestResultBool(int actual, int expected)
+void
+hrnTestResultBool(int actual, int expected)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -539,7 +567,8 @@ void hrnTestResultBool(int actual, int expected)
     hrnTestResultEnd();
 }
 
-void hrnTestResultDouble(double actual, double expected)
+void
+hrnTestResultDouble(double actual, double expected)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -557,7 +586,8 @@ void hrnTestResultDouble(double actual, double expected)
     hrnTestResultEnd();
 }
 
-void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation)
+void
+hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -566,16 +596,12 @@ void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOpera
     switch (operation)
     {
         case harnessTestResultOperationEq:
-        {
             result = actual == expected;
             break;
-        }
 
         case harnessTestResultOperationNe:
-        {
             result = actual != expected;
             break;
-        }
     }
 
     if (!result)
@@ -592,7 +618,8 @@ void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOpera
     hrnTestResultEnd();
 }
 
-void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation)
+void
+hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -601,16 +628,12 @@ void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResul
     switch (operation)
     {
         case harnessTestResultOperationEq:
-        {
             result = actual == expected;
             break;
-        }
 
         case harnessTestResultOperationNe:
-        {
             result = actual != expected;
             break;
-        }
     }
 
     if (!result)
@@ -627,7 +650,25 @@ void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResul
     hrnTestResultEnd();
 }
 
-void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation)
+#ifdef HRN_FEATURE_STRING
+
+void
+hrnTestResultStringList(const StringList *actual, const void *expected, HarnessTestResultOperation operation)
+{
+    // Return NULL if list is empty
+    if (strLstEmpty(actual))
+    {
+        hrnTestResultZ(NULL, expected, operation);
+        return;
+    }
+
+    hrnTestResultZ(strZ(strCatZ(strLstJoin(actual, "\n"), "\n")), expected, operation);
+}
+
+#endif
+
+void
+hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -636,16 +677,12 @@ void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOp
     switch (operation)
     {
         case harnessTestResultOperationEq:
-        {
             result = actual == expected;
             break;
-        }
 
         case harnessTestResultOperationNe:
-        {
             result = actual != expected;
             break;
-        }
     }
 
     if (!result)
@@ -662,7 +699,8 @@ void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOp
     hrnTestResultEnd();
 }
 
-void hrnTestResultUInt64Int64(uint64_t actual, int64_t expected, HarnessTestResultOperation operation)
+void
+hrnTestResultUInt64Int64(uint64_t actual, int64_t expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -680,7 +718,8 @@ void hrnTestResultUInt64Int64(uint64_t actual, int64_t expected, HarnessTestResu
     }
 }
 
-void hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultOperation operation)
+void
+hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
 
@@ -689,18 +728,14 @@ void hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultO
     switch (operation)
     {
         case harnessTestResultOperationEq:
-        {
             result = (actual == NULL && expected == NULL) || (actual != NULL && expected != NULL && strcmp(actual, expected) == 0);
             break;
-        }
 
         case harnessTestResultOperationNe:
-        {
             result =
                 (actual == NULL && expected != NULL) || (actual != NULL && expected == NULL) ||
                 (actual != NULL && expected != NULL && strcmp(actual, expected) == 0);
             break;
-        }
     }
 
     if (!result)

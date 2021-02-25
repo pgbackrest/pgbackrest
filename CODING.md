@@ -162,6 +162,26 @@ if (condition)
         valueThatUsesEntireLine2;
 }
 ```
+Braces should be added to `switch` statement cases that have a significant amount of code. As a general rule of thumb, if the code block in the `case` is large enough to have blank lines and/or multiple comments then it should be enclosed in braces.
+```c
+switch (int)
+{
+    case 1:
+        a = 2;
+        break;
+
+    case 2:
+    {
+        # Comment this more complex code
+        a = 1;
+        b = 2;
+
+        c = func(a, b);
+
+        break;
+    }
+}
+```
 
 #### Hints, Warnings, and Errors
 

@@ -126,40 +126,30 @@ testRun(void)
         TEST_RESULT_UINT(
             pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF00000001"), 0x40000000), 0xFFFFFFFF40000000, "1G wal segment to lsn");
 
-        TEST_RESULT_STR_Z(
-            strLstJoin(
-                pgLsnRangeToWalSegmentList(
-                    PG_VERSION_92, 1, pgLsnFromStr(STRDEF("1/60")), pgLsnFromStr(STRDEF("1/60")), 16 * 1024 * 1024),
-                ", "),
-            "000000010000000100000000", "get single");
-        TEST_RESULT_STR_Z(
-            strLstJoin(
-                pgLsnRangeToWalSegmentList(
-                    PG_VERSION_92, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/1000000")), 16 * 1024 * 1024),
-                ", "),
-            "0000000200000001000000FD, 0000000200000001000000FE, 000000020000000200000000, 000000020000000200000001",
+        TEST_RESULT_STRLST_Z(
+            pgLsnRangeToWalSegmentList(
+                PG_VERSION_92, 1, pgLsnFromStr(STRDEF("1/60")), pgLsnFromStr(STRDEF("1/60")), 16 * 1024 * 1024),
+            "000000010000000100000000\n", "get single");
+        TEST_RESULT_STRLST_Z(
+            pgLsnRangeToWalSegmentList(
+                PG_VERSION_92, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/1000000")), 16 * 1024 * 1024),
+            "0000000200000001000000FD\n0000000200000001000000FE\n000000020000000200000000\n000000020000000200000001\n",
             "get range <= 9.2");
-        TEST_RESULT_STR_Z(
-            strLstJoin(
-                pgLsnRangeToWalSegmentList(
-                    PG_VERSION_93, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/60")), 16 * 1024 * 1024),
-                ", "),
-            "0000000200000001000000FD, 0000000200000001000000FE, 0000000200000001000000FF, 000000020000000200000000",
+        TEST_RESULT_STRLST_Z(
+            pgLsnRangeToWalSegmentList(
+                PG_VERSION_93, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/60")), 16 * 1024 * 1024),
+            "0000000200000001000000FD\n0000000200000001000000FE\n0000000200000001000000FF\n000000020000000200000000\n",
             "get range > 9.2");
-        TEST_RESULT_STR_Z(
-            strLstJoin(
-                pgLsnRangeToWalSegmentList(
-                    PG_VERSION_11, 2, pgLsnFromStr(STRDEF("A/800")), pgLsnFromStr(STRDEF("B/C0000000")), 1024 * 1024 * 1024),
-                ", "),
-            "000000020000000A00000000, 000000020000000A00000001, 000000020000000A00000002, 000000020000000A00000003"
-                ", 000000020000000B00000000, 000000020000000B00000001, 000000020000000B00000002, 000000020000000B00000003",
+        TEST_RESULT_STRLST_Z(
+            pgLsnRangeToWalSegmentList(
+                PG_VERSION_11, 2, pgLsnFromStr(STRDEF("A/800")), pgLsnFromStr(STRDEF("B/C0000000")), 1024 * 1024 * 1024),
+            "000000020000000A00000000\n000000020000000A00000001\n000000020000000A00000002\n000000020000000A00000003\n"
+                "000000020000000B00000000\n000000020000000B00000001\n000000020000000B00000002\n000000020000000B00000003\n",
             "get range >= 11/1GB");
-        TEST_RESULT_STR_Z(
-            strLstJoin(
-                pgLsnRangeToWalSegmentList(
-                    PG_VERSION_11, 3, pgLsnFromStr(STRDEF("7/FFEFFFFF")), pgLsnFromStr(STRDEF("8/001AAAAA")), 1024 * 1024),
-                ", "),
-            "000000030000000700000FFE, 000000030000000700000FFF, 000000030000000800000000, 000000030000000800000001",
+        TEST_RESULT_STRLST_Z(
+            pgLsnRangeToWalSegmentList(
+                PG_VERSION_11, 3, pgLsnFromStr(STRDEF("7/FFEFFFFF")), pgLsnFromStr(STRDEF("8/001AAAAA")), 1024 * 1024),
+            "000000030000000700000FFE\n000000030000000700000FFF\n000000030000000800000000\n000000030000000800000001\n",
             "get range >= 11/1MB");
     }
 
@@ -228,7 +218,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         PgWal info = {0};
-        TEST_ASSIGN(info, pgWalFromFile(walFile, storageLocal()), "get wal info v11");
+        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest), "get wal info v11");
         TEST_RESULT_UINT(info.systemId, 0xECAFECAF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
         TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT * 2, "   check size");
@@ -245,7 +235,7 @@ testRun(void)
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_83, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
-        TEST_ASSIGN(info, pgWalFromFile(walFile, storageLocal()), "get wal info v8.3");
+        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest), "get wal info v8.3");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_83, "   check version");
         TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");

@@ -296,11 +296,6 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
     FUNCTION_TEST_RETURN(result);
 }
 
-#define FUNCTION_LOG_DB_BACKUP_START_RESULT_TYPE                                                                                   \
-    DbBackupStartResult
-#define FUNCTION_LOG_DB_BACKUP_START_RESULT_FORMAT(value, buffer, bufferSize)                                                      \
-    objToLog(&value, "DbBackupStartResult", buffer, bufferSize)
-
 DbBackupStartResult
 dbBackupStart(Db *this, bool startFast, bool stopAuto)
 {
@@ -359,7 +354,7 @@ dbBackupStart(Db *this, bool startFast, bool stopAuto)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(DB_BACKUP_START_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 /**********************************************************************************************************************************/
 // Helper to build stop backup query
@@ -409,11 +404,6 @@ dbBackupStopQuery(unsigned int pgVersion)
     FUNCTION_TEST_RETURN(result);
 }
 
-#define FUNCTION_LOG_DB_BACKUP_STOP_RESULT_TYPE                                                                                   \
-    DbBackupStopResult
-#define FUNCTION_LOG_DB_BACKUP_STOP_RESULT_FORMAT(value, buffer, bufferSize)                                                      \
-    objToLog(&value, "DbBackupStopResult", buffer, bufferSize)
-
 DbBackupStopResult
 dbBackupStop(Db *this)
 {
@@ -452,7 +442,7 @@ dbBackupStop(Db *this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(DB_BACKUP_STOP_RESULT, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /**********************************************************************************************************************************/

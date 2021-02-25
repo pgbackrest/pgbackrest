@@ -481,19 +481,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
-                    <config-key id="repo" name="Set Repository">
-                        <summary>Set default repository.</summary>
-
-                        <text>Set the repository for a command to operate on.
-
-                        For example, this option may be used to perform a restore from a specific repository, rather than letting <backrest/> choose.
-
-                        Note that some commands, e.g. <cmd>archive-push</cmd>, are intended to operate on all repositories and will ignore this option.</text>
-
-                        <example>1</example>
-                    </config-key>
-
                     <!-- CONFIG - REPO SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Path where backups and archive are stored.</summary>
@@ -755,6 +742,19 @@
                         The <br-option>archive-check</br-option> option must be enabled if <br-option>archive-copy</br-option> is enabled.</text>
 
                         <example>y</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-mode-check" name="Check Archive Mode">
+                        <summary>Check the <postgres/> <setting>archive_mode</setting> setting.</summary>
+
+                        <text>Enabled by default, this option disallows <postgres/> <setting>archive_mode=always</setting>.
+
+                        WAL segments pushed from a standby server might be logically the same as WAL segments pushed from the primary but have different checksums. Disabling archiving from multiple sources is recommended to avoid conflicts.
+
+                        <admonition type="caution">If this option is disabled then it is critical to ensure that only one archiver is writing to the repository via the <cmd>archive-push</cmd> command.</admonition></text>
+
+                        <example>n</example>
                     </config-key>
 
                     <!-- CONFIG - BACKUP SECTION - BACKUP-STANDBY KEY -->
@@ -1050,19 +1050,6 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="pg" name="Set PostgreSQL Cluster">
-                        <summary>Set PostgreSQL cluster.</summary>
-
-                        <text>Set the <postgres/> cluster for a command to operate on.
-
-                        For example, this option may be used to perform a restore to a specific <postgres/> cluster, rather than using the first configured cluster.
-
-                        Note that some commands, e.g. <cmd>backup</cmd>, are intended to operate on multiple <postgres/> clusters and will ignore this option.</text>
-
-                        <example>1</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
                     <config-key id="pg-database" name="PostgreSQL Database">
                         <summary><postgres/> database.</summary>
 
@@ -1320,7 +1307,9 @@
             <command id="expire" name="Expire">
                 <summary>Expire backups that exceed retention.</summary>
 
-                <text><backrest/> does backup rotation but is not concerned with when the backups were created.  If two full backups are configured for retention, <backrest/> will keep two full backups no matter whether they occur two hours or two weeks apart.</text>
+                <text><backrest/> does full backup rotation based on the retention type which can be a count or a time period. When a count is specified, then expiration is not concerned with when the backups were created but with how many must be retained. Differential and Incremental backups are count-based but will always be expired when the backup they depend on is expired. See sections <link page="user-guide" section="/retention/full">Full Backup Retention</link> and <link page="user-guide" section="/retention/diff">Differential Backup Retention</link> for details and examples. Archived WAL is retained by default for backups that have not expired, however, although not recommended, this schedule can be modified per repository with the retention-archive options. See section <link page="user-guide" section="/retention/archive">Archive Retention</link> for details and examples.
+
+                The <cmd>expire</cmd> command is run automatically after each successful backup and can also be run by the user. When run by the user, expiration will occur as defined by the retention settings for each configured repository. Expiration can also be limited by the user to a specific backup set with the <br-option>--set</br-option> option. It should be noted that the archive retention schedule will be checked and performed any time the <cmd>expire</cmd> command is run.</text>
 
                 <option-list>
                     <!-- OPERATION - EXPIRE COMMAND - SET OPTION -->
@@ -1362,10 +1351,12 @@
             </command>
 
             <!-- OPERATION - REPO-GET COMMAND -->
-            <command id="repo-get" name="Repository Get File">
-                <summary>Get a file from the repository.</summary>
+            <command id="repo-get" name="Repository Get">
+                <summary>Get files from a repository.</summary>
 
-                <text>Similar to the unix <cmd>cat</cmd> command but options are different.</text>
+                <text>Similar to the unix <cmd>cat</cmd> command but works on any supported repository type. This command is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
+
+                If the repository is encrypted then <cmd>repo-get</cmd> will automatically decrypt the file. Files are not automatically decompressed but the output can be piped through the appropriate decompression command, e.g. <id>gzip -d</id>.</text>
 
                 <option-list>
                     <!-- OPERATION - REPO-GET COMMAND - IGNORE-MISSING OPTION -->
@@ -1390,10 +1381,12 @@
             </command>
 
             <!-- OPERATION - REPO-LS COMMAND -->
-            <command id="repo-ls" name="Repository List Paths/Files">
-                <summary>List paths/files in the repository.</summary>
+            <command id="repo-ls" name="Repository List">
+                <summary>List files in a repository.</summary>
 
-                <text>Similar to the unix <cmd>ls</cmd> command but options and output are different.  Only information provided by repository storage drivers is available: <id>name</id>, <id>type</id>, <id>size</id>, (modify) <id>time</id>, and <id>destination</id> (for drivers that support links).</text>
+                <text>Similar to the unix <cmd>ls</cmd> command but works on any supported repository type. This command is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
+
+                The default text output prints one file name per line. JSON output is available by specifying <br-option>--output=json</br-option>.</text>
 
                 <option-list>
                     <!-- OPERATION - LS COMMAND - FILTER OPTION -->
@@ -1402,7 +1395,7 @@
 
                         <text>The filter is applied against the file/path names before they are output.</text>
 
-                        <example>(F|D|I)$</example>
+                        <example>"(F|D|I)$"</example>
                     </option>
 
                     <!-- OPERATION - LS COMMAND - OUTPUT OPTION -->
@@ -1413,6 +1406,13 @@
                         <ul>
                             <li><id>text</id> - Simple list with one file/link/path name on each line.</li>
                             <li><id>json</id> - Detailed file/link/path information in JSON format.</li>
+                        </ul>In JSON format the available fields are:
+                        <ul>
+                            <li><id>name</id> - file/link/path name (and partial path when recursing).</li>
+                            <li><id>type</id> - <id>file</id>, <id>path</id>, or <id>link</id>.</li>
+                            <li><id>size</id> - size in bytes (files only).</li>
+                            <li><id>time</id> - time last modified (files only).</li>
+                            <li><id>destination</id> - link destination (links only).</li>
                         </ul></text>
 
                         <example>json</example>
@@ -1615,7 +1615,9 @@
 
                 The '<id>wal start/stop</id>' defines the WAL range that is required to make the database consistent when restoring.  The <cmd>backup</cmd> command will ensure that this WAL range is in the archive before completing.
 
-                The '<id>database size</id>' is the full uncompressed size of the database while '<id>backup size</id>' is the amount of data actually backed up (these will be the same for full backups).  The '<id>repository size</id>' includes all the files from this backup and any referenced backups that are required to restore the database while '<id>repository backup size</id>' includes only the files in this backup (these will also be the same for full backups).  Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.
+                The '<id>database size</id>' is the full uncompressed size of the database while '<id>database backup size</id>' is the amount of data in the database to actually back up (these will be the same for full backups).
+
+                The '<id>repo</id>' indicates in which repository this backup resides. The '<id>backup set size</id>' includes all the files from this backup and any referenced backups in the repository that are required to restore the database from this backup while '<id>backup size</id>' includes only the files in this backup (these will also be the same for full backups). Repository sizes reflect compressed file sizes if compression is enabled in <backrest/> or the filesystem.
 
                 The '<id>backup reference list</id>' contains the additional backups that are required to restore this backup.</text>
 
@@ -1850,7 +1852,7 @@
                     <li>Shut down the <postgres/> cluster associated with the stanza (or use --force to override).</li>
                     <li>Run the <cmd>stop</cmd> command on the repository host.</li>
                     <li>Run the <cmd>stanza-delete</cmd> command on the repository host.</li>
-                </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files.</text>
+                </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files and/or environment variables.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->

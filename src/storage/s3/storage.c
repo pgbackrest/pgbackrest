@@ -301,7 +301,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
         // Set content length
         httpHeaderAdd(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-            param.content == NULL || bufUsed(param.content) == 0 ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+            param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
         // Calculate content-md5 header if there is content
         if (param.content != NULL)
@@ -410,7 +410,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *uri, St
         // Generate authorization header
         storageS3Auth(
             this, verb, httpUriEncode(uri, true), param.query, storageS3DateTime(time(NULL)), requestHeader,
-            param.content == NULL || bufUsed(param.content) == 0 ?
+            param.content == NULL || bufEmpty(param.content) ?
                 HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, param.content)));
 
         // Send request
@@ -804,7 +804,7 @@ storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *
         const Buffer *response = httpResponseContent(storageS3ResponseP(request));
 
         // Nothing is returned when there are no errors
-        if (bufUsed(response) > 0)
+        if (!bufEmpty(response))
         {
             XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
 

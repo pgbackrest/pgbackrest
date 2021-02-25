@@ -38,8 +38,6 @@ There should not be any code outside the HARNESS_FORK_CHILD_BEGIN/END() and HARN
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <common/fork.h>
-
 #include <common/harnessLog.h>
 
 /***********************************************************************************************************************************
@@ -137,7 +135,7 @@ Create a child process
                 "unable to create write pipe for child process %u", HARNESS_FORK_PROCESS_TOTAL());                                 \
         }                                                                                                                          \
                                                                                                                                    \
-        HARNESS_FORK_PROCESS_ID(HARNESS_FORK_PROCESS_TOTAL()) = forkSafe();                                                        \
+        HARNESS_FORK_PROCESS_ID(HARNESS_FORK_PROCESS_TOTAL()) = fork();                                                            \
                                                                                                                                    \
         if (HARNESS_FORK_PROCESS_ID(HARNESS_FORK_PROCESS_TOTAL()) == 0)                                                            \
         {                                                                                                                          \

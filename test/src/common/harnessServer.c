@@ -2,6 +2,7 @@
 Server Test Harness
 ***********************************************************************************************************************************/
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -75,7 +76,6 @@ IoWrite *hrnServerScriptBegin(IoWrite *write)
 
     ASSERT(write != NULL);
 
-    write = write;
     ioWriteOpen(write);
 
     FUNCTION_HARNESS_RESULT(IO_WRITE, write);
@@ -368,10 +368,8 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             }
 
             case hrnServerCmdDone:
-            {
                 done = true;
                 break;
-            }
 
             case hrnServerCmdExpect:
             {
@@ -387,7 +385,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
                 CATCH(FileReadError)
                 {
                     // If nothing was read then throw the original error
-                    if (bufUsed(buffer) == 0)
+                    if (bufEmpty(buffer))
                         THROW_FMT(AssertError, "server expected '%s' but got EOF", strZ(expected));
                 }
                 TRY_END();
@@ -409,19 +407,13 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             }
 
             case hrnServerCmdReply:
-            {
                 ioWrite(ioSessionIoWrite(serverSession), BUFSTR(varStr(data)));
                 ioWriteFlush(ioSessionIoWrite(serverSession));
-
                 break;
-            }
 
             case hrnServerCmdSleep:
-            {
                 sleepMSec(varUInt64Force(data));
-
                 break;
-            }
         }
     }
     while (!done);

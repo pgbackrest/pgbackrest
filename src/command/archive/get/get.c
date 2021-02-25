@@ -20,10 +20,260 @@ Archive Get Command
 #include "common/wait.h"
 #include "config/config.h"
 #include "config/exec.h"
+#include "info/infoArchive.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
+
+/***********************************************************************************************************************************
+Constants for log messages that are used multiple times to keep them consistent
+***********************************************************************************************************************************/
+#define FOUND_IN_ARCHIVE_MSG                                        "found %s in the archive"
+#define FOUND_IN_REPO_ARCHIVE_MSG                                   "found %s in the repo%u:%s archive"
+#define UNABLE_TO_FIND_IN_ARCHIVE_MSG                               "unable to find %s in the archive"
+#define COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG                         "could not get %s from the repo%u:%s archive (will be retried):"
+
+/***********************************************************************************************************************************
+Check for a list of archive files in the repository
+***********************************************************************************************************************************/
+typedef struct ArchiveFileMap
+{
+    const String *request;                                          // Archive file requested by archive_command
+    const String *actual;                                           // Actual file in the repo (with path, checksum, ext, etc.)
+} ArchiveFileMap;
+
+typedef struct ArchiveGetCheckResult
+{
+    List *archiveFileMapList;                                       // List of mapped archive files, i.e. found in the repo
+
+    const String *archiveId;                                        // Repo archive id
+    CipherType cipherType;                                          // Repo cipher type
+    const String *cipherPassArchive;                                // Repo archive cipher pass
+
+    const ErrorType *errorType;                                     // Error type if there was an error
+    const String *errorFile;                                        // Error file if there was an error
+    const String *errorMessage;                                     // Error message if there was an error
+} ArchiveGetCheckResult;
+
+// Helper to find a single archive file in the repository using a cache to speed up the process and minimize storageListP() calls
+typedef struct ArchiveGetFindCache
+{
+    const String *path;
+    const StringList *fileList;
+} ArchiveGetFindCache;
+
+static bool
+archiveGetFind(
+    const String *archiveFileRequest, const String *archiveId, ArchiveGetCheckResult *getCheckResult, List *cache, bool single)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, archiveFileRequest);
+        FUNCTION_LOG_PARAM(STRING, archiveId);
+        FUNCTION_LOG_PARAM_P(VOID, getCheckResult);
+        FUNCTION_LOG_PARAM(LIST, cache);
+        FUNCTION_LOG_PARAM(BOOL, single);
+    FUNCTION_LOG_END();
+
+    ASSERT(archiveFileRequest != NULL);
+    ASSERT(archiveId != NULL);
+    ASSERT(getCheckResult != NULL);
+    ASSERT(cache != NULL);
+
+    ArchiveFileMap archiveFileMap = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If a WAL segment search among the possible file names
+        if (walIsSegment(archiveFileRequest))
+        {
+            // Get the path
+            const String *path = strSubN(archiveFileRequest, 0, 16);
+
+            // List to hold matches for the requested file
+            StringList *matchList = NULL;
+
+            // If a single file is requested then optimize by adding a more restrictive expression to reduce network bandwidth
+            if (single)
+            {
+                matchList = storageListP(
+                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(path)),
+                    .expression = strNewFmt(
+                        "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(archiveFileRequest, 0, 24)),
+                            walIsPartial(archiveFileRequest) ? WAL_SEGMENT_PARTIAL_EXT : ""));
+            }
+            // Else multiple files will be requested so cache list results
+            else
+            {
+                // Partial files cannot be in a list with multiple requests
+                ASSERT(!walIsPartial(archiveFileRequest));
+
+                // If the path does not exist in the cache then fetch it
+                const ArchiveGetFindCache *cachePath = lstFind(cache, &path);
+
+                if (cachePath == NULL)
+                {
+                    MEM_CONTEXT_BEGIN(lstMemContext(cache))
+                    {
+                        cachePath = lstAdd(
+                            cache,
+                            &(ArchiveGetFindCache)
+                            {
+                                .path = strDup(path),
+                                .fileList = storageListP(
+                                    storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(path)),
+                                    .expression = strNewFmt("^%s[0-F]{8}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(path))),
+                            });
+                    }
+                    MEM_CONTEXT_END();
+                }
+
+                // Get a list of all WAL segments that match
+                matchList = strLstNew();
+
+                for (unsigned int fileIdx = 0; fileIdx < strLstSize(cachePath->fileList); fileIdx++)
+                {
+                    if (strBeginsWith(strLstGet(cachePath->fileList, fileIdx), archiveFileRequest))
+                        strLstAdd(matchList, strLstGet(cachePath->fileList, fileIdx));
+                }
+            }
+
+            // If there is a single result then return it
+            if (strLstSize(matchList) == 1)
+            {
+                MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+                {
+                    archiveFileMap.actual = strNewFmt(
+                        "%s/%s/%s", strZ(archiveId), strZ(path), strZ(strLstGet(matchList, 0)));
+                }
+                MEM_CONTEXT_END();
+            }
+            // Else error if there are multiple results
+            else if (strLstSize(matchList) > 1)
+            {
+                MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+                {
+                    getCheckResult->errorType = &ArchiveDuplicateError;
+                    getCheckResult->errorFile = strDup(archiveFileRequest);
+                    getCheckResult->errorMessage = strNewFmt(
+                        "duplicates found in the repo%u:%s archive for WAL segment %s: %s\n"
+                            "HINT: are multiple primaries archiving to this stanza?",
+                        cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)), strZ(archiveId),
+                        strZ(archiveFileRequest), strZ(strLstJoin(strLstSort(matchList, sortOrderAsc), ", ")));
+                }
+                MEM_CONTEXT_END();
+            }
+        }
+        // Else if not a WAL segment, see if it exists in the archive dir
+        else if (storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(archiveFileRequest))))
+        {
+            MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+            {
+                archiveFileMap.actual = strNewFmt("%s/%s", strZ(archiveId), strZ(archiveFileRequest));
+            }
+            MEM_CONTEXT_END();
+        }
+
+        if (archiveFileMap.actual != NULL)
+        {
+            MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
+            {
+                archiveFileMap.request = strDup(archiveFileRequest);
+            }
+            MEM_CONTEXT_END();
+
+            lstAdd(getCheckResult->archiveFileMapList, &archiveFileMap);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, archiveFileMap.actual != NULL);
+}
+
+static ArchiveGetCheckResult
+archiveGetCheck(const StringList *archiveRequestList)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING_LIST, archiveRequestList);
+    FUNCTION_LOG_END();
+
+    ASSERT(archiveRequestList != NULL);
+    ASSERT(!strLstEmpty(archiveRequestList));
+
+    ArchiveGetCheckResult result = {.archiveFileMapList = lstNewP(sizeof(ArchiveFileMap))};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Get pg control info
+        PgControl controlInfo = pgControlFromFile(storagePg());
+
+        // Get the repo storage in case it is remote and encryption settings need to be pulled down
+        storageRepo();
+
+        result.cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
+
+        // Attempt to load the archive info file
+        InfoArchive *info = infoArchiveLoadFile(
+            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, result.cipherType, cfgOptionStrNull(cfgOptRepoCipherPass));
+
+        // Loop through the pg history and determine which archiveId to use based on the first file in the list
+        bool found = false;
+        const String *archiveId = NULL;
+        List *cache = NULL;
+
+        for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoArchivePg(info)); pgIdx++)
+        {
+            InfoPgData pgData = infoPgData(infoArchivePg(info), pgIdx);
+
+            // Only use the archive id if it matches the current cluster
+            if (pgData.systemId == controlInfo.systemId && pgData.version == controlInfo.version)
+            {
+                archiveId = infoPgArchiveId(infoArchivePg(info), pgIdx);
+                cache = lstNewP(sizeof(ArchiveGetFindCache), .comparator = lstComparatorStr);
+
+                found = archiveGetFind(
+                    strLstGet(archiveRequestList, 0), archiveId, &result, cache, strLstSize(archiveRequestList) == 1);
+
+                // If the file was found then use this archiveId for the rest of the files
+                if (found)
+                    break;
+            }
+        }
+
+        // Error if no archive id was found -- this indicates a mismatch with the current cluster
+        if (archiveId == NULL)
+        {
+            THROW_FMT(
+                ArchiveMismatchError, "unable to retrieve the archive id for database version '%s' and system-id '%" PRIu64 "'",
+                strZ(pgVersionToStr(controlInfo.version)), controlInfo.systemId);
+        }
+
+        // Copy repo data to result if the first file was found or on error
+        if (found || result.errorType != NULL)
+        {
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.archiveId = strDup(archiveId);
+                result.cipherPassArchive = strDup(infoArchiveCipherPass(info));
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
+
+        // Continue only if the first file was found
+        if (found)
+        {
+            // Find the rest of the files in the list
+            for (unsigned int archiveRequestIdx = 1; archiveRequestIdx < strLstSize(archiveRequestList); archiveRequestIdx++)
+            {
+                if (!archiveGetFind(strLstGet(archiveRequestList, archiveRequestIdx), archiveId, &result, cache, false))
+                    break;
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
 
 /***********************************************************************************************************************************
 Clean the queue and prepare a list of WAL segments that the async process should get
@@ -82,7 +332,7 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
 
             // Else delete it
             else
-                storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(file)));
+                storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(file)), .errorOnMissing = true);
         }
 
         // Generate a list of the WAL that are needed by removing kept WAL from the ideal queue
@@ -118,7 +368,7 @@ cmdArchiveGet(void)
 
         if (strLstSize(commandParam) != 2)
         {
-            if (strLstSize(commandParam) == 0)
+            if (strLstEmpty(commandParam))
                 THROW(ParamRequiredError, "WAL segment to get required");
 
             if (strLstSize(commandParam) == 1)
@@ -143,7 +393,7 @@ cmdArchiveGet(void)
             bool throwOnError = false;                                  // Should we throw errors?
 
             // Loop and wait for the WAL segment to be pushed
-            Wait *wait = waitNew((TimeMSec)(cfgOptionDbl(cfgOptArchiveTimeout) * MSEC_PER_SEC));
+            Wait *wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
 
             do
             {
@@ -182,13 +432,14 @@ cmdArchiveGet(void)
                     storageMoveP(storageSpoolWrite(), source, destination);
 
                     // Return success
+                    LOG_INFO_FMT(FOUND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
                     result = 0;
 
                     // Get a list of WAL segments left in the queue
                     StringList *queue = storageListP(
                         storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .expression = WAL_SEGMENT_REGEXP_STR, .errorOnMissing = true);
 
-                    if (strLstSize(queue) > 0)
+                    if (!strLstEmpty(queue))
                     {
                         // Get size of the WAL segment
                         uint64_t walSegmentSize = storageInfoP(storageLocal(), walDestination).size;
@@ -253,24 +504,45 @@ cmdArchiveGet(void)
                 throwOnError = true;
             }
             while (waitMore(wait));
+
+            // Log that the file was not found
+            if (result == 1)
+                LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
+
         }
         // Else perform synchronous get
         else
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            storageRepo();
+            // Check for the archive file
+            StringList *archiveRequestList = strLstNew();
+            strLstAdd(archiveRequestList, walSegment);
+
+            ArchiveGetCheckResult checkResult = archiveGetCheck(archiveRequestList);
+
+            // If there was an error then throw it
+            if (checkResult.errorType != NULL)
+                THROW_CODE(errorTypeCode(checkResult.errorType), strZ(checkResult.errorMessage));
 
             // Get the archive file
-            result = archiveGetFile(
-                storageLocalWrite(), walSegment, walDestination, false, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-                cfgOptionStrNull(cfgOptRepoCipherPass));
-        }
+            if (!lstEmpty(checkResult.archiveFileMapList))
+            {
+                ASSERT(lstSize(checkResult.archiveFileMapList) == 1);
 
-        // Log whether or not the file was found
-        if (result == 0)
-            LOG_INFO_FMT("found %s in the archive", strZ(walSegment));
-        else
-            LOG_INFO_FMT("unable to find %s in the archive", strZ(walSegment));
+                archiveGetFile(
+                    storageLocalWrite(), ((ArchiveFileMap *)lstGet(checkResult.archiveFileMapList, 0))->actual, walDestination,
+                    false, checkResult.cipherType, checkResult.cipherPassArchive);
+
+                // If there was no error then the file existed
+                LOG_INFO_FMT(
+                    FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)), strZ(checkResult.archiveId));
+
+                result = 0;
+            }
+            // Else log that the file was not found
+            else
+                LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(walSegment));
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -278,12 +550,6 @@ cmdArchiveGet(void)
 }
 
 /**********************************************************************************************************************************/
-typedef struct ArchiveGetAsyncData
-{
-    const StringList *walSegmentList;                               // List of wal segments to process
-    unsigned int walSegmentIdx;                                     // Current index in the list to be processed
-} ArchiveGetAsyncData;
-
 static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -295,17 +561,20 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
     (void)clientIdx;
 
     // Get a new job if there are any left
-    ArchiveGetAsyncData *jobData = data;
+    ArchiveGetCheckResult *checkResult = data;
 
-    if (jobData->walSegmentIdx < strLstSize(jobData->walSegmentList))
+    if (!lstEmpty(checkResult->archiveFileMapList))
     {
-        const String *walSegment = strLstGet(jobData->walSegmentList, jobData->walSegmentIdx);
-        jobData->walSegmentIdx++;
+        const ArchiveFileMap archiveFileMap = *((ArchiveFileMap *)lstGet(checkResult->archiveFileMapList, 0));
+        lstRemoveIdx(checkResult->archiveFileMapList, 0);
 
         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
-        protocolCommandParamAdd(command, VARSTR(walSegment));
+        protocolCommandParamAdd(command, VARSTR(archiveFileMap.request));
+        protocolCommandParamAdd(command, VARSTR(archiveFileMap.actual));
+        protocolCommandParamAdd(command, VARUINT(checkResult->cipherType));
+        protocolCommandParamAdd(command, VARSTR(checkResult->cipherPassArchive));
 
-        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walSegment), command));
+        FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(archiveFileMap.request), command));
     }
 
     FUNCTION_TEST_RETURN(NULL);
@@ -316,76 +585,102 @@ cmdArchiveGetAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // PostgreSQL must be local
-    pgIsLocalVerify();
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
         TRY_BEGIN()
         {
-            // Check the parameters
-            ArchiveGetAsyncData jobData = {.walSegmentList = cfgCommandParam()};
+            // PostgreSQL must be local
+            pgIsLocalVerify();
 
-            if (strLstSize(jobData.walSegmentList) < 1)
+            // Check the parameters
+            if (strLstSize(cfgCommandParam()) < 1)
                 THROW(ParamInvalidError, "at least one wal segment is required");
 
             LOG_INFO_FMT(
                 "get %u WAL file(s) from archive: %s%s",
-                strLstSize(jobData.walSegmentList), strZ(strLstGet(jobData.walSegmentList, 0)),
-                strLstSize(jobData.walSegmentList) == 1 ?
-                    "" :
-                    strZ(strNewFmt("...%s", strZ(strLstGet(jobData.walSegmentList, strLstSize(jobData.walSegmentList) - 1)))));
+                strLstSize(cfgCommandParam()), strZ(strLstGet(cfgCommandParam(), 0)),
+                strLstSize(cfgCommandParam()) == 1 ?
+                    "" : strZ(strNewFmt("...%s", strZ(strLstGet(cfgCommandParam(), strLstSize(cfgCommandParam()) - 1)))));
 
-            // Create the parallel executor
-            ProtocolParallel *parallelExec = protocolParallelNew(
-                (TimeMSec)(cfgOptionDbl(cfgOptProtocolTimeout) * MSEC_PER_SEC) / 2, archiveGetAsyncCallback, &jobData);
+            // Check for archive files
+            ArchiveGetCheckResult checkResult = archiveGetCheck(cfgCommandParam());
 
-            for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
-                protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
+            // If any files are missing get the first one (used to construct the "unable to find" warning)
+            const String *archiveFileMissing = NULL;
 
-            // Process jobs
-            do
+            if (lstSize(checkResult.archiveFileMapList) < strLstSize(cfgCommandParam()))
+                archiveFileMissing = strLstGet(cfgCommandParam(), lstSize(checkResult.archiveFileMapList));
+
+            // Get archive files that were found
+            if (!lstEmpty(checkResult.archiveFileMapList))
             {
-                unsigned int completed = protocolParallelProcess(parallelExec);
+                // Create the parallel executor
+                ProtocolParallel *parallelExec = protocolParallelNew(
+                    cfgOptionUInt64(cfgOptProtocolTimeout) / 2, archiveGetAsyncCallback, &checkResult);
 
-                for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
+                for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
+                    protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
+
+                // Process jobs
+                do
                 {
-                    // Get the job and job key
-                    ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-                    unsigned int processId = protocolParallelJobProcessId(job);
-                    const String *walSegment = varStr(protocolParallelJobKey(job));
+                    unsigned int completed = protocolParallelProcess(parallelExec);
 
-                    // The job was successful
-                    if (protocolParallelJobErrorCode(job) == 0)
+                    for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                     {
-                        // Get the archive file
-                        if (varIntForce(protocolParallelJobResult(job)) == 0)
+                        // Get the job and job key
+                        ProtocolParallelJob *job = protocolParallelResult(parallelExec);
+                        unsigned int processId = protocolParallelJobProcessId(job);
+                        const String *walSegment = varStr(protocolParallelJobKey(job));
+
+                        // The job was successful
+                        if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            LOG_DETAIL_PID_FMT(processId, "found %s in the archive", strZ(walSegment));
+                            LOG_DETAIL_PID_FMT(
+                                processId,
+                                FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment),
+                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
+                                strZ(checkResult.archiveId));
                         }
-                        // If it does not exist write an ok file to indicate that it was checked
+                        // Else the job errored
                         else
                         {
-                            LOG_DETAIL_PID_FMT(processId, "unable to find %s in the archive", strZ(walSegment));
-                            archiveAsyncStatusOkWrite(archiveModeGet, walSegment, NULL);
+                            LOG_WARN_PID_FMT(
+                                processId,
+                                COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG " [%d] %s", strZ(walSegment),
+                                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
+                                strZ(checkResult.archiveId), protocolParallelJobErrorCode(job),
+                                strZ(protocolParallelJobErrorMessage(job)));
+
+                            archiveAsyncStatusErrorWrite(
+                                archiveModeGet, walSegment, protocolParallelJobErrorCode(job),
+                                protocolParallelJobErrorMessage(job));
                         }
-                    }
-                    // Else the job errored
-                    else
-                    {
-                        LOG_WARN_PID_FMT(
-                            processId,
-                            "could not get %s from the archive (will be retried): [%d] %s", strZ(walSegment),
-                            protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
-                        archiveAsyncStatusErrorWrite(
-                            archiveModeGet, walSegment, protocolParallelJobErrorCode(job), protocolParallelJobErrorMessage(job));
+                        protocolParallelJobFree(job);
                     }
-
-                    protocolParallelJobFree(job);
                 }
+                while (!protocolParallelDone(parallelExec));
             }
-            while (!protocolParallelDone(parallelExec));
+
+            // Log an error from archiveGetCheck() after any existing files have been fetched. This ordering is important because we
+            // need to fetch as many valid files as possible before throwing an error.
+            if (checkResult.errorType != NULL)
+            {
+                LOG_WARN_FMT(
+                    COULD_NOT_GET_FROM_REPO_ARCHIVE_MSG " [%d] %s", strZ(checkResult.errorFile),
+                    cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
+                    strZ(checkResult.archiveId), errorTypeCode(checkResult.errorType), strZ(checkResult.errorMessage));
+
+                archiveAsyncStatusErrorWrite(
+                    archiveModeGet, checkResult.errorFile, errorTypeCode(checkResult.errorType), checkResult.errorMessage);
+            }
+            // Else log a warning if any files were missing
+            else if (archiveFileMissing != NULL)
+            {
+                LOG_DETAIL_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(archiveFileMissing));
+                archiveAsyncStatusOkWrite(archiveModeGet, archiveFileMissing, NULL);
+            }
         }
         // On any global error write a single error file to cover all unprocessed files
         CATCH_ANY()

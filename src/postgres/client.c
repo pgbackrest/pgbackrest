@@ -232,7 +232,7 @@ pgClientQuery(PgClient *this, const String *query)
                 THROW_FMT(DbQueryError, "query '%s' timed out after %" PRIu64 "ms", strZ(query), this->queryTimeout);
 
             // If this was a command that returned no results then we are done
-            int resultStatus = PQresultStatus(pgResult);
+            ExecStatusType resultStatus = PQresultStatus(pgResult);
 
             if (resultStatus != PGRES_COMMAND_OK)
             {
@@ -280,36 +280,28 @@ pgClientQuery(PgClient *this, const String *query)
                                 {
                                     // Boolean type
                                     case 16:                            // bool
-                                    {
                                         varLstAdd(resultRow, varNewBool(varBoolForce(varNewStrZ(value))));
                                         break;
-                                    }
 
                                     // Text/char types
                                     case 18:                            // char
                                     case 19:                            // name
                                     case 25:                            // text
-                                    {
                                         varLstAdd(resultRow, varNewStrZ(value));
                                         break;
-                                    }
 
                                     // Integer types
                                     case 20:                            // int8
                                     case 21:                            // int2
                                     case 23:                            // int4
                                     case 26:                            // oid
-                                    {
                                         varLstAdd(resultRow, varNewInt64(cvtZToInt64(value)));
                                         break;
-                                    }
 
                                     default:
-                                    {
                                         THROW_FMT(
                                             FormatError, "unable to parse type %u in column %d for query '%s'",
                                             columnType[columnIdx], columnIdx, strZ(query));
-                                    }
                                 }
                             }
                         }

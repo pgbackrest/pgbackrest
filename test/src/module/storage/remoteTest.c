@@ -29,17 +29,18 @@ testRun(void)
     strLstAddZ(argList, "--stanza=db");
     strLstAddZ(argList, "--protocol-timeout=10");
     strLstAddZ(argList, "--buffer-size=16384");
+    hrnCfgArgKeyRawFmt(argList, cfgOptPgPath, 1, "%s/pg", testPath());
     strLstAddZ(argList, "--repo1-host=localhost");
     strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
     strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-    harnessCfgLoad(cfgCmdArchivePush, argList);
+    hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+    harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
 
     // Set type since we'll be running local and remote tests here
     cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("repo"));
 
-    // Set pg settings so we can run both db and backup remotes
+    // Set pg host so we can run both pg and repo remotes
     cfgOptionSet(cfgOptPgHost, cfgSourceParam, VARSTRDEF("localhost"));
-    cfgOptionSet(cfgOptPgPath, cfgSourceParam, VARSTR(strNewFmt("%s/pg", testPath())));
 
     // Start a protocol server to test the remote protocol
     Buffer *serverRead = bufNew(8192);
@@ -291,7 +292,14 @@ testRun(void)
             "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check protocol function directly with a file");
+        TEST_TITLE("check protocol function directly with a path");
+
+        // Remove the file since ordering cannot be guaranteed in the protocol results
+        storageRemoveP(storageRemote, STRDEF("test"), .errorOnMissing = true);
+
+        // Path timestamp must be set after file is removed since file removal updates it
+        utimeTest = (struct utimbuf){.actime = 1000000000, .modtime = 1555160000};
+        THROW_ON_SYS_ERROR(utime(strZ(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
@@ -302,7 +310,6 @@ testRun(void)
             strNewBuf(serverWrite),
             hrnReplaceKey(
                 ".\".\"\n.1\n.1555160000\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.488\n"
-                ".\"test\"\n.0\n.1555160001\n.6\n.{[user-id]}\n.\"{[user]}\"\n.{[group-id]}\n.\"{[group]}\"\n.416\n"
                 ".\n"
                 "{\"out\":true}\n"),
             "check result");

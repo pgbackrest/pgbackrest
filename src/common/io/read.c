@@ -158,7 +158,7 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
             }
 
             // Process the input buffer (or flush if NULL)
-            if (this->input == NULL || bufUsed(this->input) > 0)
+            if (this->input == NULL || !bufEmpty(this->input))
                 ioFilterGroupProcess(this->filterGroup, this->input, buffer);
 
             // Stop if not blocking -- we don't need to fill the buffer as long as we got some data
@@ -210,6 +210,72 @@ ioRead(IoRead *this, Buffer *buffer)
     ioReadInternal(this, buffer, true);
 
     FUNCTION_LOG_RETURN(SIZE, outputRemains - bufRemains(buffer));
+}
+
+/**********************************************************************************************************************************/
+size_t
+ioReadSmall(IoRead *this, Buffer *buffer)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, this);
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(this->opened && !this->closed);
+
+    // Allocate the internal output buffer if it has not already been allocated
+    if (this->output == NULL)
+    {
+        MEM_CONTEXT_BEGIN(this->memContext)
+        {
+            this->output = bufNew(ioBufferSize());
+        }
+        MEM_CONTEXT_END();
+    }
+
+    // Store size of remaining portion of buffer to calculate total read at the end
+    size_t outputRemains = bufRemains(buffer);
+
+    do
+    {
+        // Internal output buffer remains taking into account the position
+        size_t outputInternalRemains = bufUsed(this->output) - this->outputPos;
+
+        // Use any data in the internal output buffer
+        if (outputInternalRemains > 0)
+        {
+            // Determine how much data should be copied
+            size_t size = outputInternalRemains > bufRemains(buffer) ? bufRemains(buffer) : outputInternalRemains;
+
+            // Copy data to the output buffer
+            bufCatSub(buffer, this->output, this->outputPos, size);
+            this->outputPos += size;
+        }
+
+        // If more data is required
+        if (!bufFull(buffer))
+        {
+            // If the data required is the same size as the internal output buffer then just read into the external buffer
+            if (bufRemains(buffer) >= bufSize(this->output))
+            {
+                ioReadInternal(this, buffer, true);
+            }
+            // Else read as much data as is available. If is not enough we will try again later.
+            else
+            {
+                // Clear the internal output buffer since all data was copied already
+                bufUsedZero(this->output);
+                this->outputPos = 0;
+
+                ioReadInternal(this, this->output, false);
+            }
+        }
+    }
+    while (!bufFull(buffer));
+
+    FUNCTION_TEST_RETURN(outputRemains - bufRemains(buffer));
 }
 
 /***********************************************************************************************************************************

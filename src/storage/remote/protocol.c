@@ -214,7 +214,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
                 {
                     ioRead(fileRead, buffer);
 
-                    if (bufUsed(buffer) > 0)
+                    if (!bufEmpty(buffer))
                     {
                         ioWriteStrLine(protocolServerIoWrite(server), strNewFmt(PROTOCOL_BLOCK_HEADER "%zu", bufUsed(buffer)));
                         ioWrite(protocolServerIoWrite(server), buffer);
@@ -240,8 +240,8 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
             // Create the write object
             IoWrite *fileWrite = storageWriteIo(
                 storageInterfaceNewWriteP(
-                    driver, varStr(varLstGet(paramList, 0)), .modeFile = varUIntForce(varLstGet(paramList, 1)),
-                    .modePath = varUIntForce(varLstGet(paramList, 2)), .user = varStr(varLstGet(paramList, 3)),
+                    driver, varStr(varLstGet(paramList, 0)), .modeFile = (mode_t)varUIntForce(varLstGet(paramList, 1)),
+                    .modePath = (mode_t)varUIntForce(varLstGet(paramList, 2)), .user = varStr(varLstGet(paramList, 3)),
                     .group = varStr(varLstGet(paramList, 4)), .timeModified = (time_t)varUInt64Force(varLstGet(paramList, 5)),
                     .createPath = varBool(varLstGet(paramList, 6)), .syncFile = varBool(varLstGet(paramList, 7)),
                     .syncPath = varBool(varLstGet(paramList, 8)), .atomic = varBool(varLstGet(paramList, 9))));
@@ -302,7 +302,7 @@ storageRemoteProtocol(const String *command, const VariantList *paramList, Proto
         {
             storageInterfacePathCreateP(
                 driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varBool(varLstGet(paramList, 2)),
-                varUIntForce(varLstGet(paramList, 3)));
+                (mode_t)varUIntForce(varLstGet(paramList, 3)));
 
             protocolServerResponse(server, NULL);
         }

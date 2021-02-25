@@ -146,7 +146,7 @@ protocolParallelProcess(ProtocolParallel *this)
         // Initialize timeout struct used for select.  Recreate this structure each time since Linux (at least) will modify it.
         struct timeval timeoutSelect;
         timeoutSelect.tv_sec = (time_t)(this->timeout / MSEC_PER_SEC);
-        timeoutSelect.tv_usec = (time_t)(this->timeout % MSEC_PER_SEC * 1000);
+        timeoutSelect.tv_usec = (suseconds_t)(this->timeout % MSEC_PER_SEC * 1000);
 
         // Determine if there is data to be read
         int completed = select(fdMax + 1, &selectSet, NULL, NULL, &timeoutSelect);
@@ -268,7 +268,7 @@ protocolParallelDone(ProtocolParallel *this)
     ASSERT(this->state != protocolParallelJobStatePending);
 
     // If there are no jobs left then we are done
-    if (this->state != protocolParallelJobStateDone && lstSize(this->jobList) == 0)
+    if (this->state != protocolParallelJobStateDone && lstEmpty(this->jobList))
         this->state = protocolParallelJobStateDone;
 
     FUNCTION_LOG_RETURN(BOOL, this->state == protocolParallelJobStateDone);

@@ -17,6 +17,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "5");
         strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
         strLstAdd(argList, strNewFmt("--pg1-path=%s/db path", testPath()));
         strLstAddZ(argList, "--pg2-path=/db2");
@@ -32,20 +33,17 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
         unsetenv("PGBACKREST_REPO1_CIPHER_PASS");
 
-        TEST_RESULT_STR(
-            strLstJoin(cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, NULL, false, true), "|"),
-            strNewFmt(
-                "--archive-async|--no-config|--exec-id=1-test|--log-subprocess|--reset-neutral-umask|--pg1-path=\"%s/db path\""
-                "|--pg2-path=/db2|--repo1-path=%s/repo|--stanza=test1|archive-get:async",
-                testPath(), testPath()),
+        TEST_RESULT_STRLST_Z(
+            cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, NULL, false, true),
+            "--archive-async\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
+                "--pg1-path=\"" TEST_PATH "/db path\"\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\n"
+                "archive-get:async\n",
             "exec archive-get -> archive-get:async");
 
-        TEST_RESULT_STR(
-            strLstJoin(cfgExecParam(cfgCmdBackup, cfgCmdRoleDefault, NULL, false, false), "|"),
-            strNewFmt(
-                "--no-config|--exec-id=1-test|--log-subprocess|--reset-neutral-umask|--pg1-path=%s/db path|--pg2-path=/db2"
-                "|--repo1-path=%s/repo|--stanza=test1|backup",
-                testPath(), testPath()),
+        TEST_RESULT_STRLST_Z(
+            cfgExecParam(cfgCmdBackup, cfgCmdRoleDefault, NULL, false, false),
+            "--archive-timeout=5\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
+                "--pg1-path=" TEST_PATH "/db path\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\nbackup\n",
             "exec archive-get -> backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -70,12 +68,10 @@ testRun(void)
         kvPut(optionReplace, varNewStr(strNew("stanza")), NULL);
         kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_PATH), VARSTRDEF("/log"));
 
-        TEST_RESULT_STR(
-            strLstJoin(cfgExecParam(cfgCmdRestore, cfgCmdRoleDefault, optionReplace, true, false), "|"),
-            strNewFmt(
-                "--db-include=1|--db-include=2|--exec-id=1-test|--log-path=/log|--pg1-path=%s/db path|--recovery-option=a=b"
-                    "|--recovery-option=c=d|--repo1-path=/replace/path|restore",
-                testPath()),
+        TEST_RESULT_STRLST_Z(
+            cfgExecParam(cfgCmdRestore, cfgCmdRoleDefault, optionReplace, true, false),
+            "--db-include=1\n--db-include=2\n--exec-id=1-test\n--log-path=/log\n--pg1-path=" TEST_PATH "/db path\n"
+                "--recovery-option=a=b\n--recovery-option=c=d\n--repo1-path=/replace/path\nrestore\n",
             "exec restore -> restore");
     }
 
