@@ -1605,23 +1605,25 @@ testRun(void)
         cmdStanzaCreate();
         harnessLogResult("P00   INFO: stanza-create for stanza 'test1' on repo2");
 
+        // Set log level to warn
+        harnessLogLevelReset();
+        harnessLogLevelSet(logLevelWarn);
+
         // With repo2 the only repo configured, ensure it is chosen by confirming diff is changed to full due to no prior backups
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
         hrnCfgArgRawZ(argList, cfgOptType, BACKUP_TYPE_DIFF);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
-
         TEST_RESULT_LOG(
-            "P00   WARN: no prior backup exists, diff backup has been changed to full\n"
-            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, 99%) checksum 21e2ddc99cdf4cfca272eee4f38891146092e358\n"
-            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, 99%) checksum e3db315c260e79211b7b52587123b7aa060f30ab\n"
-            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
-            "P00   INFO: full backup size = 8KB\n"
-            "P00   INFO: new backup label = [FULL-2]");
+            "P00   WARN: no prior backup exists, diff backup has been changed to full");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo");
+
+        // Set log level to warn
+        harnessLogLevelReset();
+        harnessLogLevelSet(logLevelInfo);
 
         // Add repo1 to the configuration
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
@@ -1634,8 +1636,6 @@ testRun(void)
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
             "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
-            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
-            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: diff backup size = 3B\n"
             "P00   INFO: new backup label = [DIFF-3]");
 
@@ -1654,8 +1654,6 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
             "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
-            "P00 DETAIL: reference pg_data/global/pg_control to [FULL-2]\n"
-            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-2]\n"
             "P00   INFO: diff backup size = 3B\n"
             "P00   INFO: new backup label = [DIFF-4]");
         TEST_RESULT_UINT(
@@ -1664,6 +1662,7 @@ testRun(void)
 
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+        harnessLogLevelReset();
     }
 
     // *****************************************************************************************************************************
