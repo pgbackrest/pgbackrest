@@ -78,6 +78,7 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
     FUNCTION_TEST_RETURN(result);
 }
 
+/**********************************************************************************************************************************/
 ArchivePushFileResult
 archivePushFile(
     const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
