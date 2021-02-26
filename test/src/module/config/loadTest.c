@@ -46,7 +46,7 @@ testRun(void)
         TEST_TITLE("error when repo option not set and repo total > 1 or first repo index != 1");
 
         argList = strLstNew();
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
@@ -54,6 +54,9 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
             "stanza-delete command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdStanzaDelete, argList), "load stanza-delete with repo set");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
@@ -63,6 +66,12 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
             "stanza-delete command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdStanzaDelete, argList), "load stanza-delete with single repo, repo option not set");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
