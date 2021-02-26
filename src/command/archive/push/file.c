@@ -16,8 +16,69 @@ Archive Push File
 #include "postgres/interface.h"
 #include "storage/helper.h"
 
-/**********************************************************************************************************************************/
-String *
+/***********************************************************************************************************************************
+Catch write errors during processing
+
+We want to continue when there are write errors during processing so add them to a list to be reported later and return false so the
+caller knows to stop writing on the affected repo.
+***********************************************************************************************************************************/
+typedef enum
+{
+    archivePushFileIoTypeOpen,
+    archivePushFileIoTypeWrite,
+    archivePushFileIoTypeClose,
+} ArchivePushFileIoType;
+
+static bool
+archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buffer, unsigned int repoIdx, StringList *errorList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+        FUNCTION_TEST_PARAM(STRING_LIST, errorList);
+    FUNCTION_TEST_END();
+
+    ASSERT(write != NULL);
+    ASSERT(errorList != NULL);
+
+    bool result = true;
+
+    // Process write operation
+    TRY_BEGIN()
+    {
+        switch (type)
+        {
+            case archivePushFileIoTypeOpen:
+                ioWriteOpen(write);
+                break;
+
+            case archivePushFileIoTypeWrite:
+                ASSERT(buffer != NULL);
+                ioWrite(write, buffer);
+                break;
+
+            case archivePushFileIoTypeClose:
+                ioWriteClose(write);
+                break;
+        }
+    }
+    // Handle errors
+    CATCH_ANY()
+    {
+        strLstAdd(
+            errorList,
+            strNewFmt(
+                "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+        result = false;
+    }
+    TRY_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+ArchivePushFileResult
 archivePushFile(
     const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
     int compressLevel, const ArchivePushFileRepoData *repoData)
@@ -36,7 +97,8 @@ archivePushFile(
     ASSERT(archiveFile != NULL);
     ASSERT(repoData != NULL);
 
-    String *result = NULL;
+    ArchivePushFileResult result = {.warnList = strLstNew()};
+    StringList *errorList = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -99,18 +161,13 @@ archivePushFile(
                     {
                         MEM_CONTEXT_PRIOR_BEGIN()
                         {
-                            // Add LF if there has already been a warning
-                            if (result == NULL)
-                                result = strNew("");
-                            else
-                                strCatZ(result, "\n");
-
                             // Add warning to the result that will be returned to the main process
-                            strCatFmt(
-                                result,
-                                "WAL file '%s' already exists in the repo%u archive with the same checksum"
+                            strLstAdd(
+                                result.warnList,
+                                strNewFmt(
+                                    "WAL file '%s' already exists in the repo%u archive with the same checksum"
                                     "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                                    strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx)));
                         }
                         MEM_CONTEXT_PRIOR_END();
 
@@ -183,7 +240,10 @@ archivePushFile(
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
             {
                 if (destinationCopy[repoIdx])
-                    ioWriteOpen(storageWriteIo(destination[repoIdx]));
+                {
+                    destinationCopy[repoIdx] = archivePushFileIo(
+                        archivePushFileIoTypeOpen, storageWriteIo(destination[repoIdx]), NULL, repoIdx, errorList);
+                }
             }
 
             // Copy data from source to destination
@@ -198,7 +258,10 @@ archivePushFile(
                 for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
                 {
                     if (destinationCopy[repoIdx])
-                        ioWrite(storageWriteIo(destination[repoIdx]), read);
+                    {
+                        destinationCopy[repoIdx] = archivePushFileIo(
+                            archivePushFileIoTypeWrite, storageWriteIo(destination[repoIdx]), read, repoIdx, errorList);
+                    }
                 }
 
                 // Clear buffer
@@ -212,11 +275,19 @@ archivePushFile(
             for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
             {
                 if (destinationCopy[repoIdx])
-                    ioWriteClose(storageWriteIo(destination[repoIdx]));
+                {
+                    destinationCopy[repoIdx] = archivePushFileIo(
+                        archivePushFileIoTypeClose, storageWriteIo(destination[repoIdx]), NULL, repoIdx, errorList);
+                }
             }
         }
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    // Throw any errors, even if some files were successful. It is important that PostgreSQL recieves an error so it does not
+    // remove the file.
+    if (strLstSize(errorList) > 0)
+        THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
