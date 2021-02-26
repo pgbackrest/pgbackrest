@@ -377,13 +377,13 @@ cmdArchivePush(void)
                 ArchivePushCheckResult archiveInfo = archivePushCheck(cfgOptionTest(cfgOptPgPath));
 
                 // Push the file to the archive
-                String *warning = archivePushFile(
+                ArchivePushFileResult fileResult = archivePushFile(
                     walFile, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
                     compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoData);
 
                 // If a warning was returned then log it
-                if (warning != NULL)
-                    LOG_WARN(strZ(warning));
+                for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
+                    LOG_WARN(strZ(strLstGet(fileResult.warnList, warnIdx)));
 
                 // Log success
                 LOG_INFO_FMT("pushed WAL file '%s' to the archive", strZ(archiveFile));
@@ -528,20 +528,28 @@ cmdArchivePushAsync(void)
                         unsigned int processId = protocolParallelJobProcessId(job);
                         const String *walFile = varStr(protocolParallelJobKey(job));
 
+                        // Get job result
+                        const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
+
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
-                            // If there was a warning then output it to the log
-                            const String *warning = varStr(protocolParallelJobResult(job));
+                            // Output file warnings
+                            String *warning = strNew("");
+                            StringList *fileWarnList = strLstNewVarLst(varVarLst(varLstGet(fileResult, 0)));
 
-                            if (warning != NULL)
-                                LOG_WARN_PID(processId, strZ(warning));
+                            for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
+                                LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
+
+                            // Build file warnings for status file
+                            if (!strLstEmpty(fileWarnList))
+                                strCatFmt(warning, "%s%s", strSize(warning) == 0 ? "" : "\n", strZ(strLstJoin(fileWarnList, "\n")));
 
                             // Log success
                             LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
 
                             // Write the status file
-                            archiveAsyncStatusOkWrite(archiveModePush, walFile, warning);
+                            archiveAsyncStatusOkWrite(archiveModePush, walFile, strSize(warning) == 0 ? NULL : warning);
                         }
                         // Else the job errored
                         else

@@ -23,8 +23,14 @@ typedef struct ArchivePushFileRepoData
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+typedef struct ArchivePushFileResult
+{
+    StringList *warnList;                                           // Warnings from a successful operation
+    StringList *errorList;                                          // Errors on one or more repositories
+} ArchivePushFileResult;
+
 // Copy a file from the source to the archive
-String *archivePushFile(
+ArchivePushFileResult archivePushFile(
     const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
     int compressLevel, const ArchivePushFileRepoData *repoData);
 
