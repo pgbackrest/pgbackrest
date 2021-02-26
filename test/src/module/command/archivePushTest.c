@@ -450,7 +450,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{\"out\":[[\"WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum"
-                "\\nHINT: this is valid in some recovery scenarios but may also indicate a problem.\"],[]]}\n",
+                "\\nHINT: this is valid in some recovery scenarios but may also indicate a problem.\"]]}\n",
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -521,11 +521,36 @@ testRun(void)
             true, "check repo3 for WAL file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remove WAL from one repo and push again");
+        TEST_TITLE("write error on one repo but other repo succeeds");
 
         storageRemoveP(
             storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .errorOnMissing = true);
+        storageRemoveP(
+            storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
+            .errorOnMissing = true);
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001", .mode = 0500);
+
+        TEST_ERROR(
+            cmdArchivePush(), CommandError,
+            "archive-push command encountered error(s):\n"
+            "repo2: [FileOpenError] unable to open file '/home/vagrant/test/test-0/repo2/archive/test/11-1/0000000100000001"
+                "/000000010000000100000002-755defa48a0a0872767b6dea49bdd3b64902f147' for write: [13] Permission denied");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            false, "check repo2 for no WAL file");
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            true, "check repo3 for WAL file");
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push WAL to one repo");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult(

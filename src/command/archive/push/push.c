@@ -528,28 +528,24 @@ cmdArchivePushAsync(void)
                         unsigned int processId = protocolParallelJobProcessId(job);
                         const String *walFile = varStr(protocolParallelJobKey(job));
 
-                        // Get job result
-                        const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
-
                         // The job was successful
                         if (protocolParallelJobErrorCode(job) == 0)
                         {
+                            // Get job result
+                            const VariantList *fileResult = varVarLst(protocolParallelJobResult(job));
+
                             // Output file warnings
-                            String *warning = strNew("");
                             StringList *fileWarnList = strLstNewVarLst(varVarLst(varLstGet(fileResult, 0)));
 
                             for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
                                 LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
 
-                            // Build file warnings for status file
-                            if (!strLstEmpty(fileWarnList))
-                                strCatFmt(warning, "%s%s", strSize(warning) == 0 ? "" : "\n", strZ(strLstJoin(fileWarnList, "\n")));
-
                             // Log success
                             LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
 
                             // Write the status file
-                            archiveAsyncStatusOkWrite(archiveModePush, walFile, strSize(warning) == 0 ? NULL : warning);
+                            archiveAsyncStatusOkWrite(
+                                archiveModePush, walFile, strLstEmpty(fileWarnList) ? NULL : strLstJoin(fileWarnList, "\n"));
                         }
                         // Else the job errored
                         else

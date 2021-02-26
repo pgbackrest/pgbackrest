@@ -26,7 +26,6 @@ Functions
 typedef struct ArchivePushFileResult
 {
     StringList *warnList;                                           // Warnings from a successful operation
-    StringList *errorList;                                          // Errors on one or more repositories
 } ArchivePushFileResult;
 
 // Copy a file from the source to the archive

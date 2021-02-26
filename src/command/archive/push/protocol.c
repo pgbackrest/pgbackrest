@@ -62,7 +62,6 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
             // Return result
             VariantList *result = varLstNew();
             varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.warnList)));
-            varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.errorList)));
 
             protocolServerResponse(server, varNewVarLst(result));
         }
