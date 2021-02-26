@@ -535,7 +535,7 @@ testRun(void)
         TEST_ERROR(
             cmdArchivePush(), CommandError,
             "archive-push command encountered error(s):\n"
-            "repo2: [FileOpenError] unable to open file '/home/vagrant/test/test-0/repo2/archive/test/11-1/0000000100000001"
+            "repo2: [FileOpenError] unable to open file '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001"
                 "/000000010000000100000002-755defa48a0a0872767b6dea49bdd3b64902f147' for write: [13] Permission denied");
 
         TEST_RESULT_BOOL(
