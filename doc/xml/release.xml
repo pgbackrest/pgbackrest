@@ -55,6 +55,7 @@
                         <commit subject="Enhance restore command multi-repo support."/>
                         <commit subject="Refactor info command repoMin/Max."/>
                         <commit subject="Remove restore default repo from integration tests."/>
+                        <commit subject="Make --repo optional for backup command."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
