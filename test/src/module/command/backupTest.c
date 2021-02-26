@@ -1621,7 +1621,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo");
 
-        // Set log level to warn
+        // Set log level to info
         harnessLogLevelReset();
         harnessLogLevelSet(logLevelInfo);
 
