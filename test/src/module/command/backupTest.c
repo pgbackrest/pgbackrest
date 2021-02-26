@@ -1588,6 +1588,81 @@ testRun(void)
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: diff backup size = 3B\n"
             "P00   INFO: new backup label = [DIFF-2]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("only repo2 configured");
+
+        // Create stanza on a second repo
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+        strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
+        harnessCfgLoad(cfgCmdStanzaCreate, argList);
+
+        cmdStanzaCreate();
+        harnessLogResult("P00   INFO: stanza-create for stanza 'test1' on repo2");
+
+        // Set log level to warn
+        harnessLogLevelReset();
+        harnessLogLevelSet(logLevelWarn);
+
+        // With repo2 the only repo configured, ensure it is chosen by confirming diff is changed to full due to no prior backups
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
+        hrnCfgArgRawZ(argList, cfgOptType, BACKUP_TYPE_DIFF);
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_LOG(
+            "P00   WARN: no prior backup exists, diff backup has been changed to full");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo");
+
+        // Set log level to info
+        harnessLogLevelReset();
+        harnessLogLevelSet(logLevelInfo);
+
+        // Add repo1 to the configuration
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo option not specified, defaulting to repo1\n"
+            "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
+            "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
+            "P00   INFO: diff backup size = 3B\n"
+            "P00   INFO: new backup label = [DIFF-3]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi-repo - specify repo");
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+
+        harnessCfgLoad(cfgCmdBackup, argList);
+
+        storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VER"));
+
+        unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
+
+        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_LOG(
+            "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
+            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
+            "P00   INFO: diff backup size = 3B\n"
+            "P00   INFO: new backup label = [DIFF-4]");
+        TEST_RESULT_UINT(
+            strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1"))), backupCount + 1,
+            "new backup repo2");
+
+        // Cleanup
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+        harnessLogLevelReset();
     }
 
     // *****************************************************************************************************************************
