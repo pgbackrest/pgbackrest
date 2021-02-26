@@ -521,11 +521,38 @@ testRun(void)
             true, "check repo3 for WAL file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remove WAL from one repo and push again");
+        TEST_TITLE("write error on one repo but other repo succeeds");
 
         storageRemoveP(
             storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .errorOnMissing = true);
+        storageRemoveP(
+            storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
+            .errorOnMissing = true);
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001", .mode = 0500);
+
+        TEST_ERROR(
+            cmdArchivePush(), CommandError,
+            strZ(
+                strNewFmt(
+                    "archive-push command encountered error(s):\n"
+                    "repo2: [FileOpenError] unable to open file '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001"
+                        "/000000010000000100000002-%s' for write: [13] Permission denied", walBuffer2Sha1)));
+
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            false, "check repo2 for no WAL file");
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            true, "check repo3 for WAL file");
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push WAL to one repo");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult(
