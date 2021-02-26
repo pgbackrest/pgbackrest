@@ -54,13 +54,16 @@ archivePushProtocol(const String *command, const VariantList *paramList, Protoco
             }
 
             // Push the file
-            protocolServerResponse(
-                server,
-                VARSTR(
-                    archivePushFile(
-                        varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
-                        varStr(varLstGet(paramList, 3)), (CompressType)varUIntForce(varLstGet(paramList, 4)),
-                        varIntForce(varLstGet(paramList, 5)), repoData)));
+            ArchivePushFileResult fileResult = archivePushFile(
+                varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
+                varStr(varLstGet(paramList, 3)), (CompressType)varUIntForce(varLstGet(paramList, 4)),
+                varIntForce(varLstGet(paramList, 5)), repoData);
+
+            // Return result
+            VariantList *result = varLstNew();
+            varLstAdd(result, varNewVarLst(varLstNewStrLst(fileResult.warnList)));
+
+            protocolServerResponse(server, varNewVarLst(result));
         }
         else
             found = false;

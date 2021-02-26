@@ -449,8 +449,8 @@ testRun(void)
             archivePushProtocol(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR, paramList, server), true, "protocol archive put");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
-            "{\"out\":\"WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum"
-                "\\nHINT: this is valid in some recovery scenarios but may also indicate a problem.\"}\n",
+            "{\"out\":[[\"WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum"
+                "\\nHINT: this is valid in some recovery scenarios but may also indicate a problem.\"]]}\n",
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -545,7 +545,7 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: WAL file '000000010000000100000002' already exists in the repo2 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
-            "            WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
+            "P00   WARN: WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
     }
@@ -851,7 +851,7 @@ testRun(void)
             "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000002\n"
             "P01   WARN: WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
-            "            WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
+            "P01   WARN: WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P01 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
 

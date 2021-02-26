@@ -17,7 +17,7 @@ Archive Push File
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-String *
+ArchivePushFileResult
 archivePushFile(
     const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
     int compressLevel, const ArchivePushFileRepoData *repoData)
@@ -36,7 +36,7 @@ archivePushFile(
     ASSERT(archiveFile != NULL);
     ASSERT(repoData != NULL);
 
-    String *result = NULL;
+    ArchivePushFileResult result = {.warnList = strLstNew()};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -99,18 +99,13 @@ archivePushFile(
                     {
                         MEM_CONTEXT_PRIOR_BEGIN()
                         {
-                            // Add LF if there has already been a warning
-                            if (result == NULL)
-                                result = strNew("");
-                            else
-                                strCatZ(result, "\n");
-
                             // Add warning to the result that will be returned to the main process
-                            strCatFmt(
-                                result,
-                                "WAL file '%s' already exists in the repo%u archive with the same checksum"
+                            strLstAdd(
+                                result.warnList,
+                                strNewFmt(
+                                    "WAL file '%s' already exists in the repo%u archive with the same checksum"
                                     "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                                    strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx)));
                         }
                         MEM_CONTEXT_PRIOR_END();
 
@@ -218,5 +213,5 @@ archivePushFile(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
