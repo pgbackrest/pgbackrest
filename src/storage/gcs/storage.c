@@ -67,13 +67,14 @@ struct StorageGcs
 
     bool write;                                                     // Storage is writable
     const String *bucket;                                           // Bucket to store data in
-    const String *project;                                          // Project
-    StorageGcsKeyType keyType;                                      // Auth key type
-    const String *credential;                                       // Credential (client email)
-    const String *token;                                            // Token
-    const String *privateKey;                                       // Private key in PEM format
     const String *endpoint;                                         // Endpoint
     size_t chunkSize;                                               // Block size for multi-chunk upload
+
+    StorageGcsKeyType keyType;                                      // Auth key type
+    const String *credential;                                       // Credential (client email)
+    const String *privateKey;                                       // Private key in PEM format
+    String *token;                                                  // Token
+    time_t tokenTimeExpire;                                         // Token expiration time (if service auth)
 };
 
 /***********************************************************************************************************************************
@@ -143,16 +144,25 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     FUNCTION_TEST_RETURN(result);
 }
 
-static String *
-storageGcsAuthToken(StorageGcs *this)
+typedef struct
+{
+    String *tokenType;
+    String *token;
+    time_t timeExpire;
+} StorageGcsAuthTokenResult;
+
+static StorageGcsAuthTokenResult
+storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+        FUNCTION_TEST_PARAM(TIME, timeBegin);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(timeBegin > 0);
 
-    String *result = NULL;
+    StorageGcsAuthTokenResult result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -162,7 +172,7 @@ storageGcsAuthToken(StorageGcs *this)
 
         String *content = strNewFmt(
             "grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s",
-            strZ(storageGcsAuthJwt(this, time(NULL))));
+            strZ(storageGcsAuthJwt(this, timeBegin)));
 
         HttpHeader *header = httpHeaderNew(NULL);
         httpHeaderAdd(header, HTTP_HEADER_HOST_STR, STRDEF("oauth2.googleapis.com"));
@@ -181,20 +191,24 @@ storageGcsAuthToken(StorageGcs *this)
         if (error != NULL)
         {
             const String *description = varStr(kvGet(kvResponse, VARSTRDEF("error_description")));
+            CHECK(description != NULL);
 
             THROW_FMT(FormatError, "unable to get authentication token: [%s] %s", strZ(error), strZNull(description));
         }
 
-        // Check for token
-        const String *tokenType = varStr(kvGet(kvResponse, VARSTRDEF("token_type")));
-        const String *token = varStr(kvGet(kvResponse, VARSTRDEF("access_token")));
-
-        if (tokenType == NULL || token == NULL)
-            THROW(FormatError, "unable to find authentication token in response");
-
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = strNewFmt("%s %s", strZ(tokenType), strZ(token));
+            // Get token
+            result.tokenType = strDup(varStr(kvGet(kvResponse, VARSTRDEF("token_type"))));
+            CHECK(result.tokenType != NULL);
+            result.token = strDup(varStr(kvGet(kvResponse, VARSTRDEF("access_token"))));
+            CHECK(result.token != NULL);
+
+            // Get expiration
+            const Variant *const expiresIn = kvGet(kvResponse, VARSTRDEF("expires_in"));
+            CHECK(expiresIn != NULL);
+
+            result.timeExpire = timeBegin + (time_t)varInt64Force(expiresIn);
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -223,25 +237,33 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
         // Host header is required for authentication
         httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->endpoint);
 
-        // Token authentication
-        if (this->keyType == storageGcsKeyTypeToken)
+        // Process authentication type
+        switch (this->keyType)
         {
-            httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
-        }
-        // Service key authentication
-        else if (this->keyType == storageGcsKeyTypeService)
-        {
-            if (this->token == NULL)
+            // Service key authentication requests a token then drops through to normal token authentication
+            case storageGcsKeyTypeService:
             {
-                // !!! THIS NEEDS TO REFRESH
-                MEM_CONTEXT_BEGIN(this->memContext)
+                time_t timeBegin = time(NULL);
+
+                // If the current token has expired then request a new one
+                if (timeBegin >= this->tokenTimeExpire)
                 {
-                    this->token = storageGcsAuthToken(this);
+                    StorageGcsAuthTokenResult tokenResult = storageGcsAuthToken(this, timeBegin);
+
+                    MEM_CONTEXT_BEGIN(this->memContext)
+                    {
+                        strFree(this->token);
+                        this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.tokenType));
+                        this->tokenTimeExpire = tokenResult.timeExpire - 120;
+                    }
+                    MEM_CONTEXT_END();
                 }
-                MEM_CONTEXT_END();
             }
 
-            httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
+            // Token authentication
+            case storageGcsKeyTypeToken:
+                httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
+                break;
         }
     }
     MEM_CONTEXT_TEMP_END();

@@ -242,14 +242,14 @@ testRun(void)
         StorageGcs *storage = NULL;
 
         // !!! HACKY WAY TO GET A BEARER TOKEN FOR TESTING AT THE COMMAND LINE
-        // TEST_RESULT_STR_Z(
-        //     storageGcsAuthToken(
-        //         (StorageGcs *)storageDriver(
-        //             storageGcsNew(
-        //                 STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService,
-        //                 strNewFmt("/home/%s/pgbackrest/test/scratch.gcs.json", testUser()), TEST_CHUNK_SIZE, TEST_ENDPOINT_STR,
-        //                 TEST_PORT, TEST_TIMEOUT, true, NULL, NULL))),
-        //     "", "authentication token");
+        TEST_RESULT_STR_Z(
+            storageGcsAuthToken(
+                (StorageGcs *)storageDriver(
+                    storageGcsNew(
+                        STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService,
+                        strNewFmt("/home/%s/pgbackrest/test/scratch.gcs.json", testUser()), TEST_CHUNK_SIZE, TEST_ENDPOINT_STR,
+                        TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)), time(NULL)).token,
+            "", "authentication token");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("jwt read-only");
