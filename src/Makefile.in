@@ -84,6 +84,7 @@ SRCS = \
 	common/io/http/request.c \
 	common/io/http/response.c \
 	common/io/http/session.c \
+	common/io/http/url.c \
 	common/io/io.c \
 	common/io/read.c \
 	common/io/session.c \

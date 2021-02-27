@@ -57,7 +57,7 @@ Constants
         "DIo7CEz9TZW8QMM+VAt4pJTWo4Sy7iM2n0ZTFSGbBHboXHXnXQ==\\n"                                                                  \
         "-----END RSA PRIVATE KEY-----\\n\",\n"                                                                                    \
     "\"client_email\": \"service@project.iam.gserviceaccount.com\",\n"                                                             \
-    "\"token_uri\": \"https://oauth2.googleapis.com/token\"\n"                                                                     \
+    "\"token_uri\": \"https://%s:%u/token\"\n"                                                                                     \
     "}\n"
 
 /***********************************************************************************************************************************
@@ -210,6 +210,14 @@ testRun(void)
 
     Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
+    // Get test host and ports
+    const String *const testHost = hrnServerHost();
+    const unsigned int testPort = hrnServerPort(0);
+    const unsigned int testPortAuth = hrnServerPort(1);
+
+    // Generate test key with local auth host/port
+    const Buffer *const testKey = BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth));
+
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))
     {
@@ -242,19 +250,19 @@ testRun(void)
         StorageGcs *storage = NULL;
 
         // !!! HACKY WAY TO GET A BEARER TOKEN FOR TESTING AT THE COMMAND LINE
-        TEST_RESULT_STR_Z(
-            storageGcsAuthToken(
-                (StorageGcs *)storageDriver(
-                    storageGcsNew(
-                        STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService,
-                        strNewFmt("/home/%s/pgbackrest/test/scratch.gcs.json", testUser()), TEST_CHUNK_SIZE, TEST_ENDPOINT_STR,
-                        TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)), time(NULL)).token,
-            "", "authentication token");
+        // TEST_RESULT_STR_Z(
+        //     storageGcsAuthToken(
+        //         (StorageGcs *)storageDriver(
+        //             storageGcsNew(
+        //                 STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService,
+        //                 strNewFmt("/home/%s/pgbackrest/test/scratch.gcs.json", testUser()), TEST_CHUNK_SIZE, TEST_ENDPOINT_STR,
+        //                 TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)), time(NULL)).token,
+        //     "", "authentication token");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("jwt read-only");
 
-        HRN_STORAGE_PUT_Z(storageTest, TEST_KEY_FILE, TEST_KEY);
+        HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, testKey);
 
         TEST_ASSIGN(
             storage,
@@ -301,621 +309,613 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
     {
-        // Storage *storage = NULL;
-        // size_t chunkSize = (size_t)256 * 1024;
-        //
-        // TEST_ASSIGN(
-        //     storage,
-        //     storageGcsNew(
-        //         STRDEF("/"), true, NULL, STRDEF("pgbackrest-dev"), storageGcsKeyTypeToken,
-        //         STRDEF("x"),
-        //         chunkSize, TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL),
-        //     "read/write gcs storage - token");
-        //
-        // Buffer *buffer = bufNewC("testme", 6);
-        //
-        // storagePutP(storageNewWriteP(storage, STRDEF("archive/demo/dude.txt")), buffer);
-        // TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storage, STRDEF("archive/demo/dude.txt"))), buffer), true, "read == write");
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                TEST_RESULT_VOID(
+                    hrnServerRunP(
+                        ioFdReadNew(strNew("gcs server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
+                        .port = testPort),
+                    "gcs server run");
+            }
+            HARNESS_FORK_CHILD_END();
 
-        // buffer = bufNew(chunkSize * 2);
-        // bufUsedSet(buffer, bufSize(buffer));
-        //
-        // for (size_t chrIdx = 0; chrIdx < bufUsed(buffer); chrIdx++)
-        //     bufPtr(buffer)[chrIdx] = (unsigned char)(chrIdx % 94 + 32);
-        //
-        // storagePutP(storageNewWriteP(storage, STRDEF("dude2.txt")), buffer);
-        // TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storage, STRDEF("dude2.txt"))), buffer), true, "read == write");
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                TEST_RESULT_VOID(
+                    hrnServerRunP(
+                        ioFdReadNew(strNew("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
+                        .port = testPortAuth),
+                    "auth server run");
+            }
+            HARNESS_FORK_CHILD_END();
 
-        // HARNESS_FORK_BEGIN()
-        // {
-        //     HARNESS_FORK_CHILD_BEGIN(0, true)
-        //     {
-        //         TEST_RESULT_VOID(
-        //             hrnServerRunP(ioFdReadNew(strNew("gcs server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls),
-        //             "gcs server run");
-        //     }
-        //     HARNESS_FORK_CHILD_END();
-        //
-        //     HARNESS_FORK_PARENT_BEGIN()
-        //     {
-        //         IoWrite *service = hrnServerScriptBegin(
-        //             ioFdWriteNew(strNew("gcs client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("test against local host");
-        //
-        //         StringList *argList = strLstNew();
-        //         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        //         hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
-        //         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
-        //         hrnCfgArgRawZ(argList, cfgOptRepoGcsContainer, TEST_CONTAINER);
-        //         hrnCfgArgRaw(argList, cfgOptRepoGcsHost, hrnServerHost());
-        //         hrnCfgArgRawFmt(argList, cfgOptRepoGcsPort, "%u", hrnServerPort(0));
-        //         hrnCfgArgRawBool(argList, cfgOptRepoGcsVerifyTls, testContainer());
-        //         hrnCfgEnvRawZ(cfgOptRepoGcsAccount, TEST_ACCOUNT);
-        //         hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_SHARED);
-        //         harnessCfgLoad(cfgCmdArchivePush, argList);
-        //
-        //         Storage *storage = NULL;
-        //         TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
-        //
-        //         driver = (StorageGcs *)storage->driver;
-        //         TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
-        //         TEST_RESULT_STR_Z(driver->pathPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check path prefix");
-        //         TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
-        //
-        //         // Tests need the chunk size to be 16
-        //         driver->chunkSize = 16;
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("ignore missing file");
-        //
-        //         hrnServerScriptAccept(service);
-        //         testRequestP(service, HTTP_VERB_GET, "/fi%26le.txt");
-        //         testResponseP(service, .code = 404);
-        //
-        //         TEST_RESULT_PTR(
-        //             storageGetP(storageNewReadP(storage, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("error on missing file");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "/file.txt");
-        //         testResponseP(service, .code = 404);
-        //
-        //         TEST_ERROR(
-        //             storageGetP(storageNewReadP(storage, strNew("file.txt"))), FileMissingError,
-        //             "unable to open '/file.txt': No such file or directory");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("get file");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "/file.txt");
-        //         testResponseP(service, .content = "this is a sample file");
-        //
-        //         TEST_RESULT_STR_Z(
-        //             strNewBuf(storageGetP(storageNewReadP(storage, strNew("file.txt")))), "this is a sample file", "get file");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("get zero-length file");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "/file0.txt");
-        //         testResponseP(service);
-        //
-        //         TEST_RESULT_STR_Z(
-        //             strNewBuf(storageGetP(storageNewReadP(storage, strNew("file0.txt")))), "", "get zero-length file");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("non-404 error");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "/file.txt");
-        //         testResponseP(service, .code = 303, .content = "CONTENT");
-        //
-        //         StorageRead *read = NULL;
-        //         TEST_ASSIGN(read, storageNewReadP(storage, strNew("file.txt"), .ignoreMissing = true), "new read file");
-        //         TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
-        //         TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
-        //
-        //         TEST_ERROR_FMT(
-        //             ioReadOpen(storageReadIo(read)), ProtocolError,
-        //             "HTTP request failed with 303:\n"
-        //             "*** Path/Query ***:\n"
-        //             "/account/container/file.txt\n"
-        //             "*** Request Headers ***:\n"
-        //             "authorization: <redacted>\n"
-        //             "content-length: 0\n"
-        //             "date: <redacted>\n"
-        //             "host: %s\n"
-        //             "x-ms-version: 2019-02-02\n"
-        //             "*** Response Headers ***:\n"
-        //             "content-length: 7\n"
-        //             "*** Response Content ***:\n"
-        //             "CONTENT",
-        //             strZ(hrnServerHost()));
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("write error");
-        //
-        //         testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
-        //         testResponseP(service, .code = 403);
-        //
-        //         TEST_ERROR_FMT(
-        //             storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
-        //             "HTTP request failed with 403 (Forbidden):\n"
-        //             "*** Path/Query ***:\n"
-        //             "/account/container/file.txt\n"
-        //             "*** Request Headers ***:\n"
-        //             "authorization: <redacted>\n"
-        //             "content-length: 4\n"
-        //             "content-md5: ywjKSnu1+Wg8GRM6hIcspw==\n"
-        //             "date: <redacted>\n"
-        //             "host: %s\n"
-        //             "x-ms-blob-type: BlockBlob\n"
-        //             "x-ms-version: 2019-02-02",
-        //             strZ(hrnServerHost()));
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("write file in one part (with retry)");
-        //
-        //         testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
-        //         testResponseP(service, .code = 503);
-        //         testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
-        //         testResponseP(service);
-        //
-        //         StorageWrite *write = NULL;
-        //         TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
-        //         TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
-        //
-        //         TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
-        //         TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
-        //         TEST_RESULT_UINT(storageWriteModeFile(write), 0, "file mode is 0");
-        //         TEST_RESULT_UINT(storageWriteModePath(write), 0, "path mode is 0");
-        //         TEST_RESULT_STR_Z(storageWriteName(write), "/file.txt", "check file name");
-        //         TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
-        //         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
-        //
-        //         TEST_RESULT_VOID(storageWriteGcsClose(write->driver), "close file again");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("write zero-length file");
-        //
-        //         testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "");
-        //         testResponseP(service);
-        //
-        //         TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
-        //         TEST_RESULT_VOID(storagePutP(write, NULL), "write");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("write file in chunks with nothing left over on close");
-        //
-        //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCCx0000000&comp=chunk", .content = "1234567890123456");
-        //         testResponseP(service);
-        //
-        //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCCx0000001&comp=chunk", .content = "7890123456789012");
-        //         testResponseP(service);
-        //
-        //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?comp=chunklist",
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        //                 "<BlockList>"
-        //                 "<Uncommitted>0AAAAAAACCCCCCCCx0000000</Uncommitted>"
-        //                 "<Uncommitted>0AAAAAAACCCCCCCCx0000001</Uncommitted>"
-        //                 "</BlockList>\n");
-        //         testResponseP(service);
-        //
-        //         // Test needs a predictable file id
-        //         driver->fileId = 0x0AAAAAAACCCCCCCC;
-        //
-        //         TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
-        //         TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("write file in chunks with something left over on close");
-        //
-        //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCDx0000000&comp=chunk", .content = "1234567890123456");
-        //         testResponseP(service);
-        //
-        //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCDx0000001&comp=chunk", .content = "7890");
-        //         testResponseP(service);
-        //
-        //         testRequestP(
-        //             service, HTTP_VERB_PUT, "/file.txt?comp=chunklist",
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        //                 "<BlockList>"
-        //                 "<Uncommitted>0AAAAAAACCCCCCCDx0000000</Uncommitted>"
-        //                 "<Uncommitted>0AAAAAAACCCCCCCDx0000001</Uncommitted>"
-        //                 "</BlockList>\n");
-        //         testResponseP(service);
-        //
-        //         TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
-        //         TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("info for missing file");
-        //
-        //         testRequestP(service, HTTP_VERB_HEAD, "/BOGUS");
-        //         testResponseP(service, .code = 404);
-        //
-        //         TEST_RESULT_BOOL(
-        //             storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("info for file");
-        //
-        //         testRequestP(service, HTTP_VERB_HEAD, "/subdir/file1.txt");
-        //         testResponseP(service, .header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
-        //
-        //         StorageInfo info;
-        //         TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
-        //         TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        //         TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-        //         TEST_RESULT_UINT(info.size, 9999, "    check exists");
-        //         TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("info check existence only");
-        //
-        //         testRequestP(service, HTTP_VERB_HEAD, "/subdir/file2.txt");
-        //         testResponseP(service, .header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
-        //
-        //         TEST_ASSIGN(
-        //             info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
-        //         TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        //         TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-        //         TEST_RESULT_UINT(info.size, 0, "    check exists");
-        //         TEST_RESULT_INT(info.timeModified, 0, "    check time");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("list basic level");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
-        //         testResponseP(
-        //             service,
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        //                 "<EnumerationResults>"
-        //                 "    <Blobs>"
-        //                 "        <Blob>"
-        //                 "            <Name>path/to/test_file</Name>"
-        //                 "            <Properties>"
-        //                 "                <Last-Modified>Mon, 12 Oct 2009 17:50:30 GMT</Last-Modified>"
-        //                 "                <Content-Length>787</Content-Length>"
-        //                 "            </Properties>"
-        //                 "        </Blob>"
-        //                 "        <BlobPrefix>"
-        //                 "           <Name>path/to/test_path/</Name>"
-        //                 "       </BlobPrefix>"
-        //                 "    </Blobs>"
-        //                 "    <NextMarker/>"
-        //                 "</EnumerationResults>");
-        //
-        //         HarnessStorageInfoListCallbackData callbackData =
-        //         {
-        //             .content = strNew(""),
-        //         };
-        //
-        //         TEST_ERROR(
-        //             storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
-        //             AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
-        //
-        //         TEST_RESULT_VOID(
-        //             storageInfoListP(storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
-        //         TEST_RESULT_STR_Z(
-        //             callbackData.content,
-        //             "test_path {path}\n"
-        //             "test_file {file, s=787, t=1255369830}\n",
-        //             "check");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("list exists level");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&restype=container");
-        //         testResponseP(
-        //             service,
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        //                 "<EnumerationResults>"
-        //                 "    <Blobs>"
-        //                 "        <Blob>"
-        //                 "            <Name>test1.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <BlobPrefix>"
-        //                 "            <Name>path1/</Name>"
-        //                 "        </BlobPrefix>"
-        //                 "    </Blobs>"
-        //                 "    <NextMarker/>"
-        //                 "</EnumerationResults>");
-        //
-        //         callbackData.content = strNew("");
-        //
-        //         TEST_RESULT_VOID(
-        //             storageInfoListP(
-        //                 storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
-        //             "list");
-        //         TEST_RESULT_STR_Z(
-        //             callbackData.content,
-        //             "path1 {}\n"
-        //             "test1.txt {}\n",
-        //             "check");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("list a file in root with expression");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=test&restype=container");
-        //         testResponseP(
-        //             service,
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        //                 "<EnumerationResults>"
-        //                 "    <Blobs>"
-        //                 "        <Blob>"
-        //                 "            <Name>test1.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "    </Blobs>"
-        //                 "    <NextMarker/>"
-        //                 "</EnumerationResults>");
-        //
-        //         callbackData.content = strNew("");
-        //
-        //         TEST_RESULT_VOID(
-        //             storageInfoListP(
-        //                 storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
-        //                 .level = storageInfoLevelExists),
-        //             "list");
-        //         TEST_RESULT_STR_Z(
-        //             callbackData.content,
-        //             "test1.txt {}\n",
-        //             "check");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("list files with continuation");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
-        //         testResponseP(
-        //             service,
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        //                 "<EnumerationResults>"
-        //                 "    <Blobs>"
-        //                 "        <Blob>"
-        //                 "            <Name>path/to/test1.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <Blob>"
-        //                 "            <Name>path/to/test2.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <BlobPrefix>"
-        //                 "            <Name>path/to/path1/</Name>"
-        //                 "        </BlobPrefix>"
-        //                 "    </Blobs>"
-        //                 "    <NextMarker>ueGcxLPRx1Tr</NextMarker>"
-        //                 "</EnumerationResults>");
-        //
-        //         testRequestP(
-        //             service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&marker=ueGcxLPRx1Tr&prefix=path%2Fto%2F&restype=container");
-        //         testResponseP(
-        //             service,
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        //                 "<EnumerationResults>"
-        //                 "    <Blobs>"
-        //                 "        <Blob>"
-        //                 "            <Name>path/to/test3.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <BlobPrefix>"
-        //                 "            <Name>path/to/path2/</Name>"
-        //                 "        </BlobPrefix>"
-        //                 "    </Blobs>"
-        //                 "    <NextMarker/>"
-        //                 "</EnumerationResults>");
-        //
-        //         callbackData.content = strNew("");
-        //
-        //         TEST_RESULT_VOID(
-        //             storageInfoListP(
-        //                 storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
-        //             "list");
-        //         TEST_RESULT_STR_Z(
-        //             callbackData.content,
-        //             "path1 {}\n"
-        //             "test1.txt {}\n"
-        //             "test2.txt {}\n"
-        //             "path2 {}\n"
-        //             "test3.txt {}\n",
-        //             "check");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("list files with expression");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2Ftest&restype=container");
-        //         testResponseP(
-        //             service,
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        //                 "<EnumerationResults>"
-        //                 "    <Blobs>"
-        //                 "        <Blob>"
-        //                 "            <Name>path/to/test1.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <Blob>"
-        //                 "            <Name>path/to/test2.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <Blob>"
-        //                 "            <Name>path/to/test3.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <BlobPrefix>"
-        //                 "            <Name>path/to/test1.path/</Name>"
-        //                 "        </BlobPrefix>"
-        //                 "        <BlobPrefix>"
-        //                 "            <Name>path/to/test2.path/</Name>"
-        //                 "        </BlobPrefix>"
-        //                 "    </Blobs>"
-        //                 "    <NextMarker/>"
-        //                 "</EnumerationResults>");
-        //
-        //         callbackData.content = strNew("");
-        //
-        //         TEST_RESULT_VOID(
-        //             storageInfoListP(
-        //                 storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
-        //                 .level = storageInfoLevelExists),
-        //             "list");
-        //         TEST_RESULT_STR_Z(
-        //             callbackData.content,
-        //             "test1.path {}\n"
-        //             "test1.txt {}\n"
-        //             "test3.txt {}\n",
-        //             "check");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("switch to SAS auth");
-        //
-        //         hrnServerScriptClose(service);
-        //
-        //         hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, STORAGE_GCS_KEY_TYPE_SAS);
-        //         hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_SAS);
-        //         harnessCfgLoad(cfgCmdArchivePush, argList);
-        //
-        //         TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
-        //
-        //         driver = (StorageGcs *)storage->driver;
-        //         TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");
-        //
-        //         hrnServerScriptAccept(service);
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("remove file");
-        //
-        //         testRequestP(service, HTTP_VERB_DELETE, "/path/to/test.txt");
-        //         testResponseP(service);
-        //
-        //         TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("remove missing file");
-        //
-        //         testRequestP(service, HTTP_VERB_DELETE, "/path/to/missing.txt");
-        //         testResponseP(service, .code = 404);
-        //
-        //         TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/missing.txt")), "remove");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("remove files error to check redacted sig");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "?comp=list&restype=container");
-        //         testResponseP(service, .code = 403);
-        //
-        //         TEST_ERROR_FMT(
-        //             storagePathRemoveP(storage, strNew("/"), .recurse = true), ProtocolError,
-        //             "HTTP request failed with 403 (Forbidden):\n"
-        //             "*** Path/Query ***:\n"
-        //             "/account/container?comp=list&restype=container&sig=<redacted>\n"
-        //             "*** Request Headers ***:\n"
-        //             "content-length: 0\n"
-        //             "host: %s",
-        //             strZ(hrnServerHost()));
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("remove files from root");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "?comp=list&restype=container");
-        //         testResponseP(
-        //             service,
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        //                 "<EnumerationResults>"
-        //                 "    <Blobs>"
-        //                 "        <Blob>"
-        //                 "            <Name>test1.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <Blob>"
-        //                 "            <Name>path1/xxx.zzz</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <BlobPrefix>"
-        //                 "            <Name>not-deleted/</Name>"
-        //                 "        </BlobPrefix>"
-        //                 "    </Blobs>"
-        //                 "    <NextMarker/>"
-        //                 "</EnumerationResults>");
-        //
-        //         testRequestP(service, HTTP_VERB_DELETE, "/test1.txt");
-        //         testResponseP(service);
-        //
-        //         testRequestP(service, HTTP_VERB_DELETE, "/path1/xxx.zzz");
-        //         testResponseP(service);
-        //
-        //         TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("remove files from path");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
-        //         testResponseP(
-        //             service,
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        //                 "<EnumerationResults>"
-        //                 "    <Blobs>"
-        //                 "        <Blob>"
-        //                 "            <Name>path/test1.txt</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <Blob>"
-        //                 "            <Name>path/path1/xxx.zzz</Name>"
-        //                 "            <Properties/>"
-        //                 "        </Blob>"
-        //                 "        <BlobPrefix>"
-        //                 "            <Name>path/not-deleted/</Name>"
-        //                 "        </BlobPrefix>"
-        //                 "    </Blobs>"
-        //                 "    <NextMarker/>"
-        //                 "</EnumerationResults>");
-        //
-        //         testRequestP(service, HTTP_VERB_DELETE, "/path/test1.txt");
-        //         testResponseP(service);
-        //
-        //         testRequestP(service, HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
-        //         testResponseP(service);
-        //
-        //         TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         TEST_TITLE("remove files in empty subpath (nothing to do)");
-        //
-        //         testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
-        //         testResponseP(
-        //             service,
-        //             .content =
-        //                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        //                 "<EnumerationResults>"
-        //                 "    <Blobs>"
-        //                 "    </Blobs>"
-        //                 "    <NextMarker/>"
-        //                 "</EnumerationResults>");
-        //
-        //         TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
-        //
-        //         // -----------------------------------------------------------------------------------------------------------------
-        //         hrnServerScriptEnd(service);
-        //     }
-        //     HARNESS_FORK_PARENT_END();
-        // }
-        // HARNESS_FORK_END();
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNew(strNew("gcs client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
+                IoWrite *auth = hrnServerScriptBegin(
+                    ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
+
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("test against local host");
+                //
+                // StringList *argList = strLstNew();
+                // strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+                // hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+                // hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
+                // hrnCfgArgRawZ(argList, cfgOptRepoGcsContainer, TEST_CONTAINER);
+                // hrnCfgArgRaw(argList, cfgOptRepoGcsHost, hrnServerHost());
+                // hrnCfgArgRawFmt(argList, cfgOptRepoGcsPort, "%u", hrnServerPort(0));
+                // hrnCfgArgRawBool(argList, cfgOptRepoGcsVerifyTls, testContainer());
+                // hrnCfgEnvRawZ(cfgOptRepoGcsAccount, TEST_ACCOUNT);
+                // hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_SHARED);
+                // harnessCfgLoad(cfgCmdArchivePush, argList);
+                //
+                // Storage *storage = NULL;
+                // TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+                //
+                // driver = (StorageGcs *)storage->driver;
+                // TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
+                // TEST_RESULT_STR_Z(driver->pathPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check path prefix");
+                // TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
+                //
+                // // Tests need the chunk size to be 16
+                // driver->chunkSize = 16;
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("ignore missing file");
+                //
+                // hrnServerScriptAccept(service);
+                // testRequestP(service, HTTP_VERB_GET, "/fi%26le.txt");
+                // testResponseP(service, .code = 404);
+                //
+                // TEST_RESULT_PTR(
+                //     storageGetP(storageNewReadP(storage, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("error on missing file");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                // testResponseP(service, .code = 404);
+                //
+                // TEST_ERROR(
+                //     storageGetP(storageNewReadP(storage, strNew("file.txt"))), FileMissingError,
+                //     "unable to open '/file.txt': No such file or directory");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("get file");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                // testResponseP(service, .content = "this is a sample file");
+                //
+                // TEST_RESULT_STR_Z(
+                //     strNewBuf(storageGetP(storageNewReadP(storage, strNew("file.txt")))), "this is a sample file", "get file");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("get zero-length file");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "/file0.txt");
+                // testResponseP(service);
+                //
+                // TEST_RESULT_STR_Z(
+                //     strNewBuf(storageGetP(storageNewReadP(storage, strNew("file0.txt")))), "", "get zero-length file");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("non-404 error");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                // testResponseP(service, .code = 303, .content = "CONTENT");
+                //
+                // StorageRead *read = NULL;
+                // TEST_ASSIGN(read, storageNewReadP(storage, strNew("file.txt"), .ignoreMissing = true), "new read file");
+                // TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
+                // TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
+                //
+                // TEST_ERROR_FMT(
+                //     ioReadOpen(storageReadIo(read)), ProtocolError,
+                //     "HTTP request failed with 303:\n"
+                //     "*** Path/Query ***:\n"
+                //     "/account/container/file.txt\n"
+                //     "*** Request Headers ***:\n"
+                //     "authorization: <redacted>\n"
+                //     "content-length: 0\n"
+                //     "date: <redacted>\n"
+                //     "host: %s\n"
+                //     "x-ms-version: 2019-02-02\n"
+                //     "*** Response Headers ***:\n"
+                //     "content-length: 7\n"
+                //     "*** Response Content ***:\n"
+                //     "CONTENT",
+                //     strZ(hrnServerHost()));
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("write error");
+                //
+                // testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                // testResponseP(service, .code = 403);
+                //
+                // TEST_ERROR_FMT(
+                //     storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
+                //     "HTTP request failed with 403 (Forbidden):\n"
+                //     "*** Path/Query ***:\n"
+                //     "/account/container/file.txt\n"
+                //     "*** Request Headers ***:\n"
+                //     "authorization: <redacted>\n"
+                //     "content-length: 4\n"
+                //     "content-md5: ywjKSnu1+Wg8GRM6hIcspw==\n"
+                //     "date: <redacted>\n"
+                //     "host: %s\n"
+                //     "x-ms-blob-type: BlockBlob\n"
+                //     "x-ms-version: 2019-02-02",
+                //     strZ(hrnServerHost()));
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("write file in one part (with retry)");
+                //
+                // testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                // testResponseP(service, .code = 503);
+                // testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
+                // testResponseP(service);
+                //
+                // StorageWrite *write = NULL;
+                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
+                //
+                // TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
+                // TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
+                // TEST_RESULT_UINT(storageWriteModeFile(write), 0, "file mode is 0");
+                // TEST_RESULT_UINT(storageWriteModePath(write), 0, "path mode is 0");
+                // TEST_RESULT_STR_Z(storageWriteName(write), "/file.txt", "check file name");
+                // TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
+                // TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
+                //
+                // TEST_RESULT_VOID(storageWriteGcsClose(write->driver), "close file again");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("write zero-length file");
+                //
+                // testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "");
+                // testResponseP(service);
+                //
+                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                // TEST_RESULT_VOID(storagePutP(write, NULL), "write");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("write file in chunks with nothing left over on close");
+                //
+                // testRequestP(
+                //     service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCCx0000000&comp=chunk", .content = "1234567890123456");
+                // testResponseP(service);
+                //
+                // testRequestP(
+                //     service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCCx0000001&comp=chunk", .content = "7890123456789012");
+                // testResponseP(service);
+                //
+                // testRequestP(
+                //     service, HTTP_VERB_PUT, "/file.txt?comp=chunklist",
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                //         "<BlockList>"
+                //         "<Uncommitted>0AAAAAAACCCCCCCCx0000000</Uncommitted>"
+                //         "<Uncommitted>0AAAAAAACCCCCCCCx0000001</Uncommitted>"
+                //         "</BlockList>\n");
+                // testResponseP(service);
+                //
+                // // Test needs a predictable file id
+                // driver->fileId = 0x0AAAAAAACCCCCCCC;
+                //
+                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("write file in chunks with something left over on close");
+                //
+                // testRequestP(
+                //     service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCDx0000000&comp=chunk", .content = "1234567890123456");
+                // testResponseP(service);
+                //
+                // testRequestP(
+                //     service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCDx0000001&comp=chunk", .content = "7890");
+                // testResponseP(service);
+                //
+                // testRequestP(
+                //     service, HTTP_VERB_PUT, "/file.txt?comp=chunklist",
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                //         "<BlockList>"
+                //         "<Uncommitted>0AAAAAAACCCCCCCDx0000000</Uncommitted>"
+                //         "<Uncommitted>0AAAAAAACCCCCCCDx0000001</Uncommitted>"
+                //         "</BlockList>\n");
+                // testResponseP(service);
+                //
+                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("info for missing file");
+                //
+                // testRequestP(service, HTTP_VERB_HEAD, "/BOGUS");
+                // testResponseP(service, .code = 404);
+                //
+                // TEST_RESULT_BOOL(
+                //     storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("info for file");
+                //
+                // testRequestP(service, HTTP_VERB_HEAD, "/subdir/file1.txt");
+                // testResponseP(service, .header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
+                //
+                // StorageInfo info;
+                // TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
+                // TEST_RESULT_BOOL(info.exists, true, "    check exists");
+                // TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
+                // TEST_RESULT_UINT(info.size, 9999, "    check exists");
+                // TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("info check existence only");
+                //
+                // testRequestP(service, HTTP_VERB_HEAD, "/subdir/file2.txt");
+                // testResponseP(service, .header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
+                //
+                // TEST_ASSIGN(
+                //     info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
+                // TEST_RESULT_BOOL(info.exists, true, "    check exists");
+                // TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
+                // TEST_RESULT_UINT(info.size, 0, "    check exists");
+                // TEST_RESULT_INT(info.timeModified, 0, "    check time");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("list basic level");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
+                // testResponseP(
+                //     service,
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                //         "<EnumerationResults>"
+                //         "    <Blobs>"
+                //         "        <Blob>"
+                //         "            <Name>path/to/test_file</Name>"
+                //         "            <Properties>"
+                //         "                <Last-Modified>Mon, 12 Oct 2009 17:50:30 GMT</Last-Modified>"
+                //         "                <Content-Length>787</Content-Length>"
+                //         "            </Properties>"
+                //         "        </Blob>"
+                //         "        <BlobPrefix>"
+                //         "           <Name>path/to/test_path/</Name>"
+                //         "       </BlobPrefix>"
+                //         "    </Blobs>"
+                //         "    <NextMarker/>"
+                //         "</EnumerationResults>");
+                //
+                // HarnessStorageInfoListCallbackData callbackData =
+                // {
+                //     .content = strNew(""),
+                // };
+                //
+                // TEST_ERROR(
+                //     storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
+                //     AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
+                //
+                // TEST_RESULT_VOID(
+                //     storageInfoListP(storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
+                // TEST_RESULT_STR_Z(
+                //     callbackData.content,
+                //     "test_path {path}\n"
+                //     "test_file {file, s=787, t=1255369830}\n",
+                //     "check");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("list exists level");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&restype=container");
+                // testResponseP(
+                //     service,
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                //         "<EnumerationResults>"
+                //         "    <Blobs>"
+                //         "        <Blob>"
+                //         "            <Name>test1.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <BlobPrefix>"
+                //         "            <Name>path1/</Name>"
+                //         "        </BlobPrefix>"
+                //         "    </Blobs>"
+                //         "    <NextMarker/>"
+                //         "</EnumerationResults>");
+                //
+                // callbackData.content = strNew("");
+                //
+                // TEST_RESULT_VOID(
+                //     storageInfoListP(
+                //         storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                //     "list");
+                // TEST_RESULT_STR_Z(
+                //     callbackData.content,
+                //     "path1 {}\n"
+                //     "test1.txt {}\n",
+                //     "check");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("list a file in root with expression");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=test&restype=container");
+                // testResponseP(
+                //     service,
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                //         "<EnumerationResults>"
+                //         "    <Blobs>"
+                //         "        <Blob>"
+                //         "            <Name>test1.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "    </Blobs>"
+                //         "    <NextMarker/>"
+                //         "</EnumerationResults>");
+                //
+                // callbackData.content = strNew("");
+                //
+                // TEST_RESULT_VOID(
+                //     storageInfoListP(
+                //         storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
+                //         .level = storageInfoLevelExists),
+                //     "list");
+                // TEST_RESULT_STR_Z(
+                //     callbackData.content,
+                //     "test1.txt {}\n",
+                //     "check");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("list files with continuation");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
+                // testResponseP(
+                //     service,
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                //         "<EnumerationResults>"
+                //         "    <Blobs>"
+                //         "        <Blob>"
+                //         "            <Name>path/to/test1.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <Blob>"
+                //         "            <Name>path/to/test2.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <BlobPrefix>"
+                //         "            <Name>path/to/path1/</Name>"
+                //         "        </BlobPrefix>"
+                //         "    </Blobs>"
+                //         "    <NextMarker>ueGcxLPRx1Tr</NextMarker>"
+                //         "</EnumerationResults>");
+                //
+                // testRequestP(
+                //     service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&marker=ueGcxLPRx1Tr&prefix=path%2Fto%2F&restype=container");
+                // testResponseP(
+                //     service,
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                //         "<EnumerationResults>"
+                //         "    <Blobs>"
+                //         "        <Blob>"
+                //         "            <Name>path/to/test3.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <BlobPrefix>"
+                //         "            <Name>path/to/path2/</Name>"
+                //         "        </BlobPrefix>"
+                //         "    </Blobs>"
+                //         "    <NextMarker/>"
+                //         "</EnumerationResults>");
+                //
+                // callbackData.content = strNew("");
+                //
+                // TEST_RESULT_VOID(
+                //     storageInfoListP(
+                //         storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                //     "list");
+                // TEST_RESULT_STR_Z(
+                //     callbackData.content,
+                //     "path1 {}\n"
+                //     "test1.txt {}\n"
+                //     "test2.txt {}\n"
+                //     "path2 {}\n"
+                //     "test3.txt {}\n",
+                //     "check");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("list files with expression");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2Ftest&restype=container");
+                // testResponseP(
+                //     service,
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                //         "<EnumerationResults>"
+                //         "    <Blobs>"
+                //         "        <Blob>"
+                //         "            <Name>path/to/test1.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <Blob>"
+                //         "            <Name>path/to/test2.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <Blob>"
+                //         "            <Name>path/to/test3.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <BlobPrefix>"
+                //         "            <Name>path/to/test1.path/</Name>"
+                //         "        </BlobPrefix>"
+                //         "        <BlobPrefix>"
+                //         "            <Name>path/to/test2.path/</Name>"
+                //         "        </BlobPrefix>"
+                //         "    </Blobs>"
+                //         "    <NextMarker/>"
+                //         "</EnumerationResults>");
+                //
+                // callbackData.content = strNew("");
+                //
+                // TEST_RESULT_VOID(
+                //     storageInfoListP(
+                //         storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
+                //         .level = storageInfoLevelExists),
+                //     "list");
+                // TEST_RESULT_STR_Z(
+                //     callbackData.content,
+                //     "test1.path {}\n"
+                //     "test1.txt {}\n"
+                //     "test3.txt {}\n",
+                //     "check");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("switch to SAS auth");
+                //
+                // hrnServerScriptClose(service);
+                //
+                // hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, STORAGE_GCS_KEY_TYPE_SAS);
+                // hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_SAS);
+                // harnessCfgLoad(cfgCmdArchivePush, argList);
+                //
+                // TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+                //
+                // driver = (StorageGcs *)storage->driver;
+                // TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");
+                //
+                // hrnServerScriptAccept(service);
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("remove file");
+                //
+                // testRequestP(service, HTTP_VERB_DELETE, "/path/to/test.txt");
+                // testResponseP(service);
+                //
+                // TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("remove missing file");
+                //
+                // testRequestP(service, HTTP_VERB_DELETE, "/path/to/missing.txt");
+                // testResponseP(service, .code = 404);
+                //
+                // TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/missing.txt")), "remove");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("remove files error to check redacted sig");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "?comp=list&restype=container");
+                // testResponseP(service, .code = 403);
+                //
+                // TEST_ERROR_FMT(
+                //     storagePathRemoveP(storage, strNew("/"), .recurse = true), ProtocolError,
+                //     "HTTP request failed with 403 (Forbidden):\n"
+                //     "*** Path/Query ***:\n"
+                //     "/account/container?comp=list&restype=container&sig=<redacted>\n"
+                //     "*** Request Headers ***:\n"
+                //     "content-length: 0\n"
+                //     "host: %s",
+                //     strZ(hrnServerHost()));
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("remove files from root");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "?comp=list&restype=container");
+                // testResponseP(
+                //     service,
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                //         "<EnumerationResults>"
+                //         "    <Blobs>"
+                //         "        <Blob>"
+                //         "            <Name>test1.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <Blob>"
+                //         "            <Name>path1/xxx.zzz</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <BlobPrefix>"
+                //         "            <Name>not-deleted/</Name>"
+                //         "        </BlobPrefix>"
+                //         "    </Blobs>"
+                //         "    <NextMarker/>"
+                //         "</EnumerationResults>");
+                //
+                // testRequestP(service, HTTP_VERB_DELETE, "/test1.txt");
+                // testResponseP(service);
+                //
+                // testRequestP(service, HTTP_VERB_DELETE, "/path1/xxx.zzz");
+                // testResponseP(service);
+                //
+                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("remove files from path");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
+                // testResponseP(
+                //     service,
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                //         "<EnumerationResults>"
+                //         "    <Blobs>"
+                //         "        <Blob>"
+                //         "            <Name>path/test1.txt</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <Blob>"
+                //         "            <Name>path/path1/xxx.zzz</Name>"
+                //         "            <Properties/>"
+                //         "        </Blob>"
+                //         "        <BlobPrefix>"
+                //         "            <Name>path/not-deleted/</Name>"
+                //         "        </BlobPrefix>"
+                //         "    </Blobs>"
+                //         "    <NextMarker/>"
+                //         "</EnumerationResults>");
+                //
+                // testRequestP(service, HTTP_VERB_DELETE, "/path/test1.txt");
+                // testResponseP(service);
+                //
+                // testRequestP(service, HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
+                // testResponseP(service);
+                //
+                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
+                //
+                // // -----------------------------------------------------------------------------------------------------------------
+                // TEST_TITLE("remove files in empty subpath (nothing to do)");
+                //
+                // testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
+                // testResponseP(
+                //     service,
+                //     .content =
+                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                //         "<EnumerationResults>"
+                //         "    <Blobs>"
+                //         "    </Blobs>"
+                //         "    <NextMarker/>"
+                //         "</EnumerationResults>");
+                //
+                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                hrnServerScriptEnd(service);
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
     }
 
     FUNCTION_HARNESS_RESULT_VOID();
