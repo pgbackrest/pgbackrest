@@ -253,7 +253,7 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
                     MEM_CONTEXT_BEGIN(this->memContext)
                     {
                         strFree(this->token);
-                        this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.tokenType));
+                        this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
                         this->tokenTimeExpire = tokenResult.timeExpire - 120;
                     }
                     MEM_CONTEXT_END();
