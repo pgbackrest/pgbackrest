@@ -14,6 +14,7 @@ GCS Storage
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
+#include "common/io/http/url.h"
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
@@ -52,6 +53,7 @@ VARIANT_STRDEF_EXTERN(GCS_JSON_MD5_HASH_VAR,                        GCS_JSON_MD5
 VARIANT_STRDEF_EXTERN(GCS_JSON_NAME_VAR,                            GCS_JSON_NAME);
 VARIANT_STRDEF_STATIC(GCS_JSON_PRIVATE_KEY_VAR,                     "private_key");
 VARIANT_STRDEF_EXTERN(GCS_JSON_SIZE_VAR,                            GCS_JSON_SIZE);
+VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_URI_VAR,                       "token_uri");
 VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                         "updated");
 
 /***********************************************************************************************************************************
@@ -75,6 +77,7 @@ struct StorageGcs
     const String *privateKey;                                       // Private key in PEM format
     String *token;                                                  // Token
     time_t tokenTimeExpire;                                         // Token expiration time (if service auth)
+    HttpUrl *authUrl;                                               // URL for authentication server
 };
 
 /***********************************************************************************************************************************
@@ -102,8 +105,9 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
             BUFSTR(
                 strNewFmt(
                     "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\","
-                    "\"aud\":\"https://oauth2.googleapis.com/token\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
-                    strZ(this->credential), this->write ? "_write" : "_only", (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
+                    "\"aud\":\"%s\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
+                    strZ(this->credential), this->write ? "_write" : "_only", strZ(httpUrl(this->authUrl)),
+                    (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
 
         // Sign with RSA key !!! NEED TO MAKE SURE OPENSSL STUFF GETS FREED ON ERROR
         cryptoInit();
@@ -167,20 +171,22 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         HttpClient *authClient = httpClientNew(
-            tlsClientNew(sckClientNew(STRDEF("oauth2.googleapis.com"), 443, 10000), STRDEF("oauth2.googleapis.com"),
-            10000, true, false, false), 10000);
+            tlsClientNew(
+                sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), 10000), httpUrlHost(this->authUrl), 10000,
+                true, false, false),
+            10000);
 
         String *content = strNewFmt(
             "grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s",
             strZ(storageGcsAuthJwt(this, timeBegin)));
 
         HttpHeader *header = httpHeaderNew(NULL);
-        httpHeaderAdd(header, HTTP_HEADER_HOST_STR, STRDEF("oauth2.googleapis.com"));
+        httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
         httpHeaderAdd(header, STRDEF("Content-Type"), STRDEF("application/x-www-form-urlencoded"));
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
 
         HttpRequest *request = httpRequestNewP(
-            authClient, HTTP_VERB_POST_STR, STRDEF("/token"), NULL, .header = header, .content = BUFSTR(content));
+            authClient, HTTP_VERB_POST_STR, httpUrlPath(this->authUrl), NULL, .header = header, .content = BUFSTR(content));
         HttpResponse *response = httpRequestResponse(request, true);
 
         KeyValue *kvResponse = jsonToKv(strNewBuf(httpResponseContent(response)));
@@ -857,6 +863,7 @@ storageGcsNew(
             KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
             driver->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
             driver->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
+            driver->authUrl = httpUrlNewParseP(varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR)), .type = httpProtocolTypeHttps);
         }
         // Store the authentication token
         else if (keyType == storageGcsKeyTypeToken)

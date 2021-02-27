@@ -7,6 +7,7 @@ HTTP URL
 #include "common/io/http/url.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
+#include "common/type/stringList.h"
 #include "common/regExp.h"
 
 /***********************************************************************************************************************************
@@ -62,68 +63,93 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
         *this = (HttpUrl)
         {
             .memContext = MEM_CONTEXT_NEW(),
+            .pub =
+            {
+                .url = strDup(url),
+            },
         };
 
-        // Check that URL format is one we accept
-        if (!regExpMatchOne(STRDEF("^(http[s]{0,1}:\\/\\/){0,1}[^:\\/?]+(:[1-9][0-9]{0,4}){0,1}(\\/[^?\\/]*)*$"), url))
-            THROW_FMT(FormatError, "invalid URL '%s'", strZ(url));
-
-        StringList *splitUrl = strLstNewSplitZ(url, "/");
-
-        // Determine whether the first part is protocol or host
-        if (strEqZ(strLstGet(splitUrl, 0), "http:"))
-            this->pub.type = httpProtocolTypeHttp;
-        else if (strEqZ(strLstGet(splitUrl, 0), "https:"))
-            this->pub.type = httpProtocolTypeHttps;
-
-        // If no protocol found then the first part is the host
-        if (this->pub.type == httpProtocolTypeAny)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            ASSERT(param.type != httpProtocolTypeAny);
+            // Check that URL format is one we accept
+            if (!regExpMatchOne(STRDEF("^(http[s]{0,1}:\\/\\/){0,1}[^:\\/?]+(:[1-9][0-9]{0,4}){0,1}(\\/[^?\\/]*)*$"), url))
+                THROW_FMT(FormatError, "invalid URL '%s'", strZ(url));
 
-            this->pub.type = param.type;
-        }
-        else
-        {
-            if (param.type != httpProtocolTypeAny && this->pub.type != param.type)
-                THROW_FMT(FormatError, "expected protocol '%s' in URL '%s'", strZ(httpProtocolTypeStr(param.type)), strZ(url));
+            // Determine whether the first part is protocol or host
+            StringList *splitUrl = strLstNewSplitZ(url, "/");
 
-            strLstRemoveIdx(splitUrl, 0);
-            strLstRemoveIdx(splitUrl, 0);
-        }
+            if (strEqZ(strLstGet(splitUrl, 0), "http:"))
+                this->pub.type = httpProtocolTypeHttp;
+            else if (strEqZ(strLstGet(splitUrl, 0), "https:"))
+                this->pub.type = httpProtocolTypeHttps;
 
-        // Get host and check for a port
-        StringList *splitHost = strLstNewSplitZ(strLstGet(splitUrl, 0), ":");
-        ASSERT(strLstSize(splitHost) != 0);
+            // If no protocol found then the first part is the host
+            if (this->pub.type == httpProtocolTypeAny)
+            {
+                // Protocol must be set explicitly
+                ASSERT(param.type != httpProtocolTypeAny);
 
-        this->pub.host = strLstGet(splitHost, 0);
-
-        if (strLstSize(splitHost) > 1)
-        {
-            ASSERT(strLstSize(splitHost) == 2);
-
-            this->pub.port = cvtZToUInt(strZ(strLstGet(splitHost, 1)));
-        }
-        else
-        {
-            ASSERT(this->pub.type != httpProtocolTypeAny);
-
-            if (this->pub.type == httpProtocolTypeHttp)
-                this->pub.port = 80;
+                this->pub.type = param.type;
+            }
+            // Else protocol was found
             else
-                this->pub.port = 443;
-        }
+            {
+                // Protocol must match expected
+                if (param.type != httpProtocolTypeAny && this->pub.type != param.type)
+                    THROW_FMT(FormatError, "expected protocol '%s' in URL '%s'", strZ(httpProtocolTypeStr(param.type)), strZ(url));
 
-        // Check for path
-        if (strLstSize(splitUrl) > 1)
-        {
-            // Remove host to so it is easier to reconstruct the path
-            strLstRemoveIdx(splitUrl, 0);
+                // Remove protocol parts from split
+                strLstRemoveIdx(splitUrl, 0);
+                strLstRemoveIdx(splitUrl, 0);
+            }
 
-            this->pub.path = strNewFmt("/%s", strZ(strLstJoin(splitUrl, "/")));
+            // Get host
+            StringList *splitHost = strLstNewSplitZ(strLstGet(splitUrl, 0), ":");
+            ASSERT(strLstSize(splitHost) != 0);
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                this->pub.host = strDup(strLstGet(splitHost, 0));
+            }
+            MEM_CONTEXT_PRIOR_END();
+
+            // Get port if specified
+            if (strLstSize(splitHost) > 1)
+            {
+                ASSERT(strLstSize(splitHost) == 2);
+
+                this->pub.port = cvtZToUInt(strZ(strLstGet(splitHost, 1)));
+            }
+            // Else set default port based on the protocol
+            else
+            {
+                ASSERT(this->pub.type != httpProtocolTypeAny);
+
+                if (this->pub.type == httpProtocolTypeHttp)
+                    this->pub.port = 80;
+                else
+                    this->pub.port = 443;
+            }
+
+            // Check for path
+            if (strLstSize(splitUrl) > 1)
+            {
+                // Remove host part so it is easier to construct the path
+                strLstRemoveIdx(splitUrl, 0);
+
+                // Construct path
+                const String *path = strLstJoin(splitUrl, "/");
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    this->pub.path = strNewFmt("/%s", strZ(path));
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            else
+                this->pub.path = FSLASH_STR;
         }
-        else
-            this->pub.path = FSLASH_STR;
+        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_NEW_END();
 

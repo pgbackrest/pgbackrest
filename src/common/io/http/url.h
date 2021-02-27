@@ -46,6 +46,7 @@ Getters/setters
 ***********************************************************************************************************************************/
 typedef struct HttpUrlPub
 {
+    const String *url;
     HttpProtocolType type;
     const String *host;
     unsigned int port;
@@ -82,6 +83,14 @@ httpUrlPort(const HttpUrl *this)
 {
     ASSERT_INLINE(this != NULL);
     return ((const HttpUrlPub *)this)->port;
+}
+
+// URL (exactly as originally passed)
+__attribute__((always_inline)) static inline const String *
+httpUrl(const HttpUrl *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpUrlPub *)this)->url;
 }
 
 /***********************************************************************************************************************************

@@ -248,6 +248,7 @@ testRun(void)
     if (testBegin("storageGcsAuth*()"))
     {
         StorageGcs *storage = NULL;
+        HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, testKey);
 
         // !!! HACKY WAY TO GET A BEARER TOKEN FOR TESTING AT THE COMMAND LINE
         // TEST_RESULT_STR_Z(
@@ -262,8 +263,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("jwt read-only");
 
-        HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, testKey);
-
         TEST_ASSIGN(
             storage,
             (StorageGcs *)storageDriver(
@@ -271,21 +270,23 @@ testRun(void)
                     STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
                     TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
             "read-only gcs storage - service key");
+        TEST_RESULT_STR(httpUrlHost(storage->authUrl), testHost, "check host");
+        TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
+        TEST_RESULT_UINT(httpUrlPort(storage->authUrl), testPortAuth, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(storage->authUrl), httpProtocolTypeHttps, "check protocol");
 
         TEST_RESULT_STR_Z(
             storageGcsAuthJwt(storage, 1613138142),
             "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlQHByb2plY3QuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJzY29wZSI6Imh0d"
-            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX29ubHkiLCJhdWQiOiJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS9"
-            "0b2tlbiIsImV4cCI6MTYxMzE0MTc0MiwiaWF0IjoxNjEzMTM4MTQyfQ.CphPa6w6AzaQ61sO2B0EO8zbCk_wBMcxiOyTZPcNnEIb7SpbAe5dM7UCbK_Hcd"
-            "F0VTASP3h06vhPhAcJCn0gvyAnzThg0nJddCgFUnYjMqmLjSNkI-yteQwsOpYEMletE73c9dnMYawIjqGSUKND9d_q8fjtYlpAXjczu5jmSax3YMAHacWZ"
-            "GMauR0oMiDbIgqFgAcAuneSYbFQW-hKrQ30DlRkbcsvHxpAOxnUfzUo65OC4wSzUaCAy85LzrxWEjTtaI6L6YrvP0qyICe__uyV-uvKaOUBvM_pY4uJEqD"
-            "MP8S2uA2E76Tf2MJ_NcIYV0xR7XhqlmTSkc4YqZKBFoQ",
+            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX29ubHkiLCJhdWQiOiJodHRwczovL3Rscy50ZXN0LnBnYmFja3Jlc3Qub3J"
+            "nOjQ0NDQ0L3Rva2VuIiwiZXhwIjoxNjEzMTQxNzQyLCJpYXQiOjE2MTMxMzgxNDJ9.Q_eyMD7xqxI0k-ZU0CrZHEtpP-XhIVN3NHZnyj7jvSGqrYaNU9_u"
+            "qPQUo1rnoPfH8VJ5XL8tnFU-56WjjmwlibF_CulOJdzrYaYgWdm_49U4S-qzyIoKOqhaizWPIKisNufXsD36FKO9T5fSh-3iuuIt6OID23VkAjJWjhSRxj"
+            "sQW4Qe1Int3cM_OsYsoroU8KVuqGMBr5mHftKSFVlntjCaSCBqq-Cawn8MuyU25qAXOIXEvNgUi8zWcrL_JE5llir0mcUQfwfjdSx-jjMVXBLG9cTIhVx1"
+            "jjB_txzDaIMpxPr18-ABLM9cbbKQma7KJzFYB3miF4Y0vVv39C82fQ",
             "jwt");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("jwt read/write");
-
-        HRN_STORAGE_PUT_Z(storageTest, TEST_KEY_FILE, TEST_KEY);
 
         TEST_ASSIGN(
             storage,
@@ -298,11 +299,11 @@ testRun(void)
         TEST_RESULT_STR_Z(
             storageGcsAuthJwt(storage, 1613138142),
             "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlQHByb2plY3QuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJzY29wZSI6Imh0d"
-            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwiYXVkIjoiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20"
-            "vdG9rZW4iLCJleHAiOjE2MTMxNDE3NDIsImlhdCI6MTYxMzEzODE0Mn0.KGDLo5EXM4__7b8dBYKjOJMNAJau02i6quQn4ZqJ_3YBU6ruMV66yY2YjukGC"
-            "0BSxDPcYBLsKK7TnDPrJRGLXqoS50X45BAGa5gCApReSjieO3BKgH_Eqf9vOauBgjzXVugj5PP3dw886_VeuQqt4pNAEZruj2qBTKCnrYcYM9i5UV-A0Cl"
-            "pov7dTnhGu7ROkFlJ62n_Skl-v48DEVjWGmLyAVE30dIu0niWHvybG9pIfENHlnF1fWUhIbIGm4dFmcJBlNpTBv8cIhA0Y_zriEUAN3hMqFfFXMPjRUqOU"
-            "n1xbG88ranOuk9XS4CRrzH4Cv1wgjO4Wdk_S-8poZ6N1A",
+            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwiYXVkIjoiaHR0cHM6Ly90bHMudGVzdC5wZ2JhY2tyZXN0Lm9"
+            "yZzo0NDQ0NC90b2tlbiIsImV4cCI6MTYxMzE0MTc0MiwiaWF0IjoxNjEzMTM4MTQyfQ.JZQIg-PBOM-twnCzCGOUUR4KxXhNX7Lt6b_DPjNC2DAB9XvAlP"
+            "vX30ovZj_xpr2ZsL_OVnERmZKoSVhno4pe3gVS5u7WOck8xuhcLP35oSjo_ZGf04LZuZHskcb-F6QWNGboQyF-3UDqlLUx-jsz-1MP9Dhay7iJFvHZBDto"
+            "vFK2aBHeyRnpJ8j7yt03mIyrlXhO8aKG-4VgBVoJaEz-DbA-uB5tMuB2zNq31RRkjmZ_Ox67jKkoDFJqM3THvNwjlU5Ud9sYV15v3bX1WTNSm7uQ4yEzdw"
+            "IG2G5yJfYLHL4DJ3_6Og2xqeGASzehIsFAUPhJwvwwqK8clHvCyL3MGw",
             "jwt");
     }
 
