@@ -42,7 +42,7 @@ AC_LINK_IFELSE(
 
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers")
+AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough")
 
 # -Wno-clobbered is not supported on all compilers
 AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [AC_SUBST(CFLAGS, "${CFLAGS} -Wno-clobbered")], [], [-Werror])
