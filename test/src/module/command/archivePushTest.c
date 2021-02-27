@@ -449,8 +449,8 @@ testRun(void)
             archivePushProtocol(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR, paramList, server), true, "protocol archive put");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
-            "{\"out\":\"WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum"
-                "\\nHINT: this is valid in some recovery scenarios but may also indicate a problem.\"}\n",
+            "{\"out\":[[\"WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum"
+                "\\nHINT: this is valid in some recovery scenarios but may also indicate a problem.\"]]}\n",
             "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -521,11 +521,38 @@ testRun(void)
             true, "check repo3 for WAL file");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remove WAL from one repo and push again");
+        TEST_TITLE("write error on one repo but other repo succeeds");
 
         storageRemoveP(
             storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .errorOnMissing = true);
+        storageRemoveP(
+            storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
+            .errorOnMissing = true);
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001", .mode = 0500);
+
+        TEST_ERROR(
+            cmdArchivePush(), CommandError,
+            strZ(
+                strNewFmt(
+                    "archive-push command encountered error(s):\n"
+                    "repo2: [FileOpenError] unable to open file '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001"
+                        "/000000010000000100000002-%s' for write: [13] Permission denied", walBuffer2Sha1)));
+
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest, strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            false, "check repo2 for no WAL file");
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageTest, strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            true, "check repo3 for WAL file");
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push WAL to one repo");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         harnessLogResult(
@@ -545,7 +572,7 @@ testRun(void)
         harnessLogResult(
             "P00   WARN: WAL file '000000010000000100000002' already exists in the repo2 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
-            "            WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
+            "P00   WARN: WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
     }
@@ -851,7 +878,7 @@ testRun(void)
             "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000002\n"
             "P01   WARN: WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
-            "            WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
+            "P01   WARN: WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P01 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
 

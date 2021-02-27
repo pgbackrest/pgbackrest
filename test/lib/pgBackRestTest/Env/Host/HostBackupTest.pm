@@ -337,7 +337,7 @@ sub backupBegin
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
         (defined($oParam->{strRepoType}) ? " --repo1-type=$oParam->{strRepoType}" : '') .
-        ' --repo=' . (defined($oParam->{iRepo}) ? $oParam->{iRepo} : '1') .
+        (defined($oParam->{iRepo}) ? ' --repo=' . $oParam->{iRepo} : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus},

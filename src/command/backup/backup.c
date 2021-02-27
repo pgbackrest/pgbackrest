@@ -1933,6 +1933,14 @@ cmdBackup(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // If the repo option was not provided and more than one repo is configured, then log the default repo chosen
+        if (!cfgOptionTest(cfgOptRepo) && cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
+        {
+            LOG_INFO_FMT(
+                "repo option not specified, defaulting to repo%u",
+                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+        }
+
         // Load backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
