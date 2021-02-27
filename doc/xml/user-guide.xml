@@ -2475,6 +2475,14 @@
                 <block-variable-replace key="azure-setup-create-container">n</block-variable-replace>
             </block>
 
+            <p if="'{[gcs-all]}' eq 'y'">Configure GCS-compatible object store if required.</p>
+
+            <block id="gcs-setup" if="'{[gcs-all]}' eq 'y'">
+                <block-variable-replace key="gcs-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
+            </block>
+
             <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
 
             <block id="s3-setup" if="'{[s3-all]}' eq 'y'">
