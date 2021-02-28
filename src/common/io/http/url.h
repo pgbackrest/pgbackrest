@@ -46,11 +46,11 @@ Getters/setters
 ***********************************************************************************************************************************/
 typedef struct HttpUrlPub
 {
-    const String *url;
-    HttpProtocolType type;
-    const String *host;
-    unsigned int port;
-    const String *path;
+    const String *url;                                              // Original URL
+    HttpProtocolType type;                                          // Protocol type, e.g. http
+    const String *host;                                             // Host
+    unsigned int port;                                              // Port
+    const String *path;                                             // Path
 } HttpUrlPub;
 
 // Protocol type

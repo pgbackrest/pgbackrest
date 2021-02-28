@@ -22,6 +22,7 @@ struct HttpUrl
 OBJECT_DEFINE_FREE(HTTP_URL);
 
 /***********************************************************************************************************************************
+Convert protocol type to a string
 ***********************************************************************************************************************************/
 STRING_STATIC(HTTP_PROTOCOL_HTTP_STR,                               "http");
 STRING_STATIC(HTTP_PROTOCOL_HTTPS_STR,                              "https");
