@@ -49,6 +49,7 @@ typedef struct StorageGcsRequestAsyncParam
     VAR_PARAM_HEADER;
     bool noBucket;                                                  // Exclude bucket from the URI?
     bool upload;                                                    // Is an object upload?
+    bool noAuth;                                                    // Exclude authentication header?
     const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
@@ -79,6 +80,7 @@ typedef struct StorageGcsRequestParam
     VAR_PARAM_HEADER;
     bool noBucket;                                                  // Exclude bucket from the URI?
     bool upload;                                                    // Is an object upload?
+    bool noAuth;                                                    // Exclude authentication header?
     const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters

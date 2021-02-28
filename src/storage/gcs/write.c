@@ -195,13 +195,15 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
 
         httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
 
+        // Add fields needed to verify to final upload
         if (done)
             httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
 
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             this->request = storageGcsRequestAsyncP(
-                this->storage, HTTP_VERB_PUT_STR, .upload = true, .header = header, .query = query, .content = this->chunkBuffer);
+                this->storage, HTTP_VERB_PUT_STR, .upload = true, .noAuth = true, .header = header, .query = query,
+                .content = this->chunkBuffer);
         }
         MEM_CONTEXT_END();
 

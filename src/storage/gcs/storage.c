@@ -51,6 +51,8 @@ STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UP
 JSON tokens
 ***********************************************************************************************************************************/
 VARIANT_STRDEF_STATIC(GCS_JSON_CLIENT_EMAIL_VAR,                    "client_email");
+VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_VAR,                           "error");
+VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_DESCRIPTION_VAR,               "error_description");
 #define GCS_JSON_ITEMS                                              "items"
     VARIANT_STRDEF_STATIC(GCS_JSON_ITEMS_VAR,                       GCS_JSON_ITEMS);
 VARIANT_STRDEF_EXTERN(GCS_JSON_MD5_HASH_VAR,                        GCS_JSON_MD5_HASH);
@@ -59,6 +61,7 @@ VARIANT_STRDEF_EXTERN(GCS_JSON_NAME_VAR,                            GCS_JSON_NAM
     VARIANT_STRDEF_STATIC(GCS_JSON_PREFIXES_VAR,                    GCS_JSON_PREFIXES);
 VARIANT_STRDEF_STATIC(GCS_JSON_PRIVATE_KEY_VAR,                     "private_key");
 VARIANT_STRDEF_EXTERN(GCS_JSON_SIZE_VAR,                            GCS_JSON_SIZE);
+VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_TYPE_VAR,                      "token_type");
 VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_URI_VAR,                       "token_uri");
 #define GCS_JSON_UPDATED                                            "updated"
     VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                     GCS_JSON_UPDATED);
@@ -112,44 +115,58 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
             result, encodeBase64Url,
             BUFSTR(
                 strNewFmt(
-                    "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\","
-                    "\"aud\":\"%s\",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
+                    "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\",\"aud\":\"%s\""
+                        ",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
                     strZ(this->credential), this->write ? "_write" : "_only", strZ(httpUrl(this->authUrl)),
                     (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
 
-        // Sign with RSA key !!! NEED TO MAKE SURE OPENSSL STUFF GETS FREED ON ERROR
+        // Sign with RSA key
+        volatile BIO *bio = NULL;
+        volatile EVP_PKEY *privateKey = NULL;
+        volatile EVP_MD_CTX *sign = NULL;
+
         cryptoInit();
 
-        BIO *bo = BIO_new(BIO_s_mem());
-        BIO_write(bo, strZ(this->privateKey), (int)strSize(this->privateKey));
+        TRY_BEGIN()
+        {
+            // Load key
+            bio = BIO_new(BIO_s_mem());
+            BIO_write((BIO *)bio, strZ(this->privateKey), (int)strSize(this->privateKey));
 
-        EVP_PKEY *privateKey = PEM_read_bio_PrivateKey(bo, NULL, NULL, NULL);
-        cryptoError(privateKey == NULL, "unable to read PEM");
-        BIO_free(bo);
+            privateKey = PEM_read_bio_PrivateKey((BIO *)bio, NULL, NULL, NULL);
+            cryptoError(privateKey == NULL, "unable to read PEM");
 
-        EVP_MD_CTX *sign = EVP_MD_CTX_create();
-        cryptoError(EVP_DigestSignInit(sign, NULL, EVP_sha256(), NULL, privateKey) <= 0, "unable to init");
-        cryptoError(
-            EVP_DigestSignUpdate(sign, (unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0, "unable to update");
+            // Create signature
+            sign = EVP_MD_CTX_create();
+            cryptoError(
+                EVP_DigestSignInit((EVP_MD_CTX *)sign, NULL, EVP_sha256(), NULL, (EVP_PKEY *)privateKey) <= 0, "unable to init");
+            cryptoError(
+                EVP_DigestSignUpdate((EVP_MD_CTX *)sign, (unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0,
+                "unable to update");
 
-        size_t signatureLen = 0;
-        cryptoError(EVP_DigestSignFinal(sign, NULL, &signatureLen) <= 0, "unable to get size");
+            size_t signatureLen = 0;
+            cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, NULL, &signatureLen) <= 0, "unable to get size");
 
-        Buffer *signature = bufNew(signatureLen);
-        bufUsedSet(signature, bufSize(signature));
+            Buffer *signature = bufNew(signatureLen);
+            bufUsedSet(signature, bufSize(signature));
 
-        cryptoError(EVP_DigestSignFinal(sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
+            cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
 
+            // Add signature
+            strCatChr(result, '.');
+            strCatEncode(result, encodeBase64Url, signature);
+        }
+        FINALLY()
+        {
+            BIO_free((BIO *)bio);
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-        EVP_MD_CTX_cleanup(sign);
+            EVP_MD_CTX_cleanup((EVP_MD_CTX *)sign);
 #else
-        EVP_MD_CTX_free(sign);
+            EVP_MD_CTX_free((EVP_MD_CTX *)sign);
 #endif
-        EVP_PKEY_free(privateKey);
-
-        // Add signature
-        strCatChr(result, '.');
-        strCatEncode(result, encodeBase64Url, signature);
+            EVP_PKEY_free((EVP_PKEY *)privateKey);
+        }
+        TRY_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -194,11 +211,11 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
         KeyValue *kvResponse = jsonToKv(strNewBuf(httpResponseContent(response)));
 
         // Check for an error
-        const String *error = varStr(kvGet(kvResponse, VARSTRDEF("error")));
+        const String *error = varStr(kvGet(kvResponse, GCS_JSON_ERROR_VAR));
 
         if (error != NULL)
         {
-            const String *description = varStr(kvGet(kvResponse, VARSTRDEF("error_description")));
+            const String *description = varStr(kvGet(kvResponse, GCS_JSON_ERROR_DESCRIPTION_VAR));
             CHECK(description != NULL);
 
             THROW_FMT(ProtocolError, "unable to get authentication token: [%s] %s", strZ(error), strZNull(description));
@@ -207,7 +224,7 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             // Get token
-            result.tokenType = strDup(varStr(kvGet(kvResponse, VARSTRDEF("token_type"))));
+            result.tokenType = strDup(varStr(kvGet(kvResponse, GCS_JSON_TOKEN_TYPE_VAR)));
             CHECK(result.tokenType != NULL);
             result.token = strDup(varStr(kvGet(kvResponse, VARSTRDEF("access_token"))));
             CHECK(result.token != NULL);
@@ -242,9 +259,6 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Host header is required for authentication
-        httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->endpoint);
-
         // Process authentication type
         switch (this->keyType)
         {
@@ -290,6 +304,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
         FUNCTION_LOG_PARAM(BOOL, param.upload);
+        FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -317,8 +332,11 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         HttpHeader *requestHeader = param.header == NULL ?
             httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
+        // Set host
+        httpHeaderPut(requestHeader, HTTP_HEADER_HOST_STR, this->endpoint);
+
         // Set content length
-        httpHeaderAdd(
+        httpHeaderPut(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
@@ -326,7 +344,8 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Generate authorization header
-        storageGcsAuth(this, requestHeader);
+        if (!param.noAuth)
+            storageGcsAuth(this, requestHeader);
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -382,6 +401,7 @@ storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam p
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
         FUNCTION_LOG_PARAM(BOOL, param.upload);
+        FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -395,8 +415,8 @@ storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam p
         HTTP_RESPONSE,
         storageGcsResponseP(
             storageGcsRequestAsyncP(
-                this, verb, .noBucket = param.noBucket, .upload = param.upload, .object = param.object, .header = param.header,
-                .query = param.query, .content = param.content),
+                this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .object = param.object,
+                .header = param.header, .query = param.query, .content = param.content),
             .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo));
 }
 

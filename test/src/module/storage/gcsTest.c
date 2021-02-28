@@ -66,8 +66,9 @@ Helper to build test requests
 typedef struct TestRequestParam
 {
     VAR_PARAM_HEADER;
-    bool upload;
     bool noBucket;
+    bool upload;
+    bool noAuth;
     const char *object;
     const char *query;
     const char *range;
@@ -94,7 +95,8 @@ testRequest(IoWrite *write, const char *verb, TestRequestParam param)
     strCatZ(request, " HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
 
     // Add authorization string
-    strCatZ(request, "authorization:X X\r\n");
+    if (!param.noAuth)
+        strCatZ(request, "authorization:X X\r\n");
 
     // Add content-length
     strCatFmt(request, "content-length:%zu\r\n", param.content == NULL ? 0 : strlen(param.content));
@@ -539,12 +541,13 @@ testRun(void)
                 testResponseP(service, .header = "x-guploader-uploadid:ulid1");
 
                 testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid1",
-                    .range = "0-15/*", .content = "1234567890123456");
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid1", .range = "0-15/*",
+                    .content = "1234567890123456");
                 testResponseP(service, .code = 308);
 
                 testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true,
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
                     .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .range = "16-31/32",
                     .content = "7890123456789012");
                 testResponseP(service, .content = "{\"md5Hash\":\"dnF5x6K/8ZZRzpfSlMMM+w==\",\"size\":\"32\"}");
@@ -559,16 +562,18 @@ testRun(void)
                 testResponseP(service, .header = "x-guploader-uploadid:ulid2");
 
                 testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid2",
-                    .range = "0-15/*", .content = "1234567890123456");
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .range = "0-15/*",
+                    .content = "1234567890123456");
                 testResponseP(service, .code = 503);
                 testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid2",
-                    .range = "0-15/*", .content = "1234567890123456");
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .range = "0-15/*",
+                    .content = "1234567890123456");
                 testResponseP(service, .code = 308);
 
                 testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true,
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
                     .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .range = "16-19/20",
                     .content = "7890");
                 testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
@@ -583,8 +588,9 @@ testRun(void)
                 testResponseP(service, .header = "x-guploader-uploadid:ulid3");
 
                 testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid3",
-                    .range = "0-15/*", .content = "1234567890123456");
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid3", .range = "0-15/*",
+                    .content = "1234567890123456");
                 testResponseP(service, .code = 403);
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
@@ -595,7 +601,6 @@ testRun(void)
                     "*** Path/Query ***:\n"
                     "/upload/storage/v1/b/bucket/o?name=file.txt&uploadType=resumable&upload_id=<redacted>\n"
                     "*** Request Headers ***:\n"
-                    "authorization: <redacted>\n"
                     "content-length: 16\n"
                     "content-range: bytes 0-15/*\n"
                     "host: %s",
