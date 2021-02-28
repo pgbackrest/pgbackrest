@@ -324,7 +324,7 @@ testRun(void)
 
                 TEST_ERROR(
                     storageGetP(storageNewReadP(storage, strNew("file.txt"))), FileMissingError,
-                    "unable to open '/file.txt': No such file or directory");
+                    "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file");

@@ -65,7 +65,7 @@ storageReadS3Open(THIS_VOID)
     }
     // Else error unless ignore missing
     else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strZ(this->interface.name));
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
