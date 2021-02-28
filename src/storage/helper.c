@@ -349,7 +349,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
             protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
-    // Use Azure storage
+    // Use local storage
     else
     {
         const String *type = cfgOptionIdxStr(cfgOptRepoType, repoIdx);
