@@ -44,19 +44,24 @@ STRING_STATIC(GCS_QUERY_DELIMITER_STR,                              "delimiter")
 STRING_EXTERN(GCS_QUERY_FIELDS_STR,                                 GCS_QUERY_FIELDS);
 STRING_EXTERN(GCS_QUERY_MEDIA_STR,                                  GCS_QUERY_MEDIA);
 STRING_EXTERN(GCS_QUERY_NAME_STR,                                   GCS_QUERY_NAME);
+STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken");
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
 
 /***********************************************************************************************************************************
 JSON tokens
 ***********************************************************************************************************************************/
+VARIANT_STRDEF_STATIC(GCS_JSON_ACCESS_TOKEN_VAR,                    "access_token");
 VARIANT_STRDEF_STATIC(GCS_JSON_CLIENT_EMAIL_VAR,                    "client_email");
 VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_VAR,                           "error");
 VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_DESCRIPTION_VAR,               "error_description");
+VARIANT_STRDEF_STATIC(GCS_JSON_EXPIRES_IN_VAR,                      "expires_in");
 #define GCS_JSON_ITEMS                                              "items"
     VARIANT_STRDEF_STATIC(GCS_JSON_ITEMS_VAR,                       GCS_JSON_ITEMS);
 VARIANT_STRDEF_EXTERN(GCS_JSON_MD5_HASH_VAR,                        GCS_JSON_MD5_HASH);
 VARIANT_STRDEF_EXTERN(GCS_JSON_NAME_VAR,                            GCS_JSON_NAME);
+#define GCS_JSON_NEXT_PAGE_TOKEN                                    "nextPageToken"
+VARIANT_STRDEF_STATIC(GCS_JSON_NEXT_PAGE_TOKEN_VAR,                 GCS_JSON_NEXT_PAGE_TOKEN);
 #define GCS_JSON_PREFIXES                                           "prefixes"
     VARIANT_STRDEF_STATIC(GCS_JSON_PREFIXES_VAR,                    GCS_JSON_PREFIXES);
 VARIANT_STRDEF_STATIC(GCS_JSON_PRIVATE_KEY_VAR,                     "private_key");
@@ -65,6 +70,13 @@ VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_TYPE_VAR,                      "token_type"
 VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_URI_VAR,                       "token_uri");
 #define GCS_JSON_UPDATED                                            "updated"
     VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                     GCS_JSON_UPDATED);
+
+// Fields required when listing files
+#define GCS_FIELD_LIST                                                                                                             \
+    GCS_JSON_NEXT_PAGE_TOKEN "," GCS_JSON_PREFIXES "," GCS_JSON_ITEMS "(" GCS_JSON_NAME
+
+STRING_STATIC(GCS_FIELD_LIST_MIN_STR,                               GCS_FIELD_LIST ")");
+STRING_STATIC(GCS_FIELD_LIST_MAX_STR,                               GCS_FIELD_LIST "," GCS_JSON_SIZE "," GCS_JSON_UPDATED ")");
 
 /***********************************************************************************************************************************
 Object type
@@ -226,11 +238,11 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
             // Get token
             result.tokenType = strDup(varStr(kvGet(kvResponse, GCS_JSON_TOKEN_TYPE_VAR)));
             CHECK(result.tokenType != NULL);
-            result.token = strDup(varStr(kvGet(kvResponse, VARSTRDEF("access_token"))));
+            result.token = strDup(varStr(kvGet(kvResponse, GCS_JSON_ACCESS_TOKEN_VAR)));
             CHECK(result.token != NULL);
 
             // Get expiration
-            const Variant *const expiresIn = kvGet(kvResponse, VARSTRDEF("expires_in"));
+            const Variant *const expiresIn = kvGet(kvResponse, GCS_JSON_EXPIRES_IN_VAR);
             CHECK(expiresIn != NULL);
 
             result.timeExpire = timeBegin + (time_t)varInt64Force(expiresIn);
@@ -509,11 +521,7 @@ storageGcsListInternal(
             httpQueryAdd(query, GCS_QUERY_PREFIX_STR, queryPrefix);
 
         // Add fields to limit the amount of data returned
-        httpQueryAdd(
-            query, GCS_QUERY_FIELDS_STR,
-            level >= storageInfoLevelBasic ?
-                STRDEF("nextPageToken," GCS_JSON_PREFIXES "," GCS_JSON_ITEMS "(" GCS_JSON_NAME "," GCS_JSON_SIZE "," GCS_JSON_UPDATED ")") :
-                STRDEF("nextPageToken," GCS_JSON_PREFIXES "," GCS_JSON_ITEMS "(" GCS_JSON_NAME ")"));
+        httpQueryAdd(query, GCS_QUERY_FIELDS_STR, level >= storageInfoLevelBasic ? GCS_FIELD_LIST_MAX_STR : GCS_FIELD_LIST_MIN_STR);
 
         // Loop as long as a continuation marker returned
         HttpRequest *request = NULL;
@@ -541,11 +549,11 @@ storageGcsListInternal(
                 KeyValue *content = jsonToKv(strNewBuf(httpResponseContent(response)));
 
                 // If next page token exists then send an async request to get more data
-                const String *nextPageToken = varStr(kvGet(content, VARSTRDEF("nextPageToken")));
+                const String *nextPageToken = varStr(kvGet(content, GCS_JSON_NEXT_PAGE_TOKEN_VAR));
 
                 if (nextPageToken != NULL)
                 {
-                    httpQueryPut(query, STRDEF("pageToken"), nextPageToken);
+                    httpQueryPut(query, GCS_QUERY_PAGE_TOKEN_STR, nextPageToken);
 
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()
@@ -887,6 +895,7 @@ storageGcsNew(
             .bucket = strDup(bucket),
             .keyType = keyType,
             .chunkSize = chunkSize,
+            // !!! ENDPOINT SHOULD BE SPECIFIED AS A URL
             .endpoint = strDup(endpoint),
         };
 

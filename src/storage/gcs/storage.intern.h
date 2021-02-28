@@ -41,7 +41,7 @@ JSON tokens
     VARIANT_DECLARE(GCS_JSON_SIZE_VAR);
 
 /***********************************************************************************************************************************
-Perform an GCS Request
+Perform a GCS Request
 ***********************************************************************************************************************************/
 // Perform async request
 typedef struct StorageGcsRequestAsyncParam
