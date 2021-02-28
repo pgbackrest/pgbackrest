@@ -14,7 +14,7 @@ Constants
 ***********************************************************************************************************************************/
 #define TEST_ENDPOINT                                               "storage.googleapis.com"
     STRING_STATIC(TEST_ENDPOINT_STR,                                TEST_ENDPOINT);
-#define TEST_PORT                                                   443
+#define TEST_PORT                                                   ((unsigned int)443)
 #define TEST_TIMEOUT                                                5000
 #define TEST_CHUNK_SIZE                                             16
 #define TEST_BUCKET                                                 "bucket"
@@ -215,9 +215,6 @@ testRun(void)
     const unsigned int testPort = hrnServerPort(0);
     const unsigned int testPortAuth = hrnServerPort(1);
 
-    // Generate test key with local auth host/port
-    const Buffer *const testKey = BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth));
-
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))
     {
@@ -248,7 +245,6 @@ testRun(void)
     if (testBegin("storageGcsAuth*()"))
     {
         StorageGcs *storage = NULL;
-        HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, testKey);
 
         // !!! HACKY WAY TO GET A BEARER TOKEN FOR TESTING AT THE COMMAND LINE
         // TEST_RESULT_STR_Z(
@@ -263,6 +259,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("jwt read-only");
 
+        HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, "test.com", TEST_PORT)));
+
         TEST_ASSIGN(
             storage,
             (StorageGcs *)storageDriver(
@@ -270,19 +268,19 @@ testRun(void)
                     STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
                     TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
             "read-only gcs storage - service key");
-        TEST_RESULT_STR(httpUrlHost(storage->authUrl), testHost, "check host");
+        TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
         TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
-        TEST_RESULT_UINT(httpUrlPort(storage->authUrl), testPortAuth, "check port");
+        TEST_RESULT_UINT(httpUrlPort(storage->authUrl), TEST_PORT, "check port");
         TEST_RESULT_UINT(httpUrlProtocolType(storage->authUrl), httpProtocolTypeHttps, "check protocol");
 
         TEST_RESULT_STR_Z(
             storageGcsAuthJwt(storage, 1613138142),
             "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlQHByb2plY3QuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJzY29wZSI6Imh0d"
-            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX29ubHkiLCJhdWQiOiJodHRwczovL3Rscy50ZXN0LnBnYmFja3Jlc3Qub3J"
-            "nOjQ0NDQ0L3Rva2VuIiwiZXhwIjoxNjEzMTQxNzQyLCJpYXQiOjE2MTMxMzgxNDJ9.Q_eyMD7xqxI0k-ZU0CrZHEtpP-XhIVN3NHZnyj7jvSGqrYaNU9_u"
-            "qPQUo1rnoPfH8VJ5XL8tnFU-56WjjmwlibF_CulOJdzrYaYgWdm_49U4S-qzyIoKOqhaizWPIKisNufXsD36FKO9T5fSh-3iuuIt6OID23VkAjJWjhSRxj"
-            "sQW4Qe1Int3cM_OsYsoroU8KVuqGMBr5mHftKSFVlntjCaSCBqq-Cawn8MuyU25qAXOIXEvNgUi8zWcrL_JE5llir0mcUQfwfjdSx-jjMVXBLG9cTIhVx1"
-            "jjB_txzDaIMpxPr18-ABLM9cbbKQma7KJzFYB3miF4Y0vVv39C82fQ",
+            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX29ubHkiLCJhdWQiOiJodHRwczovL3Rlc3QuY29tOjQ0My90b2tlbiIsImV"
+            "4cCI6MTYxMzE0MTc0MiwiaWF0IjoxNjEzMTM4MTQyfQ.IPfwPV_Qcd4_desFHlOc2wAdWQYUe7rTWG722J_lWNSu4vZH0YVE-9N5gjLZ6z_k8cnIOaenTc"
+            "g-RX_vXmj0wZ4QyBF3t2mTVMM8jwDZtej2pPvyUslUJpcwyV6KNOOAO_TSxYN1OfE3hzMlhepC2GJRAft7oHKqaDV8DDXd4OulCM48OML0Y1ZPA-P1A-Ag"
+            "5Sfkt1aq58teZurwY3ZtwKB5jbYnb8DHJHRJwSLZCXKDrfQrwlCIsXaWXSOxxge-L3B4yaywFtTyshhGj-e8takqxinOvrPpnhjdJzGJ7IvXky_MNbTey_"
+            "RnpnhT0hjbftiJXEX6GyagwalzQRYdag",
             "jwt");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -299,17 +297,19 @@ testRun(void)
         TEST_RESULT_STR_Z(
             storageGcsAuthJwt(storage, 1613138142),
             "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlQHByb2plY3QuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJzY29wZSI6Imh0d"
-            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwiYXVkIjoiaHR0cHM6Ly90bHMudGVzdC5wZ2JhY2tyZXN0Lm9"
-            "yZzo0NDQ0NC90b2tlbiIsImV4cCI6MTYxMzE0MTc0MiwiaWF0IjoxNjEzMTM4MTQyfQ.JZQIg-PBOM-twnCzCGOUUR4KxXhNX7Lt6b_DPjNC2DAB9XvAlP"
-            "vX30ovZj_xpr2ZsL_OVnERmZKoSVhno4pe3gVS5u7WOck8xuhcLP35oSjo_ZGf04LZuZHskcb-F6QWNGboQyF-3UDqlLUx-jsz-1MP9Dhay7iJFvHZBDto"
-            "vFK2aBHeyRnpJ8j7yt03mIyrlXhO8aKG-4VgBVoJaEz-DbA-uB5tMuB2zNq31RRkjmZ_Ox67jKkoDFJqM3THvNwjlU5Ud9sYV15v3bX1WTNSm7uQ4yEzdw"
-            "IG2G5yJfYLHL4DJ3_6Og2xqeGASzehIsFAUPhJwvwwqK8clHvCyL3MGw",
+            "HBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwiYXVkIjoiaHR0cHM6Ly90ZXN0LmNvbTo0NDMvdG9rZW4iLCJ"
+            "leHAiOjE2MTMxNDE3NDIsImlhdCI6MTYxMzEzODE0Mn0.RKyHLuaIS7Ut6aud9cK7E8SxmZBT8hlOLsXd3z5mC5Ieupkzm26LE6bMik0QCww-dPbkwJKnq"
+            "Cb2cIO8GD2JdpXG4XkZhtCvbfZDZPkzioOlDwNA-Q7--btrgpFKL8C9FcZhJ1Tz24OGmIYdnZeeSf2hkBMuuIzrrve1BkRLaXfXUIWE519_tYaG4EpJ9nX"
+            "N_ouEex5CJC-YnpyhqPeSG-DX7CalHdiOERIbzKGxdcEY3VcloQbWbgAqFMAUYBg6sHoNZbdHbwHQ62khvEeF4CI0MnYBYva3darYqmEEyaTfnzGEyyg62"
+            "ocn6xBg6A6T4agO3xVT05EY-JWvq8Ockw",
             "jwt");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
     {
+        HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
+
         HARNESS_FORK_BEGIN()
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
