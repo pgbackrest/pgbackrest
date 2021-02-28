@@ -509,10 +509,7 @@ unit:
           - storage/gcs/storage
           - storage/gcs/write
           - storage/storage
-
-        # !!! NEEDED?
-        # include:
-        #   - storage/write
+          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: azure

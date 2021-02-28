@@ -21,7 +21,7 @@ Constants
     STRING_STATIC(TEST_BUCKET_STR,                                  TEST_BUCKET);
 #define TEST_KEY_FILE                                               TEST_PATH "/key.json"
     STRING_STATIC(TEST_KEY_FILE_STR,                                TEST_KEY_FILE);
-#define TEST_TOKEN                                                  "token"
+#define TEST_TOKEN                                                  "X X"
     STRING_STATIC(TEST_TOKEN_STR,                                   TEST_TOKEN);
 
 #define TEST_KEY                                                                                                                   \
@@ -63,142 +63,117 @@ Constants
 /***********************************************************************************************************************************
 Helper to build test requests
 ***********************************************************************************************************************************/
-// static StorageGcs *driver;
-//
-// typedef struct TestRequestParam
-// {
-//     VAR_PARAM_HEADER;
-//     const char *content;
-//     const char *blobType;
-// } TestRequestParam;
-//
-// /*#define testRequestP(write, verb, path, ...)                                                                                       \*/
-//     testRequest(write, verb, path, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
-//
-// static void
-// testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam param)
-// {
-//     String *request = strNewFmt("%s /" TEST_ACCOUNT "/" TEST_CONTAINER, verb);
-//
-//     // When SAS spit out the query and merge in the SAS key
-//     if (driver->sasKey != NULL)
-//     {
-//         HttpQuery *query = httpQueryNewP();
-//         StringList *pathQuery = strLstNewSplitZ(STR(path), "?");
-//
-//         if (strLstSize(pathQuery) == 2)
-//             query = httpQueryNewStr(strLstGet(pathQuery, 1));
-//
-//         httpQueryMerge(query, driver->sasKey);
-//
-//         strCat(request, strLstGet(pathQuery, 0));
-//         strCatZ(request, "?");
-//         strCat(request, httpQueryRenderP(query));
-//     }
-//     // Else just output path as is
-//     else
-//         strCatZ(request, path);
-//
-//     // Add HTTP version and user agent
-//     strCatZ(request, " HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
-//
-//     // Add authorization string
-//     if (driver->sharedKey != NULL)
-//         strCatZ(request, "authorization:SharedKey account:????????????????????????????????????????????\r\n");
-//
-//     // Add content-length
-//     strCatFmt(request, "content-length:%zu\r\n", param.content == NULL ? 0 : strlen(param.content));
-//
-//     // Add md5
-//     if (param.content != NULL)
-//     {
-//            strCatFmt(
-//                request, "content-md5:%s\r\n",
-//                strZ(strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content)))));
-//     }
-//
-//     // Add date
-//     if (driver->sharedKey != NULL)
-//         strCatZ(request, "date:???, ?? ??? ???? ??:??:?? GMT\r\n");
-//
-//     // Add host
-//     strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
-//
-//     // Add blob type
-//     if (param.blobType != NULL)
-//         strCatFmt(request, "x-ms-blob-type:%s\r\n", param.blobType);
-//
-//     // Add version
-//     if (driver->sharedKey != NULL)
-//         strCatZ(request, "x-ms-version:2019-02-02\r\n");
-//
-//     // Complete headers
-//     strCatZ(request, "\r\n");
-//
-//     // Add content
-//     if (param.content != NULL)
-//         strCatZ(request, param.content);
-//
-//     hrnServerScriptExpect(write, request);
-// }
+static StorageGcs *driver;
+
+typedef struct TestRequestParam
+{
+    VAR_PARAM_HEADER;
+    bool upload;
+    const char *object;
+    const char *query;
+    const char *range;
+    const char *content;
+} TestRequestParam;
+
+#define testRequestP(write, verb, ...)                                                                                             \
+    testRequest(write, verb, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+static void
+testRequest(IoWrite *write, const char *verb, TestRequestParam param)
+{
+    String *request = strNewFmt("%s %s/storage/v1/b/bucket/o", verb, param.upload ? "/upload" : "");
+
+    // Add object
+    if (param.object != NULL)
+        strCatFmt(request, "/%s", strZ(httpUriEncode(STR(param.object), false)));
+
+    // Add query
+    if (param.query != NULL)
+        strCatFmt(request, "?%s", param.query);
+
+    // Add HTTP version and user agent
+    strCatZ(request, " HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
+
+    // Add authorization string
+    strCatZ(request, "authorization:X X\r\n");
+
+    // Add content-length
+    strCatFmt(request, "content-length:%zu\r\n", param.content == NULL ? 0 : strlen(param.content));
+
+    // Add content-range
+    if (param.range != NULL)
+        strCatFmt(request, "content-range:bytes %s\r\n", param.range);
+
+    // Add host
+    strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
+
+    // Complete headers
+    strCatZ(request, "\r\n");
+
+    // Add content
+    if (param.content != NULL)
+        strCatZ(request, param.content);
+
+    hrnServerScriptExpect(write, request);
+}
 
 /***********************************************************************************************************************************
 Helper to build test responses
 ***********************************************************************************************************************************/
-// typedef struct TestResponseParam
-// {
-//     VAR_PARAM_HEADER;
-//     unsigned int code;
-//     const char *header;
-//     const char *content;
-// } TestResponseParam;
-//
-// /*#define testResponseP(write, ...)                                                                                                  \*/
-//     testResponse(write, (TestResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
-//
-// static void
-// testResponse(IoWrite *write, TestResponseParam param)
-// {
-//     // Set code to 200 if not specified
-//     param.code = param.code == 0 ? 200 : param.code;
-//
-//     // Output header and code
-//     String *response = strNewFmt("HTTP/1.1 %u ", param.code);
-//
-//     // Add reason for some codes
-//     switch (param.code)
-//     {
-//         case 200:
-//             strCatZ(response, "OK");
-//             break;
-//
-//         case 403:
-//             strCatZ(response, "Forbidden");
-//             break;
-//     }
-//
-//     // End header
-//     strCatZ(response, "\r\n");
-//
-//     // Headers
-//     if (param.header != NULL)
-//         strCatFmt(response, "%s\r\n", param.header);
-//
-//     // Content
-//     if (param.content != NULL)
-//     {
-//         strCatFmt(
-//             response,
-//             "content-length:%zu\r\n"
-//                 "\r\n"
-//                 "%s",
-//             strlen(param.content), param.content);
-//     }
-//     else
-//         strCatZ(response, "\r\n");
-//
-//     hrnServerScriptReply(write, response);
-// }
+typedef struct TestResponseParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int code;
+    const char *header;
+    const char *content;
+} TestResponseParam;
+
+#define testResponseP(write, ...)                                                                                                  \
+    testResponse(write, (TestResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+static void
+testResponse(IoWrite *write, TestResponseParam param)
+{
+    // Set code to 200 if not specified
+    param.code = param.code == 0 ? 200 : param.code;
+
+    // Output header and code
+    String *response = strNewFmt("HTTP/1.1 %u ", param.code);
+
+    // Add reason for some codes
+    switch (param.code)
+    {
+        case 200:
+            strCatZ(response, "OK");
+            break;
+
+        case 403:
+            strCatZ(response, "Forbidden");
+            break;
+    }
+
+    // End header
+    strCatZ(response, "\r\n");
+
+    // Headers
+    if (param.header != NULL)
+        strCatFmt(response, "%s\r\n", param.header);
+
+    // Content
+    if (param.content != NULL)
+    {
+        strCatFmt(
+            response,
+            "content-length:%zu\r\n"
+                "\r\n"
+                "%s",
+            strlen(param.content), param.content);
+    }
+    else
+        strCatZ(response, "\r\n");
+
+    hrnServerScriptReply(write, response);
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -339,223 +314,223 @@ testRun(void)
                 IoWrite *auth = hrnServerScriptBegin(
                     ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
 
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("test against local host");
-                //
-                // StringList *argList = strLstNew();
-                // strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-                // hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
-                // hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
-                // hrnCfgArgRawZ(argList, cfgOptRepoGcsContainer, TEST_CONTAINER);
-                // hrnCfgArgRaw(argList, cfgOptRepoGcsHost, hrnServerHost());
-                // hrnCfgArgRawFmt(argList, cfgOptRepoGcsPort, "%u", hrnServerPort(0));
-                // hrnCfgArgRawBool(argList, cfgOptRepoGcsVerifyTls, testContainer());
-                // hrnCfgEnvRawZ(cfgOptRepoGcsAccount, TEST_ACCOUNT);
-                // hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_SHARED);
-                // harnessCfgLoad(cfgCmdArchivePush, argList);
-                //
-                // Storage *storage = NULL;
-                // TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
-                //
-                // driver = (StorageGcs *)storage->driver;
-                // TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
-                // TEST_RESULT_STR_Z(driver->pathPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check path prefix");
-                // TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
-                //
-                // // Tests need the chunk size to be 16
-                // driver->chunkSize = 16;
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("ignore missing file");
-                //
-                // hrnServerScriptAccept(service);
-                // testRequestP(service, HTTP_VERB_GET, "/fi%26le.txt");
-                // testResponseP(service, .code = 404);
-                //
-                // TEST_RESULT_PTR(
-                //     storageGetP(storageNewReadP(storage, strNew("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("error on missing file");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "/file.txt");
-                // testResponseP(service, .code = 404);
-                //
-                // TEST_ERROR(
-                //     storageGetP(storageNewReadP(storage, strNew("file.txt"))), FileMissingError,
-                //     "unable to open '/file.txt': No such file or directory");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("get file");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "/file.txt");
-                // testResponseP(service, .content = "this is a sample file");
-                //
-                // TEST_RESULT_STR_Z(
-                //     strNewBuf(storageGetP(storageNewReadP(storage, strNew("file.txt")))), "this is a sample file", "get file");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("get zero-length file");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "/file0.txt");
-                // testResponseP(service);
-                //
-                // TEST_RESULT_STR_Z(
-                //     strNewBuf(storageGetP(storageNewReadP(storage, strNew("file0.txt")))), "", "get zero-length file");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("non-404 error");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "/file.txt");
-                // testResponseP(service, .code = 303, .content = "CONTENT");
-                //
-                // StorageRead *read = NULL;
-                // TEST_ASSIGN(read, storageNewReadP(storage, strNew("file.txt"), .ignoreMissing = true), "new read file");
-                // TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
-                // TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
-                //
-                // TEST_ERROR_FMT(
-                //     ioReadOpen(storageReadIo(read)), ProtocolError,
-                //     "HTTP request failed with 303:\n"
-                //     "*** Path/Query ***:\n"
-                //     "/account/container/file.txt\n"
-                //     "*** Request Headers ***:\n"
-                //     "authorization: <redacted>\n"
-                //     "content-length: 0\n"
-                //     "date: <redacted>\n"
-                //     "host: %s\n"
-                //     "x-ms-version: 2019-02-02\n"
-                //     "*** Response Headers ***:\n"
-                //     "content-length: 7\n"
-                //     "*** Response Content ***:\n"
-                //     "CONTENT",
-                //     strZ(hrnServerHost()));
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("write error");
-                //
-                // testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
-                // testResponseP(service, .code = 403);
-                //
-                // TEST_ERROR_FMT(
-                //     storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
-                //     "HTTP request failed with 403 (Forbidden):\n"
-                //     "*** Path/Query ***:\n"
-                //     "/account/container/file.txt\n"
-                //     "*** Request Headers ***:\n"
-                //     "authorization: <redacted>\n"
-                //     "content-length: 4\n"
-                //     "content-md5: ywjKSnu1+Wg8GRM6hIcspw==\n"
-                //     "date: <redacted>\n"
-                //     "host: %s\n"
-                //     "x-ms-blob-type: BlockBlob\n"
-                //     "x-ms-version: 2019-02-02",
-                //     strZ(hrnServerHost()));
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("write file in one part (with retry)");
-                //
-                // testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
-                // testResponseP(service, .code = 503);
-                // testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD");
-                // testResponseP(service);
-                //
-                // StorageWrite *write = NULL;
-                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
-                // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
-                //
-                // TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
-                // TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
-                // TEST_RESULT_UINT(storageWriteModeFile(write), 0, "file mode is 0");
-                // TEST_RESULT_UINT(storageWriteModePath(write), 0, "path mode is 0");
-                // TEST_RESULT_STR_Z(storageWriteName(write), "/file.txt", "check file name");
-                // TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
-                // TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
-                //
-                // TEST_RESULT_VOID(storageWriteGcsClose(write->driver), "close file again");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("write zero-length file");
-                //
-                // testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "");
-                // testResponseP(service);
-                //
-                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
-                // TEST_RESULT_VOID(storagePutP(write, NULL), "write");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("write file in chunks with nothing left over on close");
-                //
-                // testRequestP(
-                //     service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCCx0000000&comp=chunk", .content = "1234567890123456");
-                // testResponseP(service);
-                //
-                // testRequestP(
-                //     service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCCx0000001&comp=chunk", .content = "7890123456789012");
-                // testResponseP(service);
-                //
-                // testRequestP(
-                //     service, HTTP_VERB_PUT, "/file.txt?comp=chunklist",
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                //         "<BlockList>"
-                //         "<Uncommitted>0AAAAAAACCCCCCCCx0000000</Uncommitted>"
-                //         "<Uncommitted>0AAAAAAACCCCCCCCx0000001</Uncommitted>"
-                //         "</BlockList>\n");
-                // testResponseP(service);
-                //
-                // // Test needs a predictable file id
-                // driver->fileId = 0x0AAAAAAACCCCCCCC;
-                //
-                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
-                // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("write file in chunks with something left over on close");
-                //
-                // testRequestP(
-                //     service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCDx0000000&comp=chunk", .content = "1234567890123456");
-                // testResponseP(service);
-                //
-                // testRequestP(
-                //     service, HTTP_VERB_PUT, "/file.txt?chunkid=0AAAAAAACCCCCCCDx0000001&comp=chunk", .content = "7890");
-                // testResponseP(service);
-                //
-                // testRequestP(
-                //     service, HTTP_VERB_PUT, "/file.txt?comp=chunklist",
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                //         "<BlockList>"
-                //         "<Uncommitted>0AAAAAAACCCCCCCDx0000000</Uncommitted>"
-                //         "<Uncommitted>0AAAAAAACCCCCCCDx0000001</Uncommitted>"
-                //         "</BlockList>\n");
-                // testResponseP(service);
-                //
-                // TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
-                // TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("info for missing file");
-                //
-                // testRequestP(service, HTTP_VERB_HEAD, "/BOGUS");
-                // testResponseP(service, .code = 404);
-                //
-                // TEST_RESULT_BOOL(
-                //     storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("info for file");
-                //
-                // testRequestP(service, HTTP_VERB_HEAD, "/subdir/file1.txt");
-                // testResponseP(service, .header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
-                //
-                // StorageInfo info;
-                // TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
-                // TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                // TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                // TEST_RESULT_UINT(info.size, 9999, "    check exists");
-                // TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
-                //
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("test against local host");
+
+                StringList *argList = strLstNew();
+                strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
+                hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+                hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
+                hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
+                hrnCfgArgRaw(argList, cfgOptRepoGcsEndpoint, hrnServerHost());
+                hrnCfgArgRawFmt(argList, cfgOptRepoGcsPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawBool(argList, cfgOptRepoGcsVerifyTls, testContainer());
+                hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, "token");
+                hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
+                harnessCfgLoad(cfgCmdArchivePush, argList);
+
+                Storage *storage = NULL;
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                driver = (StorageGcs *)storage->driver;
+
+                // Tests need the chunk size to be 16
+                driver->chunkSize = 16;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("ignore missing file");
+
+                hrnServerScriptAccept(service);
+                testRequestP(service, HTTP_VERB_GET, .object = "fi&le.txt", .query = "alt=media");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on missing file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media");
+                testResponseP(service, .code = 404);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open '/file.txt': No such file or directory");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, strNew("file.txt")))), "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get zero-length file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file0.txt", .query = "alt=media");
+                testResponseP(service);
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, strNew("file0.txt")))), "", "get zero-length file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("non-404 error");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media");
+                testResponseP(service, .code = 303, .content = "CONTENT");
+
+                StorageRead *read = NULL;
+                TEST_ASSIGN(read, storageNewReadP(storage, strNew("file.txt"), .ignoreMissing = true), "new read file");
+                TEST_RESULT_BOOL(storageReadIgnoreMissing(read), true, "    check ignore missing");
+                TEST_RESULT_STR_Z(storageReadName(read), "/file.txt", "    check name");
+
+                TEST_ERROR_FMT(
+                    ioReadOpen(storageReadIo(read)), ProtocolError,
+                    "HTTP request failed with 303:\n"
+                    "*** Path/Query ***:\n"
+                    "/storage/v1/b/bucket/o/file.txt?alt=media\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: 7\n"
+                    "*** Response Content ***:\n"
+                    "CONTENT",
+                    strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write error");
+
+                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "ABCD");
+                testResponseP(service, .code = 403);
+
+                TEST_ERROR_FMT(
+                    storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
+                    "HTTP request failed with 403 (Forbidden):\n"
+                    "*** Path/Query ***:\n"
+                    "/upload/storage/v1/b/bucket/o?name=file.txt&uploadType=media\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 4\n"
+                    "host: %s",
+                    strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file in one part (with retry)");
+
+                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "ABCD");
+                testResponseP(service, .code = 503);
+                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "ABCD");
+                testResponseP(service, .content = "{\"md5Hash\":\"ywjKSnu1+Wg8GRM6hIcspw==\"}");
+
+                StorageWrite *write = NULL;
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
+
+                TEST_RESULT_BOOL(storageWriteAtomic(write), true, "write is atomic");
+                TEST_RESULT_BOOL(storageWriteCreatePath(write), true, "path will be created");
+                TEST_RESULT_UINT(storageWriteModeFile(write), 0, "file mode is 0");
+                TEST_RESULT_UINT(storageWriteModePath(write), 0, "path mode is 0");
+                TEST_RESULT_STR_Z(storageWriteName(write), "/file.txt", "check file name");
+                TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
+                TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
+
+                TEST_RESULT_VOID(storageWriteGcsClose(write->driver), "close file again");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write zero-length file");
+
+                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "");
+                testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"0\"}");
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, NULL), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid md5");
+
+                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "");
+                testResponseP(service, .content = "{\"md5Hash\":\"ywjK\",\"size\":\"0\"}");
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ERROR(
+                    storagePutP(write, NULL), FormatError,
+                    "expected md5 'd41d8cd98f00b204e9800998ecf8427e' for '/file.txt' but actual is 'cb08ca'");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid size");
+
+                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "");
+                testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"55\"}");
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_ERROR(storagePutP(write, NULL), FormatError, "expected size 55 for '/file.txt' but actual is 0");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file in chunks with nothing left over on close");
+
+                testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
+                testResponseP(service, .header = "x-guploader-uploadid:ulid1");
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid1",
+                    .range = "0-15/*", .content = "1234567890123456");
+                testResponseP(service);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid1",
+                    .range = "16-31/32", .content = "7890123456789012");
+                testResponseP(service, .content = "{\"md5Hash\":\"dnF5x6K/8ZZRzpfSlMMM+w==\",\"size\":\"32\"}");
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file in chunks with something left over on close");
+
+                // TEST_LOG_FMT("!!! %s", strZ(strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRDEF("12345678901234567890")))));
+
+                testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
+                testResponseP(service, .header = "x-guploader-uploadid:ulid2");
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid2",
+                    .range = "0-15/*", .content = "1234567890123456");
+                testResponseP(service);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid2",
+                    .range = "16-19/20", .content = "7890");
+                testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for missing file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "BOGUS");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_BOOL(
+                    storageInfoP(storage, strNew("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "subdir/file1.txt");
+                testResponseP(service, .content = "{\"size\":\"9999\",\"updated\":\"2015-10-21T07:28:00.000Z\"}");
+
+                StorageInfo info;
+                TEST_ASSIGN(info, storageInfoP(storage, strNew("subdir/file1.txt")), "file exists");
+                TEST_RESULT_BOOL(info.exists, true, "    check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
+                TEST_RESULT_UINT(info.size, 9999, "    check exists");
+                TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
+
                 // // -----------------------------------------------------------------------------------------------------------------
                 // TEST_TITLE("info check existence only");
                 //

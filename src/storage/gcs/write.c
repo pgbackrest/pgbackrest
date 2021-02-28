@@ -83,8 +83,6 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
         FUNCTION_LOG_PARAM(HTTP_RESPONSE, response);
     FUNCTION_LOG_END();
 
-    LOG_DETAIL_FMT("!!!HEADER:\n%s\nRESPONSE:\n%s", strZ(httpHeaderToLog(httpResponseHeader(response))), strZ(strNewBuf(httpResponseContent(response))));
-
     KeyValue *content = jsonToKv(strNewBuf(httpResponseContent(response)));
 
     // Check the md5 hash
