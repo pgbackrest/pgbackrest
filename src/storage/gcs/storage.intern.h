@@ -21,6 +21,8 @@ HTTP headers
 /***********************************************************************************************************************************
 Query tokens
 ***********************************************************************************************************************************/
+#define GCS_QUERY_FIELDS                                            "fields"
+    STRING_DECLARE(GCS_QUERY_FIELDS_STR);
 #define GCS_QUERY_NAME                                              "name"
     STRING_DECLARE(GCS_QUERY_NAME_STR);
 #define GCS_QUERY_UPLOAD_ID                                         "upload_id"

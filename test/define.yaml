@@ -501,13 +501,12 @@ unit:
         total: 3
 
         coverage:
-          - storage/helper
-
-        # !!! NEEDS TO BE COVERED
-        include:
           - storage/gcs/read
           - storage/gcs/storage
           - storage/gcs/write
+          - storage/helper
+
+        include:
           - storage/storage
           - storage/write
 

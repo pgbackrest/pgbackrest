@@ -63,12 +63,11 @@ Constants
 /***********************************************************************************************************************************
 Helper to build test requests
 ***********************************************************************************************************************************/
-static StorageGcs *driver;
-
 typedef struct TestRequestParam
 {
     VAR_PARAM_HEADER;
     bool upload;
+    bool noBucket;
     const char *object;
     const char *query;
     const char *range;
@@ -81,7 +80,7 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, const char *verb, TestRequestParam param)
 {
-    String *request = strNewFmt("%s %s/storage/v1/b/bucket/o", verb, param.upload ? "/upload" : "");
+    String *request = strNewFmt("%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
 
     // Add object
     if (param.object != NULL)
@@ -301,7 +300,7 @@ testRun(void)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(strNew("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
+                        ioFdReadNew(strNew("auth server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
                         .port = testPortAuth),
                     "auth server run");
             }
@@ -315,7 +314,7 @@ testRun(void)
                     ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("test against local host");
+                TEST_TITLE("test service auth");
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
@@ -325,22 +324,74 @@ testRun(void)
                 hrnCfgArgRaw(argList, cfgOptRepoGcsEndpoint, hrnServerHost());
                 hrnCfgArgRawFmt(argList, cfgOptRepoGcsPort, "%u", hrnServerPort(0));
                 hrnCfgArgRawBool(argList, cfgOptRepoGcsVerifyTls, testContainer());
-                hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, "token");
-                hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
+                // hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, "token");
+                hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
-                driver = (StorageGcs *)storage->driver;
-
                 // Tests need the chunk size to be 16
-                driver->chunkSize = 16;
+                ((StorageGcs *)storage->driver)->chunkSize = 16;
+
+                // Generate the auth request. The JWT part will need to be ? since it case vary in content and size.
+                const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
+                const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storage->driver), time(NULL));
+
+                String *const authRequest = strNewFmt(
+                    "POST /token HTTP/1.1\r\n"
+                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+                    "content-length:%zu\r\n"
+                    "content-type:application/x-www-form-urlencoded\r\n"
+                    "host:%s\r\n"
+                    "\r\n"
+                    "%s",
+                    strSize(jwt) + strlen(preamble), strZ(hrnServerHost()), preamble);
+
+                for (unsigned int jwtIdx = 0; jwtIdx < strSize(jwt); jwtIdx++)
+                    strCatChr(authRequest, '?');
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("create bucket");
+
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, authRequest);
+                testResponseP(auth, .content = "{\"access_token\":\"X\",\"token_type\":\"X\",\"expires_in\":120}");
+                hrnServerScriptClose(auth);
+
+                hrnServerScriptAccept(service);
+                testRequestP(service, HTTP_VERB_POST, .noBucket = true, .content = "{\"name\":\"bucket\"}");
+                testResponseP(service);
+
+                storageGcsRequestP(
+                    (StorageGcs *)storage->driver, HTTP_VERB_POST_STR, .noBucket = true,
+                    .content = BUFSTR(jsonFromKv(kvPut(kvNew(), GCS_JSON_NAME_VAR, VARSTRDEF("bucket")))));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("auth error");
+
+                // Authenticate again since the prior token timed out
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, authRequest);
+                testResponseP(auth, .content = "{\"error\":\"error\",\"error_description\":\"description\"}");
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), ProtocolError,
+                    "unable to get authentication token: [error] description");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ignore missing file");
 
-                hrnServerScriptAccept(service);
+                // Authenticate again since the prior token errored out
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, authRequest);
+                testResponseP(auth, .content = "{\"access_token\":\"X\",\"token_type\":\"X\",\"expires_in\":7200}");
+                hrnServerScriptClose(auth);
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
+
                 testRequestP(service, HTTP_VERB_GET, .object = "fi&le.txt", .query = "alt=media");
                 testResponseP(service, .code = 404);
 
@@ -404,14 +455,16 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write error");
 
-                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "ABCD");
+                testRequestP(
+                    service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
+                    .content = "ABCD");
                 testResponseP(service, .code = 403);
 
                 TEST_ERROR_FMT(
                     storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("ABCD")), ProtocolError,
                     "HTTP request failed with 403 (Forbidden):\n"
                     "*** Path/Query ***:\n"
-                    "/upload/storage/v1/b/bucket/o?name=file.txt&uploadType=media\n"
+                    "/upload/storage/v1/b/bucket/o?fields=md5Hash%%2Csize&name=file.txt&uploadType=media\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 4\n"
@@ -421,9 +474,13 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in one part (with retry)");
 
-                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "ABCD");
+                testRequestP(
+                    service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
+                    .content = "ABCD");
                 testResponseP(service, .code = 503);
-                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "ABCD");
+                testRequestP(
+                    service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
+                    .content = "ABCD");
                 testResponseP(service, .content = "{\"md5Hash\":\"ywjKSnu1+Wg8GRM6hIcspw==\"}");
 
                 StorageWrite *write = NULL;
@@ -443,7 +500,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
 
-                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "");
+                testRequestP(
+                    service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
+                    .content = "");
                 testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"0\"}");
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
@@ -452,7 +511,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("invalid md5");
 
-                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "");
+                testRequestP(
+                    service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
+                    .content = "");
                 testResponseP(service, .content = "{\"md5Hash\":\"ywjK\",\"size\":\"0\"}");
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
@@ -463,7 +524,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("invalid size");
 
-                testRequestP(service, HTTP_VERB_POST, .query = "name=file.txt&uploadType=media", .upload = true, .content = "");
+                testRequestP(
+                    service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
+                    .content = "");
                 testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"55\"}");
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
@@ -478,11 +541,12 @@ testRun(void)
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid1",
                     .range = "0-15/*", .content = "1234567890123456");
-                testResponseP(service);
+                testResponseP(service, .code = 308);
 
                 testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid1",
-                    .range = "16-31/32", .content = "7890123456789012");
+                    service, HTTP_VERB_PUT, .upload = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .range = "16-31/32",
+                    .content = "7890123456789012");
                 testResponseP(service, .content = "{\"md5Hash\":\"dnF5x6K/8ZZRzpfSlMMM+w==\",\"size\":\"32\"}");
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
@@ -491,28 +555,56 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
 
-                // TEST_LOG_FMT("!!! %s", strZ(strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRDEF("12345678901234567890")))));
-
                 testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
                 testResponseP(service, .header = "x-guploader-uploadid:ulid2");
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid2",
                     .range = "0-15/*", .content = "1234567890123456");
-                testResponseP(service);
-
+                testResponseP(service, .code = 503);
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid2",
-                    .range = "16-19/20", .content = "7890");
+                    .range = "0-15/*", .content = "1234567890123456");
+                testResponseP(service, .code = 308);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .range = "16-19/20",
+                    .content = "7890");
                 testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on resumable upload (upload_id is redacted)");
+
+                testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
+                testResponseP(service, .header = "x-guploader-uploadid:ulid3");
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .query = "name=file.txt&uploadType=resumable&upload_id=ulid3",
+                    .range = "0-15/*", .content = "1234567890123456");
+                testResponseP(service, .code = 403);
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
+
+                TEST_ERROR_FMT(
+                    storagePutP(storageNewWriteP(storage, strNew("file.txt")), BUFSTRDEF("12345678901234567")), ProtocolError,
+                    "HTTP request failed with 403 (Forbidden):\n"
+                    "*** Path/Query ***:\n"
+                    "/upload/storage/v1/b/bucket/o?name=file.txt&uploadType=resumable&upload_id=<redacted>\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 16\n"
+                    "content-range: bytes 0-15/*\n"
+                    "host: %s",
+                    strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
 
-                testRequestP(service, HTTP_VERB_GET, .object = "BOGUS");
+                testRequestP(service, HTTP_VERB_GET, .object = "BOGUS", .query = "fields=size%2Cupdated");
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(
@@ -521,7 +613,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for file");
 
-                testRequestP(service, HTTP_VERB_GET, .object = "subdir/file1.txt");
+                testRequestP(service, HTTP_VERB_GET, .object = "subdir/file1.txt", .query = "fields=size%2Cupdated");
                 testResponseP(service, .content = "{\"size\":\"9999\",\"updated\":\"2015-10-21T07:28:00.000Z\"}");
 
                 StorageInfo info;
@@ -531,360 +623,308 @@ testRun(void)
                 TEST_RESULT_UINT(info.size, 9999, "    check exists");
                 TEST_RESULT_INT(info.timeModified, 1445412480, "    check time");
 
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("info check existence only");
-                //
-                // testRequestP(service, HTTP_VERB_HEAD, "/subdir/file2.txt");
-                // testResponseP(service, .header = "content-length:777\r\nLast-Modified: Wed, 22 Oct 2015 07:28:00 GMT");
-                //
-                // TEST_ASSIGN(
-                //     info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
-                // TEST_RESULT_BOOL(info.exists, true, "    check exists");
-                // TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
-                // TEST_RESULT_UINT(info.size, 0, "    check exists");
-                // TEST_RESULT_INT(info.timeModified, 0, "    check time");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list basic level");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
-                // testResponseP(
-                //     service,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<EnumerationResults>"
-                //         "    <Blobs>"
-                //         "        <Blob>"
-                //         "            <Name>path/to/test_file</Name>"
-                //         "            <Properties>"
-                //         "                <Last-Modified>Mon, 12 Oct 2009 17:50:30 GMT</Last-Modified>"
-                //         "                <Content-Length>787</Content-Length>"
-                //         "            </Properties>"
-                //         "        </Blob>"
-                //         "        <BlobPrefix>"
-                //         "           <Name>path/to/test_path/</Name>"
-                //         "       </BlobPrefix>"
-                //         "    </Blobs>"
-                //         "    <NextMarker/>"
-                //         "</EnumerationResults>");
-                //
-                // HarnessStorageInfoListCallbackData callbackData =
-                // {
-                //     .content = strNew(""),
-                // };
-                //
-                // TEST_ERROR(
-                //     storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
-                //     AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "test_path {path}\n"
-                //     "test_file {file, s=787, t=1255369830}\n",
-                //     "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list exists level");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&restype=container");
-                // testResponseP(
-                //     service,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<EnumerationResults>"
-                //         "    <Blobs>"
-                //         "        <Blob>"
-                //         "            <Name>test1.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <BlobPrefix>"
-                //         "            <Name>path1/</Name>"
-                //         "        </BlobPrefix>"
-                //         "    </Blobs>"
-                //         "    <NextMarker/>"
-                //         "</EnumerationResults>");
-                //
-                // callbackData.content = strNew("");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(
-                //         storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
-                //     "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "path1 {}\n"
-                //     "test1.txt {}\n",
-                //     "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list a file in root with expression");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=test&restype=container");
-                // testResponseP(
-                //     service,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<EnumerationResults>"
-                //         "    <Blobs>"
-                //         "        <Blob>"
-                //         "            <Name>test1.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "    </Blobs>"
-                //         "    <NextMarker/>"
-                //         "</EnumerationResults>");
-                //
-                // callbackData.content = strNew("");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(
-                //         storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
-                //         .level = storageInfoLevelExists),
-                //     "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "test1.txt {}\n",
-                //     "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list files with continuation");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2F&restype=container");
-                // testResponseP(
-                //     service,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<EnumerationResults>"
-                //         "    <Blobs>"
-                //         "        <Blob>"
-                //         "            <Name>path/to/test1.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <Blob>"
-                //         "            <Name>path/to/test2.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <BlobPrefix>"
-                //         "            <Name>path/to/path1/</Name>"
-                //         "        </BlobPrefix>"
-                //         "    </Blobs>"
-                //         "    <NextMarker>ueGcxLPRx1Tr</NextMarker>"
-                //         "</EnumerationResults>");
-                //
-                // testRequestP(
-                //     service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&marker=ueGcxLPRx1Tr&prefix=path%2Fto%2F&restype=container");
-                // testResponseP(
-                //     service,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<EnumerationResults>"
-                //         "    <Blobs>"
-                //         "        <Blob>"
-                //         "            <Name>path/to/test3.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <BlobPrefix>"
-                //         "            <Name>path/to/path2/</Name>"
-                //         "        </BlobPrefix>"
-                //         "    </Blobs>"
-                //         "    <NextMarker/>"
-                //         "</EnumerationResults>");
-                //
-                // callbackData.content = strNew("");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(
-                //         storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
-                //     "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "path1 {}\n"
-                //     "test1.txt {}\n"
-                //     "test2.txt {}\n"
-                //     "path2 {}\n"
-                //     "test3.txt {}\n",
-                //     "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("list files with expression");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&prefix=path%2Fto%2Ftest&restype=container");
-                // testResponseP(
-                //     service,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<EnumerationResults>"
-                //         "    <Blobs>"
-                //         "        <Blob>"
-                //         "            <Name>path/to/test1.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <Blob>"
-                //         "            <Name>path/to/test2.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <Blob>"
-                //         "            <Name>path/to/test3.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <BlobPrefix>"
-                //         "            <Name>path/to/test1.path/</Name>"
-                //         "        </BlobPrefix>"
-                //         "        <BlobPrefix>"
-                //         "            <Name>path/to/test2.path/</Name>"
-                //         "        </BlobPrefix>"
-                //         "    </Blobs>"
-                //         "    <NextMarker/>"
-                //         "</EnumerationResults>");
-                //
-                // callbackData.content = strNew("");
-                //
-                // TEST_RESULT_VOID(
-                //     storageInfoListP(
-                //         storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
-                //         .level = storageInfoLevelExists),
-                //     "list");
-                // TEST_RESULT_STR_Z(
-                //     callbackData.content,
-                //     "test1.path {}\n"
-                //     "test1.txt {}\n"
-                //     "test3.txt {}\n",
-                //     "check");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("switch to SAS auth");
-                //
-                // hrnServerScriptClose(service);
-                //
-                // hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, STORAGE_GCS_KEY_TYPE_SAS);
-                // hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_SAS);
-                // harnessCfgLoad(cfgCmdArchivePush, argList);
-                //
-                // TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
-                //
-                // driver = (StorageGcs *)storage->driver;
-                // TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");
-                //
-                // hrnServerScriptAccept(service);
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove file");
-                //
-                // testRequestP(service, HTTP_VERB_DELETE, "/path/to/test.txt");
-                // testResponseP(service);
-                //
-                // TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove missing file");
-                //
-                // testRequestP(service, HTTP_VERB_DELETE, "/path/to/missing.txt");
-                // testResponseP(service, .code = 404);
-                //
-                // TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/missing.txt")), "remove");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove files error to check redacted sig");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "?comp=list&restype=container");
-                // testResponseP(service, .code = 403);
-                //
-                // TEST_ERROR_FMT(
-                //     storagePathRemoveP(storage, strNew("/"), .recurse = true), ProtocolError,
-                //     "HTTP request failed with 403 (Forbidden):\n"
-                //     "*** Path/Query ***:\n"
-                //     "/account/container?comp=list&restype=container&sig=<redacted>\n"
-                //     "*** Request Headers ***:\n"
-                //     "content-length: 0\n"
-                //     "host: %s",
-                //     strZ(hrnServerHost()));
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove files from root");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "?comp=list&restype=container");
-                // testResponseP(
-                //     service,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<EnumerationResults>"
-                //         "    <Blobs>"
-                //         "        <Blob>"
-                //         "            <Name>test1.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <Blob>"
-                //         "            <Name>path1/xxx.zzz</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <BlobPrefix>"
-                //         "            <Name>not-deleted/</Name>"
-                //         "        </BlobPrefix>"
-                //         "    </Blobs>"
-                //         "    <NextMarker/>"
-                //         "</EnumerationResults>");
-                //
-                // testRequestP(service, HTTP_VERB_DELETE, "/test1.txt");
-                // testResponseP(service);
-                //
-                // testRequestP(service, HTTP_VERB_DELETE, "/path1/xxx.zzz");
-                // testResponseP(service);
-                //
-                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove files from path");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
-                // testResponseP(
-                //     service,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<EnumerationResults>"
-                //         "    <Blobs>"
-                //         "        <Blob>"
-                //         "            <Name>path/test1.txt</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <Blob>"
-                //         "            <Name>path/path1/xxx.zzz</Name>"
-                //         "            <Properties/>"
-                //         "        </Blob>"
-                //         "        <BlobPrefix>"
-                //         "            <Name>path/not-deleted/</Name>"
-                //         "        </BlobPrefix>"
-                //         "    </Blobs>"
-                //         "    <NextMarker/>"
-                //         "</EnumerationResults>");
-                //
-                // testRequestP(service, HTTP_VERB_DELETE, "/path/test1.txt");
-                // testResponseP(service);
-                //
-                // testRequestP(service, HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
-                // testResponseP(service);
-                //
-                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
-                //
-                // // -----------------------------------------------------------------------------------------------------------------
-                // TEST_TITLE("remove files in empty subpath (nothing to do)");
-                //
-                // testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
-                // testResponseP(
-                //     service,
-                //     .content =
-                //         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                //         "<EnumerationResults>"
-                //         "    <Blobs>"
-                //         "    </Blobs>"
-                //         "    <NextMarker/>"
-                //         "</EnumerationResults>");
-                //
-                // TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info check existence only");
 
-                // Auth service no longer needed
-                hrnServerScriptEnd(auth);
+                testRequestP(service, HTTP_VERB_GET, .object = "subdir/file2.txt", .query = "fields=");
+                testResponseP(service, .content = "{}");
+
+                TEST_ASSIGN(
+                    info, storageInfoP(storage, strNew("subdir/file2.txt"), .level = storageInfoLevelExists), "file exists");
+                TEST_RESULT_BOOL(info.exists, true, "    check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "    check type");
+                TEST_RESULT_UINT(info.size, 0, "    check exists");
+                TEST_RESULT_INT(info.timeModified, 0, "    check time");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list basic level");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%29&prefix=path%2Fto%2F");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"prefixes\": ["
+                        "     \"path/to/test_path/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test_file\","
+                        "      \"size\": \"787\","
+                        "      \"updated\": \"2009-10-12T17:50:30.123Z\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                HarnessStorageInfoListCallbackData callbackData =
+                {
+                    .content = strNew(""),
+                };
+
+                TEST_ERROR(
+                    storageInfoListP(storage, strNew("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
+                    AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "test_path {path}\n"
+                    "test_file {file, s=787, t=1255369830}\n",
+                    "check");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list exists level");
+
+                testRequestP(service, HTTP_VERB_GET, .query = "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%29");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"prefixes\": ["
+                        "     \"path1/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"test1.txt\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                callbackData.content = strNew("");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(
+                        storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                    "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "path1 {}\n"
+                    "test1.txt {}\n",
+                    "check");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list a file in root with expression");
+
+                testRequestP(
+                    service, HTTP_VERB_GET, .query = "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%29&prefix=test");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"test1.txt\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                callbackData.content = strNew("");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(
+                        storage, strNew("/"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test.*$"),
+                        .level = storageInfoLevelExists),
+                    "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "test1.txt {}\n",
+                    "check");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list files with continuation");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query = "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%29&prefix=path%2Fto%2F");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"nextPageToken\": \"ueGx\","
+                        "  \"prefixes\": ["
+                        "     \"path/to/path1/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path/to/test2.txt\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query = "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%29&pageToken=ueGx&prefix=path%2Fto%2F");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"prefixes\": ["
+                        "     \"path/to/path2/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test3.txt\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                callbackData.content = strNew("");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(
+                        storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                    "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "path1 {}\n"
+                    "test1.txt {}\n"
+                    "test2.txt {}\n"
+                    "path2 {}\n"
+                    "test3.txt {}\n",
+                    "check");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list files with expression");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query = "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%29&prefix=path%2Fto%2Ftest");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"prefixes\": ["
+                        "     \"path/to/test1.path/\","
+                        "     \"path/to/test2.path/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path/to/test2.txt\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path/to/test3.txt\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                callbackData.content = strNew("");
+
+                TEST_RESULT_VOID(
+                    storageInfoListP(
+                        storage, strNew("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = strNew("^test(1|3)"),
+                        .level = storageInfoLevelExists),
+                    "list");
+                TEST_RESULT_STR_Z(
+                    callbackData.content,
+                    "test1.path {}\n"
+                    "test1.txt {}\n"
+                    "test3.txt {}\n",
+                    "check");
+
+                // // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to token auth");
+
+                hrnServerScriptClose(service);
+
+                hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, "token");
+                hrnCfgEnvRawZ(cfgOptRepoGcsKey, "X X");
+                harnessCfgLoad(cfgCmdArchivePush, argList);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove file");
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test.txt");
+                testResponseP(service);
+
+                TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/test.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove missing file");
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/missing.txt");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_VOID(storageRemoveP(storage, strNew("/path/to/missing.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove files from root");
+
+                testRequestP(service, HTTP_VERB_GET, .query = "fields=nextPageToken%2Cprefixes%2Citems%28name%29");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"prefixes\": ["
+                        "     \"not-deleted/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path1/xxx.zzz\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test1.txt");
+                testResponseP(service);
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path1/xxx.zzz");
+                testResponseP(service);
+
+                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/"), .recurse = true), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove files from path");
+
+                testRequestP(service, HTTP_VERB_GET, .query = "fields=nextPageToken%2Cprefixes%2Citems%28name%29&prefix=path%2F");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"prefixes\": ["
+                        "     \"path/not-deleted/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/test1.txt\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path/path1/xxx.zzz\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/test1.txt");
+                testResponseP(service);
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/path1/xxx.zzz");
+                testResponseP(service);
+
+                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove files in empty subpath (nothing to do)");
+
+                testRequestP(service, HTTP_VERB_GET, .query = "fields=nextPageToken%2Cprefixes%2Citems%28name%29&prefix=path%2F");
+                testResponseP(service, .content = "{}");
+
+                TEST_RESULT_VOID(storagePathRemoveP(storage, strNew("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);

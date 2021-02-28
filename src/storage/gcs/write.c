@@ -20,6 +20,7 @@ GCS query tokens
 STRING_STATIC(GCS_QUERY_MEDIA_STR,                                  "media");
 STRING_STATIC(GCS_QUERY_UPLOAD_TYPE_STR,                            "uploadType");
 STRING_STATIC(GCS_QUERY_RESUMABLE_STR,                              "resumable");
+STRING_STATIC(GCS_QUERY_FIELDS_VALUE_STR,                           GCS_JSON_MD5_HASH "," GCS_JSON_SIZE);
 
 /***********************************************************************************************************************************
 Object type
@@ -195,6 +196,9 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
 
         httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
 
+        if (done)
+            httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
+
         MEM_CONTEXT_BEGIN(this->memContext)
         {
             this->request = storageGcsRequestAsyncP(
@@ -288,6 +292,7 @@ storageWriteGcsClose(THIS_VOID)
                 HttpQuery *query = httpQueryNewP();
                 httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->interface.name, 1));
                 httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_MEDIA_STR);
+                httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
 
                 this->uploadTotal = bufUsed(this->chunkBuffer);
 

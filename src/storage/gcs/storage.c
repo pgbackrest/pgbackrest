@@ -41,6 +41,7 @@ STRING_EXTERN(GCS_HEADER_UPLOAD_ID_STR,                             GCS_HEADER_U
 Query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(GCS_QUERY_DELIMITER_STR,                              "delimiter");
+STRING_EXTERN(GCS_QUERY_FIELDS_STR,                                 GCS_QUERY_FIELDS);
 STRING_EXTERN(GCS_QUERY_NAME_STR,                                   GCS_QUERY_NAME);
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
@@ -49,12 +50,17 @@ STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UP
 JSON tokens
 ***********************************************************************************************************************************/
 VARIANT_STRDEF_STATIC(GCS_JSON_CLIENT_EMAIL_VAR,                    "client_email");
+#define GCS_JSON_ITEMS                                              "items"
+    VARIANT_STRDEF_STATIC(GCS_JSON_ITEMS_VAR,                       GCS_JSON_ITEMS);
 VARIANT_STRDEF_EXTERN(GCS_JSON_MD5_HASH_VAR,                        GCS_JSON_MD5_HASH);
 VARIANT_STRDEF_EXTERN(GCS_JSON_NAME_VAR,                            GCS_JSON_NAME);
+#define GCS_JSON_PREFIXES                                           "prefixes"
+    VARIANT_STRDEF_STATIC(GCS_JSON_PREFIXES_VAR,                    GCS_JSON_PREFIXES);
 VARIANT_STRDEF_STATIC(GCS_JSON_PRIVATE_KEY_VAR,                     "private_key");
 VARIANT_STRDEF_EXTERN(GCS_JSON_SIZE_VAR,                            GCS_JSON_SIZE);
 VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_URI_VAR,                       "token_uri");
-VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                         "updated");
+#define GCS_JSON_UPDATED                                            "updated"
+    VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                     GCS_JSON_UPDATED);
 
 /***********************************************************************************************************************************
 Object type
@@ -78,6 +84,7 @@ struct StorageGcs
     String *token;                                                  // Token
     time_t tokenTimeExpire;                                         // Token expiration time (if service auth)
     HttpUrl *authUrl;                                               // URL for authentication server
+    HttpClient *authClient;                                         // Client to service auth requests
 };
 
 /***********************************************************************************************************************************
@@ -170,23 +177,17 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        HttpClient *authClient = httpClientNew(
-            tlsClientNew(
-                sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), 10000), httpUrlHost(this->authUrl), 10000,
-                true, false, false),
-            10000);
-
         String *content = strNewFmt(
             "grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s",
             strZ(storageGcsAuthJwt(this, timeBegin)));
 
         HttpHeader *header = httpHeaderNew(NULL);
         httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
-        httpHeaderAdd(header, STRDEF("Content-Type"), STRDEF("application/x-www-form-urlencoded"));
+        httpHeaderAdd(header, HTTP_HEADER_CONTENT_TYPE_STR, STRDEF("application/x-www-form-urlencoded"));
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
 
         HttpRequest *request = httpRequestNewP(
-            authClient, HTTP_VERB_POST_STR, httpUrlPath(this->authUrl), NULL, .header = header, .content = BUFSTR(content));
+            this->authClient, HTTP_VERB_POST_STR, httpUrlPath(this->authUrl), NULL, .header = header, .content = BUFSTR(content));
         HttpResponse *response = httpRequestResponse(request, true);
 
         KeyValue *kvResponse = jsonToKv(strNewBuf(httpResponseContent(response)));
@@ -199,7 +200,7 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
             const String *description = varStr(kvGet(kvResponse, VARSTRDEF("error_description")));
             CHECK(description != NULL);
 
-            THROW_FMT(FormatError, "unable to get authentication token: [%s] %s", strZ(error), strZNull(description));
+            THROW_FMT(ProtocolError, "unable to get authentication token: [%s] %s", strZ(error), strZNull(description));
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -486,6 +487,13 @@ storageGcsListInternal(
         if (!strEmpty(queryPrefix))
             httpQueryAdd(query, GCS_QUERY_PREFIX_STR, queryPrefix);
 
+        // Add fields to limit the amount of data returned
+        httpQueryAdd(
+            query, GCS_QUERY_FIELDS_STR,
+            level >= storageInfoLevelBasic ?
+                STRDEF("nextPageToken," GCS_JSON_PREFIXES "," GCS_JSON_ITEMS "(" GCS_JSON_NAME "," GCS_JSON_SIZE "," GCS_JSON_UPDATED ")") :
+                STRDEF("nextPageToken," GCS_JSON_PREFIXES "," GCS_JSON_ITEMS "(" GCS_JSON_NAME ")"));
+
         // Loop as long as a continuation marker returned
         HttpRequest *request = NULL;
 
@@ -527,7 +535,7 @@ storageGcsListInternal(
                 }
 
                 // Get prefix list
-                const VariantList *prefixList = varVarLst(kvGet(content, VARSTRDEF("prefixes")));
+                const VariantList *prefixList = varVarLst(kvGet(content, GCS_JSON_PREFIXES_VAR));
 
                 if (prefixList != NULL)
                 {
@@ -544,8 +552,8 @@ storageGcsListInternal(
                         // Strip off base prefix and final /
                         info.name = strSubN(info.name, strSize(basePrefix), strSize(info.name) - strSize(basePrefix) - 1);
 
-                        // Add basic level info if requested
-                        if (level >= storageInfoLevelBasic)
+                        // Add type info if requested
+                        if (level >= storageInfoLevelType)
                             info.type = storageTypePath;
 
                         // Callback with info
@@ -554,7 +562,7 @@ storageGcsListInternal(
                 }
 
                 // Get file list
-                const VariantList *fileList = varVarLst(kvGet(content, VARSTRDEF("items")));
+                const VariantList *fileList = varVarLst(kvGet(content, GCS_JSON_ITEMS_VAR));
 
                 if (fileList != NULL)
                 {
@@ -615,7 +623,11 @@ storageGcsInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInt
     ASSERT(file != NULL);
 
     // // Attempt to get file info
-    HttpResponse *httpResponse = storageGcsRequestP(this, HTTP_VERB_GET_STR, .object = file, .allowMissing = true);
+    HttpResponse *httpResponse = storageGcsRequestP(
+        this, HTTP_VERB_GET_STR, .object = file, .allowMissing = true,
+        .query = httpQueryAdd(
+            httpQueryNewP(), GCS_QUERY_FIELDS_STR,
+            level >= storageInfoLevelBasic ? STRDEF(GCS_JSON_SIZE "," GCS_JSON_UPDATED) : EMPTY_STR));
 
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
@@ -770,7 +782,7 @@ storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfa
             .path = strEq(path, FSLASH_STR) ? EMPTY_STR : path,
         };
 
-        storageGcsListInternal(this, path, storageInfoLevelBasic, NULL, true, storageGcsPathRemoveCallback, &data);
+        storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, storageGcsPathRemoveCallback, &data);
 
         // Check response on last async request
         if (data.request != NULL)
@@ -857,17 +869,31 @@ storageGcsNew(
             .endpoint = strDup(endpoint),
         };
 
-        // Read data from file for service keys
-        if (keyType == storageGcsKeyTypeService)
+        // Handle auth key types
+        switch (keyType)
         {
-            KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
-            driver->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
-            driver->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
-            driver->authUrl = httpUrlNewParseP(varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR)), .type = httpProtocolTypeHttps);
+            // Read data from file for service keys
+            case storageGcsKeyTypeService:
+            {
+                KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
+                driver->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
+                driver->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
+                driver->authUrl = httpUrlNewParseP(varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR)), .type = httpProtocolTypeHttps);
+
+                driver->authClient = httpClientNew(
+                    tlsClientNew(
+                        sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout),
+                        httpUrlHost(driver->authUrl), timeout, verifyPeer, caFile, caPath),
+                    timeout);
+
+                break;
+            }
+
+            // Store the authentication token
+            case storageGcsKeyTypeToken:
+                driver->token = strDup(key);
+                break;
         }
-        // Store the authentication token
-        else if (keyType == storageGcsKeyTypeToken)
-            driver->token = strDup(key);
 
         // Create the http client used to service requests
         driver->httpClient = httpClientNew(
