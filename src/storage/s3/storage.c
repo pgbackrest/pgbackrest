@@ -483,13 +483,13 @@ General function for listing files to be used by other list routines
 ***********************************************************************************************************************************/
 static void
 storageS3ListInternal(
-    StorageS3 *this, const String *path, const String *expression, bool recurse,
-    void (*callback)(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml),
-    void *callbackData)
+    StorageS3 *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
+    StorageInfoListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
@@ -580,21 +580,30 @@ storageS3ListInternal(
                     MEM_CONTEXT_PRIOR_END();
                 }
 
-                // Get subpath list
+                // Get prefix list
                 XmlNodeList *subPathList = xmlNodeChildList(xmlRoot, S3_XML_TAG_COMMON_PREFIXES_STR);
 
                 for (unsigned int subPathIdx = 0; subPathIdx < xmlNodeLstSize(subPathList); subPathIdx++)
                 {
                     const XmlNode *subPathNode = xmlNodeLstGet(subPathList, subPathIdx);
 
-                    // Get subpath name
-                    const String *subPath = xmlNodeContent(xmlNodeChild(subPathNode, S3_XML_TAG_PREFIX_STR, true));
+                    // Get path name
+                    StorageInfo info =
+                    {
+                        .level = level,
+                        .name = xmlNodeContent(xmlNodeChild(subPathNode, S3_XML_TAG_PREFIX_STR, true)),
+                        .exists = true,
+                    };
 
                     // Strip off base prefix and final /
-                    subPath = strSubN(subPath, strSize(basePrefix), strSize(subPath) - strSize(basePrefix) - 1);
+                    info.name = strSubN(info.name, strSize(basePrefix), strSize(info.name) - strSize(basePrefix) - 1);
 
-                    // Add to list
-                    callback(this, callbackData, subPath, storageTypePath, NULL);
+                    // Add type info if requested
+                    if (level >= storageInfoLevelType)
+                        info.type = storageTypePath;
+
+                    // Callback with info
+                    callback(callbackData, &info);
                 }
 
                 // Get file list
@@ -605,13 +614,27 @@ storageS3ListInternal(
                     const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
 
                     // Get file name
-                    const String *file = xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_KEY_STR, true));
+                    StorageInfo info =
+                    {
+                        .level = level,
+                        .name = xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_KEY_STR, true)),
+                        .exists = true,
+                    };
 
                     // Strip off the base prefix when present
-                    file = strEmpty(basePrefix) ? file : strSub(file, strSize(basePrefix));
+                    if (!strEmpty(basePrefix))
+                        info.name = strSub(info.name, strSize(basePrefix));
 
-                    // Add to list
-                    callback(this, callbackData, file, storageTypeFile, fileNode);
+                    // Add basic info if requested (no need to add type info since file is default type)
+                    if (level >= storageInfoLevelBasic)
+                    {
+                        info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
+                        info.timeModified = storageS3CvtTime(
+                            xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
+                    }
+
+                    // Callback with info
+                    callback(callbackData, &info);
                 }
             }
             MEM_CONTEXT_TEMP_END();
@@ -645,12 +668,11 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
 
-    // Add basic level info if requested and the file exists
+    // Add basic level info if requested and the file exists (no need to add type info since file is default type)
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
         const HttpHeader *httpHeader = httpResponseHeader(httpResponse);
 
-        result.type = storageTypeFile;
         result.size = cvtZToUInt64(strZ(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
         result.timeModified = httpDateToTime(httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR));
     }
@@ -659,56 +681,6 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageS3InfoListData
-{
-    StorageInfoLevel level;                                         // Level of info to set
-    StorageInfoListCallback callback;                               // User-supplied callback function
-    void *callbackData;                                             // User-supplied callback data
-} StorageS3InfoListData;
-
-static void
-storageS3InfoListCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_S3, this);
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(XML_NODE, xml);
-    FUNCTION_TEST_END();
-
-    (void)this;                                                     // Unused but still logged above for debugging
-    ASSERT(callbackData != NULL);
-    ASSERT(name != NULL);
-
-    StorageS3InfoListData *data = (StorageS3InfoListData *)callbackData;
-
-    StorageInfo info =
-    {
-        .name = name,
-        .level = data->level,
-        .exists = true,
-    };
-
-    if (data->level >= storageInfoLevelBasic)
-    {
-        info.type = type;
-
-        // Add additional info for files
-        if (type == storageTypeFile)
-        {
-            ASSERT(xml != NULL);
-
-            info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_SIZE_STR, true))));
-            info.timeModified = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_LAST_MODIFIED_STR, true)));
-        }
-    }
-
-    data->callback(data->callbackData, &info);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 static bool
 storageS3InfoList(
     THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
@@ -729,12 +701,7 @@ storageS3InfoList(
     ASSERT(path != NULL);
     ASSERT(callback != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        StorageS3InfoListData data = {.level = level, .callback = callback, .callbackData = callbackData};
-        storageS3ListInternal(this, path, param.expression, false, storageS3InfoListCallback, &data);
-    }
-    MEM_CONTEXT_TEMP_END();
+    storageS3ListInternal(this, path, level, param.expression, false, callback, callbackData);
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -783,10 +750,12 @@ storageS3NewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam p
 /**********************************************************************************************************************************/
 typedef struct StorageS3PathRemoveData
 {
+    StorageS3 *this;                                                // Storage object
     MemContext *memContext;                                         // Mem context to create xml document in
     unsigned int size;                                              // Size of delete request
     HttpRequest *request;                                           // Async delete request
     XmlDocument *xml;                                               // Delete xml
+    const String *path;                                             // Root path of remove
 } StorageS3PathRemoveData;
 
 static HttpRequest *
@@ -839,24 +808,19 @@ storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *
 }
 
 static void
-storageS3PathRemoveCallback(StorageS3 *this, void *callbackData, const String *name, StorageType type, const XmlNode *xml)
+storageS3PathRemoveCallback(void *callbackData, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_S3, this);
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        (void)name;                                                 // Unused since full path from XML needed
-        FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(XML_NODE, xml);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
     ASSERT(callbackData != NULL);
+    ASSERT(info != NULL);
 
     // Only delete files since paths don't really exist
-    if (type == storageTypeFile)
+    if (info->type == storageTypeFile)
     {
-        ASSERT(xml != NULL);
-
         StorageS3PathRemoveData *data = (StorageS3PathRemoveData *)callbackData;
 
         // If there is something to delete then create the request
@@ -873,15 +837,15 @@ storageS3PathRemoveCallback(StorageS3 *this, void *callbackData, const String *n
         // Add to delete list
         xmlNodeContentSet(
             xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
-            xmlNodeContent(xmlNodeChild(xml, S3_XML_TAG_KEY_STR, true)));
+            strNewFmt("%s%s", strZ(data->path), strZ(info->name)));
         data->size++;
 
         // Delete list when it is full
-        if (data->size == this->deleteMax)
+        if (data->size == data->this->deleteMax)
         {
             MEM_CONTEXT_BEGIN(data->memContext)
             {
-                data->request = storageS3PathRemoveInternal(this, data->request, data->xml);
+                data->request = storageS3PathRemoveInternal(data->this, data->request, data->xml);
             }
             MEM_CONTEXT_END();
 
@@ -911,8 +875,14 @@ storageS3PathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfac
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageS3PathRemoveData data = {.memContext = memContextCurrent()};
-        storageS3ListInternal(this, path, NULL, true, storageS3PathRemoveCallback, &data);
+        StorageS3PathRemoveData data =
+        {
+            .this = this,
+            .memContext = memContextCurrent(),
+            .path = strEq(path, FSLASH_STR) ? EMPTY_STR : strNewFmt("%s/", strZ(strSub(path, 1))),
+        };
+
+        storageS3ListInternal(this, path, storageInfoLevelType, NULL, true, storageS3PathRemoveCallback, &data);
 
         // Call if there is more to be removed
         if (data.xml != NULL)
