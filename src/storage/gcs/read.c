@@ -13,6 +13,11 @@ GCS Storage Read
 #include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
+GCS query tokens
+***********************************************************************************************************************************/
+STRING_STATIC(GCS_QUERY_ALT_STR,                                    "alt");
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 #define STORAGE_READ_GCS_TYPE                                       StorageReadGcs
@@ -57,7 +62,7 @@ storageReadGcsOpen(THIS_VOID)
     {
         this->httpResponse = storageGcsRequestP(
             this->storage, HTTP_VERB_GET_STR, .object = this->interface.name, .allowMissing = true, .contentIo = true,
-            .query = httpQueryAdd(httpQueryNewP(), STRDEF("alt"), STRDEF("media")));
+            .query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_ALT_STR, GCS_QUERY_MEDIA_STR));
     }
     MEM_CONTEXT_END();
 
@@ -67,7 +72,7 @@ storageReadGcsOpen(THIS_VOID)
     }
     // Else error unless ignore missing
     else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strZ(this->interface.name));
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

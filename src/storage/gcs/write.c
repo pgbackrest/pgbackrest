@@ -17,7 +17,6 @@ GCS Storage File Write
 /***********************************************************************************************************************************
 GCS query tokens
 ***********************************************************************************************************************************/
-STRING_STATIC(GCS_QUERY_MEDIA_STR,                                  "media");
 STRING_STATIC(GCS_QUERY_UPLOAD_TYPE_STR,                            "uploadType");
 STRING_STATIC(GCS_QUERY_RESUMABLE_STR,                              "resumable");
 STRING_STATIC(GCS_QUERY_FIELDS_VALUE_STR,                           GCS_JSON_MD5_HASH "," GCS_JSON_SIZE);

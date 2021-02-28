@@ -42,6 +42,7 @@ Query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(GCS_QUERY_DELIMITER_STR,                              "delimiter");
 STRING_EXTERN(GCS_QUERY_FIELDS_STR,                                 GCS_QUERY_FIELDS);
+STRING_EXTERN(GCS_QUERY_MEDIA_STR,                                  GCS_QUERY_MEDIA);
 STRING_EXTERN(GCS_QUERY_NAME_STR,                                   GCS_QUERY_NAME);
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
