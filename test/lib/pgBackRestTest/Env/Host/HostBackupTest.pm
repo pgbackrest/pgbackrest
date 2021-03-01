@@ -1245,7 +1245,7 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-key-type'} = HOST_GCS_KEY_TYPE;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-key'} = HOST_GCS_KEY;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-endpoint'} = HOST_GCS . ':' . HOST_GCS_PORT;
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-verify-tls'} = 'n';
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-storage-verify-tls'} = 'n';
         }
 
         if ($iRepoTotal == 2)

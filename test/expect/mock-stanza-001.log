@@ -4,14 +4,14 @@ run 001 - remote 0, storage gcs, enc 0, cmp zst
 stanza-create db - fail on missing control file (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online --log-level-file=[LOG-LEVEL-FILE] stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00  ERROR: [055]: unable to open missing file '[TEST_PATH]/db-primary/db/base/global/pg_control' for read
 P00   INFO: stanza-create command end: aborted with exception [055]
 
 stanza-upgrade db - fail on stanza not initialized since archive.info is missing (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: stanza-upgrade for stanza 'db' on repo1
 P00  ERROR: [055]: unable to load info file '/archive/db/archive.info' or '/archive/db/archive.info.copy':
             FileMissingError: unable to open missing file '/archive/db/archive.info' for read
@@ -26,7 +26,7 @@ P00   INFO: stanza-upgrade command end: aborted with exception [055]
 stanza-create db - successfully create the stanza (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: stanza-create for stanza 'db' on repo1
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: stanza-create command end: completed successfully
@@ -70,7 +70,7 @@ backrest-checksum="[CHECKSUM]"
 stanza-create db - do not fail on rerun of stanza-create - info files exist and DB section ok (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: stanza-create for stanza 'db' on repo1
 P00   INFO: stanza 'db' already exists on repo1 and is valid
 P00 DETAIL: statistics: STATISTICS
@@ -115,7 +115,7 @@ backrest-checksum="[CHECKSUM]"
 stanza-create db - fail on database mismatch and warn force option deprecated (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online --force stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --force --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --force --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   WARN: option --force is no longer supported
 P00   INFO: stanza-create for stanza 'db' on repo1
 P00  ERROR: [028]: backup and archive info files exist but do not match the database
@@ -163,7 +163,7 @@ backrest-checksum="[CHECKSUM]"
 stanza-upgrade db - already up to date (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: stanza-upgrade for stanza 'db' on repo1
 P00   INFO: stanza 'db' on repo1 is already up to date
 P00 DETAIL: statistics: STATISTICS
@@ -207,7 +207,7 @@ backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: pushed WAL file '000000010000000100000001' to the archive
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: archive-push command end: completed successfully
@@ -215,7 +215,7 @@ P00   INFO: archive-push command end: completed successfully
 stanza-create db - fail on archive info file missing from non-empty dir (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: stanza-create for stanza 'db' on repo1
 P00  ERROR: [055]: backup.info exists but archive.info is missing on repo1
             HINT: this may be a symptom of repository corruption!
@@ -243,7 +243,7 @@ backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: pushed WAL file '000000010000000100000002' to the archive
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: archive-push command end: completed successfully
@@ -256,7 +256,7 @@ P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not 
 stanza-upgrade db - successful upgrade creates additional history (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: stanza-upgrade for stanza 'db' on repo1
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: stanza-upgrade command end: completed successfully
@@ -301,7 +301,7 @@ backrest-checksum="[CHECKSUM]"
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get 000000010000000100000002 [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG] --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: archive-get command begin [BACKREST-VERSION]: [000000010000000100000002, [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG] --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: found 000000010000000100000002 in the repo1: 9.3-1 archive
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: archive-get command end: completed successfully
@@ -312,7 +312,7 @@ P00   INFO: archive-get command end: completed successfully
 full backup - create first full backup  (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo1-retention-full=2 --no-online --type=full --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-retention-full=2 --repo1-type=gcs --stanza=db --start-fast --type=full
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --repo1-retention-full=2 --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db --start-fast --type=full
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001 (16MB, 99%) checksum f92539dea1f9482e2946c1138eeeecdea29d7f19
@@ -323,7 +323,7 @@ P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-1]
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-retention-full=2 --repo1-type=gcs --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --repo1-retention-full=2 --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: expire command end: completed successfully
 
@@ -350,8 +350,8 @@ repo1-gcs-bucket=gcsbucket
 repo1-gcs-endpoint=gcs:4443
 repo1-gcs-key=testkey
 repo1-gcs-key-type=token
-repo1-gcs-verify-tls=n
 repo1-path=/
+repo1-storage-verify-tls=n
 repo1-type=gcs
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -362,7 +362,7 @@ start-fast=y
 stanza-upgrade db - successfully upgrade (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: stanza-upgrade for stanza 'db' on repo1
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: stanza-upgrade command end: completed successfully
@@ -413,7 +413,7 @@ backrest-checksum="[CHECKSUM]"
 stanza-upgrade db - upgrade fails with mismatched db-ids (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-upgrade
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-upgrade command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: stanza-upgrade for stanza 'db' on repo1
 P00  ERROR: [028]: backup info file and archive info file do not match
             archive: id = 2, version = 9.5, system-id = 1000000000000000095
@@ -469,7 +469,7 @@ backrest-checksum="[CHECKSUM]"
 diff backup - diff changed to full backup (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo1-retention-full=2 --no-online --type=diff --stanza=db backup
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-retention-full=2 --repo1-type=gcs --stanza=db --start-fast --type=diff
+P00   INFO: backup command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-type=zst --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --repo1-retention-full=2 --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db --start-fast --type=diff
 P00   WARN: no prior backup exists, diff backup has been changed to full
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG (16MB, 33%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
 P01   INFO: backup file [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002 (16MB, 66%) checksum 51a8525d254c01f5edddda30b7fe697c7e44705c
@@ -481,7 +481,7 @@ P00   INFO: full backup size = 48MB
 P00   INFO: new backup label = [BACKUP-FULL-2]
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: backup command end: completed successfully
-P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-retention-full=2 --repo1-type=gcs --stanza=db
+P00   INFO: expire command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log --no-log-timestamp --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --repo1-retention-full=2 --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00   INFO: repo1: remove archive path /archive/db/9.3-1
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: expire command end: completed successfully
@@ -509,8 +509,8 @@ repo1-gcs-bucket=gcsbucket
 repo1-gcs-endpoint=gcs:4443
 repo1-gcs-key=testkey
 repo1-gcs-key-type=token
-repo1-gcs-verify-tls=n
 repo1-path=/
+repo1-storage-verify-tls=n
 repo1-type=gcs
 spool-path=[TEST_PATH]/db-primary/spool
 
@@ -521,7 +521,7 @@ start-fast=y
 stanza-delete db - fail on missing stop file (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo=1 --stanza=db stanza-delete
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00  ERROR: [055]: stop file does not exist for stanza 'db'
             HINT: has the pgbackrest stop command been run on this server for this stanza?
 P00 DETAIL: statistics: STATISTICS
@@ -546,7 +546,7 @@ P00   INFO: stop command end: completed successfully
 stanza-delete db - successfully delete the stanza (db-primary host)
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --repo=1 --stanza=db stanza-delete
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --no-repo1-gcs-verify-tls --repo1-path=/ --repo1-type=gcs --stanza=db
+P00   INFO: stanza-delete command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo=1 --repo1-gcs-bucket=gcsbucket --repo1-gcs-endpoint=gcs:4443 --repo1-gcs-key=testkey --repo1-gcs-key-type=token --repo1-path=/ --no-repo1-storage-verify-tls --repo1-type=gcs --stanza=db
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: stanza-delete command end: completed successfully
 

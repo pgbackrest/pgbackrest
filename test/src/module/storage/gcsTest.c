@@ -324,7 +324,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
                 hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), hrnServerPort(0));
-                hrnCfgArgRawBool(argList, cfgOptRepoGcsVerifyTls, testContainer());
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, testContainer());
                 hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 

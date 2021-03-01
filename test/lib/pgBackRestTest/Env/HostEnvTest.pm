@@ -166,7 +166,9 @@ sub setup
         $self->backrestExeHelper() .
             ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
             ' --log-level-stderr=error' .
-            ($oConfigParam->{strStorage} ne POSIX ? " --no-repo1-$oConfigParam->{strStorage}-verify-tls" .
+            ($oConfigParam->{strStorage} ne POSIX ?
+                ($oConfigParam->{strStorage} eq GCS ?
+                    " --no-repo1-storage-verify-tls" : " --no-repo1-$oConfigParam->{strStorage}-verify-tls") .
                 " --repo1-$oConfigParam->{strStorage}-" . ($oConfigParam->{strStorage} eq GCS ? 'endpoint' : 'host') .
                 "=" . $oHostObject->ipGet() : '') . ($oConfigParam->{strStorage} eq GCS ? ':' . HOST_GCS_PORT : ''),
         $oConfigParam->{strStorage} eq POSIX ? STORAGE_POSIX : STORAGE_OBJECT);
