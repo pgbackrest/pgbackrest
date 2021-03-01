@@ -168,7 +168,7 @@ sub setup
             ' --log-level-stderr=error' .
             ($oConfigParam->{strStorage} ne POSIX ? " --no-repo1-$oConfigParam->{strStorage}-verify-tls" .
                 " --repo1-$oConfigParam->{strStorage}-" . ($oConfigParam->{strStorage} eq GCS ? 'endpoint' : 'host') .
-                "=" . $oHostObject->ipGet() : ''),
+                "=" . $oHostObject->ipGet() : '') . ($oConfigParam->{strStorage} eq GCS ? ':' . HOST_GCS_PORT : ''),
         $oConfigParam->{strStorage} eq POSIX ? STORAGE_POSIX : STORAGE_OBJECT);
 
     # Create db-standby config

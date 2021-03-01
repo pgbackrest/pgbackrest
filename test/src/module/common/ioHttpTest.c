@@ -201,6 +201,17 @@ testRun(void)
         TEST_RESULT_STR_Z(httpUrlToLog(url), "{http://test:80/}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("host and port");
+
+        TEST_ASSIGN(url, httpUrlNewParseP(STRDEF("gcs:4443"), .type = httpProtocolTypeHttps), "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "gcs:4443", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "gcs", "check host");
+        TEST_RESULT_STR_Z(httpUrlPath(url), "/", "check path");
+        TEST_RESULT_UINT(httpUrlPort(url), 4443, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol");
+        TEST_RESULT_STR_Z(httpUrlToLog(url), "{https://gcs:4443/}", "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("http but expected https");
 
         TEST_ERROR(

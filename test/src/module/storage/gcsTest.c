@@ -229,7 +229,7 @@ testRun(void)
         //             storageGcsNew(
         //                 STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService,
         //                 strNewFmt("/home/%s/pgbackrest/test/scratch.gcs.json", testUser()), TEST_CHUNK_SIZE, TEST_ENDPOINT_STR,
-        //                 TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)), time(NULL)).token,
+        //                 TEST_TIMEOUT, true, NULL, NULL)), time(NULL)).token,
         //     "", "authentication token");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -242,7 +242,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
+                    TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
         TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
@@ -267,7 +267,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    TEST_ENDPOINT_STR, TEST_PORT, TEST_TIMEOUT, true, NULL, NULL)),
+                    TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read/write gcs storage - service key");
 
         TEST_RESULT_STR_Z(
@@ -323,10 +323,8 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-                hrnCfgArgRaw(argList, cfgOptRepoGcsEndpoint, hrnServerHost());
-                hrnCfgArgRawFmt(argList, cfgOptRepoGcsPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), hrnServerPort(0));
                 hrnCfgArgRawBool(argList, cfgOptRepoGcsVerifyTls, testContainer());
-                // hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, "token");
                 hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 

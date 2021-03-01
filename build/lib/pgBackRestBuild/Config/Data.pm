@@ -278,7 +278,6 @@ use constant CFGOPT_REPO_GCS_BUCKET                                 => CFGDEF_RE
 use constant CFGOPT_REPO_GCS_ENDPOINT                               => CFGDEF_REPO_GCS . '-endpoint';
 use constant CFGOPT_REPO_GCS_KEY                                    => CFGDEF_REPO_GCS . '-key';
 use constant CFGOPT_REPO_GCS_KEY_TYPE                               => CFGDEF_REPO_GCS . '-key-type';
-use constant CFGOPT_REPO_GCS_PORT                                   => CFGDEF_REPO_GCS . '-port';
 use constant CFGOPT_REPO_GCS_VERIFY_TLS                             => CFGDEF_REPO_GCS . '-verify-tls';
 
 # Repository S3
@@ -2377,17 +2376,6 @@ my %hConfigDefine =
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
             &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_GCS],
         },
-        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
-    },
-
-    &CFGOPT_REPO_GCS_PORT =>
-    {
-        &CFGDEF_GROUP => CFGOPTGRP_REPO,
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_INTEGER,
-        &CFGDEF_DEFAULT => 443,
-        &CFGDEF_ALLOW_RANGE => [1, 65535],
-        &CFGDEF_DEPEND => CFGOPT_REPO_GCS_BUCKET,
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 

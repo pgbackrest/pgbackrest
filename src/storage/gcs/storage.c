@@ -857,8 +857,8 @@ static const StorageInterface storageInterfaceGcs =
 Storage *
 storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    StorageGcsKeyType keyType, const String *key, size_t chunkSize, const String *endpoint, unsigned int port, TimeMSec timeout,
-    bool verifyPeer, const String *caFile, const String *caPath)
+    StorageGcsKeyType keyType, const String *key, size_t chunkSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
+    const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -869,7 +869,6 @@ storageGcsNew(
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, chunkSize);
         FUNCTION_LOG_PARAM(STRING, endpoint);
-        FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
@@ -895,8 +894,6 @@ storageGcsNew(
             .bucket = strDup(bucket),
             .keyType = keyType,
             .chunkSize = chunkSize,
-            // !!! ENDPOINT SHOULD BE SPECIFIED AS A URL
-            .endpoint = strDup(endpoint),
         };
 
         // Handle auth key types
@@ -925,10 +922,15 @@ storageGcsNew(
                 break;
         }
 
+        // Parse the endpoint to extract the host and port
+        HttpUrl *url = httpUrlNewParseP(endpoint, .type = httpProtocolTypeHttps);
+        driver->endpoint = httpUrlHost(url);
+
         // Create the http client used to service requests
         driver->httpClient = httpClientNew(
             tlsClientNew(
-                sckClientNew(driver->endpoint, port, timeout), driver->endpoint, timeout, verifyPeer, caFile, caPath), timeout);
+                sckClientNew(driver->endpoint, httpUrlPort(url), timeout), driver->endpoint, timeout, verifyPeer, caFile, caPath),
+            timeout);
 
         // Create list of redacted headers
         driver->headerRedactList = strLstNew();

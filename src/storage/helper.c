@@ -384,9 +384,8 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 strEqZ(cfgOptionIdxStr(cfgOptRepoGcsKeyType, repoIdx), STORAGE_GCS_KEY_TYPE_SERVICE) ?
                     storageGcsKeyTypeService : storageGcsKeyTypeToken,
                 cfgOptionIdxStr(cfgOptRepoGcsKey, repoIdx), STORAGE_GCS_CHUNKSIZE_DEFAULT,
-                cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), cfgOptionIdxUInt(cfgOptRepoGcsPort, repoIdx), ioTimeoutMs(),
-                cfgOptionIdxBool(cfgOptRepoGcsVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoGcsCaFile, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoGcsCaPath, repoIdx));
+                cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoGcsVerifyTls, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoGcsCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoGcsCaPath, repoIdx));
         }
         // Use Posix storage
         else if (strEqZ(type, STORAGE_POSIX_TYPE))

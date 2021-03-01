@@ -34,7 +34,7 @@ Constructors
 ***********************************************************************************************************************************/
 Storage *storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *endpoint, unsigned int port, TimeMSec timeout,
-    bool verifyPeer, const String *caFile, const String *caPath);
+    StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
+    const String *caFile, const String *caPath);
 
 #endif
