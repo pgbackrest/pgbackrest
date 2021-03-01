@@ -11,6 +11,17 @@ HTTP URL
 #include "common/regExp.h"
 
 /***********************************************************************************************************************************
+Regular expression for URLs. This is not intended to be completely comprehensive, e.g. it is still possible to enter bad hostnames.
+The goal is to make sure the syntax is correct enough for the rest of the parsing to succeed.
+***********************************************************************************************************************************/
+STRING_STATIC(
+    HTTP_URL_REGEXP_STR,
+    "^(http[s]{0,1}:\\/\\/){0,1}"                                   // Optional protocol (http or https)
+    "([^\\[\\:\\/?]+|\\[[a-fA-F0-9:]+\\])"                          // host/ipv4/ipv6
+    "(:[1-9][0-9]{0,4}){0,1}"                                       // Optional port
+    "(\\/[^?\\/]*)*$");                                             // Optional path
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct HttpUrl
@@ -73,7 +84,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Check that URL format is one we accept
-            if (!regExpMatchOne(STRDEF("^(http[s]{0,1}:\\/\\/){0,1}[^:\\/?]+(:[1-9][0-9]{0,4}){0,1}(\\/[^?\\/]*)*$"), url))
+            if (!regExpMatchOne(HTTP_URL_REGEXP_STR, url))
                 THROW_FMT(FormatError, "invalid URL '%s'", strZ(url));
 
             // Determine whether the first part is protocol or host
@@ -105,21 +116,48 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
             }
 
             // Get host
-            StringList *splitHost = strLstNewSplitZ(strLstGet(splitUrl, 0), ":");
-            ASSERT(strLstSize(splitHost) != 0);
+            const String *host = strLstGet(splitUrl, 0);
+            const String *port = NULL;
 
+            // If an IPv6 address
+            if (strBeginsWithZ(host, "["))
+            {
+                StringList *splitHost = strLstNewSplitZ(host, "]");
+                ASSERT(strLstSize(splitHost) == 2);
+
+                // Remove initial bracket
+                host = strSub(strLstGet(splitHost, 0), 1);
+
+                // Get port if specified
+                if (strSize(strLstGet(splitHost, 1)) > 0)
+                    port = strSub(strLstGet(splitHost, 1), 1);
+            }
+            // Else IPv4 or host name
+            else
+            {
+                StringList *splitHost = strLstNewSplitZ(host, ":");
+                ASSERT(strLstSize(splitHost) != 0);
+
+                host = strLstGet(splitHost, 0);
+
+                if (strLstSize(splitHost) > 1)
+                {
+                    ASSERT(strLstSize(splitHost) == 2);
+                    port = strLstGet(splitHost, 1);
+                }
+            }
+
+            // Copy host
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                this->pub.host = strDup(strLstGet(splitHost, 0));
+                this->pub.host = strDup(host);
             }
             MEM_CONTEXT_PRIOR_END();
 
             // Get port if specified
-            if (strLstSize(splitHost) > 1)
+            if (port != NULL)
             {
-                ASSERT(strLstSize(splitHost) == 2);
-
-                this->pub.port = cvtZToUInt(strZ(strLstGet(splitHost, 1)));
+                this->pub.port = cvtZToUInt(strZ(port));
             }
             // Else set default port based on the protocol
             else
@@ -161,6 +199,9 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 String *
 httpUrlToLog(const HttpUrl *this)
 {
+    bool ipv6 = strChr(this->pub.host, ':') != -1;
+
     return strNewFmt(
-        "{%s://%s:%u%s}", strZ(httpProtocolTypeStr(this->pub.type)), strZ(this->pub.host), this->pub.port, strZ(this->pub.path));
+        "{%s://%s%s%s:%u%s}", strZ(httpProtocolTypeStr(this->pub.type)), ipv6 ? "[" : "", strZ(this->pub.host), ipv6 ? "]" : "",
+        this->pub.port, strZ(this->pub.path));
 }
