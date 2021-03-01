@@ -264,8 +264,6 @@ helpRender(void)
                         strLstAdd(optionData[optionId].deprecatedNames, pckReadStrP(pckHelp));
 
                     pckReadArrayEndP(pckHelp);
-
-                    ASSERT(strLstSize(optionData[optionId].deprecatedNames) == 1);
                 }
 
                 // Unpack command overrides

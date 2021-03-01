@@ -666,11 +666,29 @@
                         <example>path</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-TLS KEY -->
-                    <config-key id="repo-s3-verify-tls" name="S3 Repository Verify TLS">
-                        <summary>Verify S3 server certificate.</summary>
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-ca-file" name="Repository Storage CA File">
+                        <summary>Repository storage CA file.</summary>
 
-                        <text>Disables verification of the S3 server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
+                        <text>Use a CA file other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-ca-path" name="Repository Storage TLS CA Path">
+                        <summary>Repository storage CA path.</summary>
+
+                        <text>Use a CA path other than the system default.</text>
+
+                        <example>/etc/pki/tls/certs</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-verify-tls" name="Repository Storage Certificate Verify">
+                        <summary>Repository storage server certificate verify.</summary>
+
+                        <text>Disables verification of the TLS server certificate. This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
 
                         <example>n</example>
                     </config-key>

@@ -260,15 +260,12 @@ use constant CFGOPT_REPO_HOST_USER                                  => CFGOPT_RE
 # Repository Azure
 use constant CFGDEF_REPO_AZURE                                      => CFGDEF_PREFIX_REPO . '-azure';
 use constant CFGOPT_REPO_AZURE_ACCOUNT                              => CFGDEF_REPO_AZURE . '-account';
-use constant CFGOPT_REPO_AZURE_CA_FILE                              => CFGDEF_REPO_AZURE . '-ca-file';
-use constant CFGOPT_REPO_AZURE_CA_PATH                              => CFGDEF_REPO_AZURE . '-ca-path';
 use constant CFGOPT_REPO_AZURE_CONTAINER                            => CFGDEF_REPO_AZURE . '-container';
 use constant CFGOPT_REPO_AZURE_ENDPOINT                             => CFGDEF_REPO_AZURE . '-endpoint';
 use constant CFGOPT_REPO_AZURE_HOST                                 => CFGDEF_REPO_AZURE . '-host';
 use constant CFGOPT_REPO_AZURE_KEY                                  => CFGDEF_REPO_AZURE . '-key';
 use constant CFGOPT_REPO_AZURE_KEY_TYPE                             => CFGDEF_REPO_AZURE . '-key-type';
 use constant CFGOPT_REPO_AZURE_PORT                                 => CFGDEF_REPO_AZURE . '-port';
-use constant CFGOPT_REPO_AZURE_VERIFY_TLS                           => CFGDEF_REPO_AZURE . '-verify-tls';
 
 # Repository S3
 use constant CFGDEF_REPO_S3                                         => CFGDEF_PREFIX_REPO . '-s3';
@@ -276,8 +273,6 @@ use constant CFGOPT_REPO_S3_KEY                                     => CFGDEF_RE
 use constant CFGOPT_REPO_S3_KEY_SECRET                              => CFGDEF_REPO_S3 . '-key-secret';
 use constant CFGOPT_REPO_S3_KEY_TYPE                                => CFGDEF_REPO_S3 . '-key-type';
 use constant CFGOPT_REPO_S3_BUCKET                                  => CFGDEF_REPO_S3 . '-bucket';
-use constant CFGOPT_REPO_S3_CA_FILE                                 => CFGDEF_REPO_S3 . '-ca-file';
-use constant CFGOPT_REPO_S3_CA_PATH                                 => CFGDEF_REPO_S3 . '-ca-path';
 use constant CFGOPT_REPO_S3_ENDPOINT                                => CFGDEF_REPO_S3 . '-endpoint';
 use constant CFGOPT_REPO_S3_HOST                                    => CFGDEF_REPO_S3 . '-host';
 use constant CFGOPT_REPO_S3_PORT                                    => CFGDEF_REPO_S3 . '-port';
@@ -285,7 +280,12 @@ use constant CFGOPT_REPO_S3_ROLE                                    => CFGDEF_RE
 use constant CFGOPT_REPO_S3_REGION                                  => CFGDEF_REPO_S3 . '-region';
 use constant CFGOPT_REPO_S3_TOKEN                                   => CFGDEF_REPO_S3 . '-token';
 use constant CFGOPT_REPO_S3_URI_STYLE                               => CFGDEF_REPO_S3 . '-uri-style';
-use constant CFGOPT_REPO_S3_VERIFY_TLS                              => CFGDEF_REPO_S3 . '-verify-tls';
+
+# Repository Storage
+use constant CFGDEF_REPO_STORAGE                                    => CFGDEF_PREFIX_REPO . '-storage';
+use constant CFGOPT_REPO_STORAGE_CA_FILE                            => CFGDEF_REPO_STORAGE . '-ca-file';
+use constant CFGOPT_REPO_STORAGE_CA_PATH                            => CFGDEF_REPO_STORAGE . '-ca-path';
+use constant CFGOPT_REPO_STORAGE_VERIFY_TLS                         => CFGDEF_REPO_STORAGE . '-verify-tls';
 
 # Archive options
 #-----------------------------------------------------------------------------------------------------------------------------------
@@ -2228,17 +2228,6 @@ my %hConfigDefine =
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
-    &CFGOPT_REPO_AZURE_CA_FILE =>
-    {
-        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_HOST,
-    },
-
-    &CFGOPT_REPO_AZURE_CA_PATH =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
-        &CFGDEF_INHERIT => CFGOPT_REPO_AZURE_HOST,
-    },
-
     &CFGOPT_REPO_AZURE_CONTAINER =>
     {
         &CFGDEF_GROUP => CFGOPTGRP_REPO,
@@ -2291,16 +2280,6 @@ my %hConfigDefine =
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
 
-    &CFGOPT_REPO_AZURE_VERIFY_TLS =>
-    {
-        &CFGDEF_GROUP => CFGOPTGRP_REPO,
-        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_DEFAULT => true,
-        &CFGDEF_DEPEND => CFGOPT_REPO_AZURE_ACCOUNT,
-        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
-    },
-
     &CFGOPT_REPO_S3_BUCKET =>
     {
         &CFGDEF_GROUP => CFGOPTGRP_REPO,
@@ -2316,25 +2295,6 @@ my %hConfigDefine =
             'repo-s3-bucket' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
-    },
-
-    &CFGOPT_REPO_S3_CA_FILE =>
-    {
-        &CFGDEF_INHERIT => CFGOPT_REPO_S3_HOST,
-        &CFGDEF_NAME_ALT =>
-        {
-            'repo-s3-ca-file' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
-        },
-    },
-
-    &CFGOPT_REPO_S3_CA_PATH =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
-        &CFGDEF_INHERIT => CFGOPT_REPO_S3_HOST,
-        &CFGDEF_NAME_ALT =>
-        {
-            'repo-s3-ca-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
-        },
     },
 
     &CFGOPT_REPO_S3_KEY_TYPE =>
@@ -2452,7 +2412,35 @@ my %hConfigDefine =
         &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
     },
 
-    &CFGOPT_REPO_S3_VERIFY_TLS =>
+    &CFGOPT_REPO_STORAGE_CA_FILE =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => false,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo?-azure-ca-file' => {&CFGDEF_INDEX => 1},
+            'repo-s3-ca-file' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'repo?-s3-ca-file' => {&CFGDEF_INDEX => 1},
+        },
+        &CFGDEF_DEPEND => CFGOPT_REPO_STORAGE_VERIFY_TLS,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_STORAGE_CA_PATH =>
+    {
+        &CFGDEF_TYPE => CFGDEF_TYPE_PATH,
+        &CFGDEF_INHERIT => CFGOPT_REPO_STORAGE_CA_FILE,
+        &CFGDEF_NAME_ALT =>
+        {
+            'repo?-azure-ca-path' => {&CFGDEF_INDEX => 1},
+            'repo-s3-ca-path' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'repo?-s3-ca-path' => {&CFGDEF_INDEX => 1},
+        },
+    },
+
+    &CFGOPT_REPO_STORAGE_VERIFY_TLS =>
     {
         &CFGDEF_GROUP => CFGOPTGRP_REPO,
         &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
@@ -2460,11 +2448,17 @@ my %hConfigDefine =
         &CFGDEF_DEFAULT => true,
         &CFGDEF_NAME_ALT =>
         {
+            'repo?-azure-verify-tls' => {&CFGDEF_INDEX => 1},
             'repo-s3-verify-ssl' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
             'repo?-s3-verify-ssl' => {&CFGDEF_INDEX => 1, &CFGDEF_RESET => false},
+            'repo?-s3-verify-tls' => {&CFGDEF_INDEX => 1},
+        },
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
+            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_AZURE, CFGOPTVAL_REPO_TYPE_S3],
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
-        &CFGDEF_DEPEND => CFGOPT_REPO_S3_BUCKET,
     },
 
     &CFGOPT_REPO_TYPE =>

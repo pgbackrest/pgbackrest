@@ -3095,146 +3095,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
-        PARSE_RULE_OPTION_NAME("repo-azure-ca-file"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
-        PARSE_RULE_OPTION_REQUIRED(false),
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
-        PARSE_RULE_OPTION_GROUP_MEMBER(true),
-        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_OPTIONAL_LIST
-        (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-            (
-                cfgOptRepoType,
-                "azure"
-            ),
-        ),
-    ),
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION
-    (
-        PARSE_RULE_OPTION_NAME("repo-azure-ca-path"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
-        PARSE_RULE_OPTION_REQUIRED(false),
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
-        PARSE_RULE_OPTION_GROUP_MEMBER(true),
-        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_OPTIONAL_LIST
-        (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-            (
-                cfgOptRepoType,
-                "azure"
-            ),
-        ),
-    ),
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION
-    (
         PARSE_RULE_OPTION_NAME("repo-azure-container"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_REQUIRED(true),
@@ -3663,78 +3523,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),
 
             PARSE_RULE_OPTION_OPTIONAL_DEFAULT("443"),
-        ),
-    ),
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION
-    (
-        PARSE_RULE_OPTION_NAME("repo-azure-verify-tls"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
-        PARSE_RULE_OPTION_REQUIRED(true),
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
-        PARSE_RULE_OPTION_GROUP_MEMBER(true),
-        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_OPTIONAL_LIST
-        (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-            (
-                cfgOptRepoType,
-                "azure"
-            ),
-
-            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
         ),
     ),
 
@@ -4545,146 +4333,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
-        PARSE_RULE_OPTION_NAME("repo-s3-ca-file"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
-        PARSE_RULE_OPTION_REQUIRED(false),
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
-        PARSE_RULE_OPTION_GROUP_MEMBER(true),
-        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_OPTIONAL_LIST
-        (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-            (
-                cfgOptRepoType,
-                "s3"
-            ),
-        ),
-    ),
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION
-    (
-        PARSE_RULE_OPTION_NAME("repo-s3-ca-path"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
-        PARSE_RULE_OPTION_REQUIRED(false),
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
-        PARSE_RULE_OPTION_GROUP_MEMBER(true),
-        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
-        ),
-
-        PARSE_RULE_OPTION_OPTIONAL_LIST
-        (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
-            (
-                cfgOptRepoType,
-                "s3"
-            ),
-        ),
-    ),
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION
-    (
         PARSE_RULE_OPTION_NAME("repo-s3-endpoint"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_REQUIRED(true),
@@ -5407,7 +5055,149 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
-        PARSE_RULE_OPTION_NAME("repo-s3-verify-tls"),
+        PARSE_RULE_OPTION_NAME("repo-storage-ca-file"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
+        PARSE_RULE_OPTION_REQUIRED(false),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgOptRepoType,
+                "azure",
+                "s3"
+            ),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("repo-storage-ca-path"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypePath),
+        PARSE_RULE_OPTION_REQUIRED(false),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgOptRepoType,
+                "azure",
+                "s3"
+            ),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("repo-storage-verify-tls"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
@@ -5469,6 +5259,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
             (
                 cfgOptRepoType,
+                "azure",
                 "s3"
             ),
 
@@ -8476,84 +8267,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureAccount,
     },
 
-    // repo-azure-ca-file option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-azure-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaFile,
-    },
-    {
-        .name = "reset-repo1-azure-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaFile,
-    },
-    {
-        .name = "repo2-azure-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaFile,
-    },
-    {
-        .name = "reset-repo2-azure-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaFile,
-    },
-    {
-        .name = "repo3-azure-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaFile,
-    },
-    {
-        .name = "reset-repo3-azure-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaFile,
-    },
-    {
-        .name = "repo4-azure-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaFile,
-    },
-    {
-        .name = "reset-repo4-azure-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaFile,
-    },
-
-    // repo-azure-ca-path option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-azure-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaPath,
-    },
-    {
-        .name = "reset-repo1-azure-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaPath,
-    },
-    {
-        .name = "repo2-azure-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaPath,
-    },
-    {
-        .name = "reset-repo2-azure-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaPath,
-    },
-    {
-        .name = "repo3-azure-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaPath,
-    },
-    {
-        .name = "reset-repo3-azure-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaPath,
-    },
-    {
-        .name = "repo4-azure-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaPath,
-    },
-    {
-        .name = "reset-repo4-azure-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureCaPath,
-    },
-
     // repo-azure-container option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -8786,57 +8499,6 @@ static const struct option optionList[] =
     {
         .name = "reset-repo4-azure-port",
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzurePort,
-    },
-
-    // repo-azure-verify-tls option
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "no-repo1-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "reset-repo1-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "repo2-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "no-repo2-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "reset-repo2-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "repo3-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "no-repo3-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "reset-repo3-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "repo4-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "no-repo4-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
-    },
-    {
-        .name = "reset-repo4-azure-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoAzureVerifyTls,
     },
 
     // repo-cipher-pass option and deprecations
@@ -9638,94 +9300,6 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3Bucket,
     },
 
-    // repo-s3-ca-file option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaFile,
-    },
-    {
-        .name = "reset-repo1-s3-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaFile,
-    },
-    {
-        .name = "repo-s3-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaFile,
-    },
-    {
-        .name = "repo2-s3-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaFile,
-    },
-    {
-        .name = "reset-repo2-s3-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaFile,
-    },
-    {
-        .name = "repo3-s3-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaFile,
-    },
-    {
-        .name = "reset-repo3-s3-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaFile,
-    },
-    {
-        .name = "repo4-s3-ca-file",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaFile,
-    },
-    {
-        .name = "reset-repo4-s3-ca-file",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaFile,
-    },
-
-    // repo-s3-ca-path option and deprecations
-    // -----------------------------------------------------------------------------------------------------------------------------
-    {
-        .name = "repo1-s3-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaPath,
-    },
-    {
-        .name = "reset-repo1-s3-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaPath,
-    },
-    {
-        .name = "repo-s3-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaPath,
-    },
-    {
-        .name = "repo2-s3-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaPath,
-    },
-    {
-        .name = "reset-repo2-s3-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaPath,
-    },
-    {
-        .name = "repo3-s3-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaPath,
-    },
-    {
-        .name = "reset-repo3-s3-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaPath,
-    },
-    {
-        .name = "repo4-s3-ca-path",
-        .has_arg = required_argument,
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaPath,
-    },
-    {
-        .name = "reset-repo4-s3-ca-path",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3CaPath,
-    },
-
     // repo-s3-endpoint option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -10141,71 +9715,219 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3UriStyle,
     },
 
-    // repo-s3-verify-tls option and deprecations
+    // repo-storage-ca-file option and deprecations
     // -----------------------------------------------------------------------------------------------------------------------------
     {
-        .name = "repo1-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "repo1-storage-ca-file",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
     },
     {
-        .name = "no-repo1-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "reset-repo1-storage-ca-file",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
     },
     {
-        .name = "reset-repo1-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "repo-s3-ca-file",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "repo1-azure-ca-file",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "reset-repo1-azure-ca-file",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "repo1-s3-ca-file",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "reset-repo1-s3-ca-file",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "repo2-storage-ca-file",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "reset-repo2-storage-ca-file",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "repo3-storage-ca-file",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "reset-repo3-storage-ca-file",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "repo4-storage-ca-file",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+    {
+        .name = "reset-repo4-storage-ca-file",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaFile,
+    },
+
+    // repo-storage-ca-path option and deprecations
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-storage-ca-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "reset-repo1-storage-ca-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "repo-s3-ca-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "repo1-azure-ca-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "reset-repo1-azure-ca-path",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "repo1-s3-ca-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "reset-repo1-s3-ca-path",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "repo2-storage-ca-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "reset-repo2-storage-ca-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "repo3-storage-ca-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "reset-repo3-storage-ca-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "repo4-storage-ca-path",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+    {
+        .name = "reset-repo4-storage-ca-path",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageCaPath,
+    },
+
+    // repo-storage-verify-tls option and deprecations
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "repo1-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
+    },
+    {
+        .name = "no-repo1-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
+    },
+    {
+        .name = "reset-repo1-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
         .name = "repo-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
         .name = "no-repo-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
+    },
+    {
+        .name = "repo1-azure-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
+    },
+    {
+        .name = "no-repo1-azure-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
+    },
+    {
+        .name = "reset-repo1-azure-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
         .name = "repo1-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
         .name = "no-repo1-s3-verify-ssl",
-        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
-        .name = "repo2-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "repo1-s3-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
-        .name = "no-repo2-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "no-repo1-s3-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_NEGATE_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
-        .name = "reset-repo2-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "reset-repo1-s3-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_DEPRECATE_FLAG | PARSE_RESET_FLAG | (0 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
-        .name = "repo3-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "repo2-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
-        .name = "no-repo3-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "no-repo2-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
-        .name = "reset-repo3-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "reset-repo2-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (1 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
-        .name = "repo4-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "repo3-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
-        .name = "no-repo4-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "no-repo3-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
     {
-        .name = "reset-repo4-s3-verify-tls",
-        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoS3VerifyTls,
+        .name = "reset-repo3-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (2 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
+    },
+    {
+        .name = "repo4-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
+    },
+    {
+        .name = "no-repo4-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
+    },
+    {
+        .name = "reset-repo4-storage-verify-tls",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | (3 << PARSE_KEY_IDX_SHIFT) | cfgOptRepoStorageVerifyTls,
     },
 
     // repo-type option and deprecations
@@ -10566,15 +10288,12 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptPgHostUser,
     cfgOptRecoveryOption,
     cfgOptRepoAzureAccount,
-    cfgOptRepoAzureCaFile,
-    cfgOptRepoAzureCaPath,
     cfgOptRepoAzureContainer,
     cfgOptRepoAzureEndpoint,
     cfgOptRepoAzureHost,
     cfgOptRepoAzureKey,
     cfgOptRepoAzureKeyType,
     cfgOptRepoAzurePort,
-    cfgOptRepoAzureVerifyTls,
     cfgOptRepoCipherPass,
     cfgOptRepoHost,
     cfgOptRepoHostCmd,
@@ -10584,8 +10303,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoHostPort,
     cfgOptRepoHostUser,
     cfgOptRepoS3Bucket,
-    cfgOptRepoS3CaFile,
-    cfgOptRepoS3CaPath,
     cfgOptRepoS3Endpoint,
     cfgOptRepoS3Host,
     cfgOptRepoS3KeyType,
@@ -10594,7 +10311,9 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRepoS3Role,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
-    cfgOptRepoS3VerifyTls,
+    cfgOptRepoStorageCaFile,
+    cfgOptRepoStorageCaPath,
+    cfgOptRepoStorageVerifyTls,
     cfgOptTarget,
     cfgOptTargetAction,
     cfgOptTargetExclusive,

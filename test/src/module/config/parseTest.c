@@ -1634,22 +1634,43 @@ testRun(void)
         testOptionFind("backup-ssh-port", cfgOptRepoHostPort, 0, false, false, true);
         testOptionFind("backup-user", cfgOptRepoHostUser, 0, false, false, true);
 
+        testOptionFind("repo1-azure-ca-file", cfgOptRepoStorageCaFile, 0, false, false, true);
+        testOptionFind("reset-repo1-azure-ca-file", cfgOptRepoStorageCaFile, 0, false, true, true);
+
+        testOptionFind("repo1-azure-ca-path", cfgOptRepoStorageCaPath, 0, false, false, true);
+        testOptionFind("reset-repo1-azure-ca-path", cfgOptRepoStorageCaPath, 0, false, true, true);
+
+        testOptionFind("repo1-azure-verify-tls", cfgOptRepoStorageVerifyTls, 0, false, false, true);
+        testOptionFind("no-repo1-azure-verify-tls", cfgOptRepoStorageVerifyTls, 0, true, false, true);
+        testOptionFind("reset-repo1-azure-verify-tls", cfgOptRepoStorageVerifyTls, 0, false, true, true);
+
         testOptionFind("repo-cipher-pass", cfgOptRepoCipherPass, 0, false, false, true);
         testOptionFind("repo-cipher-type", cfgOptRepoCipherType, 0, false, false, true);
         testOptionFind("repo-path", cfgOptRepoPath, 0, false, false, true);
         testOptionFind("repo-type", cfgOptRepoType, 0, false, false, true);
 
         testOptionFind("repo-s3-bucket", cfgOptRepoS3Bucket, 0, false, false, true);
-        testOptionFind("repo-s3-ca-file", cfgOptRepoS3CaFile, 0, false, false, true);
-        testOptionFind("repo-s3-ca-path", cfgOptRepoS3CaPath, 0, false, false, true);
+
+        testOptionFind("repo-s3-ca-file", cfgOptRepoStorageCaFile, 0, false, false, true);
+        testOptionFind("repo1-s3-ca-file", cfgOptRepoStorageCaFile, 0, false, false, true);
+        testOptionFind("reset-repo1-s3-ca-file", cfgOptRepoStorageCaFile, 0, false, true, true);
+
+        testOptionFind("repo-s3-ca-path", cfgOptRepoStorageCaPath, 0, false, false, true);
+        testOptionFind("repo1-s3-ca-path", cfgOptRepoStorageCaPath, 0, false, false, true);
+        testOptionFind("reset-repo1-s3-ca-path", cfgOptRepoStorageCaPath, 0, false, true, true);
+
         testOptionFind("repo-s3-endpoint", cfgOptRepoS3Endpoint, 0, false, false, true);
         testOptionFind("repo-s3-host", cfgOptRepoS3Host, 0, false, false, true);
         testOptionFind("repo-s3-key", cfgOptRepoS3Key, 0, false, false, true);
         testOptionFind("repo-s3-key-secret", cfgOptRepoS3KeySecret, 0, false, false, true);
         testOptionFind("repo-s3-region", cfgOptRepoS3Region, 0, false, false, true);
-        testOptionFind("repo-s3-verify-ssl", cfgOptRepoS3VerifyTls, 0, false, false, true);
-        testOptionFind("repo1-s3-verify-ssl", cfgOptRepoS3VerifyTls, 0, false, false, true);
-        testOptionFind("no-repo-s3-verify-ssl", cfgOptRepoS3VerifyTls, 0, true, false, true);
+
+        testOptionFind("repo-s3-verify-ssl", cfgOptRepoStorageVerifyTls, 0, false, false, true);
+        testOptionFind("repo1-s3-verify-ssl", cfgOptRepoStorageVerifyTls, 0, false, false, true);
+        testOptionFind("no-repo-s3-verify-ssl", cfgOptRepoStorageVerifyTls, 0, true, false, true);
+        testOptionFind("repo1-s3-verify-tls", cfgOptRepoStorageVerifyTls, 0, false, false, true);
+        testOptionFind("no-repo1-s3-verify-tls", cfgOptRepoStorageVerifyTls, 0, true, false, true);
+        testOptionFind("reset-repo1-s3-verify-tls", cfgOptRepoStorageVerifyTls, 0, false, true, true);
 
         // PostreSQL options
         // -------------------------------------------------------------------------------------------------------------------------

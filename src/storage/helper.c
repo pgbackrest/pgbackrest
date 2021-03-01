@@ -363,9 +363,9 @@ storageRepoGet(unsigned int repoIdx, bool write)
                     storageAzureKeyTypeShared : storageAzureKeyTypeSas,
                 cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
                 cfgOptionIdxStrNull(cfgOptRepoAzureHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoAzurePort, repoIdx), ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoAzureVerifyTls, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoAzureCaFile, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoAzureCaPath, repoIdx));
+                cfgOptionIdxUInt(cfgOptRepoAzurePort, repoIdx), ioTimeoutMs(),
+                cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
         }
         // Use CIFS storage
         else if (strEqZ(type, STORAGE_CIFS_TYPE))
@@ -407,8 +407,8 @@ storageRepoGet(unsigned int repoIdx, bool write)
                     storageS3KeyTypeShared : storageS3KeyTypeAuto,
                 cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
-                STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3CaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3CaPath, repoIdx));
+                STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
         }
     }
 

@@ -232,7 +232,7 @@ testRun(void)
 
     // TLS can only be verified in a container
     if (!testContainer())
-        hrnCfgArgRawBool(commonArgWithoutEndpointList, cfgOptRepoS3VerifyTls, false);
+        hrnCfgArgRawBool(commonArgWithoutEndpointList, cfgOptRepoStorageVerifyTls, false);
 
     // Config settings that are required for every test (with endpoint)
     StringList *commonArgList = strLstDup(commonArgWithoutEndpointList);
@@ -319,8 +319,8 @@ testRun(void)
 
         argList = strLstDup(commonArgWithoutEndpointList);
         hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "custom.endpoint:333");
-        hrnCfgArgRawZ(argList, cfgOptRepoS3CaPath, "/path/to/cert");
-        hrnCfgArgRawFmt(argList, cfgOptRepoS3CaFile, "%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageCaPath, "/path/to/cert");
+        hrnCfgArgRawFmt(argList, cfgOptRepoStorageCaFile, "%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
         hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 

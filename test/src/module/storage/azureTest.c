@@ -290,7 +290,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
                 hrnCfgArgRaw(argList, cfgOptRepoAzureHost, hrnServerHost());
                 hrnCfgArgRawFmt(argList, cfgOptRepoAzurePort, "%u", hrnServerPort(0));
-                hrnCfgArgRawBool(argList, cfgOptRepoAzureVerifyTls, testContainer());
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, testContainer());
                 hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
