@@ -211,7 +211,6 @@ testRun(void)
             "                                   [default=storage.googleapis.com]\n"
             "  --repo-gcs-key                   GCS repository key\n"
             "  --repo-gcs-key-type              GCS repository key type [default=service]\n"
-            "  --repo-gcs-port                  GCS repository server port [default=443]\n"
             "  --repo-gcs-verify-tls            GCS repository server certificate verify\n"
             "                                   [default=y]\n"
             "  --repo-host                      repository host when operating remotely via\n"
