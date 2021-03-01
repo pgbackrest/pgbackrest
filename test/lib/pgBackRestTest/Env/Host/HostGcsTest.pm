@@ -32,7 +32,7 @@ use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Manifest;
 
 ####################################################################################################################################
-# Azure defaults
+# GCS defaults
 ####################################################################################################################################
 use constant HOST_GCS_BUCKET                                        => 'gcsbucket';
     push @EXPORT, qw(HOST_GCS_BUCKET);

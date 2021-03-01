@@ -185,7 +185,8 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         // Add data to md5 hash
         ioFilterProcessIn(this->md5hash, this->chunkBuffer);
 
-        // Upload the chunk
+        // Upload the chunk. If this is the last chunk then add the total bytes in the file to the range rather than the * added to
+        // prior chunks. This indicates that the resumable upload is complete.
         HttpHeader *header = httpHeaderAdd(
             httpHeaderNew(NULL), HTTP_HEADER_CONTENT_RANGE_STR,
             strNewFmt(
@@ -195,7 +196,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
 
         httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
 
-        // Add fields needed to verify to final upload
+        // Add fields needed to verify to upload
         if (done)
             httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
 
@@ -235,7 +236,8 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
     // Continue until the write buffer has been exhausted
     do
     {
-        // If the chunk buffer is full then write it
+        // If the chunk buffer is full then write it. We can't write it at the end of this loop because this might be the end of the
+        // input and we'd have no way to signal the end of the resumable upload if there is no more data.
         if (bufRemains(this->chunkBuffer) == 0)
         {
             storageWriteGcsBlockAsync(this, false);

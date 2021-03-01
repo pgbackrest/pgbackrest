@@ -213,7 +213,7 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
 
         HttpHeader *header = httpHeaderNew(NULL);
         httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
-        httpHeaderAdd(header, HTTP_HEADER_CONTENT_TYPE_STR, STRDEF("application/x-www-form-urlencoded"));
+        httpHeaderAdd(header, HTTP_HEADER_CONTENT_TYPE_STR, HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
 
         HttpRequest *request = httpRequestNewP(
