@@ -122,10 +122,11 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
             // If an IPv6 address
             if (strBeginsWithZ(host, "["))
             {
+                // Split closing bracket
                 StringList *splitHost = strLstNewSplitZ(host, "]");
                 ASSERT(strLstSize(splitHost) == 2);
 
-                // Remove initial bracket
+                // Remove opening bracket
                 host = strSub(strLstGet(splitHost, 0), 1);
 
                 // Get port if specified
@@ -135,11 +136,14 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
             // Else IPv4 or host name
             else
             {
+                // Split on colon
                 StringList *splitHost = strLstNewSplitZ(host, ":");
                 ASSERT(strLstSize(splitHost) != 0);
 
+                // First part is the host
                 host = strLstGet(splitHost, 0);
 
+                // Second part is the port, if it exists
                 if (strLstSize(splitHost) > 1)
                 {
                     ASSERT(strLstSize(splitHost) == 2);
@@ -147,7 +151,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
                 }
             }
 
-            // Copy host
+            // Copy host into object context
             MEM_CONTEXT_PRIOR_BEGIN()
             {
                 this->pub.host = strDup(host);
@@ -176,7 +180,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
                 // Remove host part so it is easier to construct the path
                 strLstRemoveIdx(splitUrl, 0);
 
-                // Construct path
+                // Construct path and copy into local context
                 const String *path = strLstJoin(splitUrl, "/");
 
                 MEM_CONTEXT_PRIOR_BEGIN()
@@ -185,6 +189,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
+            // Else default path is /
             else
                 this->pub.path = FSLASH_STR;
         }
@@ -199,6 +204,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 String *
 httpUrlToLog(const HttpUrl *this)
 {
+    // Is IPv6 address?
     bool ipv6 = strChr(this->pub.host, ':') != -1;
 
     return strNewFmt(
