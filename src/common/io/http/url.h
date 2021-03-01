@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 HTTP URL
 
-Object to track/parse HTTP urls.
+Parse a URL into component parts.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_HTTP_URL_H
 #define COMMON_IO_HTTP_URL_H
@@ -33,7 +33,7 @@ Constructors
 typedef struct HttpUrlNewParseParam
 {
     VAR_PARAM_HEADER;
-    HttpProtocolType type;
+    HttpProtocolType type;                                          // Expected protocol type (httpProtocolTypeAny if any)
 } HttpUrlNewParseParam;
 
 #define httpUrlNewParseP(url, ...)                                                                                                 \
