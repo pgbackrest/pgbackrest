@@ -125,9 +125,9 @@
         </section>
 
         <section id="object-store-support">
-            <title>S3 and Azure Compatible Object Store Support</title>
+            <title>S3, Azure, and GCS Compatible Object Store Support</title>
 
-            <p><backrest/> repositories can be located in <proper>S3</proper> and <proper>Azure</proper> compatible object stores to allow for virtually unlimited capacity and retention.</p>
+            <p><backrest/> repositories can be located in <proper>S3</proper>, <proper>Azure</proper>, and GCS compatible object stores to allow for virtually unlimited capacity and retention.</p>
         </section>
 
         <section id="encryption">
