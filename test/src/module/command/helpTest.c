@@ -201,17 +201,11 @@ testRun(void)
             "\n"
             "  --repo                           set repository\n"
             "  --repo-azure-account             azure repository account\n"
-            "  --repo-azure-ca-file             azure repository TLS CA file\n"
-            "  --repo-azure-ca-path             azure repository TLS CA path\n"
             "  --repo-azure-container           azure repository container\n"
             "  --repo-azure-endpoint            azure repository endpoint\n"
             "                                   [default=blob.core.windows.net]\n"
-            "  --repo-azure-host                azure repository host\n"
             "  --repo-azure-key                 azure repository key\n"
             "  --repo-azure-key-type            azure repository key type [default=shared]\n"
-            "  --repo-azure-port                azure repository server port [default=443]\n"
-            "  --repo-azure-verify-tls          azure repository server certificate verify\n"
-            "                                   [default=y]\n"
             "  --repo-cipher-pass               repository cipher passphrase\n"
             "                                   [current=<redacted>]\n"
             "  --repo-cipher-type               cipher used to encrypt the repository\n"
@@ -233,19 +227,20 @@ testRun(void)
             "  --repo-path                      path where backups and archive are stored\n"
             "                                   [default=/var/lib/pgbackrest]\n"
             "  --repo-s3-bucket                 S3 repository bucket\n"
-            "  --repo-s3-ca-file                S3 SSL CA File\n"
-            "  --repo-s3-ca-path                S3 SSL CA Path\n"
             "  --repo-s3-endpoint               S3 repository endpoint\n"
-            "  --repo-s3-host                   S3 repository host\n"
             "  --repo-s3-key                    S3 repository access key\n"
             "  --repo-s3-key-secret             S3 repository secret access key\n"
             "  --repo-s3-key-type               S3 repository key type [default=shared]\n"
-            "  --repo-s3-port                   S3 repository port [default=443]\n"
             "  --repo-s3-region                 S3 repository region\n"
             "  --repo-s3-role                   S3 repository role\n"
             "  --repo-s3-token                  S3 repository security token\n"
             "  --repo-s3-uri-style              S3 URI Style [default=host]\n"
-            "  --repo-s3-verify-tls             verify S3 server certificate [default=y]\n"
+            "  --repo-storage-ca-file           repository storage CA file\n"
+            "  --repo-storage-ca-path           repository storage CA path\n"
+            "  --repo-storage-host              repository storage host\n"
+            "  --repo-storage-port              repository storage port [default=443]\n"
+            "  --repo-storage-verify-tls        repository storage certificate verify\n"
+            "                                   [default=y]\n"
             "  --repo-type                      type of storage used for the repository\n"
             "                                   [default=posix]\n"
             "\n"
@@ -322,12 +317,21 @@ testRun(void)
         TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 1048576\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        #define HELP_OPTION                                                                                                        \
+            "%s - 'archive-push' command - 'repo-storage-host' option help\n"                                                      \
+            "\n"                                                                                                                   \
+            "Repository storage host.\n"                                                                                           \
+            "\n"                                                                                                                   \
+            "Connect to a host other than the storage (e.g. S3, Azure) endpoint. This is\n"                                        \
+            "typically used for testing.\n"                                                                                        \
+            "\n"
+
+        #define HELP_OPTION_DEPRECATED_NAMES                                                                                       \
+            "deprecated names: repo-azure-host, repo-s3-host\n"
+
         optionHelp = strZ(strNewFmt(
-            "%s - 'archive-push' command - 'repo-s3-host' option help\n"
-            "\n"
-            "S3 repository host.\n"
-            "\n"
-            "Connect to a host other than the end point. This is typically used for testing.\n",
+            HELP_OPTION
+            HELP_OPTION_DEPRECATED_NAMES,
             helpVersion));
 
         argList = strLstNew();
@@ -339,11 +343,18 @@ testRun(void)
             harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
+        optionHelp = strZ(strNewFmt(
+            HELP_OPTION
+            "current: s3-host\n"
+            "\n"
+            HELP_OPTION_DEPRECATED_NAMES,
+            helpVersion));
+
         strLstAddZ(argList, "--repo1-type=s3");
         strLstAddZ(argList, "--repo1-s3-host=s3-host");
         TEST_RESULT_VOID(
             harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: s3-host\n", optionHelp), "    check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         optionHelp = strZ(strNewFmt(

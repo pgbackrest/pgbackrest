@@ -3176,7 +3176,7 @@ rm -f core conftest.err conftest.$ac_objext \
 
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
-CFLAGS="${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers"
+CFLAGS="${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough"
 
 
 # -Wno-clobbered is not supported on all compilers
@@ -5609,4 +5609,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 ec5b8676addeca8533091a1cc8a3d12005667a6d
+# Generated from src/build/configure.ac sha1 61f1b4aec11fa131a5fc0da0e5a34dcc75ac0b82

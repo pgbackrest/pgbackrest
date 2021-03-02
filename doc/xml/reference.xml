@@ -320,24 +320,6 @@
                     </config-key>
 
                     <!-- ======================================================================================================= -->
-                    <config-key id="repo-azure-ca-file" name="Azure Repository TLS CA File">
-                        <summary>Azure repository TLS CA file.</summary>
-
-                        <text>Use a CA file other than the system default.</text>
-
-                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="repo-azure-ca-path" name="Azure Respository TLS CA Path">
-                        <summary>Azure repository TLS CA path.</summary>
-
-                        <text>Use a CA path other than the system default.</text>
-
-                        <example>/etc/pki/tls/certs</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-azure-container" name="Azure Repository Container">
                         <summary>Azure repository container.</summary>
 
@@ -352,18 +334,11 @@
                     <config-key id="repo-azure-endpoint" name="Azure Repository Endpoint">
                         <summary>Azure repository endpoint.</summary>
 
-                        <text>Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government.</text>
+                        <text>Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government.
+
+                        For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</text>
 
                         <example>blob.core.usgovcloudapi.net</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="repo-azure-host" name="Azure Repository Host">
-                        <summary>Azure repository host.</summary>
-
-                        <text>Connect to a host other than the default. This is typically used for testing.</text>
-
-                        <example>127.0.0.1</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -386,24 +361,6 @@
                         </ul></text>
 
                         <example>sas</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                    <config-key id="repo-azure-port" name="Azure Repository Server Port">
-                        <summary>Azure repository server port.</summary>
-
-                        <text>Port to use when connecting to the default server (or host if specified). This is typically used for testing.</text>
-
-                        <example>10000</example>
-                    </config-key>
-
-                    <!-- ======================================================================================================= -->
-                        <config-key id="repo-azure-verify-tls" name="Azure Repository Server Certificate Verify">
-                        <summary>Azure repository server certificate verify.</summary>
-
-                        <text>Disables verification of the Azure server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
-
-                        <example>n</example>
                     </config-key>
 
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
@@ -590,49 +547,15 @@
                         <example>pg-backup</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-CA-FILE KEY -->
-                    <config-key id="repo-s3-ca-file" name="S3 SSL CA File">
-                        <summary>S3 SSL CA File.</summary>
-
-                        <text>Use a CA file other than the system default.</text>
-
-                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
-                    </config-key>
-
-                    <!-- CONFIG - REPO SECTION - REPO-S3-CA-PATH KEY -->
-                    <config-key id="repo-s3-ca-path" name="S3 SSL CA Path">
-                        <summary>S3 SSL CA Path.</summary>
-
-                        <text>Use a CA path other than the system default.</text>
-
-                        <example>/etc/pki/tls/certs</example>
-                    </config-key>
-
                     <!-- CONFIG - REPO SECTION - REPO-S3-ENDPOINT KEY -->
                     <config-key id="repo-s3-endpoint" name="S3 Repository Endpoint">
                         <summary>S3 repository endpoint.</summary>
 
-                        <text>The AWS end point should be valid for the selected region.</text>
+                        <text>The AWS endpoint should be valid for the selected region.
+
+                        For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</text>
 
                         <example>s3.amazonaws.com</example>
-                    </config-key>
-
-                    <!-- CONFIG - REPO SECTION - REPO-S3-HOST KEY -->
-                    <config-key id="repo-s3-host" name="S3 Repository Host">
-                        <summary>S3 repository host.</summary>
-
-                        <text>Connect to a host other than the end point.  This is typically used for testing.</text>
-
-                        <example>127.0.0.1</example>
-                    </config-key>
-
-                    <!-- CONFIG - REPO SECTION - REPO-S3-PORT KEY -->
-                    <config-key id="repo-s3-port" name="S3 Repository Port">
-                        <summary>S3 repository port.</summary>
-
-                        <text>Port to use when connecting to the endpoint (or host if specified).</text>
-
-                        <example>9000</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
@@ -666,11 +589,47 @@
                         <example>path</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-VERIFY-TLS KEY -->
-                    <config-key id="repo-s3-verify-tls" name="S3 Repository Verify TLS">
-                        <summary>Verify S3 server certificate.</summary>
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-ca-file" name="Repository Storage CA File">
+                        <summary>Repository storage CA file.</summary>
 
-                        <text>Disables verification of the S3 server certificate.  This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
+                        <text>Use a CA file other than the system default for storage (e.g. S3, Azure) certificates.</text>
+
+                        <example>/etc/pki/tls/certs/ca-bundle.crt</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-ca-path" name="Repository Storage TLS CA Path">
+                        <summary>Repository storage CA path.</summary>
+
+                        <text>Use a CA path other than the system default for storage (e.g. S3, Azure) certificates.</text>
+
+                        <example>/etc/pki/tls/certs</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-host" name="Repository Storage Host">
+                        <summary>Repository storage host.</summary>
+
+                        <text>Connect to a host other than the storage (e.g. S3, Azure) endpoint. This is typically used for testing.</text>
+
+                        <example>127.0.0.1</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-port" name="Repository Storage Port">
+                        <summary>Repository storage port.</summary>
+
+                        <text>Port to use when connecting to the storage (e.g. S3, Azure) endpoint (or host if specified).</text>
+
+                        <example>9000</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-storage-verify-tls" name="Repository Storage Certificate Verify">
+                        <summary>Repository storage certificate verify.</summary>
+
+                        <text>This option provides the ability to enable/disable verification of the storage (e.g. S3, Azure) server TLS certificate. Disabling should only be used for testing or other scenarios where a certificate has been self-signed.</text>
 
                         <example>n</example>
                     </config-key>

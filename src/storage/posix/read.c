@@ -82,6 +82,7 @@ storageReadPosixOpen(THIS_VOID)
         else
             THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->interface.name));                // {vm_covered}
     }
+
     // On success set free callback to ensure the file descriptor is freed
     if (this->fd != -1)
     {

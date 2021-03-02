@@ -73,22 +73,24 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     {
         result.exists = true;
 
-        // Add basic level info
-        if (result.level >= storageInfoLevelBasic)
+        // Add type info (no need set file type since it is the default)
+        if (result.level >= storageInfoLevelType && !S_ISREG(statFile.st_mode))
         {
-            result.timeModified = statFile.st_mtime;
-
-            if (S_ISREG(statFile.st_mode))
-            {
-                result.type = storageTypeFile;
-                result.size = (uint64_t)statFile.st_size;
-            }
-            else if (S_ISDIR(statFile.st_mode))
+            if (S_ISDIR(statFile.st_mode))
                 result.type = storageTypePath;
             else if (S_ISLNK(statFile.st_mode))
                 result.type = storageTypeLink;
             else
                 result.type = storageTypeSpecial;
+        }
+
+        // Add basic level info
+        if (result.level >= storageInfoLevelBasic)
+        {
+            result.timeModified = statFile.st_mtime;
+
+            if (result.type == storageTypeFile)
+                result.size = (uint64_t)statFile.st_size;
         }
 
         // Add detail level info

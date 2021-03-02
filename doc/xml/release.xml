@@ -39,6 +39,14 @@
                 <release-improvement-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Consolidate less commonly used repository storage options.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-contributor id="michael.schout"/>
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
@@ -65,6 +73,14 @@
                         </release-item-contributor-list>
 
                         <p>Partial multi-repository implementation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>HttpUrl</code> object.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>

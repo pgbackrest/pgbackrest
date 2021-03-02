@@ -288,9 +288,9 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-                hrnCfgArgRaw(argList, cfgOptRepoAzureHost, hrnServerHost());
-                hrnCfgArgRawFmt(argList, cfgOptRepoAzurePort, "%u", hrnServerPort(0));
-                hrnCfgArgRawBool(argList, cfgOptRepoAzureVerifyTls, testContainer());
+                hrnCfgArgRaw(argList, cfgOptRepoStorageHost, hrnServerHost());
+                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", hrnServerPort(0));
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, testContainer());
                 hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
@@ -324,7 +324,7 @@ testRun(void)
 
                 TEST_ERROR(
                     storageGetP(storageNewReadP(storage, strNew("file.txt"))), FileMissingError,
-                    "unable to open '/file.txt': No such file or directory");
+                    "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file");

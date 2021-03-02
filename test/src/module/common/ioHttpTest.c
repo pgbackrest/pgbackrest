@@ -174,6 +174,101 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("HttpUrl"))
+    {
+        HttpUrl *url = NULL;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid url");
+
+        TEST_ERROR(httpUrlNewParseP(STRDEF("ftp://" BOGUS_STR)), FormatError, "invalid URL 'ftp://BOGUS'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("HttpProtocolTypeStr");
+
+        TEST_RESULT_STR_Z(httpProtocolTypeStr(httpProtocolTypeHttp), "http", "check http");
+        TEST_RESULT_STR_Z(httpProtocolTypeStr(httpProtocolTypeAny), NULL, "check any");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("simple http");
+
+        TEST_ASSIGN(url, httpUrlNewParseP(STRDEF("http://test"), .type = httpProtocolTypeHttp), "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "http://test", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test", "check host");
+        TEST_RESULT_STR_Z(httpUrlPath(url), "/", "check path");
+        TEST_RESULT_UINT(httpUrlPort(url), 80, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol");
+        TEST_RESULT_STR_Z(httpUrlToLog(url), "{http://test:80/}", "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("host and port");
+
+        TEST_ASSIGN(url, httpUrlNewParseP(STRDEF("gcs:4443"), .type = httpProtocolTypeHttps), "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "gcs:4443", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "gcs", "check host");
+        TEST_RESULT_STR_Z(httpUrlPath(url), "/", "check path");
+        TEST_RESULT_UINT(httpUrlPort(url), 4443, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol");
+        TEST_RESULT_STR_Z(httpUrlToLog(url), "{https://gcs:4443/}", "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("http but expected https");
+
+        TEST_ERROR(
+            httpUrlNewParseP(STRDEF("http://test"), .type = httpProtocolTypeHttps), FormatError,
+            "expected protocol 'https' in URL 'http://test'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("https with port and path");
+
+        TEST_ASSIGN(url, httpUrlNewParseP(STRDEF("https://test.com:445/path")), "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "https://test.com:445/path", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_STR_Z(httpUrlPath(url), "/path", "check path");
+        TEST_RESULT_UINT(httpUrlPort(url), 445, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol");
+        TEST_RESULT_STR_Z(httpUrlToLog(url), "{https://test.com:445/path}", "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("host only");
+
+        TEST_ASSIGN(url, httpUrlNewParseP(STRDEF("test.com"), .type = httpProtocolTypeHttps), "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "test.com", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_STR_Z(httpUrlPath(url), "/", "check path");
+        TEST_RESULT_UINT(httpUrlPort(url), 443, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol");
+        TEST_RESULT_STR_Z(httpUrlToLog(url), "{https://test.com:443/}", "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("IPv6");
+
+        TEST_ASSIGN(url, httpUrlNewParseP(STRDEF("http://[2001:db8::ff00:42:8329]:81"), .type = httpProtocolTypeHttp), "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "http://[2001:db8::ff00:42:8329]:81", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "2001:db8::ff00:42:8329", "check host");
+        TEST_RESULT_STR_Z(httpUrlPath(url), "/", "check path");
+        TEST_RESULT_UINT(httpUrlPort(url), 81, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol");
+        TEST_RESULT_STR_Z(httpUrlToLog(url), "{http://[2001:db8::ff00:42:8329]:81/}", "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("IPv6 no port");
+
+        TEST_ASSIGN(url, httpUrlNewParseP(STRDEF("http://[2001:db8::ff00:42:8329]/url"), .type = httpProtocolTypeHttp), "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "http://[2001:db8::ff00:42:8329]/url", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "2001:db8::ff00:42:8329", "check host");
+        TEST_RESULT_STR_Z(httpUrlPath(url), "/url", "check path");
+        TEST_RESULT_UINT(httpUrlPort(url), 80, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol");
+        TEST_RESULT_STR_Z(httpUrlToLog(url), "{http://[2001:db8::ff00:42:8329]:80/url}", "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("free");
+
+        TEST_RESULT_VOID(httpUrlFree(url), "free");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("HttpClient"))
     {
         HttpClient *client = NULL;

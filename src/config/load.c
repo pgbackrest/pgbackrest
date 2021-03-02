@@ -269,7 +269,7 @@ cfgLoadUpdateOption(void)
     // For each possible repo, error if an S3 bucket name contains dots
     for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
     {
-        if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx) &&
+        if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx) &&
             strChr(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), '.') != -1)
         {
             THROW_FMT(

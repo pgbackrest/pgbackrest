@@ -232,7 +232,7 @@ testRun(void)
 
     // TLS can only be verified in a container
     if (!testContainer())
-        hrnCfgArgRawBool(commonArgWithoutEndpointList, cfgOptRepoS3VerifyTls, false);
+        hrnCfgArgRawBool(commonArgWithoutEndpointList, cfgOptRepoStorageVerifyTls, false);
 
     // Config settings that are required for every test (with endpoint)
     StringList *commonArgList = strLstDup(commonArgWithoutEndpointList);
@@ -319,8 +319,8 @@ testRun(void)
 
         argList = strLstDup(commonArgWithoutEndpointList);
         hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "custom.endpoint:333");
-        hrnCfgArgRawZ(argList, cfgOptRepoS3CaPath, "/path/to/cert");
-        hrnCfgArgRawFmt(argList, cfgOptRepoS3CaFile, "%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageCaPath, "/path/to/cert");
+        hrnCfgArgRawFmt(argList, cfgOptRepoStorageCaFile, "%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
         hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -384,7 +384,7 @@ testRun(void)
                 TEST_TITLE("config with keys, token, and host with custom port");
 
                 StringList *argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Host, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -416,7 +416,7 @@ testRun(void)
 
                 TEST_ERROR(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), FileMissingError,
-                    "unable to open '/file.txt': No such file or directory");
+                    "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file");
@@ -441,7 +441,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Host, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, STORAGE_S3_KEY_TYPE_AUTO);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
@@ -1010,8 +1010,8 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3UriStyle, STORAGE_S3_URI_STYLE_PATH);
-                hrnCfgArgRaw(argList, cfgOptRepoS3Host, host);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Port, "%u", port);
+                hrnCfgArgRaw(argList, cfgOptRepoStorageHost, host);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 

@@ -161,8 +161,8 @@ sub setup
         $self->backrestExeHelper() .
             ' --config=' . $oHostBackup->backrestConfig() . ' --stanza=' . $self->stanza() . ' --log-level-console=off' .
             ' --log-level-stderr=error' .
-            ($oConfigParam->{strStorage} ne POSIX ? " --no-repo1-$oConfigParam->{strStorage}-verify-tls" .
-                " --repo1-$oConfigParam->{strStorage}-host=" . $oHostObject->ipGet() : ''),
+            ($oConfigParam->{strStorage} ne POSIX ?
+                " --no-repo1-storage-verify-tls --repo1-$oConfigParam->{strStorage}-host=" . $oHostObject->ipGet() : ''),
         $oConfigParam->{strStorage} eq POSIX ? STORAGE_POSIX : STORAGE_OBJECT);
 
     # Create db-standby config
