@@ -334,7 +334,9 @@
                     <config-key id="repo-azure-endpoint" name="Azure Repository Endpoint">
                         <summary>Azure repository endpoint.</summary>
 
-                        <text>Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government.</text>
+                        <text>Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government.
+
+                        For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</text>
 
                         <example>blob.core.usgovcloudapi.net</example>
                     </config-key>
@@ -549,7 +551,9 @@
                     <config-key id="repo-s3-endpoint" name="S3 Repository Endpoint">
                         <summary>S3 repository endpoint.</summary>
 
-                        <text>The AWS end point should be valid for the selected region.</text>
+                        <text>The AWS end point should be valid for the selected region.
+
+                        For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</text>
 
                         <example>s3.amazonaws.com</example>
                     </config-key>
