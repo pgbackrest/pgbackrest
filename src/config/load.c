@@ -68,8 +68,8 @@ cfgLoadUpdateOption(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    // Make sure repo option is set for the default command role when it is not internal and more than one repo is configured or the
-    // first configured repo is not key 1. Filter out any commands where this does not apply.
+    // Make sure the repo option is set for the stanza-delete command when more than one repo is configured or the first configured
+    // repo is not key 1.
     if (!cfgCommandHelp() && cfgCommand() == cfgCmdStanzaDelete && !cfgOptionTest(cfgOptRepo) &&
         (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
     {
