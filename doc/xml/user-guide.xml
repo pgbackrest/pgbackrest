@@ -622,7 +622,7 @@
             <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo1-azure-key-type">{[azure-key-type]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-key">{[azure-key]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-azure-container">{[azure-container]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo1-azure-host">blob.core.windows.net</backrest-config-option>
+            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo1-storage-host">blob.core.windows.net</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -657,6 +657,7 @@
             <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
             <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-storage-host" remove="y"/>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>

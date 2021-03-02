@@ -362,10 +362,10 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 strEqZ(cfgOptionIdxStr(cfgOptRepoAzureKeyType, repoIdx), STORAGE_AZURE_KEY_TYPE_SHARED) ?
                     storageAzureKeyTypeShared : storageAzureKeyTypeSas,
                 cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
-                cfgOptionIdxStrNull(cfgOptRepoAzureHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoAzurePort, repoIdx), ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoAzureVerifyTls, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoAzureCaFile, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoAzureCaPath, repoIdx));
+                cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx), ioTimeoutMs(),
+                cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
         }
         // Use CIFS storage
         else if (strEqZ(type, STORAGE_CIFS_TYPE))
@@ -387,15 +387,15 @@ storageRepoGet(unsigned int repoIdx, bool write)
             CHECK(strEqZ(type, STORAGE_S3_TYPE));
 
             // Set the default port
-            unsigned int port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
+            unsigned int port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
             // Extract port from the endpoint and host if it is present
             const String *endPoint = cfgOptionIdxHostPort(cfgOptRepoS3Endpoint, repoIdx, &port);
-            const String *host = cfgOptionIdxHostPort(cfgOptRepoS3Host, repoIdx, &port);
+            const String *host = cfgOptionIdxHostPort(cfgOptRepoStorageHost, repoIdx, &port);
 
             // If the port option was set explicitly then use it in preference to appended ports
-            if (cfgOptionIdxSource(cfgOptRepoS3Port, repoIdx) != cfgSourceDefault)
-                port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
+            if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
+                port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
             result = storageS3New(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
@@ -407,8 +407,8 @@ storageRepoGet(unsigned int repoIdx, bool write)
                     storageS3KeyTypeShared : storageS3KeyTypeAuto,
                 cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
-                STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3CaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3CaPath, repoIdx));
+                STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
         }
     }
 
