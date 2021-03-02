@@ -70,8 +70,8 @@ cfgLoadUpdateOption(void)
 
     // Make sure the repo option is set for the stanza-delete command when more than one repo is configured or the first configured
     // repo is not key 1.
-    if (!cfgCommandHelp() && cfgCommand() == cfgCmdStanzaDelete && !cfgOptionTest(cfgOptRepo) &&
-        (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepo) && cfgCommand() == cfgCmdStanzaDelete &&
+        !cfgOptionTest(cfgOptRepo) && (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
     {
         THROW_FMT(
             OptionRequiredError,
