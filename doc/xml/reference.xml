@@ -629,7 +629,7 @@
                     <config-key id="repo-storage-verify-tls" name="Repository Storage Certificate Verify">
                         <summary>Repository storage certificate verify.</summary>
 
-                        <text>Disables verification of the storage (e.g. S3, Azure) server TLS certificate. This should only be used for testing or other scenarios where a certificate has been self-signed.</text>
+                        <text>This option provides the ability to enable/disable verification of the storage (e.g. S3, Azure) server TLS certificate. Disabling should only be used for testing or other scenarios where a certificate has been self-signed.</text>
 
                         <example>n</example>
                     </config-key>
