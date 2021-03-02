@@ -288,8 +288,8 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-                hrnCfgArgRaw(argList, cfgOptRepoAzureHost, hrnServerHost());
-                hrnCfgArgRawFmt(argList, cfgOptRepoAzurePort, "%u", hrnServerPort(0));
+                hrnCfgArgRaw(argList, cfgOptRepoStorageHost, hrnServerHost());
+                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", hrnServerPort(0));
                 hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, testContainer());
                 hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);

@@ -384,7 +384,7 @@ testRun(void)
                 TEST_TITLE("config with keys, token, and host with custom port");
 
                 StringList *argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Host, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -441,7 +441,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Host, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, STORAGE_S3_KEY_TYPE_AUTO);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
@@ -1010,8 +1010,8 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3UriStyle, STORAGE_S3_URI_STYLE_PATH);
-                hrnCfgArgRaw(argList, cfgOptRepoS3Host, host);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Port, "%u", port);
+                hrnCfgArgRaw(argList, cfgOptRepoStorageHost, host);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 

@@ -362,8 +362,8 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 strEqZ(cfgOptionIdxStr(cfgOptRepoAzureKeyType, repoIdx), STORAGE_AZURE_KEY_TYPE_SHARED) ?
                     storageAzureKeyTypeShared : storageAzureKeyTypeSas,
                 cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
-                cfgOptionIdxStrNull(cfgOptRepoAzureHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoAzurePort, repoIdx), ioTimeoutMs(),
+                cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx), ioTimeoutMs(),
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
         }
@@ -387,15 +387,15 @@ storageRepoGet(unsigned int repoIdx, bool write)
             CHECK(strEqZ(type, STORAGE_S3_TYPE));
 
             // Set the default port
-            unsigned int port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
+            unsigned int port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
             // Extract port from the endpoint and host if it is present
             const String *endPoint = cfgOptionIdxHostPort(cfgOptRepoS3Endpoint, repoIdx, &port);
-            const String *host = cfgOptionIdxHostPort(cfgOptRepoS3Host, repoIdx, &port);
+            const String *host = cfgOptionIdxHostPort(cfgOptRepoStorageHost, repoIdx, &port);
 
             // If the port option was set explicitly then use it in preference to appended ports
-            if (cfgOptionIdxSource(cfgOptRepoS3Port, repoIdx) != cfgSourceDefault)
-                port = cfgOptionIdxUInt(cfgOptRepoS3Port, repoIdx);
+            if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
+                port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
             result = storageS3New(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
