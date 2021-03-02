@@ -12,6 +12,9 @@
 #     List of commands the option can be used with this option.  An empty hash signifies that the command does not deviate from the
 #     option defaults.  Otherwise, overrides can be specified.
 #
+#     If another option is referenced (e.g. CFGDEF_COMMAND => CFGOPT_REPO_TYPE) then the list of commands will be copied from the
+#     referenced option.
+#
 # NOTE: If the option (A) has a dependency on another option (B) then the CFGCMD_ must also be specified in the other option
 #         (B), else it will still error on the option (A).
 #
