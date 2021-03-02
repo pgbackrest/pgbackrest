@@ -456,7 +456,11 @@ helpRender(void)
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
                 if (optionData[option.id].deprecatedNames != NULL)
-                    strCatFmt(result, "\ndeprecated name: %s\n", strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
+                {
+                    strCatFmt(
+                        result, "\ndeprecated name%s: %s\n", strLstSize(optionData[option.id].deprecatedNames) > 1 ? "s" : "",
+                        strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
+                }
             }
         }
 

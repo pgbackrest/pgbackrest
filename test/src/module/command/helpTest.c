@@ -305,15 +305,21 @@ testRun(void)
         TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32768\ndefault: 1048576\n", optionHelp), "    check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        #define HELP_OPTION                                                                                                        \
+            "%s - 'archive-push' command - 'repo-storage-host' option help\n"                                                      \
+            "\n"                                                                                                                   \
+            "Repository storage host.\n"                                                                                           \
+            "\n"                                                                                                                   \
+            "Connect to a host other than the storage (e.g. S3, Azure) end point. This is\n"                                       \
+            "typically used for testing.\n"                                                                                        \
+            "\n"
+
+        #define HELP_OPTION_DEPRECATED_NAMES                                                                                       \
+            "deprecated names: repo-azure-host, repo-s3-host\n"
+
         optionHelp = strZ(strNewFmt(
-            "%s - 'archive-push' command - 'repo-storage-host' option help\n"
-            "\n"
-            "Repository storage host.\n"
-            "\n"
-            "Connect to a host other than the storage (e.g. S3, Azure) end point. This is\n"
-            "typically used for testing.\n"
-            "\n"
-            "deprecated name: repo-azure-host, repo-s3-host\n",
+            HELP_OPTION
+            HELP_OPTION_DEPRECATED_NAMES,
             helpVersion));
 
         argList = strLstNew();
@@ -326,16 +332,10 @@ testRun(void)
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "    check text");
 
         optionHelp = strZ(strNewFmt(
-            "%s - 'archive-push' command - 'repo-storage-host' option help\n"
-            "\n"
-            "Repository storage host.\n"
-            "\n"
-            "Connect to a host other than the storage (e.g. S3, Azure) end point. This is\n"
-            "typically used for testing.\n"
-            "\n"
+            HELP_OPTION
             "current: s3-host\n"
             "\n"
-            "deprecated name: repo-azure-host, repo-s3-host\n",
+            HELP_OPTION_DEPRECATED_NAMES,
             helpVersion));
 
         strLstAddZ(argList, "--repo1-type=s3");
