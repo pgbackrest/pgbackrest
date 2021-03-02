@@ -551,7 +551,7 @@
                     <config-key id="repo-s3-endpoint" name="S3 Repository Endpoint">
                         <summary>S3 repository endpoint.</summary>
 
-                        <text>The AWS end point should be valid for the selected region.
+                        <text>The AWS endpoint should be valid for the selected region.
 
                         For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</text>
 
@@ -611,7 +611,7 @@
                     <config-key id="repo-storage-host" name="Repository Storage Host">
                         <summary>Repository storage host.</summary>
 
-                        <text>Connect to a host other than the storage (e.g. S3, Azure) end point. This is typically used for testing.</text>
+                        <text>Connect to a host other than the storage (e.g. S3, Azure) endpoint. This is typically used for testing.</text>
 
                         <example>127.0.0.1</example>
                     </config-key>

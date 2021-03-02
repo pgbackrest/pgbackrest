@@ -310,7 +310,7 @@ testRun(void)
             "\n"                                                                                                                   \
             "Repository storage host.\n"                                                                                           \
             "\n"                                                                                                                   \
-            "Connect to a host other than the storage (e.g. S3, Azure) end point. This is\n"                                       \
+            "Connect to a host other than the storage (e.g. S3, Azure) endpoint. This is\n"                                        \
             "typically used for testing.\n"                                                                                        \
             "\n"
 
