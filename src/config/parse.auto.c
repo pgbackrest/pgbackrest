@@ -3667,6 +3667,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_REQUIRED(true),
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_SECURE(true),
         PARSE_RULE_OPTION_GROUP_MEMBER(true),
         PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
 

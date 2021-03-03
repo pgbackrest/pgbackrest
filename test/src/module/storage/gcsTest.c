@@ -203,7 +203,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
         hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, STORAGE_GCS_KEY_TYPE_TOKEN);
-        hrnCfgArgRawZ(argList, cfgOptRepoGcsKey, TEST_TOKEN);
+        hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         Storage *storage = NULL;
@@ -840,7 +840,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, "token");
-                hrnCfgEnvRawZ(cfgOptRepoGcsKey, "X X");
+                hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
