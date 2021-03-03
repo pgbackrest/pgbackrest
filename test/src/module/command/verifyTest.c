@@ -938,16 +938,9 @@ testRun(void)
     if (testBegin("cmdVerify(), verifyProcess() - errors"))
     {
         //--------------------------------------------------------------------------------------------------------------------------
+        // Load Parameters with multi-repo
         StringList *argList = strLstDup(argListBase);
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 4, "%s/repo4", testPath());
-
-        TEST_ERROR_FMT(
-            harnessCfgLoad(cfgCmdVerify, argList), OptionRequiredError, "verify command requires option: repo\n"
-            "HINT: this command requires a specific repository to operate on");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        // Load Parameters with multi-repo
-        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdVerify, argList);
 
         // Store valid archive/backup info files
