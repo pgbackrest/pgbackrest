@@ -66,6 +66,7 @@
                         <commit subject="Make --repo optional for backup command."/>
                         <commit subject="Refactor archive-push command warnings to work like archive-get."/>
                         <commit subject="Add write fault-tolerance to archive-push command."/>
+                        <commit subject="Make --repo optional for remaining commands except stanza-delete."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
