@@ -365,11 +365,11 @@
 
                     <!-- ======================================================================================================= -->
                     <config-key id="repo-gcs-bucket" name="GCS Repository Bucket">
-                        <summary>GCS repository container.</summary>
+                        <summary>GCS repository bucket.</summary>
 
-                        <text>GCS container used to store the repository.
+                        <text>GCS bucket used to store the repository.
 
-                        <backrest/> repositories can be stored in the container root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other GCS-generated content can also be stored in the container.</text>
+                        <backrest/> repositories can be stored in the bucket root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other GCS-generated content can also be stored in the bucket.</text>
 
                         <example>/pg-backup</example>
                     </config-key>

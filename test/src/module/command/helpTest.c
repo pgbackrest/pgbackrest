@@ -198,7 +198,7 @@ testRun(void)
             "                                   [current=<redacted>]\n"
             "  --repo-cipher-type               cipher used to encrypt the repository\n"
             "                                   [current=aes-256-cbc, default=none]\n"
-            "  --repo-gcs-bucket                GCS repository container\n"
+            "  --repo-gcs-bucket                GCS repository bucket\n"
             "  --repo-gcs-endpoint              GCS repository endpoint\n"
             "                                   [default=storage.googleapis.com]\n"
             "  --repo-gcs-key                   GCS repository key\n"
