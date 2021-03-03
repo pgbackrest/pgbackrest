@@ -652,10 +652,10 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="gcs-setup">
-        <p><backrest/> supports locating repositories in <proper>GCS-compatible</proper> object stores. The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically. The repository can be located in the container root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the buket without conflicts.</p>
+        <p><backrest/> supports locating repositories in <proper>GCS-compatible</proper> object stores. The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically. The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
 
         <backrest-config host="{[gcs-setup-host]}" file="{[backrest-config-demo]}" owner="{[gcs-setup-config-owner]}">
-            <title>Configure <proper>Azure</proper></title>
+            <title>Configure <proper>GCS</proper></title>
 
             <backrest-config-option section="global" key="repo1-type">gcs</backrest-config-option>
             <backrest-config-option section="global" key="repo1-path">/{[gcs-repo]}</backrest-config-option>
@@ -2183,7 +2183,7 @@
 
     <!-- ======================================================================================================================= -->
     <section id="gcs-support" if="'{[gcs-all]}' ne 'y'" depend="/quickstart/configure-archiving">
-        <title>Azure-Compatible Object Store Support</title>
+        <title>GCS-Compatible Object Store Support</title>
 
         <block id="gcs-setup">
             <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
