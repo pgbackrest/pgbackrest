@@ -227,10 +227,9 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
 
         if (error != NULL)
         {
-            const String *description = varStr(kvGet(kvResponse, GCS_JSON_ERROR_DESCRIPTION_VAR));
-            CHECK(description != NULL);
-
-            THROW_FMT(ProtocolError, "unable to get authentication token: [%s] %s", strZ(error), strZ(description));
+            THROW_FMT(
+                ProtocolError, "unable to get authentication token: [%s] %s", strZ(error),
+                strZNull(varStr(kvGet(kvResponse, GCS_JSON_ERROR_DESCRIPTION_VAR))));
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
