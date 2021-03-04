@@ -275,7 +275,7 @@ storageWriteGcsClose(THIS_VOID)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // If a multi-chunk upload was started then finish that way
+            // If a resumable upload was started then finish that way
             if (this->uploadId != NULL)
             {
                 ASSERT(!bufEmpty(this->chunkBuffer));
