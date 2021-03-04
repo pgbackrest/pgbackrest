@@ -237,7 +237,7 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
     do
     {
         // If the chunk buffer is full then write it. We can't write it at the end of this loop because this might be the end of the
-        // input and we'd have no way to signal the end of the resumable upload if there is no more data.
+        // input and we'd have no way to signal the end of the resumable upload when closing the file if there is no more data.
         if (bufRemains(this->chunkBuffer) == 0)
         {
             storageWriteGcsBlockAsync(this, false);
