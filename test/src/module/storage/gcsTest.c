@@ -222,16 +222,6 @@ testRun(void)
     {
         StorageGcs *storage = NULL;
 
-        // !!! HACKY WAY TO GET A BEARER TOKEN FOR TESTING AT THE COMMAND LINE
-        // TEST_RESULT_STR_Z(
-        //     storageGcsAuthToken(
-        //         (StorageGcs *)storageDriver(
-        //             storageGcsNew(
-        //                 STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService,
-        //                 strNewFmt("/home/%s/pgbackrest/test/scratch.gcs.json", testUser()), TEST_CHUNK_SIZE, TEST_ENDPOINT_STR,
-        //                 TEST_TIMEOUT, true, NULL, NULL)), time(NULL)).token,
-        //     "", "authentication token");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("jwt read-only");
 
@@ -334,7 +324,7 @@ testRun(void)
                 // Tests need the chunk size to be 16
                 ((StorageGcs *)storage->driver)->chunkSize = 16;
 
-                // Generate the auth request. The JWT part will need to be ? since it case vary in content and size.
+                // Generate the auth request. The JWT part will need to be ? since it can vary in content and size.
                 const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
                 const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storage->driver), time(NULL));
 
