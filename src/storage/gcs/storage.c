@@ -61,7 +61,7 @@ VARIANT_STRDEF_STATIC(GCS_JSON_EXPIRES_IN_VAR,                      "expires_in"
 VARIANT_STRDEF_EXTERN(GCS_JSON_MD5_HASH_VAR,                        GCS_JSON_MD5_HASH);
 VARIANT_STRDEF_EXTERN(GCS_JSON_NAME_VAR,                            GCS_JSON_NAME);
 #define GCS_JSON_NEXT_PAGE_TOKEN                                    "nextPageToken"
-VARIANT_STRDEF_STATIC(GCS_JSON_NEXT_PAGE_TOKEN_VAR,                 GCS_JSON_NEXT_PAGE_TOKEN);
+    VARIANT_STRDEF_STATIC(GCS_JSON_NEXT_PAGE_TOKEN_VAR,             GCS_JSON_NEXT_PAGE_TOKEN);
 #define GCS_JSON_PREFIXES                                           "prefixes"
     VARIANT_STRDEF_STATIC(GCS_JSON_PREFIXES_VAR,                    GCS_JSON_PREFIXES);
 VARIANT_STRDEF_STATIC(GCS_JSON_PRIVATE_KEY_VAR,                     "private_key");
@@ -92,7 +92,7 @@ struct StorageGcs
     bool write;                                                     // Storage is writable
     const String *bucket;                                           // Bucket to store data in
     const String *endpoint;                                         // Endpoint
-    size_t chunkSize;                                               // Block size for multi-chunk upload
+    size_t chunkSize;                                               // Block size for resumable upload
 
     StorageGcsKeyType keyType;                                      // Auth key type
     const String *credential;                                       // Credential (client email)
@@ -230,7 +230,7 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
             const String *description = varStr(kvGet(kvResponse, GCS_JSON_ERROR_DESCRIPTION_VAR));
             CHECK(description != NULL);
 
-            THROW_FMT(ProtocolError, "unable to get authentication token: [%s] %s", strZ(error), strZNull(description));
+            THROW_FMT(ProtocolError, "unable to get authentication token: [%s] %s", strZ(error), strZ(description));
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -288,7 +288,10 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
                     {
                         strFree(this->token);
                         this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
-                        this->tokenTimeExpire = tokenResult.timeExpire - 120;
+
+                        // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
+                        this->tokenTimeExpire =
+                            tokenResult.timeExpire - ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
                     }
                     MEM_CONTEXT_END();
                 }
