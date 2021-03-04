@@ -171,6 +171,7 @@ storageWriteAzure(THIS_VOID, const Buffer *buffer)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
     ASSERT(this->blockBuffer != NULL);
 
     size_t bytesTotal = 0;
