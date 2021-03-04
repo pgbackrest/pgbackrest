@@ -117,7 +117,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
         FUNCTION_TEST_PARAM(TIME, timeBegin);
     FUNCTION_TEST_END();
 
-    // Static header
+    // Static header with dot delimiter
     String *result = strNew("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -164,7 +164,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 
             cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
 
-            // Add signature
+            // Add dot delimiter and signature
             strCatChr(result, '.');
             strCatEncode(result, encodeBase64Url, signature);
         }
