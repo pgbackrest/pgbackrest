@@ -176,6 +176,9 @@
         <variable key="s3-key">accessKey1</variable>
         <variable key="s3-key-secret">verySecretKey1</variable>
 
+        <!-- Is any object store being used to build all the documentation? -->
+        <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y')</variable>
+
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
 
@@ -658,11 +661,11 @@
         <backrest-config host="{[gcs-setup-host]}" file="{[backrest-config-demo]}" owner="{[gcs-setup-config-owner]}">
             <title>Configure <proper>GCS</proper></title>
 
-            <backrest-config-option section="global" key="repo1-type">gcs</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/{[gcs-repo]}</backrest-config-option>
-            <backrest-config-option if="'{[gcs-key-type]}' ne 'service'" section="global" key="repo1-gcs-key-type">{[gcs-key-type]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-gcs-key">{[gcs-key]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-gcs-bucket">{[gcs-bucket]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-type">gcs</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-path">/{[gcs-repo]}</backrest-config-option>
+            <backrest-config-option if="'{[gcs-key-type]}' ne 'service'" section="global" key="repo{[gcs-setup-repo-id]}-gcs-key-type">{[gcs-key-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-gcs-key">{[gcs-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-gcs-bucket">{[gcs-bucket]}</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -1054,6 +1057,7 @@
             <title>GCS-Compatible Object Store Support</title>
 
             <block id="gcs-setup">
+                <block-variable-replace key="gcs-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -2167,7 +2171,7 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="azure-support" if="'{[azure-all]}' ne 'y'" depend="/quickstart/configure-archiving">
+    <section id="azure-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
         <title>Azure-Compatible Object Store Support</title>
 
         <block id="azure-setup">
@@ -2204,23 +2208,8 @@
         </execute-list>
     </section>
 
-    <!-- ======================================================================================================================= -->
-    <section id="gcs-support" if="'{[gcs-all]}' ne 'y'" depend="/quickstart/configure-archiving">
-        <title>GCS-Compatible Object Store Support</title>
-
-        <block id="gcs-setup">
-            <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
-            <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
-            <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
-        </block>
-
-        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
-
-        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
-    </section>
-
     <!-- SECTION => S3-SUPPORT -->
-    <section id="s3-support" if="'{[s3-all]}' ne 'y'" depend="/azure-support">
+    <section id="s3-support" if="!{[object-any-all]}" depend="/azure-support">
         <title>S3-Compatible Object Store Support</title>
 
         <block id="s3-setup">
@@ -2314,8 +2303,24 @@
         </execute-list>
     </section>
 
+    <!-- ======================================================================================================================= -->
+    <section id="gcs-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
+        <title>GCS-Compatible Object Store Support</title>
+
+        <block id="gcs-setup">
+            <block-variable-replace key="gcs-setup-repo-id">4</block-variable-replace>
+            <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
+            <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
+        </block>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+    </section>
+
     <!-- SECTION => REPOSITORY HOST -->
-    <section id="delete-stanza"  depend="/s3-support">
+    <section id="delete-stanza"  depend="/quickstart">
         <title>Delete a Stanza</title>
 
         <cmd-description key="stanza-delete"/>
@@ -2342,7 +2347,7 @@
 
             <execute user="postgres" output="y">
                 <exe-cmd>
-                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=3
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=1
                     {[dash]}-log-level-console=info stanza-delete
                 </exe-cmd>
                 <exe-highlight>completed successfully</exe-highlight>
@@ -2497,6 +2502,7 @@
             <p if="'{[azure-all]}' eq 'y'">Configure Azure-compatible object store if required.</p>
 
             <block id="azure-setup" if="'{[azure-all]}' eq 'y'">
+                <block-variable-replace key="azure-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="azure-setup-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
@@ -2506,6 +2512,7 @@
             <p if="'{[gcs-all]}' eq 'y'">Configure GCS-compatible object store if required.</p>
 
             <block id="gcs-setup" if="'{[gcs-all]}' eq 'y'">
+                <block-variable-replace key="gcs-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="gcs-setup-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="gcs-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="gcs-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
@@ -2514,29 +2521,17 @@
             <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
 
             <block id="s3-setup" if="'{[s3-all]}' eq 'y'">
+                <block-variable-replace key="s3-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="s3-setup-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
             </block>
 
-            <p>Create the stanza in the new repository.</p>
+            <p if="!{[object-any-all]}">Create the stanza in the new repository.</p>
 
-            <execute-list host="{[host-repo1]}">
+            <execute-list host="{[host-repo1]}" if="!{[object-any-all]}">
                 <title>Create the stanza</title>
-
-                <!-- Delete the azure stanza so the server can be reused -->
-                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stop</exe-cmd>
-                </execute>
-
-                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-force stanza-delete</exe-cmd>
-                </execute>
-
-                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} start</exe-cmd>
-                </execute>
 
                 <!-- Create the stanza -->
                 <execute user="{[br-user]}" output="y" filter="n">
