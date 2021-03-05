@@ -22,6 +22,7 @@ typedef struct HttpResponse HttpResponse;
 /***********************************************************************************************************************************
 HTTP Response Constants
 ***********************************************************************************************************************************/
+#define HTTP_RESPONSE_CODE_PERMANENT_REDIRECT                       308
 #define HTTP_RESPONSE_CODE_FORBIDDEN                                403
 #define HTTP_RESPONSE_CODE_NOT_FOUND                                404
 

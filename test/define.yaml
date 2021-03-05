@@ -397,6 +397,9 @@ unit:
           - storage/azure/storage
           - storage/azure/write
           - storage/cifs/storage
+          - storage/gcs/read
+          - storage/gcs/storage
+          - storage/gcs/write
           - storage/helper
           - storage/remote/read
           - storage/remote/protocol
@@ -490,6 +493,20 @@ unit:
           - storage/posix/write
           - storage/helper
           - storage/read
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: gcs
+        total: 3
+
+        coverage:
+          - storage/gcs/read
+          - storage/gcs/storage
+          - storage/gcs/write
+          - storage/helper
+
+        include:
           - storage/storage
           - storage/write
 

@@ -268,6 +268,13 @@ use constant CFGOPT_REPO_AZURE_ENDPOINT                             => CFGDEF_RE
 use constant CFGOPT_REPO_AZURE_KEY                                  => CFGDEF_REPO_AZURE . '-key';
 use constant CFGOPT_REPO_AZURE_KEY_TYPE                             => CFGDEF_REPO_AZURE . '-key-type';
 
+# Repository GCS
+use constant CFGDEF_REPO_GCS                                        => CFGDEF_PREFIX_REPO . '-gcs';
+use constant CFGOPT_REPO_GCS_BUCKET                                 => CFGDEF_REPO_GCS . '-bucket';
+use constant CFGOPT_REPO_GCS_ENDPOINT                               => CFGDEF_REPO_GCS . '-endpoint';
+use constant CFGOPT_REPO_GCS_KEY                                    => CFGDEF_REPO_GCS . '-key';
+use constant CFGOPT_REPO_GCS_KEY_TYPE                               => CFGDEF_REPO_GCS . '-key-type';
+
 # Repository S3
 use constant CFGDEF_REPO_S3                                         => CFGDEF_PREFIX_REPO . '-s3';
 use constant CFGOPT_REPO_S3_KEY                                     => CFGDEF_REPO_S3 . '-key';
@@ -367,6 +374,7 @@ use constant CFGOPTVAL_BACKUP_TYPE_INCR                             => 'incr';
 #-----------------------------------------------------------------------------------------------------------------------------------
 use constant CFGOPTVAL_REPO_TYPE_AZURE                              => 'azure';
 use constant CFGOPTVAL_REPO_TYPE_CIFS                               => 'cifs';
+use constant CFGOPTVAL_REPO_TYPE_GCS                                => 'gcs';
 use constant CFGOPTVAL_REPO_TYPE_POSIX                              => 'posix';
 use constant CFGOPTVAL_REPO_TYPE_S3                                 => 's3';
 
@@ -2260,6 +2268,58 @@ my %hConfigDefine =
         ],
     },
 
+    &CFGOPT_REPO_GCS_BUCKET =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_REQUIRED => true,
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_GCS_KEY_TYPE,
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_GCS_ENDPOINT =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'storage.googleapis.com',
+        &CFGDEF_DEPEND => CFGOPT_REPO_GCS_BUCKET,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_GCS_KEY =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_SECURE => true,
+        &CFGDEF_DEPEND => CFGOPT_REPO_GCS_BUCKET,
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
+    &CFGOPT_REPO_GCS_KEY_TYPE =>
+    {
+        &CFGDEF_GROUP => CFGOPTGRP_REPO,
+        &CFGDEF_SECTION => CFGDEF_SECTION_GLOBAL,
+        &CFGDEF_TYPE => CFGDEF_TYPE_STRING,
+        &CFGDEF_DEFAULT => 'service',
+        &CFGDEF_ALLOW_LIST =>
+        [
+            'service',
+            'token',
+        ],
+        &CFGDEF_DEPEND =>
+        {
+            &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
+            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_GCS],
+        },
+        &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
+    },
+
     &CFGOPT_REPO_S3_BUCKET =>
     {
         &CFGDEF_GROUP => CFGOPTGRP_REPO,
@@ -2447,7 +2507,7 @@ my %hConfigDefine =
         &CFGDEF_DEPEND =>
         {
             &CFGDEF_DEPEND_OPTION => CFGOPT_REPO_TYPE,
-            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_AZURE, CFGOPTVAL_REPO_TYPE_S3],
+            &CFGDEF_DEPEND_LIST => [CFGOPTVAL_REPO_TYPE_AZURE, CFGOPTVAL_REPO_TYPE_GCS, CFGOPTVAL_REPO_TYPE_S3],
         },
         &CFGDEF_COMMAND => CFGOPT_REPO_TYPE,
     },
@@ -2462,6 +2522,7 @@ my %hConfigDefine =
         [
             &CFGOPTVAL_REPO_TYPE_AZURE,
             &CFGOPTVAL_REPO_TYPE_CIFS,
+            &CFGOPTVAL_REPO_TYPE_GCS,
             &CFGOPTVAL_REPO_TYPE_POSIX,
             &CFGOPTVAL_REPO_TYPE_S3,
         ],

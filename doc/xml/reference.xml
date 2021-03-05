@@ -363,6 +363,48 @@
                         <example>sas</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-bucket" name="GCS Repository Bucket">
+                        <summary>GCS repository bucket.</summary>
+
+                        <text>GCS bucket used to store the repository.
+
+                        <backrest/> repositories can be stored in the bucket root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other GCS-generated content can also be stored in the bucket.</text>
+
+                        <example>/pg-backup</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-endpoint" name="GCS Repository Endpoint">
+                        <summary>GCS repository endpoint.</summary>
+
+                        <text>Endpoint used to connect to the storage service. May be updated to use a local GCS server or alternate endpoint.</text>
+
+                        <example>localhost</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-key" name="GCS Repository Key">
+                        <summary>GCS repository key.</summary>
+
+                        <text>A token or service key file depending on the <br-option>repo-gcs-key-type</br-option> option.</text>
+
+                        <example>/etc/pgbackrest/gcs-key.json</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-gcs-key-type" name="GCS Repository Key Type">
+                        <summary>GCS repository key type.</summary>
+
+                        <text>The following types are supported for authorization:
+                        <ul>
+                            <li><id>service</id> - Service account from locally stored key.</li>
+                            <li><id>token</id> - For local testing, e.g. <file>fakegcs</file>.</li>
+                        </ul></text>
+
+                        <example>none</example>
+                    </config-key>
+
                     <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
                     <config-key id="repo-host" name="Repository Host">
                         <summary>Repository host when operating remotely via SSH.</summary>
@@ -642,6 +684,7 @@
                         <ul>
                             <li><id>azure</id> - Azure Blob Storage Service</li>
                             <li><id>cifs</id> - Like <id>posix</id>, but disables links and directory fsyncs</li>
+                            <li><id>gcs</id> - Google Cloud Storage</li>
                             <li><id>posix</id> - Posix-compliant file systems</li>
                             <li><id>s3</id> - AWS Simple Storage Service</li>
                         </ul></text>
