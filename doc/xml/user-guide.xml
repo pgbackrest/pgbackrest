@@ -1036,7 +1036,7 @@
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
 
-            <p>Multiple repositories may also be configured. See <link section="/multi-repo">Multiple Repositories</link> for details.</p>
+            <p if="!{[object-any-all]}">Multiple repositories may also be configured. See <link section="/multi-repo">Multiple Repositories</link> for details.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -1069,6 +1069,7 @@
             <title>S3-Compatible Object Store Support</title>
 
             <block id="s3-setup">
+                <block-variable-replace key="s3-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -2158,7 +2159,7 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="multi-repo">
+    <section id="multi-repo" if="!{[object-any-all]}">
         <title>Multiple Repositories</title>
 
         <p>Multiple repositories may be configured as demonstrated in <link section="/s3-support">S3 Support</link>. A potential benefit is the ability to have a local repository for fast restores and a remote repository for redundancy.</p>
@@ -2319,8 +2320,8 @@
         <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
     </section>
 
-    <!-- SECTION => REPOSITORY HOST -->
-    <section id="delete-stanza"  depend="/quickstart">
+    <!-- ======================================================================================================================= -->
+    <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
         <title>Delete a Stanza</title>
 
         <cmd-description key="stanza-delete"/>
