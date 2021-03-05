@@ -230,7 +230,6 @@ clean:
 
 # Do clean and also remove all output from configure
 clean-all: clean
-	rm -rf autom4te.cache
 	rm -f build.auto.h config.log config.status Makefile
 
 ####################################################################################################################################

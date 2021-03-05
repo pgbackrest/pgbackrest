@@ -547,6 +547,9 @@ eval
                     $strConfigure =
                         trim($strConfigure) . "\n\n# Generated from src/build/configure.ac sha1 ${strConfigureAcHash}\n";
 
+                    # Remove cache created by autconf
+                    executeTest("rm -rf ${strBackRestBase}/src/build/autom4te.cache");
+
                     # Remove unused options from help
                     my $strDirList =
                         "sbin|libexec|sysconf|sharedstate|localstate|runstate|lib|include|oldinclude|dataroot|data|info" .
