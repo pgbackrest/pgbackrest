@@ -305,9 +305,9 @@
             <config-section id="repository" name="Repository">
                 <text>The <setting>repository</setting> section defines options used to configure the repository.
 
-                <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories, though only a single repository is currently supported. For example, the repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options.
+                <b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories. For example, a single repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options. If there is more than one repository configured and the <br-option>{[dash]}-repo</br-option> option is not specified for a command, the repositories will be acted upon in highest priority order (e.g. repo1 then repo2).
 
-                The <setting>repo-retention-*</setting> options define how long backups will be retained.  Expiration only occurs when the count of complete backups exceeds the allowed retention.  In other words, if <setting>repo-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired.  If <setting>repo-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo-retention-full</setting> represents days so there must be at least that many days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
+                The <setting>repo-retention-*</setting> options define how long backups will be retained. Expiration only occurs when the count of complete backups exceeds the allowed retention. In other words, if <setting>repo1-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo1-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired. If <setting>repo1-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo1-retention-full</setting> represents days so there must be at least that many days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</text>
 
                 <config-key-list>
                     <!-- ======================================================================================================= -->
@@ -1076,7 +1076,7 @@
 
         <text>Commands are used to execute the various <backrest/> functions.  Here the command options are listed exhaustively, that is, each option applicable to a command is listed with that command even if it applies to one or more other commands.  This includes all the options that may also configured in <file>pgbackrest.conf</file>.
 
-        Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>reset-</id> prefix.  This feature may be used to restore a backup directly on a repository host.  Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely.  By adding <br-option>--reset-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally.  It may be necessary to pass a new <br-option>--pg-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.
+        Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>reset-</id> prefix. This feature may be used to restore a backup directly on a repository host. Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely. By adding <br-option>--reset-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally. It may be necessary to pass a new <br-option>--pg1-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.
 
         The <id>no-</id> prefix may be used to set a boolean option to false on the command-line.
 
@@ -1229,7 +1229,7 @@
             <command id="archive-push" name="Archive Push">
                 <summary>Push a WAL segment to the archive.</summary>
 
-                <text>The WAL segment may be pushed immediately to the archive or stored locally depending on the value of <setting>archive-async</setting></text>
+                <text>The WAL segment may be pushed immediately to the archive or stored locally depending on the value of <setting>archive-async</setting>. With multiple repositories configured, <cmd>archive-push</cmd> will attempt to push to as many repositories as possible.</text>
 
                 <command-example-list>
                     <command-example>
@@ -1247,7 +1247,7 @@
 
                 <text>WAL segments are required for <postgres/> recovery or to maintain a replica.
 
-                When multiple repositories are configured, WAL will be fetched from the repositories in priority order (e.g. <id>repo1</id>, <id>repo2</id>, etc.). In general it is better if faster/cheaper storage has higher priority. If a repository is specified with the <br-option>--repo</br-option> option then only that repository will be searched.</text>
+                When multiple repositories are configured, WAL will be fetched from the repositories in priority order (e.g. <id>repo1</id>, <id>repo2</id>, etc.). In general it is better if faster/cheaper storage has higher priority. If a repository is specified with the <br-option>{[dash]}-repo</br-option> option then only that repository will be searched.</text>
 
                 <command-example-list>
                     <command-example>
@@ -1263,7 +1263,7 @@
             <command id="check" name="Check">
                 <summary>Check the configuration.</summary>
 
-                <text>The <cmd>check</cmd> command validates that <backrest/> and the <pg-setting>archive_command</pg-setting> setting are configured correctly for archiving and backups. It detects misconfigurations, particularly in archiving, that result in incomplete backups because required WAL segments did not reach the archive. The command can be run on the database or the repository host.  The command may also be run on the standby host, however, since <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> cannot be performed on the standby, the command will only test the repository configuration.
+                <text>The <cmd>check</cmd> command validates that <backrest/> and the <pg-setting>archive_command</pg-setting> setting are configured correctly for archiving and backups. It will attempt to check all repositories and databases that are configured for the system on which the command is run. It detects misconfigurations, particularly in archiving, that result in incomplete backups because required WAL segments did not reach the archive. The command can be run on the database or the repository host. The command may also be run on the standby host, however, since <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> cannot be performed on the standby, the command will only test the repository configuration.
 
                 Note that <code>pg_create_restore_point('pgBackRest Archive Check')</code> and <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> are called to force <postgres/> to archive a WAL segment.  Restore points are only supported in <postgres/> &gt;= 9.1 so for older versions the <cmd>check</cmd> command may fail if there has been no write activity since the last log rotation, therefore it is recommended that activity be generated by the user if there have been no writes since the last WAL switch before running the <cmd>check</cmd> command.</text>
 
@@ -1283,7 +1283,7 @@
 
                 <text><backrest/> does full backup rotation based on the retention type which can be a count or a time period. When a count is specified, then expiration is not concerned with when the backups were created but with how many must be retained. Differential and Incremental backups are count-based but will always be expired when the backup they depend on is expired. See sections <link page="user-guide" section="/retention/full">Full Backup Retention</link> and <link page="user-guide" section="/retention/diff">Differential Backup Retention</link> for details and examples. Archived WAL is retained by default for backups that have not expired, however, although not recommended, this schedule can be modified per repository with the retention-archive options. See section <link page="user-guide" section="/retention/archive">Archive Retention</link> for details and examples.
 
-                The <cmd>expire</cmd> command is run automatically after each successful backup and can also be run by the user. When run by the user, expiration will occur as defined by the retention settings for each configured repository. If the <br-option>--repo</br-option> option is provided, expiration will occur only on the specified repository. Expiration can also be limited by the user to a specific backup set with the <br-option>--set</br-option> option and, unless the <br-option>--repo</br-option> option is specified, all repositories will be searched and any matching the set criteria will be expired. It should be noted that the archive retention schedule will be checked and performed any time the <cmd>expire</cmd> command is run.</text>
+                The <cmd>expire</cmd> command is run automatically after each successful backup and can also be run by the user. When run by the user, expiration will occur as defined by the retention settings for each configured repository. If the <br-option>{[dash]}-repo</br-option> option is provided, expiration will occur only on the specified repository. Expiration can also be limited by the user to a specific backup set with the <br-option>--set</br-option> option and, unless the <br-option>{[dash]}-repo</br-option> option is specified, all repositories will be searched and any matching the set criteria will be expired. It should be noted that the archive retention schedule will be checked and performed any time the <cmd>expire</cmd> command is run.</text>
 
                 <option-list>
                     <!-- OPERATION - EXPIRE COMMAND - SET OPTION -->
@@ -1330,7 +1330,9 @@
 
                 <text>Similar to the unix <cmd>cat</cmd> command but works on any supported repository type. This command is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
 
-                If the repository is encrypted then <cmd>repo-get</cmd> will automatically decrypt the file. Files are not automatically decompressed but the output can be piped through the appropriate decompression command, e.g. <id>gzip -d</id>.</text>
+                If the repository is encrypted then <cmd>repo-get</cmd> will automatically decrypt the file. Files are not automatically decompressed but the output can be piped through the appropriate decompression command, e.g. <id>gzip -d</id>.
+
+                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</text>
 
                 <option-list>
                     <!-- OPERATION - REPO-GET COMMAND - IGNORE-MISSING OPTION -->
@@ -1360,7 +1362,9 @@
 
                 <text>Similar to the unix <cmd>ls</cmd> command but works on any supported repository type. This command is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
 
-                The default text output prints one file name per line. JSON output is available by specifying <br-option>--output=json</br-option>.</text>
+                The default text output prints one file name per line. JSON output is available by specifying <br-option>--output=json</br-option>.
+
+                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</text>
 
                 <option-list>
                     <!-- OPERATION - LS COMMAND - FILTER OPTION -->
@@ -1581,7 +1585,7 @@
 
                 For machine-readable output use <br-option>--output=json</br-option>.  The JSON output contains far more information than the text output and is kept stable unless a bug is found.
 
-                Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories. In this case the state of the stanza will be detailed on additional lines per repository. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>--repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.
+                Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories. In this case the state of the stanza will be detailed on additional lines per repository. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>{[dash]}-repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.
 
                 The '<id>backup/expire running</id>' message will appear beside the '<id>status</id>' information if one of those commands is currently running on the host.
 
@@ -1757,7 +1761,7 @@
             <command id="stanza-create" name="Stanza Create">
                 <summary>Create the required stanza data.</summary>
 
-                <text>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located after the stanza has been configured in <file>pgbackrest.conf</file>.</text>
+                <text>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured locally on the host, the stanza will be created on each.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
@@ -1794,7 +1798,7 @@
             <command id="stanza-upgrade" name="Stanza Upgrade">
                 <summary>Upgrade a stanza.</summary>
 
-                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the repository host. If the database is offline use the <br-option>--no-online</br-option> option.</text>
+                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the repository host. If there is more than one repository configured locally on the host, the stanza will be created on each. If the database is offline use the <br-option>--no-online</br-option> option.</text>
 
                 <option-list>
                     <!-- ======================================================================================================= -->
@@ -1830,7 +1834,7 @@
                     <li>Run the <cmd>stanza-delete</cmd> command on the repository host.</li>
                 </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files and/or environment variables.
 
-                A stanza may only be deleted from one repository at a time. To delete the stanza from multiple repositories, repeat the <cmd>stanza-delete</cmd> command for each repository while specifying the <br-option>repo</br-option> option.</text>
+                A stanza may only be deleted from one repository at a time. To delete the stanza from multiple repositories, repeat the <cmd>stanza-delete</cmd> command for each repository while specifying the <br-option>{[dash]}-repo</br-option> option.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
