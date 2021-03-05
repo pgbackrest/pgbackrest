@@ -209,7 +209,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            124
+#define CFG_OPTION_TOTAL                                            128
 
 /***********************************************************************************************************************************
 Command enum
@@ -328,6 +328,10 @@ typedef enum
     cfgOptRepoAzureKeyType,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
+    cfgOptRepoGcsBucket,
+    cfgOptRepoGcsEndpoint,
+    cfgOptRepoGcsKey,
+    cfgOptRepoGcsKeyType,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
     cfgOptRepoHostCmd,

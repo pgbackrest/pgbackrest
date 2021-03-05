@@ -159,6 +159,13 @@
         <variable key="azure-key-type">shared</variable>
         <variable key="azure-key">YXpLZXk=</variable>
 
+        <!-- GCS Settings -->
+        <variable key="gcs-all">n</variable>                        <!-- Build all the documentation with GCS? -->
+        <variable key="gcs-bucket">demo-bucket</variable>
+        <variable key="gcs-repo">demo-repo</variable>
+        <variable key="gcs-key-type">service</variable>
+        <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
+
         <!-- S3 Settings -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
@@ -645,6 +652,23 @@
     </block-define>
 
     <!-- ======================================================================================================================= -->
+    <block-define id="gcs-setup">
+        <p><backrest/> supports locating repositories in <proper>GCS-compatible</proper> object stores. The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically. The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
+
+        <backrest-config host="{[gcs-setup-host]}" file="{[backrest-config-demo]}" owner="{[gcs-setup-config-owner]}">
+            <title>Configure <proper>GCS</proper></title>
+
+            <backrest-config-option section="global" key="repo1-type">gcs</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-path">/{[gcs-repo]}</backrest-config-option>
+            <backrest-config-option if="'{[gcs-key-type]}' ne 'service'" section="global" key="repo1-gcs-key-type">{[gcs-key-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-gcs-key">{[gcs-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo1-gcs-bucket">{[gcs-bucket]}</backrest-config-option>
+
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
     <block-define id="s3-setup">
         <p><backrest/> supports locating repositories in <proper>S3-compatible</proper> object stores.  The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically.  The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
 
@@ -1022,6 +1046,17 @@
                 <block-variable-replace key="azure-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="azure-setup-config-owner">postgres:postgres</block-variable-replace>
                 <block-variable-replace key="azure-setup-create-container">y</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="gcs-support" if="'{[gcs-all]}' eq 'y'">
+            <title>GCS-Compatible Object Store Support</title>
+
+            <block id="gcs-setup">
+                <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
+                <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
             </block>
         </section>
 
@@ -2169,6 +2204,21 @@
         </execute-list>
     </section>
 
+    <!-- ======================================================================================================================= -->
+    <section id="gcs-support" if="'{[gcs-all]}' ne 'y'" depend="/quickstart/configure-archiving">
+        <title>GCS-Compatible Object Store Support</title>
+
+        <block id="gcs-setup">
+            <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
+            <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
+        </block>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+    </section>
+
     <!-- SECTION => S3-SUPPORT -->
     <section id="s3-support" if="'{[s3-all]}' ne 'y'" depend="/azure-support">
         <title>S3-Compatible Object Store Support</title>
@@ -2451,6 +2501,14 @@
                 <block-variable-replace key="azure-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-create-container">n</block-variable-replace>
+            </block>
+
+            <p if="'{[gcs-all]}' eq 'y'">Configure GCS-compatible object store if required.</p>
+
+            <block id="gcs-setup" if="'{[gcs-all]}' eq 'y'">
+                <block-variable-replace key="gcs-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
             </block>
 
             <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
