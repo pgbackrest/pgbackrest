@@ -226,8 +226,9 @@ sub process
                 next;
             }
 
-            if (ref(\$$oOptionDefine{$strOption}{&CFGDEF_COMMAND}{$strCommand}) eq 'SCALAR' &&
-                $$oOptionDefine{$strOption}{&CFGDEF_COMMAND}{$strCommand} == false)
+            # Skip the option if it is not valid for this command and the default role. Only options valid for the default role are
+            # show in help because that is the only role available to a user.
+            if (!defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT}))
             {
                 next;
             }
@@ -281,10 +282,16 @@ sub process
                 {
                     $oOptionDoc = $oDoc->nodeGet('operation')->nodeGet('operation-general')->nodeGet('option-list')
                                        ->nodeGetById('option', $strOption, false);
+                    $strOptionSource = CONFIG_HELP_SOURCE_DEFAULT if (defined($oOptionDoc));
 
+                    # If a section is specified then use it, otherwise the option should be general since it is not for a specific
+                    # command
                     $strSection = $oOptionDoc->paramGet('section', false);
 
-                    $strOptionSource = CONFIG_HELP_SOURCE_DEFAULT if (defined($oOptionDoc));
+                    if (!defined($strSection))
+                    {
+                        $strSection = "general";
+                    }
                 }
             }
 
@@ -745,28 +752,23 @@ sub helpCommandDocGetOptionFind
     my $strCommand = shift;
     my $strOption = shift;
 
-    my $strSection = CONFIG_HELP_COMMAND;
+    # Get section from the option
+    my $strSection = $oConfigHelpData->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_SECTION};
+
+    # Get option from the command to start
     my $oOption = $$oConfigHelpData{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_OPTION}{$strOption};
 
-    if ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_DEFAULT)
-    {
-        $strSection = CFGDEF_GENERAL;
-    }
-    elsif ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_SECTION)
+    # If the option has a section (i.e. not command-line only) then it comes from the standard option reference
+    if ($$oOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_SECTION)
     {
         $oOption = $$oConfigHelpData{&CONFIG_HELP_OPTION}{$strOption};
+    }
 
-        if (defined($$oOption{&CONFIG_HELP_SECTION}) && $strSection ne $strCommand)
-        {
-            $strSection = $$oOption{&CONFIG_HELP_SECTION};
-        }
-
-        if (($strSection ne CFGDEF_GENERAL && $strSection ne CFGDEF_LOG &&
-             $strSection ne CFGDEF_REPOSITORY && $strSection ne CFGDEF_SECTION_STANZA) ||
-            $strSection eq $strCommand)
-        {
-            $strSection = CONFIG_HELP_COMMAND;
-        }
+    # Reduce the sections that are shown in the command help. This is the same logic as help.c.
+    if (!defined($strSection) ||
+        ($strSection ne 'general' && $strSection ne 'log' && $strSection ne 'repository' && $strSection ne 'stanza'))
+    {
+        $strSection = 'command';
     }
 
     return $oOption, $strSection;
