@@ -23,12 +23,11 @@ P00  ERROR: [055]: unable to load info file '/archive/db/archive.info' or '/arch
 P00 DETAIL: statistics: STATISTICS
 P00   INFO: stanza-upgrade command end: aborted with exception [055]
 
-stanza-create db - successfully create the stanza (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db --no-online stanza-create
+stanza-create db - successfully create the stanza (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db --no-online stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
-P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/backup/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/backup/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/backup/log[] --no-log-timestamp --no-online --pg1-host=db-primary --pg1-host-cmd=[BACKREST-BIN] --pg1-host-config=[TEST_PATH]/db-primary/pgbackrest.conf --pg1-host-user=[USER-1] --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-azure-account=<redacted> --repo1-azure-container=azContainer --repo1-azure-key=<redacted> --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --repo1-path=/ --repo1-storage-host=azure --no-repo1-storage-verify-tls --repo1-type=azure --stanza=db
+P00   INFO: stanza-create command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE] --compress-level-network=1 --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --no-online --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
 P00   INFO: stanza-create for stanza 'db' on repo1
-P00 DETAIL: statistics: STATISTICS
 P00   INFO: stanza-create command end: completed successfully
 
 + supplemental file: /backup/db/backup.info

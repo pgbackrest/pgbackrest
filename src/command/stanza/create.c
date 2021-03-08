@@ -117,9 +117,9 @@ cmdStanzaCreate(void)
                     sourceFile = archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
                     destinationFile = !archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
 
-                    storageCopyP(
-                        storageNewReadP(storageRepoReadStanza, sourceFile),
-                        storageNewWriteP(storageRepoWriteStanza, destinationFile));
+                    // Using get and put instead of copy in case the storage is remote
+                    Buffer *buffer = storageGetP(storageNewReadP(storageRepoIdx(repoIdx), sourceFile));
+                    storagePutP(storageNewWriteP(storageRepoIdxWrite(repoIdx), destinationFile), buffer);
                 }
 
                 if (!backupInfoFileExists || !backupInfoFileCopyExists)
@@ -127,9 +127,9 @@ cmdStanzaCreate(void)
                     sourceFile = backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
                     destinationFile = !backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
 
-                    storageCopyP(
-                        storageNewReadP(storageRepoReadStanza, sourceFile),
-                        storageNewWriteP(storageRepoWriteStanza, destinationFile));
+                    // Using get and put instead of copy in case the storage is remote
+                    Buffer *buffer = storageGetP(storageNewReadP(storageRepoIdx(repoIdx), sourceFile));
+                    storagePutP(storageNewWriteP(storageRepoIdxWrite(repoIdx), destinationFile), buffer);
                 }
 
                 // If no files copied, then the stanza was already valid

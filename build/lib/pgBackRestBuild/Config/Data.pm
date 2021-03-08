@@ -1931,11 +1931,10 @@ my %hConfigDefine =
             &CFGCMD_REPO_PUT => {},
             &CFGCMD_REPO_RM => {},
             &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {},
-            # &CFGCMD_STANZA_CREATE =>  # CSHANG Replaced with above - still does  not fix BRBLOCK258 error
-            # {
-            #     &CFGDEF_INTERNAL => true,
-            # },
+            &CFGCMD_STANZA_CREATE =>
+            {
+                &CFGDEF_INTERNAL => true,
+            },
             &CFGCMD_STANZA_DELETE =>
             {
                 &CFGDEF_INTERNAL => true,
@@ -2000,7 +1999,7 @@ my %hConfigDefine =
             &CFGCMD_REPO_PUT => {},
             &CFGCMD_REPO_RM => {},
             &CFGCMD_RESTORE => {},
-            &CFGCMD_STANZA_CREATE => {}, # CSHANG Added
+            &CFGCMD_STANZA_CREATE => {},
             &CFGCMD_VERIFY => {},
         },
         &CFGDEF_COMMAND_ROLE =>
@@ -2642,7 +2641,7 @@ my %hConfigDefine =
                 &CFGDEF_COMMAND_ROLE =>
                 {
                     &CFGCMD_ROLE_DEFAULT => {},
-                    &CFGCMD_ROLE_REMOTE => {},  # CSHANG added
+                    &CFGCMD_ROLE_REMOTE => {},
                 },
             },
             &CFGCMD_STANZA_DELETE =>

@@ -2718,7 +2718,11 @@ static const unsigned char helpDataPack[] =
                 pckTypeBool << 4 | 0x08, // Internal
             0x00, // Command expire override end
 
-            pckTypeObj << 4 | 0x09, 0x01, // Command stanza-delete override begin
+            pckTypeObj << 4 | 0x08, 0x01, // Command stanza-create override begin
+                pckTypeBool << 4 | 0x08, // Internal
+            0x00, // Command stanza-create override end
+
+            pckTypeObj << 4, // Command stanza-delete override begin
                 pckTypeBool << 4 | 0x08, // Internal
             0x00, // Command stanza-delete override end
 

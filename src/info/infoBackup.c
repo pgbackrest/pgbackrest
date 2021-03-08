@@ -777,8 +777,9 @@ infoBackupSaveFile(
         cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
         infoBackupSave(infoBackup, write);
 
-        // Make a copy of the file
-        storageCopy(storageNewReadP(storage, fileName), storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))));
+        // Make a copy of the file - using get and put instead of copy in case the storage is remote
+        Buffer *buffer = storageGetP(storageNewReadP(storage, fileName));
+        storagePutP(storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))), buffer);
     }
     MEM_CONTEXT_TEMP_END();
 
