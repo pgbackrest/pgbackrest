@@ -92,7 +92,7 @@ sub run
 
         # Create the stanza successfully without force
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-online'});
+        $oHostDbPrimary->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-online'});
 
         # Rerun stanza-create and confirm it does not fail
         #--------------------------------------------------------------------------------------------------------------------------
