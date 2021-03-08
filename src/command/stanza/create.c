@@ -109,6 +109,7 @@ cmdStanzaCreate(void)
                 // The files are valid - upgrade
                 const String *sourceFile = NULL;
                 const String *destinationFile = NULL;
+                Buffer *buffer = NULL;
 
                 // If the existing files are valid, then, if a file is missing, copy the existing one to the missing one to ensure
                 // there is both a .info and .info.copy
@@ -118,7 +119,7 @@ cmdStanzaCreate(void)
                     destinationFile = !archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
 
                     // Using get and put instead of copy in case the storage is remote
-                    Buffer *buffer = storageGetP(storageNewReadP(storageRepoIdx(repoIdx), sourceFile));
+                    buffer = storageGetP(storageNewReadP(storageRepoIdx(repoIdx), sourceFile));
                     storagePutP(storageNewWriteP(storageRepoIdxWrite(repoIdx), destinationFile), buffer);
                 }
 
@@ -128,7 +129,7 @@ cmdStanzaCreate(void)
                     destinationFile = !backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
 
                     // Using get and put instead of copy in case the storage is remote
-                    Buffer *buffer = storageGetP(storageNewReadP(storageRepoIdx(repoIdx), sourceFile));
+                    buffer = storageGetP(storageNewReadP(storageRepoIdx(repoIdx), sourceFile));
                     storagePutP(storageNewWriteP(storageRepoIdxWrite(repoIdx), destinationFile), buffer);
                 }
 

@@ -36,18 +36,10 @@ testRun(void)
     if (testBegin("cmdStanzaCreate(), checkStanzaInfo(), cmdStanzaDelete()"))
     {
         // Load Parameters
-        StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-host=/repo");
-        strLstAddZ(argList, "--repo2-host=/repo/not/local");
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
-
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), HostInvalidError, "stanza-create command must be run on the repository host");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        argList = strLstDup(argListBase);
+        StringList *argList =  strLstDup(argListBase);
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+
         TEST_ERROR_FMT(
             harnessCfgLoad(cfgCmdStanzaCreate, argList), OptionInvalidError, "option 'repo' not valid for command 'stanza-create'");
 

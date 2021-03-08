@@ -96,7 +96,7 @@ sub run
 
         # Rerun stanza-create and confirm it does not fail
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaCreate(
+        $oHostDbPrimary->stanzaCreate(
             'do not fail on rerun of stanza-create - info files exist and DB section ok',
             {strOptionalParam => '--no-online'});
 
