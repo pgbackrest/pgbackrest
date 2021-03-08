@@ -37,11 +37,6 @@ cmdStanzaCreate(void)
         if (cfgOptionBool(cfgOptForce))
             LOG_WARN("option --force is no longer supported");
 
-        // // Verify all the repos are local (i.e. repo*-host is not set) - this is a simple way to confirm we are not executing
-        // // stanza-create from a pg host as it will immediately error
-        // for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
-        //     repoIsLocalVerifyIdx(repoIdx);
-
         // Get the version and system information - validating it if the database is online
         PgControl pgControl = pgValidate();
 

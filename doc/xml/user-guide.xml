@@ -1159,7 +1159,7 @@
         <section id="create-stanza">
             <title>Create the Stanza</title>
 
-            <p>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
+            <p>The <cmd>stanza-create</cmd> command must be run to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create the stanza and check the configuration</title>
@@ -3397,12 +3397,12 @@
             </execute>
         </execute-list>
 
-        <p>Before starting the new cluster, the <cmd>stanza-upgrade</cmd> command must be run on the server where the <backrest/> repository is located.</p>
+        <p>Before starting the new cluster, the <cmd>stanza-upgrade</cmd> command must be run.</p>
 
-        <execute-list host="{[host-repo1]}">
+        <execute-list host="{[host-pg1]}">
             <title>Upgrade the stanza</title>
 
-            <execute user="{[br-user]}" output="y">
+            <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-no-online
                     {[dash]}-log-level-console=info stanza-upgrade</exe-cmd>
                 <exe-highlight>completed successfully</exe-highlight>

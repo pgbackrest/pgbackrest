@@ -90,7 +90,7 @@ sub run
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since archive.info is missing',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-online'});
 
-        # Create the stanza successfully without force
+        # Create the stanza successfully without force - run from the db server to ensure ability to run remotely
         #--------------------------------------------------------------------------------------------------------------------------
         $oHostDbPrimary->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-online'});
 
@@ -163,7 +163,7 @@ sub run
 
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
         #--------------------------------------------------------------------------------------------------------------------------
-        #  Save a pre-upgrade copy of archive info fo testing db-id mismatch
+        #  Save a pre-upgrade copy of archive info for testing db-id mismatch
         forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
 
         $oHostBackup->stanzaUpgrade('successful upgrade creates additional history', {strOptionalParam => '--no-online'});
@@ -204,7 +204,8 @@ sub run
         $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_95);
         forceStorageMode(storageTest(), $oHostDbPrimary->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
-        $oHostBackup->stanzaUpgrade('successfully upgrade', {strOptionalParam => '--no-online'});
+        # Run from the db server to ensure ability to run remotely
+        $oHostDbPrimary->stanzaUpgrade('successfully upgrade', {strOptionalParam => '--no-online'});
 
         # Copy archive.info and restore really old version
         forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});

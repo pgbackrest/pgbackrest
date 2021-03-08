@@ -1,8 +1,8 @@
 run 001 - bkp 1, sby 1, dst backup, cmp none, storage posix, enc 0
 ==================================================================
 
-stanza-create db - main create stanza info files (backup host)
-> [CONTAINER-EXEC] backup [BACKREST-BIN] --config=[TEST_PATH]/backup/pgbackrest.conf --stanza=db stanza-create
+stanza-create db - main create stanza info files (db-primary host)
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db stanza-create
 ------------------------------------------------------------------------------------------------------------------------------------
 
 check db - verify check command runs successfully (db-primary host)
