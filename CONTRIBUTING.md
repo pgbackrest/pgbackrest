@@ -170,13 +170,13 @@ Options can be added to a command or multiple commands. Options can be configura
 
 To add an option, two files need be to be modified:
 
-- `build/lib/pgBackRestBuild/Config/Data.pm`
+- `src/build/config/config.yaml`
 
 - `doc/xml/reference.xml`
 
 These files are discussed in the following sections.
 
-### Data.pm
+### `src/build/config/config.yaml`
 
 There is a detailed comment at the top of this file on the configuration definitions which one can refer to in determining how to define the rules for the option.
 

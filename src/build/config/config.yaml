@@ -1,0 +1,1990 @@
+####################################################################################################################################
+# Configuration Definition
+####################################################################################################################################
+
+####################################################################################################################################
+# Commands
+#
+# Define valid commands.
+#
+# log-file:
+#   Does this command log to a file? This is the default behavior, but it can be overridden in code by calling logFileInit(). The
+#   default is true.
+#
+# log-level-default:
+#   Defines the log level to use for default messages that are output for every command. For example, the log message that lists
+#   all the options passed is usually output at the info level, but that might not be appropriate for some commands, such as info,
+#   Allow the log level to be lowered so these common messages will not be emitted where they might be distracting.
+#
+# log-required:
+#   Does the command require a lock? This doesn't mean a lock can't be taken explicitly later, just controls whether a lock will be
+#   acquired as soon at the command starts.
+#
+# lock-remote-required:
+#   Does the command require a lock on the remote? The lock will only be acquired for process id 0.
+#
+# lock-type:
+#   What type of lock is required (archive, backup, or all)?
+#
+# parameter-allowed
+#   Does the command allow parameters? If not then the config parser will automatically error out if parameters are detected. If so,
+#   then the command is responsible for ensuring that the parameters are valid.
+####################################################################################################################################
+command:
+  archive-get:
+    command-role:
+      async: {}
+      local: {}
+      remote: {}
+    lock-type: archive
+    log-file: false
+    parameter-allowed: true
+
+  archive-push:
+    command-role:
+      async: {}
+      local: {}
+      remote: {}
+    lock-remote-required: true
+    lock-type: archive
+    log-file: false
+    parameter-allowed: true
+
+  backup:
+    command-role:
+      local: {}
+      remote: {}
+    lock-remote-required: true
+    lock-required: true
+    lock-type: backup
+
+  check:
+    command-role:
+      remote: {}
+    log-file: false
+
+  expire:
+    lock-required: true
+    lock-type: backup
+
+  help:
+    log-file: false
+    log-level-default: DEBUG
+    parameter-allowed: true
+
+  info:
+    command-role:
+      remote: {}
+    log-file: false
+    log-level-default: DEBUG
+
+  repo-create:
+    command-role:
+      remote: {}
+    internal: true
+    log-file: false
+
+  repo-get:
+    command-role:
+      remote: {}
+    log-file: false
+    log-level-default: DEBUG
+    parameter-allowed: true
+
+  repo-ls:
+    command-role:
+      remote: {}
+    log-file: false
+    log-level-default: DEBUG
+    parameter-allowed: true
+
+  repo-put:
+    command-role:
+      remote: {}
+    internal: true
+    log-file: false
+    log-level-default: DEBUG
+    parameter-allowed: true
+
+  repo-rm:
+    command-role:
+      remote: {}
+    internal: true
+    log-file: false
+    log-level-default: DEBUG
+    parameter-allowed: true
+
+  restore:
+    command-role:
+      local: {}
+      remote: {}
+
+  stanza-create:
+    command-role:
+      remote: {}
+    lock-required: true
+    lock-type: all
+
+  stanza-delete:
+    command-role:
+      remote: {}
+    lock-required: true
+    lock-type: all
+
+  stanza-upgrade:
+    command-role:
+      remote: {}
+    lock-required: true
+    lock-type: all
+
+  start: {}
+
+  stop: {}
+
+  verify:
+    command-role:
+      local: {}
+      remote: {}
+    internal: true
+
+  version:
+    log-file: false
+    log-level-default: DEBUG
+
+####################################################################################################################################
+# Option Groups
+#
+# Options groups allow related options to be grouped together so, e.g. test and valid, operations can be run across all options in
+# the group.
+####################################################################################################################################
+optionGroup:
+  pg:
+    indexTotal: 8
+    prefix: pg
+  repo:
+    indexTotal: 4
+    prefix: repo
+
+####################################################################################################################################
+# Options
+#
+# Contains the defines for options: which commands the option can/cannot be specified, for which commands it is required, default
+# settings, types, ranges, whether the option is negatable, whether it has dependencies, etc. The initial section is the global
+# section, meaning that the defines defined there apply to all commands listed for the option.
+#
+# inherit:
+#   Inherit all definitions for the referenced option. Any definitions can be overridden.
+#
+# command:
+#   List of commands the option can be used with this option. An empty hash signifies that the command does not deviate from the
+#   option defaults. Otherwise, overrides can be specified.
+#
+#   If another option is referenced (e.g. command: repo-type) then the list of commands will be copied from the referenced option.
+#
+#   NOTE: If the option (A) has a dependency on another option (B) then the command must also be specified in the other option
+#         (B), else it will still error on the option (A).
+#
+# command-role:
+#   1) Define the command roles for a command. 'default' is valid for all commands and is therefore added programmatically.
+#
+#   2) Define the command roles for an option. If not defined, the option will be valid for all roles of all commands for which it
+#      is valid. If command roles are defined for the option, then they override the roles for all commands for which the option is
+#      valid. 'default' must be defined explicitly in this case. For example, if an option is only valid for the 'default' role and
+#      the async role for each command then command-role must list 'default' and 'async', meaning each command has a default role
+#      so the option is valid for that role and for commands that have the 'async' role, it is also valid for the 'async' role of
+#      those commands.
+#
+#   3) Define the command roles for an option command override. If not defined, the option will be valid for all roles of the
+#      command or the roles specified by rule 2) above. 'default' must be defined explicitly in this case. If command roles are
+#      defined for the option command override, then they override command roles defined for the option (rule 2) above)
+#      and all roles defined for the command (rule 1) above).
+#
+# required:
+#   In global section:
+#     true - if the option does not have a default, then setting required in the global section means all commands listed in
+#            command require the user to set it.
+#     false - no commands listed require it as an option but it can be set. This can be overridden for individual commands by
+#             setting required in the command section.
+#   In command section:
+#       true - the option must be set somehow for the command, either by default or by the user, e.g.
+#              check:
+#                required: true
+#       false - mainly used for overriding required in the global section.
+#
+# default:
+#   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
+#   command section. All boolean types require a default.
+#
+# default-literal:
+#   If the default is a string output it as-is without quoting. This allows C defines to be used as defaults.
+#
+# negate:
+#   The option can be negated with "no" e.g. --no-compress. This applies to options that are only valid on the command line (i.e.
+#   no config section defined) and if not specifically defined, the default is false. All config file boolean options are
+#   automatically negatable.
+#
+# reset:
+#   The option can be reset to default even if the default is undefined.
+#
+# depend:
+#   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
+#   dependent option(s).
+#
+#   'list' further defines the allowable settings for the depended option.
+#
+# allow-list:
+#   Lists the allowable settings for the option.
+#
+# internal:
+#   Option is used by the command internally but is not exposed in the documentation. This is useful for commands that need to know
+#   where they are running by looking at other options in the config. Also good for test options.
+####################################################################################################################################
+option:
+  # Command-line only options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  config:
+    type: string
+    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
+    default-literal: true
+    negate: y
+
+  config-include-path:
+    type: path
+    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
+    default-literal: true
+
+  config-path:
+    type: path
+    default: CFGOPTDEF_CONFIG_PATH
+    default-literal: true
+
+  dry-run:
+    type: boolean
+    default: false
+    command:
+      expire: {}
+    command-role:
+      default: {}
+
+  force:
+    type: boolean
+    command:
+      backup:
+        default: false
+        depend:
+          option: online
+          list:
+            - false
+      restore:
+        default: false
+      stanza-create:
+        default: false
+        internal: true
+      stanza-delete:
+        default: false
+      stop:
+        default: false
+    command-role:
+      default: {}
+
+  online:
+    type: boolean
+    default: true
+    negate: y
+    command:
+      backup: {}
+      stanza-create: {}
+      stanza-upgrade: {}
+    command-role:
+      default: {}
+
+  output:
+    type: string
+    command:
+      info:
+        default: text
+        allow-list:
+          - text
+          - json
+      repo-ls:
+        default: text
+        allow-list:
+          - text
+          - json
+    command-role:
+      default: {}
+
+  set:
+    type: string
+    command:
+      expire:
+        required: false
+      info:
+        depend:
+          option: stanza
+        required: false
+      restore:
+        default: latest
+      verify:
+        internal: true
+        required: false
+    command-role:
+      default: {}
+
+  stanza:
+    type: string
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      expire: {}
+      info:
+        required: false
+      repo-create:
+        required: false
+      repo-get:
+        required: false
+      repo-ls:
+        required: false
+      repo-put:
+        required: false
+      repo-rm:
+        required: false
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      start:
+        required: false
+      stop:
+        required: false
+      verify: {}
+
+  target:
+    type: string
+    command:
+      restore:
+        depend:
+          option: type
+          list:
+            - name
+            - time
+            - xid
+    command-role:
+      default: {}
+
+  target-action:
+    type: string
+    command:
+      restore:
+        allow-list:
+          - pause
+          - promote
+          - shutdown
+        default: pause
+        depend:
+          option: type
+          list:
+            - immediate
+            - name
+            - time
+            - xid
+    command-role:
+      default: {}
+
+  target-exclusive:
+    type: boolean
+    command:
+      restore:
+        default: false
+        depend:
+          option: type
+          list:
+            - time
+            - xid
+    command-role:
+      default: {}
+
+  target-timeline:
+    type: string
+    command:
+      restore:
+        required: false
+        depend:
+          option: type
+          list:
+            - default
+            - name
+            - standby
+            - time
+            - xid
+    command-role:
+      default: {}
+
+  type:
+    command:
+      backup:
+        allow-list:
+          - full
+          - diff
+          - incr
+        default: incr
+      restore:
+        allow-list:
+          - name
+          - time
+          - xid
+          - preserve
+          - none
+          - immediate
+          - default
+          - standby
+        default: default
+    command-role:
+      default: {}
+    type: string
+
+  # Command-line only local/remote options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  exec-id:
+    type: string
+    internal: true
+    required: false
+
+  process:
+    type: integer
+    internal: true
+    required: false
+    allow-range: [0, 1024]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      info: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+    command-role:
+      local: {}
+      remote: {}
+
+  remote-type:
+    type: string
+    internal: true
+    required: false
+    allow-list:
+      - pg
+      - repo
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      info: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+    command-role:
+      local: {}
+      remote: {}
+
+  # Command-line only storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  cipher-pass:
+    type: string
+    internal: true
+    required: false
+    command:
+      repo-get: {}
+      repo-put: {}
+    command-role:
+      default: {}
+
+  filter:
+    type: string
+    required: false
+    command:
+      repo-ls: {}
+    command-role:
+      default: {}
+
+  ignore-missing:
+    type: boolean
+    default: false
+    command:
+      repo-get: {}
+    command-role:
+      default: {}
+
+  raw:
+    type: boolean
+    default: false
+    command:
+      repo-get: {}
+      repo-put: {}
+    command-role:
+      default: {}
+
+  recurse:
+    type: boolean
+    default: false
+    command:
+      repo-ls: {}
+      repo-rm: {}
+    command-role:
+      default: {}
+
+  sort:
+    type: string
+    default: asc
+    allow-list:
+      - none
+      - asc
+      - desc
+    command:
+      repo-ls: {}
+    command-role:
+      default: {}
+
+  # General options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  archive-timeout:
+    section: global
+    type: time
+    default: 60
+    allow-range: [0.1, 86400]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+    command-role:
+      default: {}
+
+  buffer-size:
+    section: global
+    type: size
+    default: 1048576
+    allow-list:
+      - 16384
+      - 32768
+      - 65536
+      - 131072
+      - 262144
+      - 524288
+      - 1048576
+      - 2097152
+      - 4194304
+      - 8388608
+      - 16777216
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      expire: {}
+      info: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+
+  cmd-ssh:
+    section: global
+    type: string
+    default: ssh
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      info: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+
+  # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
+  compress:
+    section: global
+    type: boolean
+    default: true
+    command:
+      archive-push: {}
+      backup: {}
+    command-role:
+      default: {}
+
+  compress-level:
+    section: global
+    type: integer
+    required: false
+    allow-range: [0, 9]
+    command: compress
+    command-role:
+      async: {}
+      default: {}
+
+  compress-level-network:
+    section: global
+    type: integer
+    default: 3
+    allow-range: [0, 9]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      info: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+
+  compress-type:
+    section: global
+    type: string
+    default: gz
+    allow-list:
+      - none
+      - bz2
+      - gz
+      - lz4
+      - zst
+    command: compress
+    command-role:
+      async: {}
+      default: {}
+
+  db-timeout:
+    section: global
+    type: time
+    default: 1800
+    allow-range: [0.1, 604800]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+
+  delta:
+    section: global
+    type: boolean
+    default: false
+    command:
+      backup: {}
+      restore: {}
+    command-role:
+      default: {}
+
+  io-timeout:
+    section: global
+    type: time
+    default: 60
+    allow-range: [0.1, 3600]
+    command: buffer-size
+
+  job-retry:
+    section: global
+    type: integer
+    internal: true
+    default: 2
+    allow-range: [0, 360]
+    command:
+      archive-get:
+        default: true
+      archive-push:
+        default: true
+      backup: {}
+      restore: {}
+      verify: {}
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+
+  job-retry-interval:
+    inherit: job-retry
+    type: time
+    default: 15
+    allow-range: [0, 900]
+
+  lock-path:
+    section: global
+    type: path
+    default: /tmp/pgbackrest
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      expire: {}
+      info: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      start: {}
+      stop: {}
+
+  neutral-umask:
+    section: global
+    type: boolean
+    default: true
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      expire: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      start: {}
+      stop: {}
+      verify: {}
+
+  process-max:
+    section: global
+    type: integer
+    default: true
+    allow-range: [1, 999]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      restore: {}
+      verify: {}
+    command-role:
+      async: {}
+      default: {}
+
+  protocol-timeout:
+    section: global
+    type: time
+    default: 1830
+    allow-range: [0.1, 604800]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      info: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+
+  sck-block:
+    section: global
+    type: boolean
+    default: false
+    internal: true
+    command: buffer-size
+
+  sck-keep-alive:
+    type: boolean
+    section: global
+    default: true
+    command: buffer-size
+
+  spool-path:
+    section: global
+    type: path
+    default: /var/spool/pgbackrest
+    command:
+      archive-get:
+        depend:
+          option: archive-async
+          list:
+            - true
+      archive-push:
+        depend:
+          option: archive-async
+          list:
+            - true
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+
+  tcp-keep-alive-count:
+    section: global
+    type: integer
+    required: false
+    allow-range: [1, 32]
+    command: buffer-size
+    depend:
+      option: sck-keep-alive
+      list:
+        - true
+
+  tcp-keep-alive-idle:
+    section: global
+    type: integer
+    required: false
+    allow-range: [1, 3600]
+    command: buffer-size
+    depend: tcp-keep-alive-count
+
+  tcp-keep-alive-interval:
+    section: global
+    type: integer
+    required: false
+    allow-range: [1, 900]
+    command: buffer-size
+    depend: tcp-keep-alive-count
+
+  # Logging options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  log-level-console:
+    section: global
+    type: string
+    default: warn
+    allow-list:
+      - off
+      - error
+      - warn
+      - info
+      - detail
+      - debug
+      - trace
+
+  log-level-file:
+    section: global
+    type: string
+    default: info
+    allow-list: log-level-console
+
+  log-level-stderr:
+    section: global
+    type: string
+    default: warn
+    allow-list: log-level-console
+
+  log-path:
+    section: global
+    type: path
+    default: /var/log/pgbackrest
+
+  log-subprocess:
+    section: global
+    type: boolean
+    default: false
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      info: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+
+  log-timestamp:
+    section: global
+    type: boolean
+    default: true
+    command: log-level-console
+
+  # Archive options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  archive-async:
+    section: global
+    type: boolean
+    default: false
+    command:
+      archive-get: {}
+      archive-push: {}
+
+  archive-get-queue-max:
+    section: global
+    type: size
+    default: 134217728
+    allow-range: [0, 4503599627370496]
+    command:
+      archive-get: {}
+    command-role:
+      async: {}
+      default: {}
+
+  archive-push-queue-max:
+    section: global
+    type: size
+    required: false
+    allow-range: [0, 4503599627370496]
+    command:
+      archive-push: {}
+    command-role:
+      async: {}
+      default: {}
+    deprecate:
+      archive-queue-max: {}
+
+  # Backup options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  archive-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      backup:
+        depend:
+          option: online
+          list:
+            - true
+      check: {}
+    command-role:
+      default: {}
+
+  archive-copy:
+    section: global
+    type: boolean
+    default: false
+    command:
+      backup:
+        depend:
+          option: archive-check
+          list:
+            - true
+    command-role:
+      default: {}
+
+  archive-mode-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      backup: {}
+      check: {}
+    command-role:
+      default: {}
+    depend:
+      option: archive-check
+      list:
+        - true
+
+  backup-standby:
+    section: global
+    type: boolean
+    default: false
+    command:
+      backup: {}
+      check: {}
+      stanza-create: {}
+      stanza-upgrade: {}
+    command-role:
+      default: {}
+
+  checksum-page:
+    section: global
+    type: boolean
+    required: false
+    command:
+      backup: {}
+    command-role:
+      default: {}
+
+  exclude:
+    section: global
+    type: list
+    required: false
+    command:
+      backup: {}
+    command-role:
+      default: {}
+
+  expire-auto:
+    section: global
+    type: boolean
+    default: true
+    command:
+      backup: {}
+    command-role:
+      default: {}
+
+  manifest-save-threshold:
+    section: global
+    type: size
+    default: 1073741824
+    allow-range: [1, 1099511627776]
+    command:
+      backup: {}
+    command-role:
+      default: {}
+
+  resume:
+    section: global
+    type: boolean
+    default: true
+    command:
+      backup: {}
+    command-role:
+      default: {}
+
+  start-fast:
+    section: global
+    type: boolean
+    default: false
+    command:
+      backup: {}
+    command-role:
+      default: {}
+
+  stop-auto:
+    section: global
+    type: boolean
+    default: false
+    command:
+      backup: {}
+    command-role:
+      default: {}
+
+  # Restore options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  archive-mode:
+    section: global
+    type: string
+    default: preserve
+    allow-list:
+      - off
+      - preserve
+    command:
+      restore: {}
+    command-role:
+      default: {}
+
+  db-include:
+    section: global
+    type: list
+    required: false
+    command:
+      restore: {}
+    command-role:
+      default: {}
+
+  link-all:
+    section: global
+    type: boolean
+    default: false
+    command:
+      restore: {}
+    command-role:
+      default: {}
+
+  link-map:
+    section: global
+    type: hash
+    required: false
+    command:
+      restore: {}
+    command-role:
+      default: {}
+
+  tablespace-map:
+    section: global
+    type: hash
+    required: false
+    command:
+      restore: {}
+    command-role:
+      default: {}
+
+  tablespace-map-all:
+    section: global
+    type: string
+    required: false
+    command:
+      restore: {}
+    command-role:
+      default: {}
+
+  recovery-option:
+    section: global
+    type: hash
+    required: false
+    command:
+      restore: {}
+    command-role:
+      default: {}
+    depend:
+      option: type
+      list:
+        - default
+        - immediate
+        - name
+        - time
+        - standby
+        - xid
+
+  # Stanza options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  pg:
+    type: integer
+    internal: true
+    required: false
+    allow-range: [1, 8]
+    command:
+      backup:
+        command-role:
+          local: {}
+
+  pg-database:
+    section: stanza
+    group: pg
+    type: string
+    command: pg-port
+    default: postgres
+    depend: pg-port
+
+  pg-host:
+    section: stanza
+    group: pg
+    type: string
+    required: false
+    command: pg-local
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+    depend:
+      option: pg-local
+      list:
+        - false
+    deprecate:
+      db-host: {index: 1, reset: false}
+      db?-host: {reset: false}
+
+  pg-host-cmd:
+    section: stanza
+    group: pg
+    type: string
+    required: false
+    command:
+      backup: {}
+      check: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+    depend:
+      option: pg-host
+    deprecate:
+      db-cmd: {index: 1, reset: false}
+      db?-cmd: {reset: false}
+
+  pg-host-config:
+    inherit: pg-host-cmd
+    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
+    default-literal: true
+    required: true
+    deprecate:
+      db-config: {index: 1, reset: false}
+      db?-config: {reset: false}
+
+  pg-host-config-include-path:
+    inherit: pg-host-cmd
+    type: path
+    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
+    default-literal: true
+
+  pg-host-config-path:
+    inherit: pg-host-cmd
+    type: path
+    default: CFGOPTDEF_CONFIG_PATH
+    default-literal: true
+
+  pg-host-port:
+    inherit: pg-host-cmd
+    type: integer
+    required: false
+    allow-range: [0, 65535]
+    deprecate:
+      db-ssh-port: {index: 1, reset: false}
+      db?-ssh-port: {reset: false}
+
+  pg-host-user:
+    inherit: pg-host-cmd
+    default: postgres
+    required: false
+    deprecate:
+      db-user: {index: 1, reset: false}
+      db?-user: {reset: false}
+
+  pg-local:
+    section: stanza
+    group: pg
+    type: boolean
+    internal: true
+    default: false
+    command:
+      archive-get:
+        internal: true
+      archive-push:
+        internal: true
+      backup: {}
+      check: {}
+      restore:
+        internal: true
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+
+  pg-path:
+    section: stanza
+    group: pg
+    type: path
+    command:
+      archive-get: {}
+      archive-push:
+        required: false
+      backup: {}
+      check: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    deprecate:
+      db-path: {index: 1, reset: false}
+      db?-path: {reset: false}
+
+  pg-port:
+    section: stanza
+    group: pg
+    type: integer
+    default: 5432
+    allow-range: [0, 65535]
+    command:
+      backup: {}
+      check: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    depend:
+      option: pg-path
+    deprecate:
+      db-port: {index: 1, reset: false}
+      db?-port: {reset: false}
+
+  pg-socket-path:
+    inherit: pg-port
+    type: path
+    required: false
+    default: ~
+    deprecate:
+      db-socket-path: {index: 1, reset: false}
+      db?-socket-path: {reset: false}
+
+  pg-user:
+    section: stanza
+    group: pg
+    type: string
+    required: false
+
+    command:
+      backup: {}
+      check: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    depend:
+      option: pg-path
+
+  # Repository options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo:
+    type: integer
+    required: false
+    allow-range: [1, 4]
+    command:
+      archive-get:
+        command-role:
+          async: {}
+          default: {}
+          local: {}
+          remote: {}
+      archive-push:
+        command-role:
+          remote: {}
+      backup:
+        command-role:
+          default: {}
+          local: {}
+      check:
+        command-role:
+          remote: {}
+      expire:
+        command-role:
+          default: {}
+      info:
+        command-role:
+          default: {}
+          remote: {}
+      repo-create:
+        command-role:
+          default: {}
+          remote: {}
+      repo-get:
+        command-role:
+          default: {}
+          remote: {}
+      repo-ls:
+        command-role:
+          default: {}
+          remote: {}
+      repo-put:
+        command-role:
+          default: {}
+          remote: {}
+      repo-rm:
+        command-role:
+          default: {}
+          remote: {}
+      restore:
+        command-role:
+          default: {}
+          local: {}
+          remote: {}
+      stanza-create:
+        command-role:
+            remote: {}
+      stanza-delete:
+        command-role:
+          default: {}
+          remote: {}
+      stanza-upgrade:
+        command-role:
+            remote: {}
+      start:
+        command-role: {}
+      stop:
+        command-role: {}
+      verify:
+        command-role:
+          default: {}
+          local: {}
+          remote: {}
+
+  repo-azure-account:
+    section: global
+    type: string
+    group: repo
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+
+  repo-azure-container:
+    section: global
+    type: string
+    group: repo
+    command: repo-type
+    depend: repo-azure-account
+
+  repo-azure-endpoint:
+    inherit: repo-azure-account
+    default: blob.core.windows.net
+
+  repo-azure-key:
+    inherit: repo-azure-account
+
+  repo-azure-key-type:
+    inherit: repo-azure-container
+    default: shared
+    allow-list:
+      - shared
+      - sas
+
+  repo-cipher-pass:
+    section: global
+    type: string
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-cipher-type
+      list:
+        - aes-256-cbc
+    group: repo
+    deprecate:
+      repo-cipher-pass: {index: 1, reset: false}
+
+  repo-cipher-type:
+    section: global
+    type: string
+    group: repo
+    default: none
+    allow-list:
+      - none
+      - aes-256-cbc
+    command: repo-type
+    deprecate:
+      repo-cipher-type: {index: 1, reset: false}
+
+  repo-gcs-bucket:
+    section: global
+    type: string
+    group: repo
+    command: repo-type
+    depend:
+      option: repo-gcs-key-type
+
+  repo-gcs-endpoint:
+    section: global
+    type: string
+    group: repo
+    default: storage.googleapis.com
+    command: repo-type
+    depend: repo-gcs-bucket
+
+  repo-gcs-key:
+    section: global
+    type: string
+    group: repo
+    secure: true
+    command: repo-type
+    depend: repo-gcs-bucket
+
+  repo-gcs-key-type:
+    section: global
+    type: string
+    group: repo
+    default: service
+    allow-list:
+      - service
+      - token
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - gcs
+
+  repo-hardlink:
+    section: global
+    group: repo
+    type: boolean
+    default: false
+    command:
+      backup: {}
+    command-role:
+      default: {}
+    deprecate:
+      hardlink: {index: 1, reset: false}
+
+  repo-host:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-local
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+    depend:
+      option: repo-local
+      list:
+        - false
+    deprecate:
+      backup-host: {index: 1, reset: false}
+
+  repo-host-cmd:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command:
+      archive-get: {}
+      archive-push: {}
+      check: {}
+      info: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+    depend:
+      option: repo-host
+    deprecate:
+      backup-cmd: {index: 1, reset: false}
+
+  repo-host-config:
+    section: global
+    group: repo
+    type: string
+    command: repo-host-cmd
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
+    default-literal: true
+    depend:
+      option: repo-host
+    deprecate:
+      backup-config: {index: 1, reset: false}
+
+  repo-host-config-include-path:
+    inherit: repo-host-config
+    type: path
+    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
+    default-literal: true
+
+  repo-host-config-path:
+    inherit: repo-host-config
+    type: path
+    default: CFGOPTDEF_CONFIG_PATH
+    default-literal: true
+
+  repo-host-port:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [0, 65535]
+    command: repo-host-cmd
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+    depend:
+      option: repo-host
+    deprecate:
+      backup-ssh-port: {index: 1, reset: false}
+
+  repo-host-user:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-host-cmd
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+    default: pgbackrest
+    depend:
+      option: repo-host
+    deprecate:
+      backup-user: {index: 1, reset: false}
+
+  repo-local:
+    section: global
+    group: repo
+    type: boolean
+    internal: true
+    default: false
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup:
+        internal: true
+      check: {}
+      expire:
+        internal: true
+      info: {}
+      repo-create: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create:
+        internal: true
+      stanza-delete:
+        internal: true
+      stanza-upgrade:
+        internal: true
+      verify: {}
+    command-role:
+      async: {}
+      default: {}
+      local: {}
+
+  repo-path:
+    section: global
+    group: repo
+    type: path
+    default: /var/lib/pgbackrest
+    command: repo-type
+    deprecate:
+      repo-path: {index: 1, reset: false}
+
+  repo-retention-archive:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      default: {}
+    deprecate:
+      retention-archive: {index: 1, reset: false}
+
+  repo-retention-archive-type:
+    section: global
+    type: string
+    group: repo
+    default: full
+    allow-list:
+      - full
+      - diff
+      - incr
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      default: {}
+    deprecate:
+      retention-archive-type: {index: 1, reset: false}
+
+  repo-retention-diff:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      default: {}
+    deprecate:
+      retention-diff: {index: 1, reset: false}
+
+  repo-retention-full:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command: repo-retention-full-type
+    command-role:
+      default: {}
+    deprecate:
+      retention-full: {index: 1, reset: false}
+
+  repo-retention-full-type:
+    section: global
+    group: repo
+    type: string
+    default: count
+    allow-list:
+      - count
+      - time
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      default: {}
+
+  repo-s3-bucket:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
+    deprecate:
+      repo-s3-bucket: {index: 1, reset: false}
+
+  repo-s3-endpoint:
+    inherit: repo-s3-bucket
+    deprecate:
+      repo-s3-endpoint: {index: 1, reset: false}
+
+  repo-s3-key:
+    section: global
+    group: repo
+    type: string
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-s3-key-type
+      list:
+        - shared
+    deprecate:
+      repo-s3-key: {index: 1, reset: false}
+
+  repo-s3-key-secret:
+    inherit: repo-s3-key
+    deprecate:
+      repo-s3-key-secret: {index: 1, reset: false}
+
+  repo-s3-key-type:
+    inherit: repo-s3-bucket
+    default: shared
+    allow-list:
+      - shared
+      - auto
+
+  repo-s3-region:
+    inherit: repo-s3-bucket
+    deprecate:
+      repo-s3-region: {index: 1, reset: false}
+
+  repo-s3-role:
+    inherit: repo-s3-bucket
+    required: false
+    depend:
+      option: repo-s3-key-type
+      list:
+        - auto
+
+  repo-s3-token:
+    inherit: repo-s3-key
+    required: false
+    command: repo-type
+
+  repo-s3-uri-style:
+    section: global
+    group: repo
+    type: string
+    default: host
+    allow-list:
+      - host
+      - path
+    command: repo-type
+    depend: repo-s3-bucket
+
+  repo-storage-ca-file:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend: repo-storage-verify-tls
+    deprecate:
+      repo-s3-ca-file: {index: 1, reset: false}
+      repo?-azure-ca-file: {index: 1}
+      repo?-s3-ca-file: {index: 1}
+
+  repo-storage-ca-path:
+    inherit: repo-storage-ca-file
+    type: path
+    deprecate:
+      repo-s3-ca-path: {index: 1, reset: false}
+      repo?-azure-ca-path: {index: 1}
+      repo?-s3-ca-path: {index: 1}
+
+  repo-storage-host:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - s3
+    deprecate:
+      repo-s3-host: {index: 1, reset: false}
+      repo?-azure-host: {index: 1}
+      repo?-s3-host: {index: 1}
+
+  repo-storage-port:
+    section: global
+    group: repo
+    type: integer
+    default: 443
+    allow-range: [1, 65535]
+    command: repo-type
+    depend: repo-storage-host
+    deprecate:
+      repo?-azure-port: {index: 1}
+      repo?-s3-port: {index: 1}
+
+  repo-storage-verify-tls:
+    section: global
+    group: repo
+    type: boolean
+    default: true
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3
+    deprecate:
+      repo-s3-verify-ssl: {index: 1, reset: false}
+      repo?-azure-verify-tls: {index: 1}
+      repo?-s3-verify-ssl: {index: 1, reset: false}
+      repo?-s3-verify-tls: {index: 1}
+
+  repo-type:
+    section: global
+    group: repo
+    type: string
+    default: posix
+    allow-list:
+      - azure
+      - cifs
+      - gcs
+      - posix
+      - s3
+    command:
+      archive-get:
+        command-role:
+          async: {}
+          default: {}
+          local: {}
+          remote: {}
+      archive-push:
+        command-role:
+          async: {}
+          default: {}
+          local: {}
+          remote: {}
+      backup:
+        command-role:
+          default: {}
+          local: {}
+      check:
+        command-role:
+          default: {}
+          remote: {}
+      expire:
+        command-role:
+          default: {}
+      info:
+        command-role:
+          default: {}
+          remote: {}
+      repo-create:
+        command-role:
+          default: {}
+          remote: {}
+      repo-get:
+        command-role:
+          default: {}
+          remote: {}
+      repo-ls:
+        command-role:
+          default: {}
+          remote: {}
+      repo-put:
+        command-role:
+          default: {}
+          remote: {}
+      repo-rm:
+        command-role:
+          default: {}
+          remote: {}
+      restore:
+        command-role:
+          default: {}
+          local: {}
+          remote: {}
+      stanza-create:
+        command-role:
+          default: {}
+          remote: {}
+      stanza-delete:
+        command-role:
+          default: {}
+          remote: {}
+      stanza-upgrade:
+        command-role:
+          default: {}
+          remote: {}
+      start:
+        command-role: {}
+      stop:
+        command-role: {}
+      verify:
+        command-role:
+          default: {}
+          local: {}
+          remote: {}
+    deprecate:
+      repo-type: {index: 1, reset: false}

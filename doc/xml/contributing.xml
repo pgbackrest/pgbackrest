@@ -193,14 +193,14 @@
 
         <p> To add an option, two files need be to be modified:</p>
         <list>
-            <list-item><file>build/lib/pgBackRestBuild/Config/Data.pm</file></list-item>
+            <list-item><file>src/build/config/config.yaml</file></list-item>
             <list-item><file>doc/xml/reference.xml</file></list-item>
         </list>
 
         <p>These files are discussed in the following sections.</p>
 
         <section id="data-file">
-            <title>Data.pm</title>
+            <title><file>src/build/config/config.yaml</file></title>
 
             <p>There is a detailed comment at the top of this file on the configuration definitions which one can refer to in determining how to define the rules for the option.</p>
 

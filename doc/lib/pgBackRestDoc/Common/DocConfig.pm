@@ -325,11 +325,11 @@ sub process
             $$oCommandOption{&CONFIG_HELP_NAME} = $oOptionDoc->paramGet('name');
 
             # Generate a list of alternate names
-            if (defined($rhConfigDefine->{$strOption}{&CFGDEF_NAME_ALT}))
+            if (defined($rhConfigDefine->{$strOption}{&CFGDEF_DEPRECATE}))
             {
                 my $rhNameAlt = {};
 
-                foreach my $strNameAlt (sort(keys(%{$rhConfigDefine->{$strOption}{&CFGDEF_NAME_ALT}})))
+                foreach my $strNameAlt (sort(keys(%{$rhConfigDefine->{$strOption}{&CFGDEF_DEPRECATE}})))
                 {
                     $strNameAlt =~ s/\?//g;
 
