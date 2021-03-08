@@ -215,7 +215,7 @@ testRun(void)
             assert(
                 strcmp(
                     errorStackTrace(),
-                    TEST_PGB_PATH "/test/src/module/common/errorTest:testTryRecurse:29:(test build required for parameters)")
+                    TEST_PGB_PATH "/test/src/module/common/errorTest.c:testTryRecurse:29:(test build required for parameters)")
                 == 0);
             assert(strcmp(errorMessage(), "too many nested try blocks") == 0);
             assert(strcmp(errorName(), AssertError.name) == 0);
