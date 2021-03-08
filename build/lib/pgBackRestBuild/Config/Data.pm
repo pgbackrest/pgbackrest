@@ -1818,6 +1818,7 @@ my %hConfigDefine =
                 &CFGDEF_COMMAND_ROLE =>
                 {
                     &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
                 },
             },
             &CFGCMD_STANZA_UPGRADE =>
@@ -2002,6 +2003,7 @@ my %hConfigDefine =
             &CFGCMD_REPO_RM => {},
             &CFGCMD_RESTORE => {},
             &CFGCMD_STANZA_CREATE => {},
+            &CFGCMD_STANZA_DELETE => {},
             &CFGCMD_STANZA_UPGRADE => {},
             &CFGCMD_VERIFY => {},
         },
@@ -2652,6 +2654,7 @@ my %hConfigDefine =
                 &CFGDEF_COMMAND_ROLE =>
                 {
                     &CFGCMD_ROLE_DEFAULT => {},
+                    &CFGCMD_ROLE_REMOTE => {},
                 },
             },
             &CFGCMD_STANZA_UPGRADE =>

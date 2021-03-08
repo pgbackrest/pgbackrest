@@ -238,10 +238,10 @@ sub run
 
         # Delete the stanza
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaDelete('fail on missing stop file', {iExpectedExitStatus => ERROR_FILE_MISSING});
+        $oHostDbPrimary->stanzaDelete('fail on missing stop file', {iExpectedExitStatus => ERROR_FILE_MISSING});
 
-        $oHostBackup->stop({strStanza => $self->stanza()});
-        $oHostBackup->stanzaDelete('successfully delete the stanza');
+        $oHostDbPrimary->stop({strStanza => $self->stanza()});
+        $oHostDbPrimary->stanzaDelete('successfully delete the stanza');
     }
 }
 
