@@ -39,6 +39,17 @@
                 <release-feature-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Multiple repository support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
