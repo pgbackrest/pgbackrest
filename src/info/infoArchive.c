@@ -12,6 +12,8 @@ Archive Info Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/ini.h"
+#include "common/io/bufferWrite.h"
+#include "common/io/io.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "info/infoArchive.h"
@@ -356,13 +358,14 @@ infoArchiveSaveFile(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Save the file
-        IoWrite *write = storageWriteIo(storageNewWriteP(storage, fileName));
+        // Write output into a buffer since it needs to be saved to storage twice
+        Buffer *buffer = bufNew(ioBufferSize());
+        IoWrite *write = ioBufferWriteNew(buffer);
         cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
         infoArchiveSave(infoArchive, write);
 
-        // Make a copy of the file - using get and put instead of copy in case the storage is remote
-        Buffer *buffer = storageGetP(storageNewReadP(storage, fileName));
+        // Save the file and make a copy
+        storagePutP(storageNewWriteP(storage, fileName), buffer);
         storagePutP(storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))), buffer);
     }
     MEM_CONTEXT_TEMP_END();
