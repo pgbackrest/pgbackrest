@@ -1320,6 +1320,21 @@ restoreSelectiveExpression(Manifest *manifest)
             // Log databases found
             LOG_DETAIL_FMT("databases found for selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
+            // Get all system db ids, even in case users would have manually re-created it
+            StringList *systemDbIdList = strLstNew();
+
+            for (unsigned int systemDbIdx = 0; systemDbIdx < manifestDbTotal(manifest); systemDbIdx++)
+            {
+                const ManifestDb *systemDb = manifestDb(manifest, systemDbIdx);
+                if (strEqZ(systemDb->name, "template0") || strEqZ(systemDb->name, "template1") ||
+                    strEqZ(systemDb->name, "postgres") || systemDb->id < PG_USER_OBJECT_MIN_ID)
+                {
+                    const String *systemDbId = varStrForce(VARUINT(systemDb->id));
+                    strLstAdd(systemDbIdList, systemDbId);
+                    strLstRemove(dbList, systemDbId);
+                }
+            }
+
             // Remove included databases from the list
             const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
 
@@ -1328,11 +1343,12 @@ restoreSelectiveExpression(Manifest *manifest)
                 const String *includeDb = strLstGet(includeList, includeIdx);
 
                 // If the db to include is not in the list as an id then search by name
-                if (!strLstExists(dbList, includeDb))
+                if (!strLstExists(dbList, includeDb) && !strLstExists(systemDbIdList, includeDb))
                 {
                     const ManifestDb *db = manifestDbFindDefault(manifest, includeDb, NULL);
 
-                    if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
+                    if (db == NULL || (!strLstExists(dbList, varStrForce(VARUINT(db->id))) &&
+                        !strLstExists(systemDbIdList, varStrForce(VARUINT(db->id)))))
                         THROW_FMT(DbMissingError, "database to include '%s' does not exist", strZ(includeDb));
 
                     // Set the include db to the id if the name mapping was successful
@@ -1340,7 +1356,7 @@ restoreSelectiveExpression(Manifest *manifest)
                 }
 
                 // Error if the db is a system db
-                if (cvtZToUInt64(strZ(includeDb)) < PG_USER_OBJECT_MIN_ID)
+                if (strLstExists(systemDbIdList, includeDb))
                     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
 
                 // Remove from list of DBs to zero
@@ -1354,31 +1370,28 @@ restoreSelectiveExpression(Manifest *manifest)
             for (unsigned int dbIdx = 0; dbIdx < strLstSize(dbList); dbIdx++)
             {
                 const String *db = strLstGet(dbList, dbIdx);
+                LOG_DETAIL_FMT("database %s will be zeroed", strZ(db));
 
-                // Only user created databases can be zeroed, never system databases
-                if (cvtZToUInt64(strZ(db)) >= PG_USER_OBJECT_MIN_ID)
+                // Create expression string or append |
+                if (expression == NULL)
+                    expression = strNew("");
+                else
+                    strCatZ(expression, "|");
+
+                // Filter files in base directory
+                strCatFmt(expression, "(^" MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/%s/)", strZ(db));
+
+                // Filter files in tablespace directories
+                for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
                 {
-                    // Create expression string or append |
-                    if (expression == NULL)
-                        expression = strNew("");
-                    else
-                        strCatZ(expression, "|");
+                    const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
-                    // Filter files in base directory
-                    strCatFmt(expression, "(^" MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/%s/)", strZ(db));
-
-                    // Filter files in tablespace directories
-                    for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+                    if (target->tablespaceId != 0)
                     {
-                        const ManifestTarget *target = manifestTarget(manifest, targetIdx);
-
-                        if (target->tablespaceId != 0)
-                        {
-                            if (tablespaceId == NULL)
-                                strCatFmt(expression, "|(^%s/%s/)", strZ(target->name), strZ(db));
-                            else
-                                strCatFmt(expression, "|(^%s/%s/%s/)", strZ(target->name), strZ(tablespaceId), strZ(db));
-                        }
+                        if (tablespaceId == NULL)
+                            strCatFmt(expression, "|(^%s/%s/)", strZ(target->name), strZ(db));
+                        else
+                            strCatFmt(expression, "|(^%s/%s/%s/)", strZ(target->name), strZ(tablespaceId), strZ(db));
                     }
                 }
             }
