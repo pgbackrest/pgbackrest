@@ -1131,10 +1131,16 @@ testRun(void)
             "To delete stanza 'db' on repo2, shut down " PG_NAME " for stanza 'db' and try again, or use --force.");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("force delete when pg appears to be running");
+        TEST_TITLE("force delete when pg appears to be running, multi-repo");
 
+        argList = strLstDup(argListCmd);
+        hrnCfgArgRaw(argList, cfgOptStanza, stanza);
+        hrnCfgArgKeyRawFmt(argList, cfgOptPgPath, 1, "%s/%s", testPath(), strZ(stanza));
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         strLstAddZ(argList,"--force");
         harnessCfgLoad(cfgCmdStanzaDelete, argList);
+
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete --force");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageTest, strNewFmt("repo/backup/%s", strZ(stanza))), false, "repo1: stanza deleted");
