@@ -1419,12 +1419,15 @@ option:
           local: {}
           remote: {}
       stanza-create:
-        command-role: {}
+        command-role:
+            remote: {}
       stanza-delete:
         command-role:
           default: {}
+          remote: {}
       stanza-upgrade:
-        command-role: {}
+        command-role:
+            remote: {}
       start:
         command-role: {}
       stop:
@@ -1575,6 +1578,9 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
       verify: {}
     command-role:
       async: {}
@@ -1962,12 +1968,15 @@ option:
       stanza-create:
         command-role:
           default: {}
+          remote: {}
       stanza-delete:
         command-role:
           default: {}
+          remote: {}
       stanza-upgrade:
         command-role:
           default: {}
+          remote: {}
       start:
         command-role: {}
       stop:

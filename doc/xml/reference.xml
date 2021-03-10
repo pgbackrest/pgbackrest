@@ -1804,7 +1804,7 @@
             <command id="stanza-create" name="Stanza Create">
                 <summary>Create the required stanza data.</summary>
 
-                <text>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured locally on the host, the stanza will be created on each.</text>
+                <text>The <cmd>stanza-create</cmd> command must be run after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured, the stanza will be created on each.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
@@ -1841,7 +1841,7 @@
             <command id="stanza-upgrade" name="Stanza Upgrade">
                 <summary>Upgrade a stanza.</summary>
 
-                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the repository host. If there is more than one repository configured locally on the host, the stanza will be created on each. If the database is offline use the <br-option>--no-online</br-option> option.</text>
+                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be created on each. If the database is offline use the <br-option>--no-online</br-option> option.</text>
 
                 <option-list>
                     <!-- ======================================================================================================= -->
@@ -1873,8 +1873,8 @@
                 To delete a stanza:
                 <ul>
                     <li>Shut down the <postgres/> cluster associated with the stanza (or use --force to override).</li>
-                    <li>Run the <cmd>stop</cmd> command on the repository host.</li>
-                    <li>Run the <cmd>stanza-delete</cmd> command on the repository host.</li>
+                    <li>Run the <cmd>stop</cmd> command on the host where the <cmd>stanza-delete</cmd> command will be run.</li>
+                    <li>Run the <cmd>stanza-delete</cmd> command.</li>
                 </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files and/or environment variables.
 
                 A stanza may only be deleted from one repository at a time. To delete the stanza from multiple repositories, repeat the <cmd>stanza-delete</cmd> command for each repository while specifying the <br-option>{[dash]}-repo</br-option> option.</text>
@@ -1893,7 +1893,7 @@
                 <command-example-list>
                     <command-example title="Delete a stanza">
                         <text><code-block title="">
-                            {[backrest-exe]} --stanza=db stanza-delete
+                            {[backrest-exe]} --stanza=db stanza-delete --repo=1
                         </code-block>
 
                         Delete the <id>db</id> stanza repository.</text>
