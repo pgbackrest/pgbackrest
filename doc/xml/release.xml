@@ -27,6 +27,17 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="christian.roux"/>
+                            <release-item-ideator id="efremov.egor"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix memory leak in backup during archive copy.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="bsiara"/>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
@@ -9265,6 +9276,11 @@
         <contributor id="douglas.j.hunley">
             <contributor-name-display>Douglas J Hunley</contributor-name-display>
             <contributor-id type="github">hunleyd</contributor-id>
+        </contributor>
+
+        <contributor id="efremov.egor">
+            <contributor-name-display>Efremov Egor</contributor-name-display>
+            <contributor-id type="github">kolbasky</contributor-id>
         </contributor>
 
         <contributor id="ejberdecia">
