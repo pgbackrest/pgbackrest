@@ -38,6 +38,17 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Enhance expire command multi-repo support."/>
+                        <commit subject="Expire continues if an error occurs processing a repository."/>
+                        <commit subject="Add archive-get command multi-repo support."/>
+                        <commit subject="Enhance restore command multi-repo support."/>
+                        <commit subject="Refactor info command repoMin/Max."/>
+                        <commit subject="Remove restore default repo from integration tests."/>
+                        <commit subject="Make --repo optional for backup command."/>
+                        <commit subject="Refactor archive-push command warnings to work like archive-get."/>
+                        <commit subject="Add write fault-tolerance to archive-push command."/>
+                        <commit subject="Make --repo optional for remaining commands except stanza-delete."/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                             <release-item-contributor id="david.steele"/>
@@ -77,26 +88,6 @@
                 </release-improvement-list>
 
                 <release-development-list>
-                    <release-item>
-                        <commit subject="Enhance expire command multi-repo support."/>
-                        <commit subject="Expire continues if an error occurs processing a repository."/>
-                        <commit subject="Add archive-get command multi-repo support."/>
-                        <commit subject="Enhance restore command multi-repo support."/>
-                        <commit subject="Refactor info command repoMin/Max."/>
-                        <commit subject="Remove restore default repo from integration tests."/>
-                        <commit subject="Make --repo optional for backup command."/>
-                        <commit subject="Refactor archive-push command warnings to work like archive-get."/>
-                        <commit subject="Add write fault-tolerance to archive-push command."/>
-                        <commit subject="Make --repo optional for remaining commands except stanza-delete."/>
-
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
-                            <release-item-contributor id="david.steele"/>
-                        </release-item-contributor-list>
-
-                        <p>Partial multi-repository implementation.</p>
-                    </release-item>
-
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
