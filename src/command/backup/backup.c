@@ -1773,6 +1773,9 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                     if (cfgOptionBool(cfgOptArchiveCopy))
                     {
+                        // Copy can be a pretty expensive operation so log it
+                        LOG_DETAIL_FMT("copy segment %s to backup", strZ(walSegment));
+
                         // Get compression type of the WAL segment and backup
                         CompressType archiveCompressType = compressTypeFromName(archiveFile);
                         CompressType backupCompressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
