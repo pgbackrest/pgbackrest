@@ -1755,8 +1755,6 @@
 
             <p>There may be cases where it is desirable to selectively restore specific databases from a cluster backup.  This could be done for performance reasons or to move selected databases to a machine that does not have enough space to restore the entire cluster backup.</p>
 
-            <admonition type="note">Recovery may error unless <br-option>--target=immediate</br-option> is specified. This is because after consistency is reached <postgres/> will flag zeroed pages as errors even for a full-page write. For <postgres/> &amp;ge; <proper>13</proper> the <setting>ignore_invalid_pages</setting> setting may be used to ignore invalid pages. In this case it is important to check the logs after recovery to ensure that no invalid pages were reported in the selected databases.</admonition>
-
             <p>To demonstrate this feature two databases are created: test1 and test2.</p>
 
             <execute-list host="{[host-pg1]}">
@@ -1841,6 +1839,8 @@
 
             <p>Stop the cluster and restore only the test2 database.  Built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</p>
 
+            <admonition type="note">Recovery may error unless <br-option>--type=immediate</br-option> is specified. This is because after consistency is reached <postgres/> will flag zeroed pages as errors even for a full-page write. For <postgres/> &amp;ge; <proper>13</proper> the <setting>ignore_invalid_pages</setting> setting may be used to ignore invalid pages. In this case it is important to check the logs after recovery to ensure that no invalid pages were reported in the selected databases.</admonition>
+
             <execute-list host="{[host-pg1]}">
                 <title>Restore from last backup including only the test2 database</title>
 
@@ -1850,7 +1850,7 @@
 
                 <execute user="postgres">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                        {[dash]}-db-include=test2 restore</exe-cmd>
+                        {[dash]}-db-include=test2 {[dash]}-type=immediate {[dash]}-target-action=promote restore</exe-cmd>
                 </execute>
 
                 <execute user="root">
