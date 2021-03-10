@@ -105,8 +105,8 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            " TEST_PGB_PATH "/test/src/module/common/exitTest:testRun:92:(void)\n"
-                "            test:main:(argListSize: 1, argList: (char *[]))\n"
+                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:92:(void)\n"
+                "            test.c:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [122]\n"
                 "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: (failOnNoLock: false)\n"
@@ -135,8 +135,8 @@ testRun(void)
                 "            options: --exec-id=1-test --process-max=4 --stanza=test\n"
                 "            \n"
                 "            stack trace:\n"
-                "            " TEST_PGB_PATH "/test/src/module/common/exitTest:testRun:123:(void)\n"
-                "            test:main:(argListSize: 1, argList: (char *[]))\n"
+                "            " TEST_PGB_PATH "/test/src/module/common/exitTest.c:testRun:123:(void)\n"
+                "            test.c:main:(argListSize: 1, argList: (char *[]))\n"
                 "            --------------------------------------------------------------------\n"
                 "P00   INFO: archive-push:async command end: aborted with exception [025]");
         }
