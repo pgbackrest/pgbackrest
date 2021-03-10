@@ -945,5 +945,5 @@ testRun(void)
             "000000010000000100000001.ok\n000000010000000100000002.ok\n", "check status files");
         }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -383,5 +383,5 @@ testRun(void)
         TEST_RESULT_INT(compressLevelDefault(compressTypeGz), 6, "gz level=6");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

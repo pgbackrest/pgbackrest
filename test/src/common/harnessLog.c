@@ -60,7 +60,7 @@ harnessLogOpen(const char *logFile, int flags, int mode)
     if (result == -1)
         THROW_SYS_ERROR_FMT(FileOpenError, "unable to open log file '%s'", logFile);
 
-    FUNCTION_HARNESS_RESULT(INT, result);
+    FUNCTION_HARNESS_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -78,7 +78,7 @@ harnessLogInit(void)
     logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
     logAnySet();
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -170,7 +170,7 @@ harnessLogLoad(const char *logFile)
     if (totalBytes > 0)
         harnessLogBuffer[totalBytes - 1] = 0;
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -243,7 +243,7 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -255,7 +255,7 @@ hrnLogReplaceClear(void)
     if (harnessLog.replaceList != NULL)
         lstClear(harnessLog.replaceList);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -337,7 +337,7 @@ hrnLogReplace(void)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -369,7 +369,7 @@ harnessLogResult(const char *expected)
     close(logFdFile);
     logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -415,7 +415,7 @@ harnessLogResultRegExp(const char *expression)
     }
     TRY_END();
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -432,5 +432,5 @@ harnessLogFinal(void)
     if (strcmp(harnessLogBuffer, "") != 0)
         THROW_FMT(AssertError, "\n\nexpected log to be empty but actual log was:\n\n%s\n\n", harnessLogBuffer);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
