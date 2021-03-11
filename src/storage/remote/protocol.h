@@ -39,6 +39,14 @@ Functions
 ssize_t storageRemoteProtocolBlockSize(const String *message);
 
 // Process storage protocol requests
-bool storageRemoteProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+void storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *server);
+void storageRemoteInfoProtocol(const VariantList *paramList, ProtocolServer *server);
+void storageRemoteInfoListProtocol(const VariantList *paramList, ProtocolServer *server);
+void storageRemoteOpenReadProtocol(const VariantList *paramList, ProtocolServer *server);
+void storageRemoteOpenWriteProtocol(const VariantList *paramList, ProtocolServer *server);
+void storageRemotePathCreateProtocol(const VariantList *paramList, ProtocolServer *server);
+void storageRemotePathRemoveProtocol(const VariantList *paramList, ProtocolServer *server);
+void storageRemotePathSyncProtocol(const VariantList *paramList, ProtocolServer *server);
+void storageRemoteRemoveProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif

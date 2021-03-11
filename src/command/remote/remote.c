@@ -22,10 +22,19 @@ Command handlers
 ***********************************************************************************************************************************/
 static const ProtocolServerHandler localHandler[] =
 {
-    {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = NULL},
-        // protocolServerHandlerAdd(server, storageRemoteProtocol);
-        // protocolServerHandlerAdd(server, dbProtocol);
-        // protocolServerHandlerAdd(server, configProtocol);
+    {.command = PROTOCOL_COMMAND_DB_OPEN, .handler = dbOpenProtocol},
+    {.command = PROTOCOL_COMMAND_DB_QUERY, .handler = dbQueryProtocol},
+    {.command = PROTOCOL_COMMAND_DB_CLOSE, .handler = dbCloseProtocol},
+    {.command = PROTOCOL_COMMAND_CONFIG_OPTION, .handler = configOptionProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = storageRemoteFeatureProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_INFO, .handler = storageRemoteInfoProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_INFO_LIST, .handler = storageRemoteInfoListProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_OPEN_READ, .handler = storageRemoteOpenReadProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_OPEN_WRITE, .handler = storageRemoteOpenWriteProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_PATH_CREATE, .handler = storageRemotePathCreateProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_PATH_REMOVE, .handler = storageRemotePathRemoveProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_PATH_SYNC, .handler = storageRemotePathSyncProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_REMOVE, .handler = storageRemoteRemoveProtocol},
 };
 
 /**********************************************************************************************************************************/

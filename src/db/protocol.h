@@ -23,6 +23,8 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process db protocol requests
-bool dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+void dbOpenProtocol(const VariantList *paramList, ProtocolServer *server);
+void dbQueryProtocol(const VariantList *paramList, ProtocolServer *server);
+void dbCloseProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif

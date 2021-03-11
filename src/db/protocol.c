@@ -29,68 +29,96 @@ static struct
 } dbProtocolLocal;
 
 /**********************************************************************************************************************************/
-bool
-dbProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+void
+dbOpenProtocol(const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(command != NULL);
-
-    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
-    bool found = true;
+    ASSERT(paramList == NULL);
+    ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_DB_OPEN_STR))
+        // If the db list does not exist then create it in the prior context (which should be persistent)
+        if (dbProtocolLocal.pgClientList == NULL)
         {
-            // If the db list does not exist then create it in the prior context (which should be persistent)
-            if (dbProtocolLocal.pgClientList == NULL)
+            MEM_CONTEXT_PRIOR_BEGIN()
             {
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    dbProtocolLocal.pgClientList = lstNewP(sizeof(PgClient *));
-                }
-                MEM_CONTEXT_PRIOR_END();
+                dbProtocolLocal.pgClientList = lstNewP(sizeof(PgClient *));
             }
-
-            // Add db to the list
-            unsigned int dbIdx = lstSize(dbProtocolLocal.pgClientList);
-
-            MEM_CONTEXT_BEGIN(lstMemContext(dbProtocolLocal.pgClientList))
-            {
-                // Only a single db is passed to the remote
-                PgClient *pgClient = pgClientNew(
-                    cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
-                    cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
-                pgClientOpen(pgClient);
-
-                lstAdd(dbProtocolLocal.pgClientList, &pgClient);
-            }
-            MEM_CONTEXT_END();
-
-            // Return db index which should be included in subsequent calls
-            protocolServerResponse(server, VARUINT(dbIdx));
+            MEM_CONTEXT_PRIOR_END();
         }
-        else if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR) || strEq(command, PROTOCOL_COMMAND_DB_CLOSE_STR))
+
+        // Add db to the list
+        unsigned int dbIdx = lstSize(dbProtocolLocal.pgClientList);
+
+        MEM_CONTEXT_BEGIN(lstMemContext(dbProtocolLocal.pgClientList))
         {
-            PgClient *pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0)));
+            // Only a single db is passed to the remote
+            PgClient *pgClient = pgClientNew(
+                cfgOptionStrNull(cfgOptPgSocketPath), cfgOptionUInt(cfgOptPgPort), cfgOptionStr(cfgOptPgDatabase),
+                cfgOptionStrNull(cfgOptPgUser), cfgOptionUInt64(cfgOptDbTimeout));
+            pgClientOpen(pgClient);
 
-            if (strEq(command, PROTOCOL_COMMAND_DB_QUERY_STR))
-                protocolServerResponse(server, varNewVarLst(pgClientQuery(pgClient, varStr(varLstGet(paramList, 1)))));
-            else
-            {
-                pgClientClose(pgClient);
-                protocolServerResponse(server, NULL);
-            }
+            lstAdd(dbProtocolLocal.pgClientList, &pgClient);
         }
-        else
-            found = false;
+        MEM_CONTEXT_END();
+
+        // Return db index which should be included in subsequent calls
+        protocolServerResponse(server, VARUINT(dbIdx));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, found);
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+dbQueryProtocol(const VariantList *paramList, ProtocolServer *server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(paramList != NULL);
+    ASSERT(server != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        protocolServerResponse(
+            server,
+            varNewVarLst(
+                pgClientQuery(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0))),
+                    varStr(varLstGet(paramList, 1)))));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+
+/**********************************************************************************************************************************/
+void
+dbCloseProtocol(const VariantList *paramList, ProtocolServer *server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(paramList != NULL);
+    ASSERT(server != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        pgClientClose(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0))));
+        protocolServerResponse(server, NULL);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
