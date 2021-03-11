@@ -1080,5 +1080,5 @@ testRun(void)
         TEST_RESULT_BOOL(archiveGetProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

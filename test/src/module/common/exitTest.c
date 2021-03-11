@@ -153,5 +153,5 @@ testRun(void)
         harnessLogResult("P00   INFO: archive-push:async command end: terminated on signal [SIGTERM]");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

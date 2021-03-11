@@ -107,5 +107,5 @@ testRun(void)
             "get xml");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

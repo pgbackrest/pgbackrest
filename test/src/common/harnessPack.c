@@ -16,7 +16,7 @@ String *hrnPackBufToStr(const Buffer *buffer)
         FUNCTION_HARNESS_PARAM(BUFFER, buffer);
     FUNCTION_HARNESS_END();
 
-    FUNCTION_HARNESS_RESULT(STRING, hrnPackToStr(pckReadNewBuf(buffer)));
+    FUNCTION_HARNESS_RETURN(STRING, hrnPackToStr(pckReadNewBuf(buffer)));
 }
 
 /**********************************************************************************************************************************/
@@ -96,5 +96,5 @@ String *hrnPackToStr(PackRead *read)
         first = false;
     }
 
-    FUNCTION_HARNESS_RESULT(STRING, result);
+    FUNCTION_HARNESS_RETURN(STRING, result);
 }

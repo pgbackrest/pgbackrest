@@ -353,5 +353,5 @@ testRun(void)
         TEST_RESULT_STRLST_Z(strLstSort(list, sortOrderDesc), "11-10\n10-4\n9.4-2\n9.6-1\n", "sort descending");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

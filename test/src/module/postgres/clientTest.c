@@ -317,5 +317,5 @@ testRun(void)
         TEST_RESULT_VOID(pgClientClose(client), "close client again");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

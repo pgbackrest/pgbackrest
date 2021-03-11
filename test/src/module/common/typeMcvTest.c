@@ -64,5 +64,5 @@ testRun(void)
         TEST_RESULT_BOOL(varBool(mcvResult(mcv)), false, "result is false");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

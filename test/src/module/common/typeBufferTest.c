@@ -162,5 +162,5 @@ testRun(void)
         TEST_RESULT_STR_Z(bufToLog(buffer), "{used: 0, size: 50, sizeAlloc: 100}", "buf to log");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -225,7 +225,7 @@ testBackupValidate(const Storage *storage, const String *path)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RESULT(STRING, result);
+    FUNCTION_HARNESS_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -2653,5 +2653,5 @@ testRun(void)
         }
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

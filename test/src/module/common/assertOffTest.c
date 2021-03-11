@@ -17,5 +17,5 @@ testRun(void)
         TEST_RESULT_VOID(ASSERT(false || false), "assert false ignored");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
