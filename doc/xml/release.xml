@@ -129,6 +129,16 @@
                             <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
+                        <p>Update selective restore documentation with caveats.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
                         <p>Add <setting>compress-type</setting> clarification to <setting>archive-copy</setting> documentation.</p>
                     </release-item>
                 </release-improvement-list>
