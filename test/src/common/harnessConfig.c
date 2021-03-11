@@ -54,7 +54,7 @@ harnessCfgLoadRaw(unsigned int argListSize, const char *argList[])
     if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
         cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTRDEF("1-test"));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -90,7 +90,7 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
 
     harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -104,7 +104,7 @@ harnessCfgLoad(ConfigCommand commandId, const StringList *argListParam)
 
     harnessCfgLoadRole(commandId, cfgCmdRoleDefault, argListParam);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

@@ -685,5 +685,5 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

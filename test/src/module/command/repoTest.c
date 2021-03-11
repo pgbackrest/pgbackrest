@@ -777,5 +777,5 @@ testRun(void)
         TEST_RESULT_BOOL(storagePathExistsP(storageRepo(), STRDEF("path")), true, "    check path exists");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

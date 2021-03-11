@@ -1304,5 +1304,5 @@ testRun(void)
         TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

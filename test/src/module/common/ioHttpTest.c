@@ -727,5 +727,5 @@ testRun(void)
         TEST_RESULT_BOOL(varLstEmpty(kvKeyList(statToKv())), false, "check");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

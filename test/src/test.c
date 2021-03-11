@@ -203,5 +203,5 @@ main(int argListSize, const char *argList[])
     TRY_END();
 #endif
 
-    FUNCTION_HARNESS_RESULT(INT, result);
+    FUNCTION_HARNESS_RETURN(INT, result);
 }

@@ -739,6 +739,8 @@
 
                         <text>This slightly paranoid option protects against corruption in the WAL segment archive by storing the WAL segments required for consistency directly in the backup.  WAL segments are still stored in the archive so this option will use additional space.
 
+                        It is best if the <cmd>archive-push</cmd> and <cmd>backup</cmd> commands have the same <setting>compress-type</setting> (e.g. <id>lz4</id>) when using this option. Otherwise, the WAL segments will need to be recompressed with the <setting>compress-type</setting> used by the backup, which can be fairly expensive depending on how much WAL was generated during the backup.
+
                         On restore, the WAL segments will be present in <path>pg_xlog/pg_wal</path> and <postgres/> will use them in preference to calling the <code>restore_command</code>.
 
                         The <br-option>archive-check</br-option> option must be enabled if <br-option>archive-copy</br-option> is enabled.</text>

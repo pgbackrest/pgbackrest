@@ -539,5 +539,5 @@ testRun(void)
         TEST_RESULT_STR_Z(strLstToLog(list), "{[\"item1\", \"item2\", \"item3\"]}", "format 3 item list");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

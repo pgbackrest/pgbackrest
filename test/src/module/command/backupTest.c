@@ -225,7 +225,7 @@ testBackupValidate(const Storage *storage, const String *path)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RESULT(STRING, result);
+    FUNCTION_HARNESS_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -1946,6 +1946,7 @@ testRun(void)
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D95D3000000000, lsn = 5d95d30/800000\n"
                 "P00   INFO: check archive for segment(s) 0000000105D95D3000000000:0000000105D95D3000000000\n"
+                "P00 DETAIL: copy segment 0000000105D95D3000000000 to backup\n"
                 "P00   INFO: new backup label = 20191003-105320F");
 
             TEST_RESULT_STR_Z_KEYRPL(
@@ -2432,6 +2433,9 @@ testRun(void)
                 "P00   INFO: backup stop archive = 0000000105DB5DE000000002, lsn = 5db5de0/280000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000002\n"
+                "P00 DETAIL: copy segment 0000000105DB5DE000000000 to backup\n"
+                "P00 DETAIL: copy segment 0000000105DB5DE000000001 to backup\n"
+                "P00 DETAIL: copy segment 0000000105DB5DE000000002 to backup\n"
                 "P00   INFO: new backup label = 20191027-181320F");
 
             TEST_RESULT_STR_KEYRPL(
@@ -2649,5 +2653,5 @@ testRun(void)
         }
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

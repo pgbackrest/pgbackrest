@@ -97,6 +97,16 @@
 
                         <p>Allow custom <setting>config-path</setting> default with <id>./configure --with-configdir</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Log archive copy during <cmd>backup</cmd>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -109,6 +119,20 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <setting>compress-type</setting> clarification to <setting>archive-copy</setting> documentation.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2021-02-08" version="2.32" title="Repository Commands">

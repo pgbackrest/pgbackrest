@@ -64,7 +64,7 @@ hrnServerScriptCommand(IoWrite *write, HrnServerCmd cmd, const Variant *data)
     ioWriteStrLine(write, jsonFromVar(data));
     ioWriteFlush(write);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -78,7 +78,7 @@ IoWrite *hrnServerScriptBegin(IoWrite *write)
 
     ioWriteOpen(write);
 
-    FUNCTION_HARNESS_RESULT(IO_WRITE, write);
+    FUNCTION_HARNESS_RETURN(IO_WRITE, write);
 }
 
 void hrnServerScriptEnd(IoWrite *write)
@@ -91,7 +91,7 @@ void hrnServerScriptEnd(IoWrite *write)
 
     hrnServerScriptCommand(write, hrnServerCmdDone, NULL);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -104,7 +104,7 @@ hrnServerScriptAbort(IoWrite *write)
 
     hrnServerScriptCommand(write, hrnServerCmdAbort, NULL);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -116,7 +116,7 @@ hrnServerScriptAccept(IoWrite *write)
 
     hrnServerScriptCommand(write, hrnServerCmdAccept, NULL);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -128,7 +128,7 @@ hrnServerScriptClose(IoWrite *write)
 
     hrnServerScriptCommand(write, hrnServerCmdClose, NULL);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -143,7 +143,7 @@ hrnServerScriptExpect(IoWrite *write, const String *data)
 
     hrnServerScriptCommand(write, hrnServerCmdExpect, VARSTR(data));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -158,7 +158,7 @@ hrnServerScriptExpectZ(IoWrite *write, const char *data)
 
     hrnServerScriptCommand(write, hrnServerCmdExpect, VARSTRZ(data));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -173,7 +173,7 @@ hrnServerScriptReply(IoWrite *write, const String *data)
 
     hrnServerScriptCommand(write, hrnServerCmdReply, VARSTR(data));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -188,7 +188,7 @@ hrnServerScriptReplyZ(IoWrite *write, const char *data)
 
     hrnServerScriptCommand(write, hrnServerCmdReply, VARSTRZ(data));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 void
@@ -203,7 +203,7 @@ hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs)
 
     hrnServerScriptCommand(write, hrnServerCmdSleep, VARUINT64(sleepMs));
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -422,7 +422,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
     if (protocol == hrnServerProtocolTls)
         SSL_CTX_free(serverContext);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
