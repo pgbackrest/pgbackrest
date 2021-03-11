@@ -243,7 +243,7 @@ typedef struct TestBackupPqScriptParam
     unsigned int timeline;                                          // Timeline to use for WAL files
 } TestBackupPqScriptParam;
 
-#define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                                           \
+#define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                       \
     testBackupPqScript(pgVersion, backupStartTime, (TestBackupPqScriptParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
