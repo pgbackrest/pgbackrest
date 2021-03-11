@@ -97,6 +97,16 @@
 
                         <p>Allow custom <setting>config-path</setting> default with <id>./configure --with-configdir</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Log archive copy during <cmd>backup</cmd>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
