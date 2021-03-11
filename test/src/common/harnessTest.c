@@ -117,7 +117,7 @@ hrnInit(
 
     strcpy(testGroupData, testGroupTemp);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -141,7 +141,7 @@ hrnAdd(int run, bool selected)
     testList[testTotal].selected = selected;
     testTotal++;
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -218,7 +218,7 @@ testBegin(const char *name)
 
     harnessTestLocal.logLastBeginTime = 0;
 
-    FUNCTION_HARNESS_RESULT(BOOL, result);
+    FUNCTION_HARNESS_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -242,7 +242,7 @@ hrnComplete(void)
         exit(255);
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -281,7 +281,7 @@ hrnReplaceStr(char *string, size_t bufferSize, const char *substring, const char
         begin = strstr(begin + strlen(replace), substring);
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -308,7 +308,7 @@ hrnReplaceKey(const char *string)
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[group]}", testGroup());
     hrnReplaceStr(harnessReplaceKeyBuffer, sizeof(harnessReplaceKeyBuffer), "{[project-exe]}", testProjectExe());
 
-    FUNCTION_HARNESS_RESULT(STRINGZ, harnessReplaceKeyBuffer);
+    FUNCTION_HARNESS_RETURN(STRINGZ, harnessReplaceKeyBuffer);
 }
 
 /**********************************************************************************************************************************/
@@ -403,7 +403,7 @@ hrnDiff(const char *expected, const char *actual)
     // Remove last linefeed from diff output
     harnessDiffBuffer[strlen(harnessDiffBuffer) - 1] = 0;
 
-    FUNCTION_HARNESS_RESULT(STRINGZ, harnessDiffBuffer);
+    FUNCTION_HARNESS_RETURN(STRINGZ, harnessDiffBuffer);
 }
 
 /**********************************************************************************************************************************/
@@ -465,7 +465,7 @@ hrnTestLogPrefix(int lineNo, bool padding)
     // Add line number and padding
     printf("l%04d %s", lineNo, padding ? "    " : "");
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -500,7 +500,7 @@ hrnTestResultException(void)
             harnessTestLocal.result.statement, errorName(), errorMessage(), errorStackTrace());
     }
 
-    FUNCTION_HARNESS_RESULT(BOOL, false);
+    FUNCTION_HARNESS_RETURN(BOOL, false);
 }
 
 void
@@ -751,7 +751,7 @@ const char *
 testExe(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(STRINGZ, testExeData);
+    FUNCTION_HARNESS_RETURN(STRINGZ, testExeData);
 }
 
 /**********************************************************************************************************************************/
@@ -759,7 +759,7 @@ const char *
 testProjectExe(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(STRINGZ, testProjectExeData);
+    FUNCTION_HARNESS_RETURN(STRINGZ, testProjectExeData);
 }
 
 /**********************************************************************************************************************************/
@@ -767,7 +767,7 @@ bool
 testContainer(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(BOOL, testContainerData);
+    FUNCTION_HARNESS_RETURN(BOOL, testContainerData);
 }
 
 /**********************************************************************************************************************************/
@@ -775,7 +775,7 @@ unsigned int
 testIdx(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(UINT, testIdxData);
+    FUNCTION_HARNESS_RETURN(UINT, testIdxData);
 }
 
 /**********************************************************************************************************************************/
@@ -783,7 +783,7 @@ uint64_t
 testScale(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(UINT64, testScaleData);
+    FUNCTION_HARNESS_RETURN(UINT64, testScaleData);
 }
 
 /**********************************************************************************************************************************/
@@ -791,7 +791,7 @@ const char *
 testPath(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(STRINGZ, testPathData);
+    FUNCTION_HARNESS_RETURN(STRINGZ, testPathData);
 }
 
 /**********************************************************************************************************************************/
@@ -799,7 +799,7 @@ const char *
 testDataPath(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(STRINGZ, testDataPathData);
+    FUNCTION_HARNESS_RETURN(STRINGZ, testDataPathData);
 }
 
 /**********************************************************************************************************************************/
@@ -807,7 +807,7 @@ const char *
 testRepoPath(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RESULT(STRINGZ, testRepoPathData);
+    FUNCTION_HARNESS_RETURN(STRINGZ, testRepoPathData);
 }
 
 /**********************************************************************************************************************************/
@@ -833,7 +833,7 @@ testTimeMSec(void)
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
 
-    FUNCTION_HARNESS_RESULT(UINT64, ((uint64_t)currentTime.tv_sec * 1000) + (uint64_t)currentTime.tv_usec / 1000);
+    FUNCTION_HARNESS_RETURN(UINT64, ((uint64_t)currentTime.tv_sec * 1000) + (uint64_t)currentTime.tv_usec / 1000);
 }
 
 /**********************************************************************************************************************************/
@@ -842,5 +842,5 @@ testTimeMSecBegin(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    FUNCTION_HARNESS_RESULT(UINT64, timeMSecBegin);
+    FUNCTION_HARNESS_RETURN(UINT64, timeMSecBegin);
 }

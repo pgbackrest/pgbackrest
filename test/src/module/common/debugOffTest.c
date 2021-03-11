@@ -30,5 +30,5 @@ testRun(void)
         TEST_RESULT_Z(debugUnitExtern, "static", "DEBUG_UNIT_EXTERN is static");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

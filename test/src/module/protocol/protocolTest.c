@@ -64,7 +64,7 @@ testServerProtocol(const String *command, const VariantList *paramList, Protocol
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RESULT(BOOL, found);
+    FUNCTION_HARNESS_RETURN(BOOL, found);
 }
 
 /***********************************************************************************************************************************
@@ -1059,5 +1059,5 @@ testRun(void)
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

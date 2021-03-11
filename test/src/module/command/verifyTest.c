@@ -1565,5 +1565,5 @@ testRun(void)
                 strZ(backupLabelDiff), strZ(backupLabelFullDb2))));
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

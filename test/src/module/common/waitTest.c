@@ -65,5 +65,5 @@ testRun(void)
         TEST_RESULT_VOID(waitFree(wait), "    free wait");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

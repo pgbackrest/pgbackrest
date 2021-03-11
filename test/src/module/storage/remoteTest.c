@@ -783,5 +783,5 @@ testRun(void)
 
     protocolFree();
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -195,7 +195,7 @@ testS3DateTime(time_t time)
         strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", gmtime(&time)) != sizeof(buffer) - 1, AssertError,
         "unable to format date");
 
-    FUNCTION_HARNESS_RESULT(STRING, strNew(buffer));
+    FUNCTION_HARNESS_RETURN(STRING, strNew(buffer));
 }
 
 /***********************************************************************************************************************************
@@ -1179,5 +1179,5 @@ testRun(void)
         HARNESS_FORK_END();
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -90,7 +90,7 @@ testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest 
     // Compare
     TEST_RESULT_STR_Z(callbackData.content, hrnReplaceKey(compare), "    compare result manifest");
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -136,7 +136,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_HARNESS_RESULT(MANIFEST, result);
+    FUNCTION_HARNESS_RETURN(MANIFEST, result);
 }
 
 /***********************************************************************************************************************************
@@ -2591,5 +2591,5 @@ testRun(void)
             testPath());
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

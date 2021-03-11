@@ -193,5 +193,5 @@ testRun(void)
         assert(stackTraceLocal.stackSize == 0);
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
