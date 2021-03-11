@@ -153,18 +153,64 @@ testRun(void)
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
                 harnessInfoChecksum(content)),
             "put backup info to file");
+// CSHANG How should this json really look?
+        TEST_RESULT_STR(
+            infoRender(),
+            strNewFmt(
+            "["
+                "{"
+                    "\"archive\":[],"
+                    "\"backup\":[],"
+                    "\"cipher\":\"none\","
+                    "\"db\":[],"
+                    "\"name\":\"stanza1\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":99,"
+                                "\"message\":\"[FileMissingError] unable to load info file '%s/repo/archive/stanza1/archive.info' or '%s/repo/archive/stanza1/archive.info.copy':\\nFileMissingError: unable to open missing file '%s/repo/archive/stanza1/archive.info' for read\\nFileMissingError: unable to open missing file '%s/repo/archive/stanza1/archive.info.copy' for read\\nHINT: archive.info cannot be opened but is required to push/get WAL segments.\\nHINT: is archive_command configured correctly in postgresql.conf?\\nHINT: has a stanza-create been performed?\\nHINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
+                        "\"code\":99,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
+                        "\"message\":\"other\""
+                        "}"
+                "}"
+            "]", testPath(), testPath(), testPath(), testPath()),
+            "json - other error");
 
-        TEST_ERROR_FMT(infoRender(), FileMissingError,
-            "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured correctly in postgresql.conf?\n"
-            "HINT: has a stanza-create been performed?\n"
-            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            strZ(archiveStanza1Path), strZ(archiveStanza1Path),
-            strZ(strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-            strZ(strNewFmt("%s/archive.info.copy", strZ(archiveStanza1Path))));
+/* CSHANG Text output on one repository - this is not very infomative and for multi-repo, what should it look like?
+Should "repo1: error (other)" here be the error list? But that could be long....
+                    "stanza: stanza2\n"
+                    "    status: mixed (backup/expire running)\n"
+                    "        repo1: error (other)\n"
+                    "        repo2: ok\n"
+                    "    cipher: mixed\n"
+                    "        repo1: none\n"
+                    "        repo2: aes-256-cbc\n"
+*/
+        harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (other)\n"
+            "    cipher: none\n",
+            "text - TEST");
+        // TEST_ERROR_FMT(infoRender(), FileMissingError,
+        //     "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
+        //     "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+        //     "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
+        //     "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+        //     "HINT: is archive_command configured correctly in postgresql.conf?\n"
+        //     "HINT: has a stanza-create been performed?\n"
+        //     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
+        //     strZ(archiveStanza1Path), strZ(archiveStanza1Path),
+        //     strZ(strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
+        //     strZ(strNewFmt("%s/archive.info.copy", strZ(archiveStanza1Path))));
 
         // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         // Only the current db information from the db:history will be processed.

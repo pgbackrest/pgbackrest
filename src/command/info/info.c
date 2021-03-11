@@ -91,6 +91,9 @@ STRING_STATIC(INFO_STANZA_MESSAGE_MIXED_STR,                        "different a
 #define INFO_STANZA_STATUS_CODE_PG_MISMATCH                         5
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mismatch across repos");
 
+#define INFO_STANZA_STATUS_CODE_OTHER                               99
+STRING_STATIC(INFO_STANZA_STATUS_CODE_OTHER_STR,                    "other");
+
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
 
 /***********************************************************************************************************************************
@@ -106,6 +109,7 @@ typedef struct InfoRepoData
     unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
     InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
     InfoArchive *archiveInfo;                                       // Contents of the archive.info file of the stanza on this repo
+    StringList *errorList;
 } InfoRepoData;
 
 #define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
@@ -155,7 +159,7 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
-    ASSERT(code >= 0 && code <= 5);
+    ASSERT((code >= 0 && code <= 5) || code == 99);
     ASSERT(stanzaInfo != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR);
@@ -187,6 +191,10 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
         case INFO_STANZA_STATUS_CODE_PG_MISMATCH:
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR));
             break;
+
+        case INFO_STANZA_STATUS_CODE_OTHER:
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_OTHER_STR));
+            break;
     }
 
     // Construct a specific lock part
@@ -201,14 +209,15 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
 Set the error status code and message for the stanza on the repo to the code and message passed
 ***********************************************************************************************************************************/
 static void
-repoStanzaStatus(const int code, Variant *repoStanzaInfo)
+repoStanzaStatus(const int code, Variant *repoStanzaInfo, InfoRepoData *repoData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, code);
         FUNCTION_TEST_PARAM(VARIANT, repoStanzaInfo);
+        FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);
     FUNCTION_TEST_END();
 
-    ASSERT(code >= 0 && code <= 3);
+    ASSERT((code >= 0 && code <= 3) || code == 99);
     ASSERT(repoStanzaInfo != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(repoStanzaInfo), STANZA_KEY_STATUS_VAR);
@@ -231,6 +240,10 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo)
 
         case INFO_STANZA_STATUS_CODE_NO_BACKUP:
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
+            break;
+// CSHANG David mentioned strLstNewSplit with delimeter and also may need to deal with carriage returns in json?
+        case INFO_STANZA_STATUS_CODE_OTHER:
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(strLstJoin(repoData->errorList, "\n")));
             break;
     }
 
@@ -610,7 +623,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
-
+// CSHANG This loop will need a TRY block
             Variant *repoInfo = varNewKv(kvNew());
             kvPut(varKv(repoInfo), REPO_KEY_KEY_VAR, VARUINT(repoData->key));
             kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(repoData->cipher)));
@@ -684,7 +697,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
                 stanzaCipherType = stanzaCipherType != repoData->cipher ? INFO_STANZA_STATUS_CODE_MIXED : repoData->cipher;
 
             // Add the status of the stanza on the repo to the repo section, and the repo to the repo array
-            repoStanzaStatus(repoData->stanzaStatus, repoInfo);
+            repoStanzaStatus(repoData->stanzaStatus, repoInfo, repoData);
             varLstAdd(repoSection, repoInfo);
 
             // Add the database history, backup, archive and repo arrays to the stanza info
@@ -692,13 +705,13 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
             kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(archiveSection));
             kvPut(varKv(stanzaInfo), STANZA_KEY_REPO_VAR, varNewVarLst(repoSection));
         }
-
+// CSHANG No longer in the loop above, and the backupListAdd() (called through backupList() here) repo loop will need a TRY block
         // Get a sorted list of the data for all existing backups for this stanza over all repos
         backupList(backupSection, stanzaData, backupLabel, repoIdxMin, repoIdxMax);
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
 
         static bool backupLockHeld = false;
-
+// CSHANG checking the lock - if that fails, should we just trap it, not throw an error, just report the lock held as false maybe?
         // If the stanza is OK on at least one repo, then check if there's a local backup running
         if (checkBackupLock)
         {
@@ -1049,6 +1062,19 @@ formatTextDb(
     FUNCTION_TEST_RETURN_VOID();
 }
 
+static void
+infoStanzaErrorAdd(InfoRepoData *repoList, const ErrorType *type, const String *message)
+{
+    repoList->stanzaStatus = INFO_STANZA_STATUS_CODE_OTHER;
+    strLstAdd(repoList->errorList, strNewFmt("[%s] %s", errorTypeName(type), strZ(message)));
+
+    // Free the info objects for this stanza since we cannot process it
+    infoBackupFree(repoList->backupInfo);
+    infoArchiveFree(repoList->archiveInfo);
+    repoList->backupInfo = NULL;
+    repoList->archiveInfo = NULL;
+}
+
 /***********************************************************************************************************************************
 Get the backup and archive info files on the specified repo for the stanza
 ***********************************************************************************************************************************/
@@ -1065,51 +1091,56 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned in
     ASSERT(storage != NULL);
     ASSERT(stanzaRepo != NULL);
 
-    InfoBackup *info = NULL;
     volatile int stanzaStatus = INFO_STANZA_STATUS_CODE_OK;
 
-    // If the stanza exists, attempt to get the backup.info file
+    // If the stanza exists, attempt to get the info files
     if (stanzaExists)
     {
-
-        // Catch certain errors
         TRY_BEGIN()
         {
-            // Attempt to load the backup info file
-            info = infoBackupLoadFile(
-                storage, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaRepo->name), INFO_BACKUP_FILE),
-                stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+            // Catch certain errors
+            TRY_BEGIN()
+            {
+                // Attempt to load the backup info file
+                stanzaRepo->repoList[repoIdx].backupInfo = infoBackupLoadFile(
+                    storage, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaRepo->name), INFO_BACKUP_FILE),
+                    stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+            }
+            CATCH(FileMissingError)
+            {
+                // If there is no backup.info then set the status to indicate missing
+                stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA;
+            }
+            CATCH(CryptoError)
+            {
+                // If a reason for the error is due to a an encryption error, add a hint
+                THROW_FMT(
+                    CryptoError,
+                    "%s\n"
+                    "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
+                    errorMessage());
+            }
+            TRY_END();
+
+            // If backup.info was found, then get the archive.info file, which must exist if the backup.info exists, else the
+            // failed load will throw an error which will be trapped and recorded
+            if (stanzaRepo->repoList[repoIdx].backupInfo != NULL)
+            {
+                stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
+                    storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
+                    stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+            }
+
+            stanzaRepo->repoList[repoIdx].stanzaStatus = stanzaStatus;
         }
-        CATCH(FileMissingError)
+        CATCH_ANY()
         {
-            // If there is no backup.info then set the status to indicate missing
-            stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA;
-        }
-        CATCH(CryptoError)
-        {
-            // If a reason for the error is due to a an encryption error, add a hint
-            THROW_FMT(
-                CryptoError,
-                "%s\n"
-                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
-                errorMessage());
+            infoStanzaErrorAdd(&stanzaRepo->repoList[repoIdx], errorType(), STR(errorMessage()));
         }
         TRY_END();
-
-        // If backup.info was found, then get the archive.info file, which must exist if the backup.info exists, else throw error
-        if (info != NULL)
-        {
-            stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
-                storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
-                stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
-        }
-
-        stanzaRepo->repoList[repoIdx].stanzaStatus = stanzaStatus;
     }
     else
         stanzaRepo->repoList[repoIdx].stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH;
-
-    stanzaRepo->repoList[repoIdx].backupInfo = info;
 
     // If the backup.info and therefore archive.info exist, and the currentPg has not been set for the stanza, then set it
     if (stanzaRepo->currentPgVersion == 0 && stanzaRepo->repoList[repoIdx].backupInfo != NULL)
@@ -1163,9 +1194,17 @@ infoRender(void)
             repoIdxMin = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
             repoIdxMax = repoIdxMin;
         }
-
+/* CSHANG One problem. Since we decided the json was to be organized by stanza instead of repo, then if I can't get a list of
+stanzas from the repo - say a permission issue when I try a storageExistsP or storageListP(storageRepo, STORAGE_PATH_BACKUP_STR)
+- then I have no json structure in which to report that. Once I have the stanzas to work with, trapping and recording errors is
+doable, and even associating the "bad" repo to the stanza is likely possible, but when there is no ability to get a stanza
+list, then how to report the error without throwing it?
+*/
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
+            // // Catch any error and continue to next repo
+            // TRY_BEGIN()
+            // {
             // Get the repo storage in case it is remote and encryption settings need to be pulled down
             const Storage *storageRepo = storageRepoIdx(repoIdx);
 
@@ -1224,6 +1263,7 @@ infoRender(void)
                             .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
                             .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
                             .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
+                            .errorList = strLstNew(),
                         };
                     }
 
@@ -1232,6 +1272,14 @@ infoRender(void)
                     lstAdd(stanzaRepoList, &stanzaRepo);
                 }
             }
+        //     }
+        //     CATCH_ANY()
+        //     {
+        // CSHANG Since we are trapping all errors up to this point in the infoUpdateStanza() then here the only errors would be at
+        // the repo level, e.g. permission issue when trying to get a listing of the stanzas on the repo. So how will we ever report
+        // that if we don't have any stanzas?
+        //     }
+        //     TRY_END();
         }
 
         // If a backup label was requested but it was not found on any repo
