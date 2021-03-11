@@ -16,11 +16,11 @@ Archive Get Protocol Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_GET_STR,                     PROTOCOL_COMMAND_ARCHIVE_GET);
+STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_GET_FILE_STR,                PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
 
 /**********************************************************************************************************************************/
 void
-archiveGetProtocol(const VariantList *paramList, ProtocolServer *server)
+archiveGetFileProtocol(const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);

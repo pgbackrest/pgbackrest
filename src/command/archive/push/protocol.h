@@ -11,13 +11,13 @@ Archive Push Protocol Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_ARCHIVE_PUSH                               "archivePush"
-    STRING_DECLARE(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
+#define PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE                          "archivePushFile"
+    STRING_DECLARE(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE_STR);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void archivePushProtocol(const VariantList *paramList, ProtocolServer *server);
+void archivePushFileProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif

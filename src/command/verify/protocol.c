@@ -19,7 +19,7 @@ STRING_EXTERN(PROTOCOL_COMMAND_VERIFY_FILE_STR,                    PROTOCOL_COMM
 
 /**********************************************************************************************************************************/
 void
-verifyProtocol(const VariantList *paramList, ProtocolServer *server)
+verifyFileProtocol(const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);

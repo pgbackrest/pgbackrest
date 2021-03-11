@@ -19,7 +19,7 @@ STRING_EXTERN(PROTOCOL_COMMAND_RESTORE_FILE_STR,                    PROTOCOL_COM
 
 /**********************************************************************************************************************************/
 void
-restoreProtocol(const VariantList *paramList, ProtocolServer *server)
+restoreFileProtocol(const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);

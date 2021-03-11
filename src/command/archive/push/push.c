@@ -425,7 +425,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         const String *walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
         jobData->walFileIdx++;
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE_STR);
         protocolCommandParamAdd(command, VARSTR(strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile))));
         protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.pgVersion));
         protocolCommandParamAdd(command, VARUINT64(jobData->archiveInfo.pgSystemId));

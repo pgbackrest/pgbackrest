@@ -235,7 +235,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("Synchronous cmdArchivePush(), archivePushFile() and archivePushProtocol()"))
+    if (testBegin("Synchronous cmdArchivePush(), archivePushFile() and archivePushFileProtocol()"))
     {
         TEST_TITLE("command must be run on the pg host");
 
@@ -445,7 +445,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(cipherTypeNone));
         varLstAdd(paramList, NULL);
 
-        TEST_RESULT_VOID(archivePushProtocol(paramList, server), "protocol archive put");
+        TEST_RESULT_VOID(archivePushFileProtocol(paramList, server), "protocol archive put");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{\"out\":[[\"WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum"

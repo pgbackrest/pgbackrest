@@ -18,6 +18,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void verifyProtocol(const VariantList *paramList, ProtocolServer *server);
+void verifyFileProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif

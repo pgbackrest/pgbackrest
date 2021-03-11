@@ -22,12 +22,11 @@ Command handlers
 ***********************************************************************************************************************************/
 static const ProtocolServerHandler localHandler[] =
 {
-    // !!! PERHAPS MAKE NAMING OF CONSTANTS AND FUNCTIONS MORE CONSISTENT
-    {.command = PROTOCOL_COMMAND_ARCHIVE_GET, .handler = archiveGetProtocol},
-    {.command = PROTOCOL_COMMAND_ARCHIVE_PUSH, .handler = archivePushProtocol},
-    {.command = PROTOCOL_COMMAND_BACKUP_FILE, .handler = backupProtocol},
-    {.command = PROTOCOL_COMMAND_RESTORE_FILE, .handler = restoreProtocol},
-    {.command = PROTOCOL_COMMAND_VERIFY_FILE, .handler = verifyProtocol},
+    {.command = PROTOCOL_COMMAND_ARCHIVE_GET_FILE, .handler = archiveGetFileProtocol},
+    {.command = PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, .handler = archivePushFileProtocol},
+    {.command = PROTOCOL_COMMAND_BACKUP_FILE, .handler = backupFileProtocol},
+    {.command = PROTOCOL_COMMAND_RESTORE_FILE, .handler = restoreFileProtocol},
+    {.command = PROTOCOL_COMMAND_VERIFY_FILE, .handler = verifyFileProtocol},
 };
 
 /**********************************************************************************************************************************/

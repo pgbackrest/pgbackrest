@@ -1063,7 +1063,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));
         varLstAdd(paramList, varNewStrZ(TEST_CIPHER_PASS_ARCHIVE));
 
-        TEST_RESULT_VOID(archiveGetProtocol(paramList, server), "protocol archive get");
+        TEST_RESULT_VOID(archiveGetFileProtocol(paramList, server), "protocol archive get");
 
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,[]]}\n", "check result");
         TEST_STORAGE_LIST(

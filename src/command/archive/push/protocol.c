@@ -15,11 +15,11 @@ Archive Push Protocol Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR,                     PROTOCOL_COMMAND_ARCHIVE_PUSH);
+STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE_STR,               PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
 
 /**********************************************************************************************************************************/
 void
-archivePushProtocol(const VariantList *paramList, ProtocolServer *server)
+archivePushFileProtocol(const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);

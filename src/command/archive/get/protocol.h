@@ -11,13 +11,13 @@ Archive Get Protocol Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_ARCHIVE_GET                                "archiveGet"
-    STRING_DECLARE(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
+#define PROTOCOL_COMMAND_ARCHIVE_GET_FILE                           "archiveGetFile"
+    STRING_DECLARE(PROTOCOL_COMMAND_ARCHIVE_GET_FILE_STR);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void archiveGetProtocol(const VariantList *paramList, ProtocolServer *server);
+void archiveGetFileProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif

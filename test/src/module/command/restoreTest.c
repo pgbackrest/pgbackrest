@@ -350,7 +350,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, NULL);
 
-        TEST_RESULT_VOID(restoreProtocol(paramList, server), "protocol restore file");
+        TEST_RESULT_VOID(restoreFileProtocol(paramList, server), "protocol restore file");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
@@ -382,7 +382,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, NULL);
 
-        TEST_RESULT_VOID(restoreProtocol(paramList, server), "protocol restore file");
+        TEST_RESULT_VOID(restoreFileProtocol(paramList, server), "protocol restore file");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "    check result");
         bufUsedSet(serverWrite, 0);
     }

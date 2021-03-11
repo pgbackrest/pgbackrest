@@ -19,7 +19,7 @@ STRING_EXTERN(PROTOCOL_COMMAND_BACKUP_FILE_STR,                     PROTOCOL_COM
 
 /**********************************************************************************************************************************/
 void
-backupProtocol(const VariantList *paramList, ProtocolServer *server)
+backupFileProtocol(const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);

@@ -18,6 +18,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-void backupProtocol(const VariantList *paramList, ProtocolServer *server);
+void backupFileProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif
