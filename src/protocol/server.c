@@ -27,8 +27,6 @@ struct ProtocolServer
     const String *name;
     IoRead *read;
     IoWrite *write;
-
-    List *handlerList;
 };
 
 OBJECT_DEFINE_MOVE(PROTOCOL_SERVER);
@@ -61,7 +59,6 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             .name = strDup(name),
             .read = read,
             .write = write,
-            .handlerList = lstNewP(sizeof(ProtocolServerProcessHandler)),
         };
 
         // Send the protocol greeting
@@ -80,20 +77,6 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_LOG_RETURN(PROTOCOL_SERVER, this);
-}
-
-/**********************************************************************************************************************************/
-void
-protocolServerHandlerAdd(ProtocolServer *this, ProtocolServerProcessHandler handler)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_LOG_PARAM(FUNCTIONP, handler);
-    FUNCTION_LOG_END();
-
-    lstAdd(this->handlerList, &handler);
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -125,11 +108,15 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
 
 /**********************************************************************************************************************************/
 void
-protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
+protocolServerProcess(
+    ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *const handlerList,
+    const unsigned int handlerListSize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
         FUNCTION_LOG_PARAM(VARIANT_LIST, retryInterval);
+        FUNCTION_LOG_PARAM_P(VOID, handlerList);
+        FUNCTION_LOG_PARAM(UINT, handlerListSize);
     FUNCTION_LOG_END();
 
     // Loop until exit command is received
@@ -146,14 +133,21 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                 const String *command = varStr(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR)));
                 VariantList *paramList = varVarLst(kvGet(commandKv, VARSTR(PROTOCOL_KEY_PARAMETER_STR)));
 
-                // Process command
-                bool found = false;
+                // Find the handler
+                ProtocolServerCommandHandler handler = NULL;
 
-                for (unsigned int handlerIdx = 0; handlerIdx < lstSize(this->handlerList); handlerIdx++)
+                for (unsigned int handlerIdx = 0; handlerIdx < handlerListSize; handlerIdx++)
                 {
-                    // Get the next handler
-                    ProtocolServerProcessHandler handler = *(ProtocolServerProcessHandler *)lstGet(this->handlerList, handlerIdx);
+                    if (strEqZ(command, handlerList[handlerIdx].command))
+                    {
+                        handler = handlerList[handlerIdx].handler;
+                        break;
+                    }
+                }
 
+                // If handler was found then process
+                if (handler != NULL)
+                {
                     // Send the command to the handler.  Run the handler in the server's memory context in case any persistent data
                     // needs to be stored by the handler.
                     MEM_CONTEXT_BEGIN(this->memContext)
@@ -162,13 +156,14 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                         bool retry = false;
                         unsigned int retryRemaining = retryInterval != NULL ? varLstSize(retryInterval) : 0;
 
+                        // Find the handler
                         do
                         {
                             retry = false;
 
                             TRY_BEGIN()
                             {
-                                found = handler(command, paramList, this);
+                                handler(paramList, this);
                             }
                             CATCH_ANY()
                             {
@@ -204,13 +199,9 @@ protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval)
                         while (retry);
                     }
                     MEM_CONTEXT_END();
-
-                    // If the handler processed the command then exit the handler loop
-                    if (found)
-                        break;
                 }
-
-                if (!found)
+                // Else check built-in commands
+                else
                 {
                     if (strEq(command, PROTOCOL_COMMAND_NOOP_STR))
                         protocolServerResponse(this, NULL);

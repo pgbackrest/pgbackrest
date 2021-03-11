@@ -18,6 +18,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool restoreProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+void restoreProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif

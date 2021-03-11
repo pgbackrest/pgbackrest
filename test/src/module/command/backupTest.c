@@ -514,8 +514,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - skip");
+        TEST_RESULT_VOID(backupProtocol(paramList, server), "protocol backup file - skip");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[3,0,0,null,null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
@@ -606,8 +605,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - pageChecksum");
+        TEST_RESULT_VOID(backupProtocol(paramList, server), "protocol backup file - pageChecksum");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{\"out\":[1,12,12,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",{\"align\":false,\"valid\":false}]}\n",
@@ -649,8 +647,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));             // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - noop");
+        TEST_RESULT_VOID(backupProtocol(paramList, server), "protocol backup file - noop");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite), "{\"out\":[4,12,0,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
@@ -791,8 +788,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));            // delta
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - copy, compress");
+        TEST_RESULT_VOID(backupProtocol(paramList, server), "protocol backup file - copy, compress");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite), "{\"out\":[0,9,29,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
@@ -815,10 +811,6 @@ testRun(void)
             (storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/zerofile", strZ(backupLabel))) &&
                 result.pageChecksumResult == NULL),
             true, "    copy zero file to repo success");
-
-        // Check invalid protocol function
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(backupProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
     }
 
     // *****************************************************************************************************************************
@@ -910,8 +902,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));                // delta
         varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - recopy, encrypt");
+        TEST_RESULT_VOID(backupProtocol(paramList, server), "protocol backup file - recopy, encrypt");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite), "{\"out\":[2,9,32,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);

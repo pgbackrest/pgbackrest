@@ -16,9 +16,15 @@ typedef struct ProtocolServer ProtocolServer;
 #include "common/io/write.h"
 
 /***********************************************************************************************************************************
-Protocol process handler type
+Protocol command handler type and structure
 ***********************************************************************************************************************************/
-typedef bool (*ProtocolServerProcessHandler)(const String *command, const VariantList *paramList, ProtocolServer *server);
+typedef void (*ProtocolServerCommandHandler)(const VariantList *paramList, ProtocolServer *server);
+
+typedef struct ProtocolServerHandler
+{
+    const char *const command;
+    ProtocolServerCommandHandler handler;
+} ProtocolServerHandler;
 
 /***********************************************************************************************************************************
 Constructors
@@ -32,13 +38,12 @@ Functions
 void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
 
 // Process requests
-void protocolServerProcess(ProtocolServer *this, const VariantList *retryInterval);
+void protocolServerProcess(
+    ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *const handlerList,
+    const unsigned int handlerListSize);
 
 // Respond to request with output if provided
 void protocolServerResponse(ProtocolServer *this, const Variant *output);
-
-// Add a new handler
-void protocolServerHandlerAdd(ProtocolServer *this, ProtocolServerProcessHandler handler);
 
 // Move to a new parent mem context
 ProtocolServer *protocolServerMove(ProtocolServer *this, MemContext *parentNew);

@@ -18,6 +18,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool verifyProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+void verifyProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif

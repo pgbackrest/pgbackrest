@@ -18,6 +18,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool archiveGetProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+void archiveGetProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif

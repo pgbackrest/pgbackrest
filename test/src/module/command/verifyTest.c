@@ -927,11 +927,9 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(fileSize));
         varLstAdd(paramList, varNewStrZ("pass"));
 
-        TEST_RESULT_BOOL(verifyProtocol(PROTOCOL_COMMAND_VERIFY_FILE_STR, paramList, server), true, "protocol verify file");
+        TEST_RESULT_VOID(verifyProtocol(paramList, server), "protocol verify file");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
         bufUsedSet(serverWrite, 0);
-
-        TEST_RESULT_BOOL(verifyProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid protocol function");
     }
 
     // *****************************************************************************************************************************

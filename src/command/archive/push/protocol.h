@@ -18,6 +18,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool archivePushProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+void archivePushProtocol(const VariantList *paramList, ProtocolServer *server);
 
 #endif
