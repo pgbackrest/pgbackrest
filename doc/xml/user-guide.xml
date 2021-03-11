@@ -1839,7 +1839,7 @@
 
             <p>Stop the cluster and restore only the test2 database.  Built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</p>
 
-            <admonition type="note">Recovery may error unless <br-option>--type=immediate</br-option> is specified. This is because after consistency is reached <postgres/> will flag zeroed pages as errors even for a full-page write. For <postgres/> &amp;ge; <proper>13</proper> the <pg-option>ignore_invalid_pages</pg-option> setting may be used to ignore invalid pages. In this case it is important to check the logs after recovery to ensure that no invalid pages were reported in the selected databases.</admonition>
+            <admonition type="warning">Recovery may error unless <br-option>--type=immediate</br-option> is specified. This is because after consistency is reached <postgres/> will flag zeroed pages as errors even for a full-page write. For <postgres/> &amp;ge; <proper>13</proper> the <pg-option>ignore_invalid_pages</pg-option> setting may be used to ignore invalid pages. In this case it is important to check the logs after recovery to ensure that no invalid pages were reported in the selected databases.</admonition>
 
             <execute-list host="{[host-pg1]}">
                 <title>Restore from last backup including only the test2 database</title>
