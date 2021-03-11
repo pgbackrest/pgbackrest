@@ -1306,7 +1306,7 @@ testRun(void)
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include '" UTF8_DB_NAME "' does not exist");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16381, 16385)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("all databases selected");
@@ -1321,7 +1321,7 @@ testRun(void)
         TEST_RESULT_STR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: databases found for selective restore (1, 16381, 16384, 16385)\n"
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)\n"
             "P00   INFO: nothing to filter - all user databases have been selected");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1335,7 +1335,7 @@ testRun(void)
             restoreSelectiveExpression(manifest), DbInvalidError,
             "system databases (template0, postgres, etc.) are included by default");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16381, 16384, 16385)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on system database with non-systemId selected");
@@ -1348,7 +1348,7 @@ testRun(void)
             restoreSelectiveExpression(manifest), DbInvalidError,
             "system databases (template0, postgres, etc.) are included by default");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16381, 16384, 16385)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on system database with non-systemId selected, by name");
@@ -1361,7 +1361,7 @@ testRun(void)
             restoreSelectiveExpression(manifest), DbInvalidError,
             "system databases (template0, postgres, etc.) are included by default");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16381, 16384, 16385)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing database selected");
@@ -1372,7 +1372,7 @@ testRun(void)
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include '7777777' does not exist");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16381, 16384, 16385)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("select database by id");
@@ -1392,8 +1392,8 @@ testRun(void)
         TEST_RESULT_STR_Z(restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)", "check expression");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: databases found for selective restore (1, 16381, 16384, 16385, 32768)\n"
-            "P00 DETAIL: database 32768 will be zeroed");
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (32768)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one database selected without tablespace id");
@@ -1413,8 +1413,8 @@ testRun(void)
             restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/32768/)", "check expression");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: databases found for selective restore (1, 16381, 16384, 16385, 32768)\n"
-            "P00 DETAIL: database 32768 will be zeroed");
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (32768)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one database selected with tablespace id");
@@ -1438,9 +1438,8 @@ testRun(void)
             "check expression");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: databases found for selective restore (1, 16381, 16384, 16385, 32768, 65536)\n"
-            "P00 DETAIL: database 32768 will be zeroed\n"
-            "P00 DETAIL: database 65536 will be zeroed");
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (32768, 65536)");
     }
 
     // *****************************************************************************************************************************
@@ -2575,7 +2574,7 @@ testRun(void)
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
             "P00 DETAIL: databases found for selective restore (1, 16384, 32768)\n"
-            "P00 DETAIL: database 32768 will be zeroed\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (32768)\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/config' exists\n"
             "P00 DETAIL: check '{[path]}/wal' exists\n"

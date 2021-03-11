@@ -1300,15 +1300,39 @@ restoreSelectiveExpression(Manifest *manifest)
                     strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
             }
 
-            // Generate a list of databases in base or in a tablespace
+            // Generate a list of databases in base or in a tablespace and get all system db ids, even in case users would have 
+            // manually re-created it
+            StringList *systemDbIdList = strLstNew();
             StringList *dbList = strLstNew();
+
+            for (unsigned int systemDbIdx = 0; systemDbIdx < manifestDbTotal(manifest); systemDbIdx++)
+            {
+                const ManifestDb *systemDb = manifestDb(manifest, systemDbIdx);
+                if (strEqZ(systemDb->name, "template0") || strEqZ(systemDb->name, "template1") ||
+                    strEqZ(systemDb->name, "postgres") || systemDb->id < PG_USER_OBJECT_MIN_ID)
+                {
+                    // Build the system id list and add to the dbList for logging and checking
+                    const String *systemDbId = varStrForce(VARUINT(systemDb->id));
+                    strLstAdd(systemDbIdList, systemDbId);
+                    strLstAdd(dbList, systemDbId);
+                }
+            }
 
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
                 const ManifestFile *file = manifestFile(manifest, fileIdx);
 
                 if (regExpMatch(baseRegExp, file->name) || regExpMatch(tablespaceRegExp, file->name))
-                    strLstAddIfMissing(dbList, strBase(strPath(file->name)));
+                {
+                    String *dbId = strBase(strPath(file->name));
+
+                    // In the highly unlikely event that a system database was somehow added after the backup began, it will only be
+                    // found in the file list and not the manifest db section, so add it to the system database list
+                    if (cvtZToUInt64(strZ(dbId)) < PG_USER_OBJECT_MIN_ID)
+                        strLstAddIfMissing(systemDbIdList, dbId);
+
+                    strLstAddIfMissing(dbList, dbId);
+                }
             }
 
             strLstSort(dbList, sortOrderAsc);
@@ -1320,21 +1344,6 @@ restoreSelectiveExpression(Manifest *manifest)
             // Log databases found
             LOG_DETAIL_FMT("databases found for selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
-            // Get all system db ids, even in case users would have manually re-created it
-            StringList *systemDbIdList = strLstNew();
-
-            for (unsigned int systemDbIdx = 0; systemDbIdx < manifestDbTotal(manifest); systemDbIdx++)
-            {
-                const ManifestDb *systemDb = manifestDb(manifest, systemDbIdx);
-                if (strEqZ(systemDb->name, "template0") || strEqZ(systemDb->name, "template1") ||
-                    strEqZ(systemDb->name, "postgres") || systemDb->id < PG_USER_OBJECT_MIN_ID)
-                {
-                    const String *systemDbId = varStrForce(VARUINT(systemDb->id));
-                    strLstAdd(systemDbIdList, systemDbId);
-                    strLstRemove(dbList, systemDbId);
-                }
-            }
-
             // Remove included databases from the list
             const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
 
@@ -1343,41 +1352,42 @@ restoreSelectiveExpression(Manifest *manifest)
                 const String *includeDb = strLstGet(includeList, includeIdx);
 
                 // If the db to include is not in the list as an id then search by name
-                if (!strLstExists(dbList, includeDb) && !strLstExists(systemDbIdList, includeDb))
+                if (!strLstExists(dbList, includeDb))
                 {
                     const ManifestDb *db = manifestDbFindDefault(manifest, includeDb, NULL);
 
-                    if (db == NULL || (!strLstExists(dbList, varStrForce(VARUINT(db->id))) &&
-                        !strLstExists(systemDbIdList, varStrForce(VARUINT(db->id)))))
+                    if (db == NULL || (!strLstExists(dbList, varStrForce(VARUINT(db->id)))))
                         THROW_FMT(DbMissingError, "database to include '%s' does not exist", strZ(includeDb));
 
                     // Set the include db to the id if the name mapping was successful
                     includeDb = varStrForce(VARUINT(db->id));
                 }
 
-                // Error if the db is a system db. System databases should be in systemDbIdList when found in the manifest. 
-                // The PG_USER_OBJECT_MIN_ID check is a safe-guard.
-                if (cvtZToUInt64(strZ(includeDb)) < PG_USER_OBJECT_MIN_ID || strLstExists(systemDbIdList, includeDb))
+                // Error if the db is a system db
+                if (strLstExists(systemDbIdList, includeDb))
                     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
 
                 // Remove from list of DBs to zero
                 strLstRemove(dbList, includeDb);
             }
 
+            // Exclude the system databases from the list
+            strLstSort(systemDbIdList, sortOrderAsc);
+            dbList = strLstMergeAnti(dbList, systemDbIdList);
+
             // Build regular expression to identify files that will be zeroed
-            strLstSort(dbList, sortOrderAsc);
             String *expression = NULL;
 
-            for (unsigned int dbIdx = 0; dbIdx < strLstSize(dbList); dbIdx++)
+            if (!strLstEmpty(dbList))
             {
-                const String *db = strLstGet(dbList, dbIdx);
+                LOG_DETAIL_FMT("databases excluded (zeroed) from selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
-                // Only user created databases can be zeroed, never system databases
-                // System databases should be excluded from the dbList when found in the manifest. This check is a safe-guard.
-                if (cvtZToUInt64(strZ(db)) >= PG_USER_OBJECT_MIN_ID)
+                // Generate the expression from the list of databases to be zeroed. Only user created databases can be zeroed,
+                // never system databases.
+                for (unsigned int dbIdx = 0; dbIdx < strLstSize(dbList); dbIdx++)
                 {
-                    LOG_DETAIL_FMT("database %s will be zeroed", strZ(db));
-                    
+                    const String *db = strLstGet(dbList, dbIdx);
+
                     // Create expression string or append |
                     if (expression == NULL)
                         expression = strNew("");
