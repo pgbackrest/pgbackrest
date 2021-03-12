@@ -33,7 +33,12 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));
+        strLstAdd(argList, strNewFmt("--repo2-path=%s/repo2", testPath())); // CSHANG
         StringList *argListText = strLstDup(argList);
+
+        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/repo/backup/stanza1", testPath())); // CSHANG
+        harnessCfgLoad(cfgCmdInfo, argList); // CSHANG
+        TEST_RESULT_STR_Z(infoRender(), "[]", "json - repo but no stanzas"); // CSHANG
 
         strLstAddZ(argList, "--output=json");
         harnessCfgLoad(cfgCmdInfo, argList);
