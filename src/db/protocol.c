@@ -92,14 +92,14 @@ dbQueryProtocol(const VariantList *paramList, ProtocolServer *server)
         protocolServerResponse(
             server,
             varNewVarLst(
-                pgClientQuery(*(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0))),
+                pgClientQuery(
+                    *(PgClient **)lstGet(dbProtocolLocal.pgClientList, varUIntForce(varLstGet(paramList, 0))),
                     varStr(varLstGet(paramList, 1)))));
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
-
 
 /**********************************************************************************************************************************/
 void

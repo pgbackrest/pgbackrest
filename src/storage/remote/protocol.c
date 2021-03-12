@@ -45,6 +45,7 @@ Local variables
 static struct
 {
     MemContext *memContext;                                         // Mem context
+    void *driver;                                                   // Storage driver used for requests
     RegExp *blockRegExp;                                            // Regular expression to check block messages
 } storageRemoteProtocolLocal;
 
@@ -138,30 +139,6 @@ storageRemoteProtocolInfoListCallback(void *server, const StorageInfo *info)
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageRemoteProtocolData
-{
-    const Storage *storage;
-    StorageInterface interface;
-    void *driver;
-} StorageRemoteProtocolData;
-
-static StorageRemoteProtocolData
-storageRemoteProtocolData(void)
-{
-    FUNCTION_TEST_VOID();
-
-    StorageRemoteProtocolData result =
-    {
-        .storage = protocolStorageTypeEnum(cfgOptionStr(cfgOptRemoteType)) == protocolStorageTypeRepo ?
-            storageRepoWrite() : storagePgWrite(),
-    };
-
-    result.interface = storageInterface(result.storage);
-    result.driver = storageDriver(result.storage);
-
-    FUNCTION_TEST_RETURN(result);
-}
-
 void
 storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *server)
 {
@@ -172,13 +149,29 @@ storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *serve
 
     ASSERT(paramList == NULL);
     ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.memContext == NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageRemoteProtocolData data = storageRemoteProtocolData();
+        // Get storage based on remote type
+        const Storage *storage =
+            protocolStorageTypeEnum(cfgOptionStr(cfgOptRemoteType)) == protocolStorageTypeRepo ?
+                storageRepoWrite() : storagePgWrite();
 
-        protocolServerWriteLine(server, jsonFromStr(storagePathP(data.storage, NULL)));
-        protocolServerWriteLine(server, jsonFromUInt64(data.interface.feature));
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            MEM_CONTEXT_NEW_BEGIN("StorageRemoteLocal")
+            {
+                storageRemoteProtocolLocal.memContext = memContextCurrent();
+                storageRemoteProtocolLocal.driver = storageDriver(storage);
+            }
+            MEM_CONTEXT_NEW_END();
+        }
+        MEM_CONTEXT_END();
+
+
+        protocolServerWriteLine(server, jsonFromStr(storagePathP(storage, NULL)));
+        protocolServerWriteLine(server, jsonFromUInt64(storageInterface(storage).feature));
 
         protocolServerResponse(server, NULL);
     }
@@ -197,14 +190,13 @@ storageRemoteInfoProtocol(const VariantList *paramList, ProtocolServer *server)
 
     ASSERT(paramList != NULL);
     ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageRemoteProtocolData data = storageRemoteProtocolData();
-
         StorageInfo info = storageInterfaceInfoP(
-            data.driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
-            .followLink = varBool(varLstGet(paramList, 2)));
+            storageRemoteProtocolLocal.driver, varStr(varLstGet(paramList, 0)),
+            (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)), .followLink = varBool(varLstGet(paramList, 2)));
 
         protocolServerResponse(server, VARBOOL(info.exists));
 
@@ -229,14 +221,13 @@ storageRemoteInfoListProtocol(const VariantList *paramList, ProtocolServer *serv
 
     ASSERT(paramList != NULL);
     ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageRemoteProtocolData data = storageRemoteProtocolData();
-
         bool result = storageInterfaceInfoListP(
-            data.driver, varStr(varLstGet(paramList, 0)), (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)),
-            storageRemoteProtocolInfoListCallback, server);
+            storageRemoteProtocolLocal.driver, varStr(varLstGet(paramList, 0)),
+            (StorageInfoLevel)varUIntForce(varLstGet(paramList, 1)), storageRemoteProtocolInfoListCallback, server);
 
         protocolServerWriteLine(server, NULL);
         protocolServerResponse(server, VARBOOL(result));
@@ -256,15 +247,15 @@ storageRemoteOpenReadProtocol(const VariantList *paramList, ProtocolServer *serv
 
     ASSERT(paramList != NULL);
     ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageRemoteProtocolData data = storageRemoteProtocolData();
-
         // Create the read object
         IoRead *fileRead = storageReadIo(
             storageInterfaceNewReadP(
-                data.driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), .limit = varLstGet(paramList, 2)));
+                storageRemoteProtocolLocal.driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)),
+                .limit = varLstGet(paramList, 2)));
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioReadFilterGroup(fileRead), varLstGet(paramList, 3));
@@ -319,15 +310,15 @@ storageRemoteOpenWriteProtocol(const VariantList *paramList, ProtocolServer *ser
 
     ASSERT(paramList != NULL);
     ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageRemoteProtocolData data = storageRemoteProtocolData();
-
         // Create the write object
         IoWrite *fileWrite = storageWriteIo(
             storageInterfaceNewWriteP(
-                data.driver, varStr(varLstGet(paramList, 0)), .modeFile = (mode_t)varUIntForce(varLstGet(paramList, 1)),
+                storageRemoteProtocolLocal.driver, varStr(varLstGet(paramList, 0)),
+                .modeFile = (mode_t)varUIntForce(varLstGet(paramList, 1)),
                 .modePath = (mode_t)varUIntForce(varLstGet(paramList, 2)), .user = varStr(varLstGet(paramList, 3)),
                 .group = varStr(varLstGet(paramList, 4)), .timeModified = (time_t)varUInt64Force(varLstGet(paramList, 5)),
                 .createPath = varBool(varLstGet(paramList, 6)), .syncFile = varBool(varLstGet(paramList, 7)),
@@ -399,14 +390,13 @@ storageRemotePathCreateProtocol(const VariantList *paramList, ProtocolServer *se
 
     ASSERT(paramList != NULL);
     ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageRemoteProtocolData data = storageRemoteProtocolData();
-
         storageInterfacePathCreateP(
-            data.driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varBool(varLstGet(paramList, 2)),
-            (mode_t)varUIntForce(varLstGet(paramList, 3)));
+            storageRemoteProtocolLocal.driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)),
+            varBool(varLstGet(paramList, 2)), (mode_t)varUIntForce(varLstGet(paramList, 3)));
 
         protocolServerResponse(server, NULL);
     }
@@ -425,13 +415,15 @@ storageRemotePathRemoveProtocol(const VariantList *paramList, ProtocolServer *se
 
     ASSERT(paramList != NULL);
     ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageRemoteProtocolData data = storageRemoteProtocolData();
-
-        protocolServerResponse(server,
-            VARBOOL(storageInterfacePathRemoveP(data.driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)))));
+        protocolServerResponse(
+            server,
+            VARBOOL(
+                storageInterfacePathRemoveP(
+                    storageRemoteProtocolLocal.driver, varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)))));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -448,12 +440,11 @@ storageRemotePathSyncProtocol(const VariantList *paramList, ProtocolServer *serv
 
     ASSERT(paramList != NULL);
     ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageRemoteProtocolData data = storageRemoteProtocolData();
-
-        storageInterfacePathSyncP(data.driver, varStr(varLstGet(paramList, 0)));
+        storageInterfacePathSyncP(storageRemoteProtocolLocal.driver, varStr(varLstGet(paramList, 0)));
         protocolServerResponse(server, NULL);
     }
     MEM_CONTEXT_TEMP_END();
@@ -471,12 +462,12 @@ storageRemoteRemoveProtocol(const VariantList *paramList, ProtocolServer *server
 
     ASSERT(paramList != NULL);
     ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StorageRemoteProtocolData data = storageRemoteProtocolData();
-
-        storageInterfaceRemoveP(data.driver, varStr(varLstGet(paramList, 0)), .errorOnMissing = varBool(varLstGet(paramList, 1)));
+        storageInterfaceRemoveP(
+            storageRemoteProtocolLocal.driver, varStr(varLstGet(paramList, 0)), .errorOnMissing = varBool(varLstGet(paramList, 1)));
         protocolServerResponse(server, NULL);
     }
     MEM_CONTEXT_TEMP_END();
@@ -493,18 +484,14 @@ storageRemoteProtocolBlockSize(const String *message)
     FUNCTION_LOG_END();
 
     ASSERT(message != NULL);
+    ASSERT(storageRemoteProtocolLocal.memContext != NULL);
 
     // Create block regular expression if it has not been created yet
-    if (storageRemoteProtocolLocal.memContext == NULL)
+    if (storageRemoteProtocolLocal.blockRegExp == NULL)
     {
-        MEM_CONTEXT_BEGIN(memContextTop())
+        MEM_CONTEXT_BEGIN(storageRemoteProtocolLocal.memContext)
         {
-            MEM_CONTEXT_NEW_BEGIN("StorageRemoteFileReadLocal")
-            {
-                storageRemoteProtocolLocal.memContext = memContextCurrent();
-                storageRemoteProtocolLocal.blockRegExp = regExpNew(BLOCK_REG_EXP_STR);
-            }
-            MEM_CONTEXT_NEW_END();
+            storageRemoteProtocolLocal.blockRegExp = regExpNew(BLOCK_REG_EXP_STR);
         }
         MEM_CONTEXT_END();
     }

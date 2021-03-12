@@ -43,7 +43,7 @@ testRun(void)
                     {.command = PROTOCOL_COMMAND_CONFIG_OPTION, .handler = configOptionProtocol},
                 };
 
-                protocolServerProcess(server, NULL, localHandler, sizeof(localHandler) / sizeof(ProtocolServerHandler));
+                protocolServerProcess(server, NULL, localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler));
             }
             HARNESS_FORK_CHILD_END();
 

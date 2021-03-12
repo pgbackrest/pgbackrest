@@ -26,6 +26,8 @@ typedef struct ProtocolServerHandler
     ProtocolServerCommandHandler handler;
 } ProtocolServerHandler;
 
+#define PROTOCOL_SERVER_HANDLER_LIST_SIZE(list)                     (sizeof(list) / sizeof(ProtocolServerHandler))
+
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/

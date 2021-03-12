@@ -109,7 +109,7 @@ testRun(void)
                 };
 
                 TEST_RESULT_VOID(
-                    protocolServerProcess(server, NULL, localHandler, sizeof(localHandler) / sizeof(ProtocolServerHandler)),
+                    protocolServerProcess(server, NULL, localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler)),
                     "run process loop");
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
             }

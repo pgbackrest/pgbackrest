@@ -64,14 +64,29 @@ testRun(void)
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeatureCompress), true, "    check compress feature");
         TEST_RESULT_STR(storagePathP(storageRemote, NULL), strNewFmt("%s/repo", testPath()), "    check path");
 
-        // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly (pg)");
+
+        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
+
         TEST_RESULT_VOID(storageRemoteFeatureProtocol(NULL, server), "protocol feature");
         TEST_RESULT_STR(
             strNewBuf(serverWrite),
             strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
             "check result");
+        bufUsedSet(serverWrite, 0);
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check protocol function directly (repo)");
+
+        storageRemoteProtocolLocal.memContext = NULL;
+        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("repo"));
+
+        TEST_RESULT_VOID(storageRemoteFeatureProtocol(NULL, server), "protocol feature");
+        TEST_RESULT_STR(
+            strNewBuf(serverWrite),
+            strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
+            "check result");
         bufUsedSet(serverWrite, 0);
     }
 

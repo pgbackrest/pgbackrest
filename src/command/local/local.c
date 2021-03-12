@@ -44,7 +44,7 @@ cmdLocal(int fdRead, int fdWrite)
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);
-        protocolServerProcess(server, cfgCommandJobRetry(), localHandler, sizeof(localHandler) / sizeof(ProtocolServerHandler));
+        protocolServerProcess(server, cfgCommandJobRetry(), localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler));
     }
     MEM_CONTEXT_TEMP_END();
 

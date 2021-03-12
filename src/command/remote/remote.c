@@ -91,7 +91,7 @@ cmdRemote(int fdRead, int fdWrite)
 
         // If not successful we'll just exit
         if (success)
-            protocolServerProcess(server, NULL, localHandler, sizeof(localHandler) / sizeof(ProtocolServerHandler));
+            protocolServerProcess(server, NULL, localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler));
     }
     MEM_CONTEXT_TEMP_END();
 

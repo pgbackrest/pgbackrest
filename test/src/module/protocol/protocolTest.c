@@ -738,7 +738,7 @@ testRun(void)
                 };
 
                 TEST_RESULT_VOID(
-                    protocolServerProcess(server, NULL, localHandler, sizeof(localHandler) / sizeof(ProtocolServerHandler)),
+                    protocolServerProcess(server, NULL, localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler)),
                     "run process loop");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -751,8 +751,7 @@ testRun(void)
                 testServerProtocolErrorTotal = 2;
 
                 TEST_RESULT_VOID(
-                    protocolServerProcess(
-                        server, retryInterval, localHandler, sizeof(localHandler) / sizeof(ProtocolServerHandler)),
+                    protocolServerProcess(server, retryInterval, localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler)),
                     "run process loop");
 
                 // -----------------------------------------------------------------------------------------------------------------
