@@ -1,8 +1,6 @@
 /***********************************************************************************************************************************
 Test Backup Command
 ***********************************************************************************************************************************/
-#include <utime.h>
-
 #include "command/stanza/create.h"
 #include "command/stanza/upgrade.h"
 #include "common/crypto/hash.h"
@@ -2562,11 +2560,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Update pg_control timestamp
-            THROW_ON_SYS_ERROR(
-                utime(
-                    strZ(storagePathP(storagePg(), STRDEF("global/pg_control"))),
-                    &(struct utimbuf){.actime = backupTimeStart, .modtime = backupTimeStart}) != 0, FileWriteError,
-                "unable to set time");
+            HRN_STORAGE_TIME(storagePg(), "global/pg_control", backupTimeStart);
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C);
