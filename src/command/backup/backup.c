@@ -1436,6 +1436,7 @@ typedef struct BackupJobData
 {
     const String *const backupLabel;                                // Backup label (defines the backup path)
     const bool backupStandby;                                       // Backup from standby
+    const CipherType cipherType;                                    // Cipher type
     const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
     const CompressType compressType;                                // Backup compression type
     const int compressLevel;                                        // Compress level if backup is compressed
@@ -1493,6 +1494,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
                 protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
                 protocolCommandParamAdd(command, VARBOOL(jobData->delta));
+                protocolCommandParamAdd(command, VARUINT(jobData->cipherType));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
 
                 // Remove job from the queue
@@ -1583,6 +1585,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .backupStandby = backupStandby,
             .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
+            .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
