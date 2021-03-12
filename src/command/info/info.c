@@ -111,6 +111,7 @@ typedef struct InfoRepoData
     unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
     InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
     InfoArchive *archiveInfo;                                       // Contents of the archive.info file of the stanza on this repo
+    Manifest *manifest;                                             // Contents of manifest if backup requested and is on this repo
     StringList *errorList; // CSHANG This may only need to be a string
 } InfoRepoData;
 
@@ -148,6 +149,23 @@ typedef struct DbGroup
     DbGroup *
 #define FUNCTION_LOG_DB_GROUP_FORMAT(value, buffer, bufferSize)                                                                    \
     objToLog(value, "DbGroup", buffer, bufferSize)
+
+
+/***********************************************************************************************************************************
+Helper function for reporting errors
+***********************************************************************************************************************************/
+static void
+infoStanzaErrorAdd(InfoRepoData *repoList, const ErrorType *type, const String *message)
+{
+    repoList->stanzaStatus = INFO_STANZA_STATUS_CODE_OTHER;
+    strLstAdd(repoList->errorList, strNewFmt("[%s] %s", errorTypeName(type), strZ(message)));
+
+    // Free the info objects for this stanza since we cannot process it
+    infoBackupFree(repoList->backupInfo);
+    infoArchiveFree(repoList->archiveInfo);
+    repoList->backupInfo = NULL;
+    repoList->archiveInfo = NULL;
+}
 
 /***********************************************************************************************************************************
 Set the overall error status code and message for the stanza to the code and message passed
@@ -418,20 +436,15 @@ backupListAdd(
     kvAdd(timeInfo, KEY_START_VAR, VARUINT64((uint64_t)backupData->backupTimestampStart));
     kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64((uint64_t)backupData->backupTimestampStop));
 
-    // If a backup label was specified and this is that label, then get the manifest
+    // If a backup label was specified and this is that label, then get the data from the loaded manifest
     if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
     {
-        // Load the manifest file
-        Manifest *manifest = manifestLoadFile(
-            storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
-            repoData->cipher, infoPgCipherPass(infoBackupPg(repoData->backupInfo)));
-
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
 
-        for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(manifest); dbIdx++)
+        for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(repoData->manifest); dbIdx++)
         {
-            const ManifestDb *db = manifestDb(manifest, dbIdx);
+            const ManifestDb *db = manifestDb(repoData->manifest, dbIdx);
 
             // Do not display template databases
             if (db->id > db->lastSystemId)
@@ -451,9 +464,9 @@ backupListAdd(
         VariantList *linkSection = varLstNew();
         VariantList *tablespaceSection = varLstNew();
 
-        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(repoData->manifest); targetIdx++)
         {
-            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+            const ManifestTarget *target = manifestTarget(repoData->manifest, targetIdx);
             Variant *link = varNewKv(kvNew());
             Variant *tablespace = varNewKv(kvNew());
 
@@ -491,9 +504,9 @@ backupListAdd(
         // Get the list of files with an error in the page checksum
         VariantList *checksumPageErrorList = varLstNew();
 
-        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(repoData->manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
+            const ManifestFile *file = manifestFile(repoData->manifest, fileIdx);
 
             if (file->checksumPageError)
                 varLstAdd(checksumPageErrorList, varNewStr(manifestPathPg(file->name)));
@@ -503,7 +516,7 @@ backupListAdd(
             varKv(backupInfo), BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR,
             (!varLstEmpty(checksumPageErrorList) ? varNewVarLst(checksumPageErrorList) : NULL));
 
-        manifestFree(manifest);
+        manifestFree(repoData->manifest);
     }
 
     varLstAdd(backupSection, backupInfo);
@@ -625,7 +638,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
-// CSHANG This loop will need a TRY block
+
             Variant *repoInfo = varNewKv(kvNew());
             kvPut(varKv(repoInfo), REPO_KEY_KEY_VAR, VARUINT(repoData->key));
             kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(repoData->cipher)));
@@ -635,40 +648,48 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
             if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK && repoData->backupInfo == NULL)
                 repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH;
 
-            // If the backup.info file has been read, then get the backup and archive information on this repo
-            if (repoData->backupInfo != NULL)
+            TRY_BEGIN()
             {
-                // If the backup.info file exists, get the database history information (oldest to newest) and corresponding archive
-                for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(repoData->backupInfo)) - 1; (int)pgIdx >= 0; pgIdx--)
+                // If the backup.info file has been read, then get the backup and archive information on this repo
+                if (repoData->backupInfo != NULL)
                 {
-                    InfoPgData pgData = infoPgData(infoBackupPg(repoData->backupInfo), pgIdx);
-                    Variant *pgInfo = varNewKv(kvNew());
+                    // If the backup.info file exists, get the database history information (oldest to newest) and corresponding archive
+                    for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(repoData->backupInfo)) - 1; (int)pgIdx >= 0; pgIdx--)
+                    {
+                        InfoPgData pgData = infoPgData(infoBackupPg(repoData->backupInfo), pgIdx);
+                        Variant *pgInfo = varNewKv(kvNew());
 
-                    kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT(pgData.id));
-                    kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
-                    kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
-                    kvPut(varKv(pgInfo), KEY_REPO_KEY_VAR, VARUINT(repoData->key));
+                        kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT(pgData.id));
+                        kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
+                        kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
+                        kvPut(varKv(pgInfo), KEY_REPO_KEY_VAR, VARUINT(repoData->key));
 
-                    varLstAdd(dbSection, pgInfo);
+                        varLstAdd(dbSection, pgInfo);
 
-                    // Get the archive info for the DB from the archive.info file
-                    archiveDbList(
-                        stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false), repoIdx,
-                        repoData->key);
-                }
+                        // Get the archive info for the DB from the archive.info file
+                        archiveDbList(
+                            stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false), repoIdx,
+                            repoData->key);
+                    }
 
-                // Set stanza status if the current db sections do not match across repos
-                InfoPgData backupInfoCurrentPg = infoPgData(
-                    infoBackupPg(repoData->backupInfo), infoPgDataCurrentId(infoBackupPg(repoData->backupInfo)));
+                    // Set stanza status if the current db sections do not match across repos
+                    InfoPgData backupInfoCurrentPg = infoPgData(
+                        infoBackupPg(repoData->backupInfo), infoPgDataCurrentId(infoBackupPg(repoData->backupInfo)));
 
-                // The current PG system and version must match across repos for the stanza, if not, a failure may have occurred
-                // during an upgrade or the repo may have been disabled during the stanza upgrade to protect from error propagation
-                if (stanzaData->currentPgVersion != backupInfoCurrentPg.version ||
-                    stanzaData->currentPgSystemId != backupInfoCurrentPg.systemId)
-                {
-                    stanzaStatusCode = INFO_STANZA_STATUS_CODE_PG_MISMATCH;
+                    // The current PG system and version must match across repos for the stanza, if not, a failure may have occurred
+                    // during an upgrade or the repo may have been disabled during the stanza upgrade to protect from error propagation
+                    if (stanzaData->currentPgVersion != backupInfoCurrentPg.version ||
+                        stanzaData->currentPgSystemId != backupInfoCurrentPg.systemId)
+                    {
+                        stanzaStatusCode = INFO_STANZA_STATUS_CODE_PG_MISMATCH;
+                    }
                 }
             }
+            CATCH_ANY()
+            {
+                infoStanzaErrorAdd(repoData, errorType(), STR(errorMessage()));
+            }
+            TRY_END();
 
             // If the stanza has been created successfully on at least one repo, then check for a lock on the PG server
             if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK)
@@ -707,7 +728,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
             kvPut(varKv(stanzaInfo), KEY_ARCHIVE_VAR, varNewVarLst(archiveSection));
             kvPut(varKv(stanzaInfo), STANZA_KEY_REPO_VAR, varNewVarLst(repoSection));
         }
-// CSHANG No longer in the loop above, and the backupListAdd() (called through backupList() here) repo loop will need a TRY block
+
         // Get a sorted list of the data for all existing backups for this stanza over all repos
         backupList(backupSection, stanzaData, backupLabel, repoIdxMin, repoIdxMax);
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
@@ -1065,32 +1086,18 @@ formatTextDb(
 }
 
 /***********************************************************************************************************************************
-Helper function for reporting errors
-***********************************************************************************************************************************/
-static void
-infoStanzaErrorAdd(InfoRepoData *repoList, const ErrorType *type, const String *message)
-{
-    repoList->stanzaStatus = INFO_STANZA_STATUS_CODE_OTHER;
-    strLstAdd(repoList->errorList, strNewFmt("[%s] %s", errorTypeName(type), strZ(message)));
-
-    // Free the info objects for this stanza since we cannot process it
-    infoBackupFree(repoList->backupInfo);
-    infoArchiveFree(repoList->archiveInfo);
-    repoList->backupInfo = NULL;
-    repoList->archiveInfo = NULL;
-}
-
-/***********************************************************************************************************************************
 Get the backup and archive info files on the specified repo for the stanza
 ***********************************************************************************************************************************/
 static void
-infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned int repoIdx, bool stanzaExists)
+infoUpdateStanza(
+    const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned int repoIdx, bool stanzaExists, const String *backupLabel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, storage);
         FUNCTION_TEST_PARAM(INFO_STANZA_REPO, stanzaRepo);
         FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(BOOL, stanzaExists);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
 
     ASSERT(storage != NULL);
@@ -1134,6 +1141,16 @@ infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned in
                 stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
                     storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
                     stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+
+                // If a specific backup was requested and it exists on this repo, then try to load the manifest
+                if (backupLabel != NULL)
+                {
+printf("BACKUPLABEL %s, LOAD MANIFEST\n", strZ(backupLabel));fflush(stdout);
+                    stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
+                        storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
+                        stanzaRepo->repoList[repoIdx].cipher,
+                        infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
+                }
             }
 
             stanzaRepo->repoList[repoIdx].stanzaStatus = stanzaStatus;
@@ -1215,17 +1232,25 @@ infoRender(void)
                 .errorList = strLstNew(),
             };
 
+            // Initialize backup label indicator
+            const String *backupExistsOnRepo = NULL;
+
             // Catch any repo errors
             TRY_BEGIN()
             {
                 // Get the repo storage in case it is remote and encryption settings need to be pulled down
                 const Storage *storageRepo = storageRepoIdx(repoIdx);
-if (repoIdx == 1) THROW(AssertError, "code test with a carriage return\nso I can see what is happening\nespecially with a long error"); // CSHANG
+// if (repoIdx == 1) THROW(AssertError, "code test with a carriage return\nso I can see what is happening\nespecially with a long error"); // CSHANG
                 // If a backup set was specified, see if the manifest exists
                 if (backupLabel != NULL)
                 {
+                    // See if the backup exists on this repo, set the global indicator that we found it on at least one repo and
+                    // set the exists label for later loading of the manifest
                     if (storageExistsP(storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
+                    {
                         backupFound = true;
+                        backupExistsOnRepo = backupLabel;
+                    }
                 }
 
                 // Get a list of stanzas in the backup directory
@@ -1254,10 +1279,10 @@ if (repoIdx == 1) THROW(AssertError, "code test with a carriage return\nso I can
                     // Get the stanza if it is already in the list
                     InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
 
-                    // If the stanza was already added to the array, then update this repo for the stanza, else the stanza has not yet
-                    // been added to the list, so add it
+                    // If the stanza was already added to the array, then update this repo for the stanza, else the stanza has not
+                    // yet been added to the list, so add it
                     if (stanzaRepo != NULL)
-                        infoUpdateStanza(storageRepo, stanzaRepo, repoIdx, stanzaExists);
+                        infoUpdateStanza(storageRepo, stanzaRepo, repoIdx, stanzaExists, backupExistsOnRepo);
                     else
                     {
                         InfoStanzaRepo stanzaRepo =
@@ -1281,7 +1306,7 @@ if (repoIdx == 1) THROW(AssertError, "code test with a carriage return\nso I can
                         }
 
                         // Update the info for this repo
-                        infoUpdateStanza(storageRepo, &stanzaRepo, repoIdx, stanzaExists);
+                        infoUpdateStanza(storageRepo, &stanzaRepo, repoIdx, stanzaExists, backupExistsOnRepo);
                         lstAdd(stanzaRepoList, &stanzaRepo);
                     }
                 }
@@ -1297,7 +1322,7 @@ if (repoIdx == 1) THROW(AssertError, "code test with a carriage return\nso I can
             }
             TRY_END();
         }
-
+// CSHANG should we make this an error inside a stanza? But it may be that the stanza does not exist either but if it doesn't it still must have a stanzaRepo structure in the list. However, it is not a repo error, because the repo may be fine, but the backup simply doesn't exist on any repos. Maybe this needs to be a stanzaStatus code. Although, I guess it could be a repo error for every repo that the stanza exists on (if it exists)?
         // If a backup label was requested but it was not found on any repo
         if (backupLabel != NULL && !backupFound)
         {

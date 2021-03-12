@@ -34,9 +34,61 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));
         strLstAdd(argList, strNewFmt("--repo2-path=%s/repo2", testPath())); // CSHANG
+        // strLstAddZ(argList, "--set=20201116-200000F"); // CSHANG
+        strLstAddZ(argList, "--stanza=stanza3"); // CSHANG
         StringList *argListText = strLstDup(argList);
 
         storagePathCreateP(storageLocalWrite(), strNewFmt("%s/repo/backup/stanza1", testPath())); // CSHANG
+        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/repo/backup/stanza2", testPath())); // CSHANG
+        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/repo/backup/stanza1/20201116-200000F", testPath())); // CSHANG
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/20201116-200000F/backup.manifest", strZ(backupStanza1Path))),
+                BUFSTRDEF("bogus")),
+            "put backup manifest to file"); // CSHANG
+
+        String *testcontent = strNew
+        (
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=2\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666,"
+                "\"db-version\":\"9.3\"}\n"
+            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.4\"}\n"
+        ); // CSHANG
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
+                harnessInfoChecksum(testcontent)),
+            "put backup info to file"); // CSHANG
+
+        testcontent = strNew
+        (
+            "[db]\n"
+            "db-id=3\n"
+            "db-system-id=6569239123849665679\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6569239123849665666,\"db-version\":\"9.3\"}\n"
+            "3={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
+        );
+
+        TEST_RESULT_VOID(
+            storagePutP(
+                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
+                harnessInfoChecksum(testcontent)),
+            "put archive info to file");
+
+//--------------------TESTS ABOVE
         harnessCfgLoad(cfgCmdInfo, argList); // CSHANG
         TEST_RESULT_STR_Z(infoRender(), "[]", "json - repo but no stanzas"); // CSHANG
 
