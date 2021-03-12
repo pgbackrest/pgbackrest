@@ -156,7 +156,7 @@ protocolServerProcess(
                         bool retry = false;
                         unsigned int retryRemaining = retryInterval != NULL ? varLstSize(retryInterval) : 0;
 
-                        // Find the handler
+                        // Handler retry loop
                         do
                         {
                             retry = false;

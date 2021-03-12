@@ -172,6 +172,7 @@ storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *serve
             MEM_CONTEXT_PRIOR_END();
         }
 
+        // Return storage features
         protocolServerWriteLine(server, jsonFromStr(storagePathP(storage, NULL)));
         protocolServerWriteLine(server, jsonFromUInt64(storageInterface(storage).feature));
 
