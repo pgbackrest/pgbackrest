@@ -729,7 +729,7 @@ testRun(void)
                 TEST_RESULT_PTR(protocolServerIoRead(server), server->read, "get read io");
                 TEST_RESULT_PTR(protocolServerIoWrite(server), server->write, "get write io");
 
-                static const ProtocolServerHandler localHandler[] =
+                static const ProtocolServerHandler commandHandler[] =
                 {
                     {.command = "assert", .handler = testServerAssertProtocol},
                     {.command = "request-simple", .handler = testServerRequestSimpleProtocol},
@@ -738,7 +738,7 @@ testRun(void)
                 };
 
                 TEST_RESULT_VOID(
-                    protocolServerProcess(server, NULL, localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler)),
+                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
                     "run process loop");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -751,7 +751,7 @@ testRun(void)
                 testServerProtocolErrorTotal = 2;
 
                 TEST_RESULT_VOID(
-                    protocolServerProcess(server, retryInterval, localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler)),
+                    protocolServerProcess(server, retryInterval, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
                     "run process loop");
 
                 // -----------------------------------------------------------------------------------------------------------------

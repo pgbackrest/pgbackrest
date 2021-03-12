@@ -20,7 +20,7 @@ Local Command
 /***********************************************************************************************************************************
 Command handlers
 ***********************************************************************************************************************************/
-static const ProtocolServerHandler localHandler[] =
+static const ProtocolServerHandler commandLocalHandlerList[] =
 {
     {.command = PROTOCOL_COMMAND_ARCHIVE_GET_FILE, .handler = archiveGetFileProtocol},
     {.command = PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, .handler = archivePushFileProtocol},
@@ -44,7 +44,8 @@ cmdLocal(int fdRead, int fdWrite)
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);
-        protocolServerProcess(server, cfgCommandJobRetry(), localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler));
+        protocolServerProcess(
+            server, cfgCommandJobRetry(), commandLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandLocalHandlerList));
     }
     MEM_CONTEXT_TEMP_END();
 

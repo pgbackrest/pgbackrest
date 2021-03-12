@@ -149,7 +149,6 @@ storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *serve
 
     ASSERT(paramList == NULL);
     ASSERT(server != NULL);
-    ASSERT(storageRemoteProtocolLocal.memContext == NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -158,17 +157,20 @@ storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *serve
             protocolStorageTypeEnum(cfgOptionStr(cfgOptRemoteType)) == protocolStorageTypeRepo ?
                 storageRepoWrite() : storagePgWrite();
 
-        MEM_CONTEXT_BEGIN(memContextTop())
+        // Store local variables in the server context
+        if (storageRemoteProtocolLocal.driver == NULL)
         {
-            MEM_CONTEXT_NEW_BEGIN("StorageRemoteLocal")
+            MEM_CONTEXT_PRIOR_BEGIN()
             {
-                storageRemoteProtocolLocal.memContext = memContextCurrent();
-                storageRemoteProtocolLocal.driver = storageDriver(storage);
+                MEM_CONTEXT_NEW_BEGIN("StorageRemoteProtocol")
+                {
+                    storageRemoteProtocolLocal.memContext = memContextCurrent();
+                    storageRemoteProtocolLocal.driver = storageDriver(storage);
+                }
+                MEM_CONTEXT_NEW_END();
             }
-            MEM_CONTEXT_NEW_END();
+            MEM_CONTEXT_PRIOR_END();
         }
-        MEM_CONTEXT_END();
-
 
         protocolServerWriteLine(server, jsonFromStr(storagePathP(storage, NULL)));
         protocolServerWriteLine(server, jsonFromUInt64(storageInterface(storage).feature));
@@ -180,6 +182,7 @@ storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *serve
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 storageRemoteInfoProtocol(const VariantList *paramList, ProtocolServer *server)
 {
@@ -211,6 +214,7 @@ storageRemoteInfoProtocol(const VariantList *paramList, ProtocolServer *server)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 storageRemoteInfoListProtocol(const VariantList *paramList, ProtocolServer *server)
 {
@@ -237,6 +241,7 @@ storageRemoteInfoListProtocol(const VariantList *paramList, ProtocolServer *serv
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 storageRemoteOpenReadProtocol(const VariantList *paramList, ProtocolServer *server)
 {
@@ -300,6 +305,7 @@ storageRemoteOpenReadProtocol(const VariantList *paramList, ProtocolServer *serv
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 storageRemoteOpenWriteProtocol(const VariantList *paramList, ProtocolServer *server)
 {
@@ -380,6 +386,7 @@ storageRemoteOpenWriteProtocol(const VariantList *paramList, ProtocolServer *ser
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 storageRemotePathCreateProtocol(const VariantList *paramList, ProtocolServer *server)
 {
@@ -405,6 +412,7 @@ storageRemotePathCreateProtocol(const VariantList *paramList, ProtocolServer *se
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 storageRemotePathRemoveProtocol(const VariantList *paramList, ProtocolServer *server)
 {
@@ -430,6 +438,7 @@ storageRemotePathRemoveProtocol(const VariantList *paramList, ProtocolServer *se
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 storageRemotePathSyncProtocol(const VariantList *paramList, ProtocolServer *server)
 {
@@ -452,6 +461,7 @@ storageRemotePathSyncProtocol(const VariantList *paramList, ProtocolServer *serv
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
 void
 storageRemoteRemoveProtocol(const VariantList *paramList, ProtocolServer *server)
 {
@@ -484,11 +494,24 @@ storageRemoteProtocolBlockSize(const String *message)
     FUNCTION_LOG_END();
 
     ASSERT(message != NULL);
-    ASSERT(storageRemoteProtocolLocal.memContext != NULL);
 
     // Create block regular expression if it has not been created yet
     if (storageRemoteProtocolLocal.blockRegExp == NULL)
     {
+        // If the context is not already allocated it means this function is being used locally so allocate it
+        if (storageRemoteProtocolLocal.memContext == NULL)
+        {
+            MEM_CONTEXT_BEGIN(memContextTop())
+            {
+                MEM_CONTEXT_NEW_BEGIN("StorageRemoteProtocol")
+                {
+                    storageRemoteProtocolLocal.memContext = memContextCurrent();
+                }
+                MEM_CONTEXT_NEW_END();
+            }
+            MEM_CONTEXT_END();
+        }
+
         MEM_CONTEXT_BEGIN(storageRemoteProtocolLocal.memContext)
         {
             storageRemoteProtocolLocal.blockRegExp = regExpNew(BLOCK_REG_EXP_STR);

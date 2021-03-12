@@ -20,7 +20,7 @@ Remote Command
 /***********************************************************************************************************************************
 Command handlers
 ***********************************************************************************************************************************/
-static const ProtocolServerHandler localHandler[] =
+static const ProtocolServerHandler commandRemoteHandlerList[] =
 {
     {.command = PROTOCOL_COMMAND_DB_OPEN, .handler = dbOpenProtocol},
     {.command = PROTOCOL_COMMAND_DB_QUERY, .handler = dbQueryProtocol},
@@ -91,7 +91,10 @@ cmdRemote(int fdRead, int fdWrite)
 
         // If not successful we'll just exit
         if (success)
-            protocolServerProcess(server, NULL, localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler));
+        {
+            protocolServerProcess(
+                server, NULL, commandRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandRemoteHandlerList));
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

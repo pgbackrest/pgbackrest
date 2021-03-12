@@ -38,12 +38,12 @@ testRun(void)
 
                 ProtocolServer *server = protocolServerNew(strNew("test"), strNew("config"), read, write);
 
-                static const ProtocolServerHandler localHandler[] =
+                static const ProtocolServerHandler commandHandler[] =
                 {
                     {.command = PROTOCOL_COMMAND_CONFIG_OPTION, .handler = configOptionProtocol},
                 };
 
-                protocolServerProcess(server, NULL, localHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(localHandler));
+                protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
             }
             HARNESS_FORK_CHILD_END();
 

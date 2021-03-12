@@ -76,10 +76,17 @@ testRun(void)
             "check result");
         bufUsedSet(serverWrite, 0);
 
+        TEST_RESULT_VOID(storageRemoteFeatureProtocol(NULL, server), "protocol feature");
+        TEST_RESULT_STR(
+            strNewBuf(serverWrite),
+            strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
+            "check result cache");
+        bufUsedSet(serverWrite, 0);
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check protocol function directly (repo)");
 
-        storageRemoteProtocolLocal.memContext = NULL;
+        storageRemoteProtocolLocal.driver = NULL;
         cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("repo"));
 
         TEST_RESULT_VOID(storageRemoteFeatureProtocol(NULL, server), "protocol feature");
@@ -378,6 +385,9 @@ testRun(void)
         TEST_RESULT_BOOL(
             ((StorageReadRemote *)fileRead->driver)->protocolReadBytes < bufSize(contentBuf), true,
             "    check compressed read size");
+
+        storageRemoteProtocolLocal.blockRegExp = NULL;
+        storageRemoteProtocolLocal.memContext = NULL;
 
         TEST_ERROR(
             storageRemoteProtocolBlockSize(strNew("bogus")), ProtocolError, "'bogus' is not a valid block size message");
