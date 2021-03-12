@@ -2589,6 +2589,9 @@ testRun(void)
             "raised from local-1 protocol: unable to open missing file"
                 " '%s/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read",
             testPath());
+
+        // Free local processes that were not freed because of the error
+        protocolFree();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
