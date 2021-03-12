@@ -66,7 +66,7 @@ testRun(void)
 
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoteFeatureProtocol(varLstNew(), server), "protocol feature");
+        TEST_RESULT_VOID(storageRemoteFeatureProtocol(NULL, server), "protocol feature");
         TEST_RESULT_STR(
             strNewBuf(serverWrite),
             strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),

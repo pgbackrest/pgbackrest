@@ -170,7 +170,7 @@ storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *serve
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(paramList != NULL);
+    ASSERT(paramList == NULL);
     ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
