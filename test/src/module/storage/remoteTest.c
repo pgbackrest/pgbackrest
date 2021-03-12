@@ -1,8 +1,6 @@
 /***********************************************************************************************************************************
 Test Remote Storage
 ***********************************************************************************************************************************/
-#include <utime.h>
-
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
@@ -98,9 +96,7 @@ testRun(void)
         TEST_TITLE("path info");
 
         storagePathCreateP(storageTest, strNew("repo"));
-        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR(
-            utime(strZ(storagePathP(storageTest, strNew("repo"))), &utimeTest) != 0, FileWriteError, "unable to set time");
+        HRN_STORAGE_TIME(storageTest, "repo", 1555160000);
 
         StorageInfo info = {.exists = false};
         TEST_ASSIGN(info, storageInfoP(storageRemote, NULL), "valid path");
@@ -278,8 +274,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storageRemote, strNew("test"), .timeModified = 1555160001), BUFSTRDEF("TESTME"));
 
         // Path timestamp must be set after file is created since file creation updates it
-        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR(utime(strZ(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
+        HRN_STORAGE_TIME(storageRemote, NULL, 1555160000);
 
         TEST_RESULT_BOOL(
             storageInfoListP(storageRemote, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
@@ -298,8 +293,7 @@ testRun(void)
         storageRemoveP(storageRemote, STRDEF("test"), .errorOnMissing = true);
 
         // Path timestamp must be set after file is removed since file removal updates it
-        utimeTest = (struct utimbuf){.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR(utime(strZ(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
+        HRN_STORAGE_TIME(storageRemote, NULL, 1555160000);
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
