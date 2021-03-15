@@ -739,6 +739,8 @@
 
                         <text>This slightly paranoid option protects against corruption in the WAL segment archive by storing the WAL segments required for consistency directly in the backup.  WAL segments are still stored in the archive so this option will use additional space.
 
+                        It is best if the <cmd>archive-push</cmd> and <cmd>backup</cmd> commands have the same <setting>compress-type</setting> (e.g. <id>lz4</id>) when using this option. Otherwise, the WAL segments will need to be recompressed with the <setting>compress-type</setting> used by the backup, which can be fairly expensive depending on how much WAL was generated during the backup.
+
                         On restore, the WAL segments will be present in <path>pg_xlog/pg_wal</path> and <postgres/> will use them in preference to calling the <code>restore_command</code>.
 
                         The <br-option>archive-check</br-option> option must be enabled if <br-option>archive-copy</br-option> is enabled.</text>
@@ -933,7 +935,9 @@
                     <config-key id="db-include" name="Include Database">
                         <summary>Restore only specified databases.</summary>
 
-                        <text>This feature allows only selected databases to be restored.  Databases not specifically included will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery.  After recovery the databases that were not included will not be accessible but can be removed with the <id>drop database</id> command. <admonition type="note">built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</admonition>The <setting>{[dash]}-db-include</setting> option can be passed multiple times to specify more than one database to include.</text>
+                        <text>This feature allows only selected databases to be restored.  Databases not specifically included will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery.  After recovery the databases that were not included will not be accessible but can be removed with the <id>drop database</id> command. <admonition type="note">built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</admonition>The <setting>{[dash]}-db-include</setting> option can be passed multiple times to specify more than one database to include.
+
+                        See <link page="user-guide" section="/restore/option-db-include">Restore Selected Databases</link> for additional information and caveats.</text>
 
                         <example>db_main</example>
                     </config-key>
@@ -1804,7 +1808,7 @@
             <command id="stanza-create" name="Stanza Create">
                 <summary>Create the required stanza data.</summary>
 
-                <text>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured locally on the host, the stanza will be created on each.</text>
+                <text>The <cmd>stanza-create</cmd> command must be run after the stanza has been configured in <file>pgbackrest.conf</file>. If there is more than one repository configured, the stanza will be created on each.</text>
 
                 <option-list>
                     <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
@@ -1841,7 +1845,7 @@
             <command id="stanza-upgrade" name="Stanza Upgrade">
                 <summary>Upgrade a stanza.</summary>
 
-                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> run on the repository host. If there is more than one repository configured locally on the host, the stanza will be created on each. If the database is offline use the <br-option>--no-online</br-option> option.</text>
+                <text>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be created on each. If the database is offline use the <br-option>--no-online</br-option> option.</text>
 
                 <option-list>
                     <!-- ======================================================================================================= -->
@@ -1873,8 +1877,8 @@
                 To delete a stanza:
                 <ul>
                     <li>Shut down the <postgres/> cluster associated with the stanza (or use --force to override).</li>
-                    <li>Run the <cmd>stop</cmd> command on the repository host.</li>
-                    <li>Run the <cmd>stanza-delete</cmd> command on the repository host.</li>
+                    <li>Run the <cmd>stop</cmd> command on the host where the <cmd>stanza-delete</cmd> command will be run.</li>
+                    <li>Run the <cmd>stanza-delete</cmd> command.</li>
                 </ul>Once the command successfully completes, it is the responsibility of the user to remove the stanza from all <backrest/> configuration files and/or environment variables.
 
                 A stanza may only be deleted from one repository at a time. To delete the stanza from multiple repositories, repeat the <cmd>stanza-delete</cmd> command for each repository while specifying the <br-option>{[dash]}-repo</br-option> option.</text>
@@ -1893,7 +1897,7 @@
                 <command-example-list>
                     <command-example title="Delete a stanza">
                         <text><code-block title="">
-                            {[backrest-exe]} --stanza=db stanza-delete
+                            {[backrest-exe]} --stanza=db stanza-delete --repo=1
                         </code-block>
 
                         Delete the <id>db</id> stanza repository.</text>

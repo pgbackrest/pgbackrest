@@ -90,7 +90,7 @@ testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest 
     // Compare
     TEST_RESULT_STR_Z(callbackData.content, hrnReplaceKey(compare), "    compare result manifest");
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -136,7 +136,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_HARNESS_RESULT(MANIFEST, result);
+    FUNCTION_HARNESS_RETURN(MANIFEST, result);
 }
 
 /***********************************************************************************************************************************
@@ -2632,7 +2632,10 @@ testRun(void)
             "raised from local-1 protocol: unable to open missing file"
                 " '%s/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read",
             testPath());
+
+        // Free local processes that were not freed because of the error
+        protocolFree();
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

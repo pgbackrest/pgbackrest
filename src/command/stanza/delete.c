@@ -136,9 +136,6 @@ cmdStanzaDelete(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // Verify the repo is local before proceeding
-    repoIsLocalVerify();
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const Storage *storageRepoReadStanza = storageRepo();

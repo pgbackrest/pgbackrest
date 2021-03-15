@@ -5,6 +5,7 @@ Storage Test Harness
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <utime.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
@@ -309,4 +310,23 @@ hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer,
     strCatFmt(log, "'%s%s'", strZ(storagePathP(storage, STR(file))), strZ(compressExtStr(param.compressType)));
 
     return strZ(log);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageTime(const int line, const Storage *const storage, const char *const path, const time_t modified)
+{
+    hrnTestLogPrefix(line, true);
+    hrnTestResultBegin(__func__, line, false);
+
+    const char *const pathFull = strZ(storagePathP(storage, path == NULL ? NULL : STR(path)));
+
+    printf("time '%" PRId64 "' on '%s'\n", (int64_t)modified, pathFull);
+    fflush(stdout);
+
+    THROW_ON_SYS_ERROR_FMT(
+        utime(pathFull, &((struct utimbuf){.actime = modified, .modtime = modified})) == -1, FileInfoError,
+        "unable to set time for '%s'", pathFull);
+
+    hrnTestResultEnd();
 }

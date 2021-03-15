@@ -37,11 +37,6 @@ cmdStanzaCreate(void)
         if (cfgOptionBool(cfgOptForce))
             LOG_WARN("option --force is no longer supported");
 
-        // Verify all the repos are local (i.e. repo*-host is not set) - this is a simple way to confirm we are not executing
-        // stanza-create from a pg host as it will immediately error
-        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
-            repoIsLocalVerifyIdx(repoIdx);
-
         // Get the version and system information - validating it if the database is online
         PgControl pgControl = pgValidate();
 
@@ -117,9 +112,10 @@ cmdStanzaCreate(void)
                     sourceFile = archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
                     destinationFile = !archiveInfoFileExists ? INFO_ARCHIVE_PATH_FILE_STR : INFO_ARCHIVE_PATH_FILE_COPY_STR;
 
-                    storageCopyP(
-                        storageNewReadP(storageRepoReadStanza, sourceFile),
-                        storageNewWriteP(storageRepoWriteStanza, destinationFile));
+                    // Using get and put instead of copy in case the storage is remote
+                    storagePutP(
+                        storageNewWriteP(storageRepoWriteStanza, destinationFile),
+                        storageGetP(storageNewReadP(storageRepoReadStanza, sourceFile)));
                 }
 
                 if (!backupInfoFileExists || !backupInfoFileCopyExists)
@@ -127,9 +123,10 @@ cmdStanzaCreate(void)
                     sourceFile = backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
                     destinationFile = !backupInfoFileExists ? INFO_BACKUP_PATH_FILE_STR : INFO_BACKUP_PATH_FILE_COPY_STR;
 
-                    storageCopyP(
-                        storageNewReadP(storageRepoReadStanza, sourceFile),
-                        storageNewWriteP(storageRepoWriteStanza, destinationFile));
+                    // Using get and put instead of copy in case the storage is remote
+                    storagePutP(
+                        storageNewWriteP(storageRepoWriteStanza, destinationFile),
+                        storageGetP(storageNewReadP(storageRepoReadStanza, sourceFile)));
                 }
 
                 // If no files copied, then the stanza was already valid

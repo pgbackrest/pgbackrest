@@ -29,5 +29,5 @@ testRun(void)
         TEST_RESULT_STR_Z(jsonFromKv(statToKv()), "{\"http.session\":{\"total\":1},\"tls.client\":{\"total\":2}}", "stat output");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

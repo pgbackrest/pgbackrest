@@ -571,5 +571,5 @@ testRun(void)
             "HINT: did an error occur during stanza-upgrade?");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -112,7 +112,7 @@ sub run
         $oHostDbPrimary->clusterCreate();
 
         # Create the stanza
-        $oHostBackup->stanzaCreate('main create stanza info files');
+        $oHostDbPrimary->stanzaCreate('main create stanza info files');
 
         # Get passphrase to access the Manifest file from backup.info - returns undefined if repo not encrypted
         my $strCipherPass =

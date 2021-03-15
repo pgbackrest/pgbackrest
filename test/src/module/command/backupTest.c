@@ -1,8 +1,6 @@
 /***********************************************************************************************************************************
 Test Backup Command
 ***********************************************************************************************************************************/
-#include <utime.h>
-
 #include "command/stanza/create.h"
 #include "command/stanza/upgrade.h"
 #include "common/crypto/hash.h"
@@ -15,6 +13,7 @@ Test Backup Command
 
 #include "common/harnessConfig.h"
 #include "common/harnessPq.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string
@@ -225,7 +224,7 @@ testBackupValidate(const Storage *storage, const String *path)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RESULT(STRING, result);
+    FUNCTION_HARNESS_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -243,7 +242,7 @@ typedef struct TestBackupPqScriptParam
     unsigned int timeline;                                          // Timeline to use for WAL files
 } TestBackupPqScriptParam;
 
-#define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                                           \
+#define testBackupPqScriptP(pgVersion, backupStartTime, ...)                                                                       \
     testBackupPqScript(pgVersion, backupStartTime, (TestBackupPqScriptParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
@@ -511,6 +510,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(0));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
+        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_BOOL(
@@ -603,6 +603,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
+        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_BOOL(
@@ -646,6 +647,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(true));             // delta
+        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_BOOL(
@@ -788,6 +790,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
+        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_BOOL(
@@ -907,6 +910,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
         varLstAdd(paramList, varNewBool(false));                // delta
+        varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));  // cipherType
         varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
 
         TEST_RESULT_BOOL(
@@ -1946,6 +1950,7 @@ testRun(void)
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D95D3000000000, lsn = 5d95d30/800000\n"
                 "P00   INFO: check archive for segment(s) 0000000105D95D3000000000:0000000105D95D3000000000\n"
+                "P00 DETAIL: copy segment 0000000105D95D3000000000 to backup\n"
                 "P00   INFO: new backup label = 20191003-105320F");
 
             TEST_RESULT_STR_Z_KEYRPL(
@@ -2432,6 +2437,9 @@ testRun(void)
                 "P00   INFO: backup stop archive = 0000000105DB5DE000000002, lsn = 5db5de0/280000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000002\n"
+                "P00 DETAIL: copy segment 0000000105DB5DE000000000 to backup\n"
+                "P00 DETAIL: copy segment 0000000105DB5DE000000001 to backup\n"
+                "P00 DETAIL: copy segment 0000000105DB5DE000000002 to backup\n"
                 "P00   INFO: new backup label = 20191027-181320F");
 
             TEST_RESULT_STR_KEYRPL(
@@ -2505,7 +2513,9 @@ testRun(void)
                 "compare file list");
 
             // Remove test files
-            storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);
+            TEST_STORAGE_REMOVE(storagePgWrite(), "base/1/2");
+            TEST_STORAGE_REMOVE(storagePgWrite(), "base/1/3");
+            TEST_STORAGE_REMOVE(storagePgWrite(), "base/1/4");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2564,11 +2574,7 @@ testRun(void)
             harnessCfgLoad(cfgCmdBackup, argList);
 
             // Update pg_control timestamp
-            THROW_ON_SYS_ERROR(
-                utime(
-                    strZ(storagePathP(storagePg(), STRDEF("global/pg_control"))),
-                    &(struct utimbuf){.actime = backupTimeStart, .modtime = backupTimeStart}) != 0, FileWriteError,
-                "unable to set time");
+            HRN_STORAGE_TIME(storagePg(), "global/pg_control", backupTimeStart);
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C);
@@ -2581,9 +2587,11 @@ testRun(void)
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
                 "            HINT: this is normal after restoring from backup or promoting a standby.\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup {[path]}/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191027-181320F\n"
+                "P00 DETAIL: hardlink pg_data/base/1/1 to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/global/pg_control to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
@@ -2601,6 +2609,8 @@ testRun(void)
                 "pg_data/PG_VERSION.gz {file, s=2}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/base {path}\n"
+                "pg_data/base/1 {path}\n"
+                "pg_data/base/1/1.gz {file, s=8192}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control.gz {file, s=8192}\n"
                 "pg_data/pg_tblspc {path}\n"
@@ -2623,6 +2633,8 @@ testRun(void)
                     ",\"size\":2,\"timestamp\":1572200000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1572400002}\n"
+                "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
+                    ",\"master\":false,\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572200000}\n"
                 "pg_data/global/pg_control={\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
                     ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
@@ -2635,6 +2647,7 @@ testRun(void)
                 "[target:path]\n"
                 "pg_data={}\n"
                 "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
                 "pg_data/global={}\n"
                 "pg_data/pg_tblspc={}\n"
                 "pg_data/pg_wal={}\n"
@@ -2643,11 +2656,8 @@ testRun(void)
                 "pg_tblspc/32768/PG_11_201809051={}\n"
                 "pg_tblspc/32768/PG_11_201809051/1={}\n",
                 "compare file list");
-
-            // Remove test files
-            storagePathRemoveP(storagePgWrite(), STRDEF("base/1"), .recurse = true);
         }
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

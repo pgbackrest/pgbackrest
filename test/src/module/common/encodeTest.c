@@ -139,5 +139,5 @@ testRun(void)
         TEST_ERROR(decodeToBin(encodeBase64Url, "c3", destinationDecode), AssertError, "unsupported");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

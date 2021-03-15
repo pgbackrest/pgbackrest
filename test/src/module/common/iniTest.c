@@ -198,5 +198,5 @@ testRun(void)
         TEST_RESULT_STR_Z(iniGet(ini, strNew("db"), strNew("pg1-path")), "/path/to/pg", "get pg1-path");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

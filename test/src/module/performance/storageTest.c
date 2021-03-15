@@ -383,5 +383,5 @@ testRun(void)
 #endif // HAVE_LIBLZ4
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -24,7 +24,7 @@ testLogOpen(const char *logFile, int flags, int mode)
 
     THROW_ON_SYS_ERROR_FMT(result == -1, FileOpenError, "unable to open log file '%s'", logFile);
 
-    FUNCTION_HARNESS_RESULT(INT, result);
+    FUNCTION_HARNESS_RETURN(INT, result);
 }
 
 /***********************************************************************************************************************************
@@ -64,7 +64,7 @@ testLogLoad(const char *logFile, char *buffer, size_t bufferSize)
     // Remove final linefeed
     buffer[totalBytes - 1] = 0;
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -88,7 +88,7 @@ testLogResult(const char *logFile, const char *expected)
         THROW_FMT(                                                                              // {+uncovered}
             AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, actual);
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -308,5 +308,5 @@ testRun(void)
             "P99   INFO: [DRY-RUN] info message 2");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

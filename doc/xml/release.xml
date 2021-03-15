@@ -27,6 +27,17 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="christian.roux"/>
+                            <release-item-ideator id="efremov.egor"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix memory leak in backup during archive copy.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-ideator id="bsiara"/>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
@@ -38,6 +49,18 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Enhance expire command multi-repo support."/>
+                        <commit subject="Expire continues if an error occurs processing a repository."/>
+                        <commit subject="Add archive-get command multi-repo support."/>
+                        <commit subject="Enhance restore command multi-repo support."/>
+                        <commit subject="Refactor info command repoMin/Max."/>
+                        <commit subject="Remove restore default repo from integration tests."/>
+                        <commit subject="Make --repo optional for backup command."/>
+                        <commit subject="Refactor archive-push command warnings to work like archive-get."/>
+                        <commit subject="Add write fault-tolerance to archive-push command."/>
+                        <commit subject="Make --repo optional for remaining commands except stanza-delete."/>
+                        <commit subject="Allow stanza-* commands to be run remotely."/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                             <release-item-contributor id="david.steele"/>
@@ -74,29 +97,19 @@
 
                         <p>Allow custom <setting>config-path</setting> default with <id>./configure --with-configdir</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Log archive copy during <cmd>backup</cmd>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
-                    <release-item>
-                        <commit subject="Enhance expire command multi-repo support."/>
-                        <commit subject="Expire continues if an error occurs processing a repository."/>
-                        <commit subject="Add archive-get command multi-repo support."/>
-                        <commit subject="Enhance restore command multi-repo support."/>
-                        <commit subject="Refactor info command repoMin/Max."/>
-                        <commit subject="Remove restore default repo from integration tests."/>
-                        <commit subject="Make --repo optional for backup command."/>
-                        <commit subject="Refactor archive-push command warnings to work like archive-get."/>
-                        <commit subject="Add write fault-tolerance to archive-push command."/>
-                        <commit subject="Make --repo optional for remaining commands except stanza-delete."/>
-
-                        <release-item-contributor-list>
-                            <release-item-contributor id="cynthia.shang"/>
-                            <release-item-contributor id="david.steele"/>
-                        </release-item-contributor-list>
-
-                        <p>Partial multi-repository implementation.</p>
-                    </release-item>
-
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
@@ -106,6 +119,30 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Update selective restore documentation with caveats.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <setting>compress-type</setting> clarification to <setting>archive-copy</setting> documentation.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2021-02-08" version="2.32" title="Repository Commands">
@@ -9273,6 +9310,11 @@
         <contributor id="douglas.j.hunley">
             <contributor-name-display>Douglas J Hunley</contributor-name-display>
             <contributor-id type="github">hunleyd</contributor-id>
+        </contributor>
+
+        <contributor id="efremov.egor">
+            <contributor-name-display>Efremov Egor</contributor-name-display>
+            <contributor-id type="github">kolbasky</contributor-id>
         </contributor>
 
         <contributor id="ejberdecia">

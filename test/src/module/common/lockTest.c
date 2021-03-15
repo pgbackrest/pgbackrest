@@ -212,5 +212,5 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file still exists");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }
