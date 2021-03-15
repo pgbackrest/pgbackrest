@@ -1300,14 +1300,15 @@ restoreSelectiveExpression(Manifest *manifest)
                     strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
             }
 
-            // Generate a list of databases in base or in a tablespace and get all system db ids, even in case users would have 
-            // manually re-created it
+            // Generate a list of databases in base or in a tablespace and get all standard system databases, even in cases where
+            // users have recreated them
             StringList *systemDbIdList = strLstNew();
             StringList *dbList = strLstNew();
 
             for (unsigned int systemDbIdx = 0; systemDbIdx < manifestDbTotal(manifest); systemDbIdx++)
             {
                 const ManifestDb *systemDb = manifestDb(manifest, systemDbIdx);
+
                 if (strEqZ(systemDb->name, "template0") || strEqZ(systemDb->name, "template1") ||
                     strEqZ(systemDb->name, "postgres") || systemDb->id < PG_USER_OBJECT_MIN_ID)
                 {
@@ -1356,7 +1357,7 @@ restoreSelectiveExpression(Manifest *manifest)
                 {
                     const ManifestDb *db = manifestDbFindDefault(manifest, includeDb, NULL);
 
-                    if (db == NULL || (!strLstExists(dbList, varStrForce(VARUINT(db->id)))))
+                    if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
                         THROW_FMT(DbMissingError, "database to include '%s' does not exist", strZ(includeDb));
 
                     // Set the include db to the id if the name mapping was successful
@@ -1382,8 +1383,8 @@ restoreSelectiveExpression(Manifest *manifest)
             {
                 LOG_DETAIL_FMT("databases excluded (zeroed) from selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
-                // Generate the expression from the list of databases to be zeroed. Only user created databases can be zeroed,
-                // never system databases.
+                // Generate the expression from the list of databases to be zeroed. Only user created databases can be zeroed, never
+                // system databases.
                 for (unsigned int dbIdx = 0; dbIdx < strLstSize(dbList); dbIdx++)
                 {
                     const String *db = strLstGet(dbList, dbIdx);
