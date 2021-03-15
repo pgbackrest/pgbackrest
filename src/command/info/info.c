@@ -126,6 +126,8 @@ typedef struct InfoStanzaRepo
     const String *name;                                             // Name of the stanza
     uint64_t currentPgSystemId;                                     // Current postgres system id for the stanza
     unsigned int currentPgVersion;                                  // Current postgres version for the stanza
+    bool backupLockChecked;                                         // Has the check for a backup lock already been performed?
+    bool backupLockHeld;                                            // Is backup lock held on the system where info command is run?
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
 
@@ -369,14 +371,13 @@ Add the backup data to the backup section
 ***********************************************************************************************************************************/
 static void
 backupListAdd(
-    VariantList *backupSection, InfoBackupData *backupData, const String *backupLabel, InfoRepoData *repoData, unsigned int repoIdx)
+    VariantList *backupSection, InfoBackupData *backupData, const String *backupLabel, InfoRepoData *repoData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);           // The section to add the backup data to
         FUNCTION_TEST_PARAM_P(INFO_BACKUP_DATA, backupData);        // The data for the backup
         FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup label to filter if requested by the user
         FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);              // The repo data where this backup is located
-        FUNCTION_TEST_PARAM(UINT, repoIdx);                         // Internal index for the repo
     FUNCTION_TEST_END();
 
     ASSERT(backupSection != NULL);
@@ -517,6 +518,7 @@ backupListAdd(
             (!varLstEmpty(checksumPageErrorList) ? varNewVarLst(checksumPageErrorList) : NULL));
 
         manifestFree(repoData->manifest);
+        repoData->manifest = NULL;
     }
 
     varLstAdd(backupSection, backupInfo);
@@ -587,7 +589,7 @@ backupList(
         repoData->backupIdx++;
 
         // Add the backup data to the backup section
-        backupListAdd(backupSection, &backupData, backupLabel, repoData, backupNextRepoIdx);
+        backupListAdd(backupSection, &backupData, backupLabel, repoData);
 
         backupTotalProcessed++;
     }
@@ -629,7 +631,6 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 
         int stanzaStatusCode = -1;
         unsigned int stanzaCipherType = 0;
-        bool checkBackupLock = false;
 
         // Set the stanza name and initialize the overall stanza variables
         kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
@@ -691,15 +692,9 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
             }
             TRY_END();
 
-            // If the stanza has been created successfully on at least one repo, then check for a lock on the PG server
-            if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK)
-            {
-                checkBackupLock = true;
-
-                // If there are no current backups on this repo then set status to no backup
-                if (infoBackupDataTotal(repoData->backupInfo) == 0)
-                    repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_NO_BACKUP;
-            }
+            // If there are no current backups on this repo then set status to no backup
+            if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK && infoBackupDataTotal(repoData->backupInfo) == 0)
+                repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_NO_BACKUP;
 
             // Track the status over all repos if the status for the stanza has not already been determined
             if (stanzaStatusCode != INFO_STANZA_STATUS_CODE_PG_MISMATCH)
@@ -733,21 +728,8 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         backupList(backupSection, stanzaData, backupLabel, repoIdxMin, repoIdxMax);
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
 
-        static bool backupLockHeld = false;
-// CSHANG checking the lock - if that fails, should we just trap it, not throw an error, just report the lock held as false maybe?
-        // If the stanza is OK on at least one repo, then check if there's a local backup running
-        if (checkBackupLock)
-        {
-            // Try to acquire a lock. If not possible, assume another backup or expire is already running.
-            backupLockHeld = !lockAcquire(
-                cfgOptionStr(cfgOptLockPath), stanzaData->name, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
-
-            // Immediately release the lock acquired
-            lockRelease(!backupLockHeld);
-        }
-
         // Set the overall stanza status
-        stanzaStatus(stanzaStatusCode, backupLockHeld, stanzaInfo);
+        stanzaStatus(stanzaStatusCode, stanzaData->backupLockHeld, stanzaInfo);
 
         // Set the overall cipher type
         if (stanzaCipherType != INFO_STANZA_STATUS_CODE_MIXED)
@@ -1145,11 +1127,22 @@ infoUpdateStanza(
                 // If a specific backup was requested and it exists on this repo, then try to load the manifest
                 if (backupLabel != NULL)
                 {
-printf("BACKUPLABEL %s, LOAD MANIFEST\n", strZ(backupLabel));fflush(stdout);
                     stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
                         storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
                         stanzaRepo->repoList[repoIdx].cipher,
                         infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
+                }
+
+                // If a backup-lock check has not already been performed, then do so
+                if (!stanzaRepo->backupLockChecked)
+                {
+                    // Try to acquire a lock. If not possible, assume another backup or expire is already running.
+                    stanzaRepo->backupLockHeld = !lockAcquire(
+                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
+
+                    // Immediately release the lock acquired
+                    lockRelease(!stanzaRepo->backupLockHeld);
+                    stanzaRepo->backupLockChecked = true;
                 }
             }
 
@@ -1322,18 +1315,12 @@ infoRender(void)
             }
             TRY_END();
         }
-// CSHANG should we make this an error inside a stanza? But it may be that the stanza does not exist either but if it doesn't it still must have a stanzaRepo structure in the list. However, it is not a repo error, because the repo may be fine, but the backup simply doesn't exist on any repos. Maybe this needs to be a stanzaStatus code. Although, I guess it could be a repo error for every repo that the stanza exists on (if it exists)?
-        // If a backup label was requested but it was not found on any repo
-        if (backupLabel != NULL && !backupFound)
-        {
-            THROW_FMT(
-                FileMissingError, "manifest does not exist for backup '%s'\n"
-                "HINT: is the backup listed when running the info command with --stanza option only?", strZ(backupLabel));
-        }
+
 
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 
+        // Record any repository-level errors with each stanza - if there are no stanzas then create an "invalid" one for reporting
         if (repoError)
         {
             if (lstEmpty(stanzaRepoList))
@@ -1341,7 +1328,7 @@ infoRender(void)
                 InfoStanzaRepo stanzaRepo =
                 {
                     .name = INFO_STANZA_INVALID_STR,
-                    .currentPgVersion = 0,  // CSHANG This may be a problem as we do not know what the version & systemId are since we don't have the backup.info file
+                    .currentPgVersion = 0,
                     .currentPgSystemId = 0,
                     .repoList = repoErrorList,
                 };
@@ -1360,6 +1347,24 @@ infoRender(void)
                         if (!strLstEmpty(repoErrorList[repoIdx].errorList))
                             stanzaData->repoList[repoIdx] = repoErrorList[repoIdx];
                     }
+                }
+            }
+        }
+
+        // If a backup label was requested but it was not found on any repo
+        if (backupLabel != NULL && !backupFound)
+        {
+            // Get the stanza record and update each repo where there is not already an error status to indicate backup not found
+            InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanza);
+
+            for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
+            {
+                if (stanzaRepo->repoList[repoIdx].stanzaStatus == INFO_STANZA_STATUS_CODE_OK)
+                {
+                    infoStanzaErrorAdd(
+                        &stanzaRepo->repoList[repoIdx], &FileMissingError,
+                        strNewFmt("manifest does not exist for backup '%s'\n"
+                        "HINT: is the backup listed when running the info command with --stanza option only?", strZ(backupLabel)));
                 }
             }
         }

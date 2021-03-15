@@ -33,64 +33,7 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--repo-path=%s/", strZ(repoPath)));
-        strLstAdd(argList, strNewFmt("--repo2-path=%s/repo2", testPath())); // CSHANG
-        // strLstAddZ(argList, "--set=20201116-200000F"); // CSHANG
-        strLstAddZ(argList, "--stanza=stanza3"); // CSHANG
         StringList *argListText = strLstDup(argList);
-
-        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/repo/backup/stanza1", testPath())); // CSHANG
-        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/repo/backup/stanza2", testPath())); // CSHANG
-        storagePathCreateP(storageLocalWrite(), strNewFmt("%s/repo/backup/stanza1/20201116-200000F", testPath())); // CSHANG
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/20201116-200000F/backup.manifest", strZ(backupStanza1Path))),
-                BUFSTRDEF("bogus")),
-            "put backup manifest to file"); // CSHANG
-
-        String *testcontent = strNew
-        (
-            "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
-            "db-id=2\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666,"
-                "\"db-version\":\"9.3\"}\n"
-            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        ); // CSHANG
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
-                harnessInfoChecksum(testcontent)),
-            "put backup info to file"); // CSHANG
-
-        testcontent = strNew
-        (
-            "[db]\n"
-            "db-id=3\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-            "2={\"db-id\":6569239123849665666,\"db-version\":\"9.3\"}\n"
-            "3={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-        );
-
-        TEST_RESULT_VOID(
-            storagePutP(
-                storageNewWriteP(storageLocalWrite(), strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-                harnessInfoChecksum(testcontent)),
-            "put archive info to file");
-
-//--------------------TESTS ABOVE
-        harnessCfgLoad(cfgCmdInfo, argList); // CSHANG
-        TEST_RESULT_STR_Z(infoRender(), "[]", "json - repo but no stanzas"); // CSHANG
 
         strLstAddZ(argList, "--output=json");
         harnessCfgLoad(cfgCmdInfo, argList);
@@ -2405,19 +2348,66 @@ Should "repo1: error (other)" here be the error list? But that could be long....
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/pgbackrest.conf", testPath())),
                 BUFSTR(content)), "put pgbackrest.conf file");
-        strLstAddZ(argListText, "--repo-cipher-type=aes-256-cbc");
-        strLstAdd(argListText, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
-        harnessCfgLoad(cfgCmdInfo, argListText);
-        TEST_ERROR_FMT(
-            infoRender(), CryptoError,
-            "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
-            "CryptoError: cipher header invalid\n"
-            "HINT: is or was the repo encrypted?\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "HINT: has a stanza-create been performed?\n"
-            "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
-            strZ(backupStanza1Path), strZ(backupStanza1Path),  strZ(strNewFmt("%s/backup.info.copy", strZ(backupStanza1Path))));
+
+        argList2 = strLstDup(argListMultiRepo);
+        strLstAddZ(argList2, "--repo-cipher-type=aes-256-cbc");
+        strLstAdd(argList2, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "    stanza: stanza1
+        status: mixed
+            repo1: error
+                   [CryptoError] unable to load info file '/home/vagrant/test/test-0/repo/backup/stanza1/backup.info' or '/home/vagrant/test/test-0/repo/backup/stanza1/backup.info.copy':
+                   CryptoError: cipher header invalid
+                   HINT: is or was the repo encrypted?
+                   FileMissingError: unable to open missing file '/home/vagrant/test/test-0/repo/backup/stanza1/backup.info.copy' for read
+                   HINT: backup.info cannot be opened and is required to perform a backup.
+                   HINT: has a stanza-create been performed?
+                   HINT: use option --stanza if encryption settings are different for the stanza than the global settings.
+            repo2: error (no valid backups)
+        cipher: aes-256-cbc
+
+        db (current)
+            wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004
+
+    stanza: stanza2
+        status: mixed
+            repo1: error
+                   [CryptoError] unable to load info file '/home/vagrant/test/test-0/repo/backup/stanza2/backup.info' or '/home/vagrant/test/test-0/repo/backup/stanza2/backup.info.copy':
+                   CryptoError: cipher header invalid
+                   HINT: is or was the repo encrypted?
+                   FileMissingError: unable to open missing file '/home/vagrant/test/test-0/repo/backup/stanza2/backup.info.copy' for read
+                   HINT: backup.info cannot be opened and is required to perform a backup.
+                   HINT: has a stanza-create been performed?
+                   HINT: use option --stanza if encryption settings are different for the stanza than the global settings.
+            repo2: error (missing stanza path)
+        cipher: aes-256-cbc
+
+    stanza: stanza3
+        status: mixed
+            repo1: error
+                   [CryptoError] unable to load info file '/home/vagrant/test/test-0/repo/backup/stanza3/backup.info' or '/home/vagrant/test/test-0/repo/backup/stanza3/backup.info.copy':
+                   CryptoError: cipher header invalid
+                   HINT: is or was the repo encrypted?
+                   FileMissingError: unable to open missing file '/home/vagrant/test/test-0/repo/backup/stanza3/backup.info.copy' for read
+                   HINT: backup.info cannot be opened and is required to perform a backup.
+                   HINT: has a stanza-create been performed?
+                   HINT: use option --stanza if encryption settings are different for the stanza than the global settings.
+            repo2: ok
+        cipher: aes-256-cbc
+
+        db (current)
+            wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002
+
+            full backup: 20201110-100000F
+                timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02
+                wal start/stop: 000000010000000000000001 / 000000010000000000000002
+                database size: 25.7MB, database backup size: 25.7MB
+                repo2: backup set size: 3MB, backup size: 3KB",
+            "text - no stanzas");
+
 
         // Unset environment key
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
