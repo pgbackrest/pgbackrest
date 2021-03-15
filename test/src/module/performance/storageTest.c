@@ -178,8 +178,14 @@ testRun(void)
                 ioWriteOpen(write);
 
                 ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
-                protocolServerHandlerAdd(server, storageRemoteProtocol);
-                protocolServerProcess(server, NULL);
+
+                static const ProtocolServerHandler commandHandler[] =
+                {
+                    {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = storageRemoteFeatureProtocol},
+                    {.command = PROTOCOL_COMMAND_STORAGE_INFO_LIST, .handler = storageRemoteInfoListProtocol},
+                };
+
+                protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
 
             }
             HARNESS_FORK_CHILD_END();
