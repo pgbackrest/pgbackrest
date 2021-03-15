@@ -94,6 +94,7 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mi
 STRING_STATIC(INFO_STANZA_STATUS_CODE_OTHER_STR,                    "other");  // CSHANG may not need
 STRING_STATIC(INFO_STANZA_INVALID_STR,                              "[invalid]");
 #define INFO_STANZA_REPO_ERROR_FORMAT                               "\n               "
+#define INFO_STANZA_ERROR_FORMAT                                    "\n         "
 
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
 
@@ -263,7 +264,7 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo, InfoRepoData *repoData
         case INFO_STANZA_STATUS_CODE_NO_BACKUP:
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
             break;
-// CSHANG David mentioned strLstNewSplit with delimeter and also may need to deal with carriage returns in json?
+
         case INFO_STANZA_STATUS_CODE_OTHER:
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(strLstJoin(repoData->errorList, "\n")));
             break;
@@ -1132,7 +1133,7 @@ infoUpdateStanza(
                         stanzaRepo->repoList[repoIdx].cipher,
                         infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
                 }
-
+// CSHANG BUT THIS WILL NOW BE AN ERROR FOR EVERY REPO - unless we don't get here for one or more. - but does that matter?
                 // If a backup-lock check has not already been performed, then do so
                 if (!stanzaRepo->backupLockChecked)
                 {
@@ -1233,7 +1234,7 @@ infoRender(void)
             {
                 // Get the repo storage in case it is remote and encryption settings need to be pulled down
                 const Storage *storageRepo = storageRepoIdx(repoIdx);
-// if (repoIdx == 1) THROW(AssertError, "code test with a carriage return\nso I can see what is happening\nespecially with a long error"); // CSHANG
+
                 // If a backup set was specified, see if the manifest exists
                 if (backupLabel != NULL)
                 {
@@ -1403,25 +1404,33 @@ infoRender(void)
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
                         // Update the overall stanza status and change displayed status if backup lock is found
-                        if (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH)
+                        if (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
+                            statusCode == INFO_STANZA_STATUS_CODE_OTHER)
                         {
                             strCatFmt(
                                 resultStr, "%s%s\n",
                                 statusCode == INFO_STANZA_STATUS_CODE_MIXED ? INFO_STANZA_MIXED :
+                                    (statusCode == INFO_STANZA_STATUS_CODE_OTHER ? INFO_STANZA_STATUS_ERROR :
                                     strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)",
-                                    strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))))),
+                                    strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)))))),
                                 backupLockHeld == true ? " (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : "");
 
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
+                            String *formatSpacer = strNew(INFO_STANZA_REPO_ERROR_FORMAT);
+                            bool multiRepo = varLstSize(repoSection) > 1;
 
                             for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
                             {
                                 KeyValue *repoInfo = varKv(varLstGet(repoSection, repoIdx));
                                 KeyValue *repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
 
-                                strCatFmt(
-                                    resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
+                                // If more than one repo configured, then add the repo status per repo
+                                if (multiRepo)
+                                {
+                                    strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
+                                    formatSpacer = strNew(INFO_STANZA_ERROR_FORMAT);
+                                }
 
                                 if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
                                 {
@@ -1433,10 +1442,11 @@ infoRender(void)
                                     {
                                         StringList *repoError = strLstNewSplit(
                                             varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR)), STRDEF("\n"));
+
                                         strCatFmt(
                                             resultStr, "%s",
-                                            strZ(strNewFmt(INFO_STANZA_STATUS_ERROR INFO_STANZA_REPO_ERROR_FORMAT "%s\n",
-                                            strZ(strLstJoin(repoError, INFO_STANZA_REPO_ERROR_FORMAT)))));
+                                            strZ(strNewFmt("%s%s%s\n", multiRepo == true ? INFO_STANZA_STATUS_ERROR : "",
+                                            strZ(formatSpacer), strZ(strLstJoin(repoError, INFO_STANZA_REPO_ERROR_FORMAT)))));
                                     }
                                     else
                                     {

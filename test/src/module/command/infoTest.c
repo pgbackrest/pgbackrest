@@ -153,7 +153,7 @@ testRun(void)
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
                 harnessInfoChecksum(content)),
             "put backup info to file");
-// CSHANG How should this json really look?
+
         TEST_RESULT_STR(
             infoRender(),
             strNewFmt(
@@ -193,6 +193,7 @@ Should "repo1: error (other)" here be the error list? But that could be long....
                     "        repo1: none\n"
                     "        repo2: aes-256-cbc\n"
 */
+// CSHANG This is NO GOOD - when we have one repository, should we output the whole error if it is "other"
         harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2339,6 +2340,7 @@ Should "repo1: error (other)" here be the error list? But that could be long....
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("encryption error");
 
+        // Change repo1 to have the same cipher type as repo2 even though on disk it does not
         content = strNew
         (
             "[global]\n"
@@ -2354,59 +2356,64 @@ Should "repo1: error (other)" here be the error list? But that could be long....
         strLstAdd(argList2, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
         harnessCfgLoad(cfgCmdInfo, argList2);
 
-        TEST_RESULT_STR_Z(
-            infoRender(),
-            "    stanza: stanza1
-        status: mixed
-            repo1: error
-                   [CryptoError] unable to load info file '/home/vagrant/test/test-0/repo/backup/stanza1/backup.info' or '/home/vagrant/test/test-0/repo/backup/stanza1/backup.info.copy':
-                   CryptoError: cipher header invalid
-                   HINT: is or was the repo encrypted?
-                   FileMissingError: unable to open missing file '/home/vagrant/test/test-0/repo/backup/stanza1/backup.info.copy' for read
-                   HINT: backup.info cannot be opened and is required to perform a backup.
-                   HINT: has a stanza-create been performed?
-                   HINT: use option --stanza if encryption settings are different for the stanza than the global settings.
-            repo2: error (no valid backups)
-        cipher: aes-256-cbc
-
-        db (current)
-            wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004
-
-    stanza: stanza2
-        status: mixed
-            repo1: error
-                   [CryptoError] unable to load info file '/home/vagrant/test/test-0/repo/backup/stanza2/backup.info' or '/home/vagrant/test/test-0/repo/backup/stanza2/backup.info.copy':
-                   CryptoError: cipher header invalid
-                   HINT: is or was the repo encrypted?
-                   FileMissingError: unable to open missing file '/home/vagrant/test/test-0/repo/backup/stanza2/backup.info.copy' for read
-                   HINT: backup.info cannot be opened and is required to perform a backup.
-                   HINT: has a stanza-create been performed?
-                   HINT: use option --stanza if encryption settings are different for the stanza than the global settings.
-            repo2: error (missing stanza path)
-        cipher: aes-256-cbc
-
-    stanza: stanza3
-        status: mixed
-            repo1: error
-                   [CryptoError] unable to load info file '/home/vagrant/test/test-0/repo/backup/stanza3/backup.info' or '/home/vagrant/test/test-0/repo/backup/stanza3/backup.info.copy':
-                   CryptoError: cipher header invalid
-                   HINT: is or was the repo encrypted?
-                   FileMissingError: unable to open missing file '/home/vagrant/test/test-0/repo/backup/stanza3/backup.info.copy' for read
-                   HINT: backup.info cannot be opened and is required to perform a backup.
-                   HINT: has a stanza-create been performed?
-                   HINT: use option --stanza if encryption settings are different for the stanza than the global settings.
-            repo2: ok
-        cipher: aes-256-cbc
-
-        db (current)
-            wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002
-
-            full backup: 20201110-100000F
-                timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02
-                wal start/stop: 000000010000000000000001 / 000000010000000000000002
-                database size: 25.7MB, database backup size: 25.7MB
-                repo2: backup set size: 3MB, backup size: 3KB",
-            "text - no stanzas");
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: error\n"
+            "               [CryptoError] unable to load info file '%s/stanza1/backup.info' or '%s/stanza1/backup.info.copy':\n"
+            "               CryptoError: cipher header invalid\n"
+            "               HINT: is or was the repo encrypted?\n"
+            "               FileMissingError: unable to open missing file '%s/stanza1/backup.info.copy' for read\n"
+            "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "               HINT: has a stanza-create been performed?\n"
+            "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
+            " settings.\n"
+            "        repo2: error (no valid backups)\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004\n"
+            "\n"
+            "stanza: stanza2\n"
+            "    status: mixed\n"
+            "        repo1: error\n"
+            "               [CryptoError] unable to load info file '%s/stanza2/backup.info' or '%s/stanza2/backup.info.copy':\n"
+            "               CryptoError: cipher header invalid\n"
+            "               HINT: is or was the repo encrypted?\n"
+            "               FileMissingError: unable to open missing file '%s/stanza2/backup.info.copy' for read\n"
+            "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "               HINT: has a stanza-create been performed?\n"
+            "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
+            " settings.\n"
+            "        repo2: error (missing stanza path)\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "stanza: stanza3\n"
+            "    status: mixed\n"
+            "        repo1: error\n"
+            "               [CryptoError] unable to load info file '%s/stanza3/backup.info' or '%s/stanza3/backup.info.copy':\n"
+            "               CryptoError: cipher header invalid\n"
+            "               HINT: is or was the repo encrypted?\n"
+            "               FileMissingError: unable to open missing file '%s/stanza3/backup.info.copy' for read\n"
+            "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "               HINT: has a stanza-create been performed?\n"
+            "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
+            " settings.\n"
+            "        repo2: ok\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002\n"
+            "\n"
+            "        full backup: 20201110-100000F\n"
+            "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+            "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+            "            database size: 25.7MB, database backup size: 25.7MB\n"
+            "            repo2: backup set size: 3MB, backup size: 3KB\n",
+            strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath),
+            strZ(backupPath), strZ(backupPath), strZ(backupPath)),
+            "text - multi-repo, multi-stanza cipher error");
 
 
         // Unset environment key
