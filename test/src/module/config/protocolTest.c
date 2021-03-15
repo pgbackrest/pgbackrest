@@ -18,7 +18,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("configOptionProtocol() and configProtocolOption()"))
+    if (testBegin("configOptionProtocol() and configOptionRemote()"))
     {
         HARNESS_FORK_BEGIN()
         {
@@ -61,8 +61,7 @@ testRun(void)
                 varLstAdd(list, varNewStr(strNew("repo1-host-user")));
 
                 TEST_RESULT_STRLST_Z(
-                    strLstNewVarLst(configProtocolOption(client, list)), "repo-host\nrepo-host-user\n",
-                    "get options");
+                    strLstNewVarLst(configOptionRemote(client, list)), "repo-host\nrepo-host-user\n", "get options");
 
                 protocolClientFree(client);
             }
