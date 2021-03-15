@@ -119,6 +119,10 @@ protocolServerProcess(
         FUNCTION_LOG_PARAM(UINT, handlerListSize);
     FUNCTION_LOG_END();
 
+    ASSERT(this != NULL);
+    ASSERT(handlerList != NULL);
+    ASSERT(handlerListSize > 0);
+
     // Loop until exit command is received
     bool exit = false;
 

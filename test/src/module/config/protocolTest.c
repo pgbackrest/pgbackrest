@@ -18,7 +18,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("configProtocol() and configProtocolOption()"))
+    if (testBegin("configOptionProtocol() and configProtocolOption()"))
     {
         HARNESS_FORK_BEGIN()
         {

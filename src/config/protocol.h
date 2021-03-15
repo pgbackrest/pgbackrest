@@ -21,7 +21,7 @@ Functions
 // Process config protocol requests
 void configOptionProtocol(const VariantList *paramList, ProtocolServer *server);
 
-// Get option values from another process
-VariantList *configProtocolOption(ProtocolClient *client, const VariantList *paramList);
+// Get option values from a remote process
+VariantList *configOptionRemote(ProtocolClient *client, const VariantList *paramList);
 
 #endif

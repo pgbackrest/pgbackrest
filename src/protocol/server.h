@@ -17,6 +17,9 @@ typedef struct ProtocolServer ProtocolServer;
 
 /***********************************************************************************************************************************
 Protocol command handler type and structure
+
+An array of this struct must be passed to protocolServerProcess() for the server to process commands. Each command handler should
+implement a single command, as defined by the command string.
 ***********************************************************************************************************************************/
 typedef void (*ProtocolServerCommandHandler)(const VariantList *paramList, ProtocolServer *server);
 

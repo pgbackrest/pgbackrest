@@ -49,7 +49,7 @@ configOptionProtocol(const VariantList *paramList, ProtocolServer *server)
 
 /**********************************************************************************************************************************/
 VariantList *
-configProtocolOption(ProtocolClient *client, const VariantList *paramList)
+configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
