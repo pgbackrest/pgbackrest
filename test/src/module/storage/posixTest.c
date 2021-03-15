@@ -178,6 +178,11 @@ testRun(void)
             storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO ": [13] Permission denied", strZ(fileNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
 
+        // -----------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info for / exists");
+
+        TEST_RESULT_BOOL(storageInfoP(storagePosixNewP(FSLASH_STR), NULL).exists, true, "info for /");
+
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/fileinfo", testPath());
 

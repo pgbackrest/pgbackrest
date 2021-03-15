@@ -255,8 +255,15 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         if (param.level == storageInfoLevelDefault)
             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
-        result = storageInterfaceInfoP(
-            this->driver, file, param.level, .followLink = param.followLink);
+        // If file is / then this is definitely a path so skip the call for drivers that do not support paths and do not provide
+        // additional info to return. Also, some object stores (e.g. S3) behave strangely when getting info for /.
+        if (strEq(file, FSLASH_STR) && !storageFeature(this, storageFeaturePath))
+        {
+            result = (StorageInfo){.level = param.level};
+        }
+        // Else call the driver
+        else
+            result = storageInterfaceInfoP(this->driver, file, param.level, .followLink = param.followLink);
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
