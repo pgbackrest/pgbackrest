@@ -1285,18 +1285,24 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(manifest->memContext)
         {
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("postgres"), .id = 12173, .lastSystemId = 12168});
+            // Give non-systemId to postgres db
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("postgres"), .id = 16385, .lastSystemId = 12168});
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template0"), .id = 12168, .lastSystemId = 12168});
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("user-made-system-db"), .id = 16380, .lastSystemId = 12168});
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF(UTF8_DB_NAME), .id = 16384, .lastSystemId = 12168});
             manifestFileAdd(
                 manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/" PG_FILE_PGVERSION)});
+            manifestFileAdd(
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16381/" PG_FILE_PGVERSION)});
+            manifestFileAdd(
+                manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16385/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include '" UTF8_DB_NAME "' does not exist");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("all databases selected");
@@ -1311,7 +1317,7 @@ testRun(void)
         TEST_RESULT_STR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: databases found for selective restore (1, 16384)\n"
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)\n"
             "P00   INFO: nothing to filter - all user databases have been selected");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1325,7 +1331,33 @@ testRun(void)
             restoreSelectiveExpression(manifest), DbInvalidError,
             "system databases (template0, postgres, etc.) are included by default");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on system database with non-systemId selected");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=16385");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            restoreSelectiveExpression(manifest), DbInvalidError,
+            "system databases (template0, postgres, etc.) are included by default");
+
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on system database with non-systemId selected, by name");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=postgres");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            restoreSelectiveExpression(manifest), DbInvalidError,
+            "system databases (template0, postgres, etc.) are included by default");
+
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing database selected");
@@ -1336,7 +1368,7 @@ testRun(void)
 
         TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to include '7777777' does not exist");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384)");
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("select database by id");
@@ -1356,7 +1388,8 @@ testRun(void)
         TEST_RESULT_STR_Z(restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)", "check expression");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: databases found for selective restore (1, 16384, 32768)");
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (32768)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one database selected without tablespace id");
@@ -1375,7 +1408,9 @@ testRun(void)
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/32768/)", "check expression");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384, 32768)");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (32768)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one database selected with tablespace id");
@@ -1385,6 +1420,7 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(manifest->memContext)
         {
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test3"), .id = 65536, .lastSystemId = 12168});
             manifestFileAdd(
                 manifest, &(ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/16387/PG_9.4_201409291/65536/" PG_FILE_PGVERSION)});
@@ -1397,7 +1433,9 @@ testRun(void)
                 "|(^pg_tblspc/16387/PG_9.4_201409291/65536/)",
             "check expression");
 
-        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 16384, 32768, 65536)");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (32768, 65536)");
     }
 
     // *****************************************************************************************************************************
@@ -2248,6 +2286,9 @@ testRun(void)
                     .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
             storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/2")), fileBuffer);
 
+            // system db name
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
+
             // base/16384 directory
             manifestPathAdd(
                 manifest,
@@ -2279,6 +2320,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/16384/16385")), fileBuffer);
 
             // base/32768 directory
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
             manifestPathAdd(
                 manifest,
                 &(ManifestPath){
@@ -2528,6 +2570,7 @@ testRun(void)
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
             "P00 DETAIL: databases found for selective restore (1, 16384, 32768)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (32768)\n"
             "P00 DETAIL: check '{[path]}/pg' exists\n"
             "P00 DETAIL: check '{[path]}/config' exists\n"
             "P00 DETAIL: check '{[path]}/wal' exists\n"
@@ -2585,6 +2628,9 @@ testRun(void)
             "raised from local-1 protocol: unable to open missing file"
                 " '%s/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read",
             testPath());
+
+        // Free local processes that were not freed because of the error
+        protocolFree();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
