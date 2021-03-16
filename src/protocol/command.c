@@ -116,5 +116,5 @@ protocolCommandJson(const ProtocolCommand *this)
 String *
 protocolCommandToLog(const ProtocolCommand *this)
 {
-    return strNewFmt("{command: %s}", strZ(this->command));
+    return strNewFmt("{command: %" PRIu64 "}", this->command); // !!! ADD DEBUG
 }
