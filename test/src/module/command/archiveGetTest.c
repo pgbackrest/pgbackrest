@@ -1043,9 +1043,7 @@ testRun(void)
         IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
         ioWriteOpen(serverWriteIo);
 
-        ProtocolServer *server = protocolServerNew(
-            strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-
+        ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
         bufUsedSet(serverWrite, 0);
 
         // Add archive-async and spool path
@@ -1065,19 +1063,13 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));
         varLstAdd(paramList, varNewStrZ(TEST_CIPHER_PASS_ARCHIVE));
 
-        TEST_RESULT_BOOL(
-            archiveGetProtocol(PROTOCOL_COMMAND_ARCHIVE_GET_STR, paramList, server), true, "protocol archive get");
+        TEST_RESULT_VOID(archiveGetFileProtocol(paramList, server), "protocol archive get");
 
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,[]]}\n", "check result");
         TEST_STORAGE_LIST(
             storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n");
 
         bufUsedSet(serverWrite, 0);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("invalid protocol command");
-
-        TEST_RESULT_BOOL(archiveGetProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

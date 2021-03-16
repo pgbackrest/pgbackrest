@@ -17,6 +17,18 @@ Local Command
 #include "protocol/helper.h"
 #include "protocol/server.h"
 
+/***********************************************************************************************************************************
+Command handlers
+***********************************************************************************************************************************/
+static const ProtocolServerHandler commandLocalHandlerList[] =
+{
+    PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST
+    PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST
+    PROTOCOL_SERVER_HANDLER_BACKUP_LIST
+    PROTOCOL_SERVER_HANDLER_RESTORE_LIST
+    PROTOCOL_SERVER_HANDLER_VERIFY_LIST
+};
+
 /**********************************************************************************************************************************/
 void
 cmdLocal(int fdRead, int fdWrite)
@@ -32,12 +44,8 @@ cmdLocal(int fdRead, int fdWrite)
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_LOCAL_STR, read, write);
-        protocolServerHandlerAdd(server, archiveGetProtocol);
-        protocolServerHandlerAdd(server, archivePushProtocol);
-        protocolServerHandlerAdd(server, backupProtocol);
-        protocolServerHandlerAdd(server, restoreProtocol);
-        protocolServerHandlerAdd(server, verifyProtocol);
-        protocolServerProcess(server, cfgCommandJobRetry());
+        protocolServerProcess(
+            server, cfgCommandJobRetry(), commandLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandLocalHandlerList));
     }
     MEM_CONTEXT_TEMP_END();
 

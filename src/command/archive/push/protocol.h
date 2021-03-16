@@ -11,13 +11,19 @@ Archive Push Protocol Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_ARCHIVE_PUSH                               "archivePush"
-    STRING_DECLARE(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR);
+#define PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE                          "archivePushFile"
+    STRING_DECLARE(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE_STR);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-bool archivePushProtocol(const String *command, const VariantList *paramList, ProtocolServer *server);
+void archivePushFileProtocol(const VariantList *paramList, ProtocolServer *server);
+
+/***********************************************************************************************************************************
+Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
+***********************************************************************************************************************************/
+#define PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST                                                                                  \
+    {.command = PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, .handler = archivePushFileProtocol},
 
 #endif

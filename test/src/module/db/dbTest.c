@@ -100,8 +100,12 @@ testRun(void)
                 ProtocolServer *server = NULL;
 
                 TEST_ASSIGN(server, protocolServerNew(strNew("db test server"), strNew("test"), read, write), "create server");
-                TEST_RESULT_VOID(protocolServerHandlerAdd(server, dbProtocol), "add handler");
-                TEST_RESULT_VOID(protocolServerProcess(server, NULL), "run process loop");
+
+                static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_DB_LIST};
+
+                TEST_RESULT_VOID(
+                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
+                    "run process loop");
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
             }
             HARNESS_FORK_CHILD_END();

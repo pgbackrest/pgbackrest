@@ -350,7 +350,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, NULL);
 
-        TEST_RESULT_BOOL(restoreProtocol(PROTOCOL_COMMAND_RESTORE_FILE_STR, paramList, server), true, "protocol restore file");
+        TEST_RESULT_VOID(restoreFileProtocol(paramList, server), "protocol restore file");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
@@ -382,13 +382,9 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, NULL);
 
-        TEST_RESULT_BOOL(restoreProtocol(PROTOCOL_COMMAND_RESTORE_FILE_STR, paramList, server), true, "protocol restore file");
+        TEST_RESULT_VOID(restoreFileProtocol(paramList, server), "protocol restore file");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "    check result");
         bufUsedSet(serverWrite, 0);
-
-        // Check invalid protocol function
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(restoreProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
     }
 
     // *****************************************************************************************************************************

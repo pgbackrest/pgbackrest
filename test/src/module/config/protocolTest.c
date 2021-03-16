@@ -18,7 +18,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("configProtocol() and configProtocolOption()"))
+    if (testBegin("configOptionProtocol() and configOptionRemote()"))
     {
         HARNESS_FORK_BEGIN()
         {
@@ -37,8 +37,9 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchiveGet, argList);
 
                 ProtocolServer *server = protocolServerNew(strNew("test"), strNew("config"), read, write);
-                protocolServerHandlerAdd(server, configProtocol);
-                protocolServerProcess(server, NULL);
+
+                static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_OPTION_LIST};
+                protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
             }
             HARNESS_FORK_CHILD_END();
 
@@ -56,8 +57,7 @@ testRun(void)
                 varLstAdd(list, varNewStr(strNew("repo1-host-user")));
 
                 TEST_RESULT_STRLST_Z(
-                    strLstNewVarLst(configProtocolOption(client, list)), "repo-host\nrepo-host-user\n",
-                    "get options");
+                    strLstNewVarLst(configOptionRemote(client, list)), "repo-host\nrepo-host-user\n", "get options");
 
                 protocolClientFree(client);
             }

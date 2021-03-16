@@ -235,7 +235,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("Synchronous cmdArchivePush(), archivePushFile() and archivePushProtocol()"))
+    if (testBegin("Synchronous cmdArchivePush(), archivePushFile() and archivePushFileProtocol()"))
     {
         TEST_TITLE("command must be run on the pg host");
 
@@ -445,8 +445,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(cipherTypeNone));
         varLstAdd(paramList, NULL);
 
-        TEST_RESULT_BOOL(
-            archivePushProtocol(PROTOCOL_COMMAND_ARCHIVE_PUSH_STR, paramList, server), true, "protocol archive put");
+        TEST_RESULT_VOID(archivePushFileProtocol(paramList, server), "protocol archive put");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{\"out\":[[\"WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum"
@@ -454,10 +453,6 @@ testRun(void)
             "check result");
 
         bufUsedSet(serverWrite, 0);
-
-        // Check invalid protocol function
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(archivePushProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple repos, one encrypted");
