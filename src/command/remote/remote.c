@@ -22,10 +22,8 @@ Command handlers
 ***********************************************************************************************************************************/
 static const ProtocolServerHandler commandRemoteHandlerList[] =
 {
-    {.command = PROTOCOL_COMMAND_DB_OPEN, .handler = dbOpenProtocol},
-    {.command = PROTOCOL_COMMAND_DB_QUERY, .handler = dbQueryProtocol},
-    {.command = PROTOCOL_COMMAND_DB_CLOSE, .handler = dbCloseProtocol},
-    {.command = PROTOCOL_COMMAND_CONFIG_OPTION, .handler = configOptionProtocol},
+    PROTOCOL_SERVER_HANDLER_DB_LIST
+    PROTOCOL_SERVER_HANDLER_OPTION_LIST
     PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
 };
 

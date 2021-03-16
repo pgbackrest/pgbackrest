@@ -20,4 +20,10 @@ Functions
 // Process protocol requests
 void restoreFileProtocol(const VariantList *paramList, ProtocolServer *server);
 
+/***********************************************************************************************************************************
+Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
+***********************************************************************************************************************************/
+#define PROTOCOL_SERVER_HANDLER_RESTORE_LIST                                                                                       \
+    {.command = PROTOCOL_COMMAND_RESTORE_FILE, .handler = restoreFileProtocol},
+
 #endif

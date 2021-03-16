@@ -50,7 +50,7 @@ void storageRemotePathSyncProtocol(const VariantList *paramList, ProtocolServer 
 void storageRemoteRemoveProtocol(const VariantList *paramList, ProtocolServer *server);
 
 /***********************************************************************************************************************************
-Remote storage protocol commands for inclusion in ProtocolServerHandler arrays passed to protocolServerProcess()
+Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
 #define PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST                                                                                \
     {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = storageRemoteFeatureProtocol},                                        \

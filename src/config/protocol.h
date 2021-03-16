@@ -24,4 +24,10 @@ void configOptionProtocol(const VariantList *paramList, ProtocolServer *server);
 // Get option values from a remote process
 VariantList *configOptionRemote(ProtocolClient *client, const VariantList *paramList);
 
+/***********************************************************************************************************************************
+Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
+***********************************************************************************************************************************/
+#define PROTOCOL_SERVER_HANDLER_OPTION_LIST                                                                                        \
+    {.command = PROTOCOL_COMMAND_CONFIG_OPTION, .handler = configOptionProtocol},
+
 #endif

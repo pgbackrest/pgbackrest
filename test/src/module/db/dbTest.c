@@ -101,12 +101,7 @@ testRun(void)
 
                 TEST_ASSIGN(server, protocolServerNew(strNew("db test server"), strNew("test"), read, write), "create server");
 
-                static const ProtocolServerHandler commandHandler[] =
-                {
-                    {.command = PROTOCOL_COMMAND_DB_OPEN, .handler = dbOpenProtocol},
-                    {.command = PROTOCOL_COMMAND_DB_QUERY, .handler = dbQueryProtocol},
-                    {.command = PROTOCOL_COMMAND_DB_CLOSE, .handler = dbCloseProtocol},
-                };
+                static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_DB_LIST};
 
                 TEST_RESULT_VOID(
                     protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
