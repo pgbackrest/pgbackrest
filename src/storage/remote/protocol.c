@@ -46,7 +46,6 @@ static struct
 {
     MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Storage driver used for requests
-    RegExp *blockRegExp;                                            // Regular expression to check block messages
 } storageRemoteProtocolLocal;
 
 /***********************************************************************************************************************************
@@ -158,7 +157,7 @@ storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *serve
                 storageRepoWrite() : storagePgWrite();
 
         // Store local variables in the server context
-        if (storageRemoteProtocolLocal.driver == NULL)
+        if (storageRemoteProtocolLocal.memContext == NULL)
         {
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -496,32 +495,21 @@ storageRemoteProtocolBlockSize(const String *message)
 
     ASSERT(message != NULL);
 
-    // Create block regular expression if it has not been created yet
-    if (storageRemoteProtocolLocal.blockRegExp == NULL)
-    {
-        // If the context is not already allocated it means this function is being used locally so allocate it
-        if (storageRemoteProtocolLocal.memContext == NULL)
-        {
-            MEM_CONTEXT_BEGIN(memContextTop())
-            {
-                MEM_CONTEXT_NEW_BEGIN("StorageRemoteProtocol")
-                {
-                    storageRemoteProtocolLocal.memContext = memContextCurrent();
-                }
-                MEM_CONTEXT_NEW_END();
-            }
-            MEM_CONTEXT_END();
-        }
+    // Regular expression to check block messages
+    static RegExp *blockRegExp = NULL;
 
-        MEM_CONTEXT_BEGIN(storageRemoteProtocolLocal.memContext)
+    // Create block regular expression if it has not been created yet
+    if (blockRegExp == NULL)
+    {
+        MEM_CONTEXT_BEGIN(memContextTop())
         {
-            storageRemoteProtocolLocal.blockRegExp = regExpNew(BLOCK_REG_EXP_STR);
+            blockRegExp = regExpNew(BLOCK_REG_EXP_STR);
         }
         MEM_CONTEXT_END();
     }
 
     // Validate the header block size message
-    if (!regExpMatch(storageRemoteProtocolLocal.blockRegExp, message))
+    if (!regExpMatch(blockRegExp, message))
         THROW_FMT(ProtocolError, "'%s' is not a valid block size message", strZ(message));
 
     FUNCTION_LOG_RETURN(SSIZE, (ssize_t)cvtZToInt(strZ(message) + sizeof(PROTOCOL_BLOCK_HEADER) - 1));
