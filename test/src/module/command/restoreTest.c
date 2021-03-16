@@ -1490,17 +1490,14 @@ testRun(void)
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on combining include and exclude options, non system database can't be excluded");
+        TEST_TITLE("error on combining include and exclude options");
 
         argList = strLstDup(argListClean);
-        strLstAddZ(argList, "--db-include=16384");
-        strLstAddZ(argList, "--db-exclude=32768");
+        strLstAddZ(argList, "--db-include=test2");
+        strLstAddZ(argList, "--db-exclude=test2");
         harnessCfgLoad(cfgCmdRestore, argList);
 
-        TEST_ERROR(
-            restoreSelectiveExpression(manifest), DbInvalidError,
-            "only system databases may be excluded when using the include option\n"
-            "HINT: remove '32768' from the exclude list");
+        TEST_ERROR(restoreSelectiveExpression(manifest), DbInvalidError, "database to include '32768' is in the exclude list");
 
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)");
 
@@ -1511,6 +1508,7 @@ testRun(void)
         strLstAddZ(argList, "--db-include=16384");
         strLstAddZ(argList, "--db-exclude=1");
         strLstAddZ(argList, "--db-exclude=16385");
+        strLstAddZ(argList, "--db-exclude=32768");  // user databases excluded will be silently ignored
         harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(

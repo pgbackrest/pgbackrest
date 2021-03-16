@@ -1366,13 +1366,6 @@ restoreSelectiveExpression(Manifest *manifest)
                     excludeDb = varStrForce(VARUINT(db->id));
                 }
 
-                // When used in combination with include option, only system databases may be excluded
-                if(strLstSize(includeList) > 0 && !strLstExists(systemDbIdList, excludeDb))
-                    THROW_FMT(
-                        DbInvalidError,
-                        "only system databases may be excluded when using the include option\n"
-                            "HINT: remove '%s' from the exclude list", strZ(excludeDb));
-
                 // Add to exclude list
                 strLstAdd(excludeDbIdList, excludeDb);
             }
@@ -1397,6 +1390,10 @@ restoreSelectiveExpression(Manifest *manifest)
                 // Error if the db is a system db
                 if (strLstExists(systemDbIdList, includeDb))
                     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
+
+                // Error if the db id is in the exclude list
+                if(strLstExists(excludeDbIdList, includeDb))
+                    THROW_FMT(DbInvalidError, "database to include '%s' is in the exclude list", strZ(includeDb));
 
                 // Remove from list of DBs to zero
                 strLstRemove(dbList, includeDb);
