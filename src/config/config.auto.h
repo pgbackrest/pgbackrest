@@ -100,6 +100,8 @@ Option constants
     STRING_DECLARE(CFGOPT_CONFIG_INCLUDE_PATH_STR);
 #define CFGOPT_CONFIG_PATH                                          "config-path"
     STRING_DECLARE(CFGOPT_CONFIG_PATH_STR);
+#define CFGOPT_DB_EXCLUDE                                           "db-exclude"
+    STRING_DECLARE(CFGOPT_DB_EXCLUDE_STR);
 #define CFGOPT_DB_INCLUDE                                           "db-include"
     STRING_DECLARE(CFGOPT_DB_INCLUDE_STR);
 #define CFGOPT_DB_TIMEOUT                                           "db-timeout"
@@ -209,7 +211,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
     STRING_DECLARE(CFGOPT_TYPE_STR);
 
-#define CFG_OPTION_TOTAL                                            128
+#define CFG_OPTION_TOTAL                                            129
 
 /***********************************************************************************************************************************
 Command enum
@@ -273,6 +275,7 @@ typedef enum
     cfgOptConfig,
     cfgOptConfigIncludePath,
     cfgOptConfigPath,
+    cfgOptDbExclude,
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,

@@ -1120,6 +1120,15 @@ option:
     command-role:
       default: {}
 
+  db-exclude:
+    section: global
+    type: list
+    required: false
+    command:
+      restore: {}
+    command-role:
+      default: {}
+
   db-include:
     section: global
     type: list

@@ -1280,7 +1280,7 @@ restoreSelectiveExpression(Manifest *manifest)
     String *result = NULL;
 
     // Continue if db-include is specified
-    if (cfgOptionTest(cfgOptDbInclude))
+    if (cfgOptionTest(cfgOptDbExclude) || cfgOptionTest(cfgOptDbInclude))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1345,9 +1345,39 @@ restoreSelectiveExpression(Manifest *manifest)
             // Log databases found
             LOG_DETAIL_FMT("databases found for selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
-            // Remove included databases from the list
+            // Generate list with ids of databases to exclude
+            StringList *excludeDbIdList = strLstNew();
+            const StringList *excludeList = strLstNewVarLst(cfgOptionLst(cfgOptDbExclude));
             const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
 
+            for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
+            {
+                const String *excludeDb = strLstGet(excludeList, excludeIdx);
+
+                // If the db to exclude is not in the list as an id then search by name
+                if (!strLstExists(dbList, excludeDb))
+                {
+                    const ManifestDb *db = manifestDbFindDefault(manifest, excludeDb, NULL);
+
+                    if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
+                        THROW_FMT(DbMissingError, "database to exclude '%s' does not exist", strZ(excludeDb));
+
+                    // Set the exclude db to the id if the name mapping was successful
+                    excludeDb = varStrForce(VARUINT(db->id));
+                }
+
+                // When used in combination with include option, only system databases may be excluded
+                if(strLstSize(includeList) > 0 && !strLstExists(systemDbIdList, excludeDb))
+                    THROW_FMT(
+                        DbInvalidError,
+                        "only system databases may be excluded when using the include option\n"
+                            "HINT: remove '%s' from the exclude list", strZ(excludeDb));
+
+                // Add to exclude list
+                strLstAdd(excludeDbIdList, excludeDb);
+            }
+
+            // Remove included databases from the list
             for (unsigned int includeIdx = 0; includeIdx < strLstSize(includeList); includeIdx++)
             {
                 const String *includeDb = strLstGet(includeList, includeIdx);
@@ -1372,9 +1402,14 @@ restoreSelectiveExpression(Manifest *manifest)
                 strLstRemove(dbList, includeDb);
             }
 
-            // Exclude the system databases from the list
+            // Remove the system databases from list of DBs to zero unless they are excluded explicitly
             strLstSort(systemDbIdList, sortOrderAsc);
+            systemDbIdList = strLstMergeAnti(systemDbIdList, excludeDbIdList);
             dbList = strLstMergeAnti(dbList, systemDbIdList);
+
+            // Only exclude specified db in case no db to include has been provided
+            if (strLstSize(includeList) <= 0)
+                dbList = strLstDup(excludeDbIdList);
 
             // Build regular expression to identify files that will be zeroed
             String *expression = NULL;
