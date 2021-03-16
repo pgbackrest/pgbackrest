@@ -181,37 +181,23 @@ testRun(void)
                         "}"
                 "}"
             "]", testPath(), testPath(), testPath(), testPath()),
-            "json - other error");
+            "json - other error, single repo");
 
-/* CSHANG Text output on one repository - this is not very infomative and for multi-repo, what should it look like?
-Should "repo1: error (other)" here be the error list? But that could be long....
-                    "stanza: stanza2\n"
-                    "    status: mixed (backup/expire running)\n"
-                    "        repo1: error (other)\n"
-                    "        repo2: ok\n"
-                    "    cipher: mixed\n"
-                    "        repo1: none\n"
-                    "        repo2: aes-256-cbc\n"
-*/
-// CSHANG This is NO GOOD - when we have one repository, should we output the whole error if it is "other"
         harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
-        TEST_RESULT_STR_Z(
-            infoRender(),
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
             "stanza: stanza1\n"
             "    status: error (other)\n"
-            "    cipher: none\n",
-            "text - TEST");
-        // TEST_ERROR_FMT(infoRender(), FileMissingError,
-        //     "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
-        //     "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-        //     "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-        //     "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-        //     "HINT: is archive_command configured correctly in postgresql.conf?\n"
-        //     "HINT: has a stanza-create been performed?\n"
-        //     "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-        //     strZ(archiveStanza1Path), strZ(archiveStanza1Path),
-        //     strZ(strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-        //     strZ(strNewFmt("%s/archive.info.copy", strZ(archiveStanza1Path))));
+            "            [FileMissingError] unable to load info file '%s/stanza1/archive.info' or '%s/stanza1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '%s/stanza1/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '%s/stanza1/archive.info.copy' for read\n"
+            "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
+            " scheme.\n"
+            "    cipher: none\n", strZ(archivePath), strZ(archivePath), strZ(archivePath), strZ(archivePath)),
+            "text - other error, single repo");
 
         // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         // Only the current db information from the db:history will be processed.
@@ -1613,6 +1599,22 @@ Should "repo1: error (other)" here be the error list? But that could be long....
         }
         HARNESS_FORK_END();
 
+        // Stanza exists but set requested does not
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList2 = strLstDup(argListMultiRepo);
+        strLstAddZ(argList2, "--stanza=stanza1");
+        strLstAddZ(argList2, "--set=bogus");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: ok\n"
+            "    cipher: none\n"
+            "\n", "TEST");
+
+// CSHANG Still some formatting issues and need to add some tests for duplicate backups, manifest error, and acqure-lock error
+
         // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListMultiRepo);
@@ -2684,28 +2686,28 @@ Should "repo1: error (other)" here be the error list? But that could be long....
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), "No stanzas exist in the repository.\n",
             "    check text");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        strLstAddZ(argList, "--set=bogus");
-
-        TEST_ERROR_FMT(
-            harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
-
-        // Option --repo not required when only 1 repo configured
-        strLstAddZ(argList, "--stanza=stanza1");
-        harnessCfgLoad(cfgCmdInfo, argList);
-
-        TEST_ERROR_FMT(
-                cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
-                "HINT: is the backup listed when running the info command with --stanza option only?");
-
-        // Option --repo when only 1 repo configured but will search the repo provided
-        strLstAddZ(argList, "--repo=1");
-        harnessCfgLoad(cfgCmdInfo, argList);
-
-        TEST_ERROR_FMT(
-                cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
-                "HINT: is the backup listed when running the info command with --stanza option only?");
+        // CSHANG Need to move these OR need to have
+        // //--------------------------------------------------------------------------------------------------------------------------
+        // strLstAddZ(argList, "--set=bogus");
+        //
+        // TEST_ERROR_FMT(
+        //     harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
+        //
+        // // Option --repo not required when only 1 repo configured
+        // strLstAddZ(argList, "--stanza=stanza1");
+        // harnessCfgLoad(cfgCmdInfo, argList);
+        //
+        // TEST_ERROR_FMT(
+        //         cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
+        //         "HINT: is the backup listed when running the info command with --stanza option only?");
+        //
+        // // Option --repo when only 1 repo configured but will search the repo provided
+        // strLstAddZ(argList, "--repo=1");
+        // harnessCfgLoad(cfgCmdInfo, argList);
+        //
+        // TEST_ERROR_FMT(
+        //         cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
+        //         "HINT: is the backup listed when running the info command with --stanza option only?");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

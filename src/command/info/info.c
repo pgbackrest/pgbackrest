@@ -94,7 +94,7 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mi
 STRING_STATIC(INFO_STANZA_STATUS_CODE_OTHER_STR,                    "other");  // CSHANG may not need
 STRING_STATIC(INFO_STANZA_INVALID_STR,                              "[invalid]");
 #define INFO_STANZA_REPO_ERROR_FORMAT                               "\n               "
-#define INFO_STANZA_ERROR_FORMAT                                    "\n         "
+#define INFO_STANZA_ERROR_FORMAT                                    "\n            "
 
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
 
@@ -1345,13 +1345,14 @@ infoRender(void)
 
                     for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
                     {
+                        // If an error has not already been reported for the stanza on this repo, then report the repo error
                         if (!strLstEmpty(repoErrorList[repoIdx].errorList))
                             stanzaData->repoList[repoIdx] = repoErrorList[repoIdx];
                     }
                 }
             }
         }
-
+// CSHANG ADD test for duplicate backup on each repo.
         // If a backup label was requested but it was not found on any repo
         if (backupLabel != NULL && !backupFound)
         {
@@ -1407,17 +1408,26 @@ infoRender(void)
                         if (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
                             statusCode == INFO_STANZA_STATUS_CODE_OTHER)
                         {
+                            // CSHANG This is without the "(other)" strCatFmt(
+                            //     resultStr, "%s%s",
+                            //     statusCode == INFO_STANZA_STATUS_CODE_MIXED ? INFO_STANZA_MIXED :
+                            //         (statusCode == INFO_STANZA_STATUS_CODE_OTHER ? INFO_STANZA_STATUS_ERROR :
+                            //         strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)",
+                            //         strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)))))),
+                            //     backupLockHeld == true ? " (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : "");
+
+
+                            // Stanza status
                             strCatFmt(
                                 resultStr, "%s%s\n",
                                 statusCode == INFO_STANZA_STATUS_CODE_MIXED ? INFO_STANZA_MIXED :
-                                    (statusCode == INFO_STANZA_STATUS_CODE_OTHER ? INFO_STANZA_STATUS_ERROR :
                                     strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)",
-                                    strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)))))),
+                                    strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))))),
                                 backupLockHeld == true ? " (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : "");
 
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
-                            String *formatSpacer = strNew(INFO_STANZA_REPO_ERROR_FORMAT);
+                            String *formatSpacer = strNew(INFO_STANZA_ERROR_FORMAT);
                             bool multiRepo = varLstSize(repoSection) > 1;
 
                             for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
@@ -1429,7 +1439,7 @@ infoRender(void)
                                 if (multiRepo)
                                 {
                                     strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
-                                    formatSpacer = strNew(INFO_STANZA_ERROR_FORMAT);
+                                    formatSpacer = strNew(INFO_STANZA_REPO_ERROR_FORMAT);
                                 }
 
                                 if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
@@ -1445,14 +1455,15 @@ infoRender(void)
 
                                         strCatFmt(
                                             resultStr, "%s",
-                                            strZ(strNewFmt("%s%s%s\n", multiRepo == true ? INFO_STANZA_STATUS_ERROR : "",
-                                            strZ(formatSpacer), strZ(strLstJoin(repoError, INFO_STANZA_REPO_ERROR_FORMAT)))));
+                                            strZ(strNewFmt("%s%s%s\n", multiRepo ? INFO_STANZA_STATUS_ERROR : "",
+                                            strZ(formatSpacer), strZ(strLstJoin(repoError, strZ(formatSpacer))))));
                                     }
                                     else
                                     {
+
                                         strCatFmt(
-                                            resultStr, "%s", strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)\n",
-                                            strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))))));
+                                            resultStr, "%s", strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)%s",
+                                            strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))), multiRepo ? "\n" : "")));
                                     }
                                 }
                             }
