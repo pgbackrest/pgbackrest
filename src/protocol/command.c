@@ -38,7 +38,7 @@ protocolCommandNew(const StringId command)
         FUNCTION_TEST_PARAM(UINT64, command); // !!! FIX WHEN STRINGID LOGGING EXISTS
     FUNCTION_TEST_END();
 
-    ASSERT(command != NULL);
+    ASSERT(command != 0);
 
     ProtocolCommand *this = NULL;
 

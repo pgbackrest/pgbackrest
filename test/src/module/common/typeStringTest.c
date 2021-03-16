@@ -527,29 +527,14 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("STRID*()"))
     {
-        TEST_RESULT_UINT(STRID1('a'), (uint64_t)'a', "1 char");
-        TEST_RESULT_UINT(STRID2('a', 'b'), (uint64_t)'a' || (uint64_t)'b' << 8, "2 chars");
-        TEST_RESULT_UINT(STRID3('a', 'b', 'c'), (uint64_t)'a' || (uint64_t)'b' << 8 || (uint64_t)'c' << 8, "3 chars");
-        TEST_RESULT_UINT(
-            STRID4('a', 'b', 'c', '-'), (uint64_t)'a' || (uint64_t)'b' << 8 || (uint64_t)'c' << 8 || (uint64_t)'-' << 8, "4 chars");
-        TEST_RESULT_UINT(
-            STRID5('a', 'b', 'c', '-', '4'),
-            (uint64_t)'a' || (uint64_t)'b' << 8 || (uint64_t)'c' << 8 || (uint64_t)'-' << 8 || (uint64_t)'4' << 8, "5 chars");
-        TEST_RESULT_UINT(
-            STRID6('a', 'b', 'c', '-', '4', '0'),
-            (uint64_t)'a' || (uint64_t)'b' << 8 || (uint64_t)'c' << 8 || (uint64_t)'-' << 8 || (uint64_t)'4' << 8 ||
-                (uint64_t)'0' << 8,
-            "6 chars");
-        TEST_RESULT_UINT(
-            STRID7('a', 'b', 'c', '-', '4', '0', '_'),
-            (uint64_t)'a' || (uint64_t)'b' << 8 || (uint64_t)'c' << 8 || (uint64_t)'-' << 8 || (uint64_t)'4' << 8
-                 || (uint64_t)'0' << 8 || (uint64_t)'_' << 8,
-            "7 chars");
-        TEST_RESULT_UINT(
-            STRID8('a', 'b', 'c', '-', '4', '0', '_', '\t'),
-            (uint64_t)'a' || (uint64_t)'b' << 8 || (uint64_t)'c' << 8 || (uint64_t)'-' << 8 || (uint64_t)'4' << 8
-                 || (uint64_t)'0' << 8 || (uint64_t)'_' << 8 || (uint64_t)'\t' << 8,
-            "8 chars");
+        TEST_RESULT_UINT(STRID1('a'), 0x61, "1 char");
+        TEST_RESULT_UINT(STRID2('a', 'b'), 0x6261, "2 chars");
+        TEST_RESULT_UINT(STRID3('a', 'b', 'C'), 0x436261, "3 chars");
+        TEST_RESULT_UINT(STRID4('a', 'b', 'C', '-'), 0x2D436261, "4 chars");
+        TEST_RESULT_UINT(STRID5('a', 'b', 'C', '-', '4'), 0x342D436261, "5 chars");
+        TEST_RESULT_UINT(STRID6('a', 'b', 'C', '-', '4', '0'), 0x30342D436261, "6 chars");
+        TEST_RESULT_UINT(STRID7('a', 'b', 'C', '-', '4', '0', '_'), 0x5F30342D436261, "7 chars");
+        TEST_RESULT_UINT(STRID8('a', 'b', 'C', '-', '4', '0', '_', '\t'), 0x095F30342D436261, "8 chars");
     }
 
     // *****************************************************************************************************************************

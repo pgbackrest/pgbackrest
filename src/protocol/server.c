@@ -218,7 +218,7 @@ protocolServerProcess(
                             break;
 
                         default:
-                            THROW_FMT(ProtocolError, "invalid command '%s'", strZ(command));
+                            THROW_FMT(ProtocolError, "invalid command '%s'", "BROKEN"); // !!! FIX
                     }
                 }
 
