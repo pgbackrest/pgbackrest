@@ -1348,7 +1348,6 @@ restoreSelectiveExpression(Manifest *manifest)
             // Generate list with ids of databases to exclude
             StringList *excludeDbIdList = strLstNew();
             const StringList *excludeList = strLstNewVarLst(cfgOptionLst(cfgOptDbExclude));
-            const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
 
             for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
             {
@@ -1371,6 +1370,8 @@ restoreSelectiveExpression(Manifest *manifest)
             }
 
             // Remove included databases from the list
+            const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
+
             for (unsigned int includeIdx = 0; includeIdx < strLstSize(includeList); includeIdx++)
             {
                 const String *includeDb = strLstGet(includeList, includeIdx);
