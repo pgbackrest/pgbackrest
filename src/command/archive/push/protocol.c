@@ -12,11 +12,6 @@ Archive Push Protocol Handler
 #include "config/config.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE_STR,               PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
-
 /**********************************************************************************************************************************/
 void
 archivePushFileProtocol(const VariantList *paramList, ProtocolServer *server)

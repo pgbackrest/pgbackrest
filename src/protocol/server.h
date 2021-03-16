@@ -14,6 +14,7 @@ typedef struct ProtocolServer ProtocolServer;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
 Protocol command handler type and structure
@@ -25,7 +26,7 @@ typedef void (*ProtocolServerCommandHandler)(const VariantList *paramList, Proto
 
 typedef struct ProtocolServerHandler
 {
-    const char *const command;
+    StringId command;
     ProtocolServerCommandHandler handler;
 } ProtocolServerHandler;
 

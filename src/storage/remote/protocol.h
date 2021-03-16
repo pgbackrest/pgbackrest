@@ -13,25 +13,6 @@ Constants
 ***********************************************************************************************************************************/
 #define PROTOCOL_BLOCK_HEADER                                       "BRBLOCK"
 
-#define PROTOCOL_COMMAND_STORAGE_FEATURE                            "storageFeature"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_FEATURE_STR);
-#define PROTOCOL_COMMAND_STORAGE_INFO                               "storageInfo"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_INFO_STR);
-#define PROTOCOL_COMMAND_STORAGE_INFO_LIST                          "storageInfoList"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
-#define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          "storageOpenRead"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
-#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         "storageOpenWrite"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
-#define PROTOCOL_COMMAND_STORAGE_PATH_CREATE                        "storagePathCreate"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR);
-#define PROTOCOL_COMMAND_STORAGE_REMOVE                             "storageRemove"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_REMOVE_STR);
-#define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        "storagePathRemove"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR);
-#define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          "storagePathSync"
-    STRING_DECLARE(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR);
-
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
@@ -52,6 +33,16 @@ void storageRemoteRemoveProtocol(const VariantList *paramList, ProtocolServer *s
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_STORAGE_FEATURE                            STRID3('s', '-', 'f')
+#define PROTOCOL_COMMAND_STORAGE_INFO                               STRID3('s', '-', 'i')
+#define PROTOCOL_COMMAND_STORAGE_INFO_LIST                          STRID3('s', '-', 'l')
+#define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          STRID3('s', '-', 'r')
+#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         STRID3('s', '-', 'w')
+#define PROTOCOL_COMMAND_STORAGE_PATH_CREATE                        STRID4('s', '-', 'p', 'c')
+#define PROTOCOL_COMMAND_STORAGE_REMOVE                             STRID3('s', '-', 'r')
+#define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        STRID4('s', '-', 'p', 'r')
+#define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          STRID4('s', '-', 'p', 's')
+
 #define PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST                                                                                \
     {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = storageRemoteFeatureProtocol},                                        \
     {.command = PROTOCOL_COMMAND_STORAGE_INFO, .handler = storageRemoteInfoProtocol},                                              \

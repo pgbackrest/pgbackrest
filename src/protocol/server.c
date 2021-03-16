@@ -134,7 +134,7 @@ protocolServerProcess(
             {
                 // Read command
                 KeyValue *commandKv = jsonToKv(ioReadLine(this->read));
-                const String *command = varStr(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR)));
+                const StringId command = varUInt64(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR)));
                 VariantList *paramList = varVarLst(kvGet(commandKv, VARSTR(PROTOCOL_KEY_PARAMETER_STR)));
 
                 // Find the handler
@@ -142,7 +142,7 @@ protocolServerProcess(
 
                 for (unsigned int handlerIdx = 0; handlerIdx < handlerListSize; handlerIdx++)
                 {
-                    if (strEqZ(command, handlerList[handlerIdx].command))
+                    if (command == handlerList[handlerIdx].command)
                     {
                         handler = handlerList[handlerIdx].handler;
                         break;
@@ -207,12 +207,19 @@ protocolServerProcess(
                 // Else check built-in commands
                 else
                 {
-                    if (strEq(command, PROTOCOL_COMMAND_NOOP_STR))
-                        protocolServerResponse(this, NULL);
-                    else if (strEq(command, PROTOCOL_COMMAND_EXIT_STR))
-                        exit = true;
-                    else
-                        THROW_FMT(ProtocolError, "invalid command '%s'", strZ(command));
+                    switch (command)
+                    {
+                        case PROTOCOL_COMMAND_EXIT:
+                            exit = true;
+                            break;
+
+                        case PROTOCOL_COMMAND_NOOP:
+                            protocolServerResponse(this, NULL);
+                            break;
+
+                        default:
+                            THROW_FMT(ProtocolError, "invalid command '%s'", strZ(command));
+                    }
                 }
 
                 // Send keep alives to remotes.  When a local process is doing work that does not involve the remote it is important

@@ -9,12 +9,6 @@ Backup Protocol Handler
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_BACKUP_FILE                                "backupFile"
-    STRING_DECLARE(PROTOCOL_COMMAND_BACKUP_FILE_STR);
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
@@ -23,6 +17,8 @@ void backupFileProtocol(const VariantList *paramList, ProtocolServer *server);
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_BACKUP_FILE                                STRID4('b', 'p', '-', 'f')
+
 #define PROTOCOL_SERVER_HANDLER_BACKUP_LIST                                                                                        \
     {.command = PROTOCOL_COMMAND_BACKUP_FILE, .handler = backupFileProtocol},
 

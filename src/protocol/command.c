@@ -23,7 +23,7 @@ Object type
 struct ProtocolCommand
 {
     MemContext *memContext;
-    const String *command;
+    StringId command;
     Variant *parameterList;
 };
 
@@ -32,10 +32,10 @@ OBJECT_DEFINE_FREE(PROTOCOL_COMMAND);
 
 /**********************************************************************************************************************************/
 ProtocolCommand *
-protocolCommandNew(const String *command)
+protocolCommandNew(const StringId command)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, command);
+        FUNCTION_TEST_PARAM(UINT64, command); // !!! FIX WHEN STRINGID LOGGING EXISTS
     FUNCTION_TEST_END();
 
     ASSERT(command != NULL);
@@ -49,7 +49,7 @@ protocolCommandNew(const String *command)
         *this = (ProtocolCommand)
         {
             .memContext = memContextCurrent(),
-            .command = strDup(command),
+            .command = command,
         };
     }
     MEM_CONTEXT_NEW_END();
@@ -96,7 +96,7 @@ protocolCommandJson(const ProtocolCommand *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        KeyValue *command = kvPut(kvNew(), VARSTR(PROTOCOL_KEY_COMMAND_STR), VARSTR(this->command));
+        KeyValue *command = kvPut(kvNew(), VARSTR(PROTOCOL_KEY_COMMAND_STR), VARUINT64(this->command));
 
         if (this->parameterList != NULL)
             kvPut(command, VARSTR(PROTOCOL_KEY_PARAMETER_STR), this->parameterList);

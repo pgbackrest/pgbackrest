@@ -754,7 +754,7 @@ verifyArchive(void *data)
                         String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
                         // Set up the job
-                        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
+                        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
                         protocolCommandParamAdd(command, VARSTR(filePathName));
                         protocolCommandParamAdd(command, VARSTR(checksum));
                         protocolCommandParamAdd(command, VARUINT64(archiveResult->pgWalInfo.size));
@@ -977,7 +977,7 @@ verifyBackup(void *data)
                 if (filePathName != NULL)
                 {
                     // Set up the job
-                    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE_STR);
+                    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
                     protocolCommandParamAdd(command, VARSTR(filePathName));
 
                     // If the checksum is not present in the manifest, it will be calculated by manifest load

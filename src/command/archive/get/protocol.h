@@ -5,14 +5,9 @@ Archive Get Protocol Handler
 #define COMMAND_ARCHIVE_GET_PROTOCOL_H
 
 #include "common/type/string.h"
+#include "common/type/stringId.h"
 #include "common/type/variantList.h"
 #include "protocol/server.h"
-
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_ARCHIVE_GET_FILE                           "archiveGetFile"
-    STRING_DECLARE(PROTOCOL_COMMAND_ARCHIVE_GET_FILE_STR);
 
 /***********************************************************************************************************************************
 Functions
@@ -23,6 +18,8 @@ void archiveGetFileProtocol(const VariantList *paramList, ProtocolServer *server
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_ARCHIVE_GET_FILE                           STRID4('a', 'g', '-', 'f')
+
 #define PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST                                                                                   \
     {.command = PROTOCOL_COMMAND_ARCHIVE_GET_FILE, .handler = archiveGetFileProtocol},
 

@@ -22,19 +22,6 @@ Remote Storage Protocol Handler
 #include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_FEATURE_STR,                 PROTOCOL_COMMAND_STORAGE_FEATURE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_STR,                    PROTOCOL_COMMAND_STORAGE_INFO);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR,               PROTOCOL_COMMAND_STORAGE_INFO_LIST);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR,               PROTOCOL_COMMAND_STORAGE_OPEN_READ);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR,              PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR,             PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR,             PROTOCOL_COMMAND_STORAGE_PATH_REMOVE);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR,               PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
-STRING_EXTERN(PROTOCOL_COMMAND_STORAGE_REMOVE_STR,                  PROTOCOL_COMMAND_STORAGE_REMOVE);
-
-/***********************************************************************************************************************************
 Regular expressions
 ***********************************************************************************************************************************/
 STRING_STATIC(BLOCK_REG_EXP_STR,                                    PROTOCOL_BLOCK_HEADER "-1|[0-9]+");

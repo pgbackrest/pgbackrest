@@ -122,11 +122,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
-        total: 26
+        total: 27
         feature: string
 
         coverage:
           - common/type/string
+          - common/type/stringId: noCode
           - common/type/stringList
 
         depend:

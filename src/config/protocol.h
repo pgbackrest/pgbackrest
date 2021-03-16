@@ -10,12 +10,6 @@ Configuration Protocol Handler
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_CONFIG_OPTION                              "configOption"
-    STRING_DECLARE(PROTOCOL_COMMAND_CONFIG_OPTION_STR);
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process config protocol requests
@@ -27,6 +21,8 @@ VariantList *configOptionRemote(ProtocolClient *client, const VariantList *param
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_CONFIG_OPTION                              STRID5('o', 'p', 't', '-', 'g')
+
 #define PROTOCOL_SERVER_HANDLER_OPTION_LIST                                                                                        \
     {.command = PROTOCOL_COMMAND_CONFIG_OPTION, .handler = configOptionProtocol},
 
