@@ -734,6 +734,11 @@ testRun(void)
                 TEST_RESULT_BOOL(storageExistsP(s3, strNew("BOGUS")), false, "check");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for / does not exist");
+
+                TEST_RESULT_BOOL(storageInfoP(s3, NULL, .ignoreMissing = true).exists, false, "info for /");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
 
                 // File missing
