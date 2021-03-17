@@ -1609,9 +1609,17 @@ testRun(void)
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
-            "    status: ok\n"
-            "    cipher: none\n"
-            "\n", "TEST");
+            "    status: error (other)\n"
+            "        repo1: error\n"
+            "               [FileMissingError] manifest does not exist for backup 'bogus'\n"
+            "               HINT: is the backup listed when running the info command with --stanza option only?\n"
+            "        repo2: error\n"
+            "               [FileMissingError] manifest does not exist for backup 'bogus'\n"
+            "               HINT: is the backup listed when running the info command with --stanza option only?\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n",
+            "text, multi-repo, manifest missing/backup label bad format");
 
 // CSHANG Still some formatting issues and need to add some tests for duplicate backups, manifest error, and acqure-lock error
 
@@ -2686,12 +2694,86 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), "No stanzas exist in the repository.\n",
             "    check text");
-        // CSHANG Need to move these OR need to have
-        // //--------------------------------------------------------------------------------------------------------------------------
-        // strLstAddZ(argList, "--set=bogus");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        strLstAddZ(argList, "--set=bogus");
+
+        TEST_ERROR_FMT(
+            harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo-level error");
+
+        TEST_RESULT_VOID(
+            storagePathCreateP(storageLocalWrite(), strNewFmt("%s/repo2", testPath()), .mode = 0200), "repo directory with bad permissions");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 1, "%s/repo2", testPath());
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: [invalid]\n"
+            "    status: error (other)\n"
+            "            [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
+            "    cipher: none\n", testPath()),
+            "text - invalid stanza");
+
+        hrnCfgArgRawZ(argList, cfgOptOutput, "json");
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "["
+                "{"
+                    "\"archive\":[],"
+                    "\"backup\":[],"
+                    "\"cipher\":\"none\","
+                    "\"db\":[],"
+                    "\"name\":\"[invalid]\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":99,"
+                                "\"message\":\"[PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission"
+                                " denied\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
+                        "\"code\":99,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
+                        "\"message\":\"other\""
+                        "}"
+                "}"
+            "]", testPath()),
+            "json - invalid stanza");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 1, "%s/repo2", testPath());
+        hrnCfgArgRawZ(argList, cfgOptStanza, "stanza1");
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: error (other)\n"
+            "            [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
+            "    cipher: none\n", testPath()),
+            "text - stanza requested");
+                //
+        // hrnCfgArgRawZ(argList, cfgOptStanza, "stanza1");
+        // harnessCfgLoad(cfgCmdInfo, argList);
         //
-        // TEST_ERROR_FMT(
-        //     harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
+        //         TEST_RESULT_STR_Z(
+        //             infoRender(),
+        //             "stanza: stanza1\n"
+        //             "    status: error (other)\n"
+        //             "            [FileOpenError] unable to get info for path/file '%s/bogus/backup.manifest': [13] Permission denied
+        // cipher: none
+        //             "stanza: stanza1\n", "TEST");
         //
         // // Option --repo not required when only 1 repo configured
         // strLstAddZ(argList, "--stanza=stanza1");

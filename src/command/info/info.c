@@ -1321,14 +1321,15 @@ infoRender(void)
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 
-        // Record any repository-level errors with each stanza - if there are no stanzas then create an "invalid" one for reporting
+        // Record any repository-level errors with each stanza - if there are no stanzas and one was not requested, then create an
+        // "invalid" one for reporting
         if (repoError)
         {
             if (lstEmpty(stanzaRepoList))
             {
                 InfoStanzaRepo stanzaRepo =
                 {
-                    .name = INFO_STANZA_INVALID_STR,
+                    .name = stanza != NULL ? stanza : INFO_STANZA_INVALID_STR,
                     .currentPgVersion = 0,
                     .currentPgSystemId = 0,
                     .repoList = repoErrorList,
@@ -1427,7 +1428,7 @@ infoRender(void)
 
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
-                            String *formatSpacer = strNew(INFO_STANZA_ERROR_FORMAT);
+                            String *formatSpacer = strNew("            "); // CSHANG 12 spaces
                             bool multiRepo = varLstSize(repoSection) > 1;
 
                             for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
@@ -1439,7 +1440,7 @@ infoRender(void)
                                 if (multiRepo)
                                 {
                                     strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
-                                    formatSpacer = strNew(INFO_STANZA_REPO_ERROR_FORMAT);
+                                    formatSpacer = strNew("               ");  // CSHANG 16
                                 }
 
                                 if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
@@ -1453,17 +1454,19 @@ infoRender(void)
                                         StringList *repoError = strLstNewSplit(
                                             varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR)), STRDEF("\n"));
 
-                                        strCatFmt(
-                                            resultStr, "%s",
-                                            strZ(strNewFmt("%s%s%s\n", multiRepo ? INFO_STANZA_STATUS_ERROR : "",
-                                            strZ(formatSpacer), strZ(strLstJoin(repoError, strZ(formatSpacer))))));
+strCatFmt(resultStr, "%s%s%s\n", multiRepo ? INFO_STANZA_STATUS_ERROR "\n" : "", strZ(formatSpacer),
+strZ(strLstJoin(repoError, strZ(strNewFmt("\n%s", strZ(formatSpacer))))));  // CSHANG 12 spaces
+                                        // strCatFmt(
+                                        //     resultStr, "%s\n",
+                                        //     strZ(strNewFmt("%s%s%s", multiRepo ? INFO_STANZA_STATUS_ERROR : "",
+                                        //     strZ(formatSpacer), strZ(strNewFmt("%s", strZ(strLstJoin(repoError, strZ(formatSpacer))))))));
                                     }
                                     else
                                     {
 
                                         strCatFmt(
-                                            resultStr, "%s", strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)%s",
-                                            strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))), multiRepo ? "\n" : "")));
+                                            resultStr, INFO_STANZA_STATUS_ERROR " (%s)\n",
+                                            strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))));
                                     }
                                 }
                             }
