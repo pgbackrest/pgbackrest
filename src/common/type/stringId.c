@@ -4,6 +4,7 @@ Represent Short Strings as Integers
 #include "build.auto.h"
 
 #include "common/assert.h"
+#include "common/debug.h"
 #include "common/type/stringId.h"
 
 /**********************************************************************************************************************************/
