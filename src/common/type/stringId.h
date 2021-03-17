@@ -38,8 +38,11 @@ typedef uint64_t StringId;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Convert a string id back to a String, usually for logging
+// Convert a StringId to a String
 String *strIdToStr(const StringId strId);
+
+// Convert a String to a StringId
+StringId strIdFromStr(const String *const str);
 
 /***********************************************************************************************************************************
 Macros for function logging

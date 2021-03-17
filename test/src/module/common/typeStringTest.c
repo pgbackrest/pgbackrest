@@ -539,6 +539,19 @@ testRun(void)
         TEST_RESULT_UINT(STRID8('a', 'b', 'C', '-', '4', '0', '_', '\t'), 0x095F30342D436261, "8 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdFromStr()");
+
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("a")), 0x61, "1 char");
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("ab")), 0x6261, "2 chars");
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC")), 0x436261, "3 chars");
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-")), 0x2D436261, "4 chars");
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-4")), 0x342D436261, "5 chars");
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-40")), 0x30342D436261, "6 chars");
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-40_")), 0x5F30342D436261, "7 chars");
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-40_\t")), 0x095F30342D436261, "8 chars");
+        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-40_\t?")), 0x095F30342D436261, "9 chars (truncated to 8)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToStr()");
 
         TEST_RESULT_STR_Z(strIdToStr(0x61), "a", "string id to string");

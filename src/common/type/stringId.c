@@ -10,13 +10,65 @@ Represent Short Strings as Integers
 String *
 strIdToStr(const StringId strId)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGID, strId);
+    FUNCTION_TEST_END();
+
     // One byte encodes one char so the buffer need be no larger than the size of an unsigned 64-bit integer plus the terminator
     char buffer[sizeof(uint64_t) + 1];
 
     // Use the log function to get the zero-terminated string
     strIdToLog(strId, buffer, sizeof(buffer));
 
-    return strNew(buffer);
+    FUNCTION_TEST_RETURN(strNew(buffer));
+}
+
+/**********************************************************************************************************************************/
+StringId strIdFromStr(const String *const str)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, str);
+    FUNCTION_TEST_END();
+
+    ASSERT(str != NULL);
+    ASSERT(strSize(str) > 0);
+
+    const char *const ptr = strZ(str);
+
+    switch (strSize(str))
+    {
+        case 1:
+            FUNCTION_TEST_RETURN((uint64_t)ptr[0]);
+
+        case 2:
+            FUNCTION_TEST_RETURN((uint64_t)ptr[0] | (uint64_t)ptr[1] << 8);
+
+        case 3:
+            FUNCTION_TEST_RETURN((uint64_t)ptr[0] | (uint64_t)ptr[1] << 8 | (uint64_t)ptr[2] << 16);
+
+        case 4:
+            FUNCTION_TEST_RETURN((uint64_t)ptr[0] | (uint64_t)ptr[1] << 8 | (uint64_t)ptr[2] << 16 | (uint64_t)ptr[3] << 24);
+
+        case 5:
+            FUNCTION_TEST_RETURN(
+                (uint64_t)ptr[0] | (uint64_t)ptr[1] << 8 | (uint64_t)ptr[2] << 16 | (uint64_t)ptr[3] << 24 |
+                (uint64_t)ptr[4] << 32);
+
+        case 6:
+            FUNCTION_TEST_RETURN(
+                (uint64_t)ptr[0] | (uint64_t)ptr[1] << 8 | (uint64_t)ptr[2] << 16 | (uint64_t)ptr[3] << 24 |
+                (uint64_t)ptr[4] << 32 | (uint64_t)ptr[5] << 40);
+
+        case 7:
+            FUNCTION_TEST_RETURN(
+                (uint64_t)ptr[0] | (uint64_t)ptr[1] << 8 | (uint64_t)ptr[2] << 16 | (uint64_t)ptr[3] << 24 |
+                (uint64_t)ptr[4] << 32 | (uint64_t)ptr[5] << 40 | (uint64_t)ptr[6] << 48);
+
+        default:
+            FUNCTION_TEST_RETURN(
+                (uint64_t)ptr[0] | (uint64_t)ptr[1] << 8 | (uint64_t)ptr[2] << 16 | (uint64_t)ptr[3] << 24 |
+                (uint64_t)ptr[4] << 32 | (uint64_t)ptr[5] << 40 | (uint64_t)ptr[6] << 48 | (uint64_t)ptr[7] << 56);
+    }
 }
 
 /**********************************************************************************************************************************/

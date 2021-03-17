@@ -674,13 +674,13 @@ testRun(void)
 
                 // Simple request
                 TEST_RESULT_VOID(
-                    ioWriteStrLine(write, strNewFmt("{\"cmd\":%" PRIu64 "}", STRID3('r', '-', 's'))), "write simple request");
+                    ioWriteStrLine(write, strNewFmt("{\"cmd\":%u}", STRID3('r', '-', 's'))), "write simple request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "simple request result");
 
                 // Throw an assert error which will include a stack trace
                 TEST_RESULT_VOID(
-                    ioWriteStrLine(write, strNewFmt("{\"cmd\":%" PRIu64 "}", STRID4('a', 's', 'r', 't'))), "write assert");
+                    ioWriteStrLine(write, strNewFmt("{\"cmd\":%u}", STRID4('a', 's', 'r', 't'))), "write assert");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush assert error");
                 TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
                 TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 25, "    check code");
@@ -689,7 +689,7 @@ testRun(void)
 
                 // Complex request -- after process loop has been restarted
                 TEST_RESULT_VOID(
-                    ioWriteStrLine(write, strNewFmt("{\"cmd\":%" PRIu64 "}", STRID3('r', '-', 'c'))), "write complex request");
+                    ioWriteStrLine(write, strNewFmt("{\"cmd\":%u}", STRID3('r', '-', 'c'))), "write complex request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush complex request");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":false}", "complex request result");
                 TEST_RESULT_STR_Z(ioReadLine(read), ".LINEOFTEXT", "complex request result");
@@ -701,7 +701,7 @@ testRun(void)
 
                 // Retry errors until success
                 TEST_RESULT_VOID(
-                    ioWriteStrLine(write, strNewFmt("{\"cmd\":%" PRIu64 "}", STRID2('e', '0'))), "write error-until-0");
+                    ioWriteStrLine(write, strNewFmt("{\"cmd\":%d}", STRID2('e', '0'))), "write error-until-0");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush error-until-0");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "error-until-0 result");
 
