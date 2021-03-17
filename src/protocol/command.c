@@ -35,7 +35,7 @@ ProtocolCommand *
 protocolCommandNew(const StringId command)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGID, command);
+        FUNCTION_TEST_PARAM(STRING_ID, command);
     FUNCTION_TEST_END();
 
     ASSERT(command != 0);

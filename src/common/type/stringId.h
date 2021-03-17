@@ -8,8 +8,15 @@ Represent Short Strings as Integers
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "common/type/string.h"
+
+/***********************************************************************************************************************************
+Maximum number of characters in a StringId. This is a safe buffer size when calling strIdToZN. If the buffer needs to be
+zero-terminated then an extra byte will be needed.
+***********************************************************************************************************************************/
+#define STRING_ID_MAX                                               8
 
 /***********************************************************************************************************************************
 !!! AND EXPLAIN WHY THIS IS A TYPEDEF SINCE WE DO NOT NORMALLY TYPEDEF STANDARD TYPES
@@ -38,20 +45,42 @@ typedef uint64_t StringId;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Convert a StringId to a String
+// Write StringId to characters without zero-terminating. The buffer at ptr must have enough space to write the entire StringId,
+// which could be eight characters. However, the caller may know the exact (or max length) in advance and act accordingly. The
+// actual number of bytes written is returned.
+size_t strIdToZN(StringId strId, char *const buffer);
+
+// Convert StringId to String
 String *strIdToStr(const StringId strId);
 
-// Convert a String to a StringId
-StringId strIdFromStr(const String *const str);
+// Convert StringId to zero-terminated string. See strIdToZN() for buffer sizing and return value.
+size_t strIdToZ(const StringId strId, char *const buffer);
+
+// Convert N chars to StringId
+StringId strIdFromZN(const char *const buffer, const size_t size);
+
+// Convert String to StringId
+__attribute__((always_inline)) static inline StringId
+strIdFromStr(const String *const str)
+{
+    return strIdFromZN(strZ(str), strSize(str));
+}
+
+// Convert zero-terminted string to StringId
+__attribute__((always_inline)) static inline StringId
+strIdFromZ(const char *const str)
+{
+    return strIdFromZN(str, strlen(str));
+}
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 size_t strIdToLog(const StringId strId, char *const buffer, const size_t bufferSize);
 
-#define FUNCTION_LOG_STRINGID_TYPE                                                                                                 \
+#define FUNCTION_LOG_STRING_ID_TYPE                                                                                                \
     StringId
-#define FUNCTION_LOG_STRINGID_FORMAT(value, buffer, bufferSize)                                                                    \
+#define FUNCTION_LOG_STRING_ID_FORMAT(value, buffer, bufferSize)                                                                   \
     strIdToLog(value, buffer, bufferSize)
 
 #endif

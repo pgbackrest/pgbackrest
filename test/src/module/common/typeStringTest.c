@@ -525,7 +525,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("STRID*(), strIdToStr(), and strIdToLog()"))
+    if (testBegin("STRID*(), strIdTo*(), and strIdFrom*()"))
     {
         TEST_TITLE("STRID* macros");
 
@@ -539,29 +539,67 @@ testRun(void)
         TEST_RESULT_UINT(STRID8('a', 'b', 'C', '-', '4', '0', '_', '\t'), 0x095F30342D436261, "8 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdFromZN()");
+
+        TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 1), 0x61, "1 char");
+        TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 2), 0x6261, "2 chars");
+        TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 3), 0x436261, "3 chars");
+        TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 4), 0x2D436261, "4 chars");
+        TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 5), 0x342D436261, "5 chars");
+        TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 6), 0x30342D436261, "6 chars");
+        TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 7), 0x5F30342D436261, "7 chars");
+        TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 8), 0x095F30342D436261, "8 chars");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdFromStr()");
 
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("a")), 0x61, "1 char");
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("ab")), 0x6261, "2 chars");
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC")), 0x436261, "3 chars");
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-")), 0x2D436261, "4 chars");
         TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-4")), 0x342D436261, "5 chars");
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-40")), 0x30342D436261, "6 chars");
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-40_")), 0x5F30342D436261, "7 chars");
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-40_\t")), 0x095F30342D436261, "8 chars");
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-40_\t?")), 0x095F30342D436261, "9 chars (truncated to 8)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdFromZ()");
+
+        TEST_RESULT_UINT(strIdFromZ("abC-"), 0x2D436261, "4 chars");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdToZN()");
+
+        char buffer[STRING_ID_MAX + 1] = "XXXXXXXX";
+
+        TEST_RESULT_UINT(strIdToZN(0x61, buffer), 1, "1 char");
+        TEST_RESULT_Z(buffer, "aXXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(0x6261, buffer), 2, "2 chars");
+        TEST_RESULT_Z(buffer, "abXXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(0x436261, buffer), 3, "3 chars");
+        TEST_RESULT_Z(buffer, "abCXXXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(0x2D436261, buffer), 4, "4 chars");
+        TEST_RESULT_Z(buffer, "abC-XXXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(0x342D436261, buffer), 5, "5 chars");
+        TEST_RESULT_Z(buffer, "abC-4XXX", "    check");
+        TEST_RESULT_UINT(strIdToZN(0x30342D436261, buffer), 6, "6 chars");
+        TEST_RESULT_Z(buffer, "abC-40XX", "    check");
+        TEST_RESULT_UINT(strIdToZN(0x5F30342D436261, buffer), 7, "7 chars");
+        TEST_RESULT_Z(buffer, "abC-40_X", "    check");
+        TEST_RESULT_UINT(strIdToZN(0x095F30342D436261, buffer), 8, "8 chars");
+        TEST_RESULT_Z(buffer, "abC-40_\t", "    check");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToStr()");
 
-        TEST_RESULT_STR_Z(strIdToStr(0x61), "a", "string id to string");
-        TEST_RESULT_STR_Z(strIdToStr(0x095F30342D436261), "abC-40_\t", "string id to string");
+        TEST_RESULT_STR_Z(strIdToStr(0x61), "a", "1 char");
+        TEST_RESULT_STR_Z(strIdToStr(0x095F30342D436261), "abC-40_\t", "8 chars");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdToStr()");
+
+        TEST_RESULT_UINT(strIdToZ(0x61, buffer), 1, "1 char");
+        TEST_RESULT_Z(buffer, "a", "    check");
+        TEST_RESULT_UINT(strIdToZ(0x2D436261, buffer), 4, "4 chars");
+        TEST_RESULT_Z(buffer, "abC-", "    check");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToLog()");
 
-        char buffer[] = "XX";
-        TEST_RESULT_UINT(strIdToLog(0x36261, buffer, sizeof(buffer)), 2, "string id with limited buffer");
+        TEST_RESULT_UINT(strIdToLog(0x6261, buffer, sizeof(buffer)), 2, "string id with limited buffer");
         TEST_RESULT_UINT(strlen(buffer), 2, "    check length");
         TEST_RESULT_Z(buffer, "ab", "    check buffer");
     }
