@@ -1621,8 +1621,6 @@ testRun(void)
             "        repo2: aes-256-cbc\n",
             "text, multi-repo, manifest missing/backup label bad format");
 
-// CSHANG add some tests for duplicate backups, manifest error, and acqure-lock error
-
         // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListMultiRepo);
@@ -2424,8 +2422,7 @@ testRun(void)
             strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath),
             strZ(backupPath), strZ(backupPath), strZ(backupPath)),
             "text - multi-repo, multi-stanza cipher error");
-
-
+// CSHANG ADD TEST FOR inability to read the WAL Dir
         // Unset environment key
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
     }

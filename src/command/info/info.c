@@ -111,7 +111,7 @@ typedef struct InfoRepoData
     InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
     InfoArchive *archiveInfo;                                       // Contents of the archive.info file of the stanza on this repo
     Manifest *manifest;                                             // Contents of manifest if backup requested and is on this repo
-    StringList *errorList; // CSHANG This may only need to be a string
+    String *error; // CSHANG This may only need to be a string
 } InfoRepoData;
 
 #define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
@@ -159,13 +159,15 @@ static void
 infoStanzaErrorAdd(InfoRepoData *repoList, const ErrorType *type, const String *message)
 {
     repoList->stanzaStatus = INFO_STANZA_STATUS_CODE_OTHER;
-    strLstAdd(repoList->errorList, strNewFmt("[%s] %s", errorTypeName(type), strZ(message)));
+    repoList->error = strNewFmt("[%s] %s", errorTypeName(type), strZ(message));
 
     // Free the info objects for this stanza since we cannot process it
     infoBackupFree(repoList->backupInfo);
     infoArchiveFree(repoList->archiveInfo);
+    manifestFree(repoList->manifest);
     repoList->backupInfo = NULL;
     repoList->archiveInfo = NULL;
+    repoList->manifest = NULL;
 }
 
 /***********************************************************************************************************************************
@@ -264,7 +266,7 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo, InfoRepoData *repoData
             break;
 
         case INFO_STANZA_STATUS_CODE_OTHER:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(strLstJoin(repoData->errorList, "\n")));
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(repoData->error));
             break;
     }
 
@@ -1223,7 +1225,7 @@ infoRender(void)
                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
                 .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx),
-                .errorList = strLstNew(),
+                .error = strNew(""),
             };
 
             // Initialize backup label indicator
@@ -1295,7 +1297,7 @@ infoRender(void)
                                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
                                 .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
                                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
-                                .errorList = strLstNew(),
+                                .error = strNew(""),
                             };
                         }
 
@@ -1347,7 +1349,7 @@ infoRender(void)
                     for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
                     {
                         // If an error has not already been reported for the stanza on this repo, then report the repo error
-                        if (!strLstEmpty(repoErrorList[repoIdx].errorList))
+                        if (!strEmpty(repoErrorList[repoIdx].error))
                             stanzaData->repoList[repoIdx] = repoErrorList[repoIdx];
                     }
                 }
