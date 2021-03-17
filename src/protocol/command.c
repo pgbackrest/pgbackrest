@@ -35,7 +35,7 @@ ProtocolCommand *
 protocolCommandNew(const StringId command)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT64, command); // !!! FIX WHEN STRINGID LOGGING EXISTS
+        FUNCTION_TEST_PARAM(STRINGID, command);
     FUNCTION_TEST_END();
 
     ASSERT(command != 0);
@@ -116,5 +116,5 @@ protocolCommandJson(const ProtocolCommand *this)
 String *
 protocolCommandToLog(const ProtocolCommand *this)
 {
-    return strNewFmt("{command: %" PRIu64 "}", this->command); // !!! ADD DEBUG
+    return strNewFmt("{command: %s}", strZ(strIdToStr(this->command)));
 }

@@ -525,7 +525,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("STRID*()"))
+    if (testBegin("STRID*(), strIdToStr(), and strIdToLog()"))
     {
         TEST_RESULT_UINT(STRID1('a'), 0x61, "1 char");
         TEST_RESULT_UINT(STRID2('a', 'b'), 0x6261, "2 chars");
@@ -535,6 +535,14 @@ testRun(void)
         TEST_RESULT_UINT(STRID6('a', 'b', 'C', '-', '4', '0'), 0x30342D436261, "6 chars");
         TEST_RESULT_UINT(STRID7('a', 'b', 'C', '-', '4', '0', '_'), 0x5F30342D436261, "7 chars");
         TEST_RESULT_UINT(STRID8('a', 'b', 'C', '-', '4', '0', '_', '\t'), 0x095F30342D436261, "8 chars");
+
+        TEST_RESULT_STR_Z(strIdToStr(0x61), "a", "string id to string");
+        TEST_RESULT_STR_Z(strIdToStr(0x095F30342D436261), "abC-40_\t", "string id to string");
+
+        char buffer[] = "XX";
+        TEST_RESULT_UINT(strIdToLog(0x36261, buffer, sizeof(buffer)), 2, "string id with limited buffer");
+        TEST_RESULT_UINT(strlen(buffer), 2, "    check length");
+        TEST_RESULT_Z(buffer, "ab", "    check buffer");
     }
 
     // *****************************************************************************************************************************

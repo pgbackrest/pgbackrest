@@ -443,12 +443,12 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: 828665187}", "check log");
+        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: cmd1}", "check log");
         TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":828665187,\"param\":[\"param1\",\"param2\"]}", "check json");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(command, protocolCommandNew(STRID4('c', 'm', 'd', '2')), "create command");
-        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: 845442403}", "check log");
+        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: cmd2}", "check log");
         TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":845442403}", "check json");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -664,11 +664,12 @@ testRun(void)
                 // Invalid command
                 KeyValue *result = NULL;
 
-                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":1}")), "write bogus");
+                TEST_RESULT_VOID(
+                    ioWriteStrLine(write, strNewFmt("{\"cmd\":%" PRIu64 "}", STRID5('b', 'o', 'g', 'u', 's'))), "write bogus");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush bogus");
                 TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
                 TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 39, "    check code");
-                TEST_RESULT_STR_Z(varStr(kvGet(result, VARSTRDEF("out"))), "invalid command 'BROKEN'", "    check message");
+                TEST_RESULT_STR_Z(varStr(kvGet(result, VARSTRDEF("out"))), "invalid command 'bogus'", "    check message");
                 TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Simple request
