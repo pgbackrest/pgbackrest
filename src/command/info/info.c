@@ -91,10 +91,8 @@ STRING_STATIC(INFO_STANZA_MESSAGE_MIXED_STR,                        "different a
 #define INFO_STANZA_STATUS_CODE_PG_MISMATCH                         5
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mismatch across repos");
 #define INFO_STANZA_STATUS_CODE_OTHER                               99
-STRING_STATIC(INFO_STANZA_STATUS_CODE_OTHER_STR,                    "other");  // CSHANG may not need
+STRING_STATIC(INFO_STANZA_STATUS_CODE_OTHER_STR,                    "other");
 STRING_STATIC(INFO_STANZA_INVALID_STR,                              "[invalid]");
-#define INFO_STANZA_REPO_ERROR_FORMAT                               "\n               "
-#define INFO_STANZA_ERROR_FORMAT                                    "\n            "
 
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
 
@@ -655,7 +653,8 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
                 // If the backup.info file has been read, then get the backup and archive information on this repo
                 if (repoData->backupInfo != NULL)
                 {
-                    // If the backup.info file exists, get the database history information (oldest to newest) and corresponding archive
+                    // If the backup.info file exists, get the database history information (oldest to newest) and corresponding
+                    // archive
                     for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(repoData->backupInfo)) - 1; (int)pgIdx >= 0; pgIdx--)
                     {
                         InfoPgData pgData = infoPgData(infoBackupPg(repoData->backupInfo), pgIdx);
@@ -679,7 +678,8 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
                         infoBackupPg(repoData->backupInfo), infoPgDataCurrentId(infoBackupPg(repoData->backupInfo)));
 
                     // The current PG system and version must match across repos for the stanza, if not, a failure may have occurred
-                    // during an upgrade or the repo may have been disabled during the stanza upgrade to protect from error propagation
+                    // during an upgrade or the repo may have been disabled during the stanza upgrade to protect from error
+                    // propagation
                     if (stanzaData->currentPgVersion != backupInfoCurrentPg.version ||
                         stanzaData->currentPgSystemId != backupInfoCurrentPg.systemId)
                     {
@@ -1133,7 +1133,7 @@ infoUpdateStanza(
                         stanzaRepo->repoList[repoIdx].cipher,
                         infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
                 }
-// CSHANG BUT THIS WILL NOW BE AN ERROR FOR EVERY REPO - unless we don't get here for one or more. - but does that matter?
+
                 // If a backup-lock check has not already been performed, then do so
                 if (!stanzaRepo->backupLockChecked)
                 {
@@ -1353,7 +1353,7 @@ infoRender(void)
                 }
             }
         }
-// CSHANG ADD test for duplicate backup on each repo.
+
         // If a backup label was requested but it was not found on any repo
         if (backupLabel != NULL && !backupFound)
         {
@@ -1409,15 +1409,6 @@ infoRender(void)
                         if (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
                             statusCode == INFO_STANZA_STATUS_CODE_OTHER)
                         {
-                            // CSHANG This is without the "(other)" strCatFmt(
-                            //     resultStr, "%s%s",
-                            //     statusCode == INFO_STANZA_STATUS_CODE_MIXED ? INFO_STANZA_MIXED :
-                            //         (statusCode == INFO_STANZA_STATUS_CODE_OTHER ? INFO_STANZA_STATUS_ERROR :
-                            //         strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)",
-                            //         strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)))))),
-                            //     backupLockHeld == true ? " (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : "");
-
-
                             // Stanza status
                             strCatFmt(
                                 resultStr, "%s%s\n",
@@ -1428,7 +1419,7 @@ infoRender(void)
 
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
-                            String *formatSpacer = strNew("            "); // CSHANG 12 spaces
+                            String *formatSpacer = strNew("            ");
                             bool multiRepo = varLstSize(repoSection) > 1;
 
                             for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
@@ -1440,7 +1431,7 @@ infoRender(void)
                                 if (multiRepo)
                                 {
                                     strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
-                                    formatSpacer = strNew("               ");  // CSHANG 16
+                                    formatSpacer = strNew("               ");
                                 }
 
                                 if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
@@ -1454,12 +1445,10 @@ infoRender(void)
                                         StringList *repoError = strLstNewSplit(
                                             varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR)), STRDEF("\n"));
 
-strCatFmt(resultStr, "%s%s%s\n", multiRepo ? INFO_STANZA_STATUS_ERROR "\n" : "", strZ(formatSpacer),
-strZ(strLstJoin(repoError, strZ(strNewFmt("\n%s", strZ(formatSpacer))))));  // CSHANG 12 spaces
-                                        // strCatFmt(
-                                        //     resultStr, "%s\n",
-                                        //     strZ(strNewFmt("%s%s%s", multiRepo ? INFO_STANZA_STATUS_ERROR : "",
-                                        //     strZ(formatSpacer), strZ(strNewFmt("%s", strZ(strLstJoin(repoError, strZ(formatSpacer))))))));
+                                        strCatFmt(
+                                            resultStr, "%s%s%s\n", multiRepo ? INFO_STANZA_STATUS_ERROR "\n" : "",
+                                            strZ(formatSpacer),
+                                            strZ(strLstJoin(repoError, strZ(strNewFmt("\n%s", strZ(formatSpacer))))));
                                     }
                                     else
                                     {

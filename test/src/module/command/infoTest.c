@@ -1621,7 +1621,7 @@ testRun(void)
             "        repo2: aes-256-cbc\n",
             "text, multi-repo, manifest missing/backup label bad format");
 
-// CSHANG Still some formatting issues and need to add some tests for duplicate backups, manifest error, and acqure-lock error
+// CSHANG add some tests for duplicate backups, manifest error, and acqure-lock error
 
         // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
@@ -2705,7 +2705,8 @@ testRun(void)
         TEST_TITLE("repo-level error");
 
         TEST_RESULT_VOID(
-            storagePathCreateP(storageLocalWrite(), strNewFmt("%s/repo2", testPath()), .mode = 0200), "repo directory with bad permissions");
+            storagePathCreateP(
+                storageLocalWrite(), strNewFmt("%s/repo2", testPath()), .mode = 0200), "repo directory with bad permissions");
 
         argList = strLstNew();
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 1, "%s/repo2", testPath());
@@ -2763,6 +2764,19 @@ testRun(void)
             "            [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
             "    cipher: none\n", testPath()),
             "text - stanza requested");
+
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo", testPath());
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: error\n"
+            "               [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
+            "        repo2: error (missing stanza path)\n"
+            "    cipher: none\n", testPath()),
+            "text - stanza repo structure exists");
                 //
         // hrnCfgArgRawZ(argList, cfgOptStanza, "stanza1");
         // harnessCfgLoad(cfgCmdInfo, argList);
