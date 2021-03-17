@@ -527,6 +527,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("STRID*(), strIdToStr(), and strIdToLog()"))
     {
+        TEST_TITLE("STRID* macros");
+
         TEST_RESULT_UINT(STRID1('a'), 0x61, "1 char");
         TEST_RESULT_UINT(STRID2('a', 'b'), 0x6261, "2 chars");
         TEST_RESULT_UINT(STRID3('a', 'b', 'C'), 0x436261, "3 chars");
@@ -536,8 +538,14 @@ testRun(void)
         TEST_RESULT_UINT(STRID7('a', 'b', 'C', '-', '4', '0', '_'), 0x5F30342D436261, "7 chars");
         TEST_RESULT_UINT(STRID8('a', 'b', 'C', '-', '4', '0', '_', '\t'), 0x095F30342D436261, "8 chars");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdToStr()");
+
         TEST_RESULT_STR_Z(strIdToStr(0x61), "a", "string id to string");
         TEST_RESULT_STR_Z(strIdToStr(0x095F30342D436261), "abC-40_\t", "string id to string");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdToLog()");
 
         char buffer[] = "XX";
         TEST_RESULT_UINT(strIdToLog(0x36261, buffer, sizeof(buffer)), 2, "string id with limited buffer");
