@@ -191,7 +191,7 @@ typedef struct ArchivePushCheckResult
 {
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system id
-    ArchivePushFileRepoData *repoData;                              // Data for each repo
+    List *repoList;                                                 // Data for each repo
 } ArchivePushCheckResult;
 
 static ArchivePushCheckResult
@@ -201,7 +201,7 @@ archivePushCheck(bool pgPathSet)
         FUNCTION_LOG_PARAM(BOOL, pgPathSet);
     FUNCTION_LOG_END();
 
-    ArchivePushCheckResult result = {.repoData = memNew(cfgOptionGroupIdxTotal(cfgOptGrpRepo) * sizeof(ArchivePushFileRepoData))};
+    ArchivePushCheckResult result = {.repoList = lstNewP(sizeof(ArchivePushFileRepoData))};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -220,12 +220,12 @@ archivePushCheck(bool pgPathSet)
             // Get the repo storage in case it is remote and encryption settings need to be pulled down
             storageRepoIdx(repoIdx);
 
-            // Set cipher type in repo data
-            result.repoData[repoIdx].cipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+            // Get cipher type
+            CipherType repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
 
             // Attempt to load the archive info file
             InfoArchive *info = infoArchiveLoadFile(
-                storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, result.repoData[repoIdx].cipherType,
+                storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, repoCipherType,
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
             // Get archive id for the most recent version -- archive-push will only operate against the most recent version
@@ -253,8 +253,16 @@ archivePushCheck(bool pgPathSet)
             {
                 result.pgVersion = archiveInfo.version;
                 result.pgSystemId = archiveInfo.systemId;
-                result.repoData[repoIdx].archiveId = strDup(archiveId);
-                result.repoData[repoIdx].cipherPass = strDup(infoArchiveCipherPass(info));
+
+                lstAdd(
+                    result.repoList,
+                    &(ArchivePushFileRepoData)
+                    {
+                        .repoIdx = repoIdx,
+                        .archiveId = strDup(archiveId),
+                        .cipherType = repoCipherType,
+                        .cipherPass = strDup(infoArchiveCipherPass(info)),
+                    });
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -379,7 +387,7 @@ cmdArchivePush(void)
                 // Push the file to the archive
                 ArchivePushFileResult fileResult = archivePushFile(
                     walFile, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
-                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoData);
+                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList);
 
                 // If a warning was returned then log it
                 for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
@@ -432,13 +440,17 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         protocolCommandParamAdd(command, VARSTR(walFile));
         protocolCommandParamAdd(command, VARUINT(jobData->compressType));
         protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
+        protocolCommandParamAdd(command, VARUINT(lstSize(jobData->archiveInfo.repoList)));
 
         // Add data for each repo to push to
-        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+        for (unsigned int repoListIdx = 0; repoListIdx < lstSize(jobData->archiveInfo.repoList); repoListIdx++)
         {
-            protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.repoData[repoIdx].archiveId));
-            protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.repoData[repoIdx].cipherType));
-            protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.repoData[repoIdx].cipherPass));
+            ArchivePushFileRepoData *data = lstGet(jobData->archiveInfo.repoList, repoListIdx);
+
+            protocolCommandParamAdd(command, VARUINT(data->repoIdx));
+            protocolCommandParamAdd(command, VARSTR(data->archiveId));
+            protocolCommandParamAdd(command, VARUINT(data->cipherType));
+            protocolCommandParamAdd(command, VARSTR(data->cipherPass));
         }
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));

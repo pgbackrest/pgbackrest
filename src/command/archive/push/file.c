@@ -82,7 +82,7 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
 ArchivePushFileResult
 archivePushFile(
     const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
-    int compressLevel, const ArchivePushFileRepoData *repoData)
+    int compressLevel, const List *const repoList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSource);
@@ -91,21 +91,19 @@ archivePushFile(
         FUNCTION_LOG_PARAM(STRING, archiveFile);
         FUNCTION_LOG_PARAM(ENUM, compressType);
         FUNCTION_LOG_PARAM(INT, compressLevel);
-        FUNCTION_LOG_PARAM_P(VOID, repoData);
+        FUNCTION_LOG_PARAM_P(VOID, repoList);
     FUNCTION_LOG_END();
 
     ASSERT(walSource != NULL);
     ASSERT(archiveFile != NULL);
-    ASSERT(repoData != NULL);
+    ASSERT(repoList != NULL);
+    ASSERT(lstSize(repoList) > 0);
 
     ArchivePushFileResult result = {.warnList = strLstNew()};
     StringList *errorList = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Total repos to push files to
-        unsigned int repoTotal = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
-
         // Is this a WAL segment?
         bool isSegment = walIsSegment(archiveFile);
 
@@ -129,10 +127,10 @@ archivePushFile(
 
         // Assume that all repos need a copy of the archive file
         bool destinationCopyAny = true;
-        bool *destinationCopy = memNew(sizeof(bool) * repoTotal);
+        bool *destinationCopy = memNew(sizeof(bool) * lstSize(repoList));
 
-        for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
-            destinationCopy[repoIdx] = true;
+        for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
+            destinationCopy[repoListIdx] = true;
 
         // Get wal segment checksum and compare it to what exists in the repo, if any
         if (isSegment)
@@ -148,10 +146,13 @@ archivePushFile(
             const String *walSegmentChecksum = varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
 
             // Check each repo for the WAL segment
-            for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
+                const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
+
                 // If the wal segment already exists in the repo then compare checksums
-                const String *walSegmentFile = walSegmentFind(storageRepoIdx(repoIdx), repoData[repoIdx].archiveId, archiveFile, 0);
+                const String *walSegmentFile = walSegmentFind(
+                    storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
 
                 if (walSegmentFile != NULL)
                 {
@@ -168,19 +169,19 @@ archivePushFile(
                                 strNewFmt(
                                     "WAL file '%s' already exists in the repo%u archive with the same checksum"
                                     "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                    strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx)));
+                                    strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoData->repoIdx)));
                         }
                         MEM_CONTEXT_PRIOR_END();
 
                         // No need to copy to this repo
-                        destinationCopy[repoIdx] = false;
+                        destinationCopy[repoData->repoIdx] = false;
                     }
                     // Else error so we don't overwrite the existing segment
                     else
                     {
                         THROW_FMT(
                             ArchiveDuplicateError, "WAL file '%s' already exists in the repo%u archive with a different checksum",
-                            strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                            strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoData->repoIdx));
                     }
                 }
                 // Else the repo needs a copy
@@ -210,26 +211,27 @@ archivePushFile(
             }
 
             // Initialize per-repo destination files
-            StorageWrite **destination = memNew(sizeof(StorageWrite *) * repoTotal);
+            StorageWrite **destination = memNew(sizeof(StorageWrite *) * lstSize(repoList));
 
-            for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
+                const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
+
                 // Does this repo need a copy?
-                if (destinationCopy[repoIdx])
+                if (destinationCopy[repoData->repoIdx])
                 {
                     // Create destination file
-                    destination[repoIdx] = storageNewWriteP(
-                        storageRepoIdxWrite(repoIdx),
-                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData[repoIdx].archiveId), strZ(archiveDestination)),
+                    destination[repoData->repoIdx] = storageNewWriteP(
+                        storageRepoIdxWrite(repoData->repoIdx),
+                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData->archiveId), strZ(archiveDestination)),
                         .compressible = compressible);
 
                     // If there is a cipher then add the encrypt filter
-                    if (repoData[repoIdx].cipherType != cipherTypeNone)
+                    if (repoData->cipherType != cipherTypeNone)
                     {
                         ioFilterGroupAdd(
-                            ioWriteFilterGroup(storageWriteIo(destination[repoIdx])),
-                            cipherBlockNew(
-                                cipherModeEncrypt, repoData[repoIdx].cipherType, BUFSTR(repoData[repoIdx].cipherPass), NULL));
+                            ioWriteFilterGroup(storageWriteIo(destination[repoData->repoIdx])),
+                            cipherBlockNew(cipherModeEncrypt, repoData->cipherType, BUFSTR(repoData->cipherPass), NULL));
                     }
                 }
             }
@@ -238,8 +240,10 @@ archivePushFile(
             ioReadOpen(storageReadIo(source));
 
             // Open the destination files now that we know the source file exists and is readable
-            for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
+                const unsigned int repoIdx = ((ArchivePushFileRepoData *)lstGet(repoList, repoListIdx))->repoIdx;
+
                 if (destinationCopy[repoIdx])
                 {
                     destinationCopy[repoIdx] = archivePushFileIo(
@@ -256,8 +260,10 @@ archivePushFile(
                 ioRead(storageReadIo(source), read);
 
                 // Write to each destination
-                for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+                for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
                 {
+                    const unsigned int repoIdx = ((ArchivePushFileRepoData *)lstGet(repoList, repoListIdx))->repoIdx;
+
                     if (destinationCopy[repoIdx])
                     {
                         destinationCopy[repoIdx] = archivePushFileIo(
@@ -273,8 +279,10 @@ archivePushFile(
             // Close the source and destination files
             ioReadClose(storageReadIo(source));
 
-            for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
+                const unsigned int repoIdx = ((ArchivePushFileRepoData *)lstGet(repoList, repoListIdx))->repoIdx;
+
                 if (destinationCopy[repoIdx])
                 {
                     destinationCopy[repoIdx] = archivePushFileIo(

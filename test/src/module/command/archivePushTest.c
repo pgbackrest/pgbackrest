@@ -169,9 +169,12 @@ testRun(void)
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
-        TEST_RESULT_STR_Z(result.repoData[0].archiveId, "9.6-1", "check archive id");
-        TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check cipher type");
-        TEST_RESULT_STR_Z(result.repoData[0].cipherPass, NULL, "check cipher pass (not set in this test)");
+
+        ArchivePushFileRepoData *repoData = lstGet(result.repoList, 0);
+        TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
+        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-1", "check archive id");
+        TEST_RESULT_UINT(repoData->cipherType, cipherTypeNone, "check cipher type");
+        TEST_RESULT_STR_Z(repoData->cipherPass, NULL, "check cipher pass (not set in this test)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mismatched repos when pg-path not present");
@@ -226,12 +229,18 @@ testRun(void)
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
-        TEST_RESULT_STR_Z(result.repoData[0].archiveId, "9.6-1", "check repo2 archive id");
-        TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check repo2 cipher pass");
-        TEST_RESULT_STR_Z(result.repoData[0].cipherPass, NULL, "check repo2 cipher pass (not set in this test)");
-        TEST_RESULT_STR_Z(result.repoData[1].archiveId, "9.6-2", "check repo4 archive id");
-        TEST_RESULT_UINT(result.repoData[1].cipherType, cipherTypeNone, "check repo4 cipher type");
-        TEST_RESULT_STR_Z(result.repoData[1].cipherPass, NULL, "check repo4 cipher pass (not set in this test)");
+
+        repoData = lstGet(result.repoList, 0);
+        TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
+        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-1", "check repo2 archive id");
+        TEST_RESULT_UINT(repoData->cipherType, cipherTypeNone, "check repo2 cipher pass");
+        TEST_RESULT_STR_Z(repoData->cipherPass, NULL, "check repo2 cipher pass (not set in this test)");
+
+        repoData = lstGet(result.repoList, 1);
+        TEST_RESULT_UINT(repoData->repoIdx, 1, "check repo idx");
+        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-2", "check repo4 archive id");
+        TEST_RESULT_UINT(repoData->cipherType, cipherTypeNone, "check repo4 cipher type");
+        TEST_RESULT_STR_Z(repoData->cipherPass, NULL, "check repo4 cipher pass (not set in this test)");
     }
 
     // *****************************************************************************************************************************
@@ -441,6 +450,8 @@ testRun(void)
         varLstAdd(paramList, varNewStrZ("000000010000000100000002"));
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewInt(6));
+        varLstAdd(paramList, varNewUInt(1));
+        varLstAdd(paramList, varNewUInt(0));
         varLstAdd(paramList, varNewStrZ("11-1"));
         varLstAdd(paramList, varNewUInt64(cipherTypeNone));
         varLstAdd(paramList, NULL);
