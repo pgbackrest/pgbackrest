@@ -133,9 +133,10 @@ testRun(void)
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
 
         TEST_ERROR(
-            archivePushCheck(true), ArchiveMismatchError,
-            "PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version 9.4, system-id"
-                " 5555555555555555555"
+            archivePushCheck(true), RepoInvalidError,
+            "unable to find a valid repository:\n"
+            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version"
+                " 9.4, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
         // Fix the version
@@ -149,9 +150,10 @@ testRun(void)
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.6\"}\n"));
 
         TEST_ERROR(
-            archivePushCheck(true), ArchiveMismatchError,
-            "PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version 9.6, system-id"
-                " 5555555555555555555"
+            archivePushCheck(true), RepoInvalidError,
+            "unable to find a valid repository:\n"
+            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version"
+                " 9.6, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
         // Fix archive info
@@ -205,11 +207,22 @@ testRun(void)
                 "[db:history]\n"
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
 
-        TEST_ERROR(
-            archivePushCheck(false), ArchiveMismatchError,
-            "repo2 stanza version 9.6, system-id 18072658121562454734 do not match repo4 stanza version 9.4, system-id"
-                " 5555555555555555555"
-                "\nHINT: are you archiving to the correct stanza?");
+        TEST_ASSIGN(result, archivePushCheck(false), "get archive check result");
+
+        TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
+        TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
+        TEST_RESULT_STRLST_Z(
+            result.errorList,
+            "repo4: [ArchiveMismatchError] repo2 stanza version 9.6, system-id 18072658121562454734 do not match repo4 stanza"
+                " version 9.4, system-id 5555555555555555555\n"
+            "HINT: are you archiving to the correct stanza?\n",
+            "check error list");
+
+        repoData = lstGet(result.repoList, 0);
+        TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
+        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-1", "check archive id");
+        TEST_RESULT_UINT(repoData->cipherType, cipherTypeNone, "check cipher type");
+        TEST_RESULT_STR_Z(repoData->cipherPass, NULL, "check cipher pass (not set in this test)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("matched repos when pg-path not present");
