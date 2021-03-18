@@ -4,14 +4,15 @@ run 002 - rmt 1, storage s3, enc 0, cmp zst
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=none --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
-P00  ERROR: [055]: unable to load info file '/archive/db/archive.info' or '/archive/db/archive.info.copy':
+P00  ERROR: [103]: unable to find a valid repository:
+            repo1: [FileMissingError] unable to load info file '/archive/db/archive.info' or '/archive/db/archive.info.copy':
             FileMissingError: raised from remote-0 protocol on 'backup': unable to open missing file '/archive/db/archive.info' for read
             FileMissingError: raised from remote-0 protocol on 'backup': unable to open missing file '/archive/db/archive.info.copy' for read
             HINT: archive.info cannot be opened but is required to push/get WAL segments.
             HINT: is archive_command configured correctly in postgresql.conf?
             HINT: has a stanza-create been performed?
             HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.
-P00   INFO: archive-push command end: aborted with exception [055]
+P00   INFO: archive-push command end: aborted with exception [103]
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -110,9 +111,10 @@ P00   INFO: archive-get command end: aborted with exception [103]
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
 ------------------------------------------------------------------------------------------------------------------------------------
 P00   INFO: archive-push command begin [BACKREST-VERSION]: [[TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002] --buffer-size=[BUFFER-SIZE] --compress-level=3 --compress-level-network=1 --compress-type=none --config=[TEST_PATH]/db-primary/pgbackrest.conf --db-timeout=45 --exec-id=[EXEC-ID] --job-retry=0 --lock-path=[TEST_PATH]/db-primary/lock --log-level-console=detail --log-level-file=[LOG-LEVEL-FILE] --log-level-stderr=off --log-path=[TEST_PATH]/db-primary/log[] --no-log-timestamp --pg1-path=[TEST_PATH]/db-primary/db/base --protocol-timeout=60 --repo1-host=backup --repo1-host-cmd=[BACKREST-BIN] --repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf --repo1-host-user=[USER-1] --stanza=db
-P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match repo1 stanza version 9.4, system-id 5000900090001855000
+P00  ERROR: [103]: unable to find a valid repository:
+            repo1: [ArchiveMismatchError] PostgreSQL version 9.4, system-id 1000000000000000094 do not match repo1 stanza version 9.4, system-id 5000900090001855000
             HINT: are you archiving to the correct stanza?
-P00   INFO: archive-push command end: aborted with exception [044]
+P00   INFO: archive-push command end: aborted with exception [103]
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --stanza=db archive-get 000000010000000100000001 [TEST_PATH]/db-primary/db/base/pg_xlog/RECOVERYXLOG
 ------------------------------------------------------------------------------------------------------------------------------------

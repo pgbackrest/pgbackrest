@@ -159,7 +159,7 @@ sub run
         forceStorageMode(storageTest(), $oHostDbPrimary->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         # Fail on attempt to push an archive
-        $oHostDbPrimary->archivePush($strWalPath, $strArchiveTestFile, 1, ERROR_ARCHIVE_MISMATCH);
+        $oHostDbPrimary->archivePush($strWalPath, $strArchiveTestFile, 1, ERROR_REPO_INVALID);
 
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
         #--------------------------------------------------------------------------------------------------------------------------

@@ -250,7 +250,8 @@ P00   INFO: archive-push command end: completed successfully
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [044]: PostgreSQL version 9.4, system-id 1000000000000000094 do not match repo1 stanza version 9.3, system-id 1000000000000000093
+P00  ERROR: [103]: unable to find a valid repository:
+            repo1: [ArchiveMismatchError] PostgreSQL version 9.4, system-id 1000000000000000094 do not match repo1 stanza version 9.3, system-id 1000000000000000093
             HINT: are you archiving to the correct stanza?
 
 stanza-upgrade db - successful upgrade creates additional history (db-primary host)
