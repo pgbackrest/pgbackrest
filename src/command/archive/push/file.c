@@ -285,7 +285,7 @@ archivePushFile(
     }
     MEM_CONTEXT_TEMP_END();
 
-    // Throw any errors, even if some files were successful. It is important that PostgreSQL recieves an error so it does not
+    // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it does not
     // remove the file.
     if (strLstSize(errorList) > 0)
         THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
