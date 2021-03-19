@@ -538,18 +538,18 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STR5ID*()");
 
-        #define TEST_STR5ID1                                        (((uint16_t)('a' - 96) << 4) | STRID_5BIT)
-        #define TEST_STR5ID2                                        (TEST_STR5ID1 | (((uint16_t)('b' - 96) << 9)))
-        #define TEST_STR5ID3                                        ((uint32_t)TEST_STR5ID2 | (((uint32_t)('c' - 96) << 14)))
-        #define TEST_STR5ID4                                        (TEST_STR5ID3 | (((uint32_t)('-' - 18) << 19)))
-        #define TEST_STR5ID5                                        (TEST_STR5ID4 | (((uint32_t)('z' - 96) << 24)))
-        #define TEST_STR5ID6                                        ((uint64_t)TEST_STR5ID5 | (((uint64_t)('k' - 96) << 29)))
-        #define TEST_STR5ID7                                        ((uint64_t)TEST_STR5ID6 | (((uint64_t)('z' - 96) << 34)))
-        #define TEST_STR5ID8                                        ((uint64_t)TEST_STR5ID7 | (((uint64_t)('-' - 18) << 39)))
-        #define TEST_STR5ID9                                        ((uint64_t)TEST_STR5ID8 | (((uint64_t)('-' - 18) << 44)))
-        #define TEST_STR5ID10                                       ((uint64_t)TEST_STR5ID9 | (((uint64_t)('y' - 96) << 49)))
-        #define TEST_STR5ID11                                       ((uint64_t)TEST_STR5ID10 | (((uint64_t)('m' - 96) << 54)))
-        #define TEST_STR5ID12                                       ((uint64_t)TEST_STR5ID11 | (((uint64_t)('k' - 96) << 59)))
+        #define TEST_STR5ID1                                        (stringIdBit5 | (uint16_t)('a' - 96) << 4)
+        #define TEST_STR5ID2                                        (TEST_STR5ID1 | (uint16_t)('b' - 96) << 9)
+        #define TEST_STR5ID3                                        ((uint32_t)TEST_STR5ID2 | (uint32_t)('c' - 96) << 14)
+        #define TEST_STR5ID4                                        (TEST_STR5ID3 | (uint32_t)('-' - 18) << 19)
+        #define TEST_STR5ID5                                        (TEST_STR5ID4 | (uint32_t)('z' - 96) << 24)
+        #define TEST_STR5ID6                                        ((uint64_t)TEST_STR5ID5 | (uint64_t)('k' - 96) << 29)
+        #define TEST_STR5ID7                                        (TEST_STR5ID6 | (uint64_t)('z' - 96) << 34)
+        #define TEST_STR5ID8                                        (TEST_STR5ID7 | (uint64_t)('-' - 18) << 39)
+        #define TEST_STR5ID9                                        (TEST_STR5ID8 | (uint64_t)('-' - 18) << 44)
+        #define TEST_STR5ID10                                       (TEST_STR5ID9 | (uint64_t)('y' - 96) << 49)
+        #define TEST_STR5ID11                                       (TEST_STR5ID10 | (uint64_t)('m' - 96) << 54)
+        #define TEST_STR5ID12                                       (TEST_STR5ID11 | (uint64_t)('k' - 96) << 59)
 
         TEST_RESULT_UINT(STR5ID1('a'), TEST_STR5ID1, "1 char");
         TEST_RESULT_UINT(STR5ID2('a', 'b'), TEST_STR5ID2, "2 chars");
@@ -581,16 +581,16 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STR6ID*()");
 
-        #define TEST_STR6ID1                                        (((uint16_t)('a' - 96) << 4) | STRID_6BIT)
-        #define TEST_STR6ID2                                        (TEST_STR6ID1 | (((uint16_t)('b' - 96) << 10)))
-        #define TEST_STR6ID3                                        ((uint32_t)TEST_STR6ID2 | (((uint32_t)('C' - 29) << 16)))
-        #define TEST_STR6ID4                                        (TEST_STR6ID3 | (((uint32_t)('-' - 18) << 22)))
-        #define TEST_STR6ID5                                        ((uint64_t)TEST_STR6ID4 | (((uint64_t)('4' - 20) << 28)))
-        #define TEST_STR6ID6                                        ((uint64_t)TEST_STR6ID5 | (((uint64_t)('0' - 20) << 34)))
-        #define TEST_STR6ID7                                        ((uint64_t)TEST_STR6ID6 | (((uint64_t)('M' - 29) << 40)))
-        #define TEST_STR6ID8                                        ((uint64_t)TEST_STR6ID7 | (((uint64_t)('z' - 96) << 46)))
-        #define TEST_STR6ID9                                        ((uint64_t)TEST_STR6ID8 | (((uint64_t)('Z' - 29) << 52)))
-        #define TEST_STR6ID10                                       ((uint64_t)TEST_STR6ID9 | (((uint64_t)('9' - 20) << 58)))
+        #define TEST_STR6ID1                                        (stringIdBit6 | (uint16_t)('a' - 96) << 4)
+        #define TEST_STR6ID2                                        (TEST_STR6ID1 | (uint16_t)('b' - 96) << 10)
+        #define TEST_STR6ID3                                        ((uint32_t)TEST_STR6ID2 | (uint32_t)('C' - 29) << 16)
+        #define TEST_STR6ID4                                        (TEST_STR6ID3 | (uint32_t)('-' - 18) << 22)
+        #define TEST_STR6ID5                                        ((uint64_t)TEST_STR6ID4 | (uint64_t)('4' - 20) << 28)
+        #define TEST_STR6ID6                                        (TEST_STR6ID5 | (uint64_t)('0' - 20) << 34)
+        #define TEST_STR6ID7                                        (TEST_STR6ID6 | (uint64_t)('M' - 29) << 40)
+        #define TEST_STR6ID8                                        (TEST_STR6ID7 | (uint64_t)('z' - 96) << 46)
+        #define TEST_STR6ID9                                        (TEST_STR6ID8 | (uint64_t)('Z' - 29) << 52)
+        #define TEST_STR6ID10                                       (TEST_STR6ID9 | (uint64_t)('9' - 20) << 58)
 
         TEST_RESULT_UINT(STR6ID1('a'), TEST_STR6ID1, "1 char");
         TEST_RESULT_UINT(STR6ID2('a', 'b'), TEST_STR6ID2, "2 chars");

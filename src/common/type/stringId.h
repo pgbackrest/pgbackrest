@@ -16,7 +16,7 @@ Represent Short Strings as Integers
 Maximum number of characters in a StringId. This is a safe buffer size when calling strIdToZN. If the buffer needs to be
 zero-terminated then an extra byte will be needed.
 ***********************************************************************************************************************************/
-#define STRING_ID_MAX                                               8
+#define STRING_ID_MAX                                               13
 
 /***********************************************************************************************************************************
 !!! AND EXPLAIN WHY THIS IS A TYPEDEF SINCE WE DO NOT NORMALLY TYPEDEF STANDARD TYPES
@@ -26,14 +26,25 @@ typedef uint64_t StringId;
 /***********************************************************************************************************************************
 !!!
 ***********************************************************************************************************************************/
+typedef enum
+{
+    stringIdBit5 = 0,                                               // 5-bit
+    stringIdBit6 = 1,                                               // 6-bit
+    stringIdBit7 = 2,                                               // 7-bit
+    stringIdBit8 = 3,                                               // 8-bit
+} StringIdBit;
+
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 // 5-bit StringId - a-z and -
 // ---------------------------------------------------------------------------------------------------------------------------------
-#define STRID_5BIT                                                  0
+// Identify a-z and transform to a = 1, b = 2, etc.
+#define STRID_LOWER(c)                                              ((c > 0x60 && c < 0x7B) * (c - 0x60))
+// Identify - and transform to 27
+#define STRID_DASH(c)                                               ((c == 0x2D) * (c - 0x12))
 
-#define STRID_LOWER(c)                                              ((c > 0x60 && c < 0x7B) * (c - 96))
-#define STRID_DASH(c)                                               ((c == 0x2D) * (c - 18))
-// !!! #define STRID_USCORE(c)                                             ((c == 0x5F) * (c - 32))
-
+// Identify and transform valid 5-bit characters
 #define STR5IDC(c)                                                  (STRID_LOWER(c) | STRID_DASH(c))
 
 #define STR5ID1(c1)                                                                                                                \
@@ -75,49 +86,48 @@ typedef uint64_t StringId;
 
 // 6-bit StringId - a-z, A-Z, 0-9 and -
 // ---------------------------------------------------------------------------------------------------------------------------------
-#define STRID_6BIT                                                  1
-
+// Identify 0-9 and transform to 0 = 28, 1 = 29, etc.
 #define STRID_NUMBER(c)                                             ((c > 0x2F && c < 0x3A) * (c - 20))
+// Identify A-Z and transform to A = 38, B = 39, etc.
 #define STRID_UPPER(c)                                              ((c > 0x40 && c < 0x5B) * (c - 29))
 
+// Identify and transform valid 6-bit characters
 #define STR6IDC(c)                                                                                                                 \
     (STRID_LOWER(c) | STRID_DASH(c) | STRID_NUMBER(c) | STRID_UPPER(c))
 
 #define STR6ID1(c1)                                                                                                                \
-    (STRID_6BIT | (uint16_t)STR6IDC(c1) << 4)
+    (stringIdBit6 | (uint16_t)STR6IDC(c1) << 4)
 #define STR6ID2(c1, c2)                                                                                                            \
-    (STRID_6BIT | (uint16_t)STR6IDC(c1) << 4 | (uint16_t)STR6IDC(c2) << 10)
+    (stringIdBit6 | (uint16_t)STR6IDC(c1) << 4 | (uint16_t)STR6IDC(c2) << 10)
 #define STR6ID3(c1, c2, c3)                                                                                                        \
-    (STRID_6BIT | (uint32_t)STR6IDC(c1) << 4 | (uint32_t)STR6IDC(c2) << 10 | (uint32_t)STR6IDC(c3) << 16)
+    (stringIdBit6 | (uint32_t)STR6IDC(c1) << 4 | (uint32_t)STR6IDC(c2) << 10 | (uint32_t)STR6IDC(c3) << 16)
 #define STR6ID4(c1, c2, c3, c4)                                                                                                    \
-    (STRID_6BIT | (uint32_t)STR6IDC(c1) << 4 | (uint32_t)STR6IDC(c2) << 10 | (uint32_t)STR6IDC(c3) << 16 |                         \
+    (stringIdBit6 | (uint32_t)STR6IDC(c1) << 4 | (uint32_t)STR6IDC(c2) << 10 | (uint32_t)STR6IDC(c3) << 16 |                       \
      (uint32_t)STR6IDC(c4) << 22)
 #define STR6ID5(c1, c2, c3, c4, c5)                                                                                                \
-    (STRID_6BIT | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                         \
+    (stringIdBit6 | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                       \
      (uint64_t)STR6IDC(c4) << 22 | (uint64_t)STR6IDC(c5) << 28)
 #define STR6ID6(c1, c2, c3, c4, c5, c6)                                                                                            \
-    (STRID_6BIT | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                         \
+    (stringIdBit6 | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                       \
      (uint64_t)STR6IDC(c4) << 22 | (uint64_t)STR6IDC(c5) << 28 | (uint64_t)STR6IDC(c6) << 34)
 #define STR6ID7(c1, c2, c3, c4, c5, c6, c7)                                                                                        \
-    (STRID_6BIT | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                         \
+    (stringIdBit6 | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                       \
      (uint64_t)STR6IDC(c4) << 22 | (uint64_t)STR6IDC(c5) << 28 | (uint64_t)STR6IDC(c6) << 34 | (uint64_t)STR6IDC(c7) << 40)
 #define STR6ID8(c1, c2, c3, c4, c5, c6, c7, c8)                                                                                    \
-    (STRID_6BIT | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                         \
+    (stringIdBit6 | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                       \
      (uint64_t)STR6IDC(c4) << 22 | (uint64_t)STR6IDC(c5) << 28 | (uint64_t)STR6IDC(c6) << 34 | (uint64_t)STR6IDC(c7) << 40 |       \
      (uint64_t)STR6IDC(c8) << 46)
 #define STR6ID9(c1, c2, c3, c4, c5, c6, c7, c8, c9)                                                                                \
-    (STRID_6BIT | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                         \
+    (stringIdBit6 | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                       \
      (uint64_t)STR6IDC(c4) << 22 | (uint64_t)STR6IDC(c5) << 28 | (uint64_t)STR6IDC(c6) << 34 | (uint64_t)STR6IDC(c7) << 40 |       \
      (uint64_t)STR6IDC(c8) << 46 | (uint64_t)STR6IDC(c9) << 52)
 #define STR6ID10(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)                                                                          \
-    (STRID_6BIT | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                         \
+    (stringIdBit6 | (uint64_t)STR6IDC(c1) << 4 | (uint64_t)STR6IDC(c2) << 10 | (uint64_t)STR6IDC(c3) << 16 |                       \
      (uint64_t)STR6IDC(c4) << 22 | (uint64_t)STR6IDC(c5) << 28 | (uint64_t)STR6IDC(c6) << 34 | (uint64_t)STR6IDC(c7) << 40 |       \
      (uint64_t)STR6IDC(c8) << 46 | (uint64_t)STR6IDC(c9) << 52 | (uint64_t)STR6IDC(c10) << 58)
 
 // 8-bit StringId - all ASCII and UTF8
 // ---------------------------------------------------------------------------------------------------------------------------------
-#define STRID_8BIT                                                  3
-
 #define STRID1(c1)                                                  (uint8_t)c1
 #define STRID2(c1, c2)                                              ((uint16_t)c1 | (uint16_t)c2 << 8)
 #define STRID3(c1, c2, c3)                                          ((uint32_t)c1 | (uint32_t)c2 << 8 | (uint32_t)c3 << 16)
