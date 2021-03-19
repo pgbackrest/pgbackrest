@@ -26,6 +26,31 @@ typedef uint64_t StringId;
 /***********************************************************************************************************************************
 !!!
 ***********************************************************************************************************************************/
+#define STRID_6BIT                                                  1
+
+#define STRID_LOWER(c)                                              (((c & 0xE0) == 0x60) * (c - 97))
+#define STRID_DASH(c)                                               ((c == 0x2D) * (c - 19))
+#define STRID_NUMBER(c)                                             (((c & 0xF0) == 0x30) * (c - 21))
+#define STRID_UPPER(c)                                              (((c & 0xE0) == 0x40 && c != 0x5F) * (c - 28))
+#define STRID_USCORE(c)                                             ((c == 0x5F) * (c - 32))
+
+#define STRIDC(c)                                                                                                                  \
+    (STRID_LOWER(c) | STRID_DASH(c) | STRID_USCORE(c) | STRID_NUMBER(c) | STRID_UPPER(c))
+
+#define STR6ID1(c1)                                                 ((uint16_t)STRIDC(c1) << 4 | STRID_6BIT)
+#define STR6ID2(c1, c2)                                             (STR6ID1(c1) | (uint16_t)STRIDC(c2) << 10)
+#define STR6ID3(c1, c2, c3)                                         ((uint32_t)STR6ID2(c1, c2) | (uint32_t)STRIDC(c3) << 16)
+#define STR6ID4(c1, c2, c3, c4)                                     (STR6ID3(c1, c2, c3) | (uint32_t)STRIDC(c4) << 22)
+#define STR6ID5(c1, c2, c3, c4, c5)                                 ((uint64_t)STR6ID4(c1, c2, c3, c4) | (uint64_t)STRIDC(c5) << 28)
+#define STR6ID6(c1, c2, c3, c4, c5, c6)                             (STR6ID5(c1, c2, c3, c4, c5) | (uint64_t)STRIDC(c6) << 34)
+#define STR6ID7(c1, c2, c3, c4, c5, c6, c7)                         (STR6ID6(c1, c2, c3, c4, c5, c6) | (uint64_t)STRIDC(c7) << 40)
+#define STR6ID8(c1, c2, c3, c4, c5, c6, c7, c8)                                                                                    \
+    (STR6ID7(c1, c2, c3, c4, c5, c6, c7) | (uint64_t)STRIDC(c8) << 46)
+#define STR6ID9(c1, c2, c3, c4, c5, c6, c7, c8, c9)                                                                                \
+    (STR6ID8(c1, c2, c3, c4, c5, c6, c7, c8) | (uint64_t)STRIDC(c9) << 52)
+#define STR6ID10(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)                                                                          \
+    (STR6ID9(c1, c2, c3, c4, c5, c6, c7, c8, c9) | (uint64_t)STRIDC(c10) << 58)
+
 #define STRID1(c1)                                                  (uint8_t)c1
 #define STRID2(c1, c2)                                              ((uint16_t)c1 | (uint16_t)c2 << 8)
 #define STRID3(c1, c2, c3)                                          ((uint32_t)c1 | (uint32_t)c2 << 8 | (uint32_t)c3 << 16)

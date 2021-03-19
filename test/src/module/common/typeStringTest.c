@@ -527,7 +527,49 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("STRID*(), strIdTo*(), and strIdFrom*()"))
     {
-        TEST_TITLE("STRID* macros");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("STRIDC()");
+
+        for (char charIdx = 'a'; charIdx <= 'z'; charIdx++)
+            TEST_RESULT_INT(STRIDC(charIdx), charIdx - 97, "%c", charIdx);
+
+        TEST_RESULT_UINT(STRIDC('-'), 26, "-");
+
+        for (char charIdx = '0'; charIdx <= '9'; charIdx++)
+            TEST_RESULT_INT(STRIDC(charIdx), charIdx - 21, "%c", charIdx);
+
+        for (char charIdx = 'A'; charIdx <= 'Z'; charIdx++)
+            TEST_RESULT_INT(STRIDC(charIdx), charIdx - 28, "%c", charIdx);
+
+        TEST_RESULT_UINT(STRIDC('_'), 63, "_");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("STR6ID*()");
+
+        #define TEST_STR6ID1                                        (((uint16_t)('a' - 97) << 4) | STRID_6BIT)
+        #define TEST_STR6ID2                                        (TEST_STR6ID1 | (((uint16_t)('b' - 97) << 10)))
+        #define TEST_STR6ID3                                        ((uint32_t)TEST_STR6ID2 | (((uint32_t)('C' - 28) << 16)))
+        #define TEST_STR6ID4                                        (TEST_STR6ID3 | (((uint32_t)('-' - 19) << 22)))
+        #define TEST_STR6ID5                                        ((uint64_t)TEST_STR6ID4 | (((uint64_t)('4' - 21) << 28)))
+        #define TEST_STR6ID6                                        ((uint64_t)TEST_STR6ID5 | (((uint64_t)('0' - 21) << 34)))
+        #define TEST_STR6ID7                                        ((uint64_t)TEST_STR6ID6 | (((uint64_t)('_' - 32) << 40)))
+        #define TEST_STR6ID8                                        ((uint64_t)TEST_STR6ID7 | (((uint64_t)('z' - 97) << 46)))
+        #define TEST_STR6ID9                                        ((uint64_t)TEST_STR6ID8 | (((uint64_t)('Z' - 28) << 52)))
+        #define TEST_STR6ID10                                       ((uint64_t)TEST_STR6ID9 | (((uint64_t)('9' - 21) << 58)))
+
+        TEST_RESULT_UINT(STR6ID1('a'), TEST_STR6ID1, "1 char");
+        TEST_RESULT_UINT(STR6ID2('a', 'b'), TEST_STR6ID2, "2 chars");
+        TEST_RESULT_UINT(STR6ID3('a', 'b', 'C'), TEST_STR6ID3, "3 chars");
+        TEST_RESULT_UINT(STR6ID4('a', 'b', 'C', '-'), TEST_STR6ID4, "4 chars");
+        TEST_RESULT_UINT(STR6ID5('a', 'b', 'C', '-', '4'), TEST_STR6ID5, "5 chars");
+        TEST_RESULT_UINT(STR6ID6('a', 'b', 'C', '-', '4', '0'), TEST_STR6ID6, "6 chars");
+        TEST_RESULT_UINT(STR6ID7('a', 'b', 'C', '-', '4', '0', '_'), TEST_STR6ID7, "7 chars");
+        TEST_RESULT_UINT(STR6ID8('a', 'b', 'C', '-', '4', '0', '_', 'z'), TEST_STR6ID8, "8 chars");
+        TEST_RESULT_UINT(STR6ID9('a', 'b', 'C', '-', '4', '0', '_', 'z', 'Z'), TEST_STR6ID9, "9 chars");
+        TEST_RESULT_UINT(STR6ID10('a', 'b', 'C', '-', '4', '0', '_', 'z', 'Z', '9'), TEST_STR6ID10, "10 chars");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("STRID*()");
 
         TEST_RESULT_UINT(STRID1('a'), 0x61, "1 char");
         TEST_RESULT_UINT(STRID2('a', 'b'), 0x6261, "2 chars");
