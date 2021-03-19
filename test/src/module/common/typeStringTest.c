@@ -614,24 +614,15 @@ testRun(void)
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-4", 5), TEST_STR6ID5, "6 bits 5 chars");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9", 10), TEST_STR6ID10, "6 bits 10 chars");
 
-        // TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 1), 0x61, "1 char");
-        // TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 2), 0x6261, "2 chars");
-        // TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 3), 0x436261, "3 chars");
-        // TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 4), 0x2D436261, "4 chars");
-        // TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 5), 0x342D436261, "5 chars");
-        // TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 6), 0x30342D436261, "6 chars");
-        // TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 7), 0x5F30342D436261, "7 chars");
-        // TEST_RESULT_UINT(strIdFromZN("abC-40_\t?", 8), 0x095F30342D436261, "8 chars");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdFromStr()");
 
-        // TEST_RESULT_UINT(strIdFromStr(STRDEF("abC-4")), 0x342D436261, "5 chars");
+        TEST_RESULT_UINT(strIdFromStr(stringIdBit5, STRDEF("abc-")), TEST_STR5ID4, "5 bits 4 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdFromZ()");
 
-        // TEST_RESULT_UINT(strIdFromZ("abC-"), 0x2D436261, "4 chars");
+        TEST_RESULT_UINT(strIdFromZ(stringIdBit6, "abC-"), TEST_STR6ID4, "6 bits 4 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToZN()");

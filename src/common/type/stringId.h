@@ -30,7 +30,6 @@ typedef enum
 {
     stringIdBit5 = 0,                                               // 5-bit
     stringIdBit6 = 1,                                               // 6-bit
-    stringIdBit7 = 2,                                               // 7-bit
 } StringIdBit;
 
 #define STRING_ID_BIT_MASK                                          3

@@ -87,8 +87,10 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
             FUNCTION_TEST_RETURN(result);
         }
 
-        case stringIdBit6:
+        default:
         {
+            ASSERT(bit == stringIdBit6);
+
             static const uint8_t map[256] =
             {
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, // 0
@@ -146,48 +148,6 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
 
             FUNCTION_TEST_RETURN(result);
         }
-
-        default:
-        {
-            ASSERT(bit == stringIdBit7);
-
-            switch (size)
-            {
-                case 1:
-                    FUNCTION_TEST_RETURN((uint64_t)buffer[0]);
-
-                case 2:
-                    FUNCTION_TEST_RETURN((uint64_t)buffer[0] | (uint64_t)buffer[1] << 8);
-
-                case 3:
-                    FUNCTION_TEST_RETURN((uint64_t)buffer[0] | (uint64_t)buffer[1] << 8 | (uint64_t)buffer[2] << 16);
-
-                case 4:
-                    FUNCTION_TEST_RETURN(
-                        (uint64_t)buffer[0] | (uint64_t)buffer[1] << 8 | (uint64_t)buffer[2] << 16 | (uint64_t)buffer[3] << 24);
-
-                case 5:
-                    FUNCTION_TEST_RETURN(
-                        (uint64_t)buffer[0] | (uint64_t)buffer[1] << 8 | (uint64_t)buffer[2] << 16 | (uint64_t)buffer[3] << 24 |
-                        (uint64_t)buffer[4] << 32);
-
-                case 6:
-                    FUNCTION_TEST_RETURN(
-                        (uint64_t)buffer[0] | (uint64_t)buffer[1] << 8 | (uint64_t)buffer[2] << 16 | (uint64_t)buffer[3] << 24 |
-                        (uint64_t)buffer[4] << 32 | (uint64_t)buffer[5] << 40);
-
-                case 7:
-                    FUNCTION_TEST_RETURN(
-                        (uint64_t)buffer[0] | (uint64_t)buffer[1] << 8 | (uint64_t)buffer[2] << 16 | (uint64_t)buffer[3] << 24 |
-                        (uint64_t)buffer[4] << 32 | (uint64_t)buffer[5] << 40 | (uint64_t)buffer[6] << 48);
-
-                default:
-                    FUNCTION_TEST_RETURN(
-                        (uint64_t)buffer[0] | (uint64_t)buffer[1] << 8 | (uint64_t)buffer[2] << 16 | (uint64_t)buffer[3] << 24 |
-                        (uint64_t)buffer[4] << 32 | (uint64_t)buffer[5] << 40 | (uint64_t)buffer[6] << 48 |
-                        (uint64_t)buffer[7] << 56);
-            }
-        }
     }
 }
 
@@ -239,8 +199,10 @@ strIdToZN(StringId strId, char *const buffer)
             FUNCTION_TEST_RETURN(12);
         }
 
-        case stringIdBit6:
+        default:
         {
+            CHECK(bit == stringIdBit6);
+
             const char map[64] = "?abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
             #define STR6ID_TO_ZN_IDX(idx)                                                                                          \
@@ -266,33 +228,6 @@ strIdToZN(StringId strId, char *const buffer)
             ASSERT(strId >> 6 == 0);
 
             FUNCTION_TEST_RETURN(10);
-        }
-
-        default:
-        {
-            CHECK(bit == stringIdBit7);
-
-            #define STR7ID_TO_ZN_IDX(idx)                                                                                          \
-                buffer[idx] = (char)(strId & 0x7F);                                                                                \
-                strId >>= 8;                                                                                                       \
-                                                                                                                                   \
-                if (strId == 0)                                                                                                    \
-                    FUNCTION_TEST_RETURN(idx + 1)
-
-            // Char 1-7
-            STR7ID_TO_ZN_IDX(0);
-            STR7ID_TO_ZN_IDX(1);
-            STR7ID_TO_ZN_IDX(2);
-            STR7ID_TO_ZN_IDX(3);
-            STR7ID_TO_ZN_IDX(4);
-            STR7ID_TO_ZN_IDX(5);
-            STR7ID_TO_ZN_IDX(6);
-
-            // Char 8
-            buffer[7] = (char)(strId & 0x7F);
-            ASSERT(strId >> 8 == 0);
-
-            FUNCTION_TEST_RETURN(8);
         }
     }
 }
