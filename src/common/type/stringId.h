@@ -31,8 +31,10 @@ typedef enum
     stringIdBit5 = 0,                                               // 5-bit
     stringIdBit6 = 1,                                               // 6-bit
     stringIdBit7 = 2,                                               // 7-bit
-    stringIdBit8 = 3,                                               // 8-bit
 } StringIdBit;
+
+#define STRING_ID_BIT_MASK                                          3
+#define STRING_ID_HEADER_SIZE                                       4
 
 /***********************************************************************************************************************************
 !!!
@@ -89,7 +91,7 @@ typedef enum
 // Identify 0-9 and transform to 0 = 28, 1 = 29, etc.
 #define STRID_NUMBER(c)                                             ((c > 0x2F && c < 0x3A) * (c - 20))
 // Identify A-Z and transform to A = 38, B = 39, etc.
-#define STRID_UPPER(c)                                              ((c > 0x40 && c < 0x5B) * (c - 29))
+#define STRID_UPPER(c)                                              ((c > 0x40 && c < 0x5B) * (c - 27))
 
 // Identify and transform valid 6-bit characters
 #define STR6IDC(c)                                                                                                                 \
@@ -126,24 +128,6 @@ typedef enum
      (uint64_t)STR6IDC(c4) << 22 | (uint64_t)STR6IDC(c5) << 28 | (uint64_t)STR6IDC(c6) << 34 | (uint64_t)STR6IDC(c7) << 40 |       \
      (uint64_t)STR6IDC(c8) << 46 | (uint64_t)STR6IDC(c9) << 52 | (uint64_t)STR6IDC(c10) << 58)
 
-// 8-bit StringId - all ASCII and UTF8
-// ---------------------------------------------------------------------------------------------------------------------------------
-#define STRID1(c1)                                                  (uint8_t)c1
-#define STRID2(c1, c2)                                              ((uint16_t)c1 | (uint16_t)c2 << 8)
-#define STRID3(c1, c2, c3)                                          ((uint32_t)c1 | (uint32_t)c2 << 8 | (uint32_t)c3 << 16)
-#define STRID4(c1, c2, c3, c4)                                                                                                     \
-    ((uint32_t)c1 | (uint32_t)c2 << 8 | (uint32_t)c3 << 16 | (uint32_t)c4 << 24)
-#define STRID5(c1, c2, c3, c4, c5)                                                                                                 \
-    ((uint64_t)c1 | (uint64_t)c2 << 8 | (uint64_t)c3 << 16 | (uint64_t)c4 << 24 | (uint64_t)c5 << 32)
-#define STRID6(c1, c2, c3, c4, c5, c6)                                                                                             \
-    ((uint64_t)c1 | (uint64_t)c2 << 8 | (uint64_t)c3 << 16 | (uint64_t)c4 << 24 | (uint64_t)c5 << 32 | (uint64_t)c6 << 40)
-#define STRID7(c1, c2, c3, c4, c5, c6, c7)                                                                                         \
-    ((uint64_t)c1 | (uint64_t)c2 << 8 | (uint64_t)c3 << 16 | (uint64_t)c4 << 24 | (uint64_t)c5 << 32 | (uint64_t)c6 << 40 |        \
-        (uint64_t)c7 << 48)
-#define STRID8(c1, c2, c3, c4, c5, c6, c7, c8)                                                                                     \
-    ((uint64_t)c1 | (uint64_t)c2 << 8 | (uint64_t)c3 << 16 | (uint64_t)c4 << 24 | (uint64_t)c5 << 32 | (uint64_t)c6 << 40 |        \
-        (uint64_t)c7 << 48 | (uint64_t)c8 << 56)
-
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
@@ -159,20 +143,20 @@ String *strIdToStr(const StringId strId);
 size_t strIdToZ(const StringId strId, char *const buffer);
 
 // Convert N chars to StringId
-StringId strIdFromZN(const char *const buffer, const size_t size);
+StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size);
 
 // Convert String to StringId
 __attribute__((always_inline)) static inline StringId
-strIdFromStr(const String *const str)
+strIdFromStr(const StringIdBit bit, const String *const str)
 {
-    return strIdFromZN(strZ(str), strSize(str));
+    return strIdFromZN(bit, strZ(str), strSize(str));
 }
 
 // Convert zero-terminted string to StringId
 __attribute__((always_inline)) static inline StringId
-strIdFromZ(const char *const str)
+strIdFromZ(const StringIdBit bit, const char *const str)
 {
-    return strIdFromZN(str, strlen(str));
+    return strIdFromZN(bit, str, strlen(str));
 }
 
 /***********************************************************************************************************************************

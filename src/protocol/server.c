@@ -134,7 +134,7 @@ protocolServerProcess(
             {
                 // Read command
                 KeyValue *commandKv = jsonToKv(ioReadLine(this->read));
-                const StringId command = varUInt64(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR)));
+                const StringId command = strIdFromStr(stringIdBit5, varStr(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR))));
                 VariantList *paramList = varVarLst(kvGet(commandKv, VARSTR(PROTOCOL_KEY_PARAMETER_STR)));
 
                 // Find the handler

@@ -17,7 +17,7 @@ void archivePushFileProtocol(const VariantList *paramList, ProtocolServer *serve
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE                          STRID4('a', 'p', '-', 'f')
+#define PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE                          STR5ID4('a', 'p', '-', 'f')
 
 #define PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST                                                                                  \
     {.command = PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, .handler = archivePushFileProtocol},

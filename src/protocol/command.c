@@ -96,7 +96,10 @@ protocolCommandJson(const ProtocolCommand *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        KeyValue *command = kvPut(kvNew(), VARSTR(PROTOCOL_KEY_COMMAND_STR), VARUINT64(this->command));
+        char commandStrId[STRING_ID_MAX + 1];
+        strIdToZ(this->command, commandStrId);
+
+        KeyValue *command = kvPut(kvNew(), VARSTR(PROTOCOL_KEY_COMMAND_STR), VARSTRZ(commandStrId));
 
         if (this->parameterList != NULL)
             kvPut(command, VARSTR(PROTOCOL_KEY_PARAMETER_STR), this->parameterList);

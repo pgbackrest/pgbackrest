@@ -33,15 +33,15 @@ void storageRemoteRemoveProtocol(const VariantList *paramList, ProtocolServer *s
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_STORAGE_FEATURE                            STRID3('s', '-', 'f')
-#define PROTOCOL_COMMAND_STORAGE_INFO                               STRID3('s', '-', 'i')
-#define PROTOCOL_COMMAND_STORAGE_INFO_LIST                          STRID3('s', '-', 'l')
-#define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          STRID4('s', '-', 'o', 'r')
-#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         STRID4('s', '-', 'o', 'w')
-#define PROTOCOL_COMMAND_STORAGE_PATH_CREATE                        STRID4('s', '-', 'p', 'c')
-#define PROTOCOL_COMMAND_STORAGE_REMOVE                             STRID3('s', '-', 'r')
-#define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        STRID4('s', '-', 'p', 'r')
-#define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          STRID4('s', '-', 'p', 's')
+#define PROTOCOL_COMMAND_STORAGE_FEATURE                            STR5ID3('s', '-', 'f')
+#define PROTOCOL_COMMAND_STORAGE_INFO                               STR5ID3('s', '-', 'i')
+#define PROTOCOL_COMMAND_STORAGE_INFO_LIST                          STR5ID3('s', '-', 'l')
+#define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          STR5ID4('s', '-', 'o', 'r')
+#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         STR5ID4('s', '-', 'o', 'w')
+#define PROTOCOL_COMMAND_STORAGE_PATH_CREATE                        STR5ID4('s', '-', 'p', 'c')
+#define PROTOCOL_COMMAND_STORAGE_REMOVE                             STR5ID3('s', '-', 'r')
+#define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        STR5ID4('s', '-', 'p', 'r')
+#define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          STR5ID4('s', '-', 'p', 's')
 
 #define PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST                                                                                \
     {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = storageRemoteFeatureProtocol},                                        \
