@@ -34,19 +34,22 @@ typedef enum
 
 #define STRING_ID_BIT_MASK                                          3
 #define STRING_ID_HEADER_SIZE                                       4
+#define STRING_ID_PREFIX                                            4
 
 /***********************************************************************************************************************************
 !!!
 ***********************************************************************************************************************************/
 // 5-bit StringId - a-z and -
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Identify a-z and transform to a = 1, b = 2, etc.
+// Identify a-z and transform to a = 1, b = 2, ...
 #define STRID_LOWER(c)                                              ((c > 0x60 && c < 0x7B) * (c - 0x60))
 // Identify - and transform to 27
 #define STRID_DASH(c)                                               ((c == 0x2D) * (c - 0x12))
+// Identify 1-4 and transform to 1 = 28, 2 = 29, ...
+#define STRID_NUMBER4(c)                                            ((c > 0x30 && c < 0x35) * (c - 21))
 
 // Identify and transform valid 5-bit characters
-#define STR5IDC(c)                                                  (STRID_LOWER(c) | STRID_DASH(c))
+#define STR5IDC(c)                                                  (STRID_LOWER(c) | STRID_DASH(c) | STRID_NUMBER4(c))
 
 #define STR5ID1(c1)                                                                                                                \
     ((uint16_t)STR5IDC(c1) << 4)
@@ -87,9 +90,9 @@ typedef enum
 
 // 6-bit StringId - a-z, A-Z, 0-9 and -
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Identify 0-9 and transform to 0 = 28, 1 = 29, etc.
+// Identify 0-9 and transform to 0 = 28, 1 = 29, ...
 #define STRID_NUMBER(c)                                             ((c > 0x2F && c < 0x3A) * (c - 20))
-// Identify A-Z and transform to A = 38, B = 39, etc.
+// Identify A-Z and transform to A = 38, B = 39, ...
 #define STRID_UPPER(c)                                              ((c > 0x40 && c < 0x5B) * (c - 27))
 
 // Identify and transform valid 6-bit characters

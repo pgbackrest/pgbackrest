@@ -535,6 +535,9 @@ testRun(void)
 
         TEST_RESULT_UINT(STR5IDC('-'), 27, "-");
 
+        for (char charIdx = '1'; charIdx <= '4'; charIdx++)
+            TEST_RESULT_INT(STR5IDC(charIdx), charIdx - 21, "%c", charIdx);
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STR5ID*()");
 
@@ -545,11 +548,12 @@ testRun(void)
         #define TEST_STR5ID5                                        (TEST_STR5ID4 | (uint32_t)('z' - 96) << 24)
         #define TEST_STR5ID6                                        ((uint64_t)TEST_STR5ID5 | (uint64_t)('k' - 96) << 29)
         #define TEST_STR5ID7                                        (TEST_STR5ID6 | (uint64_t)('z' - 96) << 34)
-        #define TEST_STR5ID8                                        (TEST_STR5ID7 | (uint64_t)('-' - 18) << 39)
+        #define TEST_STR5ID8                                        (TEST_STR5ID7 | (uint64_t)('1' - 21) << 39)
         #define TEST_STR5ID9                                        (TEST_STR5ID8 | (uint64_t)('-' - 18) << 44)
         #define TEST_STR5ID10                                       (TEST_STR5ID9 | (uint64_t)('y' - 96) << 49)
         #define TEST_STR5ID11                                       (TEST_STR5ID10 | (uint64_t)('m' - 96) << 54)
-        #define TEST_STR5ID12                                       (TEST_STR5ID11 | (uint64_t)('k' - 96) << 59)
+        #define TEST_STR5ID12                                       (TEST_STR5ID11 | (uint64_t)('4' - 21) << 59)
+        #define TEST_STR5ID13                                       (TEST_STR5ID12 | STRING_ID_PREFIX)
 
         TEST_RESULT_UINT(STR5ID1('a'), TEST_STR5ID1, "1 char");
         TEST_RESULT_UINT(STR5ID2('a', 'b'), TEST_STR5ID2, "2 chars");
@@ -558,11 +562,11 @@ testRun(void)
         TEST_RESULT_UINT(STR5ID5('a', 'b', 'c','-', 'z'), TEST_STR5ID5, "5 chars");
         TEST_RESULT_UINT(STR5ID6('a', 'b', 'c','-', 'z', 'k'), TEST_STR5ID6, "6 chars");
         TEST_RESULT_UINT(STR5ID7('a', 'b', 'c','-', 'z', 'k', 'z'), TEST_STR5ID7, "7 chars");
-        TEST_RESULT_UINT(STR5ID8('a', 'b', 'c','-', 'z', 'k', 'z', '-'), TEST_STR5ID8, "8 chars");
-        TEST_RESULT_UINT(STR5ID9('a', 'b', 'c','-', 'z', 'k', 'z', '-', '-'), TEST_STR5ID9, "9 chars");
-        TEST_RESULT_UINT(STR5ID10('a', 'b', 'c','-', 'z', 'k', 'z', '-', '-', 'y'), TEST_STR5ID10, "10 chars");
-        TEST_RESULT_UINT(STR5ID11('a', 'b', 'c','-', 'z', 'k', 'z', '-', '-', 'y', 'm'), TEST_STR5ID11, "11 chars");
-        TEST_RESULT_UINT(STR5ID12('a', 'b', 'c','-', 'z', 'k', 'z', '-', '-', 'y', 'm', 'k'), TEST_STR5ID12, "12 chars");
+        TEST_RESULT_UINT(STR5ID8('a', 'b', 'c','-', 'z', 'k', 'z', '1'), TEST_STR5ID8, "8 chars");
+        TEST_RESULT_UINT(STR5ID9('a', 'b', 'c','-', 'z', 'k', 'z', '1', '-'), TEST_STR5ID9, "9 chars");
+        TEST_RESULT_UINT(STR5ID10('a', 'b', 'c','-', 'z', 'k', 'z', '1', '-', 'y'), TEST_STR5ID10, "10 chars");
+        TEST_RESULT_UINT(STR5ID11('a', 'b', 'c','-', 'z', 'k', 'z', '1', '-', 'y', 'm'), TEST_STR5ID11, "11 chars");
+        TEST_RESULT_UINT(STR5ID12('a', 'b', 'c','-', 'z', 'k', 'z', '1', '-', 'y', 'm', '4'), TEST_STR5ID12, "12 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STR6IDC()");
@@ -591,6 +595,7 @@ testRun(void)
         #define TEST_STR6ID8                                        (TEST_STR6ID7 | (uint64_t)('z' - 96) << 46)
         #define TEST_STR6ID9                                        (TEST_STR6ID8 | (uint64_t)('Z' - 27) << 52)
         #define TEST_STR6ID10                                       (TEST_STR6ID9 | (uint64_t)('9' - 20) << 58)
+        #define TEST_STR6ID11                                       (TEST_STR6ID10 | STRING_ID_PREFIX)
 
         TEST_RESULT_UINT(STR6ID1('a'), TEST_STR6ID1, "1 char");
         TEST_RESULT_UINT(STR6ID2('a', 'b'), TEST_STR6ID2, "2 chars");
@@ -608,11 +613,13 @@ testRun(void)
 
         TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "a", 1), TEST_STR5ID1, "5 bits 1 char");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zk", 6), TEST_STR5ID6, "5 bits 6 chars");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz--ymk", 12), TEST_STR5ID12, "5 bits 12 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz1-ym4", 12), TEST_STR5ID12, "5 bits 12 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz1-ym4?", 13), TEST_STR5ID13, "5 bits 13 chars");
 
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "a", 1), TEST_STR6ID1, "6 bits 1 char");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-4", 5), TEST_STR6ID5, "6 bits 5 chars");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9", 10), TEST_STR6ID10, "6 bits 10 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9?", 11), TEST_STR6ID11, "6 bits 11 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdFromStr()");
@@ -644,15 +651,17 @@ testRun(void)
         TEST_RESULT_UINT(strIdToZN(TEST_STR5ID7, buffer5), 7, "5 bits 7 chars");
         TEST_RESULT_Z(buffer5, "abc-zkzXXXXXX", "    check");
         TEST_RESULT_UINT(strIdToZN(TEST_STR5ID8, buffer5), 8, "5 bits 8 chars");
-        TEST_RESULT_Z(buffer5, "abc-zkz-XXXXX", "    check");
+        TEST_RESULT_Z(buffer5, "abc-zkz1XXXXX", "    check");
         TEST_RESULT_UINT(strIdToZN(TEST_STR5ID9, buffer5), 9, "5 bits 9 chars");
-        TEST_RESULT_Z(buffer5, "abc-zkz--XXXX", "    check");
+        TEST_RESULT_Z(buffer5, "abc-zkz1-XXXX", "    check");
         TEST_RESULT_UINT(strIdToZN(TEST_STR5ID10, buffer5), 10, "5 bits 10 chars");
-        TEST_RESULT_Z(buffer5, "abc-zkz--yXXX", "    check");
+        TEST_RESULT_Z(buffer5, "abc-zkz1-yXXX", "    check");
         TEST_RESULT_UINT(strIdToZN(TEST_STR5ID11, buffer5), 11, "5 bits 11 chars");
-        TEST_RESULT_Z(buffer5, "abc-zkz--ymXX", "    check");
+        TEST_RESULT_Z(buffer5, "abc-zkz1-ymXX", "    check");
         TEST_RESULT_UINT(strIdToZN(TEST_STR5ID12, buffer5), 12, "5 bits 12 chars");
-        TEST_RESULT_Z(buffer5, "abc-zkz--ymkX", "    check");
+        TEST_RESULT_Z(buffer5, "abc-zkz1-ym4X", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID13, buffer5), 13, "5 bits 13 chars");
+        TEST_RESULT_Z(buffer5, "abc-zkz1-ym4+", "    check");
 
         char buffer6[] = "XXXXXXXXXXX";
 
@@ -676,12 +685,14 @@ testRun(void)
         TEST_RESULT_Z(buffer6, "abC-40MzZXX", "    check");
         TEST_RESULT_UINT(strIdToZN(TEST_STR6ID10, buffer6), 10, "6 bits 10 chars");
         TEST_RESULT_Z(buffer6, "abC-40MzZ9X", "    check");
+        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID11, buffer6), 11, "6 bits 11 chars");
+        TEST_RESULT_Z(buffer6, "abC-40MzZ9+", "    check");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToStr()");
 
         TEST_RESULT_STR_Z(strIdToStr(TEST_STR5ID1), "a", "5 bits 1 char");
-        TEST_RESULT_STR_Z(strIdToStr(TEST_STR5ID8), "abc-zkz-", "5 bits 8 chars");
+        TEST_RESULT_STR_Z(strIdToStr(TEST_STR5ID8), "abc-zkz1", "5 bits 8 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToStr()");

@@ -28,7 +28,7 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 27,  0,  0,
-                 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+                 0, 28, 29, 30, 31,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
@@ -48,7 +48,12 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
             switch (size)
             {
                 default:
+                {
+                    if (size > 12)
+                        result |= STRING_ID_PREFIX;
+
                     result |= (uint64_t)map[(uint8_t)buffer[11]] << 59;
+                }
 
                 case 11:
                     result |= (uint64_t)map[(uint8_t)buffer[10]] << 54;
@@ -93,12 +98,12 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
 
             static const uint8_t map[256] =
             {
-                 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, // 0
-                 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, // 16
-                 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 27,  0,  0, // 32
-                28, 29, 30, 31, 32, 33, 34, 35, 36, 37,  0,  0,  0,  0,  0,  0, // 48
-                 0, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, // 64
-                53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,  0,  0,  0,  0,  0, // 80
+                 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+                 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+                 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 27,  0,  0,
+                28, 29, 30, 31, 32, 33, 34, 35, 36, 37,  0,  0,  0,  0,  0,  0,
+                 0, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52,
+                53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,  0,  0,  0,  0,  0,
                  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
                 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -116,7 +121,12 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
             switch (size)
             {
                 default:
+                {
+                    if (size > 10)
+                        result |= STRING_ID_PREFIX;
+
                     result |= (uint64_t)map[(uint8_t)buffer[9]] << 58;
+                }
 
                 case 9:
                     result |= (uint64_t)map[(uint8_t)buffer[8]] << 52;
@@ -163,6 +173,7 @@ strIdToZN(StringId strId, char *const buffer)
     ASSERT(strId != 0);
     ASSERT(buffer != NULL);
 
+    bool prefix = strId & STRING_ID_PREFIX;
     StringIdBit bit = (StringIdBit)(strId & STRING_ID_BIT_MASK);
     strId >>= STRING_ID_HEADER_SIZE;
 
@@ -170,7 +181,7 @@ strIdToZN(StringId strId, char *const buffer)
     {
         case stringIdBit5:
         {
-            const char map[32] = "?abcdefghijklmnopqrstuvwxyz-????";
+            const char map[32] = "!abcdefghijklmnopqrstuvwxyz-1234";
 
             #define STR5ID_TO_ZN_IDX(idx)                                                                                          \
                 buffer[idx] = map[strId & 0x1F];                                                                                   \
@@ -196,6 +207,12 @@ strIdToZN(StringId strId, char *const buffer)
             buffer[11] = map[strId & 0x1F];
             ASSERT(strId >> 5 == 0);
 
+            if (prefix)
+            {
+                buffer[12] = '+';
+                FUNCTION_TEST_RETURN(13);
+            }
+
             FUNCTION_TEST_RETURN(12);
         }
 
@@ -203,7 +220,7 @@ strIdToZN(StringId strId, char *const buffer)
         {
             CHECK(bit == stringIdBit6);
 
-            const char map[64] = "?abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const char map[64] = "!abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
             #define STR6ID_TO_ZN_IDX(idx)                                                                                          \
                 buffer[idx] = map[strId & 0x3F];                                                                                   \
@@ -226,6 +243,12 @@ strIdToZN(StringId strId, char *const buffer)
             // Char 10
             buffer[9] = map[strId & 0x3F];
             ASSERT(strId >> 6 == 0);
+
+            if (prefix)
+            {
+                buffer[10] = '+';
+                FUNCTION_TEST_RETURN(11);
+            }
 
             FUNCTION_TEST_RETURN(10);
         }
