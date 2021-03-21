@@ -656,9 +656,6 @@ testRun(void)
         TEST_ERROR(strIdGenerate("Watcha"), FormatError, "STRID: 0x480d407c1 /* StringId/6 \"Watcha\" */");
         TEST_ERROR(strIdGenerate("%tcha"), FormatError, "'%' is invalid for 6-bit encoding in '%tcha'");
 
-        // TEST_RESULT_STR_Z(strIdToStr(0x83dee0), "noop", "!!!CHECK");
-        strIdGenerate("s-ps");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToLog()");
 
