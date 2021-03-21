@@ -15,31 +15,6 @@ Constants used to extract information from the header
 #define STRING_ID_PREFIX                                            4
 
 /**********************************************************************************************************************************/
-#ifdef DEBUG
-
-void
-strIdGenerate(const char *const buffer)
-{
-    StringId result = 0;
-
-    TRY_BEGIN()
-    {
-        result = strIdFromZ(stringIdBit5, buffer);
-    }
-    CATCH_ANY()
-    {
-        result = strIdFromZ(stringIdBit6, buffer);
-    }
-    TRY_END();
-
-    THROW_FMT(
-        FormatError, "STRID: 0x%" PRIx64 " /* StringId/%u \"%s\" */", result, (unsigned int)(result & STRING_ID_BIT_MASK) + 5,
-        buffer);
-}
-
-#endif
-
-/**********************************************************************************************************************************/
 StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -364,6 +339,30 @@ strIdToZ(const StringId strId, char *const buffer)
 
     FUNCTION_TEST_RETURN(size);
 }
+
+
+/**********************************************************************************************************************************/
+#ifdef DEBUG
+
+void
+strIdGenerate(const char *const buffer)
+{
+    StringId result = 0;
+
+    TRY_BEGIN()
+    {
+        result = strIdFromZ(stringIdBit5, buffer);
+    }
+    CATCH_ANY()
+    {
+        result = strIdFromZ(stringIdBit6, buffer);
+    }
+    TRY_END();
+
+    THROW_FMT(FormatError, "STRID%u(\"%s\", 0x%" PRIx64 ")", (unsigned int)(result & STRING_ID_BIT_MASK) + 5, buffer, result);
+}
+
+#endif
 
 /**********************************************************************************************************************************/
 size_t

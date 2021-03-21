@@ -567,6 +567,12 @@ testRun(void)
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9?", 11), TEST_STR6ID11, "6 bits 11 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("STRID*()");
+
+        TEST_RESULT_UINT(STRID5("a", TEST_STR5ID1), TEST_STR5ID1, "STRID5()");
+        TEST_RESULT_UINT(STRID6("abC-4", TEST_STR6ID5), TEST_STR6ID5, "STRID6()");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdFromStr()");
 
         TEST_RESULT_UINT(strIdFromStr(stringIdBit5, STRDEF("abc-")), TEST_STR5ID4, "5 bits 4 chars");
@@ -652,8 +658,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdGenerate()");
 
-        TEST_ERROR(strIdGenerate("watcha"), FormatError, "STRID: 0x281d0370 /* StringId/5 \"watcha\" */");
-        TEST_ERROR(strIdGenerate("Watcha"), FormatError, "STRID: 0x480d407c1 /* StringId/6 \"Watcha\" */");
+        TEST_ERROR(strIdGenerate("watcha"), FormatError, "STRID5(\"watcha\", 0x281d0370)");
+        TEST_ERROR(strIdGenerate("Watcha"), FormatError, "STRID6(\"Watcha\", 0x480d407c1)");
         TEST_ERROR(strIdGenerate("%tcha"), FormatError, "'%' is invalid for 6-bit encoding in '%tcha'");
 
         // -------------------------------------------------------------------------------------------------------------------------

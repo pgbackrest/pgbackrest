@@ -17,7 +17,7 @@ void verifyFileProtocol(const VariantList *paramList, ProtocolServer *server);
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_VERIFY_FILE                                0x36cd60 /* StringId/5 "vf-f" */
+#define PROTOCOL_COMMAND_VERIFY_FILE                                STRID5("vf-f", 0x36cd60)
 
 #define PROTOCOL_SERVER_HANDLER_VERIFY_LIST                                                                                        \
     {.command = PROTOCOL_COMMAND_VERIFY_FILE, .handler = verifyFileProtocol},

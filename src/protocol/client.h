@@ -26,8 +26,8 @@ Constants
 #define PROTOCOL_GREETING_VERSION                                   "version"
     STRING_DECLARE(PROTOCOL_GREETING_VERSION_STR);
 
-#define PROTOCOL_COMMAND_EXIT                                       0xa27050 /* StringId/5 "exit" */
-#define PROTOCOL_COMMAND_NOOP                                       0x83dee0 /* StringId/5 "noop" */
+#define PROTOCOL_COMMAND_EXIT                                       STRID5("exit", 0xa27050)
+#define PROTOCOL_COMMAND_NOOP                                       STRID5("noop", 0x83dee0)
 
 #define PROTOCOL_ERROR                                              "err"
     STRING_DECLARE(PROTOCOL_ERROR_STR);
