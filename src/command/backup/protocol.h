@@ -17,7 +17,7 @@ void backupFileProtocol(const VariantList *paramList, ProtocolServer *server);
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_BACKUP_FILE                                STR5ID4('b', 'p', '-', 'f')
+#define PROTOCOL_COMMAND_BACKUP_FILE                                0x19b4021 /* StringId/5 "bp-f" */
 
 #define PROTOCOL_SERVER_HANDLER_BACKUP_LIST                                                                                        \
     {.command = PROTOCOL_COMMAND_BACKUP_FILE, .handler = backupFileProtocol},

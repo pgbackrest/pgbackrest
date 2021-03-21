@@ -705,6 +705,13 @@ testRun(void)
         TEST_RESULT_Z(buffer, "abc-", "    check");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strIdGenerate()");
+
+        TEST_ERROR(strIdGenerate("watcha"), FormatError, "STRID: 0x480d40571 /* StringId/5 \"watcha\" */");
+        TEST_ERROR(strIdGenerate("Watcha"), FormatError, "STRID: 0x480d407c1 /* StringId/6 \"Watcha\" */");
+        TEST_ERROR(strIdGenerate("%tcha"), FormatError, "'%' is invalid for 6-bit encoding in '%tcha'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToLog()");
 
         TEST_RESULT_UINT(strIdToLog(TEST_STR5ID2, buffer, sizeof(buffer)), 2, "string id with limited buffer");

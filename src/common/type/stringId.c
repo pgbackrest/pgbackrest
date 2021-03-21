@@ -7,6 +7,38 @@ Represent Short Strings as Integers
 #include "common/debug.h"
 #include "common/type/stringId.h"
 
+/***********************************************************************************************************************************
+Constants used to extract information from the header
+***********************************************************************************************************************************/
+#define STRING_ID_BIT_MASK                                          3
+#define STRING_ID_HEADER_SIZE                                       4
+#define STRING_ID_PREFIX                                            4
+
+/**********************************************************************************************************************************/
+#ifdef DEBUG
+
+void
+strIdGenerate(const char *const buffer)
+{
+    StringId result = 0;
+
+    TRY_BEGIN()
+    {
+        result = strIdFromZ(stringIdBit5, buffer);
+    }
+    CATCH_ANY()
+    {
+        result = strIdFromZ(stringIdBit6, buffer);
+    }
+    TRY_END();
+
+    THROW_FMT(
+        FormatError, "STRID: 0x%" PRIx64 " /* StringId/%u \"%s\" */", strIdFromZ(stringIdBit6, buffer),
+        (unsigned int)(result & STRING_ID_BIT_MASK) + 5, buffer);
+}
+
+#endif
+
 /**********************************************************************************************************************************/
 StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
 {
@@ -19,10 +51,13 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
     ASSERT(buffer != NULL);
     ASSERT(size > 0);
 
+    // Encoding type
     switch (bit)
     {
+        // 5-bit encoding
         case stringIdBit5:
         {
+            // Map to convert characters to encoding
             static const uint8_t map[256] =
             {
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -43,12 +78,27 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
             };
 
+#ifdef DEBUG
+            // Make sure the string is valid for this encoding
+            for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
+            {
+                if (size > 12)
+                    break;
+
+                if (map[(uint8_t)buffer[bufferIdx]] == 0)
+                    THROW_FMT(FormatError, "'%c' is invalid for 5-bit encoding in '%s'", buffer[bufferIdx], buffer);
+            }
+#endif
+
+            // Set encoding in header
             uint64_t result = stringIdBit5;
 
+            // Encode based on the number of characters that need to be encoded
             switch (size)
             {
                 default:
                 {
+                    // If size is greater then can be encoded set the prefix flag
                     if (size > 12)
                         result |= STRING_ID_PREFIX;
 
@@ -92,10 +142,12 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
             FUNCTION_TEST_RETURN(result);
         }
 
+        // 6-bit encoding
         default:
         {
             ASSERT(bit == stringIdBit6);
 
+            // Map to convert characters to encoding
             static const uint8_t map[256] =
             {
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -116,12 +168,27 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
             };
 
+#ifdef DEBUG
+            // Make sure the string is valid for this encoding
+            for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
+            {
+                if (size > 10)
+                    break;
+
+                if (map[(uint8_t)buffer[bufferIdx]] == 0)
+                    THROW_FMT(FormatError, "'%c' is invalid for 6-bit encoding in '%s'", buffer[bufferIdx], buffer);
+            }
+#endif
+
+            // Set encoding in header
             uint64_t result = stringIdBit6;
 
+            // Encode based on the number of characters that need to be encoded
             switch (size)
             {
                 default:
                 {
+                    // If size is greater then can be encoded set the prefix flag
                     if (size > 10)
                         result |= STRING_ID_PREFIX;
 
@@ -173,16 +240,25 @@ strIdToZN(StringId strId, char *const buffer)
     ASSERT(strId != 0);
     ASSERT(buffer != NULL);
 
+    // Is the StringId a prefix of a longer string?
     bool prefix = strId & STRING_ID_PREFIX;
+
+    // Extract bits used to encode the characters
     StringIdBit bit = (StringIdBit)(strId & STRING_ID_BIT_MASK);
+
+    // Remove header to get the encoded characters
     strId >>= STRING_ID_HEADER_SIZE;
 
+    // Decoding type
     switch (bit)
     {
+        // 5-bit decoding
         case stringIdBit5:
         {
+            // Map to convert encoding to characters
             const char map[32] = "!abcdefghijklmnopqrstuvwxyz-1234";
 
+            // Macro to decode all but the last character
             #define STR5ID_TO_ZN_IDX(idx)                                                                                          \
                 buffer[idx] = map[strId & 0x1F];                                                                                   \
                 strId >>= 5;                                                                                                       \
@@ -207,6 +283,7 @@ strIdToZN(StringId strId, char *const buffer)
             buffer[11] = map[strId & 0x1F];
             ASSERT(strId >> 5 == 0);
 
+            // If prefix flag is set then append +
             if (prefix)
             {
                 buffer[12] = '+';
@@ -216,12 +293,15 @@ strIdToZN(StringId strId, char *const buffer)
             FUNCTION_TEST_RETURN(12);
         }
 
+        // 6-bit decoding
         default:
         {
             CHECK(bit == stringIdBit6);
 
+            // Map to convert encoding to characters
             const char map[64] = "!abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+            // Macro to decode all but the last character
             #define STR6ID_TO_ZN_IDX(idx)                                                                                          \
                 buffer[idx] = map[strId & 0x3F];                                                                                   \
                 strId >>= 6;                                                                                                       \
@@ -244,6 +324,7 @@ strIdToZN(StringId strId, char *const buffer)
             buffer[9] = map[strId & 0x3F];
             ASSERT(strId >> 6 == 0);
 
+            // If prefix flag is set then append +
             if (prefix)
             {
                 buffer[10] = '+';
