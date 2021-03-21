@@ -33,15 +33,15 @@ void storageRemoteRemoveProtocol(const VariantList *paramList, ProtocolServer *s
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_STORAGE_FEATURE                            STR5ID3('s', '-', 'f')
-#define PROTOCOL_COMMAND_STORAGE_INFO                               STR5ID3('s', '-', 'i')
-#define PROTOCOL_COMMAND_STORAGE_INFO_LIST                          STR5ID3('s', '-', 'l')
-#define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          STR5ID4('s', '-', 'o', 'r')
-#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         STR5ID4('s', '-', 'o', 'w')
-#define PROTOCOL_COMMAND_STORAGE_PATH_CREATE                        STR5ID4('s', '-', 'p', 'c')
-#define PROTOCOL_COMMAND_STORAGE_REMOVE                             STR5ID3('s', '-', 'r')
-#define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        STR5ID4('s', '-', 'p', 'r')
-#define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          STR5ID4('s', '-', 'p', 's')
+#define PROTOCOL_COMMAND_STORAGE_FEATURE                            0x1b730 /* StringId/5 "s-f" */
+#define PROTOCOL_COMMAND_STORAGE_INFO                               0x27730 /* StringId/5 "s-i" */
+#define PROTOCOL_COMMAND_STORAGE_INFO_LIST                          0x33730 /* StringId/5 "s-l" */
+#define PROTOCOL_COMMAND_STORAGE_OPEN_READ                          0x93f730 /* StringId/5 "s-or" */
+#define PROTOCOL_COMMAND_STORAGE_OPEN_WRITE                         0xbbf730 /* StringId/5 "s-ow" */
+#define PROTOCOL_COMMAND_STORAGE_PATH_CREATE                        0x1c3730 /* StringId/5 "s-pc" */
+#define PROTOCOL_COMMAND_STORAGE_REMOVE                             0x4b730 /* StringId/5 "s-r" */
+#define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        0x943730 /* StringId/5 "s-pr" */
+#define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          0x9c3730 /* StringId/5 "s-ps" */
 
 #define PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST                                                                                \
     {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = storageRemoteFeatureProtocol},                                        \

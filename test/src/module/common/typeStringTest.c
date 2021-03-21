@@ -528,18 +528,7 @@ testRun(void)
     if (testBegin("STRID*(), strIdTo*(), and strIdFrom*()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("STR5IDC()");
-
-        for (char charIdx = 'a'; charIdx <= 'z'; charIdx++)
-            TEST_RESULT_INT(STR5IDC(charIdx), charIdx - 96, "%c", charIdx);
-
-        TEST_RESULT_UINT(STR5IDC('-'), 27, "-");
-
-        for (char charIdx = '1'; charIdx <= '4'; charIdx++)
-            TEST_RESULT_INT(STR5IDC(charIdx), charIdx - 21, "%c", charIdx);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("STR5ID*()");
+        TEST_TITLE("strIdFromZN()");
 
         #define TEST_STR5ID1                                        (stringIdBit5 | (uint16_t)('a' - 96) << 4)
         #define TEST_STR5ID2                                        (TEST_STR5ID1 | (uint16_t)('b' - 96) << 9)
@@ -555,35 +544,10 @@ testRun(void)
         #define TEST_STR5ID12                                       (TEST_STR5ID11 | (uint64_t)('4' - 21) << 59)
         #define TEST_STR5ID13                                       (TEST_STR5ID12 | STRING_ID_PREFIX)
 
-        TEST_RESULT_UINT(STR5ID1('a'), TEST_STR5ID1, "1 char");
-        TEST_RESULT_UINT(STR5ID2('a', 'b'), TEST_STR5ID2, "2 chars");
-        TEST_RESULT_UINT(STR5ID3('a', 'b', 'c'), TEST_STR5ID3, "3 chars");
-        TEST_RESULT_UINT(STR5ID4('a', 'b', 'c','-'), TEST_STR5ID4, "4 chars");
-        TEST_RESULT_UINT(STR5ID5('a', 'b', 'c','-', 'z'), TEST_STR5ID5, "5 chars");
-        TEST_RESULT_UINT(STR5ID6('a', 'b', 'c','-', 'z', 'k'), TEST_STR5ID6, "6 chars");
-        TEST_RESULT_UINT(STR5ID7('a', 'b', 'c','-', 'z', 'k', 'z'), TEST_STR5ID7, "7 chars");
-        TEST_RESULT_UINT(STR5ID8('a', 'b', 'c','-', 'z', 'k', 'z', '1'), TEST_STR5ID8, "8 chars");
-        TEST_RESULT_UINT(STR5ID9('a', 'b', 'c','-', 'z', 'k', 'z', '1', '-'), TEST_STR5ID9, "9 chars");
-        TEST_RESULT_UINT(STR5ID10('a', 'b', 'c','-', 'z', 'k', 'z', '1', '-', 'y'), TEST_STR5ID10, "10 chars");
-        TEST_RESULT_UINT(STR5ID11('a', 'b', 'c','-', 'z', 'k', 'z', '1', '-', 'y', 'm'), TEST_STR5ID11, "11 chars");
-        TEST_RESULT_UINT(STR5ID12('a', 'b', 'c','-', 'z', 'k', 'z', '1', '-', 'y', 'm', '4'), TEST_STR5ID12, "12 chars");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("STR6IDC()");
-
-        for (char charIdx = 'a'; charIdx <= 'z'; charIdx++)
-            TEST_RESULT_INT(STR6IDC(charIdx), charIdx - 96, "%c", charIdx);
-
-        TEST_RESULT_UINT(STR6IDC('-'), 27, "-");
-
-        for (char charIdx = '0'; charIdx <= '9'; charIdx++)
-            TEST_RESULT_INT(STR6IDC(charIdx), charIdx - 20, "%c", charIdx);
-
-        for (char charIdx = 'A'; charIdx <= 'Z'; charIdx++)
-            TEST_RESULT_INT(STR6IDC(charIdx), charIdx - 27, "%c", charIdx);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("STR6ID*()");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "a", 1), TEST_STR5ID1, "5 bits 1 char");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zk", 6), TEST_STR5ID6, "5 bits 6 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz1-ym4", 12), TEST_STR5ID12, "5 bits 12 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz1-ym4?", 13), TEST_STR5ID13, "5 bits 13 chars");
 
         #define TEST_STR6ID1                                        (stringIdBit6 | (uint16_t)('a' - 96) << 4)
         #define TEST_STR6ID2                                        (TEST_STR6ID1 | (uint16_t)('b' - 96) << 10)
@@ -596,25 +560,6 @@ testRun(void)
         #define TEST_STR6ID9                                        (TEST_STR6ID8 | (uint64_t)('Z' - 27) << 52)
         #define TEST_STR6ID10                                       (TEST_STR6ID9 | (uint64_t)('9' - 20) << 58)
         #define TEST_STR6ID11                                       (TEST_STR6ID10 | STRING_ID_PREFIX)
-
-        TEST_RESULT_UINT(STR6ID1('a'), TEST_STR6ID1, "1 char");
-        TEST_RESULT_UINT(STR6ID2('a', 'b'), TEST_STR6ID2, "2 chars");
-        TEST_RESULT_UINT(STR6ID3('a', 'b', 'C'), TEST_STR6ID3, "3 chars");
-        TEST_RESULT_UINT(STR6ID4('a', 'b', 'C', '-'), TEST_STR6ID4, "4 chars");
-        TEST_RESULT_UINT(STR6ID5('a', 'b', 'C', '-', '4'), TEST_STR6ID5, "5 chars");
-        TEST_RESULT_UINT(STR6ID6('a', 'b', 'C', '-', '4', '0'), TEST_STR6ID6, "6 chars");
-        TEST_RESULT_UINT(STR6ID7('a', 'b', 'C', '-', '4', '0', 'M'), TEST_STR6ID7, "7 chars");
-        TEST_RESULT_UINT(STR6ID8('a', 'b', 'C', '-', '4', '0', 'M', 'z'), TEST_STR6ID8, "8 chars");
-        TEST_RESULT_UINT(STR6ID9('a', 'b', 'C', '-', '4', '0', 'M', 'z', 'Z'), TEST_STR6ID9, "9 chars");
-        TEST_RESULT_UINT(STR6ID10('a', 'b', 'C', '-', '4', '0', 'M', 'z', 'Z', '9'), TEST_STR6ID10, "10 chars");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("strIdFromZN()");
-
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "a", 1), TEST_STR5ID1, "5 bits 1 char");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zk", 6), TEST_STR5ID6, "5 bits 6 chars");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz1-ym4", 12), TEST_STR5ID12, "5 bits 12 chars");
-        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz1-ym4?", 13), TEST_STR5ID13, "5 bits 13 chars");
 
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "a", 1), TEST_STR6ID1, "6 bits 1 char");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-4", 5), TEST_STR6ID5, "6 bits 5 chars");
@@ -707,9 +652,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdGenerate()");
 
-        TEST_ERROR(strIdGenerate("watcha"), FormatError, "STRID: 0x480d40571 /* StringId/5 \"watcha\" */");
+        TEST_ERROR(strIdGenerate("watcha"), FormatError, "STRID: 0x281d0370 /* StringId/5 \"watcha\" */");
         TEST_ERROR(strIdGenerate("Watcha"), FormatError, "STRID: 0x480d407c1 /* StringId/6 \"Watcha\" */");
         TEST_ERROR(strIdGenerate("%tcha"), FormatError, "'%' is invalid for 6-bit encoding in '%tcha'");
+
+        // TEST_RESULT_STR_Z(strIdToStr(0x83dee0), "noop", "!!!CHECK");
+        strIdGenerate("s-ps");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToLog()");

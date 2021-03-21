@@ -20,9 +20,9 @@ void dbCloseProtocol(const VariantList *paramList, ProtocolServer *server);
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_DB_OPEN                                    STR5ID4('d', 'b', '-', 'o')
-#define PROTOCOL_COMMAND_DB_QUERY                                   STR5ID4('d', 'b', '-', 'q')
-#define PROTOCOL_COMMAND_DB_CLOSE                                   STR5ID4('d', 'b', '-', 'c')
+#define PROTOCOL_COMMAND_DB_OPEN                                    0x7ec440 /* StringId/5 "db-o" */
+#define PROTOCOL_COMMAND_DB_QUERY                                   0x8ec440 /* StringId/5 "db-q" */
+#define PROTOCOL_COMMAND_DB_CLOSE                                   0x1ec440 /* StringId/5 "db-c" */
 
 #define PROTOCOL_SERVER_HANDLER_DB_LIST                                                                                            \
     {.command = PROTOCOL_COMMAND_DB_OPEN, .handler = dbOpenProtocol},                                                              \

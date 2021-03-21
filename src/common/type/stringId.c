@@ -33,8 +33,8 @@ strIdGenerate(const char *const buffer)
     TRY_END();
 
     THROW_FMT(
-        FormatError, "STRID: 0x%" PRIx64 " /* StringId/%u \"%s\" */", strIdFromZ(stringIdBit6, buffer),
-        (unsigned int)(result & STRING_ID_BIT_MASK) + 5, buffer);
+        FormatError, "STRID: 0x%" PRIx64 " /* StringId/%u \"%s\" */", result, (unsigned int)(result & STRING_ID_BIT_MASK) + 5,
+        buffer);
 }
 
 #endif

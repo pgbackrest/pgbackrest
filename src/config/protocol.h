@@ -21,7 +21,7 @@ VariantList *configOptionRemote(ProtocolClient *client, const VariantList *param
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_CONFIG_OPTION                              STR5ID5('o', 'p', 't', '-', 'g')
+#define PROTOCOL_COMMAND_CONFIG_OPTION                              0x7dd20f0 /* StringId/5 "opt-g" */
 
 #define PROTOCOL_SERVER_HANDLER_OPTION_LIST                                                                                        \
     {.command = PROTOCOL_COMMAND_CONFIG_OPTION, .handler = configOptionProtocol},

@@ -218,7 +218,7 @@ protocolServerProcess(
                             break;
 
                         default:
-                            THROW_FMT(ProtocolError, "invalid command '%s'", strZ(strIdToStr(command)));
+                            THROW_FMT(ProtocolError, "invalid command '%s' (0x%" PRIx64 ")", strZ(strIdToStr(command)), command);
                     }
                 }
 
