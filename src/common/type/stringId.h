@@ -3,14 +3,13 @@ Represent Short Strings as Integers
 
 It is often useful to represent indentifiers as strings when they cannot easily be represented as an enum/integer, e.g. because they
 are distributed among a number of unrelated modules or need to be passed to remote processes. Strings are also more helpful in
-debugging since they can be recognized without cross-referencing the source. However, strings are awkward to work with in code since
+debugging since they can be recognized without cross-referencing the source. However, strings are awkward to work with in C since
 they cannot be directly used in switch statments leading to less efficient if-else structures.
 
 A StringId encodes a short string into an integer so it can be used in switch statements but may also be readily converted back into
-a string for debugging purposes. The provided STR*ID*() macros allow a StringId to be defined as characters to make it easier to
-ensure that a StringId is unique within a certain namespace, e.g. all storage drivers.
+a string for debugging purposes. StringIds may also be suitable for matching user input providing the strings are short enough.
 
-!!! Functions are also provided for converting back and forth to be used for debugging and runtime generation of StringIds.
+See strIdGenerate() for information on StringId constants.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_STRINGID_H
 #define COMMON_TYPE_STRINGID_H
@@ -40,6 +39,12 @@ typedef enum
     stringIdBit5 = 0,                                               // 5-bit
     stringIdBit6 = 1,                                               // 6-bit
 } StringIdBit;
+
+/***********************************************************************************************************************************
+Macros to define constant StringIds. ALWAYS use strIdGenerate() to create these macros.
+***********************************************************************************************************************************/
+#define STRID5(str, strId)                                          strId
+#define STRID6(str, strId)                                          strId
 
 /***********************************************************************************************************************************
 Functions
@@ -74,17 +79,30 @@ String *strIdToStr(const StringId strId);
 size_t strIdToZ(const StringId strId, char *const buffer);
 
 /***********************************************************************************************************************************
-Debug functions and macros
+Generate constant StringIds
+
+To generate a constant StringId call strIdGenerate() in any debug build. It will throw an error with the generated StringId macro
+in the error message.
+
+For example:
+
+strIdGenerate("test");
+
+will throw the following error message:
+
+STRID5("test", 0xa4cb40)
+
+which can be used in a function, switch, or #define, e.g.:
+
+#define TEST_STRID                                                  STRID5("test", 0xa4cb40)
+
+DO NOT MODIFY either paramater in the macro -- ALWAYS use strIdGenerate() to create a new constant StringId. The parameters in the
+macro are not verified against each other so the string parameter is included only for documentation purposes.
 ***********************************************************************************************************************************/
 #ifdef DEBUG
+    // Generate a new constant StringId
     void strIdGenerate(const char *const buffer) __attribute__((__noreturn__));
 #endif
-
-/***********************************************************************************************************************************
-!!!
-***********************************************************************************************************************************/
-#define STRID5(str, strId)                                          strId
-#define STRID6(str, strId)                                          strId
 
 /***********************************************************************************************************************************
 Macros for function logging
