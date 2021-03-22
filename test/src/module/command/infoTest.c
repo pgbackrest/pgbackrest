@@ -153,16 +153,30 @@ testRun(void)
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
                 harnessInfoChecksum(content)),
             "put backup info to file");
-
+/* CSHANG If we don't clear the backup.info then we will fill out whatever data we have, including db. Currently, if we can't read
+the archive.info, the program blows up b/c we throw and error. We don't want to do that anymore, so we probably should report on whatever we have?
+*/
         TEST_RESULT_STR(
-            infoRender(),
-            strNewFmt(
+            infoRender(), strNewFmt(
             "["
                 "{"
                     "\"archive\":[],"
                     "\"backup\":[],"
                     "\"cipher\":\"none\","
-                    "\"db\":[],"
+                    "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"repo-key\":1,"
+                            "\"system-id\":6569239123849665666,"
+                            "\"version\":\"9.3\""
+                        "},"
+                        "{"
+                            "\"id\":2,"
+                            "\"repo-key\":1,"
+                            "\"system-id\":6569239123849665679,"
+                            "\"version\":\"9.4\""
+                        "}"
+                    "],"
                     "\"name\":\"stanza1\","
                     "\"repo\":["
                         "{"
@@ -170,7 +184,15 @@ testRun(void)
                             "\"key\":1,"
                             "\"status\":{"
                                 "\"code\":99,"
-                                "\"message\":\"[FileMissingError] unable to load info file '%s/repo/archive/stanza1/archive.info' or '%s/repo/archive/stanza1/archive.info.copy':\\nFileMissingError: unable to open missing file '%s/repo/archive/stanza1/archive.info' for read\\nFileMissingError: unable to open missing file '%s/repo/archive/stanza1/archive.info.copy' for read\\nHINT: archive.info cannot be opened but is required to push/get WAL segments.\\nHINT: is archive_command configured correctly in postgresql.conf?\\nHINT: has a stanza-create been performed?\\nHINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.\""
+                                "\"message\":\"[FileMissingError] unable to load info file '%s/archive.info' or"
+                                " '%s/archive.info.copy':\\n"
+                                "FileMissingError: unable to open missing file '%s/archive.info' for read\\n"
+                                "FileMissingError: unable to open missing file '%s/archive.info.copy' for read\\n"
+                                "HINT: archive.info cannot be opened but is required to push/get WAL segments.\\n"
+                                "HINT: is archive_command configured correctly in postgresql.conf?\\n"
+                                "HINT: has a stanza-create been performed?\\n"
+                                "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
+                                " archiving scheme.\""
                             "}"
                         "}"
                     "],"
@@ -180,9 +202,12 @@ testRun(void)
                         "\"message\":\"other\""
                         "}"
                 "}"
-            "]", testPath(), testPath(), testPath(), testPath()),
+            "]", strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path)),
             "json - other error, single repo");
-
+/* CSHANG which means we would additionally have the following added to the text output below:
+        db (current)
+            wal archive min/max (9.4): none present
+*/
         harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
         TEST_RESULT_STR(
             infoRender(), strNewFmt(
@@ -2343,6 +2368,21 @@ testRun(void)
                 "}"
             "]",
             "json - multi-repo, database mismatch, repo2 stanza-upgrade needed");
+// CSHANG
+        // Backup label not found
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup label exists on one repo");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20201110-100000F");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: mixed\n"),
+            "TEST");
 
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
@@ -2422,7 +2462,35 @@ testRun(void)
             strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath),
             strZ(backupPath), strZ(backupPath), strZ(backupPath)),
             "text - multi-repo, multi-stanza cipher error");
-// CSHANG ADD TEST FOR inability to read the WAL Dir
+
+        // Crypto error
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("WAL read error");
+
+        TEST_RESULT_VOID(
+            storagePathCreateP(
+                storageLocalWrite(), strNewFmt("%s/9.4-1", strZ(archiveStanza1Path)), .mode = 0200),
+                "WAL directory with bad permissions");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: error\n"
+            "               [PathOpenError] unable to list file info for path '%s/stanza1/9.4-1': [13] Permission denied\n"
+            "        repo2: error (no valid backups)\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004\n", strZ(archivePath)),
+            "WAL directory read error");
+
         // Unset environment key
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
     }
@@ -2774,33 +2842,6 @@ testRun(void)
             "        repo2: error (missing stanza path)\n"
             "    cipher: none\n", testPath()),
             "text - stanza repo structure exists");
-                //
-        // hrnCfgArgRawZ(argList, cfgOptStanza, "stanza1");
-        // harnessCfgLoad(cfgCmdInfo, argList);
-        //
-        //         TEST_RESULT_STR_Z(
-        //             infoRender(),
-        //             "stanza: stanza1\n"
-        //             "    status: error (other)\n"
-        //             "            [FileOpenError] unable to get info for path/file '%s/bogus/backup.manifest': [13] Permission denied
-        // cipher: none
-        //             "stanza: stanza1\n", "TEST");
-        //
-        // // Option --repo not required when only 1 repo configured
-        // strLstAddZ(argList, "--stanza=stanza1");
-        // harnessCfgLoad(cfgCmdInfo, argList);
-        //
-        // TEST_ERROR_FMT(
-        //         cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
-        //         "HINT: is the backup listed when running the info command with --stanza option only?");
-        //
-        // // Option --repo when only 1 repo configured but will search the repo provided
-        // strLstAddZ(argList, "--repo=1");
-        // harnessCfgLoad(cfgCmdInfo, argList);
-        //
-        // TEST_ERROR_FMT(
-        //         cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
-        //         "HINT: is the backup listed when running the info command with --stanza option only?");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
