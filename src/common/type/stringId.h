@@ -41,7 +41,8 @@ typedef enum
 } StringIdBit;
 
 /***********************************************************************************************************************************
-Macros to define constant StringIds. ALWAYS use strIdGenerate() to create these macros.
+Macros to define constant StringIds. ALWAYS use strIdGenerate() to create these macros. The parameters in the macros are not
+verified against each other so the str parameter is included only for documentation purposes.
 ***********************************************************************************************************************************/
 #define STRID5(str, strId)                                          strId
 #define STRID6(str, strId)                                          strId
@@ -96,8 +97,7 @@ which can be used in a function, switch, or #define, e.g.:
 
 #define TEST_STRID                                                  STRID5("test", 0xa4cb40)
 
-DO NOT MODIFY either paramater in the macro -- ALWAYS use strIdGenerate() to create a new constant StringId. The parameters in the
-macro are not verified against each other so the string parameter is included only for documentation purposes.
+DO NOT MODIFY either parameter in the macro -- ALWAYS use strIdGenerate() to create a new constant StringId.
 ***********************************************************************************************************************************/
 #ifdef DEBUG
     // Generate a new constant StringId
