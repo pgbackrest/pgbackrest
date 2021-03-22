@@ -34,9 +34,11 @@ Defaults
 /***********************************************************************************************************************************
 S3 HTTP headers
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
-STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
-STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
+#define S3_HEADER_PREFIX                                            "x-amz-"
+    STRING_STATIC(S3_HEADER_PREFIX_STR,                             S3_HEADER_PREFIX);
+STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         S3_HEADER_PREFIX "content-sha256");
+STRING_STATIC(S3_HEADER_DATE_STR,                                   S3_HEADER_PREFIX "date");
+STRING_STATIC(S3_HEADER_TOKEN_STR,                                  S3_HEADER_PREFIX "security-token");
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -208,7 +210,7 @@ storageS3Auth(
 
             // Skip headers that do not require signing
             if (!strEq(headerKeyLower, HTTP_HEADER_HOST_STR) && !strEq(headerKeyLower, HTTP_HEADER_CONTENT_MD5_STR) &&
-                !strBeginsWithZ(headerKeyLower, "x-amz-"))
+                !strBeginsWith(headerKeyLower, S3_HEADER_PREFIX_STR))
                 continue;
 
             strCatFmt(canonicalRequest, "%s:%s\n", strZ(headerKeyLower), strZ(httpHeaderGet(httpHeader, headerKey)));
