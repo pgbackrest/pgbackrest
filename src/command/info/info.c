@@ -7,7 +7,7 @@ Info Command
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdio.h> // CSHANG remove
+
 #include "command/archive/common.h"
 #include "command/info/info.h"
 #include "common/debug.h"
@@ -90,8 +90,8 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing sta
 STRING_STATIC(INFO_STANZA_MESSAGE_MIXED_STR,                        "different across repos");
 #define INFO_STANZA_STATUS_CODE_PG_MISMATCH                         5
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mismatch across repos");
-// #define INFO_STANZA_STATUS_CODE_BACKUP_MISSING                      6
-// STRING_STATIC(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR,           "missing requested backup");
+#define INFO_STANZA_STATUS_CODE_BACKUP_MISSING                      6
+STRING_STATIC(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR,           "requested backup not found");
 #define INFO_STANZA_STATUS_CODE_OTHER                               99
 STRING_STATIC(INFO_STANZA_STATUS_CODE_OTHER_STR,                    "other");
 STRING_STATIC(INFO_STANZA_INVALID_STR,                              "[invalid]");
@@ -162,7 +162,7 @@ infoStanzaErrorAdd(InfoRepoData *repoList, const ErrorType *type, const String *
 {
     repoList->stanzaStatus = INFO_STANZA_STATUS_CODE_OTHER;
     repoList->error = strNewFmt("[%s] %s", errorTypeName(type), strZ(message));
-// CSHANG Maybe clearing these is a bad idea
+
     // Free the info objects for this stanza since we cannot process it
     infoBackupFree(repoList->backupInfo);
     infoArchiveFree(repoList->archiveInfo);
@@ -184,7 +184,7 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
-    ASSERT((code >= 0 && code <= 5) || code == 99);
+    ASSERT((code >= 0 && code <= 6) || code == 99);
     ASSERT(stanzaInfo != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR);
@@ -215,6 +215,10 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
 
         case INFO_STANZA_STATUS_CODE_PG_MISMATCH:
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR));
+            break;
+
+        case INFO_STANZA_STATUS_CODE_BACKUP_MISSING:
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR));
             break;
 
         case INFO_STANZA_STATUS_CODE_OTHER:
@@ -267,9 +271,9 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo, InfoRepoData *repoData
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
             break;
 
-        // case INFO_STANZA_STATUS_CODE_BACKUP_MISSING:
-        //     kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR));
-        //     break;
+        case INFO_STANZA_STATUS_CODE_BACKUP_MISSING:
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR));
+            break;
 
         case INFO_STANZA_STATUS_CODE_OTHER:
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(repoData->error));
@@ -674,17 +678,11 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
                         kvPut(varKv(pgInfo), KEY_REPO_KEY_VAR, VARUINT(repoData->key));
 
                         varLstAdd(dbSection, pgInfo);
-/* CSHANG Added checking archiveInfo - so here we will report on the backupInfo if we have it and the archiveInfo if we have it.
-But to report accurately, we are using the backup.info DB history information since that is what the backups and hence the WAL are
-associated with.
-*/
-                        if (repoData->archiveInfo != NULL)
-                        {
-                            // Get the archive info for the DB from the archive.info file
-                            archiveDbList(
-                                stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false),
-                                repoIdx, repoData->key);
-                        }
+
+                        // Get the archive info for the DB from the archive.info file
+                        archiveDbList(
+                            stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false),
+                            repoIdx, repoData->key);
                     }
 
                     // Set stanza status if the current db sections do not match across repos
@@ -1139,48 +1137,13 @@ infoUpdateStanza(
                     storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
                     stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
 
-                // If a specific backup was requested see if it exists on this repo. If the --repo option was not set then on repos
-                // where it was not found, an error will be reported.
+                // If a specific backup was exists on this repo then attempt to load the manifest
                 if (backupLabel != NULL)
                 {
-                    // if (storageExistsP(storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
-                    // {
-                        stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
-                            storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
-                            stanzaRepo->repoList[repoIdx].cipher,
-                            infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
-                    // }
-//                     else
-//                     {
-// /* CSHANG The problem here is that the status is set to OTHER and we clear the archiveinfo, backupinfo and manifest for that repo
-//  but in doing so the WAL listed in the text output across repos is not accurate because we no longer look at the repo in error.
-//  AND the --set option is only valid for the text output. So does it make sense to report on the repo that is in "error"?
-//  */
-//
-//                         THROW_FMT(
-//                             FileMissingError, "manifest does not exist for backup '%s'\n"
-//                             "HINT: is the backup listed when running the info command with --stanza option only?",
-//                             strZ(backupLabel));
-//                     }
-                    // {
-                    //     TRY_BEGIN()
-                    //     {
-                    //         stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
-                    //             storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
-                    //             stanzaRepo->repoList[repoIdx].cipher,
-                    //             infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
-                    //     }
-                    //     CATCH_ANY()
-                    //     {
-                    //         THROW_FMT(
-                    //             FileMissingError, "manifest does not exist for backup '%s'\n"
-                    //             "HINT: is the backup listed when running the info command with --stanza option only?",
-                    //             strZ(backupLabel));
-                    //     }
-                    //     TRY_END();
-                    // }
-                    // else
-                    //     stanzaStatus = INFO_STANZA_STATUS_CODE_BACKUP_MISSING;
+                    stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
+                        storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
+                        stanzaRepo->repoList[repoIdx].cipher,
+                        infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
                 }
 
                 // If a backup-lock check has not already been performed, then do so
@@ -1406,29 +1369,20 @@ infoRender(void)
         // If a backup label was requested but it was not found on any repo
         if (backupLabel != NULL && !backupFound)
         {
-            THROW_FMT(
-                FileMissingError, "manifest does not exist for backup '%s'\n"
-                "HINT: is the backup listed when running the info command with --stanza option only?",
-                strZ(backupLabel));
-        }
+            // Get the stanza record and update each repo where there is not already an error status to indicate backup not found to
+            // avoid displaying the repo where it is found as OK and the repos where it was not found as error
+            InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanza);
 
-        // // If a backup label was requested but it was not found on any repo
-        // if (backupLabel != NULL && !backupFound)
-        // {
-        //     // Get the stanza record and update each repo where there is not already an error status to indicate backup not found
-        //     InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanza);
-        //
-        //     for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
-        //     {
-        //         if (stanzaRepo->repoList[repoIdx].stanzaStatus == INFO_STANZA_STATUS_CODE_OK)
-        //         {
-        //             infoStanzaErrorAdd(
-        //                 &stanzaRepo->repoList[repoIdx], &FileMissingError,
-        //                 strNewFmt("manifest does not exist for backup '%s'\n"
-        //                 "HINT: is the backup listed when running the info command with --stanza option only?", strZ(backupLabel)));
-        //         }
-        //     }
-        // }
+            for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
+            {
+                if (stanzaRepo->repoList[repoIdx].stanzaStatus == INFO_STANZA_STATUS_CODE_OK)
+                {
+                    stanzaRepo->repoList[repoIdx].stanzaStatus = INFO_STANZA_STATUS_CODE_BACKUP_MISSING;
+                    infoBackupFree(stanzaRepo->repoList[repoIdx].backupInfo);
+                    stanzaRepo->repoList[repoIdx].backupInfo = NULL;
+                }
+            }
+        }
 
         // If the backup storage exists, then search for and process any stanzas
         if (!lstEmpty(stanzaRepoList))

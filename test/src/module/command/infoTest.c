@@ -153,9 +153,7 @@ testRun(void)
                 storageNewWriteP(storageLocalWrite(), strNewFmt("%s/backup.info", strZ(backupStanza1Path))),
                 harnessInfoChecksum(content)),
             "put backup info to file");
-/* CSHANG If we don't clear the backup.info then we will fill out whatever data we have, including db. Currently, if we can't read
-the archive.info, the program blows up b/c we throw and error. We don't want to do that anymore, so we probably should report on whatever we have?
-*/
+
         TEST_RESULT_STR(
             infoRender(), strNewFmt(
             "["
@@ -163,20 +161,7 @@ the archive.info, the program blows up b/c we throw and error. We don't want to 
                     "\"archive\":[],"
                     "\"backup\":[],"
                     "\"cipher\":\"none\","
-                    "\"db\":["
-                        "{"
-                            "\"id\":1,"
-                            "\"repo-key\":1,"
-                            "\"system-id\":6569239123849665666,"
-                            "\"version\":\"9.3\""
-                        "},"
-                        "{"
-                            "\"id\":2,"
-                            "\"repo-key\":1,"
-                            "\"system-id\":6569239123849665679,"
-                            "\"version\":\"9.4\""
-                        "}"
-                    "],"
+                    "\"db\":[],"
                     "\"name\":\"stanza1\","
                     "\"repo\":["
                         "{"
@@ -204,10 +189,7 @@ the archive.info, the program blows up b/c we throw and error. We don't want to 
                 "}"
             "]", strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path)),
             "json - other error, single repo");
-/* CSHANG which means we would additionally have the following added to the text output below:
-        db (current)
-            wal archive min/max (9.4): none present
-*/
+
         harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
         TEST_RESULT_STR(
             infoRender(), strNewFmt(
@@ -1624,7 +1606,7 @@ the archive.info, the program blows up b/c we throw and error. We don't want to 
         }
         HARNESS_FORK_END();
 
-        // Stanza exists but set requested does not
+        // Stanza exists but set requested backup does not
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--stanza=stanza1");
@@ -1634,17 +1616,11 @@ the archive.info, the program blows up b/c we throw and error. We don't want to 
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
-            "    status: error (other)\n"
-            "        repo1: error\n"
-            "               [FileMissingError] manifest does not exist for backup 'bogus'\n"
-            "               HINT: is the backup listed when running the info command with --stanza option only?\n"
-            "        repo2: error\n"
-            "               [FileMissingError] manifest does not exist for backup 'bogus'\n"
-            "               HINT: is the backup listed when running the info command with --stanza option only?\n"
+            "    status: error (requested backup not found)\n"
             "    cipher: mixed\n"
             "        repo1: none\n"
             "        repo2: aes-256-cbc\n",
-            "text, multi-repo, manifest missing/backup label bad format");
+            "text, multi-repo, backup not found");
 
         // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
