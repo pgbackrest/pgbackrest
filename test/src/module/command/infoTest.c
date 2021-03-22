@@ -2344,21 +2344,6 @@ testRun(void)
                 "}"
             "]",
             "json - multi-repo, database mismatch, repo2 stanza-upgrade needed");
-// CSHANG
-        // Backup label not found
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup label exists on one repo");
-
-        argList2 = strLstDup(argListMultiRepo);
-        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
-        hrnCfgArgRawZ(argList2, cfgOptSet, "20201110-100000F");
-        harnessCfgLoad(cfgCmdInfo, argList2);
-
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
-            "stanza: stanza1\n"
-            "    status: mixed\n"),
-            "TEST");
 
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------
@@ -2438,6 +2423,31 @@ testRun(void)
             strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath),
             strZ(backupPath), strZ(backupPath), strZ(backupPath)),
             "text - multi-repo, multi-stanza cipher error");
+
+        // Backup label not found, one repo in error
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup label exists on one repo, other repo in error");
+
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20201110-100000F");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza3\n"
+            "    status: mixed\n"
+            "        repo1: error\n"
+            "               [CryptoError] unable to load info file '%s/stanza3/backup.info' or '%s/stanza3/backup.info.copy':\n"
+            "               CryptoError: cipher header invalid\n"
+            "               HINT: is or was the repo encrypted?\n"
+            "               FileMissingError: unable to open missing file '%s/stanza3/backup.info.copy' for read\n"
+            "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "               HINT: has a stanza-create been performed?\n"
+            "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
+            " settings.\n"
+            "        repo2: error (requested backup not found)\n"
+            "    cipher: aes-256-cbc\n", strZ(backupPath), strZ(backupPath), strZ(backupPath)),
+            "backup label not found, one repo in error");
 
         // Crypto error
         //--------------------------------------------------------------------------------------------------------------------------

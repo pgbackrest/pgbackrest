@@ -113,7 +113,7 @@ typedef struct InfoRepoData
     InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
     InfoArchive *archiveInfo;                                       // Contents of the archive.info file of the stanza on this repo
     Manifest *manifest;                                             // Contents of manifest if backup requested and is on this repo
-    String *error; // CSHANG This may only need to be a string
+    String *error;                                                  // Formatted error
 } InfoRepoData;
 
 #define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
@@ -246,7 +246,7 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo, InfoRepoData *repoData
         FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);
     FUNCTION_TEST_END();
 
-    ASSERT((code >= 0 && code <= 3) || code == 99);
+    ASSERT((code >= 0 && code <= 3) || code == 99 || code == 6);
     ASSERT(repoStanzaInfo != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(repoStanzaInfo), STANZA_KEY_STATUS_VAR);
