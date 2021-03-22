@@ -206,8 +206,9 @@ storageS3Auth(
             const String *headerKey = strLstGet(headerList, headerIdx);
             const String *headerKeyLower = strLower(strDup(headerKey));
 
-            // Skip the authorization header -- if it exists this is a retry
-            if (strEq(headerKeyLower, HTTP_HEADER_AUTHORIZATION_STR))
+            // Skip headers that do not require signing
+            if (!strEq(headerKeyLower, HTTP_HEADER_HOST_STR) && !strEq(headerKeyLower, HTTP_HEADER_CONTENT_MD5_STR) &&
+                !strBeginsWithZ(headerKeyLower, "x-amz-"))
                 continue;
 
             strCatFmt(canonicalRequest, "%s:%s\n", strZ(headerKeyLower), strZ(httpHeaderGet(httpHeader, headerKey)));
