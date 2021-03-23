@@ -98,7 +98,6 @@ STRING_STATIC(INFO_STANZA_INVALID_STR,                              "[invalid]")
 
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
 
-
 /***********************************************************************************************************************************
 Data types and structures
 ***********************************************************************************************************************************/
@@ -152,7 +151,6 @@ typedef struct DbGroup
     DbGroup *
 #define FUNCTION_LOG_DB_GROUP_FORMAT(value, buffer, bufferSize)                                                                    \
     objToLog(value, "DbGroup", buffer, bufferSize)
-
 
 /***********************************************************************************************************************************
 Helper function for reporting errors
@@ -1137,7 +1135,7 @@ infoUpdateStanza(
                     storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
                     stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
 
-                // If a specific backup was exists on this repo then attempt to load the manifest
+                // If a specific backup exists on this repo then attempt to load the manifest
                 if (backupLabel != NULL)
                 {
                     stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
@@ -1146,7 +1144,7 @@ infoUpdateStanza(
                         infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
                 }
 
-                // If a backup-lock check has not already been performed, then do so
+                // If a backup lock check has not already been performed, then do so
                 if (!stanzaRepo->backupLockChecked)
                 {
                     // Try to acquire a lock. If not possible, assume another backup or expire is already running.
@@ -1204,13 +1202,12 @@ infoRender(void)
 
         // Get the backup label if specified
         const String *backupLabel = cfgOptionStrNull(cfgOptSet);
+        bool backupFound = false;
 
         // Since the --set option depends on the --stanza option, the parser will error before this if the backup label is
         // specified but a stanza is not
         if (backupLabel != NULL && !strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
             THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
-
-        bool backupFound = false;
 
         // Initialize the repo index
         unsigned int repoIdxMin = 0;
@@ -1251,7 +1248,7 @@ infoRender(void)
                 // If a backup set was specified, see if the manifest exists
                 if (backupLabel != NULL)
                 {
-                    // See if the backup exists on this repo, set the global indicator that we found it on at least one repo and
+                    // If the backup exists on this repo, set the global indicator that we found it on at least one repo and
                     // set the exists label for later loading of the manifest
                     if (storageExistsP(storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
                     {
@@ -1320,10 +1317,10 @@ infoRender(void)
             }
             CATCH_ANY()
             {
-                // At this point, stanza-level errors were caught and stored in the stanza structure, any error are due to higher
-                // level problems (e.g. repo inaccessible, invalid permissions on the repo, etc) and will be reported later if there
-                // are valid stanzas. If there are no valid stanzas after the loop exits, then these errors will be reported with
-                // a stanza named [invalid].
+                // At this point, stanza-level errors were caught and stored in the stanza structure, any errors caught here are due
+                // to higher level problems (e.g. repo inaccessible, invalid permissions on the repo, etc) and will be reported
+                // later if there are valid stanzas. If there are no valid stanzas after the loop exits, then these errors will be
+                // reported with a stanza named "[invalid]".
                 infoStanzaErrorAdd(&repoErrorList[repoIdx], errorType(), STR(errorMessage()));
                 repoError = true;
             }
@@ -1334,7 +1331,7 @@ infoRender(void)
         String *resultStr = strNew("");
 
         // Record any repository-level errors with each stanza - if there are no stanzas and one was not requested, then create an
-        // "invalid" one for reporting
+        // "[invalid]" one for reporting
         if (repoError)
         {
             if (lstEmpty(stanzaRepoList))
@@ -1366,11 +1363,12 @@ infoRender(void)
             }
         }
 
-        // If a backup label was requested but it was not found on any repo
+        // If a backup label was requested but it was not found on any repo, report the error here rather than individually to avoid
+        // listing each repo as "requested backup not found"
         if (backupLabel != NULL && !backupFound)
         {
-            // Get the stanza record and update each repo where there is not already an error status to indicate backup not found to
-            // avoid displaying the repo where it is found as OK and the repos where it was not found as error
+            // Get the stanza record and update each repo to indicate backup not found where there is not already an error status
+            // so that errors on other repositories will be displayed and not overwritten
             InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanza);
 
             for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
