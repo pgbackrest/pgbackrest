@@ -106,7 +106,7 @@ Test that an expected error is actually thrown and error when it isn't
     {                                                                                                                              \
         TEST_ERROR_catch = true;                                                                                                   \
                                                                                                                                    \
-        if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
+        if (strcmp(errorMessage(), hrnReplaceKey(errorMessageExpected)) != 0 || errorType() != &errorTypeExpected)                 \
             THROW_FMT(                                                                                                             \
                 TestError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
                 errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
