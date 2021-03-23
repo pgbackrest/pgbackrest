@@ -322,11 +322,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
-            strZ(
-                strNewFmt(
-                    "WAL file '%s/pg/pg_wal/000000010000000100000001' version 10, system-id 18072658121562454734 do not match"
-                        " stanza version 11, system-id 18072658121562454734",
-                    testPath())));
+            "WAL file '{[path]}/pg/pg_wal/000000010000000100000001' version 10, system-id 18072658121562454734 do not match"
+                " stanza version 11, system-id 18072658121562454734");
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAFECAFECAF}, walBuffer1);
@@ -335,11 +332,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
-            strZ(
-                strNewFmt(
-                    "WAL file '%s/pg/pg_wal/000000010000000100000001' version 11, system-id 17055110554209741999 do not match"
-                        " stanza version 11, system-id 18072658121562454734",
-                    testPath())));
+            "WAL file '{[path]}/pg/pg_wal/000000010000000100000001' version 11, system-id 17055110554209741999 do not match"
+                " stanza version 11, system-id 18072658121562454734");
 
         // Generate valid WAL and push them
         // -------------------------------------------------------------------------------------------------------------------------
@@ -557,7 +551,7 @@ testRun(void)
             strZ(
                 strNewFmt(
                     "archive-push command encountered error(s):\n"
-                    "repo2: [FileOpenError] unable to open file '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001"
+                    "repo2: [FileOpenError] unable to open file '{[path]}/repo2/archive/test/11-1/0000000100000001"
                         "/000000010000000100000002-%s' for write: [13] Permission denied", walBuffer2Sha1)));
 
         TEST_RESULT_BOOL(
