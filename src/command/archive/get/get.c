@@ -260,7 +260,7 @@ archiveGetFind(
             {
                 getCheckResult->errorType = &RepoInvalidError;
                 getCheckResult->errorFile = strDup(archiveFileRequest);
-                getCheckResult->errorMessage = strNewFmt(UNABLE_TO_FIND_VALID_REPO_MSG);
+                getCheckResult->errorMessage = strNew(UNABLE_TO_FIND_VALID_REPO_MSG);
                 getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
             }
             MEM_CONTEXT_END();
