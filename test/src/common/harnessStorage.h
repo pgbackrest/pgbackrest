@@ -100,6 +100,14 @@ Remove a file and error if it does not exist
     strZ(storagePathP(storage, STR(path))))
 
 /***********************************************************************************************************************************
+Change the time of a path/file
+***********************************************************************************************************************************/
+#define HRN_STORAGE_TIME(storage, path, time)                                                                                      \
+    hrnStorageTime(__LINE__, storage, path, time)
+
+void hrnStorageTime(const int line, const Storage *const storage, const char *const path, const time_t modified);
+
+/***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers. All required functions are stubbed out so this interface can be copied and
 specific functions replaced for testing.
 ***********************************************************************************************************************************/

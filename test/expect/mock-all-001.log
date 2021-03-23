@@ -2818,6 +2818,7 @@ P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE
 P00   INFO: repo1: restore backup set [BACKUP-DIFF-4]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespace/ts2-2'
 P00 DETAIL: databases found for selective restore (1, 16384, 32768)
+P00 DETAIL: databases excluded (zeroed) from selective restore (32768)
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/tablespace/ts2-2/[TS_PATH-1]' exists
 P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete
@@ -2882,6 +2883,7 @@ P00   INFO: restore command begin [BACKREST-VERSION]: --buffer-size=[BUFFER-SIZE
 P00   INFO: repo1: restore backup set [BACKUP-DIFF-4]
 P00   INFO: map tablespace 'pg_tblspc/2' to '[TEST_PATH]/db-primary/db/tablespace/ts2-2'
 P00 DETAIL: databases found for selective restore (1, 16384, 32768)
+P00 DETAIL: databases excluded (zeroed) from selective restore (16384)
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/base-2' exists
 P00 DETAIL: check '[TEST_PATH]/db-primary/db/tablespace/ts2-2/[TS_PATH-1]' exists
 P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete

@@ -1,9 +1,6 @@
 /***********************************************************************************************************************************
 Test Posix Storage
 ***********************************************************************************************************************************/
-#include <unistd.h>
-#include <utime.h>
-
 #include "common/io/io.h"
 #include "common/time.h"
 #include "storage/read.h"
@@ -181,6 +178,11 @@ testRun(void)
             storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO ": [13] Permission denied", strZ(fileNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
 
+        // -----------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info for / exists");
+
+        TEST_RESULT_BOOL(storageInfoP(storagePosixNewP(FSLASH_STR), NULL).exists, true, "info for /");
+
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileName = strNewFmt("%s/fileinfo", testPath());
 
@@ -204,8 +206,7 @@ testRun(void)
             "path not enforced");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR_FMT(utime(testPath(), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
+        HRN_STORAGE_TIME(storageTest, testPath(), 1555160000);
 
         TEST_ASSIGN(info, storageInfoP(storageTest, strNew(testPath())), "get path info");
         TEST_RESULT_STR(info.name, NULL, "    name is not set");
@@ -224,8 +225,7 @@ testRun(void)
         const Buffer *buffer = BUFSTRDEF("TESTFILE");
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, fileName), buffer), "put test file");
 
-        utimeTest.modtime = 1555155555;
-        THROW_ON_SYS_ERROR_FMT(utime(strZ(fileName), &utimeTest) != 0, FileWriteError, "unable to set time for '%s'", testPath());
+        HRN_STORAGE_TIME(storageTest, strZ(fileName), 1555155555);
 
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_RESULT_INT(system(strZ(strNewFmt("sudo chown 99999:99999 %s", strZ(fileName)))), 0, "set invalid user/group");

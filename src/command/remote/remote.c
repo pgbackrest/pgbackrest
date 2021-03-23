@@ -17,6 +17,16 @@ Remote Command
 #include "protocol/server.h"
 #include "storage/remote/protocol.h"
 
+/***********************************************************************************************************************************
+Command handlers
+***********************************************************************************************************************************/
+static const ProtocolServerHandler commandRemoteHandlerList[] =
+{
+    PROTOCOL_SERVER_HANDLER_DB_LIST
+    PROTOCOL_SERVER_HANDLER_OPTION_LIST
+    PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
+};
+
 /**********************************************************************************************************************************/
 void
 cmdRemote(int fdRead, int fdWrite)
@@ -32,9 +42,6 @@ cmdRemote(int fdRead, int fdWrite)
         ioWriteOpen(write);
 
         ProtocolServer *server = protocolServerNew(name, PROTOCOL_SERVICE_REMOTE_STR, read, write);
-        protocolServerHandlerAdd(server, storageRemoteProtocol);
-        protocolServerHandlerAdd(server, dbProtocol);
-        protocolServerHandlerAdd(server, configProtocol);
 
         // Acquire a lock if this command needs one.  We'll use the noop that is always sent from the client right after the
         // handshake to return an error.  We can't take a lock earlier than this because we want the error to go back through the
@@ -74,7 +81,10 @@ cmdRemote(int fdRead, int fdWrite)
 
         // If not successful we'll just exit
         if (success)
-            protocolServerProcess(server, NULL);
+        {
+            protocolServerProcess(
+                server, NULL, commandRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandRemoteHandlerList));
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

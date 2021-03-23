@@ -502,7 +502,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
                 varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherType, hostIdx)));
                 varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherPass, hostIdx)));
 
-                VariantList *optionList = configProtocolOption(protocolHelperClient->client, param);
+                VariantList *optionList = configOptionRemote(protocolHelperClient->client, param);
 
                 if (!strEq(varStr(varLstGet(optionList, 0)), CIPHER_TYPE_NONE_STR))
                 {
