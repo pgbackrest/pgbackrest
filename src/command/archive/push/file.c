@@ -29,6 +29,23 @@ typedef enum
     archivePushFileIoTypeClose,
 } ArchivePushFileIoType;
 
+// Helper to add errors to the list
+static void
+archivePushErrorAdd(StringList *errorList, unsigned int repoIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, errorList);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+    FUNCTION_TEST_END();
+
+    strLstAdd(
+        errorList,
+        strNewFmt(
+            "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static bool
 archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buffer, unsigned int repoIdx, StringList *errorList)
 {
@@ -67,10 +84,7 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
     // Handle errors
     CATCH_ANY()
     {
-        strLstAdd(
-            errorList,
-            strNewFmt(
-                "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+        archivePushErrorAdd(errorList, repoIdx);
         result = false;
     }
     TRY_END();
@@ -82,7 +96,7 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
 ArchivePushFileResult
 archivePushFile(
     const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
-    int compressLevel, const List *const repoList)
+    int compressLevel, const List *const repoList, const StringList *const priorErrorList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSource);
@@ -92,15 +106,17 @@ archivePushFile(
         FUNCTION_LOG_PARAM(ENUM, compressType);
         FUNCTION_LOG_PARAM(INT, compressLevel);
         FUNCTION_LOG_PARAM_P(VOID, repoList);
+        FUNCTION_LOG_PARAM(STRING_LIST, priorErrorList);
     FUNCTION_LOG_END();
 
     ASSERT(walSource != NULL);
     ASSERT(archiveFile != NULL);
     ASSERT(repoList != NULL);
+    ASSERT(priorErrorList != NULL);
     ASSERT(lstSize(repoList) > 0);
 
     ArchivePushFileResult result = {.warnList = strLstNew()};
-    StringList *errorList = strLstNew();
+    StringList *errorList = strLstDup(priorErrorList);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -150,10 +166,25 @@ archivePushFile(
             {
                 const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
 
-                // If the wal segment already exists in the repo then compare checksums
-                const String *walSegmentFile = walSegmentFind(
-                    storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
+                // Check if the WAL segement already exists in the repo
+                const String *walSegmentFile = NULL;
 
+                TRY_BEGIN()
+                {
+                    walSegmentFile = walSegmentFind(storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
+                }
+                CATCH_ANY()
+                {
+                    archivePushErrorAdd(errorList, repoData->repoIdx);
+                    destinationCopy[repoListIdx] = false;
+                }
+                TRY_END();
+
+                // If there was an error try the next repo
+                if (!destinationCopy[repoListIdx])
+                    continue;
+
+                // If the WAL segment was found validate the checksum
                 if (walSegmentFile != NULL)
                 {
                     String *walSegmentRepoChecksum = strSubN(walSegmentFile, strSize(archiveFile) + 1, HASH_TYPE_SHA1_SIZE_HEX);
@@ -174,9 +205,10 @@ archivePushFile(
                         MEM_CONTEXT_PRIOR_END();
 
                         // No need to copy to this repo
-                        destinationCopy[repoData->repoIdx] = false;
+                        destinationCopy[repoListIdx] = false;
                     }
-                    // Else error so we don't overwrite the existing segment
+                    // Else error so we don't overwrite the existing segment. Do not continue processing after this error since it
+                    // indicates corruption, split brain, or some other unrecoverable error.
                     else
                     {
                         THROW_FMT(
@@ -218,10 +250,10 @@ archivePushFile(
                 const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
 
                 // Does this repo need a copy?
-                if (destinationCopy[repoData->repoIdx])
+                if (destinationCopy[repoListIdx])
                 {
                     // Create destination file
-                    destination[repoData->repoIdx] = storageNewWriteP(
+                    destination[repoListIdx] = storageNewWriteP(
                         storageRepoIdxWrite(repoData->repoIdx),
                         strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData->archiveId), strZ(archiveDestination)),
                         .compressible = compressible);
@@ -230,7 +262,7 @@ archivePushFile(
                     if (repoData->cipherType != cipherTypeNone)
                     {
                         ioFilterGroupAdd(
-                            ioWriteFilterGroup(storageWriteIo(destination[repoData->repoIdx])),
+                            ioWriteFilterGroup(storageWriteIo(destination[repoListIdx])),
                             cipherBlockNew(cipherModeEncrypt, repoData->cipherType, BUFSTR(repoData->cipherPass), NULL));
                     }
                 }
@@ -244,10 +276,10 @@ archivePushFile(
             {
                 const unsigned int repoIdx = ((ArchivePushFileRepoData *)lstGet(repoList, repoListIdx))->repoIdx;
 
-                if (destinationCopy[repoIdx])
+                if (destinationCopy[repoListIdx])
                 {
-                    destinationCopy[repoIdx] = archivePushFileIo(
-                        archivePushFileIoTypeOpen, storageWriteIo(destination[repoIdx]), NULL, repoIdx, errorList);
+                    destinationCopy[repoListIdx] = archivePushFileIo(
+                        archivePushFileIoTypeOpen, storageWriteIo(destination[repoListIdx]), NULL, repoIdx, errorList);
                 }
             }
 
@@ -264,10 +296,10 @@ archivePushFile(
                 {
                     const unsigned int repoIdx = ((ArchivePushFileRepoData *)lstGet(repoList, repoListIdx))->repoIdx;
 
-                    if (destinationCopy[repoIdx])
+                    if (destinationCopy[repoListIdx])
                     {
-                        destinationCopy[repoIdx] = archivePushFileIo(
-                            archivePushFileIoTypeWrite, storageWriteIo(destination[repoIdx]), read, repoIdx, errorList);
+                        destinationCopy[repoListIdx] = archivePushFileIo(
+                            archivePushFileIoTypeWrite, storageWriteIo(destination[repoListIdx]), read, repoIdx, errorList);
                     }
                 }
 
@@ -283,10 +315,10 @@ archivePushFile(
             {
                 const unsigned int repoIdx = ((ArchivePushFileRepoData *)lstGet(repoList, repoListIdx))->repoIdx;
 
-                if (destinationCopy[repoIdx])
+                if (destinationCopy[repoListIdx])
                 {
-                    destinationCopy[repoIdx] = archivePushFileIo(
-                        archivePushFileIoTypeClose, storageWriteIo(destination[repoIdx]), NULL, repoIdx, errorList);
+                    destinationCopy[repoListIdx] = archivePushFileIo(
+                        archivePushFileIoTypeClose, storageWriteIo(destination[repoListIdx]), NULL, repoIdx, errorList);
                 }
             }
         }

@@ -413,7 +413,8 @@ cmdArchivePush(void)
                 // Push the file to the archive
                 ArchivePushFileResult fileResult = archivePushFile(
                     walFile, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
-                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList);
+                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList,
+                    archiveInfo.errorList);
 
                 // If a warning was returned then log it
                 for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
@@ -466,6 +467,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         protocolCommandParamAdd(command, VARSTR(walFile));
         protocolCommandParamAdd(command, VARUINT(jobData->compressType));
         protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
+        protocolCommandParamAdd(command, varNewVarLst(varLstNewStrLst(jobData->archiveInfo.errorList)));
         protocolCommandParamAdd(command, VARUINT(lstSize(jobData->archiveInfo.repoList)));
 
         // Add data for each repo to push to

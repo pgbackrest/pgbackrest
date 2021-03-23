@@ -463,6 +463,7 @@ testRun(void)
         varLstAdd(paramList, varNewStrZ("000000010000000100000002"));
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewInt(6));
+        varLstAdd(paramList, varNewVarLst(varLstNewStrLst(strLstNew())));
         varLstAdd(paramList, varNewUInt(1));
         varLstAdd(paramList, varNewUInt(0));
         varLstAdd(paramList, varNewStrZ("11-1"));
@@ -594,6 +595,50 @@ testRun(void)
             "P00   WARN: WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push succeeds on one repo when other repo fails to load archive.info");
+
+        TEST_STORAGE_REMOVE(
+            storageTest, strZ(strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+        TEST_STORAGE_REMOVE(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+        HRN_STORAGE_MODE(storageTest, "repo2", .mode = 0200);
+
+        TEST_ERROR(
+            cmdArchivePush(), CommandError,
+            "archive-push command encountered error(s):\n"
+            "repo2: [FileOpenError] unable to load info file '{[path]}/repo2/archive/test/archive.info' or"
+                " '{[path]}/repo2/archive/test/archive.info.copy':\n"
+            "FileOpenError: unable to open file '{[path]}/repo2/archive/test/archive.info' for read: [13] Permission denied\n"
+            "FileOpenError: unable to open file '{[path]}/repo2/archive/test/archive.info.copy' for read: [13] Permission denied\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
+
+        // Make sure WAL got pushed to repo3
+        TEST_STORAGE_REMOVE(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+
+        HRN_STORAGE_MODE(storageTest, "repo2");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push succeeds on one repo when other repo fails to read path");
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1", .mode = 0200);
+
+        TEST_ERROR(
+            cmdArchivePush(), CommandError,
+            "archive-push command encountered error(s):\n"
+            "repo2: [PathOpenError] unable to list file info for path '{[path]}/repo2/archive/test/11-1/0000000100000001': [13]"
+                " Permission denied");
+
+        // Make sure WAL got pushed to repo3
+        TEST_STORAGE_REMOVE(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1");
     }
 
     // *****************************************************************************************************************************
