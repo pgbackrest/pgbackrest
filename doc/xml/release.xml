@@ -70,6 +70,7 @@
                         <commit subject="Add write fault-tolerance to archive-push command."/>
                         <commit subject="Make --repo optional for remaining commands except stanza-delete."/>
                         <commit subject="Allow stanza-* commands to be run remotely."/>
+                        <commit subject="Improve info command fault tolerance."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
