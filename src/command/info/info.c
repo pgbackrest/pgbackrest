@@ -1127,8 +1127,8 @@ infoUpdateStanza(
             }
             TRY_END();
 
-            // If backup.info was found, then get the archive.info file, which must exist if the backup.info exists, else the
-            // failed load will throw an error which will be trapped and recorded
+            // If backup.info was found, then get the archive.info file, which must exist if the backup.info exists, else the failed
+            // load will throw an error which will be trapped and recorded
             if (stanzaRepo->repoList[repoIdx].backupInfo != NULL)
             {
                 stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
@@ -1330,7 +1330,7 @@ infoRender(void)
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 
-        // Record any repository-level errors with each stanza - if there are no stanzas and one was not requested, then create an
+        // Record any repository-level errors with each stanza -- if there are no stanzas and one was not requested, then create an
         // "[invalid]" one for reporting
         if (repoError)
         {
@@ -1444,9 +1444,7 @@ infoRender(void)
                                 }
 
                                 if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
-                                {
                                     strCatZ(resultStr, INFO_STANZA_STATUS_OK "\n");
-                                }
                                 else
                                 {
                                     if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OTHER)
