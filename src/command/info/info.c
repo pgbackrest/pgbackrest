@@ -1233,7 +1233,7 @@ infoRender(void)
                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
                 .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx),
-                .error = strNew(""),
+                .error = NULL,
             };
 
             // Initialize backup label indicator
@@ -1305,7 +1305,7 @@ infoRender(void)
                                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
                                 .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
                                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
-                                .error = strNew(""),
+                                .error = NULL,
                             };
                         }
 
@@ -1355,8 +1355,7 @@ infoRender(void)
 
                     for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
                     {
-                        // If an error has not already been reported for the stanza on this repo, then report the repo error
-                        if (!strEmpty(repoErrorList[repoIdx].error))
+                        if (repoErrorList[repoIdx].error != NULL)
                             stanzaData->repoList[repoIdx] = repoErrorList[repoIdx];
                     }
                 }
