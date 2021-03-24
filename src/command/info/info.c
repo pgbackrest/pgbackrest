@@ -1428,8 +1428,8 @@ infoRender(void)
 
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
-                            String *formatSpacer = strNew("            ");
                             bool multiRepo = varLstSize(repoSection) > 1;
+                            String *formatSpacer = !multiRepo ? strNew("            ") : strNew("               ");
 
                             for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
                             {
@@ -1438,10 +1438,7 @@ infoRender(void)
 
                                 // If more than one repo configured, then add the repo status per repo
                                 if (multiRepo)
-                                {
                                     strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
-                                    formatSpacer = strNew("               ");
-                                }
 
                                 if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
                                     strCatZ(resultStr, INFO_STANZA_STATUS_OK "\n");
