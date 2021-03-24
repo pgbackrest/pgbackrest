@@ -1429,7 +1429,7 @@ infoRender(void)
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
                             bool multiRepo = varLstSize(repoSection) > 1;
-                            String *formatSpacer = !multiRepo ? strNew("            ") : strNew("               ");
+                            const char *formatSpacer = multiRepo ? "               " : "            ";
 
                             for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
                             {
@@ -1451,8 +1451,7 @@ infoRender(void)
 
                                         strCatFmt(
                                             resultStr, "%s%s%s\n", multiRepo ? INFO_STANZA_STATUS_ERROR "\n" : "",
-                                            strZ(formatSpacer),
-                                            strZ(strLstJoin(repoError, strZ(strNewFmt("\n%s", strZ(formatSpacer))))));
+                                            formatSpacer, strZ(strLstJoin(repoError, strZ(strNewFmt("\n%s", formatSpacer)))));
                                     }
                                     else
                                     {
