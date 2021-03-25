@@ -68,9 +68,9 @@ cfgLoadUpdateOption(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    // Make sure repo option is set for the default command role when it is not internal and more than one repo is configured or the
-    // first configured repo is not key 1. Filter out any commands where this does not apply.
-    if (!cfgCommandHelp() && cfgCommand() != cfgCmdInfo && cfgCommand() != cfgCmdExpire && cfgOptionValid(cfgOptRepo) &&
+    // Make sure the repo option is set for the stanza-delete command when more than one repo is configured or the first configured
+    // repo is not key 1.
+    if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepo) && cfgCommand() == cfgCmdStanzaDelete &&
         !cfgOptionTest(cfgOptRepo) && (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
     {
         THROW_FMT(
@@ -268,7 +268,7 @@ cfgLoadUpdateOption(void)
     // For each possible repo, error if an S3 bucket name contains dots
     for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
     {
-        if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoS3VerifyTls, repoIdx) &&
+        if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx) &&
             strChr(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), '.') != -1)
         {
             THROW_FMT(
@@ -372,13 +372,6 @@ cfgLoad(unsigned int argListSize, const char *argList[])
     {
         // Parse config from command line and config file
         configParse(storageLocal(), argListSize, argList, true);
-
-        // Check that only repo1 is configured. This is temporary until the multi-repo support is finalized.
-        if (cfgCommandRole() == cfgCmdRoleDefault && cfgOptionGroupValid(cfgOptGrpRepo) &&
-            (cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1 || cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0) != 1))
-        {
-            THROW_FMT(OptionInvalidValueError, "only repo1 may be configured");
-        }
 
         // Initialize dry-run mode for storage when valid for the current command
         storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));

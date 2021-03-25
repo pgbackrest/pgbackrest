@@ -30,6 +30,7 @@ use pgBackRestTest::Common::StorageRepo;
 use pgBackRestTest::Env::ArchiveInfo;
 use pgBackRestTest::Env::BackupInfo;
 use pgBackRestTest::Env::Host::HostAzureTest;
+use pgBackRestTest::Env::Host::HostGcsTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostS3Test;
 use pgBackRestTest::Env::Manifest;
@@ -37,6 +38,12 @@ use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
 use pgBackRestTest::Common::RunTest;
+
+####################################################################################################################################
+# Error constants
+####################################################################################################################################
+use constant ERROR_REPO_INVALID                                     => 103;
+push @EXPORT, qw(ERROR_REPO_INVALID);
 
 ####################################################################################################################################
 # Latest backup link constant
@@ -78,6 +85,8 @@ use constant AZURE                                                  => 'azure';
     push @EXPORT, qw(AZURE);
 use constant CIFS                                                   => 'cifs';
     push @EXPORT, qw(CIFS);
+use constant GCS                                                    => 'gcs';
+    push @EXPORT, qw(GCS);
 use constant POSIX                                                  => STORAGE_POSIX;
     push @EXPORT, qw(POSIX);
 use constant S3                                                     => 's3';
@@ -328,7 +337,7 @@ sub backupBegin
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         (defined($$oParam{bStandby}) && $$oParam{bStandby} ? " --backup-standby" : '') .
         (defined($oParam->{strRepoType}) ? " --repo1-type=$oParam->{strRepoType}" : '') .
-        ' --repo=' . (defined($oParam->{iRepo}) ? $oParam->{iRepo} : '1') .
+        (defined($oParam->{iRepo}) ? ' --repo=' . $oParam->{iRepo} : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup',
         {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus},
@@ -1229,6 +1238,15 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-host'} = HOST_AZURE;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-azure-verify-tls'} = 'n';
         }
+        elsif ($oParam->{strStorage} eq GCS)
+        {
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = GCS;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-bucket'} = HOST_GCS_BUCKET;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-key-type'} = HOST_GCS_KEY_TYPE;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-key'} = HOST_GCS_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-endpoint'} = HOST_GCS . ':' . HOST_GCS_PORT;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-storage-verify-tls'} = 'n';
+        }
 
         if ($iRepoTotal == 2)
         {
@@ -1739,7 +1757,7 @@ sub restore
             {name => 'bTablespace', optional => true},
             {name => 'strUser', optional => true},
             {name => 'strBackupExpected', optional => true},
-            {name => 'iRepo', optional => true, default => 1},
+            {name => 'iRepo', optional => true},
         );
 
     # Build link map options
@@ -1770,6 +1788,9 @@ sub restore
     my $oHostGroup = hostGroupGet();
     my $oHostBackup = defined($oHostGroup->hostGet(HOST_BACKUP, true)) ? $oHostGroup->hostGet(HOST_BACKUP) : $self;
 
+    # If the repo was not passed, then use repo1 as the repo for getting the expected manifest/backup
+    my $iRepoDefault = !defined($iRepo) ? 1 : $iRepo;
+
     # Load the expected manifest if it was not defined
     my $oExpectedManifest = undef;
 
@@ -1777,15 +1798,15 @@ sub restore
     # - which should be the backup passed as strBackupExpected. If it is not defined, then set it based on the strBackup passed.
     if (!defined($strBackupExpected))
     {
-        $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast($iRepo) : $strBackup;
+        $strBackupExpected = $strBackup eq 'latest' ? $oHostBackup->backupLast($iRepoDefault) : $strBackup;
     }
 
     if (!defined($rhExpectedManifest))
     {
         # Load the manifest from the backup expected to be chosen/processed by restore
         my $oExpectedManifest = new pgBackRestTest::Env::Manifest(
-            $self->repoBackupPath($strBackupExpected . qw{/} . FILE_MANIFEST, $iRepo),
-            {strCipherPass => $oHostBackup->cipherPassManifest(), oStorage => storageRepo({iRepo => $iRepo})});
+            $self->repoBackupPath($strBackupExpected . qw{/} . FILE_MANIFEST, $iRepoDefault),
+            {strCipherPass => $oHostBackup->cipherPassManifest(), oStorage => storageRepo({iRepo => $iRepoDefault})});
 
         $rhExpectedManifest = $oExpectedManifest->{oContent};
 
@@ -1853,7 +1874,8 @@ sub restore
         (defined($strLinkMap) ? $strLinkMap : '') .
         ($self->synthetic() ? '' : ' --link-all') .
         (defined($strTargetAction) && $strTargetAction ne 'pause' ? " --target-action=${strTargetAction}" : '') .
-        " --repo=${iRepo} --stanza=" . $self->stanza() . ' restore',
+        (defined($iRepo) ? " --repo=${iRepo}" : '') .
+        " --stanza=" . $self->stanza() . ' restore',
         {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
          bLogOutput => $self->synthetic()},
         $strUser);
@@ -1862,7 +1884,7 @@ sub restore
     {
         # Only compare restores in repo1. There is not a lot of value in comparing restores in other repos and it would require a
         # lot of changes to the Perl test harness.
-        if ($iRepo == 1)
+        if ($iRepoDefault == 1)
         {
             $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
         }

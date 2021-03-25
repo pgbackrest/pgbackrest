@@ -1436,6 +1436,7 @@ typedef struct BackupJobData
 {
     const String *const backupLabel;                                // Backup label (defines the backup path)
     const bool backupStandby;                                       // Backup from standby
+    const CipherType cipherType;                                    // Cipher type
     const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
     const CompressType compressType;                                // Backup compression type
     const int compressLevel;                                        // Compress level if backup is compressed
@@ -1493,6 +1494,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
                 protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
                 protocolCommandParamAdd(command, VARBOOL(jobData->delta));
+                protocolCommandParamAdd(command, VARUINT(jobData->cipherType));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
 
                 // Remove job from the queue
@@ -1583,6 +1585,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .backupStandby = backupStandby,
             .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
+            .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
@@ -1763,75 +1766,85 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {
-                const String *walSegment = strLstGet(walSegmentList, walSegmentIdx);
-
-                // Find the actual wal segment file in the archive
-                const String *archiveFile = walSegmentFind(
-                    storageRepo(), archiveId, walSegment,  cfgOptionUInt64(cfgOptArchiveTimeout));
-
-                if (cfgOptionBool(cfgOptArchiveCopy))
+                MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    // Get compression type of the WAL segment and backup
-                    CompressType archiveCompressType = compressTypeFromName(archiveFile);
-                    CompressType backupCompressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+                    const String *walSegment = strLstGet(walSegmentList, walSegmentIdx);
 
-                    // Open the archive file
-                    StorageRead *read = storageNewReadP(
-                        storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(archiveFile)));
-                    IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
+                    // Find the actual wal segment file in the archive
+                    const String *archiveFile = walSegmentFind(
+                        storageRepo(), archiveId, walSegment,  cfgOptionUInt64(cfgOptArchiveTimeout));
 
-                    // Decrypt with archive key if encrypted
-                    cipherBlockFilterGroupAdd(
-                        filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
-                        infoArchiveCipherPass(infoArchive));
-
-                    // Compress/decompress if archive and backup do not have the same compression settings
-                    if (archiveCompressType != backupCompressType)
+                    if (cfgOptionBool(cfgOptArchiveCopy))
                     {
-                        if (archiveCompressType != compressTypeNone)
-                            ioFilterGroupAdd(filterGroup, decompressFilter(archiveCompressType));
+                        // Copy can be a pretty expensive operation so log it
+                        LOG_DETAIL_FMT("copy segment %s to backup", strZ(walSegment));
 
-                        if (backupCompressType != compressTypeNone)
-                            ioFilterGroupAdd(filterGroup, compressFilter(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
+                        // Get compression type of the WAL segment and backup
+                        CompressType archiveCompressType = compressTypeFromName(archiveFile);
+                        CompressType backupCompressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType));
+
+                        // Open the archive file
+                        StorageRead *read = storageNewReadP(
+                            storageRepo(), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(archiveFile)));
+                        IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
+
+                        // Decrypt with archive key if encrypted
+                        cipherBlockFilterGroupAdd(
+                            filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
+                            infoArchiveCipherPass(infoArchive));
+
+                        // Compress/decompress if archive and backup do not have the same compression settings
+                        if (archiveCompressType != backupCompressType)
+                        {
+                            if (archiveCompressType != compressTypeNone)
+                                ioFilterGroupAdd(filterGroup, decompressFilter(archiveCompressType));
+
+                            if (backupCompressType != compressTypeNone)
+                            {
+                                ioFilterGroupAdd(
+                                    filterGroup, compressFilter(backupCompressType, cfgOptionInt(cfgOptCompressLevel)));
+                            }
+                        }
+
+                        // Encrypt with backup key if encrypted
+                        cipherBlockFilterGroupAdd(
+                            filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+                            manifestCipherSubPass(manifest));
+
+                        // Add size filter last to calculate repo size
+                        ioFilterGroupAdd(filterGroup, ioSizeNew());
+
+                        // Copy the file
+                        const String *manifestName = strNewFmt(
+                            MANIFEST_TARGET_PGDATA "/%s/%s", strZ(pgWalPath(manifestData(manifest)->pgVersion)), strZ(walSegment));
+
+                        storageCopyP(
+                            read,
+                            storageNewWriteP(
+                                storageRepoWrite(),
+                                strNewFmt(
+                                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
+                                    strZ(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))))));
+
+                        // Add to manifest
+                        ManifestFile file =
+                        {
+                            .name = manifestName,
+                            .primary = true,
+                            .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
+                            .user = basePath->user,
+                            .group = basePath->group,
+                            .size = walSegmentSize,
+                            .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
+                            .timestamp = manifestData(manifest)->backupTimestampStop,
+                        };
+
+                        memcpy(file.checksumSha1, strZ(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+                        manifestFileAdd(manifest, &file);
                     }
-
-                    // Encrypt with backup key if encrypted
-                    cipherBlockFilterGroupAdd(
-                        filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
-                        manifestCipherSubPass(manifest));
-
-                    // Add size filter last to calculate repo size
-                    ioFilterGroupAdd(filterGroup, ioSizeNew());
-
-                    // Copy the file
-                    const String *manifestName = strNewFmt(
-                        MANIFEST_TARGET_PGDATA "/%s/%s", strZ(pgWalPath(manifestData(manifest)->pgVersion)), strZ(walSegment));
-
-                    storageCopyP(
-                        read,
-                        storageNewWriteP(
-                            storageRepoWrite(),
-                            strNewFmt(
-                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
-                                strZ(compressExtStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))))));
-
-                    // Add to manifest
-                    ManifestFile file =
-                    {
-                        .name = manifestName,
-                        .primary = true,
-                        .mode = basePath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH),
-                        .user = basePath->user,
-                        .group = basePath->group,
-                        .size = walSegmentSize,
-                        .sizeRepo = varUInt64Force(ioFilterGroupResult(filterGroup, SIZE_FILTER_TYPE_STR)),
-                        .timestamp = manifestData(manifest)->backupTimestampStop,
-                    };
-
-                    memcpy(file.checksumSha1, strZ(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);
-
-                    manifestFileAdd(manifest, &file);
                 }
+                MEM_CONTEXT_TEMP_END();
 
                 // A keep-alive is required here for the remote holding the backup lock
                 protocolKeepAlive();
@@ -1933,6 +1946,14 @@ cmdBackup(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // If the repo option was not provided and more than one repo is configured, then log the default repo chosen
+        if (!cfgOptionTest(cfgOptRepo) && cfgOptionGroupIdxTotal(cfgOptGrpRepo) > 1)
+        {
+            LOG_INFO_FMT(
+                "repo option not specified, defaulting to repo%u",
+                cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+        }
+
         // Load backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),

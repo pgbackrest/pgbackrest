@@ -319,8 +319,7 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
     }
 
     // Output the current function
-    result = stackTraceFmt(
-        buffer, bufferSize, 0, "%.*s:%s:%u:(%s)", (int)(strlen(fileName) - 2), fileName, functionName, fileLine, param);
+    result = stackTraceFmt(buffer, bufferSize, 0, "%s:%s:%u:(%s)", fileName, functionName, fileLine, param);
 
     // Output stack if there is anything on it
     if (stackIdx >= 0)
@@ -334,8 +333,7 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
         {
             StackTraceData *data = &stackTraceLocal.stack[stackIdx];
 
-            result += stackTraceFmt(
-                buffer, bufferSize, result, "\n%.*s:%s", (int)(strlen(data->fileName) - 2), data->fileName, data->functionName);
+            result += stackTraceFmt(buffer, bufferSize, result, "\n%s:%s", data->fileName, data->functionName);
 
             if (data->fileLine > 0)
                 result += stackTraceFmt(buffer, bufferSize, result, ":%u", data->fileLine);

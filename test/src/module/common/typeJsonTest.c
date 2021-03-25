@@ -36,6 +36,7 @@ testRun(void)
     if (testBegin("jsonToStr() and jsonToStrInternal()"))
     {
         TEST_ERROR(jsonToStr(strNew("\"\\j\"")), JsonFormatError, "invalid escape character 'j'");
+        TEST_ERROR(jsonToStr(strNew("\"\\uffff\"")), JsonFormatError, "unable to decode 'ffff'");
         TEST_ERROR(jsonToStr(strNew("\"runonstring")), JsonFormatError, "expected '\"' but found null delimiter");
         TEST_ERROR(jsonToStr(strNew("\"normal\"L")), JsonFormatError, "unexpected characters after string at 'L'");
         TEST_ERROR(jsonToStr(strNew("nullz")), JsonFormatError, "unexpected characters after string at 'z'");
@@ -43,7 +44,7 @@ testRun(void)
         TEST_RESULT_STR(jsonToStr(strNew("null")), NULL, "null string");
         TEST_RESULT_STR_Z(jsonToStr(strNew(" \"test\"")), "test", "simple string");
         TEST_RESULT_STR_Z(jsonToStr(strNew("\"te\\\"st\" ")), "te\"st", "string with quote");
-        TEST_RESULT_STR_Z(jsonToStr(strNew("\"\\\"\\\\\\/\\b\\n\\r\\t\\f\"")), "\"\\/\b\n\r\t\f", "string with escapes");
+        TEST_RESULT_STR_Z(jsonToStr(strNew("\"\\\"\\\\\\/\\b\\n\\r\\t\\f\\u0026\"")), "\"\\/\b\n\r\t\f&", "string with escapes");
     }
 
     // *****************************************************************************************************************************
@@ -308,5 +309,5 @@ testRun(void)
         TEST_RESULT_STR_Z(jsonFromVar(varNewStrZ("test \" string")), "\"test \\\" string\"", "string variant");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

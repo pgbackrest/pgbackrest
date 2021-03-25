@@ -688,6 +688,7 @@ ac_user_opts='
 enable_option_checking
 enable_test
 enable_optimize
+with_configdir
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1308,6 +1309,11 @@ Optional Features:
   --enable-test           enable internal test code and assertions for
                           debugging
   --disable-optimize      disable compiler optimizations
+
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-configdir=DIR    default configuration path
 
 Some influential environment variables:
   CC          C compiler command
@@ -3170,7 +3176,7 @@ rm -f core conftest.err conftest.$ac_objext \
 
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
-CFLAGS="${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers"
+CFLAGS="${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough"
 
 
 # -Wno-clobbered is not supported on all compilers
@@ -4311,9 +4317,18 @@ fi
 # Set configuration path
 # ----------------------------------------------------------------------------------------------------------------------------------
 
-cat >>confdefs.h <<_ACEOF
+# Check whether --with-configdir was given.
+if test "${with_configdir+set}" = set; then :
+  withval=$with_configdir; cat >>confdefs.h <<_ACEOF
+#define CFGOPTDEF_CONFIG_PATH "${withval}"
+_ACEOF
+
+else
+  cat >>confdefs.h <<_ACEOF
 #define CFGOPTDEF_CONFIG_PATH "/etc/" PROJECT_BIN
 _ACEOF
+
+fi
 
 
 # Write output
@@ -5594,4 +5609,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 af35157cc6b32faa6d20e46790a4ea22bd24ed3c
+# Generated from src/build/configure.ac sha1 61f1b4aec11fa131a5fc0da0e5a34dcc75ac0b82

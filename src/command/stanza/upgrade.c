@@ -37,11 +37,6 @@ cmdStanzaUpgrade(void)
         // Get the version and system information - validating it if the database is online
         PgControl pgControl = pgValidate();
 
-        // Verify all the repos are local (i.e. repo*-host is not set) - this is a simple way to confirm we are not executing
-        // stanza-upgrade from a pg host as it will immediately error
-        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
-            repoIsLocalVerifyIdx(repoIdx);
-
         // For each repository configured, upgrade the stanza
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {

@@ -42,7 +42,7 @@ AC_LINK_IFELSE(
 
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers")
+AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough")
 
 # -Wno-clobbered is not supported on all compilers
 AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [AC_SUBST(CFLAGS, "${CFLAGS} -Wno-clobbered")], [], [-Werror])
@@ -152,7 +152,10 @@ AC_CHECK_LIB(
 
 # Set configuration path
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["/etc/" PROJECT_BIN], [Path for configuration files])
+AC_ARG_WITH(
+    [configdir], [AS_HELP_STRING([--with-configdir=DIR], [default configuration path])],
+    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["${withval}"])],
+    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["/etc/" PROJECT_BIN])])
 
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------

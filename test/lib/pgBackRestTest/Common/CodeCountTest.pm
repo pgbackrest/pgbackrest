@@ -27,8 +27,8 @@ sub codeCountScan
     my $strBasePath = shift;
 
     # Load YAML
-    require YAML::Any;
-    YAML::Any->import(qw(Load Dump));
+    require YAML::XS;
+    YAML::XS->import(qw(Load Dump));
 
     my $hCodeCount = {};
 

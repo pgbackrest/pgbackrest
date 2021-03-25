@@ -5,7 +5,6 @@ Stanza Commands Handler
 
 #include "command/check/common.h"
 #include "common/debug.h"
-#include "common/encode.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "db/helper.h"
@@ -27,12 +26,9 @@ cipherPassGen(CipherType cipherType)
     if (cipherType != cipherTypeNone)
     {
         unsigned char buffer[48]; // 48 is the amount of entropy needed to get a 64 base key
-        char cipherPassSubChar[65];
-        ASSERT(encodeToStrSize(encodeBase64, sizeof(buffer)) + 1 == sizeof(cipherPassSubChar));
-
         cryptoRandomBytes(buffer, sizeof(buffer));
-        encodeToStr(encodeBase64, buffer, sizeof(buffer), cipherPassSubChar);
-        result = strNew(cipherPassSubChar);
+
+        result = strNewEncode(encodeBase64, BUF(buffer, sizeof(buffer)));
     }
 
     FUNCTION_TEST_RETURN(result);

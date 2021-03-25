@@ -52,6 +52,12 @@
             <p>A custom protocol allows <backrest/> to backup, restore, and archive locally or remotely via SSH with minimal configuration.  An interface to query <postgres/> is also provided via the protocol layer so that remote access to <postgres/> is never required, which enhances security.</p>
         </section>
 
+        <section id="multi-repo">
+            <title>Multiple Repositories</title>
+
+            <p>Multiple repositories allow, for example, a local repository with minimal retention for fast restores and a remote repository with a longer retention for redundancy and access across the enterprise.</p>
+        </section>
+
         <section id="backup-types">
             <title>Full, Incremental, &amp; Differential Backups</title>
 
@@ -125,9 +131,9 @@
         </section>
 
         <section id="object-store-support">
-            <title>S3 and Azure Compatible Object Store Support</title>
+            <title>S3, Azure, and GCS Compatible Object Store Support</title>
 
-            <p><backrest/> repositories can be located in <proper>S3</proper> and <proper>Azure</proper> compatible object stores to allow for virtually unlimited capacity and retention.</p>
+            <p><backrest/> repositories can be located in <proper>S3</proper>, <proper>Azure</proper>, and GCS compatible object stores to allow for virtually unlimited capacity and retention.</p>
         </section>
 
         <section id="encryption">

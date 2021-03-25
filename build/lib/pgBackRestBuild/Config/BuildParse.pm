@@ -449,9 +449,9 @@ sub buildConfigParse
 
         my @stryOptionName = ($strOption);
 
-        if (defined($rhOption->{&CFGDEF_NAME_ALT}))
+        if (defined($rhOption->{&CFGDEF_DEPRECATE}))
         {
-            foreach my $strOptionNameAlt (sort(keys(%{$rhOption->{&CFGDEF_NAME_ALT}})))
+            foreach my $strOptionNameAlt (sort(keys(%{$rhOption->{&CFGDEF_DEPRECATE}})))
             {
                 push(@stryOptionName, $strOptionNameAlt);
             }
@@ -467,7 +467,7 @@ sub buildConfigParse
             for (my $iOptionNameIdx = 0; $iOptionNameIdx < @stryOptionName; $iOptionNameIdx++)
             {
                 my $strOptionName = $stryOptionName[$iOptionNameIdx];
-                my $rhNameAlt = $rhOption->{&CFGDEF_NAME_ALT}{$strOptionName};
+                my $rhNameAlt = $rhOption->{&CFGDEF_DEPRECATE}{$strOptionName};
 
                 # Skip alt name if it is not valid for this option index
                 if ($iOptionNameIdx > 0 && defined($rhNameAlt->{&CFGDEF_INDEX}) && $rhNameAlt->{&CFGDEF_INDEX} != $iOptionIdx)

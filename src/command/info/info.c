@@ -90,6 +90,12 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_MISSING_STANZA_DATA_STR,   "missing sta
 STRING_STATIC(INFO_STANZA_MESSAGE_MIXED_STR,                        "different across repos");
 #define INFO_STANZA_STATUS_CODE_PG_MISMATCH                         5
 STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mismatch across repos");
+#define INFO_STANZA_STATUS_CODE_BACKUP_MISSING                      6
+STRING_STATIC(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR,           "requested backup not found");
+#define INFO_STANZA_STATUS_CODE_OTHER                               99
+#define INFO_STANZA_STATUS_MESSAGE_OTHER                            "other"
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_OTHER_STR,                 INFO_STANZA_STATUS_MESSAGE_OTHER);
+STRING_STATIC(INFO_STANZA_INVALID_STR,                              "[invalid]");
 
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
 
@@ -106,6 +112,8 @@ typedef struct InfoRepoData
     unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
     InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
     InfoArchive *archiveInfo;                                       // Contents of the archive.info file of the stanza on this repo
+    Manifest *manifest;                                             // Contents of manifest if backup requested and is on this repo
+    String *error;                                                  // Formatted error
 } InfoRepoData;
 
 #define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
@@ -119,6 +127,8 @@ typedef struct InfoStanzaRepo
     const String *name;                                             // Name of the stanza
     uint64_t currentPgSystemId;                                     // Current postgres system id for the stanza
     unsigned int currentPgVersion;                                  // Current postgres version for the stanza
+    bool backupLockChecked;                                         // Has the check for a backup lock already been performed?
+    bool backupLockHeld;                                            // Is backup lock held on the system where info command is run?
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
 
@@ -144,6 +154,24 @@ typedef struct DbGroup
     objToLog(value, "DbGroup", buffer, bufferSize)
 
 /***********************************************************************************************************************************
+Helper function for reporting errors
+***********************************************************************************************************************************/
+static void
+infoStanzaErrorAdd(InfoRepoData *repoList, const ErrorType *type, const String *message)
+{
+    repoList->stanzaStatus = INFO_STANZA_STATUS_CODE_OTHER;
+    repoList->error = strNewFmt("[%s] %s", errorTypeName(type), strZ(message));
+
+    // Free the info objects for this stanza since we cannot process it
+    infoBackupFree(repoList->backupInfo);
+    infoArchiveFree(repoList->archiveInfo);
+    manifestFree(repoList->manifest);
+    repoList->backupInfo = NULL;
+    repoList->archiveInfo = NULL;
+    repoList->manifest = NULL;
+}
+
+/***********************************************************************************************************************************
 Set the overall error status code and message for the stanza to the code and message passed
 ***********************************************************************************************************************************/
 static void
@@ -155,7 +183,7 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
-    ASSERT(code >= 0 && code <= 5);
+    ASSERT((code >= 0 && code <= 6) || code == 99);
     ASSERT(stanzaInfo != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR);
@@ -187,6 +215,14 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
         case INFO_STANZA_STATUS_CODE_PG_MISMATCH:
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR));
             break;
+
+        case INFO_STANZA_STATUS_CODE_BACKUP_MISSING:
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR));
+            break;
+
+        case INFO_STANZA_STATUS_CODE_OTHER:
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OTHER_STR));
+            break;
     }
 
     // Construct a specific lock part
@@ -201,14 +237,15 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
 Set the error status code and message for the stanza on the repo to the code and message passed
 ***********************************************************************************************************************************/
 static void
-repoStanzaStatus(const int code, Variant *repoStanzaInfo)
+repoStanzaStatus(const int code, Variant *repoStanzaInfo, InfoRepoData *repoData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, code);
         FUNCTION_TEST_PARAM(VARIANT, repoStanzaInfo);
+        FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);
     FUNCTION_TEST_END();
 
-    ASSERT(code >= 0 && code <= 3);
+    ASSERT((code >= 0 && code <= 3) || code == 99 || code == 6);
     ASSERT(repoStanzaInfo != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(repoStanzaInfo), STANZA_KEY_STATUS_VAR);
@@ -231,6 +268,14 @@ repoStanzaStatus(const int code, Variant *repoStanzaInfo)
 
         case INFO_STANZA_STATUS_CODE_NO_BACKUP:
             kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_NO_BACKUP_STR));
+            break;
+
+        case INFO_STANZA_STATUS_CODE_BACKUP_MISSING:
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR));
+            break;
+
+        case INFO_STANZA_STATUS_CODE_OTHER:
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(repoData->error));
             break;
     }
 
@@ -336,14 +381,13 @@ Add the backup data to the backup section
 ***********************************************************************************************************************************/
 static void
 backupListAdd(
-    VariantList *backupSection, InfoBackupData *backupData, const String *backupLabel, InfoRepoData *repoData, unsigned int repoIdx)
+    VariantList *backupSection, InfoBackupData *backupData, const String *backupLabel, InfoRepoData *repoData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);           // The section to add the backup data to
         FUNCTION_TEST_PARAM_P(INFO_BACKUP_DATA, backupData);        // The data for the backup
         FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup label to filter if requested by the user
         FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);              // The repo data where this backup is located
-        FUNCTION_TEST_PARAM(UINT, repoIdx);                         // Internal index for the repo
     FUNCTION_TEST_END();
 
     ASSERT(backupSection != NULL);
@@ -403,20 +447,15 @@ backupListAdd(
     kvAdd(timeInfo, KEY_START_VAR, VARUINT64((uint64_t)backupData->backupTimestampStart));
     kvAdd(timeInfo, KEY_STOP_VAR, VARUINT64((uint64_t)backupData->backupTimestampStop));
 
-    // If a backup label was specified and this is that label, then get the manifest
+    // If a backup label was specified and this is that label, then get the data from the loaded manifest
     if (backupLabel != NULL && strEq(backupData->backupLabel, backupLabel))
     {
-        // Load the manifest file
-        Manifest *manifest = manifestLoadFile(
-            storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
-            repoData->cipher, infoPgCipherPass(infoBackupPg(repoData->backupInfo)));
-
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
 
-        for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(manifest); dbIdx++)
+        for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(repoData->manifest); dbIdx++)
         {
-            const ManifestDb *db = manifestDb(manifest, dbIdx);
+            const ManifestDb *db = manifestDb(repoData->manifest, dbIdx);
 
             // Do not display template databases
             if (db->id > db->lastSystemId)
@@ -436,9 +475,9 @@ backupListAdd(
         VariantList *linkSection = varLstNew();
         VariantList *tablespaceSection = varLstNew();
 
-        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(repoData->manifest); targetIdx++)
         {
-            const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+            const ManifestTarget *target = manifestTarget(repoData->manifest, targetIdx);
             Variant *link = varNewKv(kvNew());
             Variant *tablespace = varNewKv(kvNew());
 
@@ -476,9 +515,9 @@ backupListAdd(
         // Get the list of files with an error in the page checksum
         VariantList *checksumPageErrorList = varLstNew();
 
-        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+        for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(repoData->manifest); fileIdx++)
         {
-            const ManifestFile *file = manifestFile(manifest, fileIdx);
+            const ManifestFile *file = manifestFile(repoData->manifest, fileIdx);
 
             if (file->checksumPageError)
                 varLstAdd(checksumPageErrorList, varNewStr(manifestPathPg(file->name)));
@@ -488,7 +527,8 @@ backupListAdd(
             varKv(backupInfo), BACKUP_KEY_CHECKSUM_PAGE_ERROR_VAR,
             (!varLstEmpty(checksumPageErrorList) ? varNewVarLst(checksumPageErrorList) : NULL));
 
-        manifestFree(manifest);
+        manifestFree(repoData->manifest);
+        repoData->manifest = NULL;
     }
 
     varLstAdd(backupSection, backupInfo);
@@ -501,15 +541,15 @@ For each current backup in the backup.info file of the stanza, set the data for 
 ***********************************************************************************************************************************/
 static void
 backupList(
-    VariantList *backupSection, InfoStanzaRepo *stanzaData, const String *backupLabel, unsigned int repoIdxStart,
+    VariantList *backupSection, InfoStanzaRepo *stanzaData, const String *backupLabel, unsigned int repoIdxMin,
     unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);           // The section to add the backup data to
         FUNCTION_TEST_PARAM(INFO_STANZA_REPO, stanzaData);          // The data for the stanza
         FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup label to filter if requested by the user
-        FUNCTION_TEST_PARAM(UINT, repoIdxStart);                    // The start index of the repo array to begin checking
-        FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index beyond the last repo index to check
+        FUNCTION_TEST_PARAM(UINT, repoIdxMin);                      // The start index of the repo array to begin checking
+        FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index of the last repo to check
     FUNCTION_TEST_END();
 
     ASSERT(backupSection != NULL);
@@ -520,7 +560,7 @@ backupList(
     unsigned int backupTotalProcessed = 0;
 
     // Get the number of backups to be processed
-    for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
+    for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
     {
         InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
 
@@ -534,7 +574,7 @@ backupList(
         time_t backupNextTime = 0;
 
         // Backups are sorted for each repo, so iterate over the lists to create a single list ordered by backup-timestamp-stop
-        for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
+        for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
 
@@ -559,7 +599,7 @@ backupList(
         repoData->backupIdx++;
 
         // Add the backup data to the backup section
-        backupListAdd(backupSection, &backupData, backupLabel, repoData, backupNextRepoIdx);
+        backupListAdd(backupSection, &backupData, backupLabel, repoData);
 
         backupTotalProcessed++;
     }
@@ -571,12 +611,12 @@ backupList(
 Set the stanza data for each stanza found in the repo
 ***********************************************************************************************************************************/
 static VariantList *
-stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int repoIdxStart, unsigned int repoIdxMax)
+stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int repoIdxMin, unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, stanzaRepoList);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
-        FUNCTION_TEST_PARAM(UINT, repoIdxStart);
+        FUNCTION_TEST_PARAM(UINT, repoIdxMin);
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
 
@@ -601,13 +641,12 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 
         int stanzaStatusCode = -1;
         unsigned int stanzaCipherType = 0;
-        bool checkBackupLock = false;
 
         // Set the stanza name and initialize the overall stanza variables
         kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
 
         // Get the stanza for each requested repo
-        for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
+        for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             InfoRepoData *repoData = &stanzaData->repoList[repoIdx];
 
@@ -620,55 +659,59 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
             if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK && repoData->backupInfo == NULL)
                 repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH;
 
-            // If the backup.info file has been read, then get the backup and archive information on this repo
-            if (repoData->backupInfo != NULL)
+            TRY_BEGIN()
             {
-                // If the backup.info file exists, get the database history information (oldest to newest) and corresponding archive
-                for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(repoData->backupInfo)) - 1; (int)pgIdx >= 0; pgIdx--)
+                // If the backup.info file has been read, then get the backup and archive information on this repo
+                if (repoData->backupInfo != NULL)
                 {
-                    InfoPgData pgData = infoPgData(infoBackupPg(repoData->backupInfo), pgIdx);
-                    Variant *pgInfo = varNewKv(kvNew());
+                    // If the backup.info file exists, get the database history information (oldest to newest) and corresponding
+                    // archive
+                    for (unsigned int pgIdx = infoPgDataTotal(infoBackupPg(repoData->backupInfo)) - 1; (int)pgIdx >= 0; pgIdx--)
+                    {
+                        InfoPgData pgData = infoPgData(infoBackupPg(repoData->backupInfo), pgIdx);
+                        Variant *pgInfo = varNewKv(kvNew());
 
-                    kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT(pgData.id));
-                    kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
-                    kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
-                    kvPut(varKv(pgInfo), KEY_REPO_KEY_VAR, VARUINT(repoData->key));
+                        kvPut(varKv(pgInfo), DB_KEY_ID_VAR, VARUINT(pgData.id));
+                        kvPut(varKv(pgInfo), DB_KEY_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
+                        kvPut(varKv(pgInfo), DB_KEY_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
+                        kvPut(varKv(pgInfo), KEY_REPO_KEY_VAR, VARUINT(repoData->key));
 
-                    varLstAdd(dbSection, pgInfo);
+                        varLstAdd(dbSection, pgInfo);
 
-                    // Get the archive info for the DB from the archive.info file
-                    archiveDbList(
-                        stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false), repoIdx,
-                        repoData->key);
-                }
+                        // Get the archive info for the DB from the archive.info file
+                        archiveDbList(
+                            stanzaData->name, &pgData, archiveSection, repoData->archiveInfo, (pgIdx == 0 ? true : false),
+                            repoIdx, repoData->key);
+                    }
 
-                // Set stanza status if the current db sections do not match across repos
-                InfoPgData backupInfoCurrentPg = infoPgData(
-                    infoBackupPg(repoData->backupInfo), infoPgDataCurrentId(infoBackupPg(repoData->backupInfo)));
+                    // Set stanza status if the current db sections do not match across repos
+                    InfoPgData backupInfoCurrentPg = infoPgData(
+                        infoBackupPg(repoData->backupInfo), infoPgDataCurrentId(infoBackupPg(repoData->backupInfo)));
 
-                // The current PG system and version must match across repos for the stanza, if not, a failure may have occurred
-                // during an upgrade or the repo may have been disabled during the stanza upgrade to protect from error propagation
-                if (stanzaData->currentPgVersion != backupInfoCurrentPg.version ||
-                    stanzaData->currentPgSystemId != backupInfoCurrentPg.systemId)
-                {
-                    stanzaStatusCode = INFO_STANZA_STATUS_CODE_PG_MISMATCH;
+                    // The current PG system and version must match across repos for the stanza, if not, a failure may have occurred
+                    // during an upgrade or the repo may have been disabled during the stanza upgrade to protect from error
+                    // propagation
+                    if (stanzaData->currentPgVersion != backupInfoCurrentPg.version ||
+                        stanzaData->currentPgSystemId != backupInfoCurrentPg.systemId)
+                    {
+                        stanzaStatusCode = INFO_STANZA_STATUS_CODE_PG_MISMATCH;
+                    }
                 }
             }
-
-            // If the stanza has been created successfully on at least one repo, then check for a lock on the PG server
-            if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK)
+            CATCH_ANY()
             {
-                checkBackupLock = true;
-
-                // If there are no current backups on this repo then set status to no backup
-                if (infoBackupDataTotal(repoData->backupInfo) == 0)
-                    repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_NO_BACKUP;
+                infoStanzaErrorAdd(repoData, errorType(), STR(errorMessage()));
             }
+            TRY_END();
+
+            // If there are no current backups on this repo then set status to no backup
+            if (repoData->stanzaStatus == INFO_STANZA_STATUS_CODE_OK && infoBackupDataTotal(repoData->backupInfo) == 0)
+                repoData->stanzaStatus = INFO_STANZA_STATUS_CODE_NO_BACKUP;
 
             // Track the status over all repos if the status for the stanza has not already been determined
             if (stanzaStatusCode != INFO_STANZA_STATUS_CODE_PG_MISMATCH)
             {
-                if (repoIdx == repoIdxStart)
+                if (repoIdx == repoIdxMin)
                     stanzaStatusCode = repoData->stanzaStatus;
                 else
                 {
@@ -678,13 +721,13 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
             }
 
             // Track cipher type over all repos
-            if (repoIdx == repoIdxStart)
+            if (repoIdx == repoIdxMin)
                 stanzaCipherType = repoData->cipher;
             else
                 stanzaCipherType = stanzaCipherType != repoData->cipher ? INFO_STANZA_STATUS_CODE_MIXED : repoData->cipher;
 
             // Add the status of the stanza on the repo to the repo section, and the repo to the repo array
-            repoStanzaStatus(repoData->stanzaStatus, repoInfo);
+            repoStanzaStatus(repoData->stanzaStatus, repoInfo, repoData);
             varLstAdd(repoSection, repoInfo);
 
             // Add the database history, backup, archive and repo arrays to the stanza info
@@ -694,24 +737,11 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         }
 
         // Get a sorted list of the data for all existing backups for this stanza over all repos
-        backupList(backupSection, stanzaData, backupLabel, repoIdxStart, repoIdxMax);
+        backupList(backupSection, stanzaData, backupLabel, repoIdxMin, repoIdxMax);
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
 
-        static bool backupLockHeld = false;
-
-        // If the stanza is OK on at least one repo, then check if there's a local backup running
-        if (checkBackupLock)
-        {
-            // Try to acquire a lock. If not possible, assume another backup or expire is already running.
-            backupLockHeld = !lockAcquire(
-                cfgOptionStr(cfgOptLockPath), stanzaData->name, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
-
-            // Immediately release the lock acquired
-            lockRelease(!backupLockHeld);
-        }
-
         // Set the overall stanza status
-        stanzaStatus(stanzaStatusCode, backupLockHeld, stanzaInfo);
+        stanzaStatus(stanzaStatusCode, stanzaData->backupLockHeld, stanzaInfo);
 
         // Set the overall cipher type
         if (stanzaCipherType != INFO_STANZA_STATUS_CODE_MIXED)
@@ -1053,63 +1083,91 @@ formatTextDb(
 Get the backup and archive info files on the specified repo for the stanza
 ***********************************************************************************************************************************/
 static void
-infoUpdateStanza(const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned int repoIdx, bool stanzaExists)
+infoUpdateStanza(
+    const Storage *storage, InfoStanzaRepo *stanzaRepo, unsigned int repoIdx, bool stanzaExists, const String *backupLabel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, storage);
         FUNCTION_TEST_PARAM(INFO_STANZA_REPO, stanzaRepo);
         FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(BOOL, stanzaExists);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
 
     ASSERT(storage != NULL);
     ASSERT(stanzaRepo != NULL);
 
-    InfoBackup *info = NULL;
     volatile int stanzaStatus = INFO_STANZA_STATUS_CODE_OK;
 
-    // If the stanza exists, attempt to get the backup.info file
+    // If the stanza exists, attempt to get the info files
     if (stanzaExists)
     {
-
-        // Catch certain errors
         TRY_BEGIN()
         {
-            // Attempt to load the backup info file
-            info = infoBackupLoadFile(
-                storage, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaRepo->name), INFO_BACKUP_FILE),
-                stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+            // Catch certain errors
+            TRY_BEGIN()
+            {
+                // Attempt to load the backup info file
+                stanzaRepo->repoList[repoIdx].backupInfo = infoBackupLoadFile(
+                    storage, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaRepo->name), INFO_BACKUP_FILE),
+                    stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+            }
+            CATCH(FileMissingError)
+            {
+                // If there is no backup.info then set the status to indicate missing
+                stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA;
+            }
+            CATCH(CryptoError)
+            {
+                // If a reason for the error is due to a an encryption error, add a hint
+                THROW_FMT(
+                    CryptoError,
+                    "%s\n"
+                    "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
+                    errorMessage());
+            }
+            TRY_END();
+
+            // If backup.info was found, then get the archive.info file, which must exist if the backup.info exists, else the failed
+            // load will throw an error which will be trapped and recorded
+            if (stanzaRepo->repoList[repoIdx].backupInfo != NULL)
+            {
+                stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
+                    storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
+                    stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+
+                // If a specific backup exists on this repo then attempt to load the manifest
+                if (backupLabel != NULL)
+                {
+                    stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
+                        storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
+                        stanzaRepo->repoList[repoIdx].cipher,
+                        infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
+                }
+
+                // If a backup lock check has not already been performed, then do so
+                if (!stanzaRepo->backupLockChecked)
+                {
+                    // Try to acquire a lock. If not possible, assume another backup or expire is already running.
+                    stanzaRepo->backupLockHeld = !lockAcquire(
+                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
+
+                    // Immediately release the lock acquired
+                    lockRelease(!stanzaRepo->backupLockHeld);
+                    stanzaRepo->backupLockChecked = true;
+                }
+            }
+
+            stanzaRepo->repoList[repoIdx].stanzaStatus = stanzaStatus;
         }
-        CATCH(FileMissingError)
+        CATCH_ANY()
         {
-            // If there is no backup.info then set the status to indicate missing
-            stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA;
-        }
-        CATCH(CryptoError)
-        {
-            // If a reason for the error is due to a an encryption error, add a hint
-            THROW_FMT(
-                CryptoError,
-                "%s\n"
-                "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
-                errorMessage());
+            infoStanzaErrorAdd(&stanzaRepo->repoList[repoIdx], errorType(), STR(errorMessage()));
         }
         TRY_END();
-
-        // If backup.info was found, then get the archive.info file, which must exist if the backup.info exists, else throw error
-        if (info != NULL)
-        {
-            stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
-                storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
-                stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
-        }
-
-        stanzaRepo->repoList[repoIdx].stanzaStatus = stanzaStatus;
     }
     else
         stanzaRepo->repoList[repoIdx].stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH;
-
-    stanzaRepo->repoList[repoIdx].backupInfo = info;
 
     // If the backup.info and therefore archive.info exist, and the currentPg has not been set for the stanza, then set it
     if (stanzaRepo->currentPgVersion == 0 && stanzaRepo->repoList[repoIdx].backupInfo != NULL)
@@ -1153,101 +1211,180 @@ infoRender(void)
             THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
 
         // Initialize the repo index
-        unsigned int repoIdxStart = 0;
-        unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
-        unsigned int repoTotal = repoIdxMax;
+        unsigned int repoIdxMin = 0;
+        unsigned int repoTotal = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
+        unsigned int repoIdxMax = repoTotal - 1;
 
         // If the repo was specified then set index to the array location and max to loop only once
         if (cfgOptionTest(cfgOptRepo))
         {
-            repoIdxStart = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
-            repoIdxMax = repoIdxStart + 1;
+            repoIdxMin = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
+            repoIdxMax = repoIdxMin;
         }
 
-        for (unsigned int repoIdx = repoIdxStart; repoIdx < repoIdxMax; repoIdx++)
+        // Initialize error reporting at the repo level
+        InfoRepoData *repoErrorList = memNew(repoTotal * sizeof(InfoRepoData));
+        bool repoError = false;
+
+        for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            const Storage *storageRepo = storageRepoIdx(repoIdx);
-
-            // If a backup set was specified, see if the manifest exists
-            if (backupLabel != NULL)
+            // Initialize the error list on this repo
+            repoErrorList[repoIdx] = (InfoRepoData)
             {
-                if (storageExistsP(storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
-                    backupFound = true;
-            }
+                .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx),
+                .error = NULL,
+            };
 
-            // Get a list of stanzas in the backup directory
-            StringList *stanzaNameList = strLstSort(storageListP(storageRepo, STORAGE_PATH_BACKUP_STR), sortOrderAsc);
+            // Initialize backup label indicator
+            const String *backupExistsOnRepo = NULL;
 
-            // All stanzas will be "found" if they are in the storage list
-            bool stanzaExists = true;
-
-            if (stanza != NULL)
+            // Catch any repo errors
+            TRY_BEGIN()
             {
-                // If a specific stanza was requested and it is not on this repo, then stanzaExists flag will be reset to false
-                if (strLstEmpty(stanzaNameList) || !strLstExists(stanzaNameList, stanza))
-                    stanzaExists = false;
+                // Get the repo storage in case it is remote and encryption settings need to be pulled down
+                const Storage *storageRepo = storageRepoIdx(repoIdx);
 
-                // Narrow the list to only the requested stanza
-                strLstFree(stanzaNameList);
-                stanzaNameList = strLstNew();
-                strLstAdd(stanzaNameList, stanza);
-            }
-
-            // Process each stanza
-            for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaNameList); stanzaIdx++)
-            {
-                String *stanzaName = strLstGet(stanzaNameList, stanzaIdx);
-
-                // Get the stanza if it is already in the list
-                InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
-
-                // If the stanza was already added to the array, then update this repo for the stanza, else the stanza has not yet
-                // been added to the list, so add it
-                if (stanzaRepo != NULL)
-                    infoUpdateStanza(storageRepo, stanzaRepo, repoIdx, stanzaExists);
-                else
+                // If a backup set was specified, see if the manifest exists
+                if (backupLabel != NULL)
                 {
-                    InfoStanzaRepo stanzaRepo =
+                    // If the backup exists on this repo, set the global indicator that we found it on at least one repo and
+                    // set the exists label for later loading of the manifest
+                    if (storageExistsP(storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))))
                     {
-                        .name = stanzaName,
-                        .currentPgVersion = 0,
-                        .currentPgSystemId = 0,
-                        .repoList = memNew(repoTotal * sizeof(InfoRepoData)),
-                    };
-
-                    // Initialize all the repos
-                    for (unsigned int repoListIdx = 0; repoListIdx < repoTotal; repoListIdx++)
-                    {
-                        stanzaRepo.repoList[repoListIdx] = (InfoRepoData)
-                        {
-                            .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
-                            .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
-                            .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
-                        };
+                        backupFound = true;
+                        backupExistsOnRepo = backupLabel;
                     }
+                }
 
-                    // Update the info for this repo
-                    infoUpdateStanza(storageRepo, &stanzaRepo, repoIdx, stanzaExists);
-                    lstAdd(stanzaRepoList, &stanzaRepo);
+                // Get a list of stanzas in the backup directory
+                StringList *stanzaNameList = strLstSort(storageListP(storageRepo, STORAGE_PATH_BACKUP_STR), sortOrderAsc);
+
+                // All stanzas will be "found" if they are in the storage list
+                bool stanzaExists = true;
+
+                if (stanza != NULL)
+                {
+                    // If a specific stanza was requested and it is not on this repo, then stanzaExists flag will be reset to false
+                    if (strLstEmpty(stanzaNameList) || !strLstExists(stanzaNameList, stanza))
+                        stanzaExists = false;
+
+                    // Narrow the list to only the requested stanza
+                    strLstFree(stanzaNameList);
+                    stanzaNameList = strLstNew();
+                    strLstAdd(stanzaNameList, stanza);
+                }
+
+                // Process each stanza
+                for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaNameList); stanzaIdx++)
+                {
+                    String *stanzaName = strLstGet(stanzaNameList, stanzaIdx);
+
+                    // Get the stanza if it is already in the list
+                    InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
+
+                    // If the stanza was already added to the array, then update this repo for the stanza, else the stanza has not
+                    // yet been added to the list, so add it
+                    if (stanzaRepo != NULL)
+                        infoUpdateStanza(storageRepo, stanzaRepo, repoIdx, stanzaExists, backupExistsOnRepo);
+                    else
+                    {
+                        InfoStanzaRepo stanzaRepo =
+                        {
+                            .name = stanzaName,
+                            .currentPgVersion = 0,
+                            .currentPgSystemId = 0,
+                            .repoList = memNew(repoTotal * sizeof(InfoRepoData)),
+                        };
+
+                        // Initialize all the repos
+                        for (unsigned int repoListIdx = 0; repoListIdx < repoTotal; repoListIdx++)
+                        {
+                            stanzaRepo.repoList[repoListIdx] = (InfoRepoData)
+                            {
+                                .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
+                                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
+                                .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
+                                .error = NULL,
+                            };
+                        }
+
+                        // Update the info for this repo
+                        infoUpdateStanza(storageRepo, &stanzaRepo, repoIdx, stanzaExists, backupExistsOnRepo);
+                        lstAdd(stanzaRepoList, &stanzaRepo);
+                    }
                 }
             }
-        }
-
-        // If a backup label was requested but it was not found on any repo
-        if (backupLabel != NULL && !backupFound)
-        {
-            THROW_FMT(
-                FileMissingError, "manifest does not exist for backup '%s'\n"
-                "HINT: is the backup listed when running the info command with --stanza option only?", strZ(backupLabel));
+            CATCH_ANY()
+            {
+                // At this point, stanza-level errors were caught and stored in the stanza structure, any errors caught here are due
+                // to higher level problems (e.g. repo inaccessible, invalid permissions on the repo, etc) and will be reported
+                // later if there are valid stanzas. If there are no valid stanzas after the loop exits, then these errors will be
+                // reported with a stanza named "[invalid]".
+                infoStanzaErrorAdd(&repoErrorList[repoIdx], errorType(), STR(errorMessage()));
+                repoError = true;
+            }
+            TRY_END();
         }
 
         VariantList *infoList = varLstNew();
         String *resultStr = strNew("");
 
+        // Record any repository-level errors with each stanza -- if there are no stanzas and one was not requested, then create an
+        // "[invalid]" one for reporting
+        if (repoError)
+        {
+            if (lstEmpty(stanzaRepoList))
+            {
+                InfoStanzaRepo stanzaRepo =
+                {
+                    .name = stanza != NULL ? stanza : INFO_STANZA_INVALID_STR,
+                    .currentPgVersion = 0,
+                    .currentPgSystemId = 0,
+                    .repoList = repoErrorList,
+                };
+
+                lstAdd(stanzaRepoList, &stanzaRepo);
+            }
+            else
+            {
+                // For each stanza report the repos that were in error
+                for (unsigned int idx = 0; idx < lstSize(stanzaRepoList); idx++)
+                {
+                    InfoStanzaRepo *stanzaData = lstGet(stanzaRepoList, idx);
+
+                    for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
+                    {
+                        if (repoErrorList[repoIdx].error != NULL)
+                            stanzaData->repoList[repoIdx] = repoErrorList[repoIdx];
+                    }
+                }
+            }
+        }
+
+        // If a backup label was requested but it was not found on any repo, report the error here rather than individually to avoid
+        // listing each repo as "requested backup not found"
+        if (backupLabel != NULL && !backupFound)
+        {
+            // Get the stanza record and update each repo to indicate backup not found where there is not already an error status
+            // so that errors on other repositories will be displayed and not overwritten
+            InfoStanzaRepo *stanzaRepo = lstFind(stanzaRepoList, &stanza);
+
+            for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
+            {
+                if (stanzaRepo->repoList[repoIdx].stanzaStatus == INFO_STANZA_STATUS_CODE_OK)
+                {
+                    stanzaRepo->repoList[repoIdx].stanzaStatus = INFO_STANZA_STATUS_CODE_BACKUP_MISSING;
+                    infoBackupFree(stanzaRepo->repoList[repoIdx].backupInfo);
+                    stanzaRepo->repoList[repoIdx].backupInfo = NULL;
+                }
+            }
+        }
+
         // If the backup storage exists, then search for and process any stanzas
         if (!lstEmpty(stanzaRepoList))
-            infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxStart, repoIdxMax);
+            infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxMin, repoIdxMax);
 
         // Format text output
         if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
@@ -1279,8 +1416,10 @@ infoRender(void)
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
                         // Update the overall stanza status and change displayed status if backup lock is found
-                        if (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH)
+                        if (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
+                            statusCode == INFO_STANZA_STATUS_CODE_OTHER)
                         {
+                            // Stanza status
                             strCatFmt(
                                 resultStr, "%s%s\n",
                                 statusCode == INFO_STANZA_STATUS_CODE_MIXED ? INFO_STANZA_MIXED :
@@ -1290,19 +1429,40 @@ infoRender(void)
 
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
+                            bool multiRepo = varLstSize(repoSection) > 1;
+                            const char *formatSpacer = multiRepo ? "               " : "            ";
 
                             for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
                             {
                                 KeyValue *repoInfo = varKv(varLstGet(repoSection, repoIdx));
                                 KeyValue *repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
 
-                                strCatFmt(
-                                    resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
-                                strCatFmt(
-                                    resultStr, "%s",
-                                    varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK ?
-                                    INFO_STANZA_STATUS_OK "\n" : strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)\n",
-                                    strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))))));
+                                // If more than one repo configured, then add the repo status per repo
+                                if (multiRepo)
+                                    strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
+
+                                if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
+                                    strCatZ(resultStr, INFO_STANZA_STATUS_OK "\n");
+                                else
+                                {
+                                    if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OTHER)
+                                    {
+                                        StringList *repoError = strLstNewSplit(
+                                            varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR)), STRDEF("\n"));
+
+                                        strCatFmt(
+                                            resultStr, "%s%s%s\n",
+                                            multiRepo ? INFO_STANZA_STATUS_ERROR " (" INFO_STANZA_STATUS_MESSAGE_OTHER ")\n" : "",
+                                            formatSpacer, strZ(strLstJoin(repoError, strZ(strNewFmt("\n%s", formatSpacer)))));
+                                    }
+                                    else
+                                    {
+
+                                        strCatFmt(
+                                            resultStr, INFO_STANZA_STATUS_ERROR " (%s)\n",
+                                            strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))));
+                                    }
+                                }
                             }
                         }
                         else

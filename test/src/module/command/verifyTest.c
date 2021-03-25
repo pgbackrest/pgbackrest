@@ -876,7 +876,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("verifyFile(), verifyProtocol()"))
+    if (testBegin("verifyFile() and verifyFileProtocol()"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -912,7 +912,7 @@ testRun(void)
                 "file encrypted compressed checksum mismatch");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verifyProtocol()");
+        TEST_TITLE("verifyFileProtocol()");
 
         // Start a protocol server to test the protocol directly
         Buffer *serverWrite = bufNew(8192);
@@ -927,27 +927,18 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(fileSize));
         varLstAdd(paramList, varNewStrZ("pass"));
 
-        TEST_RESULT_BOOL(verifyProtocol(PROTOCOL_COMMAND_VERIFY_FILE_STR, paramList, server), true, "protocol verify file");
+        TEST_RESULT_VOID(verifyFileProtocol(paramList, server), "protocol verify file");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
         bufUsedSet(serverWrite, 0);
-
-        TEST_RESULT_BOOL(verifyProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid protocol function");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("cmdVerify(), verifyProcess() - errors"))
     {
         //--------------------------------------------------------------------------------------------------------------------------
+        // Load Parameters with multi-repo
         StringList *argList = strLstDup(argListBase);
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 4, "%s/repo4", testPath());
-
-        TEST_ERROR_FMT(
-            harnessCfgLoad(cfgCmdVerify, argList), OptionRequiredError, "verify command requires option: repo\n"
-            "HINT: this command requires a specific repository to operate on");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        // Load Parameters with multi-repo
-        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdVerify, argList);
 
         // Store valid archive/backup info files
@@ -1572,5 +1563,5 @@ testRun(void)
                 strZ(backupLabelDiff), strZ(backupLabelFullDb2))));
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

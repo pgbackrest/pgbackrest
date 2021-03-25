@@ -62,7 +62,6 @@ SRCS = \
 	common/crypto/hash.c \
 	common/debug.c \
 	common/encode.c \
-	common/encode/base64.c \
 	common/error.c \
 	common/exec.c \
 	common/exit.c \
@@ -85,6 +84,7 @@ SRCS = \
 	common/io/http/request.c \
 	common/io/http/response.c \
 	common/io/http/session.c \
+	common/io/http/url.c \
 	common/io/io.c \
 	common/io/read.c \
 	common/io/session.c \
@@ -155,6 +155,9 @@ SRCS = \
 	storage/azure/storage.c \
 	storage/azure/write.c \
 	storage/cifs/storage.c \
+	storage/gcs/read.c \
+	storage/gcs/storage.c \
+	storage/gcs/write.c \
 	storage/posix/read.c \
 	storage/posix/storage.c \
 	storage/posix/write.c \
@@ -227,7 +230,6 @@ clean:
 
 # Do clean and also remove all output from configure
 clean-all: clean
-	rm -rf autom4te.cache
 	rm -f build.auto.h config.log config.status Makefile
 
 ####################################################################################################################################

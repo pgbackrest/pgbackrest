@@ -154,17 +154,57 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put backup info to file");
 
-        TEST_ERROR_FMT(infoRender(), FileMissingError,
-            "unable to load info file '%s/archive.info' or '%s/archive.info.copy':\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-            "HINT: is archive_command configured correctly in postgresql.conf?\n"
-            "HINT: has a stanza-create been performed?\n"
-            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            strZ(archiveStanza1Path), strZ(archiveStanza1Path),
-            strZ(strNewFmt("%s/archive.info", strZ(archiveStanza1Path))),
-            strZ(strNewFmt("%s/archive.info.copy", strZ(archiveStanza1Path))));
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "["
+                "{"
+                    "\"archive\":[],"
+                    "\"backup\":[],"
+                    "\"cipher\":\"none\","
+                    "\"db\":[],"
+                    "\"name\":\"stanza1\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":99,"
+                                "\"message\":\"[FileMissingError] unable to load info file '%s/archive.info' or"
+                                " '%s/archive.info.copy':\\n"
+                                "FileMissingError: unable to open missing file '%s/archive.info' for read\\n"
+                                "FileMissingError: unable to open missing file '%s/archive.info.copy' for read\\n"
+                                "HINT: archive.info cannot be opened but is required to push/get WAL segments.\\n"
+                                "HINT: is archive_command configured correctly in postgresql.conf?\\n"
+                                "HINT: has a stanza-create been performed?\\n"
+                                "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
+                                " archiving scheme.\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
+                        "\"code\":99,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
+                        "\"message\":\"other\""
+                        "}"
+                "}"
+            "]", strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path), strZ(archiveStanza1Path)),
+            "json - other error, single repo");
+
+        harnessCfgLoad(cfgCmdInfo, argListTextStanzaOpt);
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: error (other)\n"
+            "            [FileMissingError] unable to load info file '%s/stanza1/archive.info' or '%s/stanza1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '%s/stanza1/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '%s/stanza1/archive.info.copy' for read\n"
+            "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
+            " scheme.\n"
+            "    cipher: none\n", strZ(archivePath), strZ(archivePath), strZ(archivePath), strZ(archivePath)),
+            "text - other error, single repo");
 
         // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         // Only the current db information from the db:history will be processed.
@@ -1566,6 +1606,22 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
+        // Stanza exists but set requested backup does not
+        //--------------------------------------------------------------------------------------------------------------------------
+        argList2 = strLstDup(argListMultiRepo);
+        strLstAddZ(argList2, "--stanza=stanza1");
+        strLstAddZ(argList2, "--set=bogus");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (requested backup not found)\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n",
+            "text, multi-repo, backup not found");
+
         // Backup set requested, with 1 checksum error
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListMultiRepo);
@@ -2293,6 +2349,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("encryption error");
 
+        // Change repo1 to have the same cipher type as repo2 even though on disk it does not
         content = strNew
         (
             "[global]\n"
@@ -2302,19 +2359,123 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/pgbackrest.conf", testPath())),
                 BUFSTR(content)), "put pgbackrest.conf file");
-        strLstAddZ(argListText, "--repo-cipher-type=aes-256-cbc");
-        strLstAdd(argListText, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
-        harnessCfgLoad(cfgCmdInfo, argListText);
-        TEST_ERROR_FMT(
-            infoRender(), CryptoError,
-            "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
-            "CryptoError: cipher header invalid\n"
-            "HINT: is or was the repo encrypted?\n"
-            "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
-            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "HINT: has a stanza-create been performed?\n"
-            "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
-            strZ(backupStanza1Path), strZ(backupStanza1Path),  strZ(strNewFmt("%s/backup.info.copy", strZ(backupStanza1Path))));
+
+        argList2 = strLstDup(argListMultiRepo);
+        strLstAddZ(argList2, "--repo-cipher-type=aes-256-cbc");
+        strLstAdd(argList2, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: error (other)\n"
+            "               [CryptoError] unable to load info file '%s/stanza1/backup.info' or '%s/stanza1/backup.info.copy':\n"
+            "               CryptoError: cipher header invalid\n"
+            "               HINT: is or was the repo encrypted?\n"
+            "               FileMissingError: unable to open missing file '%s/stanza1/backup.info.copy' for read\n"
+            "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "               HINT: has a stanza-create been performed?\n"
+            "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
+            " settings.\n"
+            "        repo2: error (no valid backups)\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004\n"
+            "\n"
+            "stanza: stanza2\n"
+            "    status: mixed\n"
+            "        repo1: error (other)\n"
+            "               [CryptoError] unable to load info file '%s/stanza2/backup.info' or '%s/stanza2/backup.info.copy':\n"
+            "               CryptoError: cipher header invalid\n"
+            "               HINT: is or was the repo encrypted?\n"
+            "               FileMissingError: unable to open missing file '%s/stanza2/backup.info.copy' for read\n"
+            "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "               HINT: has a stanza-create been performed?\n"
+            "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
+            " settings.\n"
+            "        repo2: error (missing stanza path)\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "stanza: stanza3\n"
+            "    status: mixed\n"
+            "        repo1: error (other)\n"
+            "               [CryptoError] unable to load info file '%s/stanza3/backup.info' or '%s/stanza3/backup.info.copy':\n"
+            "               CryptoError: cipher header invalid\n"
+            "               HINT: is or was the repo encrypted?\n"
+            "               FileMissingError: unable to open missing file '%s/stanza3/backup.info.copy' for read\n"
+            "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "               HINT: has a stanza-create been performed?\n"
+            "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
+            " settings.\n"
+            "        repo2: ok\n"
+            "    cipher: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002\n"
+            "\n"
+            "        full backup: 20201110-100000F\n"
+            "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+            "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
+            "            database size: 25.7MB, database backup size: 25.7MB\n"
+            "            repo2: backup set size: 3MB, backup size: 3KB\n",
+            strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath), strZ(backupPath),
+            strZ(backupPath), strZ(backupPath), strZ(backupPath)),
+            "text - multi-repo, multi-stanza cipher error");
+
+        // Backup label not found, one repo in error
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup label exists on one repo, other repo in error");
+
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20201110-100000F");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza3\n"
+            "    status: mixed\n"
+            "        repo1: error (other)\n"
+            "               [CryptoError] unable to load info file '%s/stanza3/backup.info' or '%s/stanza3/backup.info.copy':\n"
+            "               CryptoError: cipher header invalid\n"
+            "               HINT: is or was the repo encrypted?\n"
+            "               FileMissingError: unable to open missing file '%s/stanza3/backup.info.copy' for read\n"
+            "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "               HINT: has a stanza-create been performed?\n"
+            "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
+            " settings.\n"
+            "        repo2: error (requested backup not found)\n"
+            "    cipher: aes-256-cbc\n", strZ(backupPath), strZ(backupPath), strZ(backupPath)),
+            "backup label not found, one repo in error");
+
+        // Crypto error
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("WAL read error");
+
+        TEST_RESULT_VOID(
+            storagePathCreateP(
+                storageLocalWrite(), strNewFmt("%s/9.4-1", strZ(archiveStanza1Path)), .mode = 0200),
+                "WAL directory with bad permissions");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        harnessCfgLoad(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: error (other)\n"
+            "               [PathOpenError] unable to list file info for path '%s/stanza1/9.4-1': [13] Permission denied\n"
+            "        repo2: error (no valid backups)\n"
+            "    cipher: mixed\n"
+            "        repo1: none\n"
+            "        repo2: aes-256-cbc\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000003/000000010000000000000004\n", strZ(archivePath)),
+            "WAL directory read error");
 
         // Unset environment key
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
@@ -2591,22 +2752,83 @@ testRun(void)
         TEST_ERROR_FMT(
             harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
-        // Option --repo not required when only 1 repo configured
-        strLstAddZ(argList, "--stanza=stanza1");
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo-level error");
+
+        TEST_RESULT_VOID(
+            storagePathCreateP(
+                storageLocalWrite(), strNewFmt("%s/repo2", testPath()), .mode = 0200), "repo directory with bad permissions");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 1, "%s/repo2", testPath());
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_ERROR_FMT(
-                cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
-                "HINT: is the backup listed when running the info command with --stanza option only?");
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: [invalid]\n"
+            "    status: error (other)\n"
+            "            [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
+            "    cipher: none\n", testPath()),
+            "text - invalid stanza");
 
-        // Option --repo when only 1 repo configured but will search the repo provided
-        strLstAddZ(argList, "--repo=1");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "json");
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_ERROR_FMT(
-                cmdInfo(), FileMissingError, "manifest does not exist for backup 'bogus'\n"
-                "HINT: is the backup listed when running the info command with --stanza option only?");
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "["
+                "{"
+                    "\"archive\":[],"
+                    "\"backup\":[],"
+                    "\"cipher\":\"none\","
+                    "\"db\":[],"
+                    "\"name\":\"[invalid]\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":99,"
+                                "\"message\":\"[PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission"
+                                " denied\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
+                        "\"code\":99,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
+                        "\"message\":\"other\""
+                        "}"
+                "}"
+            "]", testPath()),
+            "json - invalid stanza");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 1, "%s/repo2", testPath());
+        hrnCfgArgRawZ(argList, cfgOptStanza, "stanza1");
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: error (other)\n"
+            "            [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
+            "    cipher: none\n", testPath()),
+            "text - stanza requested");
+
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo", testPath());
+        harnessCfgLoad(cfgCmdInfo, argList);
+
+        TEST_RESULT_STR(
+            infoRender(), strNewFmt(
+            "stanza: stanza1\n"
+            "    status: mixed\n"
+            "        repo1: error (other)\n"
+            "               [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
+            "        repo2: error (missing stanza path)\n"
+            "    cipher: none\n", testPath()),
+            "text - stanza repo structure exists");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

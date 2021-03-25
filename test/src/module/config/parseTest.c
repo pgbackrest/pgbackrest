@@ -776,8 +776,9 @@ testRun(void)
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'/path1/path2//' cannot contain // for 'pg1-path' option");
 
-        // Local and remove commands should not modify log levels during parsing
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("non-default roles should not modify log levels");
+
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         hrnCfgArgRawZ(argList, cfgOptPg, "2");
@@ -791,7 +792,7 @@ testRun(void)
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
-        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "load local config");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/2", "default pg-path");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleLocal, "    command role is local");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "    backup:local command does not require lock");
@@ -810,11 +811,26 @@ testRun(void)
 
         logLevelStdOut = logLevelError;
         logLevelStdErr = logLevelError;
-        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "load remote config");
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load remote config");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleRemote, "    command role is remote");
         TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "    remote role name");
         TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
         TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+
+        argList = strLstNew();
+        strLstAdd(argList, strNew("pgbackrest"));
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
+        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--log-level-stderr=info"));
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
+
+        logLevelStdOut = logLevelError;
+        logLevelStdErr = logLevelError;
+        TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load async config");
+        TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleAsync, "    command role is async");
+        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
+        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+
         harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -856,11 +872,11 @@ testRun(void)
         strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
         strLstAdd(argList, strNew("--no-config"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--repo1-s3-host=xxx"));
+        strLstAdd(argList, strNew("--repo1-s3-bucket=xxx"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'repo1-s3-host' not valid without option 'repo1-type' = 's3'");
+            "option 'repo1-s3-bucket' not valid without option 'repo1-type' = 's3'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1203,22 +1219,22 @@ testRun(void)
 
         unsigned int port = 55555;
 
-        cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("host.com")) ;
-        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Host, &port), "host.com", "check plain host");
+        cfgOptionSet(cfgOptRepoStorageHost, cfgSourceConfig, varNewStrZ("host.com")) ;
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoStorageHost, &port), "host.com", "check plain host");
         TEST_RESULT_UINT(port, 55555, "check that port was not updated");
 
-        cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777")) ;
-        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Host, &port), "myhost.com", "check host with port");
+        cfgOptionSet(cfgOptRepoStorageHost, cfgSourceConfig, varNewStrZ("myhost.com:777")) ;
+        TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoStorageHost, &port), "myhost.com", "check host with port");
         TEST_RESULT_UINT(port, 777, "check that port was updated");
 
         cfgOptionSet(cfgOptRepoS3Endpoint, cfgSourceConfig, NULL);
         TEST_RESULT_STR_Z(cfgOptionHostPort(cfgOptRepoS3Endpoint, &port), NULL, "check null host");
         TEST_RESULT_UINT(port, 777, "check that port was not updated");
 
-        cfgOptionSet(cfgOptRepoS3Host, cfgSourceConfig, varNewStrZ("myhost.com:777:888")) ;
+        cfgOptionSet(cfgOptRepoStorageHost, cfgSourceConfig, varNewStrZ("myhost.com:777:888")) ;
         TEST_ERROR(
-            cfgOptionHostPort(cfgOptRepoS3Host, &port), OptionInvalidError,
-            "'myhost.com:777:888' is not valid for option 'repo1-s3-host'"
+            cfgOptionHostPort(cfgOptRepoStorageHost, &port), OptionInvalidError,
+            "'myhost.com:777:888' is not valid for option 'repo1-storage-host'"
                 "\nHINT: is more than one port specified?");
         TEST_RESULT_UINT(port, 777, "check that port was not updated");
 
@@ -1618,22 +1634,57 @@ testRun(void)
         testOptionFind("backup-ssh-port", cfgOptRepoHostPort, 0, false, false, true);
         testOptionFind("backup-user", cfgOptRepoHostUser, 0, false, false, true);
 
+        testOptionFind("repo1-azure-ca-file", cfgOptRepoStorageCaFile, 0, false, false, true);
+        testOptionFind("reset-repo1-azure-ca-file", cfgOptRepoStorageCaFile, 0, false, true, true);
+
+        testOptionFind("repo1-azure-ca-path", cfgOptRepoStorageCaPath, 0, false, false, true);
+        testOptionFind("reset-repo1-azure-ca-path", cfgOptRepoStorageCaPath, 0, false, true, true);
+
+        testOptionFind("repo1-azure-host", cfgOptRepoStorageHost, 0, false, false, true);
+        testOptionFind("reset-repo1-azure-host", cfgOptRepoStorageHost, 0, false, true, true);
+
+        testOptionFind("repo1-azure-port", cfgOptRepoStoragePort, 0, false, false, true);
+        testOptionFind("reset-repo1-azure-port", cfgOptRepoStoragePort, 0, false, true, true);
+
+        testOptionFind("repo1-azure-verify-tls", cfgOptRepoStorageVerifyTls, 0, false, false, true);
+        testOptionFind("no-repo1-azure-verify-tls", cfgOptRepoStorageVerifyTls, 0, true, false, true);
+        testOptionFind("reset-repo1-azure-verify-tls", cfgOptRepoStorageVerifyTls, 0, false, true, true);
+
         testOptionFind("repo-cipher-pass", cfgOptRepoCipherPass, 0, false, false, true);
         testOptionFind("repo-cipher-type", cfgOptRepoCipherType, 0, false, false, true);
         testOptionFind("repo-path", cfgOptRepoPath, 0, false, false, true);
         testOptionFind("repo-type", cfgOptRepoType, 0, false, false, true);
 
         testOptionFind("repo-s3-bucket", cfgOptRepoS3Bucket, 0, false, false, true);
-        testOptionFind("repo-s3-ca-file", cfgOptRepoS3CaFile, 0, false, false, true);
-        testOptionFind("repo-s3-ca-path", cfgOptRepoS3CaPath, 0, false, false, true);
+
+        testOptionFind("repo-s3-ca-file", cfgOptRepoStorageCaFile, 0, false, false, true);
+        testOptionFind("repo1-s3-ca-file", cfgOptRepoStorageCaFile, 0, false, false, true);
+        testOptionFind("reset-repo1-s3-ca-file", cfgOptRepoStorageCaFile, 0, false, true, true);
+
+        testOptionFind("repo-s3-ca-path", cfgOptRepoStorageCaPath, 0, false, false, true);
+        testOptionFind("repo1-s3-ca-path", cfgOptRepoStorageCaPath, 0, false, false, true);
+        testOptionFind("reset-repo1-s3-ca-path", cfgOptRepoStorageCaPath, 0, false, true, true);
+
         testOptionFind("repo-s3-endpoint", cfgOptRepoS3Endpoint, 0, false, false, true);
-        testOptionFind("repo-s3-host", cfgOptRepoS3Host, 0, false, false, true);
+
+        testOptionFind("repo-s3-host", cfgOptRepoStorageHost, 0, false, false, true);
+        testOptionFind("repo1-s3-host", cfgOptRepoStorageHost, 0, false, false, true);
+        testOptionFind("reset-repo1-s3-host", cfgOptRepoStorageHost, 0, false, true, true);
+
         testOptionFind("repo-s3-key", cfgOptRepoS3Key, 0, false, false, true);
         testOptionFind("repo-s3-key-secret", cfgOptRepoS3KeySecret, 0, false, false, true);
+
+        testOptionFind("repo1-s3-port", cfgOptRepoStoragePort, 0, false, false, true);
+        testOptionFind("reset-repo1-s3-port", cfgOptRepoStoragePort, 0, false, true, true);
+
         testOptionFind("repo-s3-region", cfgOptRepoS3Region, 0, false, false, true);
-        testOptionFind("repo-s3-verify-ssl", cfgOptRepoS3VerifyTls, 0, false, false, true);
-        testOptionFind("repo1-s3-verify-ssl", cfgOptRepoS3VerifyTls, 0, false, false, true);
-        testOptionFind("no-repo-s3-verify-ssl", cfgOptRepoS3VerifyTls, 0, true, false, true);
+
+        testOptionFind("repo-s3-verify-ssl", cfgOptRepoStorageVerifyTls, 0, false, false, true);
+        testOptionFind("repo1-s3-verify-ssl", cfgOptRepoStorageVerifyTls, 0, false, false, true);
+        testOptionFind("no-repo-s3-verify-ssl", cfgOptRepoStorageVerifyTls, 0, true, false, true);
+        testOptionFind("repo1-s3-verify-tls", cfgOptRepoStorageVerifyTls, 0, false, false, true);
+        testOptionFind("no-repo1-s3-verify-tls", cfgOptRepoStorageVerifyTls, 0, true, false, true);
+        testOptionFind("reset-repo1-s3-verify-tls", cfgOptRepoStorageVerifyTls, 0, false, true, true);
 
         // PostreSQL options
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1662,5 +1713,5 @@ testRun(void)
         }
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

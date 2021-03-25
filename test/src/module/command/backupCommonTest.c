@@ -324,5 +324,5 @@ testRun(void)
         TEST_RESULT_STR_Z(backupTypeStr(backupTypeIncr), "incr", "backup type str incr");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

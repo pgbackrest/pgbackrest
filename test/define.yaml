@@ -114,6 +114,13 @@ unit:
           - common/time
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: encode
+        total: 2
+
+        coverage:
+          - common/encode
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
         total: 26
         feature: string
@@ -297,7 +304,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
-        total: 5
+        total: 6
 
         coverage:
           - common/io/http/client
@@ -307,6 +314,7 @@ unit:
           - common/io/http/request
           - common/io/http/response
           - common/io/http/session
+          - common/io/http/url
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
@@ -314,14 +322,6 @@ unit:
 
         coverage:
           - common/exec
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: encode
-        total: 1
-
-        coverage:
-          - common/encode
-          - common/encode/base64
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: ini
@@ -397,6 +397,9 @@ unit:
           - storage/azure/storage
           - storage/azure/write
           - storage/cifs/storage
+          - storage/gcs/read
+          - storage/gcs/storage
+          - storage/gcs/write
           - storage/helper
           - storage/remote/read
           - storage/remote/protocol
@@ -490,6 +493,20 @@ unit:
           - storage/posix/write
           - storage/helper
           - storage/read
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: gcs
+        total: 3
+
+        coverage:
+          - storage/gcs/read
+          - storage/gcs/storage
+          - storage/gcs/write
+          - storage/helper
+
+        include:
           - storage/storage
           - storage/write
 

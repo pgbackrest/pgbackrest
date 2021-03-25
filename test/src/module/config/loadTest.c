@@ -46,7 +46,7 @@ testRun(void)
         TEST_TITLE("error when repo option not set and repo total > 1 or first repo index != 1");
 
         argList = strLstNew();
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
@@ -54,6 +54,9 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
             "stanza-delete command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdStanzaDelete, argList), "load stanza-delete with repo set");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
@@ -63,6 +66,12 @@ testRun(void)
             harnessCfgLoad(cfgCmdStanzaDelete, argList), OptionRequiredError,
             "stanza-delete command requires option: repo\n"
             "HINT: this command requires a specific repository to operate on");
+
+        argList = strLstNew();
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        TEST_RESULT_VOID(harnessCfgLoad(cfgCmdStanzaDelete, argList), "load stanza-delete with single repo, repo option not set");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
@@ -76,13 +85,26 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgRawZ(argList, cfgOptRepo, "3");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 4, "4");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 3, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, "/repo4");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, "/repo4");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "host2");
         TEST_ERROR(
-            harnessCfgLoad(cfgCmdExpire, argList), OptionInvalidValueError,
-            "local repo3 and repo4 paths are both '/var/lib/pgbackrest' but must be different");
+            harnessCfgLoad(cfgCmdRestore, argList), OptionInvalidValueError,
+            "local repo3 and repo4 paths are both '/repo4' but must be different");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo can be specified for backup");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+
+        harnessCfgLoad(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local default repo paths for cifs repo type must be different");
@@ -485,26 +507,6 @@ testRun(void)
             storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
         lockRelease(true);
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on multi-repo");
-
-        argList = strLstNew();
-        strLstAddZ(argList, PROJECT_BIN);
-        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
-        strLstAddZ(argList, CFGCMD_EXPIRE);
-
-        TEST_ERROR(cfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError, "only repo1 may be configured");
-
-        argList = strLstNew();
-        strLstAddZ(argList, PROJECT_BIN);
-        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, "/repo2");
-        strLstAddZ(argList, CFGCMD_EXPIRE);
-
-        TEST_ERROR(cfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidValueError, "only repo1 may be configured");
-
         // Command does not have umask and disables keep-alives
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -706,5 +708,5 @@ testRun(void)
         lockRelease(true);
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

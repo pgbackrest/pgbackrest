@@ -18,53 +18,93 @@ Test protocol request handler
 ***********************************************************************************************************************************/
 static unsigned int testServerProtocolErrorTotal = 0;
 
-static bool
-testServerProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+static void
+testServerAssertProtocol(const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRING, command);
         FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
         FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
-    ASSERT(command != NULL);
-
-    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
-    bool found = true;
+    ASSERT(paramList == NULL);
+    ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, strNew("assert")))
-        {
-            THROW(AssertError, "test assert");
-        }
-        else if (strEq(command, strNew("request-simple")))
-        {
-            protocolServerResponse(server, varNewBool(true));
-        }
-        else if (strEq(command, strNew("request-complex")))
-        {
-            protocolServerResponse(server, varNewBool(false));
-            protocolServerWriteLine(server, strNew("LINEOFTEXT"));
-            protocolServerWriteLine(server, NULL);
-            ioWriteFlush(protocolServerIoWrite(server));
-        }
-        else if (strEq(command, STRDEF("error-until-0")))
-        {
-            if (testServerProtocolErrorTotal > 0)
-            {
-                testServerProtocolErrorTotal--;
-                THROW(FormatError, "error-until-0");
-            }
-
-            protocolServerResponse(server, varNewBool(true));
-        }
-        else
-            found = false;
+        THROW(AssertError, "test assert");
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RESULT(BOOL, found);
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+static void
+testServerRequestSimpleProtocol(const VariantList *paramList, ProtocolServer *server)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(paramList == NULL);
+    ASSERT(server != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        protocolServerResponse(server, varNewBool(true));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+static void
+testServerRequestComplexProtocol(const VariantList *paramList, ProtocolServer *server)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(paramList == NULL);
+    ASSERT(server != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        protocolServerResponse(server, varNewBool(false));
+        protocolServerWriteLine(server, strNew("LINEOFTEXT"));
+        protocolServerWriteLine(server, NULL);
+        ioWriteFlush(protocolServerIoWrite(server));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+static void
+testServerErrorUntil0Protocol(const VariantList *paramList, ProtocolServer *server)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(VARIANT_LIST, paramList);
+        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(paramList == NULL);
+    ASSERT(server != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        if (testServerProtocolErrorTotal > 0)
+        {
+            testServerProtocolErrorTotal--;
+            THROW(FormatError, "error-until-0");
+        }
+
+        protocolServerResponse(server, varNewBool(true));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -689,9 +729,17 @@ testRun(void)
                 TEST_RESULT_PTR(protocolServerIoRead(server), server->read, "get read io");
                 TEST_RESULT_PTR(protocolServerIoWrite(server), server->write, "get write io");
 
-                TEST_RESULT_VOID(protocolServerHandlerAdd(server, testServerProtocol), "add handler");
+                static const ProtocolServerHandler commandHandler[] =
+                {
+                    {.command = "assert", .handler = testServerAssertProtocol},
+                    {.command = "request-simple", .handler = testServerRequestSimpleProtocol},
+                    {.command = "request-complex", .handler = testServerRequestComplexProtocol},
+                    {.command = "error-until-0", .handler = testServerErrorUntil0Protocol},
+                };
 
-                TEST_RESULT_VOID(protocolServerProcess(server, NULL), "run process loop");
+                TEST_RESULT_VOID(
+                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
+                    "run process loop");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("run process loop with retries");
@@ -702,7 +750,9 @@ testRun(void)
 
                 testServerProtocolErrorTotal = 2;
 
-                TEST_RESULT_VOID(protocolServerProcess(server, retryInterval), "run process loop");
+                TEST_RESULT_VOID(
+                    protocolServerProcess(server, retryInterval, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
+                    "run process loop");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free server");
@@ -1059,5 +1109,5 @@ testRun(void)
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

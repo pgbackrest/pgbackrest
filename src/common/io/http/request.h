@@ -45,6 +45,13 @@ HTTP Constants
     STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
 #define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
     STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
+#define HTTP_HEADER_CONTENT_RANGE                                   "content-range"
+    STRING_DECLARE(HTTP_HEADER_CONTENT_RANGE_STR);
+#define HTTP_HEADER_CONTENT_TYPE                                    "content-type"
+    STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_STR);
+#define HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL                       "application/x-www-form-urlencoded"
+    STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
+#define HTTP_HEADER_CONTENT_RANGE_BYTES                             "bytes"
 #define HTTP_HEADER_DATE                                            "date"
     STRING_DECLARE(HTTP_HEADER_DATE_STR);
 #define HTTP_HEADER_ETAG                                            "etag"
@@ -65,10 +72,10 @@ typedef struct HttpRequestNewParam
     const Buffer *content;
 } HttpRequestNewParam;
 
-#define httpRequestNewP(client, verb, uri, ...)                                                                                    \
-    httpRequestNew(client, verb, uri, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define httpRequestNewP(client, verb, path, ...)                                                                                   \
+    httpRequestNew(client, verb, path, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *uri, HttpRequestNewParam param);
+HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
 Functions
@@ -88,8 +95,8 @@ Getters/Setters
 // Request verb
 const String *httpRequestVerb(const HttpRequest *this);
 
-// Request URI
-const String *httpRequestUri(const HttpRequest *this);
+// Request path
+const String *httpRequestPath(const HttpRequest *this);
 
 // Request query
 const HttpQuery *httpRequestQuery(const HttpRequest *this);

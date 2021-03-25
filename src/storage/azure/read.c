@@ -3,12 +3,8 @@ Azure Storage Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "common/debug.h"
 #include "common/io/http/client.h"
-#include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
@@ -59,7 +55,7 @@ storageReadAzureOpen(THIS_VOID)
     MEM_CONTEXT_BEGIN(this->memContext)
     {
         this->httpResponse = storageAzureRequestP(
-            this->storage, HTTP_VERB_GET_STR, .uri = this->interface.name, .allowMissing = true, .contentIo = true);
+            this->storage, HTTP_VERB_GET_STR, .path = this->interface.name, .allowMissing = true, .contentIo = true);
     }
     MEM_CONTEXT_END();
 
@@ -69,7 +65,7 @@ storageReadAzureOpen(THIS_VOID)
     }
     // Else error unless ignore missing
     else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, "unable to open '%s': No such file or directory", strZ(this->interface.name));
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

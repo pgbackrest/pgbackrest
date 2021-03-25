@@ -178,8 +178,9 @@ testRun(void)
                 ioWriteOpen(write);
 
                 ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
-                protocolServerHandlerAdd(server, storageRemoteProtocol);
-                protocolServerProcess(server, NULL);
+
+                static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
+                protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
 
             }
             HARNESS_FORK_CHILD_END();
@@ -383,5 +384,5 @@ testRun(void)
 #endif // HAVE_LIBLZ4
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

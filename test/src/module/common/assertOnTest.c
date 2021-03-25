@@ -17,5 +17,5 @@ testRun(void)
         TEST_ERROR(ASSERT(false || false), AssertError, "assertion 'false || false' failed");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

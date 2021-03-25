@@ -3,6 +3,7 @@ Help Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <ctype.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -263,8 +264,6 @@ helpRender(void)
                         strLstAdd(optionData[optionId].deprecatedNames, pckReadStrP(pckHelp));
 
                     pckReadArrayEndP(pckHelp);
-
-                    ASSERT(strLstSize(optionData[optionId].deprecatedNames) == 1);
                 }
 
                 // Unpack command overrides
@@ -359,9 +358,12 @@ helpRender(void)
                     {
                         ConfigOption optionId = varUInt(varLstGet(optionList, optionIdx));
 
-                        // Get option summary
-                        String *summary = strFirstLower(
-                            strNewN(strZ(optionData[optionId].summary), strSize(optionData[optionId].summary) - 1));
+                        // Get option summary and lower-case first letter if it does not appear to be part of an acronym
+                        String *summary = strNewN(strZ(optionData[optionId].summary), strSize(optionData[optionId].summary) - 1);
+                        ASSERT(strSize(summary) > 1);
+
+                        if (!isupper(strZ(summary)[1]) && !isdigit(strZ(summary)[1]))
+                            strFirstLower(summary);
 
                         // Ouput current and default values if they exist
                         const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgParseOptionType(optionId));
@@ -453,7 +455,11 @@ helpRender(void)
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
                 if (optionData[option.id].deprecatedNames != NULL)
-                    strCatFmt(result, "\ndeprecated name: %s\n", strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
+                {
+                    strCatFmt(
+                        result, "\ndeprecated name%s: %s\n", strLstSize(optionData[option.id].deprecatedNames) > 1 ? "s" : "",
+                        strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
+                }
             }
         }
 

@@ -159,6 +159,13 @@
         <variable key="azure-key-type">shared</variable>
         <variable key="azure-key">YXpLZXk=</variable>
 
+        <!-- GCS Settings -->
+        <variable key="gcs-all">n</variable>                        <!-- Build all the documentation with GCS? -->
+        <variable key="gcs-bucket">demo-bucket</variable>
+        <variable key="gcs-repo">demo-repo</variable>
+        <variable key="gcs-key-type">service</variable>
+        <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
+
         <!-- S3 Settings -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
@@ -168,6 +175,9 @@
         <variable key="s3-endpoint">s3.{[s3-region]}.amazonaws.com</variable>
         <variable key="s3-key">accessKey1</variable>
         <variable key="s3-key-secret">verySecretKey1</variable>
+
+        <!-- Is any object store being used to build all the documentation? -->
+        <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y')</variable>
 
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
@@ -616,13 +626,14 @@
         <backrest-config host="{[azure-setup-host]}" file="{[backrest-config-demo]}" owner="{[azure-setup-config-owner]}">
             <title>Configure <proper>Azure</proper></title>
 
-            <backrest-config-option section="global" key="repo1-type">azure</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/{[azure-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-account">{[azure-account]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo1-azure-key-type">{[azure-key-type]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-key">{[azure-key]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-azure-container">{[azure-container]}</backrest-config-option>
-            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo1-azure-host">blob.core.windows.net</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-type">azure</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-path">/{[azure-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-account">{[azure-account]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-key-type]}' ne 'shared'" section="global" key="repo{[azure-setup-repo-id]}-azure-key-type">{[azure-key-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-key">{[azure-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-container">{[azure-container]}</backrest-config-option>
+            <backrest-config-option if="'{[azure-local]}' eq 'y'" section="global" key="repo{[azure-setup-repo-id]}-storage-host">blob.core.windows.net</backrest-config-option>
+            <backrest-config-option if="'{[azure-all]}' ne 'y'" section="global" key="repo{[azure-setup-repo-id]}-retention-full">4</backrest-config-option>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -636,11 +647,28 @@
             </execute>
 
             <execute user="{[azure-setup-user]}" if="'{[azure-setup-create-container]}' eq 'y'" show='n'>
-                <exe-cmd>{[project-exe]} repo-create</exe-cmd>
+                <exe-cmd>{[project-exe]} --repo={[azure-setup-repo-id]} repo-create</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>Shared access signatures may be used by setting the <br-option>repo1-azure-key-type</br-option> option to <id>sas</id> and the <br-option>repo1-azure-key</br-option> option to the shared access signature token.</p>
+        <p>Shared access signatures may be used by setting the <br-option>repo{[azure-setup-repo-id]}-azure-key-type</br-option> option to <id>sas</id> and the <br-option>repo{[azure-setup-repo-id]}-azure-key</br-option> option to the shared access signature token.</p>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
+    <block-define id="gcs-setup">
+        <p><backrest/> supports locating repositories in <proper>GCS-compatible</proper> object stores. The bucket used to store the repository must be created in advance &amp;mdash; <backrest/> will not do it automatically. The repository can be located in the bucket root (<path>/</path>) but it's usually best to place it in a subpath so object store logs or other data can also be stored in the bucket without conflicts.</p>
+
+        <backrest-config host="{[gcs-setup-host]}" file="{[backrest-config-demo]}" owner="{[gcs-setup-config-owner]}">
+            <title>Configure <proper>GCS</proper></title>
+
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-type">gcs</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-path">/{[gcs-repo]}</backrest-config-option>
+            <backrest-config-option if="'{[gcs-key-type]}' ne 'service'" section="global" key="repo{[gcs-setup-repo-id]}-gcs-key-type">{[gcs-key-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-gcs-key">{[gcs-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-gcs-bucket">{[gcs-bucket]}</backrest-config-option>
+
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
     </block-define>
 
     <!-- ======================================================================================================================= -->
@@ -650,13 +678,15 @@
         <backrest-config host="{[s3-setup-host]}" file="{[backrest-config-demo]}" owner="{[s3-setup-config-owner]}">
             <title>Configure <proper>S3</proper></title>
 
-            <backrest-config-option section="global" key="repo1-type">s3</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-path">/{[s3-repo]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key">{[s3-key]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-key-secret">{[s3-key-secret]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-bucket">{[s3-bucket]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
-            <backrest-config-option section="global" key="repo1-s3-region">{[s3-region]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-type">s3</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-path">/{[s3-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-key">{[s3-key]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-key-secret">{[s3-key-secret]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-bucket">{[s3-bucket]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-region">{[s3-region]}</backrest-config-option>
+            <backrest-config-option if="'{[s3-all]}' ne 'y'" section="global" key="repo{[s3-setup-repo-id]}-retention-full">4</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-storage-host" remove="y"/>
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
@@ -670,7 +700,7 @@
             </execute>
 
             <execute user="{[s3-setup-user]}" if="'{[s3-setup-create-bucket]}' eq 'y'" show='n'>
-                <exe-cmd>{[project-exe]} repo-create</exe-cmd>
+                <exe-cmd>{[project-exe]} --repo={[s3-setup-repo-id]} repo-create</exe-cmd>
             </execute>
         </execute-list>
 
@@ -1005,6 +1035,8 @@
 
                 <backrest-config-option section="global" key="repo1-path">{[backrest-repo-path]}</backrest-config-option>
             </backrest-config>
+
+            <p if="!{[object-any-all]}">Multiple repositories may also be configured. See <link section="/multi-repo">Multiple Repositories</link> for details.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -1012,6 +1044,7 @@
             <title>Azure-Compatible Object Store Support</title>
 
             <block id="azure-setup">
+                <block-variable-replace key="azure-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="azure-setup-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="azure-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -1020,10 +1053,23 @@
         </section>
 
         <!-- =================================================================================================================== -->
+        <section id="gcs-support" if="'{[gcs-all]}' eq 'y'">
+            <title>GCS-Compatible Object Store Support</title>
+
+            <block id="gcs-setup">
+                <block-variable-replace key="gcs-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
+                <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
         <section id="s3-support" if="'{[s3-all]}' eq 'y'">
             <title>S3-Compatible Object Store Support</title>
 
             <block id="s3-setup">
+                <block-variable-replace key="s3-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -1113,7 +1159,7 @@
         <section id="create-stanza">
             <title>Create the Stanza</title>
 
-            <p>The <cmd>stanza-create</cmd> command must be run on the host where the repository is located to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
+            <p>The <cmd>stanza-create</cmd> command must be run to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create the stanza and check the configuration</title>
@@ -1548,7 +1594,7 @@
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=full
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>expire full backup set repo1\: {[backup-full-first]}|archive retention on backup {[backup-full-second]}|remove archive</exe-highlight>
+                    <exe-highlight>expire full backup set {[backup-full-first]}|archive retention on backup {[backup-full-second]}|remove archive</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -1593,7 +1639,7 @@
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=diff
                         --log-level-console=info backup</exe-cmd>
-                    <exe-highlight>expire diff backup set repo1: {[backup-diff-second]}</exe-highlight>
+                    <exe-highlight>expire diff backup set {[backup-diff-second]}</exe-highlight>
                 </execute>
             </execute-list>
         </section>
@@ -1657,7 +1703,9 @@
     <section id="restore" depend="quickstart/perform-backup">
         <title>Restore</title>
 
-        <p>The Restore section introduces additional <cmd>restore</cmd> command features.</p>
+        <cmd-description key="restore"/>
+
+        <p>The following sections introduce additional <cmd>restore</cmd> command features.</p>
 
         <!-- ******************************************************************************************************************* -->
         <section id="ownership">
@@ -1707,10 +1755,10 @@
 
             <p>There may be cases where it is desirable to selectively restore specific databases from a cluster backup.  This could be done for performance reasons or to move selected databases to a machine that does not have enough space to restore the entire cluster backup.</p>
 
-            <p>To demonstrate this feature two databases are created: test1 and test2.  A fresh backup is run so <backrest/> is aware of the new databases.</p>
+            <p>To demonstrate this feature two databases are created: test1 and test2.</p>
 
             <execute-list host="{[host-pg1]}">
-                <title>Create two test databases and perform a backup</title>
+                <title>Create two test databases</title>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>
@@ -1722,10 +1770,6 @@
                     <exe-cmd>
                         psql -c "create database test2;"
                     </exe-cmd>
-                </execute>
-
-                <execute user="postgres">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=incr backup</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -1746,6 +1790,16 @@
                         psql -c "create table test2_table (id int);
                                  insert into test2_table (id) values (2);" test2
                     </exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>A fresh backup is run so <backrest/> is aware of the new databases.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Perform a backup</title>
+
+                <execute user="postgres">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=incr backup</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -1785,6 +1839,8 @@
 
             <p>Stop the cluster and restore only the test2 database.  Built-in databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>) are always restored.</p>
 
+            <admonition type="warning">Recovery may error unless <br-option>--type=immediate</br-option> is specified. This is because after consistency is reached <postgres/> will flag zeroed pages as errors even for a full-page write. For <postgres/> &amp;ge; <proper>13</proper> the <pg-option>ignore_invalid_pages</pg-option> setting may be used to ignore invalid pages. In this case it is important to check the logs after recovery to ensure that no invalid pages were reported in the selected databases.</admonition>
+
             <execute-list host="{[host-pg1]}">
                 <title>Restore from last backup including only the test2 database</title>
 
@@ -1794,7 +1850,7 @@
 
                 <execute user="postgres">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                        {[dash]}-db-include=test2 restore</exe-cmd>
+                        {[dash]}-db-include=test2 {[dash]}-type=immediate {[dash]}-target-action=promote restore</exe-cmd>
                 </execute>
 
                 <execute user="root">
@@ -2111,10 +2167,24 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="azure-support" if="'{[azure-all]}' ne 'y'" depend="/quickstart/configure-archiving">
+    <section id="multi-repo" if="!{[object-any-all]}">
+        <title>Multiple Repositories</title>
+
+        <p>Multiple repositories may be configured as demonstrated in <link section="/s3-support">S3 Support</link>. A potential benefit is the ability to have a local repository for fast restores and a remote repository for redundancy.</p>
+
+        <p>Some commands, e.g. <cmd>stanza-create</cmd>/<cmd>stanza-update</cmd>, will automatically work with all configured repositories while others, e.g. <link section="/delete-stanza">stanza-delete</link>, will require a repository to be specified using the <br-option>repo</br-option> option. See the <link url="command.html">command reference</link> for details on which commands require the repository to be specified.</p>
+
+        <p>Note that the <br-option>repo</br-option> option is not required when only <br-option>repo1</br-option> is configured in order to maintain backward compatibility. However, the <br-option>repo</br-option> option <i>is</i> required when a single repo is configured as, e.g. <br-option>repo2</br-option>. This is to prevent command breakage if a new repository is added later.</p>
+
+        <p>The <cmd>archive-push</cmd> command will always push WAL to the archive in all configured repositories but backups will need to be scheduled individually for each repository. In many cases this is desirable since backup types and retention will vary by repository. Likewise, restores must specify a repository. It is generally better to specify a repository for restores that has low latency/cost even if that means more recovery time. Only restore testing can determine which repository will be most efficient.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="azure-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
         <title>Azure-Compatible Object Store Support</title>
 
         <block id="azure-setup">
+            <block-variable-replace key="azure-setup-repo-id">2</block-variable-replace>
             <block-variable-replace key="azure-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="azure-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="azure-setup-config-owner">postgres:postgres</block-variable-replace>
@@ -2138,25 +2208,28 @@
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
             <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
-                    --log-level-console=info backup</exe-cmd>
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=2
+                    --log-level-console=info backup
+                </exe-cmd>
                 <exe-highlight>no prior backup exists|full backup size</exe-highlight>
             </execute>
         </execute-list>
     </section>
 
     <!-- SECTION => S3-SUPPORT -->
-    <section id="s3-support" if="'{[s3-all]}' ne 'y'" depend="/quickstart/configure-archiving">
+    <section id="s3-support" if="!{[object-any-all]}" depend="/azure-support">
         <title>S3-Compatible Object Store Support</title>
 
         <block id="s3-setup">
+            <block-variable-replace key="s3-setup-repo-id">3</block-variable-replace>
             <block-variable-replace key="s3-setup-host">{[host-pg1]}</block-variable-replace>
             <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
             <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
             <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
         </block>
 
-        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible. If the role is associated with an instance in <proper>AWS</proper> then <backrest/> will automatically retrieve temporary credentials when <br-option>repo1-s3-key-type=auto</br-option>, which means that keys do not need to be explicitly set in <file>{[backrest-config-demo]}</file>.</p>
+        <p>A role should be created to run <backrest/> and the bucket permissions should be set as restrictively as possible. If the role is associated with an instance in <proper>AWS</proper> then <backrest/> will automatically retrieve temporary credentials when <br-option>repo3-s3-key-type=auto</br-option>, which means that keys do not need to be explicitly set in <file>{[backrest-config-demo]}</file>.</p>
 
         <p>This sample <proper>Amazon S3</proper> policy will restrict all reads and writes to the bucket and repository path.</p>
 
@@ -2232,15 +2305,31 @@
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
 
             <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=3
                     --log-level-console=info backup</exe-cmd>
                 <exe-highlight>no prior backup exists|full backup size</exe-highlight>
             </execute>
         </execute-list>
     </section>
 
-    <!-- SECTION => REPOSITORY HOST -->
-    <section id="delete-stanza" depend="/quickstart/create-stanza">
+    <!-- ======================================================================================================================= -->
+    <section id="gcs-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
+        <title>GCS-Compatible Object Store Support</title>
+
+        <block id="gcs-setup">
+            <block-variable-replace key="gcs-setup-repo-id">4</block-variable-replace>
+            <block-variable-replace key="gcs-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="gcs-setup-user">postgres</block-variable-replace>
+            <block-variable-replace key="gcs-setup-config-owner">postgres:postgres</block-variable-replace>
+        </block>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
         <title>Delete a Stanza</title>
 
         <cmd-description key="stanza-delete"/>
@@ -2263,10 +2352,13 @@
         </execute-list>
 
         <execute-list host="{[host-pg1]}">
-            <title>Delete the stanza</title>
+            <title>Delete the stanza from one repository</title>
 
             <execute user="postgres" output="y">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-delete</exe-cmd>
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=1
+                    {[dash]}-log-level-console=info stanza-delete
+                </exe-cmd>
                 <exe-highlight>completed successfully</exe-highlight>
             </execute>
 
@@ -2419,38 +2511,36 @@
             <p if="'{[azure-all]}' eq 'y'">Configure Azure-compatible object store if required.</p>
 
             <block id="azure-setup" if="'{[azure-all]}' eq 'y'">
+                <block-variable-replace key="azure-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="azure-setup-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="azure-setup-create-container">n</block-variable-replace>
             </block>
 
+            <p if="'{[gcs-all]}' eq 'y'">Configure GCS-compatible object store if required.</p>
+
+            <block id="gcs-setup" if="'{[gcs-all]}' eq 'y'">
+                <block-variable-replace key="gcs-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="gcs-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="gcs-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
+            </block>
+
             <p if="'{[s3-all]}' eq 'y'">Configure S3-compatible object store if required.</p>
 
             <block id="s3-setup" if="'{[s3-all]}' eq 'y'">
+                <block-variable-replace key="s3-setup-repo-id">1</block-variable-replace>
                 <block-variable-replace key="s3-setup-host">{[host-repo1]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
             </block>
 
-            <p>Create the stanza in the new repository.</p>
+            <p if="!{[object-any-all]}">Create the stanza in the new repository.</p>
 
-            <execute-list host="{[host-repo1]}">
+            <execute-list host="{[host-repo1]}" if="!{[object-any-all]}">
                 <title>Create the stanza</title>
-
-                <!-- Delete the azure stanza so the server can be reused -->
-                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stop</exe-cmd>
-                </execute>
-
-                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-force stanza-delete</exe-cmd>
-                </execute>
-
-                <execute if="'{[azure-all]}' eq 'y'" user="{[br-user]}" output="n" show="n">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} start</exe-cmd>
-                </execute>
 
                 <!-- Create the stanza -->
                 <execute user="{[br-user]}" output="y" filter="n">
@@ -3315,12 +3405,12 @@
             </execute>
         </execute-list>
 
-        <p>Before starting the new cluster, the <cmd>stanza-upgrade</cmd> command must be run on the server where the <backrest/> repository is located.</p>
+        <p>Before starting the new cluster, the <cmd>stanza-upgrade</cmd> command must be run.</p>
 
-        <execute-list host="{[host-repo1]}">
+        <execute-list host="{[host-pg1]}">
             <title>Upgrade the stanza</title>
 
-            <execute user="{[br-user]}" output="y">
+            <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-no-online
                     {[dash]}-log-level-console=info stanza-upgrade</exe-cmd>
                 <exe-highlight>completed successfully</exe-highlight>

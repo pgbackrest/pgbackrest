@@ -36,18 +36,10 @@ testRun(void)
     if (testBegin("cmdStanzaCreate(), checkStanzaInfo(), cmdStanzaDelete()"))
     {
         // Load Parameters
-        StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-host=/repo");
-        strLstAddZ(argList, "--repo2-host=/repo/not/local");
-        harnessCfgLoad(cfgCmdStanzaCreate, argList);
-
-        TEST_ERROR_FMT(
-            cmdStanzaCreate(), HostInvalidError, "stanza-create command must be run on the repository host");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        argList = strLstDup(argListBase);
+        StringList *argList =  strLstDup(argListBase);
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+
         TEST_ERROR_FMT(
             harnessCfgLoad(cfgCmdStanzaCreate, argList), OptionInvalidError, "option 'repo' not valid for command 'stanza-create'");
 
@@ -678,16 +670,9 @@ testRun(void)
 
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-host=/repo/not/local");
-        harnessCfgLoad(cfgCmdStanzaUpgrade, argList);
-
-        TEST_ERROR_FMT(
-            cmdStanzaUpgrade(), HostInvalidError, "stanza-upgrade command must be run on the repository host");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        argList = strLstDup(argListBase);
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+
         TEST_ERROR_FMT(
             harnessCfgLoad(cfgCmdStanzaUpgrade, argList), OptionInvalidError,
             "option 'repo' not valid for command 'stanza-upgrade'");
@@ -1001,20 +986,11 @@ testRun(void)
         StringList *argListCmd = strLstNew();
         strLstAdd(argListCmd, strNewFmt("--repo1-path=%s/repo", testPath()));
 
-        StringList *argList = strLstDup(argListCmd);
-        strLstAddZ(argList, "--repo1-host=/repo/not/local");
-        strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));
-        strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strZ(stanza)));
-        harnessCfgLoad(cfgCmdStanzaDelete, argList);
-
-        TEST_ERROR_FMT(
-            cmdStanzaDelete(), HostInvalidError, "stanza-delete command must be run on the repository host");
-
         //--------------------------------------------------------------------------------------------------------------------------
         String *stanzaOther = strNew("otherstanza");
 
         // Load Parameters
-        argList = strLstDup(argListCmd);
+        StringList *argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanzaOther)));
         strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strZ(stanzaOther)));
         strLstAddZ(argList, "--no-online");
@@ -1155,13 +1131,21 @@ testRun(void)
             "To delete stanza 'db' on repo2, shut down " PG_NAME " for stanza 'db' and try again, or use --force.");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("force delete when pg appears to be running");
+        TEST_TITLE("force delete when pg appears to be running, multi-repo");
 
+        argList = strLstDup(argListCmd);
+        hrnCfgArgRaw(argList, cfgOptStanza, stanza);
+        hrnCfgArgKeyRawFmt(argList, cfgOptPgPath, 1, "%s/%s", testPath(), strZ(stanza));
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         strLstAddZ(argList,"--force");
         harnessCfgLoad(cfgCmdStanzaDelete, argList);
+
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete --force");
         TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("repo/backup/%s", strZ(stanza))), false, "    stanza deleted");
+            storagePathExistsP(storageTest, strNewFmt("repo/backup/%s", strZ(stanza))), false, "repo1: stanza deleted");
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageTest, strNewFmt("repo2/backup/%s", strZ(stanza))), true, "repo2: stanza not deleted");
 
         // Ensure other stanza never deleted
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1169,5 +1153,5 @@ testRun(void)
             storageExistsP(storageTest, strNewFmt("repo/archive/%s/archive.info", strZ(stanzaOther))), true, "otherstanza exists");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -43,10 +43,10 @@ sub run
     (
         {vm => VM2, remote => false, storage => AZURE, encrypt =>  true, compress => BZ2},
         {vm => VM2, remote =>  true, storage => POSIX, encrypt => false, compress =>  GZ},
-        {vm => VM3, remote => false, storage => POSIX, encrypt => false, compress => ZST},
+        {vm => VM3, remote => false, storage =>   GCS, encrypt => false, compress => ZST},
         {vm => VM3, remote =>  true, storage => AZURE, encrypt =>  true, compress => LZ4},
         {vm => VM4, remote => false, storage =>    S3, encrypt => false, compress =>  GZ},
-        {vm => VM4, remote =>  true, storage => POSIX, encrypt =>  true, compress => ZST},
+        {vm => VM4, remote =>  true, storage =>   GCS, encrypt =>  true, compress => ZST},
     )
     {
         # Only run tests for this vm
@@ -90,13 +90,13 @@ sub run
         $oHostBackup->stanzaUpgrade('fail on stanza not initialized since archive.info is missing',
             {iExpectedExitStatus => ERROR_FILE_MISSING, strOptionalParam => '--no-online'});
 
-        # Create the stanza successfully without force
+        # Create the stanza successfully without force - run from the db server to ensure ability to run remotely
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-online'});
+        $oHostDbPrimary->stanzaCreate('successfully create the stanza', {strOptionalParam => '--no-online'});
 
         # Rerun stanza-create and confirm it does not fail
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaCreate(
+        $oHostDbPrimary->stanzaCreate(
             'do not fail on rerun of stanza-create - info files exist and DB section ok',
             {strOptionalParam => '--no-online'});
 
@@ -159,11 +159,11 @@ sub run
         forceStorageMode(storageTest(), $oHostDbPrimary->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
         # Fail on attempt to push an archive
-        $oHostDbPrimary->archivePush($strWalPath, $strArchiveTestFile, 1, ERROR_ARCHIVE_MISMATCH);
+        $oHostDbPrimary->archivePush($strWalPath, $strArchiveTestFile, 1, ERROR_REPO_INVALID);
 
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
         #--------------------------------------------------------------------------------------------------------------------------
-        #  Save a pre-upgrade copy of archive info fo testing db-id mismatch
+        #  Save a pre-upgrade copy of archive info for testing db-id mismatch
         forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
 
         $oHostBackup->stanzaUpgrade('successful upgrade creates additional history', {strOptionalParam => '--no-online'});
@@ -204,7 +204,8 @@ sub run
         $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_95);
         forceStorageMode(storageTest(), $oHostDbPrimary->dbBasePath() . '/' . DB_FILE_PGCONTROL, '600');
 
-        $oHostBackup->stanzaUpgrade('successfully upgrade', {strOptionalParam => '--no-online'});
+        # Run from the db server to ensure ability to run remotely
+        $oHostDbPrimary->stanzaUpgrade('successfully upgrade', {strOptionalParam => '--no-online'});
 
         # Copy archive.info and restore really old version
         forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
@@ -237,10 +238,10 @@ sub run
 
         # Delete the stanza
         #--------------------------------------------------------------------------------------------------------------------------
-        $oHostBackup->stanzaDelete('fail on missing stop file', {iExpectedExitStatus => ERROR_FILE_MISSING});
+        $oHostDbPrimary->stanzaDelete('fail on missing stop file', {iExpectedExitStatus => ERROR_FILE_MISSING});
 
-        $oHostBackup->stop({strStanza => $self->stanza()});
-        $oHostBackup->stanzaDelete('successfully delete the stanza');
+        $oHostDbPrimary->stop({strStanza => $self->stanza()});
+        $oHostDbPrimary->stanzaDelete('successfully delete the stanza');
     }
 }
 

@@ -312,5 +312,5 @@ testRun(void)
         TEST_RESULT_STR_Z(pckReadStrP(packRead), "test", "read string");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

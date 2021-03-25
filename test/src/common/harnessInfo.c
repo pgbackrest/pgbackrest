@@ -102,7 +102,7 @@ harnessInfoChecksum(const String *info)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RESULT(BUFFER, result);
+    FUNCTION_HARNESS_RETURN(BUFFER, result);
 }
 
 Buffer *
@@ -114,7 +114,7 @@ harnessInfoChecksumZ(const char *info)
 
     ASSERT(info != NULL);
 
-    FUNCTION_HARNESS_RESULT(BUFFER, harnessInfoChecksum(STR(info)));
+    FUNCTION_HARNESS_RETURN(BUFFER, harnessInfoChecksum(STR(info)));
 }
 
 /***********************************************************************************************************************************

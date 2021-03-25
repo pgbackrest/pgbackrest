@@ -110,5 +110,5 @@ testRun(void)
         TEST_RESULT_VOID(kvFree(store), "free store");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

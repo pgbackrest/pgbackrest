@@ -204,5 +204,5 @@ testRun(void)
         HARNESS_FORK_END();
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

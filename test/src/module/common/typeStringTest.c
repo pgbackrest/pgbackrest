@@ -15,7 +15,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("strNew(), strNewBuf(), strNewDbl(), strNewN(), strEmpty(), strZ(), strZNull(), strSize(), and strFree()"))
+    if (testBegin("strNew*(), strEmpty(), strZ(), strZNull(), strSize(), and strFree()"))
     {
         // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
         // knowing about it
@@ -63,6 +63,11 @@ testRun(void)
         TEST_ASSIGN(string, strNew(""), "new empty string");
         TEST_RESULT_UINT(string->size, 0, "    check size");
         TEST_RESULT_UINT(string->extra, 64, "    check extra");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strNewEncode()");
+
+        TEST_RESULT_STR_Z(strNewEncode(encodeBase64, BUFSTRDEF("zz")), "eno=", "encode base64");
     }
 
     // *****************************************************************************************************************************
@@ -99,7 +104,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strCat(), strCatChr(), and strCatFmt()"))
+    if (testBegin("strCat*()"))
     {
         String *string = strNew("XXXX");
         String *string2 = strNew("ZZZZ");
@@ -114,6 +119,10 @@ testRun(void)
             strCatZN(string, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*", 55),
             "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
         TEST_RESULT_UINT(string->extra, 34, "check extra");
+        TEST_RESULT_STR_Z(
+            strCatEncode(string, encodeBase64, BUFSTRDEF("zzzzz")),
+            "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=", "cat encode");
+        TEST_RESULT_UINT(string->extra, 26, "check extra");
 
         TEST_RESULT_STR_Z(string2, "ZZZZ", "check unaltered string");
     }
@@ -530,5 +539,5 @@ testRun(void)
         TEST_RESULT_STR_Z(strLstToLog(list), "{[\"item1\", \"item2\", \"item3\"]}", "format 3 item list");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

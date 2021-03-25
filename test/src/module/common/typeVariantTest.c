@@ -418,5 +418,5 @@ testRun(void)
         TEST_RESULT_PTR(varLstNewStrLst(NULL), NULL, "variant list from null string list");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

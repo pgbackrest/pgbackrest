@@ -1,8 +1,6 @@
 /***********************************************************************************************************************************
 Test Remote Storage
 ***********************************************************************************************************************************/
-#include <utime.h>
-
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
@@ -64,20 +62,37 @@ testRun(void)
         TEST_RESULT_BOOL(storageFeature(storageRemote, storageFeatureCompress), true, "    check compress feature");
         TEST_RESULT_STR(storagePathP(storageRemote, NULL), strNewFmt("%s/repo", testPath()), "    check path");
 
-        // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_FEATURE_STR, varLstNew(), server), true, "protocol feature");
+        TEST_TITLE("check protocol function directly (pg)");
+
+        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("pg"));
+
+        TEST_RESULT_VOID(storageRemoteFeatureProtocol(NULL, server), "protocol feature");
         TEST_RESULT_STR(
             strNewBuf(serverWrite),
             strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
             "check result");
-
         bufUsedSet(serverWrite, 0);
 
-        // Check invalid protocol function
+        TEST_RESULT_VOID(storageRemoteFeatureProtocol(NULL, server), "protocol feature");
+        TEST_RESULT_STR(
+            strNewBuf(serverWrite),
+            strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
+            "check result cache");
+        bufUsedSet(serverWrite, 0);
+
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(storageRemoteProtocol(strNew(BOGUS_STR), varLstNew(), server), false, "invalid function");
+        TEST_TITLE("check protocol function directly (repo)");
+
+        storageRemoteProtocolLocal.memContext = NULL;
+        cfgOptionSet(cfgOptRemoteType, cfgSourceParam, VARSTRDEF("repo"));
+
+        TEST_RESULT_VOID(storageRemoteFeatureProtocol(NULL, server), "protocol feature");
+        TEST_RESULT_STR(
+            strNewBuf(serverWrite),
+            strNewFmt(".\"%s/repo\"\n.%" PRIu64 "\n{}\n", testPath(), storageInterface(storageTest).feature),
+            "check result");
+        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -98,9 +113,7 @@ testRun(void)
         TEST_TITLE("path info");
 
         storagePathCreateP(storageTest, strNew("repo"));
-        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR(
-            utime(strZ(storagePathP(storageTest, strNew("repo"))), &utimeTest) != 0, FileWriteError, "unable to set time");
+        HRN_STORAGE_TIME(storageTest, "repo", 1555160000);
 
         StorageInfo info = {.exists = false};
         TEST_ASSIGN(info, storageInfoP(storageRemote, NULL), "valid path");
@@ -202,7 +215,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(storageInfoLevelBasic));
         varLstAdd(paramList, varNewBool(false));
 
-        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
+        TEST_RESULT_VOID(storageRemoteInfoProtocol(paramList, server), "protocol list");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -219,7 +232,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(storageInfoLevelBasic));
         varLstAdd(paramList, varNewBool(false));
 
-        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
+        TEST_RESULT_VOID(storageRemoteInfoProtocol(paramList, server), "protocol list");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             hrnReplaceKey(
@@ -238,7 +251,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
         varLstAdd(paramList, varNewBool(false));
 
-        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_STR, paramList, server), true, "protocol list");
+        TEST_RESULT_VOID(storageRemoteInfoProtocol(paramList, server), "protocol list");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             hrnReplaceKey(
@@ -278,8 +291,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storageRemote, strNew("test"), .timeModified = 1555160001), BUFSTRDEF("TESTME"));
 
         // Path timestamp must be set after file is created since file creation updates it
-        struct utimbuf utimeTest = {.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR(utime(strZ(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
+        HRN_STORAGE_TIME(storageRemote, NULL, 1555160000);
 
         TEST_RESULT_BOOL(
             storageInfoListP(storageRemote, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
@@ -298,14 +310,13 @@ testRun(void)
         storageRemoveP(storageRemote, STRDEF("test"), .errorOnMissing = true);
 
         // Path timestamp must be set after file is removed since file removal updates it
-        utimeTest = (struct utimbuf){.actime = 1000000000, .modtime = 1555160000};
-        THROW_ON_SYS_ERROR(utime(strZ(storagePathP(storageRemote, NULL)), &utimeTest) != 0, FileWriteError, "unable to set time");
+        HRN_STORAGE_TIME(storageRemote, NULL, 1555160000);
 
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStrZ(hrnReplaceKey("{[path]}/repo")));
         varLstAdd(paramList, varNewUInt(storageInfoLevelDetail));
 
-        TEST_RESULT_BOOL(storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR, paramList, server), true, "call protocol");
+        TEST_RESULT_VOID(storageRemoteInfoListProtocol(paramList, server), "call protocol");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             hrnReplaceKey(
@@ -380,9 +391,7 @@ testRun(void)
         varLstAdd(paramList, NULL);
         varLstAdd(paramList, varNewVarLst(varLstNew()));
 
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true,
-            "protocol open read (missing)");
+        TEST_RESULT_VOID(storageRemoteOpenReadProtocol(paramList, server), "protocol open read (missing)");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "check result");
 
         bufUsedSet(serverWrite, 0);
@@ -408,8 +417,7 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeGz));
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
 
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read");
+        TEST_RESULT_VOID(storageRemoteOpenReadProtocol(paramList, server), "protocol open read");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{\"out\":true}\n"
@@ -440,8 +448,7 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, ioSinkNew());
         varLstAdd(paramList, ioFilterGroupParamAll(filterGroup));
 
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), true, "protocol open read (sink)");
+        TEST_RESULT_VOID(storageRemoteOpenReadProtocol(paramList, server), "protocol open read (sink)");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{\"out\":true}\n"
@@ -459,9 +466,7 @@ testRun(void)
         varLstAdd(paramList, NULL);
         varLstAdd(paramList, varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvAdd(kvNew(), varNewStrZ("bogus"), NULL)))));
 
-        TEST_ERROR(
-            storageRemoteProtocol(
-                PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR, paramList, server), AssertError, "unable to add filter 'bogus'");
+        TEST_ERROR(storageRemoteOpenReadProtocol(paramList, server), AssertError, "unable to add filter 'bogus'");
     }
 
     // *****************************************************************************************************************************
@@ -557,8 +562,7 @@ testRun(void)
                 "BRBLOCK3\n"
                 "ABCBRBLOCK-1\n"));
 
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
+        TEST_RESULT_VOID(storageRemoteOpenWriteProtocol(paramList, server), "protocol open write");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{}\n"
@@ -588,8 +592,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewVarLst(varLstNew()));
 
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR, paramList, server), true, "protocol open write");
+        TEST_RESULT_VOID(storageRemoteOpenWriteProtocol(paramList, server), "protocol open write");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{}\n"
@@ -628,7 +631,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));      // path mode
 
         TEST_ERROR_FMT(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, paramList, server), PathCreateError,
+            storageRemotePathCreateProtocol(paramList, server), PathCreateError,
             "raised from remote-0 protocol on 'localhost': unable to create path '%s/repo/testpath': [17] File exists",
             testPath());
 
@@ -641,7 +644,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(0));      // path mode
 
         TEST_ERROR_FMT(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, paramList, server), PathCreateError,
+            storageRemotePathCreateProtocol(paramList, server), PathCreateError,
             "raised from remote-0 protocol on 'localhost': unable to create path '%s/repo/parent/testpath': "
             "[2] No such file or directory", testPath());
 
@@ -652,8 +655,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(false));    // noParentCreate (true=error if it does not have a parent, false=create parent)
         varLstAdd(paramList, varNewUInt64(0777));   // path mode
 
-        TEST_RESULT_VOID(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR, paramList, server), "create parent and path");
+        TEST_RESULT_VOID(storageRemotePathCreateProtocol(paramList, server), "create parent and path");
         TEST_ASSIGN(info, storageInfoP(storageTest, strNewFmt("repo/%s", strZ(path))), "  get path info");
         TEST_RESULT_BOOL(info.exists, true, "  path exists");
         TEST_RESULT_INT(info.mode, 0777, "  mode is set");
@@ -682,9 +684,7 @@ testRun(void)
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
         varLstAdd(paramList, varNewBool(true));    // recurse
 
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), true,
-            "  protocol path remove missing");
+        TEST_RESULT_VOID(storageRemotePathRemoveProtocol(paramList, server), "  protocol path remove missing");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "  check result");
 
         bufUsedSet(serverWrite, 0);
@@ -693,9 +693,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRemote, strNewFmt("%s/file.txt", strZ(path))), BUFSTRDEF("TEST")),
             "new path and file");
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR, paramList, server), true,
-            "  protocol path recurse remove");
+        TEST_RESULT_VOID(storageRemotePathRemoveProtocol(paramList, server), "  protocol path recurse remove");
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo/%s", strZ(path))), false, "  recurse path removed");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "  check result");
 
@@ -726,7 +724,7 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));
 
         TEST_ERROR_FMT(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, paramList, server), FileRemoveError,
+            storageRemoteRemoveProtocol(paramList, server), FileRemoveError,
             "raised from remote-0 protocol on 'localhost': unable to remove '%s/repo/file.txt': "
             "[2] No such file or directory", testPath());
 
@@ -734,17 +732,13 @@ testRun(void)
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(file))));
         varLstAdd(paramList, varNewBool(false));
 
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, paramList, server), true,
-            "protocol file remove - no error on missing");
+        TEST_RESULT_VOID(storageRemoteRemoveProtocol(paramList, server), "protocol file remove - no error on missing");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
         bufUsedSet(serverWrite, 0);
 
         // Write the file to the repo via the remote and test the protocol
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRemote, file), BUFSTRDEF("TEST")), "new file");
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_REMOVE_STR, paramList, server), true,
-            "protocol file remove");
+        TEST_RESULT_VOID(storageRemoteRemoveProtocol(paramList, server), "protocol file remove");
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo/%s", strZ(file))), false, "  confirm file removed");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
         bufUsedSet(serverWrite, 0);
@@ -767,21 +761,19 @@ testRun(void)
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/%s", testPath(), strZ(path))));
 
-        TEST_RESULT_BOOL(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), true,
-            "protocol path sync");
+        TEST_RESULT_VOID(storageRemotePathSyncProtocol(paramList, server), "protocol path sync");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{}\n", "  check result");
         bufUsedSet(serverWrite, 0);
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/anewpath", testPath())));
         TEST_ERROR_FMT(
-            storageRemoteProtocol(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR, paramList, server), PathMissingError,
+            storageRemotePathSyncProtocol(paramList, server), PathMissingError,
             "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_PATH_SYNC_MISSING,
             strZ(strNewFmt("%s/repo/anewpath", testPath())));
     }
 
     protocolFree();
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

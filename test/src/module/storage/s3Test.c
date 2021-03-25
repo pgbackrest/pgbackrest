@@ -28,11 +28,11 @@ typedef struct TestRequestParam
     const char *securityToken;
 } TestRequestParam;
 
-#define testRequestP(write, s3, verb, uri, ...)                                                                                    \
-    testRequest(write, s3, verb, uri, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define testRequestP(write, s3, verb, path, ...)                                                                                   \
+    testRequest(write, s3, verb, path, (TestRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 static void
-testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, TestRequestParam param)
+testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, TestRequestParam param)
 {
     // Get security token from param
     const char *securityToken = param.securityToken == NULL ? NULL : param.securityToken;
@@ -50,21 +50,20 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     }
 
     // Add request
-    String *request = strNewFmt("%s %s HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n", verb, uri);
+    String *request = strNewFmt("%s %s HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n", verb, path);
 
     // Add authorization header when s3 service
     if (s3 != NULL)
     {
         strCatFmt(
             request,
-                "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
-                    "SignedHeaders=content-length",
-                param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
+            "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,SignedHeaders=",
+            param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
 
         if (param.content != NULL)
-            strCatZ(request, ";content-md5");
+            strCatZ(request, "content-md5;");
 
-        strCatZ(request, ";host;x-amz-content-sha256;x-amz-date");
+        strCatZ(request, "host;x-amz-content-sha256;x-amz-date");
 
         if (securityToken != NULL)
             strCatZ(request, ";x-amz-security-token");
@@ -78,9 +77,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *uri, Test
     // Add md5
     if (param.content != NULL)
     {
-        char md5Hash[HASH_TYPE_MD5_SIZE_HEX];
-        encodeToStr(encodeBase64, bufPtr(cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content))), HASH_TYPE_M5_SIZE, md5Hash);
-        strCatFmt(request, "content-md5:%s\r\n", md5Hash);
+        strCatFmt(
+            request, "content-md5:%s\r\n",
+            strZ(strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content)))));
     }
 
     // Add host
@@ -195,7 +194,7 @@ testS3DateTime(time_t time)
         strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", gmtime(&time)) != sizeof(buffer) - 1, AssertError,
         "unable to format date");
 
-    FUNCTION_HARNESS_RESULT(STRING, strNew(buffer));
+    FUNCTION_HARNESS_RETURN(STRING, strNew(buffer));
 }
 
 /***********************************************************************************************************************************
@@ -232,7 +231,7 @@ testRun(void)
 
     // TLS can only be verified in a container
     if (!testContainer())
-        hrnCfgArgRawBool(commonArgWithoutEndpointList, cfgOptRepoS3VerifyTls, false);
+        hrnCfgArgRawBool(commonArgWithoutEndpointList, cfgOptRepoStorageVerifyTls, false);
 
     // Config settings that are required for every test (with endpoint)
     StringList *commonArgList = strLstDup(commonArgWithoutEndpointList);
@@ -319,8 +318,8 @@ testRun(void)
 
         argList = strLstDup(commonArgWithoutEndpointList);
         hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "custom.endpoint:333");
-        hrnCfgArgRawZ(argList, cfgOptRepoS3CaPath, "/path/to/cert");
-        hrnCfgArgRawFmt(argList, cfgOptRepoS3CaFile, "%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageCaPath, "/path/to/cert");
+        hrnCfgArgRawFmt(argList, cfgOptRepoStorageCaFile, "%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
         hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -384,7 +383,7 @@ testRun(void)
                 TEST_TITLE("config with keys, token, and host with custom port");
 
                 StringList *argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Host, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -416,7 +415,7 @@ testRun(void)
 
                 TEST_ERROR(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), FileMissingError,
-                    "unable to open '/file.txt': No such file or directory");
+                    "unable to open missing file '/file.txt' for read");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file");
@@ -441,7 +440,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Host, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, STORAGE_S3_KEY_TYPE_AUTO);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
@@ -471,7 +470,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH);
                 testResponseP(auth, .http = "1.0", .code = 301);
 
                 hrnServerScriptClose(auth);
@@ -479,7 +478,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
                     "HTTP request failed with 301:\n"
-                        "*** URI/Query ***:\n"
+                        "*** Path/Query ***:\n"
                         "/latest/meta-data/iam/security-credentials\n"
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
@@ -491,7 +490,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH);
                 testResponseP(auth, .http = "1.0", .code = 404);
 
                 hrnServerScriptClose(auth);
@@ -506,13 +505,13 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_URI);
+                testRequestP(auth, NULL, HTTP_VERB_GET, S3_CREDENTIAL_PATH);
                 testResponseP(auth, .http = "1.0", .content = strZ(credRole));
 
                 hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .code = 300);
 
                 hrnServerScriptClose(auth);
@@ -520,7 +519,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, strNew("file.txt"))), ProtocolError,
                     "HTTP request failed with 300:\n"
-                        "*** URI/Query ***:\n"
+                        "*** Path/Query ***:\n"
                         "/latest/meta-data/iam/security-credentials/credrole\n"
                         "*** Request Headers ***:\n"
                         "content-length: 0\n"
@@ -532,7 +531,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .code = 404);
 
                 hrnServerScriptClose(auth);
@@ -548,7 +547,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(auth, .http = "1.0", .content = "{\"Code\":\"IAM role is not configured\"}");
 
                 hrnServerScriptClose(auth);
@@ -562,7 +561,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(
                     auth,
                     .content = strZ(
@@ -584,7 +583,7 @@ testRun(void)
                 TEST_ERROR(
                     ioReadOpen(storageReadIo(read)), ProtocolError,
                     "HTTP request failed with 303:\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/file.txt\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
@@ -608,7 +607,7 @@ testRun(void)
 
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_URI "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
                 testResponseP(
                     auth,
                     .content = strZ(
@@ -734,6 +733,11 @@ testRun(void)
                 TEST_RESULT_BOOL(storageExistsP(s3, strNew("BOGUS")), false, "check");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for / does not exist");
+
+                TEST_RESULT_BOOL(storageInfoP(s3, NULL, .ignoreMissing = true).exists, false, "info for /");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
 
                 // File missing
@@ -782,7 +786,7 @@ testRun(void)
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
@@ -806,7 +810,7 @@ testRun(void)
 
                 TEST_ERROR(storageListP(s3, strNew("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
-                    "*** URI/Query ***:\n"
+                    "*** Path/Query ***:\n"
                     "/?delimiter=%2F&list-type=2\n"
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
@@ -1010,8 +1014,8 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3UriStyle, STORAGE_S3_URI_STYLE_PATH);
-                hrnCfgArgRaw(argList, cfgOptRepoS3Host, host);
-                hrnCfgArgRawFmt(argList, cfgOptRepoS3Port, "%u", port);
+                hrnCfgArgRaw(argList, cfgOptRepoStorageHost, host);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -1179,5 +1183,5 @@ testRun(void)
         HARNESS_FORK_END();
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

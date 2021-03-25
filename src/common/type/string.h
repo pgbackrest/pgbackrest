@@ -36,6 +36,7 @@ String object
 typedef struct String String;
 
 #include "common/assert.h"
+#include "common/encode.h"
 #include "common/type/buffer.h"
 
 /***********************************************************************************************************************************
@@ -67,6 +68,9 @@ String *strNewBuf(const Buffer *buffer);
 // Create a new string by converting the double value
 String *strNewDbl(double value);
 
+// Create a new string encoded with the specified type (e.g. encodeBase64) from a buffer
+String *strNewEncode(EncodeType type, const Buffer *buffer);
+
 // Create a new string from a format string with parameters (i.e. sprintf)
 String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
@@ -95,6 +99,9 @@ String *strCatZ(String *this, const char *cat);
 
 // Append a character
 String *strCatChr(String *this, char cat);
+
+// Append a string encoded with the specified type (e.g. encodeBase64) from a buffer
+String *strCatEncode(String *this, EncodeType type, const Buffer *buffer);
 
 // Append a formatted string
 String *strCatFmt(String *this, const char *format, ...) __attribute__((format(printf, 2, 3)));

@@ -89,6 +89,23 @@ bufNewC(const void *buffer, size_t size)
 
 /**********************************************************************************************************************************/
 Buffer *
+bufNewDecode(EncodeType type, const String *string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(STRING, string);
+    FUNCTION_TEST_END();
+
+    Buffer *this = bufNew(decodeToBinSize(type, strZ(string)));
+
+    decodeToBin(type, strZ(string), bufPtr(this));
+    bufUsedSet(this, bufSize(this));
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+Buffer *
 bufDup(const Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();

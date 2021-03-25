@@ -190,7 +190,9 @@ testRun(void)
         // File
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--repo-path=%s/repo/aaa", testPath()));
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/bogus");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH_REPO "/aaa");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAddZ(argList, "--output=json");
         harnessCfgLoad(cfgCmdRepoLs, argList);
 
@@ -228,6 +230,7 @@ testRun(void)
 
         // Needed for tests
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "xxx", true);
+        setenv("PGBACKREST_REPO2_CIPHER_PASS", "xxx", true);
 
         // Test files and buffers
         const String *fileName = STRDEF("file.txt");
@@ -434,8 +437,10 @@ testRun(void)
         TEST_TITLE("put encrypted backup.history manifest");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
-        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/bogus");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
         strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/backup.history/2020/label.manifest.gz");
         harnessCfgLoad(cfgCmdRepoPut, argList);
@@ -542,7 +547,9 @@ testRun(void)
         TEST_TITLE("get file outside of the repo error");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/bogus");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         hrnCfgArgRawZ(argList, cfgOptRepoCipherType, CIPHER_TYPE_AES_256_CBC);
         strLstAddZ(argList, "/somewhere/" INFO_ARCHIVE_FILE);
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -757,7 +764,9 @@ testRun(void)
         TEST_TITLE("remove file");
 
         argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--repo-path=%s/repo", testPath()));
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/bogus");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAddZ(argList, "path/aaa.txt");
         harnessCfgLoad(cfgCmdRepoRm, argList);
 
@@ -768,5 +777,5 @@ testRun(void)
         TEST_RESULT_BOOL(storagePathExistsP(storageRepo(), STRDEF("path")), true, "    check path exists");
     }
 
-    FUNCTION_HARNESS_RESULT_VOID();
+    FUNCTION_HARNESS_RETURN_VOID();
 }

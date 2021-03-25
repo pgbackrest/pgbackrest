@@ -135,7 +135,7 @@ my $bClean;
 my $bCleanOnly;
 my $strLogLevel = lc(INFO);
 my $strLogLevelTest = lc(OFF);
-my $strLogLevelTestFile = lc(TRACE);
+my $strLogLevelTestFile = lc(DEBUG);
 my $bNoLogTimestamp = false;
 my $bVmOut = false;
 my @stryModule;
@@ -547,6 +547,9 @@ eval
                     $strConfigure =
                         trim($strConfigure) . "\n\n# Generated from src/build/configure.ac sha1 ${strConfigureAcHash}\n";
 
+                    # Remove cache created by autconf
+                    executeTest("rm -rf ${strBackRestBase}/src/build/autom4te.cache");
+
                     # Remove unused options from help
                     my $strDirList =
                         "sbin|libexec|sysconf|sharedstate|localstate|runstate|lib|include|oldinclude|dataroot|data|info" .
@@ -569,7 +572,8 @@ eval
 
             # Auto-generate C files
             #-----------------------------------------------------------------------------------------------------------------------
-            if (!$bSmart || grep(/^build\//, @stryModifiedList) || grep(/^doc\/xml\/reference\.xml/, @stryModifiedList))
+            if (!$bSmart || grep(/^build\//, @stryModifiedList) || grep(/^doc\/xml\/reference\.xml/, @stryModifiedList) ||
+                grep(/^src\/build\/config\/config\.yaml/, @stryModifiedList))
             {
                 errorDefineLoad(${$oStorageBackRest->get("build/error.yaml")});
 
