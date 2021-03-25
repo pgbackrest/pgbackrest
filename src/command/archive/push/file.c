@@ -95,11 +95,12 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
 /**********************************************************************************************************************************/
 ArchivePushFileResult
 archivePushFile(
-    const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
-    int compressLevel, const List *const repoList, const StringList *const priorErrorList)
+    const String *walSource, bool headerCheck, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
+    CompressType compressType, int compressLevel, const List *const repoList, const StringList *const priorErrorList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSource);
+        FUNCTION_LOG_PARAM(BOOL, headerCheck);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(STRING, archiveFile);
@@ -124,7 +125,7 @@ archivePushFile(
         bool isSegment = walIsSegment(archiveFile);
 
         // If this is a segment compare archive version and systemId to the WAL header
-        if (isSegment)
+        if (headerCheck && isSegment)
         {
             PgWal walInfo = pgWalFromFile(walSource, storageLocal());
 

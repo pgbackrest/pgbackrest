@@ -1016,6 +1016,16 @@ option:
     command-role:
       default: {}
 
+  archive-header-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      archive-push: {}
+    command-role:
+      default: {}
+      async: {}
+
   archive-mode-check:
     section: global
     type: boolean

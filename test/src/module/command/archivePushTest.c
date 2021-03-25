@@ -327,6 +327,7 @@ testRun(void)
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAFECAFECAF}, walBuffer1);
+        const char *walBuffer1Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer1)));
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
 
@@ -335,14 +336,37 @@ testRun(void)
             "WAL file '{[path]}/pg/pg_wal/000000010000000100000001' version 11, system-id 17055110554209741999 do not match"
                 " stanza version 11, system-id 18072658121562454734");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push by ignoring the invalid header");
+
+        argListTemp = strLstDup(argList);
+        hrnCfgArgRawNegate(argListTemp, cfgOptArchiveHeaderCheck);
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
+        TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
+        harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageRepoIdx(0),
+                strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)),
+            true, "check repo for WAL file");
+        TEST_STORAGE_REMOVE(
+            storageRepoIdxWrite(0), strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)));
+
         // Generate valid WAL and push them
         // -------------------------------------------------------------------------------------------------------------------------
+        argListTemp = strLstDup(argList);
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
 
         // Check sha1 checksum against fixed values once to make sure they are not getting munged. After this we'll calculate them
         // directly from the buffers to reduce the cost of maintaining checksums.
-        const char *walBuffer1Sha1 = TEST_64BIT() ?
+        walBuffer1Sha1 = TEST_64BIT() ?
             (TEST_BIG_ENDIAN() ? "1c5f963d720bb199d7935dbd315447ea2ec3feb2" : "aae7591a1dbc58f21d0d004886075094f622e6dd") :
             "28a13fd8cf6fcd9f9a8108aed4c8bcc58040863a";
 
@@ -452,6 +476,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath())));
+        varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewUInt64(PG_VERSION_11));
         varLstAdd(paramList, varNewUInt64(0xFACEFACEFACEFACE));
         varLstAdd(paramList, varNewStrZ("000000010000000100000002"));
