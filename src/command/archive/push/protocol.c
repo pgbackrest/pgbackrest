@@ -31,28 +31,31 @@ archivePushFileProtocol(const VariantList *paramList, ProtocolServer *server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const unsigned int paramFixed = 6;                          // Fixed params before the repo param array
-        const unsigned int paramRepo = 3;                           // Parameters in each index of the repo array
+        // Build the repo data list
+        List *repoList = lstNewP(sizeof(ArchivePushFileRepoData));
+        unsigned int repoListSize = varUIntForce(varLstGet(paramList, 7));
+        unsigned int paramIdx = 8;
 
-        // Check that the correct number of repo parameters were passed
-        CHECK(varLstSize(paramList) - paramFixed == cfgOptionGroupIdxTotal(cfgOptGrpRepo) * paramRepo);
-
-        // Build the repo data array
-        ArchivePushFileRepoData *repoData = memNew(cfgOptionGroupIdxTotal(cfgOptGrpRepo) * sizeof(ArchivePushFileRepoData));
-
-        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+        for (unsigned int repoListIdx = 0; repoListIdx < repoListSize; repoListIdx++)
         {
-            repoData[repoIdx].archiveId = varStr(varLstGet(paramList, paramFixed + (repoIdx * paramRepo)));
-            repoData[repoIdx].cipherType = (CipherType)varUIntForce(
-                varLstGet(paramList, paramFixed + (repoIdx * paramRepo) + 1));
-            repoData[repoIdx].cipherPass = varStr(varLstGet(paramList, paramFixed + (repoIdx * paramRepo) + 2));
+            lstAdd(
+                repoList,
+                &(ArchivePushFileRepoData)
+                {
+                    .repoIdx = varUIntForce(varLstGet(paramList, paramIdx)),
+                    .archiveId = varStr(varLstGet(paramList, paramIdx + 1)),
+                    .cipherType = (CipherType)varUIntForce(varLstGet(paramList, paramIdx + 2)),
+                    .cipherPass = varStr(varLstGet(paramList, paramIdx + 3)),
+                });
+
+            paramIdx += 4;
         }
 
         // Push the file
         ArchivePushFileResult fileResult = archivePushFile(
             varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
             varStr(varLstGet(paramList, 3)), (CompressType)varUIntForce(varLstGet(paramList, 4)),
-            varIntForce(varLstGet(paramList, 5)), repoData);
+            varIntForce(varLstGet(paramList, 5)), repoList, strLstNewVarLst(varVarLst(varLstGet(paramList, 6))));
 
         // Return result
         VariantList *result = varLstNew();

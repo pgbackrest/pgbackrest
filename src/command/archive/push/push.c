@@ -26,6 +26,11 @@ Archive Push Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+Constants for log messages that are used multiple times to keep them consistent
+***********************************************************************************************************************************/
+#define UNABLE_TO_FIND_VALID_REPO_MSG                               "unable to find a valid repository"
+
+/***********************************************************************************************************************************
 Ready file extension constants
 ***********************************************************************************************************************************/
 #define STATUS_EXT_READY                                            ".ready"
@@ -191,7 +196,8 @@ typedef struct ArchivePushCheckResult
 {
     unsigned int pgVersion;                                         // PostgreSQL version
     uint64_t pgSystemId;                                            // PostgreSQL system id
-    ArchivePushFileRepoData *repoData;                              // Data for each repo
+    List *repoList;                                                 // Data for each repo
+    StringList *errorList;                                          // Errors while checking repos
 } ArchivePushCheckResult;
 
 static ArchivePushCheckResult
@@ -201,7 +207,7 @@ archivePushCheck(bool pgPathSet)
         FUNCTION_LOG_PARAM(BOOL, pgPathSet);
     FUNCTION_LOG_END();
 
-    ArchivePushCheckResult result = {.repoData = memNew(cfgOptionGroupIdxTotal(cfgOptGrpRepo) * sizeof(ArchivePushFileRepoData))};
+    ArchivePushCheckResult result = {.repoList = lstNewP(sizeof(ArchivePushFileRepoData)), .errorList = strLstNew()};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -217,49 +223,77 @@ archivePushCheck(bool pgPathSet)
 
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            storageRepoIdx(repoIdx);
-
-            // Set cipher type in repo data
-            result.repoData[repoIdx].cipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
-
-            // Attempt to load the archive info file
-            InfoArchive *info = infoArchiveLoadFile(
-                storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, result.repoData[repoIdx].cipherType,
-                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
-
-            // Get archive id for the most recent version -- archive-push will only operate against the most recent version
-            String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
-            InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
-
-            // Ensure that stanza version and system identifier match pg_control when available or the other repos when pg_control
-            // is not available
-            if (pgPathSet || repoIdx > 0)
+            TRY_BEGIN()
             {
-                if (result.pgVersion != archiveInfo.version || result.pgSystemId != archiveInfo.systemId)
+                // Get the repo storage in case it is remote and encryption settings need to be pulled down
+                storageRepoIdx(repoIdx);
+
+                // Get cipher type
+                CipherType repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+
+                // Attempt to load the archive info file
+                InfoArchive *info = infoArchiveLoadFile(
+                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, repoCipherType,
+                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+
+                // Get archive id for the most recent version -- archive-push will only operate against the most recent version
+                String *archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+                InfoPgData archiveInfo = infoPgData(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
+
+                // Ensure that stanza version and system identifier match pg_control when available or the other repos when
+                // pg_control is not available
+                if (pgPathSet || repoIdx > 0)
                 {
-                    THROW_FMT(
-                        ArchiveMismatchError,
-                        "%s version %s, system-id %" PRIu64 " do not match %s stanza version %s, system-id %" PRIu64
-                        "\nHINT: are you archiving to the correct stanza?",
-                        pgPathSet ? PG_NAME : strZ(strNewFmt("repo%u stanza", cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0))),
-                        strZ(pgVersionToStr(result.pgVersion)), result.pgSystemId,
-                        strZ(strNewFmt("repo%u", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx))),
-                        strZ(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId);
+                    if (result.pgVersion != archiveInfo.version || result.pgSystemId != archiveInfo.systemId)
+                    {
+                        THROW_FMT(
+                            ArchiveMismatchError,
+                            "%s version %s, system-id %" PRIu64 " do not match %s stanza version %s, system-id %" PRIu64
+                            "\nHINT: are you archiving to the correct stanza?",
+                            pgPathSet ? PG_NAME : strZ(strNewFmt("repo%u stanza", cfgOptionGroupIdxToKey(cfgOptGrpRepo, 0))),
+                            strZ(pgVersionToStr(result.pgVersion)), result.pgSystemId,
+                            strZ(strNewFmt("repo%u", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx))),
+                            strZ(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId);
+                    }
                 }
-            }
 
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                result.pgVersion = archiveInfo.version;
-                result.pgSystemId = archiveInfo.systemId;
-                result.repoData[repoIdx].archiveId = strDup(archiveId);
-                result.repoData[repoIdx].cipherPass = strDup(infoArchiveCipherPass(info));
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result.pgVersion = archiveInfo.version;
+                    result.pgSystemId = archiveInfo.systemId;
+
+                    lstAdd(
+                        result.repoList,
+                        &(ArchivePushFileRepoData)
+                        {
+                            .repoIdx = repoIdx,
+                            .archiveId = strDup(archiveId),
+                            .cipherType = repoCipherType,
+                            .cipherPass = strDup(infoArchiveCipherPass(info)),
+                        });
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
-            MEM_CONTEXT_PRIOR_END();
+            CATCH_ANY()
+            {
+                strLstAdd(
+                    result.errorList,
+                    strNewFmt(
+                        "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()),
+                        errorMessage()));
+            }
+            TRY_END();
         }
     }
     MEM_CONTEXT_TEMP_END();
+
+    // If no valid repos were found then error
+    if (lstEmpty(result.repoList))
+    {
+        ASSERT(strLstSize(result.errorList) > 0);
+
+        THROW_FMT(RepoInvalidError, UNABLE_TO_FIND_VALID_REPO_MSG ":\n%s", strZ(strLstJoin(result.errorList, "\n")));
+    }
 
     FUNCTION_LOG_RETURN_STRUCT(result);
 }
@@ -379,7 +413,8 @@ cmdArchivePush(void)
                 // Push the file to the archive
                 ArchivePushFileResult fileResult = archivePushFile(
                     walFile, archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
-                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoData);
+                    compressTypeEnum(cfgOptionStr(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList,
+                    archiveInfo.errorList);
 
                 // If a warning was returned then log it
                 for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
@@ -432,13 +467,18 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
         protocolCommandParamAdd(command, VARSTR(walFile));
         protocolCommandParamAdd(command, VARUINT(jobData->compressType));
         protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
+        protocolCommandParamAdd(command, varNewVarLst(varLstNewStrLst(jobData->archiveInfo.errorList)));
+        protocolCommandParamAdd(command, VARUINT(lstSize(jobData->archiveInfo.repoList)));
 
         // Add data for each repo to push to
-        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+        for (unsigned int repoListIdx = 0; repoListIdx < lstSize(jobData->archiveInfo.repoList); repoListIdx++)
         {
-            protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.repoData[repoIdx].archiveId));
-            protocolCommandParamAdd(command, VARUINT(jobData->archiveInfo.repoData[repoIdx].cipherType));
-            protocolCommandParamAdd(command, VARSTR(jobData->archiveInfo.repoData[repoIdx].cipherPass));
+            ArchivePushFileRepoData *data = lstGet(jobData->archiveInfo.repoList, repoListIdx);
+
+            protocolCommandParamAdd(command, VARUINT(data->repoIdx));
+            protocolCommandParamAdd(command, VARSTR(data->archiveId));
+            protocolCommandParamAdd(command, VARUINT(data->cipherType));
+            protocolCommandParamAdd(command, VARSTR(data->cipherPass));
         }
 
         FUNCTION_TEST_RETURN(protocolParallelJobNew(VARSTR(walFile), command));

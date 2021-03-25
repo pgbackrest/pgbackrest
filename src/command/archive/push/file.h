@@ -15,6 +15,7 @@ archivePushFile() with size equal to cfgOptionGroupIdxTotal(cfgOptGrpRepo).
 ***********************************************************************************************************************************/
 typedef struct ArchivePushFileRepoData
 {
+    unsigned int repoIdx;
     const String *archiveId;
     CipherType cipherType;
     const String *cipherPass;
@@ -31,6 +32,6 @@ typedef struct ArchivePushFileResult
 // Copy a file from the source to the archive
 ArchivePushFileResult archivePushFile(
     const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
-    int compressLevel, const ArchivePushFileRepoData *repoData);
+    int compressLevel, const List *const repoList, const StringList *const priorErrorList);
 
 #endif
