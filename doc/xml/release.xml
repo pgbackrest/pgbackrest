@@ -70,6 +70,7 @@
                         <commit subject="Add write fault-tolerance to archive-push command."/>
                         <commit subject="Make --repo optional for remaining commands except stanza-delete."/>
                         <commit subject="Allow stanza-* commands to be run remotely."/>
+                        <commit subject="Improve info command fault tolerance."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
@@ -98,6 +99,16 @@
                         </release-item-contributor-list>
 
                         <p>Include recreated system databases during selective restore.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="brian.p.bockelman"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Exclude <id>content-length</id> from <proper>S3</proper> signed headers.</p>
                     </release-item>
 
                     <release-item>
@@ -9189,6 +9200,11 @@
         <contributor id="brian.faherty">
             <contributor-name-display>Brian Faherty</contributor-name-display>
             <contributor-id type="github">scrummyin</contributor-id>
+        </contributor>
+
+        <contributor id="brian.p.bockelman">
+            <contributor-name-display>Brian P Bockelman</contributor-name-display>
+            <contributor-id type="github">bbockelm</contributor-id>
         </contributor>
 
         <contributor id="brian.peterson">
