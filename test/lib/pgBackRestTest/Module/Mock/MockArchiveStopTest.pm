@@ -102,12 +102,12 @@ sub run
         &log(INFO, '    push second WAL');
 
         $oHostDbPrimary->archivePush(
-            $strWalPath, $strWalTestFile, 2, ERROR_REPO_INVALID, undef, $iError ? '--repo1-host=bogus': undef);
+            $strWalPath, $strWalTestFile, 2, ERROR_REPO_INVALID, undef, $iError ? '--repo1-host=bogus' : undef);
 
         &log(INFO, '    push third WAL');
 
         $oHostDbPrimary->archivePush(
-            $strWalPath, $strWalTestFile, 3, ERROR_REPO_INVALID, undef, $iError ? '--repo1-host=bogus': undef);
+            $strWalPath, $strWalTestFile, 3, ERROR_REPO_INVALID, undef, $iError ? '--repo1-host=bogus' : undef);
 
         # Now this segment will get dropped
         &log(INFO, '    push fourth WAL');
