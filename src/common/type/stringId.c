@@ -57,7 +57,7 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
-                if (size > 12)
+                if (size == STRID5_MAX)
                     break;
 
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
@@ -74,7 +74,7 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
                 default:
                 {
                     // If size is greater then can be encoded set the prefix flag
-                    if (size > 12)
+                    if (size == STRID5_MAX)
                         result |= STRING_ID_PREFIX;
 
                     result |= (uint64_t)map[(uint8_t)buffer[11]] << 59;
@@ -147,7 +147,7 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
-                if (size > 10)
+                if (size == STRID6_MAX)
                     break;
 
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
@@ -164,7 +164,7 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
                 default:
                 {
                     // If size is greater then can be encoded set the prefix flag
-                    if (size > 10)
+                    if (size == STRID6_MAX)
                         result |= STRING_ID_PREFIX;
 
                     result |= (uint64_t)map[(uint8_t)buffer[9]] << 58;
@@ -319,7 +319,7 @@ strIdToStr(const StringId strId)
         FUNCTION_TEST_PARAM(STRING_ID, strId);
     FUNCTION_TEST_END();
 
-    char buffer[STRING_ID_MAX + 1];
+    char buffer[STRID_MAX + 1];
     buffer[strIdToZN(strId, buffer)] = '\0';
 
     FUNCTION_TEST_RETURN(strNew(buffer));
@@ -368,7 +368,7 @@ strIdGenerate(const char *const buffer)
 size_t
 strIdToLog(const StringId strId, char *const buffer, const size_t bufferSize)
 {
-    ASSERT(bufferSize > STRING_ID_MAX);
+    ASSERT(bufferSize > STRID_MAX);
     (void)bufferSize;
 
     return strIdToZ(strId, buffer);

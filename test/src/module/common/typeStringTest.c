@@ -648,7 +648,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToStr()");
 
-        char buffer[STRING_ID_MAX + 1];
+        char buffer[STRID_MAX + 1];
 
         TEST_RESULT_UINT(strIdToZ(TEST_STR5ID1, buffer), 1, "5 bits 1 char");
         TEST_RESULT_Z(buffer, "a", "    check");

@@ -22,9 +22,14 @@ See strIdGenerate() for information on StringId constants.
 
 /***********************************************************************************************************************************
 Maximum number of characters in a StringId. This is a safe buffer size when calling strIdToZN. If the buffer needs to be
-zero-terminated then an extra byte will be needed.
+zero-terminated then an extra byte should be added.
 ***********************************************************************************************************************************/
-#define STRING_ID_MAX                                               13
+// Maximum for specific encodings (e.g. 5-bit, 6-bit)
+#define STRID5_MAX                                                  13
+#define STRID6_MAX                                                  11
+
+// Maximum for any encoding
+#define STRID_MAX                                                   STRID5_MAX
 
 /***********************************************************************************************************************************
 StringId typedef to make them more recognizable in the code
