@@ -48,13 +48,15 @@ backrest-checksum="[CHECKSUM]"
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000001
 ------------------------------------------------------------------------------------------------------------------------------------
 
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db --repo1-host=bogus archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000002 --repo1-host=bogus
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [125]: remote-0 process on 'bogus' terminated unexpectedly [255]: ssh: Could not resolve hostname bogus: Name or service not known
+P00  ERROR: [103]: unable to find a valid repository:
+            repo1: [UnknownError] remote-0 process on 'bogus' terminated unexpectedly [255]: ssh: Could not resolve hostname bogus: Name or service not known
 
-> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db --repo1-host=bogus archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000003
+> [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000003 --repo1-host=bogus
 ------------------------------------------------------------------------------------------------------------------------------------
-P00  ERROR: [125]: remote-0 process on 'bogus' terminated unexpectedly [255]: ssh: Could not resolve hostname bogus: Name or service not known
+P00  ERROR: [103]: unable to find a valid repository:
+            repo1: [UnknownError] remote-0 process on 'bogus' terminated unexpectedly [255]: ssh: Could not resolve hostname bogus: Name or service not known
 
 > [CONTAINER-EXEC] db-primary [BACKREST-BIN] --config=[TEST_PATH]/db-primary/pgbackrest.conf --log-level-console=warn --archive-push-queue-max=33554432 --stanza=db archive-push [TEST_PATH]/db-primary/db/base/pg_xlog/000000010000000100000004 --repo1-host=bogus
 ------------------------------------------------------------------------------------------------------------------------------------

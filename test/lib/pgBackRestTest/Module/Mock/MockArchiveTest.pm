@@ -135,7 +135,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile1}",
-            {iExpectedExitStatus => ERROR_FILE_MISSING, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
@@ -293,7 +293,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandPush . " ${strWalPath}/${strSourceFile}",
-            {iExpectedExitStatus => ERROR_ARCHIVE_MISMATCH, oLogTest => $self->expect()});
+            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",

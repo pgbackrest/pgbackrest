@@ -133,9 +133,10 @@ testRun(void)
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
 
         TEST_ERROR(
-            archivePushCheck(true), ArchiveMismatchError,
-            "PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version 9.4, system-id"
-                " 5555555555555555555"
+            archivePushCheck(true), RepoInvalidError,
+            "unable to find a valid repository:\n"
+            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version"
+                " 9.4, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
         // Fix the version
@@ -149,9 +150,10 @@ testRun(void)
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.6\"}\n"));
 
         TEST_ERROR(
-            archivePushCheck(true), ArchiveMismatchError,
-            "PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version 9.6, system-id"
-                " 5555555555555555555"
+            archivePushCheck(true), RepoInvalidError,
+            "unable to find a valid repository:\n"
+            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id 18072658121562454734 do not match repo1 stanza version"
+                " 9.6, system-id 5555555555555555555"
                 "\nHINT: are you archiving to the correct stanza?");
 
         // Fix archive info
@@ -169,9 +171,12 @@ testRun(void)
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
-        TEST_RESULT_STR_Z(result.repoData[0].archiveId, "9.6-1", "check archive id");
-        TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check cipher type");
-        TEST_RESULT_STR_Z(result.repoData[0].cipherPass, NULL, "check cipher pass (not set in this test)");
+
+        ArchivePushFileRepoData *repoData = lstGet(result.repoList, 0);
+        TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
+        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-1", "check archive id");
+        TEST_RESULT_UINT(repoData->cipherType, cipherTypeNone, "check cipher type");
+        TEST_RESULT_STR_Z(repoData->cipherPass, NULL, "check cipher pass (not set in this test)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mismatched repos when pg-path not present");
@@ -202,11 +207,22 @@ testRun(void)
                 "[db:history]\n"
                 "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"));
 
-        TEST_ERROR(
-            archivePushCheck(false), ArchiveMismatchError,
-            "repo2 stanza version 9.6, system-id 18072658121562454734 do not match repo4 stanza version 9.4, system-id"
-                " 5555555555555555555"
-                "\nHINT: are you archiving to the correct stanza?");
+        TEST_ASSIGN(result, archivePushCheck(false), "get archive check result");
+
+        TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
+        TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
+        TEST_RESULT_STRLST_Z(
+            result.errorList,
+            "repo4: [ArchiveMismatchError] repo2 stanza version 9.6, system-id 18072658121562454734 do not match repo4 stanza"
+                " version 9.4, system-id 5555555555555555555\n"
+            "HINT: are you archiving to the correct stanza?\n",
+            "check error list");
+
+        repoData = lstGet(result.repoList, 0);
+        TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
+        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-1", "check archive id");
+        TEST_RESULT_UINT(repoData->cipherType, cipherTypeNone, "check cipher type");
+        TEST_RESULT_STR_Z(repoData->cipherPass, NULL, "check cipher pass (not set in this test)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("matched repos when pg-path not present");
@@ -226,12 +242,18 @@ testRun(void)
 
         TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
         TEST_RESULT_UINT(result.pgSystemId, 0xFACEFACEFACEFACE, "check pg system id");
-        TEST_RESULT_STR_Z(result.repoData[0].archiveId, "9.6-1", "check repo2 archive id");
-        TEST_RESULT_UINT(result.repoData[0].cipherType, cipherTypeNone, "check repo2 cipher pass");
-        TEST_RESULT_STR_Z(result.repoData[0].cipherPass, NULL, "check repo2 cipher pass (not set in this test)");
-        TEST_RESULT_STR_Z(result.repoData[1].archiveId, "9.6-2", "check repo4 archive id");
-        TEST_RESULT_UINT(result.repoData[1].cipherType, cipherTypeNone, "check repo4 cipher type");
-        TEST_RESULT_STR_Z(result.repoData[1].cipherPass, NULL, "check repo4 cipher pass (not set in this test)");
+
+        repoData = lstGet(result.repoList, 0);
+        TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
+        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-1", "check repo2 archive id");
+        TEST_RESULT_UINT(repoData->cipherType, cipherTypeNone, "check repo2 cipher pass");
+        TEST_RESULT_STR_Z(repoData->cipherPass, NULL, "check repo2 cipher pass (not set in this test)");
+
+        repoData = lstGet(result.repoList, 1);
+        TEST_RESULT_UINT(repoData->repoIdx, 1, "check repo idx");
+        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-2", "check repo4 archive id");
+        TEST_RESULT_UINT(repoData->cipherType, cipherTypeNone, "check repo4 cipher type");
+        TEST_RESULT_STR_Z(repoData->cipherPass, NULL, "check repo4 cipher pass (not set in this test)");
     }
 
     // *****************************************************************************************************************************
@@ -300,33 +322,51 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
-            strZ(
-                strNewFmt(
-                    "WAL file '%s/pg/pg_wal/000000010000000100000001' version 10, system-id 18072658121562454734 do not match"
-                        " stanza version 11, system-id 18072658121562454734",
-                    testPath())));
+            "WAL file '{[path]}/pg/pg_wal/000000010000000100000001' version 10, system-id 18072658121562454734 do not match"
+                " stanza version 11, system-id 18072658121562454734");
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAFECAFECAF}, walBuffer1);
+        const char *walBuffer1Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer1)));
 
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("pg_wal/000000010000000100000001")), walBuffer1);
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
-            strZ(
-                strNewFmt(
-                    "WAL file '%s/pg/pg_wal/000000010000000100000001' version 11, system-id 17055110554209741999 do not match"
-                        " stanza version 11, system-id 18072658121562454734",
-                    testPath())));
+            "WAL file '{[path]}/pg/pg_wal/000000010000000100000001' version 11, system-id 17055110554209741999 do not match"
+                " stanza version 11, system-id 18072658121562454734");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push by ignoring the invalid header");
+
+        argListTemp = strLstDup(argList);
+        hrnCfgArgRawNegate(argListTemp, cfgOptArchiveHeaderCheck);
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
+        TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
+        harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
+
+        TEST_RESULT_BOOL(
+            storageExistsP(
+                storageRepoIdx(0),
+                strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)),
+            true, "check repo for WAL file");
+        TEST_STORAGE_REMOVE(
+            storageRepoIdxWrite(0), strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)));
 
         // Generate valid WAL and push them
         // -------------------------------------------------------------------------------------------------------------------------
+        argListTemp = strLstDup(argList);
+        strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
+        harnessCfgLoad(cfgCmdArchivePush, argListTemp);
+
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         pgWalTestToBuffer((PgWal){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}, walBuffer1);
 
         // Check sha1 checksum against fixed values once to make sure they are not getting munged. After this we'll calculate them
         // directly from the buffers to reduce the cost of maintaining checksums.
-        const char *walBuffer1Sha1 = TEST_64BIT() ?
+        walBuffer1Sha1 = TEST_64BIT() ?
             (TEST_BIG_ENDIAN() ? "1c5f963d720bb199d7935dbd315447ea2ec3feb2" : "aae7591a1dbc58f21d0d004886075094f622e6dd") :
             "28a13fd8cf6fcd9f9a8108aed4c8bcc58040863a";
 
@@ -436,11 +476,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath())));
+        varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewUInt64(PG_VERSION_11));
         varLstAdd(paramList, varNewUInt64(0xFACEFACEFACEFACE));
         varLstAdd(paramList, varNewStrZ("000000010000000100000002"));
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, varNewInt(6));
+        varLstAdd(paramList, varNewVarLst(varLstNewStrLst(strLstNew())));
+        varLstAdd(paramList, varNewUInt(1));
+        varLstAdd(paramList, varNewUInt(0));
         varLstAdd(paramList, varNewStrZ("11-1"));
         varLstAdd(paramList, varNewUInt64(cipherTypeNone));
         varLstAdd(paramList, NULL);
@@ -532,7 +576,7 @@ testRun(void)
             strZ(
                 strNewFmt(
                     "archive-push command encountered error(s):\n"
-                    "repo2: [FileOpenError] unable to open file '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001"
+                    "repo2: [FileOpenError] unable to open file '{[path]}/repo2/archive/test/11-1/0000000100000001"
                         "/000000010000000100000002-%s' for write: [13] Permission denied", walBuffer2Sha1)));
 
         TEST_RESULT_BOOL(
@@ -570,6 +614,50 @@ testRun(void)
             "P00   WARN: WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push succeeds on one repo when other repo fails to load archive.info");
+
+        TEST_STORAGE_REMOVE(
+            storageTest, strZ(strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+        TEST_STORAGE_REMOVE(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+        HRN_STORAGE_MODE(storageTest, "repo2", .mode = 0200);
+
+        TEST_ERROR(
+            cmdArchivePush(), CommandError,
+            "archive-push command encountered error(s):\n"
+            "repo2: [FileOpenError] unable to load info file '{[path]}/repo2/archive/test/archive.info' or"
+                " '{[path]}/repo2/archive/test/archive.info.copy':\n"
+            "FileOpenError: unable to open file '{[path]}/repo2/archive/test/archive.info' for read: [13] Permission denied\n"
+            "FileOpenError: unable to open file '{[path]}/repo2/archive/test/archive.info.copy' for read: [13] Permission denied\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
+
+        // Make sure WAL got pushed to repo3
+        TEST_STORAGE_REMOVE(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+
+        HRN_STORAGE_MODE(storageTest, "repo2");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push succeeds on one repo when other repo fails to read path");
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1", .mode = 0200);
+
+        TEST_ERROR(
+            cmdArchivePush(), CommandError,
+            "archive-push command encountered error(s):\n"
+            "repo2: [PathOpenError] unable to list file info for path '{[path]}/repo2/archive/test/11-1/0000000100000001': [13]"
+                " Permission denied");
+
+        // Make sure WAL got pushed to repo3
+        TEST_STORAGE_REMOVE(
+            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+
+        HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1");
     }
 
     // *****************************************************************************************************************************
