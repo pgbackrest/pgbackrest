@@ -155,7 +155,15 @@
                     <config-key id="compress-level" name="Compress Level">
                         <summary>File compression level.</summary>
 
-                        <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).</text>
+                        <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).
+
+                        The following are the defaults levels based on the type when compress-level is not specified:
+                        <ul>
+                            <li><id>bz2</id> - 9</li>
+                            <li><id>gz</id> - 6</li>
+                            <li><id>lz4</id> - 1</li>
+                            <li><id>zst</id> - 3</li>
+                        </ul></text>
 
                         <allow>0-9</allow>
                         <example>9</example>
