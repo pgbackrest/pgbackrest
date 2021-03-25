@@ -93,7 +93,8 @@ STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_PG_MISMATCH_STR,           "database mi
 #define INFO_STANZA_STATUS_CODE_BACKUP_MISSING                      6
 STRING_STATIC(INFO_STANZA_STATUS_CODE_BACKUP_MISSING_STR,           "requested backup not found");
 #define INFO_STANZA_STATUS_CODE_OTHER                               99
-STRING_STATIC(INFO_STANZA_STATUS_CODE_OTHER_STR,                    "other");
+#define INFO_STANZA_STATUS_MESSAGE_OTHER                            "other"
+STRING_STATIC(INFO_STANZA_STATUS_MESSAGE_OTHER_STR,                 INFO_STANZA_STATUS_MESSAGE_OTHER);
 STRING_STATIC(INFO_STANZA_INVALID_STR,                              "[invalid]");
 
 #define INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP                      "backup/expire running"
@@ -220,7 +221,7 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
             break;
 
         case INFO_STANZA_STATUS_CODE_OTHER:
-            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_CODE_OTHER_STR));
+            kvAdd(statusKv, STATUS_KEY_MESSAGE_VAR, VARSTR(INFO_STANZA_STATUS_MESSAGE_OTHER_STR));
             break;
     }
 
@@ -1450,7 +1451,8 @@ infoRender(void)
                                             varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR)), STRDEF("\n"));
 
                                         strCatFmt(
-                                            resultStr, "%s%s%s\n", multiRepo ? INFO_STANZA_STATUS_ERROR "\n" : "",
+                                            resultStr, "%s%s%s\n",
+                                            multiRepo ? INFO_STANZA_STATUS_ERROR " (" INFO_STANZA_STATUS_MESSAGE_OTHER ")\n" : "",
                                             formatSpacer, strZ(strLstJoin(repoError, strZ(strNewFmt("\n%s", formatSpacer)))));
                                     }
                                     else

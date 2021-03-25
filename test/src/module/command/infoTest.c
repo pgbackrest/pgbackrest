@@ -2369,7 +2369,7 @@ testRun(void)
             infoRender(), strNewFmt(
             "stanza: stanza1\n"
             "    status: mixed\n"
-            "        repo1: error\n"
+            "        repo1: error (other)\n"
             "               [CryptoError] unable to load info file '%s/stanza1/backup.info' or '%s/stanza1/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
@@ -2386,7 +2386,7 @@ testRun(void)
             "\n"
             "stanza: stanza2\n"
             "    status: mixed\n"
-            "        repo1: error\n"
+            "        repo1: error (other)\n"
             "               [CryptoError] unable to load info file '%s/stanza2/backup.info' or '%s/stanza2/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
@@ -2400,7 +2400,7 @@ testRun(void)
             "\n"
             "stanza: stanza3\n"
             "    status: mixed\n"
-            "        repo1: error\n"
+            "        repo1: error (other)\n"
             "               [CryptoError] unable to load info file '%s/stanza3/backup.info' or '%s/stanza3/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
@@ -2436,7 +2436,7 @@ testRun(void)
             infoRender(), strNewFmt(
             "stanza: stanza3\n"
             "    status: mixed\n"
-            "        repo1: error\n"
+            "        repo1: error (other)\n"
             "               [CryptoError] unable to load info file '%s/stanza3/backup.info' or '%s/stanza3/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
@@ -2466,7 +2466,7 @@ testRun(void)
             infoRender(), strNewFmt(
             "stanza: stanza1\n"
             "    status: mixed\n"
-            "        repo1: error\n"
+            "        repo1: error (other)\n"
             "               [PathOpenError] unable to list file info for path '%s/stanza1/9.4-1': [13] Permission denied\n"
             "        repo2: error (no valid backups)\n"
             "    cipher: mixed\n"
@@ -2823,7 +2823,7 @@ testRun(void)
             infoRender(), strNewFmt(
             "stanza: stanza1\n"
             "    status: mixed\n"
-            "        repo1: error\n"
+            "        repo1: error (other)\n"
             "               [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
             "        repo2: error (missing stanza path)\n"
             "    cipher: none\n", testPath()),
