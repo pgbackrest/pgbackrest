@@ -103,6 +103,16 @@
 
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-ideator id="brian.p.bockelman"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Exclude <id>content-length</id> from <proper>S3</proper> signed headers.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
@@ -9190,6 +9200,11 @@
         <contributor id="brian.faherty">
             <contributor-name-display>Brian Faherty</contributor-name-display>
             <contributor-id type="github">scrummyin</contributor-id>
+        </contributor>
+
+        <contributor id="brian.p.bockelman">
+            <contributor-name-display>Brian P Bockelman</contributor-name-display>
+            <contributor-id type="github">bbockelm</contributor-id>
         </contributor>
 
         <contributor id="brian.peterson">

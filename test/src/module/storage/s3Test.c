@@ -57,14 +57,13 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     {
         strCatFmt(
             request,
-                "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
-                    "SignedHeaders=content-length",
-                param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
+            "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,SignedHeaders=",
+            param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
 
         if (param.content != NULL)
-            strCatZ(request, ";content-md5");
+            strCatZ(request, "content-md5;");
 
-        strCatZ(request, ";host;x-amz-content-sha256;x-amz-date");
+        strCatZ(request, "host;x-amz-content-sha256;x-amz-date");
 
         if (securityToken != NULL)
             strCatZ(request, ";x-amz-security-token");
