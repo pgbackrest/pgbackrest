@@ -32,12 +32,12 @@ StringId typedef to make them more recognizable in the code
 typedef uint64_t StringId;
 
 /***********************************************************************************************************************************
-Number of bits to use for encoding. The number of bits affects the character set that can be used.
+Number of bits to use for encoding. The number of bits affects the character set that can be encoded.
 ***********************************************************************************************************************************/
 typedef enum
 {
-    stringIdBit5 = 0,                                               // 5-bit
-    stringIdBit6 = 1,                                               // 6-bit
+    stringIdBit5 = 0,                                               // 5-bit encoding for a-z, 1-4, and - characters
+    stringIdBit6 = 1,                                               // 6-bit encoding for a-z, 0-9, A-Z, and - characters
 } StringIdBit;
 
 /***********************************************************************************************************************************
