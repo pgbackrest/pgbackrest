@@ -157,7 +157,7 @@
 
                         <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).
 
-                        The following are the defaults levels based on the type when compress-level is not specified:
+                        The following are the defaults levels based on <setting>compress-type</setting> when <setting>compress-level</setting> is not specified:
                         <ul>
                             <li><id>bz2</id> - 9</li>
                             <li><id>gz</id> - 6</li>
