@@ -200,6 +200,15 @@
 
                         <p>Add <setting>compress-level</setting> defaults per <setting>compress-type</setting> value.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add note about required <proper>NFS</proper> settings being the same as <postgres/>.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-doc-list>
         </release>
