@@ -1344,7 +1344,7 @@
     <section id="backup" depend="/quickstart/create-stanza">
         <title>Backup</title>
 
-        <p>The Backup section introduces additional <cmd>backup</cmd> command features.</p>
+        <p>The Backup section introduces additional <cmd>backup</cmd> command features not covered in the <link section="/quickstart/perform-backup">Quick Start - Perform a Backup</link> section.</p>
 
         <!-- SECTION => BACKUP - START-FAST -->
         <section id="option-start-fast">
