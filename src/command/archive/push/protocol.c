@@ -33,8 +33,8 @@ archivePushFileProtocol(const VariantList *paramList, ProtocolServer *server)
     {
         // Build the repo data list
         List *repoList = lstNewP(sizeof(ArchivePushFileRepoData));
-        unsigned int repoListSize = varUIntForce(varLstGet(paramList, 7));
-        unsigned int paramIdx = 8;
+        unsigned int repoListSize = varUIntForce(varLstGet(paramList, 8));
+        unsigned int paramIdx = 9;
 
         for (unsigned int repoListIdx = 0; repoListIdx < repoListSize; repoListIdx++)
         {
@@ -53,9 +53,10 @@ archivePushFileProtocol(const VariantList *paramList, ProtocolServer *server)
 
         // Push the file
         ArchivePushFileResult fileResult = archivePushFile(
-            varStr(varLstGet(paramList, 0)), varUIntForce(varLstGet(paramList, 1)), varUInt64(varLstGet(paramList, 2)),
-            varStr(varLstGet(paramList, 3)), (CompressType)varUIntForce(varLstGet(paramList, 4)),
-            varIntForce(varLstGet(paramList, 5)), repoList, strLstNewVarLst(varVarLst(varLstGet(paramList, 6))));
+            varStr(varLstGet(paramList, 0)), varBool(varLstGet(paramList, 1)), varUIntForce(varLstGet(paramList, 2)),
+            varUInt64(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)),
+            (CompressType)varUIntForce(varLstGet(paramList, 5)), varIntForce(varLstGet(paramList, 6)), repoList,
+            strLstNewVarLst(varVarLst(varLstGet(paramList, 7))));
 
         // Return result
         VariantList *result = varLstNew();

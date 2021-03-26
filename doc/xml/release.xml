@@ -90,6 +90,17 @@
 
                         <p>GCS support for repository storage.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="hans.jurgen.schonig"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>archive-header-check</br-option> option.</p>
+                    </release-item>
                 </release-feature-list>
 
                 <release-improvement-list>
@@ -179,6 +190,15 @@
                         </release-item-contributor-list>
 
                         <p>Add <setting>compress-type</setting> clarification to <setting>archive-copy</setting> documentation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <setting>compress-level</setting> defaults per <setting>compress-type</setting> value.</p>
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>

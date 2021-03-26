@@ -155,7 +155,15 @@
                     <config-key id="compress-level" name="Compress Level">
                         <summary>File compression level.</summary>
 
-                        <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).</text>
+                        <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).
+
+                        The following are the defaults levels based on <setting>compress-type</setting> when <setting>compress-level</setting> is not specified:
+                        <ul>
+                            <li><id>bz2</id> - 9</li>
+                            <li><id>gz</id> - 6</li>
+                            <li><id>lz4</id> - 1</li>
+                            <li><id>zst</id> - 3</li>
+                        </ul></text>
 
                         <allow>0-9</allow>
                         <example>9</example>
@@ -746,6 +754,17 @@
                         The <br-option>archive-check</br-option> option must be enabled if <br-option>archive-copy</br-option> is enabled.</text>
 
                         <example>y</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="archive-header-check" name="Check WAL Headers">
+                        <summary>Check PostgreSQL version/id in WAL headers.</summary>
+
+                        <text>Enabled by default, this option checks the WAL header against the <postgres/> version and system identifier to ensure that the WAL is being copied to the correct stanza. This is in addition to checking <file>pg_control</file> against the stanza and verifying that WAL is being copied from the same <postgres/> data directory where <file>pg_control</file> is located.
+
+                        Therefore, disabling this check is fairly safe but should only be done when needed, e.g. if the WAL is encrypted.</text>
+
+                        <example>n</example>
                     </config-key>
 
                     <!-- ======================================================================================================= -->
