@@ -185,15 +185,16 @@
             </execute-list>
         </section>
     </section>
-
+<!-- CSHANG The above Running Tests should probably be folded in here - better flow. -->
     <section id="testing">
         <title>Testing</title>
-
+<!-- CSHANG the test/README.md file doesn't exist anymore. Do we need to mention Vagrant? WAIT, yes, the section above under With Docker mentions a VM - oh, no that was in reference to vm option (although it just says "The vm"  -->
+<!-- CSHANG We should say something about building and testing the docs - which should be covered in the readme of the doc directory so should reference that. -->
         <p>For testing, it is recommended that Vagrant and Docker be used; instructions are provided in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/test">test</link> directory. A list of all possible test combinations can be viewed by running:</p>
         <code-block>
             pgbackrest/test/test.pl --dry-run
         </code-block>
-
+<!-- CSHANG the BACKREST_USER doesn't even exist so can we just remove this statement? -->
         <admonition type="warning">currently the <id>BACKREST_USER</id> in <file>ContainerTest.pm</file> must exist, or the test suite will fail with a string concatenation error.</admonition>
 
         <p>If using a RHEL system, the CPAN XML parser is required for running <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docs need only be run for HTML output.</p>
