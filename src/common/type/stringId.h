@@ -56,7 +56,8 @@ verified against each other so the str parameter is included only for documentat
 Functions
 ***********************************************************************************************************************************/
 // Convert N chars to StringId, If the string is longer than the allowable length for the selected encoding then the StringID will
-// be marked as "partial" and will have a '+' appended whenever it is converted back to a string.
+// be marked as "partial" and will have a '+' appended whenever it is converted back to a string. This is to distiguish it from a
+// string with the same number of encoded characters that did not overflow.
 StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size);
 
 // Convert String to StringId using strIdFromZN()
