@@ -155,7 +155,15 @@
                     <config-key id="compress-level" name="Compress Level">
                         <summary>File compression level.</summary>
 
-                        <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).</text>
+                        <text>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).
+
+                        The following are the defaults levels based on <setting>compress-type</setting> when <setting>compress-level</setting> is not specified:
+                        <ul>
+                            <li><id>bz2</id> - 9</li>
+                            <li><id>gz</id> - 6</li>
+                            <li><id>lz4</id> - 1</li>
+                            <li><id>zst</id> - 3</li>
+                        </ul></text>
 
                         <allow>0-9</allow>
                         <example>9</example>
@@ -687,7 +695,7 @@
                             <li><id>gcs</id> - Google Cloud Storage</li>
                             <li><id>posix</id> - Posix-compliant file systems</li>
                             <li><id>s3</id> - AWS Simple Storage Service</li>
-                        </ul></text>
+                        </ul>When an <proper>NFS</proper> mount is used as a <id>posix</id> repository, the same rules apply to <backrest/> as described in the <postgres/> documentation: <link url="https://www.postgresql.org/docs/current/creating-cluster.html#CREATING-CLUSTER-FILESYSTEM">Creating a Database Cluster - File Systems</link>.</text>
 
                         <example>cifs</example>
                     </config-key>
