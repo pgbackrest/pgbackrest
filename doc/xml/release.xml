@@ -16,6 +16,9 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
+                        <github-issue id="1299"/>
+                        <github-pull-request id="1301"/>
+
                         <release-item-contributor-list>
                             <release-item-ideator id="lev.kokotov"/>
                             <release-item-contributor id="david.steele"/>
@@ -26,6 +29,8 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1319"/>
+
                         <release-item-contributor-list>
                             <release-item-ideator id="christian.roux"/>
                             <release-item-ideator id="efremov.egor"/>
@@ -37,6 +42,9 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1294"/>
+                        <github-pull-request id="1295"/>
+
                         <release-item-contributor-list>
                             <release-item-ideator id="bsiara"/>
                             <release-item-contributor id="david.steele"/>
@@ -47,6 +55,9 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1317"/>
+                        <github-pull-request id="1336"/>
+
                         <release-item-contributor-list>
                             <release-item-ideator id="lesovsky.alexey"/>
                             <release-item-contributor id="david.steele"/>
@@ -59,19 +70,40 @@
 
                 <release-feature-list>
                     <release-item>
-                        <commit subject="Enhance expire command multi-repo support."/>
-                        <commit subject="Expire continues if an error occurs processing a repository."/>
-                        <commit subject="Add archive-get command multi-repo support."/>
-                        <commit subject="Enhance restore command multi-repo support."/>
+                        <commit subject="Enhance expire command multi-repo support.">
+                            <github-pull-request id="1289"/>
+                        </commit>
+                        <commit subject="Expire continues if an error occurs processing a repository.">
+                            <github-pull-request id="1308"/>
+                        </commit>
+                        <commit subject="Add archive-get command multi-repo support.">
+                            <github-pull-request id="1292"/>
+                        </commit>
+                        <commit subject="Enhance restore command multi-repo support.">
+                            <github-pull-request id="1300"/>
+                        </commit>
                         <commit subject="Refactor info command repoMin/Max."/>
                         <commit subject="Remove restore default repo from integration tests."/>
-                        <commit subject="Make --repo optional for backup command."/>
+                        <commit subject="Make --repo optional for backup command.">
+                            <github-pull-request id="1316"/>
+                        </commit>
                         <commit subject="Refactor archive-push command warnings to work like archive-get."/>
-                        <commit subject="Add write fault-tolerance to archive-push command."/>
+                        <commit subject="Add write fault-tolerance to archive-push command.">
+                            <github-pull-request id="1316"/>
+                        </commit>
                         <commit subject="Make --repo optional for remaining commands except stanza-delete."/>
-                        <commit subject="Allow stanza-* commands to be run remotely."/>
-                        <commit subject="Improve info command fault tolerance."/>
-                        <commit subject="Improve archive-push command fault tolerance."/>
+                        <commit subject="Multiple repository support.">
+                            <github-pull-request id="1227"/>
+                        </commit>
+                        <commit subject="Allow stanza-* commands to be run remotely.">
+                            <github-pull-request id="1326"/>
+                        </commit>
+                        <commit subject="Improve info command fault tolerance.">
+                            <github-pull-request id="1342"/>
+                        </commit>
+                        <commit subject="Improve archive-push command fault tolerance.">
+                            <github-pull-request id="1343"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
@@ -84,6 +116,10 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="631"/>
+                        <github-issue id="743"/>
+                        <github-pull-request id="1320"/>
+
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
@@ -92,6 +128,8 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1298"/>
+
                         <release-item-contributor-list>
                             <release-item-ideator id="hans.jurgen.schonig"/>
                             <release-item-contributor id="david.steele"/>
@@ -105,6 +143,9 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="986"/>
+                        <github-pull-request id="1307"/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="stefan.fercot"/>
                             <release-item-reviewer id="cynthia.shang"/>
@@ -114,6 +155,9 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1340"/>
+                        <github-pull-request id="1341"/>
+
                         <release-item-contributor-list>
                             <release-item-ideator id="brian.p.bockelman"/>
                             <release-item-contributor id="david.steele"/>
@@ -124,6 +168,8 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1321"/>
+
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
@@ -132,6 +178,10 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1251"/>
+                        <github-issue id="1293"/>
+                        <github-pull-request id="1255"/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="michael.schout"/>
                             <release-item-reviewer id="david.steele"/>
@@ -141,6 +191,9 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1319"/>
+                        <github-pull-request id="1328"/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
@@ -153,6 +206,8 @@
 
                 <release-development-list>
                     <release-item>
+                        <github-pull-request id="1332"/>
+
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
@@ -161,6 +216,8 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1318"/>
+
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
@@ -173,6 +230,9 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="796"/>
+                        <github-pull-request id="1329"/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
@@ -183,6 +243,9 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1319"/>
+                        <github-pull-request id="1327"/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
@@ -193,6 +256,9 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1242"/>
+                        <github-pull-request id="1346"/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                             <release-item-reviewer id="david.steele"/>
@@ -202,6 +268,9 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="871"/>
+                        <github-pull-request id="1347"/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
                             <release-item-reviewer id="david.steele"/>
