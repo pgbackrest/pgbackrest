@@ -230,8 +230,7 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
-                        <github-issue id="796"/>
-                        <github-pull-request id="1329"/>
+                        <github-pull-request id="1353"/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="cynthia.shang"/>
@@ -242,6 +241,9 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="796"/>
+                        <github-pull-request id="1329"/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
