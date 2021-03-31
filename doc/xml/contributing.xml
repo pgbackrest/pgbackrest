@@ -120,75 +120,9 @@
         </execute-list>
     </section>
 
-    <section id="running">
-        <title>Running Tests</title>
-
-        <section id="without-docker">
-            <title>Without Docker</title>
-
-            <p>If <proper>Docker</proper> is not installed, then the available tests can be listed using <setting>--vm-none</setting>.</p>
-
-            <execute-list host="{[host-contrib]}">
-                <title>List tests that don't require a container</title>
-
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl --vm=none --dry-run</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                    <exe-highlight>[0-9]+ tests selected|DRY RUN COMPLETED SUCCESSFULLY</exe-highlight>
-                </execute>
-            </execute-list>
-
-            <p>Once a test has been selected it can be run by specifying the module and test.  The <setting>--dev</setting> option sets several flags that are appropriate for development rather than test.  Most importantly, it reuses object files from the previous test run to speed testing.  The <setting>--vm-out</setting> option displays the test output.</p>
-
-            <execute-list host="{[host-contrib]}">
-                <title>Run a test</title>
-
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                </execute>
-            </execute-list>
-
-            <p>An entire module can be run by using only the <setting>--module</setting> option.</p>
-
-            <execute-list host="{[host-contrib]}">
-                <title>Run a module</title>
-
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --module=postgres</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                </execute>
-            </execute-list>
-        </section>
-
-        <section id="with-docker" depend="/environment">
-            <title>With Docker</title>
-
-            <p>Build a container to run tests.  The vm must be pre-configured but a variety are available.  The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
-
-            <execute-list host="{[host-contrib]}">
-                <title>Build a VM</title>
-
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u18</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                </execute>
-            </execute-list>
-
-            <execute-list host="{[host-contrib]}">
-                <title>Run a Test</title>
-
-                <execute output="y">
-                    <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u18 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
-                    <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
-                </execute>
-            </execute-list>
-        </section>
-    </section>
-<!-- CSHANG The above Running Tests should probably be folded in here - better flow. -->
     <section id="testing">
         <title>Testing</title>
-<!-- CSHANG the test/README.md file doesn't exist anymore. Do we need to mention Vagrant? WAIT, yes, the section above under With Docker mentions a VM - oh, no that was in reference to vm option (although it just says "The vm"  -->
+<!-- CSHANG the test/README.md file doesn't exist anymore. Do we need to mention Vagrant? WAIT, yes, the section below under With Docker mentions a VM - oh, no that was in reference to vm option (although it just says "The vm must be pre-configured but a variety are available." which I at first thought was a reference to Vagrant)  -->
 <!-- CSHANG We should say something about building and testing the docs - which should be covered in the readme of the doc directory so should reference that. -->
         <p>For testing, it is recommended that Vagrant and Docker be used; instructions are provided in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/test">test</link> directory. A list of all possible test combinations can be viewed by running:</p>
         <code-block>
@@ -196,22 +130,111 @@
         </code-block>
 <!-- CSHANG the BACKREST_USER doesn't even exist so can we just remove this statement? -->
         <admonition type="warning">currently the <id>BACKREST_USER</id> in <file>ContainerTest.pm</file> must exist, or the test suite will fail with a string concatenation error.</admonition>
-
+<!-- CSHANG Are these paragraphs even relevant any more? -->
         <p>If using a RHEL system, the CPAN XML parser is required for running <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docs need only be run for HTML output.</p>
-
+<!-- Do we really need to state this? Aren't the auto generated files run automatically now? -->
         <p>While some files are automatically generated during <code>make</code>, others are generated by running the test harness as follows:</p>
 
         <code-block>
             pgbackrest/test/test.pl --gen-only
         </code-block>
 
-        <p>Prior to any submission, the html version of the documentation should also be run.</p>
+        <p>Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under <code>pgbackrest/doc/output/html</code></p>
 
         <code-block>
             pgbackrest/doc/doc.pl --out=html
         </code-block>
 
         <admonition type="note"><code>ERROR: [028]</code> regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.</admonition>
+
+        <section id="running">
+            <title>Running Tests</title>
+
+            <p>Examples of test runs are provided in the following sections. There are several important options for running a test:</p>
+            <list>
+                <list-item><setting>--dry-run</setting> - without any other otpions, this will list all the available tests</list-item>
+                <list-item><setting>--module</setting> - identifies the module in which the test is located</list-item>
+                <list-item><setting>--test</setting> - the actual test set to be run</list-item>
+                <list-item><setting>--run</setting> - a number identifying the run within a test if testing a single run rather than the entire test</list-item>
+<!-- CSHANG what do you meant by "rather than test". I'd like to reword this to
+"sets several flags that are appropriate for development, most importantly, it reuses object files from the previous test run to speed testing"
+-->
+                <list-item><setting>--dev</setting> - sets several flags that are appropriate for development rather than test.  Most importantly, it reuses object files from the previous test run to speed testing.</list-item>
+                <list-item><setting>--vm-out</setting> - displays the test output</list-item>
+                <list-item><setting>--vm</setting> - identifies the pre-build virtual machine when using Docker, otherwise the setting should be <code>none</code></list-item>
+            </list>
+
+            <p>For more options, run the test or documentation engine with the <setting>--help</setting> option:</p>
+
+            <code-block>
+                pgbackrest/test/test.pl --help
+                pgbackrest/doc/doc.pl --help
+            </code-block>
+
+            <section id="without-docker">
+                <title>Without Docker</title>
+
+                <p>If <proper>Docker</proper> is not installed, then the available tests can be listed using <setting>--vm=none</setting>, and each test must then be run with <setting>--vm=none</setting>.</p>
+
+                <execute-list host="{[host-contrib]}">
+                    <title>List tests that don't require a container</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl --vm=none --dry-run</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                        <exe-highlight>[0-9]+ tests selected|DRY RUN COMPLETED SUCCESSFULLY</exe-highlight>
+                    </execute>
+                </execute-list>
+<!-- CSHANG This paragraph needs to be outside this since it is relevant with or without Docker, so I've incorporated it above
+                <p>Once a test has been selected it can be run by specifying the module and test.  The <setting>{[dash]}-dev</setting> option sets several flags that are appropriate for development rather than test.  Most importantly, it reuses object files from the previous test run to speed testing.  The <setting>{[dash]}-vm-out</setting> option displays the test output.</p>
+-->
+                <execute-list host="{[host-contrib]}">
+                    <title>Run a test</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+
+                <p>An entire module can be run by using only the <setting>--module</setting> option.</p>
+
+                <execute-list host="{[host-contrib]}">
+                    <title>Run a module</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl --vm=none --dev --module=postgres</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+            </section>
+
+            <section id="with-docker" depend="/environment">
+                <title>With Docker</title>
+
+                <p>Build a container to run tests.  The vm must be pre-configured but a variety are available.  The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
+
+                <execute-list host="{[host-contrib]}">
+                    <title>Build a VM</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl --vm-build --vm=u18</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+
+                <admonition type="note">to build all the vms, just omit the <setting>--vm</setting> option above.</admonition>
+
+                <execute-list host="{[host-contrib]}">
+                    <title>Run a Specific Test Run</title>
+
+                    <execute output="y">
+                        <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u18 {[dash]}-dev {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
+                        <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
+                    </execute>
+                </execute-list>
+            </section>
+        </section>
 
         <section id="unit-test">
             <title>Writing a Unit Test</title>
