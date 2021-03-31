@@ -164,7 +164,7 @@
 <!ELEMENT release-improvement-list (release-item+)>
 <!ELEMENT release-development-list (release-item+)>
 
-<!ELEMENT release-item (commit*, release-item-contributor-list?, p+)>
+<!ELEMENT release-item (((github-issue*, github-pull-request*)|commit*), release-item-contributor-list?, p+)>
 
 <!ELEMENT release-item-contributor-list (release-item-ideator*, release-item-contributor*, release-item-reviewer*)>
 
@@ -175,7 +175,13 @@
 <!ELEMENT release-item-reviewer (#PCDATA)>
     <!ATTLIST release-item-reviewer id CDATA #REQUIRED>
 
-<!ELEMENT commit EMPTY>
+<!ELEMENT github-issue EMPTY>
+    <!ATTLIST github-issue id CDATA #REQUIRED>
+
+<!ELEMENT github-pull-request EMPTY>
+    <!ATTLIST github-pull-request id CDATA #REQUIRED>
+
+<!ELEMENT commit (github-issue*, github-pull-request*)>
     <!ATTLIST commit type CDATA "">
     <!ATTLIST commit id CDATA "">
     <!ATTLIST commit subject CDATA #REQUIRED>
