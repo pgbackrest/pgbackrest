@@ -19,15 +19,9 @@
 <!ELEMENT command-list (text?, command+)>
     <!ATTLIST command-list title CDATA #REQUIRED>
 
-<!ELEMENT command (summary, text, option-list?, command-example-list)>
+<!ELEMENT command (summary, text, option-list?)>
     <!ATTLIST command id CDATA #REQUIRED>
     <!ATTLIST command name CDATA #REQUIRED>
-
-<!ELEMENT command-example-list (text?, command-example+)>
-    <!ATTLIST command-example-list title CDATA "Examples">
-
-<!ELEMENT command-example (text)>
-    <!ATTLIST command-example title CDATA "Example">
 
 <!ELEMENT option-list (option+)>
 

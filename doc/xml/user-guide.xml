@@ -1092,7 +1092,7 @@
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             </postgres-config>
 
-            <p>Setting <pg-option>wal_level</pg-option> to at least <pg-setting>{[wal-level]}</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
+            <p><id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived. Setting <pg-option>wal_level</pg-option> to at least <pg-setting>{[wal-level]}</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
 
             <p>The <postgres/> cluster must be restarted after making these changes and before performing a backup.</p>
 
@@ -1344,7 +1344,7 @@
     <section id="backup" depend="/quickstart/create-stanza">
         <title>Backup</title>
 
-        <p>The Backup section introduces additional <cmd>backup</cmd> command features.</p>
+        <p>The Backup section introduces additional <cmd>backup</cmd> command features not covered in the <link section="/quickstart/perform-backup">Quick Start - Perform a Backup</link> section.</p>
 
         <!-- SECTION => BACKUP - START-FAST -->
         <section id="option-start-fast">
@@ -2014,7 +2014,7 @@
             </execute>
         </execute-list>
 
-        <p><backrest/> has automatically generated the recovery settings in <file>{[pg-recovery-file-demo]}</file> so <postgres/> can be started immediately. Once <postgres/> has finished recovery the table will exist again and can be queried.</p>
+        <p><backrest/> has automatically generated the recovery settings in <file>{[pg-recovery-file-demo]}</file> so <postgres/> can be started immediately. <id>%f</id> is how <postgres/> specifies the WAL segment it needs and <id>%p</id> is the location where it should be copied. Once <postgres/> has finished recovery the table will exist again and can be queried.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Start <postgres/> and check that the important table exists</title>
