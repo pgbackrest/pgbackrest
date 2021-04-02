@@ -52,7 +52,7 @@
     <section id="environment">
         <title>Building a Development Environment</title>
 
-        <p>This example is based on <proper>Ubuntu 18.04</proper>, but it should work on many versions of <proper>Debian</proper> and <proper>Ubuntu</proper>.</p>
+        <p>This example is based on <proper>Ubuntu 18.04</proper>, but it should work on many versions of <proper>Debian</proper> and <proper>Ubuntu</proper>. CSHANG - SAY SOMETHING LIKE: A vagrant file is provided in the test directory as an example of running in a virtual environment -- SEE THE OLD README</p>
 
         <host-add id="{[host-contrib-id]}" name="{[host-contrib]}" user="{[host-contrib-user]}" image="{[host-contrib-image]}" os="u18" option="-v /var/run/docker.sock:/var/run/docker.sock -v {[cwd]}/test:{[cwd]}/test" mount="/home/{[host-contrib-user]}/pgbackrest:/home/{[host-contrib-user]}/pgbackrest"/>
 
@@ -124,7 +124,7 @@
         <title>Testing</title>
 <!-- CSHANG the test/README.md file doesn't exist anymore. Do we need to mention Vagrant? WAIT, yes, the section below under With Docker mentions a VM - oh, no that was in reference to vm option (although it just says "The vm must be pre-configured but a variety are available." which I at first thought was a reference to Vagrant)  -->
 <!-- CSHANG We should say something about building and testing the docs - which should be covered in the readme of the doc directory so should reference that. -->
-        <p>For testing, it is recommended that Vagrant and Docker be used; instructions are provided in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/test">test</link> directory. A list of all possible test combinations can be viewed by running:</p>
+        <p>A list of all possible test combinations can be viewed by running:</p>
         <code-block>
             pgbackrest/test/test.pl --dry-run
         </code-block>
