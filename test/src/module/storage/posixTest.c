@@ -200,7 +200,7 @@ testRun(void)
 
         TEST_ERROR(
             storageInfoP(storageTest, STRDEF("/etc"), .ignoreMissing = true), AssertError,
-            hrnReplaceKey("absolute path '/etc' is not in base path '{[path]}'"));
+            "absolute path '/etc' is not in base path '{[path]}'");
         TEST_RESULT_BOOL(
             storageInfoP(storageTest, STRDEF("/etc"), .ignoreMissing = true, .noPathEnforce = true).exists, true,
             "path not enforced");

@@ -1122,7 +1122,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, pgCatalogTestVersion(PG_VERSION_94), false, false, NULL, NULL),
-            LinkDestinationError, hrnReplaceKey("link 'link' destination '{[path]}/pg/base' is in PGDATA"));
+            LinkDestinationError, "link 'link' destination '{[path]}/pg/base' is in PGDATA");
 
         THROW_ON_SYS_ERROR(
             unlink(strZ(strNewFmt("%s/pg/link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
@@ -1158,7 +1158,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, pgCatalogTestVersion(PG_VERSION_94), false, true, NULL, NULL), FileOpenError,
-            hrnReplaceKey("unable to get info for missing path/file '{[path]}/pg/link-to-link': [2] No such file or directory"));
+            "unable to get info for missing path/file '{[path]}/pg/link-to-link': [2] No such file or directory");
 
         THROW_ON_SYS_ERROR(
             unlink(strZ(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");

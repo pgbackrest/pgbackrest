@@ -106,7 +106,7 @@ testRun(void)
 
         TEST_ERROR(
             storageInfoP(storageRemote, strNew(BOGUS_STR)), FileOpenError,
-            hrnReplaceKey("unable to get info for missing path/file '{[path]}/repo/BOGUS'"));
+            "unable to get info for missing path/file '{[path]}/repo/BOGUS'");
         TEST_RESULT_BOOL(storageInfoP(storageRemote, strNew(BOGUS_STR), .ignoreMissing = true).exists, false, "missing file/path");
 
         // -------------------------------------------------------------------------------------------------------------------------
