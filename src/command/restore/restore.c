@@ -2209,7 +2209,7 @@ cmdRestore(void)
         restoreManifestMap(jobData.manifest);
 
         // Check that links are sane
-        manifestLinkCheck(jobData.manifest);
+        manifestLinkCheck(jobData.manifest, UINT_MAX);
 
         // Update ownership
         restoreManifestOwner(jobData.manifest);
