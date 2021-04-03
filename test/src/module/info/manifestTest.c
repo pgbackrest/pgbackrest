@@ -1932,12 +1932,12 @@ testRun(void)
             "relative path link target path");
 
         // Link check
-        TEST_RESULT_VOID(manifestLinkCheck(manifest, UINT_MAX), "successful link check");
+        TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
         manifestTargetAdd(
             manifest, &(ManifestTarget){
                .name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/base-2")});
         TEST_ERROR(
-            manifestLinkCheck(manifest, UINT_MAX), LinkDestinationError,
+            manifestLinkCheck(manifest), LinkDestinationError,
             "link 'base/2' (/pg/base-1/base-2) destination is a subdirectory of or the same directory as"
                 " link 'base/1' (/pg/base-1)");
         manifestTargetRemove(manifest, STRDEF("pg_data/base/2"));
@@ -1948,7 +1948,7 @@ testRun(void)
         manifestTargetAdd(
             manifest, &(ManifestTarget){
                .name = STRDEF("pg_data/test.sh"), .type = manifestTargetTypeLink, .path = STRDEF(".."), .file = STRDEF("test.sh")});
-        TEST_RESULT_VOID(manifestLinkCheck(manifest, UINT_MAX), "successful link check");
+        TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
         manifestTargetRemove(manifest, STRDEF("pg_data/test.sh"));
 
         // ManifestFile getters
