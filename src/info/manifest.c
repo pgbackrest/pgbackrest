@@ -409,15 +409,10 @@ typedef struct ManifestLinkCheck
 
 // Helper to initialize the link data
 static ManifestLinkCheck
-manifestLinkCheckInit(const Manifest *this)
+manifestLinkCheckInit(void)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-    FUNCTION_TEST_END();
-
-    ManifestLinkCheck result = {.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)};
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN((ManifestLinkCheck){.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)});
 }
 
 // Helper to check a single link specified by targetIdx
@@ -531,7 +526,7 @@ manifestLinkCheck(const Manifest *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check all links
-        ManifestLinkCheck linkCheck = manifestLinkCheckInit(this);
+        ManifestLinkCheck linkCheck = manifestLinkCheckInit();
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(this); targetIdx++)
             manifestLinkCheckOne(this, &linkCheck, targetIdx);
@@ -1043,7 +1038,7 @@ manifestNewBuild(
                 .online = online,
                 .checksumPage = checksumPage,
                 .tablespaceList = tablespaceList,
-                .linkCheck = manifestLinkCheckInit(this),
+                .linkCheck = manifestLinkCheckInit(),
                 .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
                 .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
                 .pgPath = storagePathP(storagePg, NULL),
