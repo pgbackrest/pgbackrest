@@ -393,23 +393,46 @@ manifestNewInternal(void)
 }
 
 /**********************************************************************************************************************************/
+// Data needed in link list
+typedef struct ManifestLinkCheckItem
+{
+    const String *path;                                             // Link destination path terminated with /
+    unsigned int targetIdx;                                         // Index of target used for error messages
+} ManifestLinkCheckItem;
+
+// Persistent data needed during processing of manifestLinkCheck/One()
 typedef struct ManifestLinkCheck
 {
-    const String *path;
-    unsigned int targetIdx;
+    const String *basePath;                                         // Base data path (initialized on first call)
+    List *linkList;                                                 // Current list of link destination paths
 } ManifestLinkCheck;
 
+// Helper to initialize the link data
+static ManifestLinkCheck
+manifestLinkCheckInit(const Manifest *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+    FUNCTION_TEST_END();
+
+    ManifestLinkCheck result = {.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)};
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+// Helper to check a single link specified by targetIdx
 static void
-manifestLinkCheckOne(const Manifest *this, List *linkList, unsigned int targetIdx)
+manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigned int targetIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(MANIFEST, this);
-        FUNCTION_LOG_PARAM(LIST, linkList);
+        FUNCTION_LOG_PARAM_P(VOID, linkCheck);
         FUNCTION_LOG_PARAM(UINT, targetIdx);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(linkList != NULL);
+    ASSERT(linkCheck != NULL);
+    ASSERT(linkCheck->linkList != NULL);
     ASSERT(targetIdx < manifestTargetTotal(this));
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -418,19 +441,25 @@ manifestLinkCheckOne(const Manifest *this, List *linkList, unsigned int targetId
 
         if (target1->type == manifestTargetTypeLink)
         {
+            // Create link destination path for comparison with other paths. It must end in / so subpaths can be detected without
+            // matching valid partial path names at the end of the path.
             const String *path = NULL;
 
-            MEM_CONTEXT_BEGIN(lstMemContext(linkList))
+            MEM_CONTEXT_BEGIN(lstMemContext(linkCheck->linkList))
             {
                 path = strNewFmt("%s/", strZ(manifestTargetPath(this, target1)));
+
+                // Get base bath
+                if (linkCheck->basePath == NULL)
+                {
+                    linkCheck->basePath = strNewFmt(
+                        "%s/", strZ(manifestTargetPath(this, manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR))));
+                }
             }
             MEM_CONTEXT_END();
 
             // Check that link destination is not in base data path
-            const String *const basePath = strNewFmt(
-                "%s/", strZ(manifestTargetPath(this, manifestTargetFind(this, MANIFEST_TARGET_PGDATA_STR))));
-
-            if (strBeginsWith(path, basePath))
+            if (strBeginsWith(path, linkCheck->basePath))
             {
                 THROW_FMT(
                     LinkDestinationError,
@@ -439,7 +468,7 @@ manifestLinkCheckOne(const Manifest *this, List *linkList, unsigned int targetId
             }
 
             // Check if the link destination path already exists
-            const ManifestLinkCheck *const link = lstFind(linkList, &path);
+            const ManifestLinkCheckItem *const link = lstFind(linkCheck->linkList, &path);
 
             if (link != NULL)
             {
@@ -459,17 +488,17 @@ manifestLinkCheckOne(const Manifest *this, List *linkList, unsigned int targetId
             else
             {
                 // Add the link destination path and sort
-                lstAdd(linkList, &(ManifestLinkCheck){.path = path, .targetIdx = targetIdx});
-                lstSort(linkList, sortOrderAsc);
+                lstAdd(linkCheck->linkList, &(ManifestLinkCheckItem){.path = path, .targetIdx = targetIdx});
+                lstSort(linkCheck->linkList, sortOrderAsc);
 
                 // Find the path in the sorted list
-                unsigned int linkIdx = lstFindIdx(linkList, &path);
+                unsigned int linkIdx = lstFindIdx(linkCheck->linkList, &path);
                 ASSERT(linkIdx != LIST_NOT_FOUND);
 
                 // Check the prior path to ensure it is not a subpath
                 if (linkIdx > 0)
                 {
-                    const ManifestLinkCheck *const link2 = lstGet(linkList, linkIdx - 1);
+                    const ManifestLinkCheckItem *const link2 = lstGet(linkCheck->linkList, linkIdx - 1);
 
                     if (strBeginsWith(path, link2->path))
                     {
@@ -502,10 +531,10 @@ manifestLinkCheck(const Manifest *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check all links
-        List *linkList = lstNewP(sizeof(ManifestLinkCheck), .comparator = lstComparatorStr);
+        ManifestLinkCheck linkCheck = manifestLinkCheckInit(this);
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(this); targetIdx++)
-            manifestLinkCheckOne(this, linkList, targetIdx);
+            manifestLinkCheckOne(this, &linkCheck, targetIdx);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -525,7 +554,7 @@ typedef struct ManifestBuildData
     RegExp *tempRelationExp;                                        // Identify temp relations
     RegExp *standbyExp;                                             // Identify files that must be copied from the primary
     const VariantList *tablespaceList;                              // List of tablespaces in the database
-    List *linkList;                                                 // List of links found during build (used for prefix check)
+    ManifestLinkCheck linkCheck;                                    // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
 
@@ -948,7 +977,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             manifestLinkAdd(buildData.manifest, &link);
 
             // Make sure the link is valid
-            manifestLinkCheckOne(buildData.manifest, buildData.linkList, manifestTargetTotal(buildData.manifest) - 1);
+            manifestLinkCheckOne(buildData.manifest, &buildData.linkCheck, manifestTargetTotal(buildData.manifest) - 1);
 
             // If the link check was successful but the destination does not exist then check it again to generate an error
             if (!linkedInfo.exists)
@@ -1014,7 +1043,7 @@ manifestNewBuild(
                 .online = online,
                 .checksumPage = checksumPage,
                 .tablespaceList = tablespaceList,
-                .linkList = lstNewP(sizeof(ManifestLinkCheck), .comparator = lstComparatorStr),
+                .linkCheck = manifestLinkCheckInit(this),
                 .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
                 .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
                 .pgPath = storagePathP(storagePg, NULL),
