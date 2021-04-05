@@ -1,7 +1,7 @@
 # Initialize configuration
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.33])
+AC_INIT([pgBackRest], [2.34dev])
 AC_CONFIG_SRCDIR([version.h])
 AC_CONFIG_AUX_DIR(build)
 
