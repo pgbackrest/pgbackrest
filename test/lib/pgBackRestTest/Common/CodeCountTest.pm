@@ -64,7 +64,7 @@ sub codeCountScan
                  $strFile =~ '^test/expect/' ||
                  $strFile =~ '^test/patch/' ||
                  $strFile =~ '^test/result/' ||
-                 $strFile eq 'test/scratch.txt' ||
+                 $strFile =~ '^test/scratch' ||
                  $strFile =~ '^test/src/valgrind\.suppress\.' ||
                  $strFile eq 'test/src/lcov.conf');
 
