@@ -12,7 +12,7 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.33dev" title="UNDER DEVELOPMENT">
+        <release date="2021-05-05" version="2.33" title="Multi-Repository and GCS Support">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
