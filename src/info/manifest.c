@@ -435,6 +435,7 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
     {
         const ManifestTarget *target1 = manifestTarget(this, targetIdx);
 
+        // Only check link targets
         if (target1->type == manifestTargetTypeLink)
         {
             // Create link destination path for comparison with other paths. It must end in / so subpaths can be detected without
@@ -523,7 +524,7 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
                             strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
                     }
 
-                    // Stop once the first prior path link has been checked since it must be the parent if there is one
+                    // Stop once the first prior path link has been checked since it must be the parent (if there is one)
                     if (priorLink->file == NULL)
                         break;
                 }
