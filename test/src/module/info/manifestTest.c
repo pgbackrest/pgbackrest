@@ -1957,13 +1957,40 @@ testRun(void)
         manifestTargetRemove(manifest, STRDEF("pg_data/base/2"));
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on file link in linked path");
+
+        manifestTargetAdd(
+            manifest,
+            &(ManifestTarget){
+                .name = STRDEF("pg_data/base/1/file"), .type = manifestTargetTypeLink, .path = STRDEF("../../../base-1"),
+                .file = STRDEF("file")});
+        TEST_ERROR(
+            manifestLinkCheck(manifest), LinkDestinationError,
+            "link 'base/1/file' (/pg/base-1) destination is the same directory as link 'base/1' (/pg/base-1)");
+        manifestTargetRemove(manifest, STRDEF("pg_data/base/1/file"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check that a file link in the parent path of a path link does not conflict");
 
         manifestTargetAdd(
             manifest, &(ManifestTarget){
                .name = STRDEF("pg_data/test.sh"), .type = manifestTargetTypeLink, .path = STRDEF(".."), .file = STRDEF("test.sh")});
         TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on two file links with the same name");
+
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+               .name = STRDEF("pg_data/test2.sh"), .type = manifestTargetTypeLink, .path = STRDEF(".."),
+               .file = STRDEF("test.sh")});
+
+        TEST_ERROR(
+            manifestLinkCheck(manifest), LinkDestinationError,
+            "link 'test2.sh' (/pg/test.sh) destination is the same file as link 'test.sh' (/pg/test.sh)");
+
         manifestTargetRemove(manifest, STRDEF("pg_data/test.sh"));
+        manifestTargetRemove(manifest, STRDEF("pg_data/test2.sh"));
 
         // ManifestFile getters
         const ManifestFile *file = NULL;

@@ -397,6 +397,7 @@ manifestNewInternal(void)
 typedef struct ManifestLinkCheckItem
 {
     const String *path;                                             // Link destination path terminated with /
+    const String *file;                                             // Link file if a file link
     unsigned int targetIdx;                                         // Index of target used for error messages
 } ManifestLinkCheckItem;
 
@@ -467,8 +468,22 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
 
             if (link != NULL)
             {
-                // Only error if the target is not a file link
-                if (target1->file == NULL)
+                // If both links are files make sure they don't link to the same file
+                if (target1->file != NULL && link->file != NULL)
+                {
+                    if (strEq(target1->file, link->file))
+                    {
+                        const ManifestTarget *const target2 = manifestTarget(this, link->targetIdx);
+
+                        THROW_FMT(
+                            LinkDestinationError,
+                            "link '%s' (%s/%s) destination is the same file as link '%s' (%s/%s)",
+                            strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)), strZ(target1->file),
+                            strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)), strZ(target2->file));
+                    }
+                }
+                // Else error because one of the links is a path and cannot link to the same path as another file/path link
+                else
                 {
                     const ManifestTarget *const target2 = manifestTarget(this, link->targetIdx);
 
@@ -479,25 +494,27 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
                         strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
                 }
             }
-            // Else add it
+            // Else add to the link list and check against other links
             else
             {
                 // Add the link destination path and sort
-                lstAdd(linkCheck->linkList, &(ManifestLinkCheckItem){.path = path, .targetIdx = targetIdx});
+                lstAdd(linkCheck->linkList, &(ManifestLinkCheckItem){.path = path, .file = target1->file, .targetIdx = targetIdx});
                 lstSort(linkCheck->linkList, sortOrderAsc);
 
                 // Find the path in the sorted list
                 unsigned int linkIdx = lstFindIdx(linkCheck->linkList, &path);
                 ASSERT(linkIdx != LIST_NOT_FOUND);
 
-                // Check the prior path to ensure it is not a subpath
-                if (linkIdx > 0)
+                // Check the link destination path to be sure it is not a subpath of a prior link destination path. Skip file
+                // links since they are allowed to be in the same path with each other and in the parent path of a linked
+                // destination path.
+                for (unsigned int priorLinkIdx = linkIdx - 1; priorLinkIdx < linkIdx; priorLinkIdx--)
                 {
-                    const ManifestLinkCheckItem *const link2 = lstGet(linkCheck->linkList, linkIdx - 1);
+                    const ManifestLinkCheckItem *const priorLink = lstGet(linkCheck->linkList, priorLinkIdx);
 
-                    if (strBeginsWith(path, link2->path))
+                    if (strBeginsWith(path, priorLink->path))
                     {
-                        const ManifestTarget *const target2 = manifestTarget(this, link2->targetIdx);
+                        const ManifestTarget *const target2 = manifestTarget(this, priorLink->targetIdx);
 
                         THROW_FMT(
                             LinkDestinationError,
@@ -505,6 +522,10 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
                             strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)),
                             strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
                     }
+
+                    // Stop once the first prior path link has been checked since it must be the parent if there is one
+                    if (priorLink->file == NULL)
+                        break;
                 }
             }
         }
