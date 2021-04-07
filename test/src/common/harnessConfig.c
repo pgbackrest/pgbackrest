@@ -72,7 +72,7 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
 
     // Set job retry to 0 if it is valid
     if (cfgParseOptionValid(commandId, commandRoleId, cfgOptJobRetry))
-        strLstInsertZ(argList, 0, "--" CFGOPT_JOB_RETRY "=0");
+        strLstInsert(argList, 0, STRDEF("--" CFGOPT_JOB_RETRY "=0"));
 
     // Set log path if valid
     if (cfgParseOptionValid(commandId, commandRoleId, cfgOptLogPath))

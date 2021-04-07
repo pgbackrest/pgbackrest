@@ -17,9 +17,9 @@ Object type
 ***********************************************************************************************************************************/
 struct List
 {
+    ListPub pub;                                                    // Publicly accessible variables
     MemContext *memContext;
     size_t itemSize;
-    unsigned int listSize;
     unsigned int listSizeMax;
     SortOrder sortOrder;
     unsigned char *listAlloc;                                       // Pointer to memory allocated for the list
@@ -60,21 +60,6 @@ lstNew(size_t itemSize, ListParam param)
 }
 
 /**********************************************************************************************************************************/
-void *
-lstAdd(List *this, const void *item)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-        FUNCTION_TEST_PARAM_P(VOID, item);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(item != NULL);
-
-    FUNCTION_TEST_RETURN(lstInsert(this, lstSize(this), item));
-}
-
-/**********************************************************************************************************************************/
 List *
 lstClear(List *this)
 {
@@ -92,7 +77,7 @@ lstClear(List *this)
         }
         MEM_CONTEXT_END();
 
-        this->listSize = 0;
+        this->pub.listSize = 0;
         this->listSizeMax = 0;
     }
 
@@ -137,8 +122,8 @@ lstGet(const List *this, unsigned int listIdx)
     ASSERT(this != NULL);
 
     // Ensure list index is in range
-    if (listIdx >= this->listSize)
-        THROW_FMT(AssertError, "cannot get index %u from list with %u value(s)", listIdx, this->listSize);
+    if (listIdx >= lstSize(this))
+        THROW_FMT(AssertError, "cannot get index %u from list with %u value(s)", listIdx, lstSize(this));
 
     // Return pointer to list item
     FUNCTION_TEST_RETURN(this->list + (listIdx * this->itemSize));
@@ -154,26 +139,11 @@ lstGetLast(const List *this)
     ASSERT(this != NULL);
 
     // Ensure there are items in the list
-    if (this->listSize == 0)
+    if (lstSize(this) == 0)
         THROW(AssertError, "cannot get last from list with no values");
 
     // Return pointer to list item
-    FUNCTION_TEST_RETURN(lstGet(this, this->listSize - 1));
-}
-
-/**********************************************************************************************************************************/
-bool
-lstExists(const List *this, const void *item)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-        FUNCTION_TEST_PARAM_P(VOID, item);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(item != NULL);
-
-    FUNCTION_TEST_RETURN(lstFind(this, item) != NULL);
+    FUNCTION_TEST_RETURN(lstGet(this, lstSize(this) - 1));
 }
 
 /**********************************************************************************************************************************/
@@ -190,13 +160,13 @@ lstFind(const List *this, const void *item)
     ASSERT(item != NULL);
 
     if (this->sortOrder == sortOrderAsc)
-        FUNCTION_TEST_RETURN(bsearch(item, this->list, this->listSize, this->itemSize, this->comparator));
+        FUNCTION_TEST_RETURN(bsearch(item, this->list, lstSize(this), this->itemSize, this->comparator));
     else if (this->sortOrder == sortOrderDesc)
     {
         // Assign the list for the descending comparator to use
         comparatorDescList = this;
 
-        FUNCTION_TEST_RETURN(bsearch(item, this->list, this->listSize, this->itemSize, lstComparatorDesc));
+        FUNCTION_TEST_RETURN(bsearch(item, this->list, lstSize(this), this->itemSize, lstComparatorDesc));
     }
 
     // Fall back on an iterative search
@@ -260,7 +230,7 @@ lstIdx(const List *this, const void *item)
     size_t result = (size_t)((unsigned char * const)item - this->list) / this->itemSize;
 
     // Item pointers should always be in range
-    ASSERT(result < this->listSize);
+    ASSERT(result < lstSize(this));
 
     FUNCTION_TEST_RETURN((unsigned int)result);
 }
@@ -279,7 +249,7 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     ASSERT(item != NULL);
 
     // If list size = max then allocate more space
-    if (this->listSize == this->listSizeMax)
+    if (lstSize(this) == this->listSizeMax)
     {
         MEM_CONTEXT_BEGIN(this->memContext)
         {
@@ -303,9 +273,9 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     // Else if there is space before the beginning of the list then move the list down
     else if (
         (this->list != this->listAlloc) &&
-        (this->listSize + ((uintptr_t)(this->list - this->listAlloc) / this->itemSize) == this->listSizeMax))
+        (lstSize(this) + ((uintptr_t)(this->list - this->listAlloc) / this->itemSize) == this->listSizeMax))
     {
-        memmove(this->listAlloc, this->list, this->listSize * this->itemSize);
+        memmove(this->listAlloc, this->list, lstSize(this) * this->itemSize);
         this->list = this->listAlloc;
     }
 
@@ -319,7 +289,7 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     // Copy item into the list
     this->sortOrder = sortOrderNone;
     memcpy(itemPtr, item, this->itemSize);
-    this->listSize++;
+    this->pub.listSize++;
 
     FUNCTION_TEST_RETURN(itemPtr);
 }
@@ -337,7 +307,7 @@ lstRemoveIdx(List *this, unsigned int listIdx)
     ASSERT(listIdx <= lstSize(this));
 
     // Decrement the list size
-    this->listSize--;
+    this->pub.listSize--;
 
     // If this is the first item then move the list pointer up to avoid moving all the items
     if (listIdx == 0)
@@ -386,10 +356,10 @@ lstRemoveLast(List *this)
 
     ASSERT(this != NULL);
 
-    if (this->listSize == 0)
+    if (lstSize(this) == 0)
         THROW(AssertError, "cannot remove last from list with no values");
 
-    FUNCTION_TEST_RETURN(lstRemoveIdx(this, this->listSize - 1));
+    FUNCTION_TEST_RETURN(lstRemoveIdx(this, lstSize(this) - 1));
 }
 
 /**********************************************************************************************************************************/
@@ -403,19 +373,6 @@ lstMemContext(const List *this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(this->memContext);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-lstSize(const List *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->listSize);
 }
 
 /**********************************************************************************************************************************/
@@ -433,7 +390,7 @@ lstSort(List *this, SortOrder sortOrder)
     switch (sortOrder)
     {
         case sortOrderAsc:
-            qsort(this->list, this->listSize, this->itemSize, this->comparator);
+            qsort(this->list, lstSize(this), this->itemSize, this->comparator);
             break;
 
         case sortOrderDesc:
@@ -441,7 +398,7 @@ lstSort(List *this, SortOrder sortOrder)
             // Assign the list that will be sorted for the comparator function to use
             comparatorDescList = this;
 
-            qsort(this->list, this->listSize, this->itemSize, lstComparatorDesc);
+            qsort(this->list, lstSize(this), this->itemSize, lstComparatorDesc);
             break;
         }
 
@@ -475,5 +432,5 @@ lstComparatorSet(List *this, ListComparator *comparator)
 String *
 lstToLog(const List *this)
 {
-    return strNewFmt("{size: %u}", this->listSize);
+    return strNewFmt("{size: %u}", lstSize(this));
 }
