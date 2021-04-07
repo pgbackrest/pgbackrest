@@ -7,17 +7,16 @@ Storage Read Interface
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
-#include "storage/read.intern.h"
+#include "storage/read.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct StorageRead
 {
+    StorageReadPub pub;                                             // Publicly accessible variables
     MemContext *memContext;                                         // Object mem context
     void *driver;
-    const StorageReadInterface *interface;
-    IoRead *io;
 };
 
 OBJECT_DEFINE_MOVE(STORAGE_READ);
@@ -49,78 +48,16 @@ storageReadNew(void *driver, const StorageReadInterface *interface)
 
     *this = (StorageRead)
     {
+        .pub =
+        {
+            .interface = interface,
+            .io = ioReadNew(driver, interface->ioInterface),
+        },
         .memContext = memContextCurrent(),
         .driver = driver,
-        .interface = interface,
-        .io = ioReadNew(driver, interface->ioInterface),
     };
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
-}
-
-/**********************************************************************************************************************************/
-bool
-storageReadIgnoreMissing(const StorageRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->ignoreMissing);
-}
-
-/**********************************************************************************************************************************/
-const Variant *
-storageReadLimit(const StorageRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->limit);
-}
-
-/**********************************************************************************************************************************/
-IoRead *
-storageReadIo(const StorageRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->io);
-}
-
-/**********************************************************************************************************************************/
-const String *
-storageReadName(const StorageRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->name);
-}
-
-/**********************************************************************************************************************************/
-const String *
-storageReadType(const StorageRead *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->type);
 }
 
 /**********************************************************************************************************************************/
@@ -128,6 +65,6 @@ String *
 storageReadToLog(const StorageRead *this)
 {
     return strNewFmt(
-        "{type: %s, name: %s, ignoreMissing: %s}", strZ(this->interface->type), strZ(strToLog(this->interface->name)),
-        cvtBoolToConstZ(this->interface->ignoreMissing));
+        "{type: %s, name: %s, ignoreMissing: %s}", strZ(storageReadType(this)), strZ(strToLog(storageReadName(this))),
+        cvtBoolToConstZ(storageReadIgnoreMissing(this)));
 }

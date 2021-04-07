@@ -4,7 +4,7 @@ S3 Storage
 #ifndef STORAGE_S3_STORAGE_H
 #define STORAGE_S3_STORAGE_H
 
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type

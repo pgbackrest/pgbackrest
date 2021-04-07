@@ -350,7 +350,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storageTest, strNew("repo/test.txt")), contentBuf);
 
         // Disable protocol compression in the storage object to test no compression
-        ((StorageRemote *)storageRemote->driver)->compressLevel = 0;
+        ((StorageRemote *)storageDriver(storageRemote))->compressLevel = 0;
 
         StorageRead *fileRead = NULL;
 
@@ -370,7 +370,7 @@ testRun(void)
         TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "    check read size");
 
         // Enable protocol compression in the storage object
-        ((StorageRemote *)storageRemote->driver)->compressLevel = 3;
+        ((StorageRemote *)storageDriver(storageRemote))->compressLevel = 3;
 
         TEST_ASSIGN(
             fileRead, storageNewReadP(storageRemote, strNew("test.txt"), .compressible = true), "get file (protocol compress)");
@@ -490,7 +490,7 @@ testRun(void)
         ioBufferSizeSet(9999);
 
         // Disable protocol compression in the storage object to test no compression
-        ((StorageRemote *)storageRemote->driver)->compressLevel = 0;
+        ((StorageRemote *)storageDriver(storageRemote))->compressLevel = 0;
 
         StorageWrite *write = NULL;
         TEST_ASSIGN(write, storageNewWriteP(storageRemote, strNew("test.txt")), "new write file");
@@ -513,7 +513,7 @@ testRun(void)
             bufEq(storageGetP(storageNewReadP(storageRemote, strNew("test.txt"))), contentBuf), true, "check file");
 
         // Enable protocol compression in the storage object
-        ((StorageRemote *)storageRemote->driver)->compressLevel = 3;
+        ((StorageRemote *)storageDriver(storageRemote))->compressLevel = 3;
 
         // Write the file again, but this time free it before close and make sure the .tmp file is left
         // -------------------------------------------------------------------------------------------------------------------------
