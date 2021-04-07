@@ -18,9 +18,6 @@ Posix Storage Read
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
-#define STORAGE_READ_POSIX_TYPE                                     StorageReadPosix
-#define STORAGE_READ_POSIX_PREFIX                                   storageReadPosix
-
 typedef struct StorageReadPosix
 {
     MemContext *memContext;                                         // Object mem context
@@ -44,12 +41,22 @@ Macros for function logging
 /***********************************************************************************************************************************
 Close file descriptor
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_READ_POSIX, LOG, logLevelTrace)
+static void
+storageReadPosixFreeResource(THIS_VOID)
 {
+    THIS(StorageReadPosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_POSIX, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     if (this->fd != -1)
         THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file

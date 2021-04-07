@@ -43,14 +43,24 @@ OBJECT_DEFINE_FREE(DB);
 /***********************************************************************************************************************************
 Close protocol connection.  No need to close a locally created PgClient since it has its own destructor.
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(DB, LOG, logLevelTrace)
+static void
+dbFreeResource(THIS_VOID)
 {
+    THIS(Db);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE_STR);
     protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
 
     protocolClientExecute(this->remoteClient, command, false);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 Db *

@@ -23,9 +23,6 @@ STRING_EXTERN(ZST_DECOMPRESS_FILTER_TYPE_STR,                       ZST_DECOMPRE
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define ZST_DECOMPRESS_TYPE                                         ZstDecompress
-#define ZST_DECOMPRESS_PREFIX                                       zstDecompress
-
 typedef struct ZstDecompress
 {
     MemContext *memContext;                                         // Context to store data
@@ -57,11 +54,21 @@ zstDecompressToLog(const ZstDecompress *this)
 /***********************************************************************************************************************************
 Free decompression context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(ZST_DECOMPRESS, LOG, logLevelTrace)
+static void
+zstDecompressFreeResource(THIS_VOID)
 {
+    THIS(ZstDecompress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ZST_DECOMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     ZSTD_freeDStream(this->context);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Decompress data

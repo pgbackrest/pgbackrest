@@ -17,9 +17,6 @@ Socket Session
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define SOCKET_SESSION_TYPE                                         SocketSession
-#define SOCKET_SESSION_PREFIX                                       sckSession
-
 typedef struct SocketSession
 {
     MemContext *memContext;                                         // Mem context
@@ -52,11 +49,21 @@ sckSessionToLog(const THIS_VOID)
 /***********************************************************************************************************************************
 Free connection
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(SOCKET_SESSION, LOG, logLevelTrace)
+static void
+sckSessionFreeResource(THIS_VOID)
 {
+    THIS(SocketSession);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(SOCKET_SESSION, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     close(this->fd);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 static void

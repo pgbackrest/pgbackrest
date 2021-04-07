@@ -360,11 +360,21 @@ xmlNodeFree(XmlNode *this)
 /***********************************************************************************************************************************
 Free document
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(XML_DOCUMENT, LOG, logLevelTrace)
+static void
+xmlDocumentFreeResource(THIS_VOID)
 {
+    THIS(XmlDocument);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(XML_DOCUMENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     xmlFreeDoc(this->xml);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 XmlDocument *

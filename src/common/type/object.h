@@ -59,33 +59,6 @@ If "this" is NULL then no action is taken.
     }
 
 /***********************************************************************************************************************************
-Free resource associated with an object that was not allocated by a mem context
-
-Create a callback function intended to be use with memContextCallbackSet() that frees a resource that was allocated by, e.g., a
-third-party library and not by a mem context.  Don't call memFree() or memContextFree() in this function -- that will be handled
-when the mem context is freed.
-
-If the object prefix is "object" then the function will be defined as:
-
-static void objectFreeResource(THIS_VOID)
-***********************************************************************************************************************************/
-#define OBJECT_DEFINE_FREE_RESOURCE_BEGIN(objectMacro, logTypeMacro, logLevelMacro)                                                \
-    static void                                                                                                                    \
-    GLUE(objectMacro##_PREFIX, FreeResource)(THIS_VOID)                                                                            \
-    {                                                                                                                              \
-        THIS(objectMacro##_TYPE);                                                                                                  \
-                                                                                                                                   \
-        FUNCTION_##logTypeMacro##_BEGIN(logLevelMacro);                                                                            \
-            FUNCTION_##logTypeMacro##_PARAM(objectMacro, this);                                                                    \
-        FUNCTION_##logTypeMacro##_END();                                                                                           \
-                                                                                                                                   \
-        ASSERT(this != NULL);
-
-#define OBJECT_DEFINE_FREE_RESOURCE_END(logTypeMacro)                                                                              \
-        FUNCTION_##logTypeMacro##_RETURN_VOID();                                                                                   \
-    }
-
-/***********************************************************************************************************************************
 Define a function used by the caller to dispose of an object that is no longer needed when it would consume significant amounts of
 memory, e.g. in a loop.  For the most part free does not need to be called explicitly, and in fact should not be since the automatic
 cleanup is much more efficient.

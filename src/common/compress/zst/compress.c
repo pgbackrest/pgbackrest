@@ -23,9 +23,6 @@ STRING_EXTERN(ZST_COMPRESS_FILTER_TYPE_STR,                         ZST_COMPRESS
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define ZST_COMPRESS_TYPE                                           ZstCompress
-#define ZST_COMPRESS_PREFIX                                         zstCompress
-
 typedef struct ZstCompress
 {
     MemContext *memContext;                                         // Context to store data
@@ -57,11 +54,21 @@ zstCompressToLog(const ZstCompress *this)
 /***********************************************************************************************************************************
 Free compression context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(ZST_COMPRESS, LOG, logLevelTrace)
+static void
+zstCompressFreeResource(THIS_VOID)
 {
+    THIS(ZstCompress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ZST_COMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     ZSTD_freeCStream(this->context);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Compress data

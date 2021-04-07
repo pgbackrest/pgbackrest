@@ -22,9 +22,6 @@ STRING_EXTERN(GZ_COMPRESS_FILTER_TYPE_STR,                          GZ_COMPRESS_
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define GZ_COMPRESS_TYPE                                            GzCompress
-#define GZ_COMPRESS_PREFIX                                          gzCompress
-
 typedef struct GzCompress
 {
     MemContext *memContext;                                         // Context to store data
@@ -59,11 +56,21 @@ Compression constants
 /***********************************************************************************************************************************
 Free deflate stream
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(GZ_COMPRESS, LOG, logLevelTrace)
+static void
+gzCompressFreeResource(THIS_VOID)
 {
+    THIS(GzCompress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(GZ_COMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     deflateEnd(&this->stream);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Compress data

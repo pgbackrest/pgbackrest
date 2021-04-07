@@ -32,19 +32,6 @@ void testObjectFree(TestObject *this);
 OBJECT_DEFINE_MOVE(TEST_OBJECT);
 OBJECT_DEFINE_FREE(TEST_OBJECT);
 
-/***********************************************************************************************************************************
-Free object resource
-***********************************************************************************************************************************/
-bool testObjectFreeResourceCalled = false;
-
-static void testObjectFreeResource(void *thisVoid);
-
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TEST_OBJECT, LOG, logLevelTrace)
-{
-    testObjectFreeResourceCalled = true;
-}
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
-
 /**********************************************************************************************************************************/
 TestObject *
 testObjectNew(void)
@@ -61,8 +48,6 @@ testObjectNew(void)
         {
             .memContext = MEM_CONTEXT_NEW(),
         };
-
-        memContextCallbackSet(this->memContext, testObjectFreeResource, (void *)1);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -91,7 +76,6 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_VOID(testObjectFree(testObject), "    free object");
-        TEST_RESULT_BOOL(testObjectFreeResourceCalled, true, "    check callback");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

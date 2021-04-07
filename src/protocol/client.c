@@ -47,16 +47,26 @@ OBJECT_DEFINE_FREE(PROTOCOL_CLIENT);
 /***********************************************************************************************************************************
 Close protocol connection
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(PROTOCOL_CLIENT, LOG, logLevelTrace)
+static void
+protocolClientFreeResource(THIS_VOID)
 {
+    THIS(ProtocolClient);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
         protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT_STR));
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 ProtocolClient *
