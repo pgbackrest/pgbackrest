@@ -20,16 +20,26 @@ Constructors
 Wait *waitNew(TimeMSec waitTime);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct WaitPub
+{
+    TimeMSec remainTime;                                            // Wait time remaining (in usec)
+} WaitPub;
+
+// How much time is remaining? Recalculated each time waitMore() is called.
+__attribute__((always_inline)) static inline TimeMSec
+waitRemaining(const Wait *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const WaitPub *)this)->remainTime;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Wait and return whether the caller has more time left
 bool waitMore(Wait *this);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// How much time is remaining? Recalculated each time waitMore() is called.
-TimeMSec waitRemaining(const Wait *this);
 
 /***********************************************************************************************************************************
 Destructor

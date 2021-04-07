@@ -14,15 +14,13 @@ Object type
 ***********************************************************************************************************************************/
 struct Wait
 {
+    WaitPub pub;                                                    // Publicly accessible variables
     MemContext *memContext;                                         // Context that contains the wait handler
     TimeMSec waitTime;                                              // Total time to wait (in usec)
-    TimeMSec remainTime;                                            // Wait time remaining (in usec)
     TimeMSec sleepTime;                                             // Next sleep time (in usec)
     TimeMSec sleepPrevTime;                                         // Previous time slept (in usec)
     TimeMSec beginTime;                                             // Time the wait began (in epoch usec)
 };
-
-OBJECT_DEFINE_GET(Remaining, const, WAIT, TimeMSec, remainTime);
 
 OBJECT_DEFINE_FREE(WAIT);
 
@@ -46,9 +44,12 @@ waitNew(TimeMSec waitTime)
 
         *this = (Wait)
         {
+            .pub =
+            {
+                .remainTime = waitTime,
+            },
             .memContext = MEM_CONTEXT_NEW(),
             .waitTime = waitTime,
-            .remainTime = waitTime,
         };
 
         // Calculate first sleep time -- start with 1/10th of a second for anything >= 1 second
@@ -100,7 +101,7 @@ waitMore(Wait *this)
             // Store new sleep times
             this->sleepPrevTime = this->sleepTime;
             this->sleepTime = sleepNextTime;
-            this->remainTime = this->waitTime - elapsedTime;
+            this->pub.remainTime = this->waitTime - elapsedTime;
         }
         // Else set sleep to zero so next call will return false
         else

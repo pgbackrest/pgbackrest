@@ -32,35 +32,64 @@ Constructors
 HttpResponse *httpResponseNew(HttpSession *session, const String *verb, bool contentCache);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct HttpResponsePub
+{
+    IoRead *contentRead;                                            // Read interface for response content
+    unsigned int code;                                              // Response code (e.g. 200, 404)
+    HttpHeader *header;                                             // Response headers
+    String *reason;                                                 // Response reason e.g. (OK, Not Found)
+} HttpResponsePub;
+
+// Read interface used to get the response content. This is intended for reading content that may be very large and will not be held
+// in memory all at once. If the content must be loaded completely for processing (e.g. XML) then httpResponseContent() is simpler.
+__attribute__((always_inline)) static inline IoRead *
+httpResponseIoRead(HttpResponse *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpResponsePub *)this)->contentRead;
+}
+
+// Response code
+__attribute__((always_inline)) static inline unsigned int
+httpResponseCode(const HttpResponse *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpResponsePub *)this)->code;
+}
+
+// Response headers
+__attribute__((always_inline)) static inline const HttpHeader *
+httpResponseHeader(const HttpResponse *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpResponsePub *)this)->header;
+}
+
+// Response reason
+__attribute__((always_inline)) static inline const String *
+httpResponseReason(const HttpResponse *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpResponsePub *)this)->reason;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Is this response code OK, i.e. 2XX?
-bool httpResponseCodeOk(const HttpResponse *this);
+__attribute__((always_inline)) static inline bool
+httpResponseCodeOk(const HttpResponse *this)
+{
+    return httpResponseCode(this) / 100 == 2;
+}
 
 // Fetch all response content. Content will be cached so it can be retrieved again without additional cost.
 const Buffer *httpResponseContent(HttpResponse *this);
 
 // Move to a new parent mem context
 HttpResponse *httpResponseMove(HttpResponse *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Is the response still being read?
-bool httpResponseBusy(const HttpResponse *this);
-
-// Read interface used to get the response content. This is intended for reading content that may be very large and will not be held
-// in memory all at once. If the content must be loaded completely for processing (e.g. XML) then httpResponseContent() is simpler.
-IoRead *httpResponseIoRead(HttpResponse *this);
-
-// Response code
-unsigned int httpResponseCode(const HttpResponse *this);
-
-// Response headers
-const HttpHeader *httpResponseHeader(const HttpResponse *this);
-
-// Response reason
-const String *httpResponseReason(const HttpResponse *this);
 
 /***********************************************************************************************************************************
 Destructor

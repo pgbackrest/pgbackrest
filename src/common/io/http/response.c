@@ -33,14 +33,10 @@ Object type
 ***********************************************************************************************************************************/
 struct HttpResponse
 {
+    HttpResponsePub pub;                                            // Publicly accessible variables
     MemContext *memContext;                                         // Mem context
 
     HttpSession *session;                                           // HTTP session
-    IoRead *contentRead;                                            // Read interface for response content
-
-    unsigned int code;                                              // Response code (e.g. 200, 404)
-    String *reason;                                                 // Response reason e.g. (OK, Not Found)
-    HttpHeader *header;                                             // Response headers
 
     bool contentChunked;                                            // Is the response content chunked?
     uint64_t contentSize;                                           // Content size (ignored for chunked)
@@ -53,11 +49,6 @@ struct HttpResponse
 
 OBJECT_DEFINE_MOVE(HTTP_RESPONSE);
 OBJECT_DEFINE_FREE(HTTP_RESPONSE);
-
-OBJECT_DEFINE_GET(IoRead, , HTTP_RESPONSE, IoRead *, contentRead);
-OBJECT_DEFINE_GET(Code, const, HTTP_RESPONSE, unsigned int, code);
-OBJECT_DEFINE_GET(Header, const, HTTP_RESPONSE, const HttpHeader *, header);
-OBJECT_DEFINE_GET(Reason, const, HTTP_RESPONSE, const String *, reason);
 
 /***********************************************************************************************************************************
 When response is done close/reuse the connection
@@ -224,9 +215,12 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
         *this = (HttpResponse)
         {
+            .pub =
+            {
+                .header = httpHeaderNew(NULL),
+            },
             .memContext = MEM_CONTEXT_NEW(),
             .session = httpSessionMove(session, memContextCurrent()),
-            .header = httpHeaderNew(NULL),
         };
 
         MEM_CONTEXT_TEMP_BEGIN()
@@ -261,12 +255,12 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             if (spacePos != 3)
                 THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strZ(status));
 
-            this->code = cvtZToUInt(strZ(strSubN(status, 0, (size_t)spacePos)));
+            this->pub.code = cvtZToUInt(strZ(strSubN(status, 0, (size_t)spacePos)));
 
             // Read reason phrase. A missing reason phrase will be represented as an empty string.
             MEM_CONTEXT_BEGIN(this->memContext)
             {
-                this->reason = strSub(status, (size_t)spacePos + 1);
+                this->pub.reason = strSub(status, (size_t)spacePos + 1);
             }
             MEM_CONTEXT_END();
 
@@ -289,7 +283,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
                 String *headerKey = strLower(strTrim(strSubN(header, 0, (size_t)colonPos)));
                 String *headerValue = strTrim(strSub(header, (size_t)colonPos + 1));
 
-                httpHeaderAdd(this->header, headerKey, headerValue);
+                httpHeaderAdd(this->pub.header, headerKey, headerValue);
 
                 // Read transfer encoding (only chunked is supported)
                 if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
@@ -336,8 +330,8 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             // rather than also checking if the io object exists.
             MEM_CONTEXT_BEGIN(this->memContext)
             {
-                this->contentRead = ioReadNewP(this, .eof = httpResponseEof, .read = httpResponseRead);
-                ioReadOpen(this->contentRead);
+                this->pub.contentRead = ioReadNewP(this, .eof = httpResponseEof, .read = httpResponseRead);
+                ioReadOpen(httpResponseIoRead(this));
             }
             MEM_CONTEXT_END();
 
@@ -394,26 +388,13 @@ httpResponseContent(HttpResponse *this)
 }
 
 /**********************************************************************************************************************************/
-bool
-httpResponseCodeOk(const HttpResponse *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->code / 100 == 2);
-}
-
-/**********************************************************************************************************************************/
 String *
 httpResponseToLog(const HttpResponse *this)
 {
     return strNewFmt(
         "{code: %u, reason: %s, header: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64
             ", closeOnContentEof: %s, contentExists: %s, contentEof: %s, contentCached: %s}",
-        this->code, strZ(this->reason), strZ(httpHeaderToLog(this->header)), cvtBoolToConstZ(this->contentChunked),
-        this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof), cvtBoolToConstZ(this->contentExists),
-        cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
+        httpResponseCode(this), strZ(httpResponseReason(this)), strZ(httpHeaderToLog(httpResponseHeader(this))),
+        cvtBoolToConstZ(this->contentChunked), this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof),
+        cvtBoolToConstZ(this->contentExists), cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
 }

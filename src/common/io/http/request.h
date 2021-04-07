@@ -78,6 +78,49 @@ typedef struct HttpRequestNewParam
 HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct HttpRequestPub
+{
+    const String *verb;                                             // HTTP verb (GET, POST, etc.)
+    const String *path;                                             // HTTP path
+    const HttpQuery *query;                                         // HTTP query
+    const HttpHeader *header;                                       // HTTP headers
+} HttpRequestPub;
+
+// Request path
+__attribute__((always_inline)) static inline const String *
+httpRequestPath(const HttpRequest *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpRequestPub *)this)->path;
+}
+
+// Request query
+__attribute__((always_inline)) static inline const HttpQuery *
+httpRequestQuery(const HttpRequest *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpRequestPub *)this)->query;
+}
+
+// Request headers
+__attribute__((always_inline)) static inline const HttpHeader *
+httpRequestHeader(const HttpRequest *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpRequestPub *)this)->header;
+}
+
+// Request verb
+__attribute__((always_inline)) static inline const String *
+httpRequestVerb(const HttpRequest *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpRequestPub *)this)->verb;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Wait for a response from the request
@@ -88,21 +131,6 @@ void httpRequestError(const HttpRequest *this, HttpResponse *response) __attribu
 
 // Move to a new parent mem context
 HttpRequest *httpRequestMove(HttpRequest *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Request verb
-const String *httpRequestVerb(const HttpRequest *this);
-
-// Request path
-const String *httpRequestPath(const HttpRequest *this);
-
-// Request query
-const HttpQuery *httpRequestQuery(const HttpRequest *this);
-
-// Request headers
-const HttpHeader *httpRequestHeader(const HttpRequest *this);
 
 /***********************************************************************************************************************************
 Destructor

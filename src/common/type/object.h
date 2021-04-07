@@ -35,27 +35,6 @@ Create a local "this" variable of the correct type from a THIS_VOID parameter
 #define THIS(type)                                                  type *this = thisVoid
 
 /***********************************************************************************************************************************
-Define a function used to get an object member variable.
-
-If the object type/prefix is "Object"/"object" then the macro:
-
-OBJECT_DEFINE_GET(Size, const, OBJECT, size_t, size);
-
-will define the function as:
-
-size_t objectSize(const Object *this)
-
-No function logging in required because no functions can be called which means no errors can be thrown.
-***********************************************************************************************************************************/
-#define OBJECT_DEFINE_GET(name, objectQualifier, objectMacro, returnType, objectMember)                                            \
-    returnType                                                                                                                     \
-    GLUE(objectMacro##_PREFIX, name)(objectQualifier objectMacro##_TYPE *this)                                                     \
-    {                                                                                                                              \
-        ASSERT(this != NULL);                                                                                                      \
-        return this->objectMember;                                                                                                 \
-    }
-
-/***********************************************************************************************************************************
 Define a function used by the caller to move an object from one context to another
 
 The object type is expected to have a memmber named "memContext" and the object must allocate *all* memory in that context.

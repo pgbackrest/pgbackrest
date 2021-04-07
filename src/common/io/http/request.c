@@ -44,12 +44,9 @@ Object type
 ***********************************************************************************************************************************/
 struct HttpRequest
 {
+    HttpRequestPub pub;                                             // Publicly accessible variables
     MemContext *memContext;                                         // Mem context
     HttpClient *client;                                             // HTTP client
-    const String *verb;                                             // HTTP verb (GET, POST, etc.)
-    const String *path;                                             // HTTP path
-    const HttpQuery *query;                                         // HTTP query
-    const HttpHeader *header;                                       // HTTP headers
     const Buffer *content;                                          // HTTP content
 
     HttpSession *session;                                           // Session for async requests
@@ -57,11 +54,6 @@ struct HttpRequest
 
 OBJECT_DEFINE_MOVE(HTTP_REQUEST);
 OBJECT_DEFINE_FREE(HTTP_REQUEST);
-
-OBJECT_DEFINE_GET(Verb, const, HTTP_REQUEST, const String *, verb);
-OBJECT_DEFINE_GET(Path, const, HTTP_REQUEST, const String *, path);
-OBJECT_DEFINE_GET(Query, const, HTTP_REQUEST, const HttpQuery *, query);
-OBJECT_DEFINE_GET(Header, const, HTTP_REQUEST, const HttpHeader *, header);
 
 /***********************************************************************************************************************************
 Process the request
@@ -111,17 +103,19 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                         String *requestStr =
                             strNewFmt(
                                 "%s %s%s%s " HTTP_VERSION CRLF_Z HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION CRLF_Z,
-                                strZ(this->verb), strZ(this->path), this->query == NULL ? "" : "?",
-                                this->query == NULL ? "" : strZ(httpQueryRenderP(this->query)));
+                                strZ(httpRequestVerb(this)), strZ(httpRequestPath(this)), httpRequestQuery(this) == NULL ? "" : "?",
+                                httpRequestQuery(this) == NULL ? "" : strZ(httpQueryRenderP(httpRequestQuery(this))));
 
                         // Add headers
-                        const StringList *headerList = httpHeaderList(this->header);
+                        const StringList *headerList = httpHeaderList(httpRequestHeader(this));
 
                         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
                         {
                             const String *headerKey = strLstGet(headerList, headerIdx);
 
-                            strCatFmt(requestStr, "%s:%s" CRLF_Z, strZ(headerKey), strZ(httpHeaderGet(this->header, headerKey)));
+                            strCatFmt(
+                                requestStr, "%s:%s" CRLF_Z, strZ(headerKey),
+                                strZ(httpHeaderGet(httpRequestHeader(this), headerKey)));
                         }
 
                         // Add blank line to end of headers and write the request as a buffer so secrets do not show up in logs
@@ -143,7 +137,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                     // Wait for response
                     if (waitForResponse)
                     {
-                        result = httpResponseNew(session, this->verb, contentCache);
+                        result = httpResponseNew(session, httpRequestVerb(this), contentCache);
 
                         // Retry when response code is 5xx.  These errors generally represent a server error for a request that
                         // looks valid. There are a few errors that might be permanently fatal but they are rare and it seems best
@@ -206,12 +200,15 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
 
         *this = (HttpRequest)
         {
+            .pub =
+            {
+                .verb = strDup(verb),
+                .path = strDup(path),
+                .query = httpQueryDupP(param.query),
+                .header = param.header == NULL ? httpHeaderNew(NULL) : httpHeaderDup(param.header, NULL),
+            },
             .memContext = MEM_CONTEXT_NEW(),
             .client = client,
-            .verb = strDup(verb),
-            .path = strDup(path),
-            .query = httpQueryDupP(param.query),
-            .header = param.header == NULL ? httpHeaderNew(NULL) : httpHeaderDup(param.header, NULL),
             .content = param.content == NULL ? NULL : bufDup(param.content),
         };
 
@@ -260,13 +257,13 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
     // Output path/query
     strCatZ(error, ":\n*** Path/Query ***:");
 
-    strCatFmt(error, "\n%s", strZ(this->path));
+    strCatFmt(error, "\n%s", strZ(httpRequestPath(this)));
 
-    if (this->query != NULL)
-        strCatFmt(error, "?%s", strZ(httpQueryRenderP(this->query, .redact = true)));
+    if (httpRequestQuery(this) != NULL)
+        strCatFmt(error, "?%s", strZ(httpQueryRenderP(httpRequestQuery(this), .redact = true)));
 
     // Output request headers
-    const StringList *requestHeaderList = httpHeaderList(this->header);
+    const StringList *requestHeaderList = httpHeaderList(httpRequestHeader(this));
 
     if (!strLstEmpty(requestHeaderList))
     {
@@ -278,7 +275,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 
             strCatFmt(
                 error, "\n%s: %s", strZ(key),
-                httpHeaderRedact(this->header, key) ? "<redacted>" : strZ(httpHeaderGet(this->header, key)));
+                httpHeaderRedact(httpRequestHeader(this), key) ? "<redacted>" : strZ(httpHeaderGet(httpRequestHeader(this), key)));
         }
     }
 
@@ -312,7 +309,7 @@ String *
 httpRequestToLog(const HttpRequest *this)
 {
     return strNewFmt(
-        "{verb: %s, path: %s, query: %s, header: %s, contentSize: %zu}", strZ(this->verb), strZ(this->path),
-        this->query == NULL ? "null" : strZ(httpQueryToLog(this->query)), strZ(httpHeaderToLog(this->header)),
-        this->content == NULL ? 0 : bufUsed(this->content));
+        "{verb: %s, path: %s, query: %s, header: %s, contentSize: %zu}", strZ(httpRequestVerb(this)), strZ(httpRequestPath(this)),
+        httpRequestQuery(this) == NULL ? "null" : strZ(httpQueryToLog(httpRequestQuery(this))),
+        strZ(httpHeaderToLog(httpRequestHeader(this))), this->content == NULL ? 0 : bufUsed(this->content));
 }
