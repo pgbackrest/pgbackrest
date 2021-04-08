@@ -6,7 +6,6 @@ Storage Read Interface
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
@@ -15,12 +14,8 @@ Object type
 struct StorageRead
 {
     StorageReadPub pub;                                             // Publicly accessible variables
-    MemContext *memContext;                                         // Object mem context
     void *driver;
 };
-
-OBJECT_DEFINE_MOVE(STORAGE_READ);
-OBJECT_DEFINE_FREE(STORAGE_READ);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -50,10 +45,10 @@ storageReadNew(void *driver, const StorageReadInterface *interface)
     {
         .pub =
         {
+            .memContext = memContextCurrent(),
             .interface = interface,
             .io = ioReadNew(driver, interface->ioInterface),
         },
-        .memContext = memContextCurrent(),
         .driver = driver,
     };
 

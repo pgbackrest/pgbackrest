@@ -7,15 +7,13 @@ expected to be embedded in this object.
 #ifndef DB_DB_H
 #define DB_DB_H
 
+#include "common/type/object.h"
 #include "postgres/client.h"
 #include "protocol/client.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define DB_TYPE                                                     Db
-#define DB_PREFIX                                                   db
-
 typedef struct Db Db;
 
 /***********************************************************************************************************************************
@@ -69,7 +67,11 @@ String *dbWalSwitch(Db *this);
 void dbClose(Db *this);
 
 // Move to a new parent mem context
-Db *dbMove(Db *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline Db *
+dbMove(Db *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -89,7 +91,11 @@ const String *dbArchiveCommand(const Db *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void dbFree(Db *this);
+__attribute__((always_inline)) static inline void
+dbFree(Db *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

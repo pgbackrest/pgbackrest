@@ -37,7 +37,7 @@ testRun(void)
         TEST_RESULT_UINT(list->itemSize, sizeof(void *), "item size");
         TEST_RESULT_UINT(list->pub.listSize, 0, "list size");
         TEST_RESULT_UINT(list->listSizeMax, 0, "list size max");
-        TEST_RESULT_PTR(lstMemContext(list), list->memContext, "list mem context");
+        TEST_RESULT_PTR(lstMemContext(list), list->pub.memContext, "list mem context");
         TEST_RESULT_VOID(lstClear(list), "clear list");
 
         void *ptr = NULL;

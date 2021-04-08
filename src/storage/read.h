@@ -7,24 +7,27 @@ Storage Read Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_READ_TYPE                                           StorageRead
-#define STORAGE_READ_PREFIX                                         storageRead
-
 typedef struct StorageRead StorageRead;
 
 #include "common/io/read.h"
+#include "common/type/object.h"
 #include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-StorageRead *storageReadMove(StorageRead *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline StorageRead *
+storageReadMove(StorageRead *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct StorageReadPub
 {
+    MemContext *memContext;                                         // Mem context
     const StorageReadInterface *interface;                          // File data (name, driver type, etc.)
     IoRead *io;                                                     // Read interface
 } StorageReadPub;
@@ -72,7 +75,11 @@ storageReadType(const StorageRead *this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void storageReadFree(StorageRead *this);
+__attribute__((always_inline)) static inline void
+storageReadFree(StorageRead *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

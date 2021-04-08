@@ -14,7 +14,6 @@ Backup Manifest Handler
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "common/type/mcv.h"
-#include "common/type/object.h"
 #include "info/info.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -164,9 +163,6 @@ struct Manifest
     List *linkList;                                                 // List of links
     List *dbList;                                                   // List of databases
 };
-
-OBJECT_DEFINE_MOVE(MANIFEST);
-OBJECT_DEFINE_FREE(MANIFEST);
 
 /***********************************************************************************************************************************
 Internal functions to add types to their lists

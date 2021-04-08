@@ -6,7 +6,6 @@ Database Client
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 #include "db/db.h"
 #include "db/protocol.h"
@@ -36,9 +35,6 @@ struct Db
     const String *archiveMode;                                      // The archive_mode reported by the database
     const String *archiveCommand;                                   // The archive_command reported by the database
 };
-
-OBJECT_DEFINE_MOVE(DB);
-OBJECT_DEFINE_FREE(DB);
 
 /***********************************************************************************************************************************
 Close protocol connection.  No need to close a locally created PgClient since it has its own destructor.

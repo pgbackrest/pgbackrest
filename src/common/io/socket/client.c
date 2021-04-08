@@ -34,9 +34,6 @@ STRING_EXTERN(SOCKET_STAT_SESSION_STR,                              SOCKET_STAT_
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define SOCKET_CLIENT_TYPE                                          SocketClient
-#define SOCKET_CLIENT_PREFIX                                        sckClient
-
 typedef struct SocketClient
 {
     MemContext *memContext;                                         // Mem context

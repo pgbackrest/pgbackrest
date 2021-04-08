@@ -10,7 +10,6 @@ IO Read Interface
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -32,8 +31,6 @@ struct IoRead
     bool closed;                                                    // Has the io been closed?
 #endif
 };
-
-OBJECT_DEFINE_FREE(IO_READ);
 
 /**********************************************************************************************************************************/
 IoRead *

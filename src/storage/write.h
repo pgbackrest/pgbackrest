@@ -7,13 +7,11 @@ Storage Write Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_WRITE_TYPE                                          StorageWrite
-#define STORAGE_WRITE_PREFIX                                        storageWrite
-
 typedef struct StorageWrite StorageWrite;
 
 #include "common/io/write.h"
 #include "common/type/buffer.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 #include "storage/write.intern.h"
 
@@ -21,13 +19,18 @@ typedef struct StorageWrite StorageWrite;
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-StorageWrite *storageWriteMove(StorageWrite *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline StorageWrite *
+storageWriteMove(StorageWrite *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct StorageWritePub
 {
+    MemContext *memContext;                                         // Mem context
     const StorageWriteInterface *interface;                         // File data (name, driver type, etc.)
     IoWrite *io;                                                    // Write interface
 } StorageWritePub;
@@ -108,7 +111,11 @@ storageWriteType(const StorageWrite *this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void storageWriteFree(StorageWrite *this);
+__attribute__((always_inline)) static inline void
+storageWriteFree(StorageWrite *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

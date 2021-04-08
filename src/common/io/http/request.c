@@ -8,7 +8,6 @@ HTTP Request
 #include "common/io/http/request.h"
 #include "common/log.h"
 #include "common/stat.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 #include "version.h"
 
@@ -45,15 +44,11 @@ Object type
 struct HttpRequest
 {
     HttpRequestPub pub;                                             // Publicly accessible variables
-    MemContext *memContext;                                         // Mem context
     HttpClient *client;                                             // HTTP client
     const Buffer *content;                                          // HTTP content
 
     HttpSession *session;                                           // Session for async requests
 };
-
-OBJECT_DEFINE_MOVE(HTTP_REQUEST);
-OBJECT_DEFINE_FREE(HTTP_REQUEST);
 
 /***********************************************************************************************************************************
 Process the request
@@ -131,7 +126,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 
                         // If not waiting for the response then move the session to the object context
                         if (!waitForResponse)
-                            this->session = httpSessionMove(session, this->memContext);
+                            this->session = httpSessionMove(session, this->pub.memContext);
                     }
 
                     // Wait for response
@@ -202,12 +197,12 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
         {
             .pub =
             {
+                .memContext = MEM_CONTEXT_NEW(),
                 .verb = strDup(verb),
                 .path = strDup(path),
                 .query = httpQueryDupP(param.query),
                 .header = param.header == NULL ? httpHeaderNew(NULL) : httpHeaderDup(param.header, NULL),
             },
-            .memContext = MEM_CONTEXT_NEW(),
             .client = client,
             .content = param.content == NULL ? NULL : bufDup(param.content),
         };

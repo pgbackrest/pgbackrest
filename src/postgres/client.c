@@ -9,7 +9,6 @@ Postgres Client
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/list.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 #include "postgres/client.h"
 
@@ -27,9 +26,6 @@ struct PgClient
 
     PGconn *connection;
 };
-
-OBJECT_DEFINE_MOVE(PG_CLIENT);
-OBJECT_DEFINE_FREE(PG_CLIENT);
 
 /***********************************************************************************************************************************
 Close protocol connection

@@ -6,7 +6,6 @@ Protocol Parallel Job
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "protocol/command.h"
 #include "protocol/parallelJob.h"
 
@@ -26,9 +25,6 @@ struct ProtocolParallelJob
     String *message;                                                // Message if there was a error
     const Variant *result;                                          // Result if job was successful
 };
-
-OBJECT_DEFINE_MOVE(PROTOCOL_PARALLEL_JOB);
-OBJECT_DEFINE_FREE(PROTOCOL_PARALLEL_JOB);
 
 /**********************************************************************************************************************************/
 ProtocolParallelJob *

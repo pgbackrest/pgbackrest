@@ -12,7 +12,6 @@ HTTP Response
 #include "common/io/read.intern.h"
 #include "common/log.h"
 #include "common/stat.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -34,10 +33,7 @@ Object type
 struct HttpResponse
 {
     HttpResponsePub pub;                                            // Publicly accessible variables
-    MemContext *memContext;                                         // Mem context
-
     HttpSession *session;                                           // HTTP session
-
     bool contentChunked;                                            // Is the response content chunked?
     uint64_t contentSize;                                           // Content size (ignored for chunked)
     uint64_t contentRemaining;                                      // Content remaining (per chunk if chunked)
@@ -46,9 +42,6 @@ struct HttpResponse
     bool contentEof;                                                // Has all content been read?
     Buffer *content;                                                // Caches content once requested
 };
-
-OBJECT_DEFINE_MOVE(HTTP_RESPONSE);
-OBJECT_DEFINE_FREE(HTTP_RESPONSE);
 
 /***********************************************************************************************************************************
 When response is done close/reuse the connection
@@ -217,9 +210,9 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
         {
             .pub =
             {
+                .memContext = MEM_CONTEXT_NEW(),
                 .header = httpHeaderNew(NULL),
             },
-            .memContext = MEM_CONTEXT_NEW(),
             .session = httpSessionMove(session, memContextCurrent()),
         };
 
@@ -258,7 +251,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             this->pub.code = cvtZToUInt(strZ(strSubN(status, 0, (size_t)spacePos)));
 
             // Read reason phrase. A missing reason phrase will be represented as an empty string.
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(this->pub.memContext)
             {
                 this->pub.reason = strSub(status, (size_t)spacePos + 1);
             }
@@ -328,7 +321,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
             // Create an io object, even if there is no content.  This makes the logic for readers easier -- they can just check eof
             // rather than also checking if the io object exists.
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(this->pub.memContext)
             {
                 this->pub.contentRead = ioReadNewP(this, .eof = httpResponseEof, .read = httpResponseRead);
                 ioReadOpen(httpResponseIoRead(this));
@@ -343,7 +336,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             // Else cache content when requested or on error
             else if (contentCache || !httpResponseCodeOk(this))
             {
-                MEM_CONTEXT_BEGIN(this->memContext)
+                MEM_CONTEXT_BEGIN(this->pub.memContext)
                 {
                     httpResponseContent(this);
                 }

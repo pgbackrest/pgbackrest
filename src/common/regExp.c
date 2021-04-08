@@ -8,7 +8,6 @@ Regular Expression Handler
 
 #include "common/debug.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/regExp.h"
 
 /***********************************************************************************************************************************
@@ -21,8 +20,6 @@ struct RegExp
     const char *matchPtr;
     size_t matchSize;
 };
-
-OBJECT_DEFINE_FREE(REGEXP);
 
 /***********************************************************************************************************************************
 Free regular expression

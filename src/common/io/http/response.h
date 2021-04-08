@@ -10,14 +10,12 @@ cached content, etc. will still be available for the lifetime of the object.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_RESPONSE_TYPE                                          HttpResponse
-#define HTTP_RESPONSE_PREFIX                                        httpResponse
-
 typedef struct HttpResponse HttpResponse;
 
 #include "common/io/http/header.h"
 #include "common/io/http/session.h"
 #include "common/io/read.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 HTTP Response Constants
@@ -36,6 +34,7 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct HttpResponsePub
 {
+    MemContext *memContext;                                         // Mem context
     IoRead *contentRead;                                            // Read interface for response content
     unsigned int code;                                              // Response code (e.g. 200, 404)
     HttpHeader *header;                                             // Response headers
@@ -89,12 +88,20 @@ httpResponseCodeOk(const HttpResponse *this)
 const Buffer *httpResponseContent(HttpResponse *this);
 
 // Move to a new parent mem context
-HttpResponse *httpResponseMove(HttpResponse *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline HttpResponse *
+httpResponseMove(HttpResponse *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpResponseFree(HttpResponse *this);
+__attribute__((always_inline)) static inline void
+httpResponseFree(HttpResponse *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

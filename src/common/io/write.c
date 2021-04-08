@@ -10,7 +10,6 @@ IO Write Interface
 #include "common/io/write.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -29,8 +28,6 @@ struct IoWrite
     bool closed;                                                    // Has the io been closed?
 #endif
 };
-
-OBJECT_DEFINE_FREE(IO_WRITE);
 
 /**********************************************************************************************************************************/
 IoWrite *

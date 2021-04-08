@@ -6,7 +6,6 @@ Wait Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -15,14 +14,11 @@ Object type
 struct Wait
 {
     WaitPub pub;                                                    // Publicly accessible variables
-    MemContext *memContext;                                         // Context that contains the wait handler
     TimeMSec waitTime;                                              // Total time to wait (in usec)
     TimeMSec sleepTime;                                             // Next sleep time (in usec)
     TimeMSec sleepPrevTime;                                         // Previous time slept (in usec)
     TimeMSec beginTime;                                             // Time the wait began (in epoch usec)
 };
-
-OBJECT_DEFINE_FREE(WAIT);
 
 /**********************************************************************************************************************************/
 Wait *
@@ -46,9 +42,9 @@ waitNew(TimeMSec waitTime)
         {
             .pub =
             {
+                .memContext = MEM_CONTEXT_NEW(),
                 .remainTime = waitTime,
             },
-            .memContext = MEM_CONTEXT_NEW(),
             .waitTime = waitTime,
         };
 

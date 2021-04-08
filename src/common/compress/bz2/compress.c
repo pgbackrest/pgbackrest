@@ -11,6 +11,7 @@ BZ2 Compress
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 

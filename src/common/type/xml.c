@@ -12,7 +12,6 @@ Xml Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/list.h"
-#include "common/type/object.h"
 #include "common/type/xml.h"
 
 /***********************************************************************************************************************************
@@ -37,8 +36,6 @@ struct XmlDocument
     xmlDocPtr xml;
     XmlNode *root;
 };
-
-OBJECT_DEFINE_FREE(XML_DOCUMENT);
 
 /***********************************************************************************************************************************
 Error handler

@@ -10,7 +10,6 @@ List Handler
 
 #include "common/debug.h"
 #include "common/type/list.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -18,7 +17,6 @@ Object type
 struct List
 {
     ListPub pub;                                                    // Publicly accessible variables
-    MemContext *memContext;
     size_t itemSize;
     unsigned int listSizeMax;
     SortOrder sortOrder;
@@ -26,9 +24,6 @@ struct List
     unsigned char *list;                                            // Pointer to the current start of the list
     ListComparator *comparator;
 };
-
-OBJECT_DEFINE_MOVE(LIST);
-OBJECT_DEFINE_FREE(LIST);
 
 /**********************************************************************************************************************************/
 List *
@@ -48,7 +43,10 @@ lstNew(size_t itemSize, ListParam param)
 
         *this = (List)
         {
-            .memContext = MEM_CONTEXT_NEW(),
+            .pub =
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+            },
             .itemSize = itemSize,
             .sortOrder = param.sortOrder,
             .comparator = param.comparator,
@@ -71,7 +69,7 @@ lstClear(List *this)
 
     if (this->list != NULL)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(lstMemContext(this))
         {
             memFree(this->list);
         }
@@ -251,7 +249,7 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     // If list size = max then allocate more space
     if (lstSize(this) == this->listSizeMax)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(lstMemContext(this))
         {
             // If nothing has been allocated yet
             if (this->listSizeMax == 0)
@@ -360,19 +358,6 @@ lstRemoveLast(List *this)
         THROW(AssertError, "cannot remove last from list with no values");
 
     FUNCTION_TEST_RETURN(lstRemoveIdx(this, lstSize(this) - 1));
-}
-
-/**********************************************************************************************************************************/
-MemContext *
-lstMemContext(const List *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(LIST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->memContext);
 }
 
 /**********************************************************************************************************************************/

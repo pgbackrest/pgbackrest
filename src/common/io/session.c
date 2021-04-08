@@ -7,7 +7,6 @@ Io Session Interface
 #include "common/io/session.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -18,9 +17,6 @@ struct IoSession
     void *driver;                                                   // Driver object
     const IoSessionInterface *interface;                            // Driver interface
 };
-
-OBJECT_DEFINE_MOVE(IO_SESSION);
-OBJECT_DEFINE_FREE(IO_SESSION);
 
 /**********************************************************************************************************************************/
 IoSession *

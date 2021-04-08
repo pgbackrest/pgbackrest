@@ -64,7 +64,11 @@ void ioFilterProcessIn(IoFilter *this, const Buffer *input);
 void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
 
 // Move filter to a new parent mem context
-IoFilter *ioFilterMove(IoFilter *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline IoFilter *
+ioFilterMove(IoFilter *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters

@@ -11,7 +11,6 @@ Storage Interface
 #include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/regExp.h"
 #include "common/wait.h"
 #include "storage/storage.h"
@@ -29,8 +28,6 @@ struct Storage
     bool write;
     StoragePathExpressionCallback *pathExpressionFunction;
 };
-
-OBJECT_DEFINE_FREE(STORAGE);
 
 /**********************************************************************************************************************************/
 Storage *

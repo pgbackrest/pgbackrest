@@ -9,12 +9,10 @@ List Handler
 /***********************************************************************************************************************************
 List object
 ***********************************************************************************************************************************/
-#define LIST_TYPE                                                   List
-#define LIST_PREFIX                                                 lst
-
 typedef struct List List;
 
 #include "common/memContext.h"
+#include "common/type/object.h"
 #include "common/type/param.h"
 #include "common/type/string.h"
 
@@ -68,11 +66,20 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ListPub
 {
+    MemContext *memContext;                                         // Mem context
     unsigned int listSize;                                          // List size
 } ListPub;
 
 // Set a new comparator
 List *lstComparatorSet(List *this, ListComparator *comparator);
+
+// Memory context for this list
+__attribute__((always_inline)) static inline MemContext *
+lstMemContext(const List *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const ListPub *)this)->memContext;
+}
 
 // List size
 __attribute__((always_inline)) static inline unsigned int
@@ -124,11 +131,12 @@ lstAdd(List *this, const void *item)
     return lstInsert(this, lstSize(this), item);
 }
 
-// Memory context for this list
-MemContext *lstMemContext(const List *this);
-
 // Move to a new parent mem context
-List *lstMove(List *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline List *
+lstMove(List *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Remove an item from the list
 bool lstRemove(List *this, const void *item);
@@ -141,7 +149,11 @@ List *lstSort(List *this, SortOrder sortOrder);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void lstFree(List *this);
+__attribute__((always_inline)) static inline void
+lstFree(List *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

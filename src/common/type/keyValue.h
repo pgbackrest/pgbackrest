@@ -7,11 +7,9 @@ Key Value Handler
 /***********************************************************************************************************************************
 KeyValue object
 ***********************************************************************************************************************************/
-#define KEY_VALUE_TYPE                                              KeyValue
-#define KEY_VALUE_PREFIX                                            kv
-
 typedef struct KeyValue KeyValue;
 
+#include "common/type/object.h"
 #include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
@@ -29,7 +27,12 @@ KeyValue *kvAdd(KeyValue *this, const Variant *key, const Variant *value);
 // List of keys
 const VariantList *kvKeyList(const KeyValue *this);
 
-KeyValue *kvMove(KeyValue *this, MemContext *parentNew);
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline KeyValue *
+kvMove(KeyValue *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Put key/value pair
 KeyValue *kvPut(KeyValue *this, const Variant *key, const Variant *value);
@@ -53,7 +56,11 @@ VariantList *kvGetList(const KeyValue *this, const Variant *key);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void kvFree(KeyValue *this);
+__attribute__((always_inline)) static inline void
+kvFree(KeyValue *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

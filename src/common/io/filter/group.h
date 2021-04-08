@@ -13,12 +13,10 @@ only call ioFilterGroupNew(), ioFilterGroupAdd(), and ioFilterGroupResult().
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_FILTER_GROUP_TYPE                                        IoFilterGroup
-#define IO_FILTER_GROUP_PREFIX                                      ioFilterGroup
-
 typedef struct IoFilterGroup IoFilterGroup;
 
 #include "common/io/filter/filter.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -75,7 +73,11 @@ unsigned int ioFilterGroupSize(const IoFilterGroup *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioFilterGroupFree(IoFilterGroup *this);
+__attribute__((always_inline)) static inline void
+ioFilterGroupFree(IoFilterGroup *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

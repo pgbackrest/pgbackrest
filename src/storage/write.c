@@ -6,7 +6,6 @@ Storage Write Interface
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
@@ -15,12 +14,8 @@ Object type
 struct StorageWrite
 {
     StorageWritePub pub;                                            // Publicly accessible variables
-    MemContext *memContext;                                         // Object mem context
     void *driver;
 };
-
-OBJECT_DEFINE_MOVE(STORAGE_WRITE);
-OBJECT_DEFINE_FREE(STORAGE_WRITE);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -51,10 +46,10 @@ storageWriteNew(void *driver, const StorageWriteInterface *interface)
     {
         .pub =
         {
+            .memContext = memContextCurrent(),
             .interface = interface,
             .io = ioWriteNew(driver, interface->ioInterface),
         },
-        .memContext = memContextCurrent(),
         .driver = driver,
     };
 

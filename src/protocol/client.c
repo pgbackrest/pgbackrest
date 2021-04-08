@@ -9,7 +9,6 @@ Protocol Client
 #include "common/time.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 #include "protocol/client.h"
 #include "version.h"
 
@@ -40,9 +39,6 @@ struct ProtocolClient
     IoWrite *write;
     TimeMSec keepAliveTime;
 };
-
-OBJECT_DEFINE_MOVE(PROTOCOL_CLIENT);
-OBJECT_DEFINE_FREE(PROTOCOL_CLIENT);
 
 /***********************************************************************************************************************************
 Close protocol connection

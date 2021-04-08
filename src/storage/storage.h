@@ -9,9 +9,6 @@ Storage Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_TYPE                                                Storage
-#define STORAGE_PREFIX                                              storage
-
 typedef struct Storage Storage;
 
 #include "common/type/buffer.h"

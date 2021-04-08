@@ -12,7 +12,6 @@ Protocol Server
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
-#include "common/type/object.h"
 #include "protocol/client.h"
 #include "protocol/helper.h"
 #include "protocol/server.h"
@@ -28,9 +27,6 @@ struct ProtocolServer
     IoRead *read;
     IoWrite *write;
 };
-
-OBJECT_DEFINE_MOVE(PROTOCOL_SERVER);
-OBJECT_DEFINE_FREE(PROTOCOL_SERVER);
 
 /**********************************************************************************************************************************/
 ProtocolServer *

@@ -10,13 +10,11 @@ be closed when work with them is done but they also contain destructors to do cl
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_SESSION_TYPE                                             IoSession
-#define IO_SESSION_PREFIX                                           ioSession
-
 typedef struct IoSession IoSession;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Session roles
@@ -34,7 +32,11 @@ Functions
 void ioSessionClose(IoSession *this);
 
 // Move to a new parent mem context
-IoSession *ioSessionMove(IoSession *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline IoSession *
+ioSessionMove(IoSession *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -54,7 +56,11 @@ IoSessionRole ioSessionRole(const IoSession *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioSessionFree(IoSession *this);
+__attribute__((always_inline)) static inline void
+ioSessionFree(IoSession *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

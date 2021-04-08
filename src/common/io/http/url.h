@@ -9,12 +9,10 @@ Parse a URL into component parts.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_URL_TYPE                                             HttpUrl
-#define HTTP_URL_PREFIX                                           httpUrl
-
 typedef struct HttpUrl HttpUrl;
 
 #include "common/type/param.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -46,6 +44,7 @@ Getters/setters
 ***********************************************************************************************************************************/
 typedef struct HttpUrlPub
 {
+    MemContext *memContext;                                         // Mem context
     const String *url;                                              // Original URL
     HttpProtocolType type;                                          // Protocol type, e.g. http
     const String *host;                                             // Host
@@ -96,7 +95,11 @@ httpUrl(const HttpUrl *this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpUrlFree(HttpUrl *this);
+__attribute__((always_inline)) static inline void
+httpUrlFree(HttpUrl *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

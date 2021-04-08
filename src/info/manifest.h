@@ -29,12 +29,10 @@ Constants
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define MANIFEST_TYPE                                               Manifest
-#define MANIFEST_PREFIX                                             manifest
-
 typedef struct Manifest Manifest;
 
 #include "common/crypto/hash.h"
+#include "common/type/object.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -182,7 +180,11 @@ Functions
 void manifestLinkCheck(const Manifest *this);
 
 // Move to a new parent mem context
-Manifest *manifestMove(Manifest *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline Manifest *
+manifestMove(Manifest *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Manifest save
 void manifestSave(Manifest *this, IoWrite *write);
@@ -268,7 +270,11 @@ void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void manifestFree(Manifest *this);
+__attribute__((always_inline)) static inline void
+manifestFree(Manifest *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Helper functions
