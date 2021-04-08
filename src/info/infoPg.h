@@ -9,9 +9,6 @@ PostgreSQL Info Handler
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define INFO_PG_TYPE                                                InfoPg
-#define INFO_PG_PREFIX                                              infoPg
-
 typedef struct InfoPg InfoPg;
 
 #include "common/crypto/common.h"

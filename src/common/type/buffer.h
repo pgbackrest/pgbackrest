@@ -7,12 +7,10 @@ Buffer Handler
 /***********************************************************************************************************************************
 Buffer object
 ***********************************************************************************************************************************/
-#define BUFFER_TYPE                                                 Buffer
-#define BUFFER_PREFIX                                               buf
-
 typedef struct Buffer Buffer;
 
 #include "common/memContext.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -22,6 +20,7 @@ There is nothing user-accessible here but this construct allows constant buffers
 functions that process dynamically allocated buffers.
 ***********************************************************************************************************************************/
 #define BUFFER_COMMON                                                                                                              \
+    MemContext *memContext;                                         /* Mem context */                                              \
     size_t sizeAlloc;                                               /* Allocated size of the buffer */                             \
     size_t size;                                                    /* Reported size of the buffer */                              \
     bool sizeLimit;                                                 /* Is the size limited to make the buffer appear smaller? */   \
@@ -68,7 +67,11 @@ bool bufEq(const Buffer *this, const Buffer *compare);
 String *bufHex(const Buffer *this);
 
 // Move to a new parent mem context
-Buffer *bufMove(Buffer *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline Buffer *
+bufMove(Buffer *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Resize the buffer
 Buffer *bufResize(Buffer *this, size_t size);
@@ -156,7 +159,11 @@ bufRemainsPtr(Buffer *this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void bufFree(Buffer *this);
+__attribute__((always_inline)) static inline void
+bufFree(Buffer *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for constant buffers

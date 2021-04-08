@@ -35,9 +35,9 @@ testRun(void)
         List *list = lstNewP(sizeof(void *));
 
         TEST_RESULT_UINT(list->itemSize, sizeof(void *), "item size");
-        TEST_RESULT_UINT(list->listSize, 0, "list size");
+        TEST_RESULT_UINT(list->pub.listSize, 0, "list size");
         TEST_RESULT_UINT(list->listSizeMax, 0, "list size max");
-        TEST_RESULT_PTR(lstMemContext(list), list->memContext, "list mem context");
+        TEST_RESULT_PTR(lstMemContext(list), list->pub.memContext, "list mem context");
         TEST_RESULT_VOID(lstClear(list), "clear list");
 
         void *ptr = NULL;
@@ -130,7 +130,7 @@ testRun(void)
             TEST_RESULT_VOID(lstAdd(list, &item), "add item %d", item);
         }
 
-        TEST_RESULT_INT(list->listSize, list->listSizeMax, "size equals max size");
+        TEST_RESULT_UINT(lstSize(list), list->listSizeMax, "size equals max size");
 
         // Remove last item
         TEST_RESULT_VOID(lstRemoveLast(list), "remove last item");

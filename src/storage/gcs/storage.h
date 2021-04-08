@@ -4,7 +4,7 @@ GCS Storage
 #ifndef STORAGE_GCS_STORAGE_H
 #define STORAGE_GCS_STORAGE_H
 
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type

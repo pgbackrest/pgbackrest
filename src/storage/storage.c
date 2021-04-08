@@ -11,29 +11,23 @@ Storage Interface
 #include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/regExp.h"
 #include "common/wait.h"
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct Storage
 {
+    StoragePub pub;                                                 // Publicly accessible variables
     MemContext *memContext;
-    void *driver;
-    StorageInterface interface;
-    const String *type;
-
     const String *path;
     mode_t modeFile;
     mode_t modePath;
     bool write;
     StoragePathExpressionCallback *pathExpressionFunction;
 };
-
-OBJECT_DEFINE_FREE(STORAGE);
 
 /**********************************************************************************************************************************/
 Storage *
@@ -66,10 +60,13 @@ storageNew(
 
     *this = (Storage)
     {
+        .pub =
+        {
+            .type = type,
+            .driver = driver,
+            .interface = interface,
+        },
         .memContext = memContextCurrent(),
-        .driver = driver,
-        .interface = interface,
-        .type = type,
         .path = strDup(path),
         .modeFile = modeFile,
         .modePath = modePath,
@@ -242,7 +239,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.info != NULL);
+    ASSERT(this->pub.interface.info != NULL);
 
     StorageInfo result = {0};
 
@@ -263,7 +260,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         }
         // Else call the driver
         else
-            result = storageInterfaceInfoP(this->driver, file, param.level, .followLink = param.followLink);
+            result = storageInterfaceInfoP(this->pub.driver, file, param.level, .followLink = param.followLink);
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
@@ -342,7 +339,7 @@ storageInfoListSort(
         // If no sorting then use the callback directly
         if (sortOrder == sortOrderNone)
         {
-            result = storageInterfaceInfoListP(this->driver, path, level, callback, callbackData, .expression = expression);
+            result = storageInterfaceInfoListP(this->pub.driver, path, level, callback, callbackData, .expression = expression);
         }
         // Else sort the info before sending it to the callback
         else
@@ -355,7 +352,7 @@ storageInfoListSort(
             };
 
             result = storageInterfaceInfoListP(
-                this->driver, path, level, storageInfoListSortCallback, &data, .expression = expression);
+                this->pub.driver, path, level, storageInfoListSortCallback, &data, .expression = expression);
             lstSort(data.infoList, sortOrder);
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -459,7 +456,7 @@ storageInfoList(
 
     ASSERT(this != NULL);
     ASSERT(callback != NULL);
-    ASSERT(this->interface.infoList != NULL);
+    ASSERT(this->pub.interface.infoList != NULL);
     ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
 
     bool result = false;
@@ -574,29 +571,29 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.move != NULL);
+    ASSERT(this->pub.interface.move != NULL);
     ASSERT(source != NULL);
     ASSERT(destination != NULL);
     ASSERT(!storageReadIgnoreMissing(source));
-    ASSERT(strEq(this->type, storageReadType(source)));
+    ASSERT(strEq(storageType(this), storageReadType(source)));
     ASSERT(strEq(storageReadType(source), storageWriteType(destination)));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file can't be moved it will need to be copied
-        if (!storageInterfaceMoveP(this->driver, source, destination))
+        if (!storageInterfaceMoveP(this->pub.driver, source, destination))
         {
             // Perform the copy
             storageCopyP(source, destination);
 
             // Remove the source file
-            storageInterfaceRemoveP(this->driver, storageReadName(source));
+            storageInterfaceRemoveP(this->pub.driver, storageReadName(source));
 
             // Sync source path if the destination path was synced.  We know the source and destination paths are different because
             // the move did not succeed.  This will need updating when drivers other than Posix/CIFS are implemented because there's
             // no way to get coverage on it now.
             if (storageWriteSyncPath(destination))
-                storageInterfacePathSyncP(this->driver, strPath(storageReadName(source)));
+                storageInterfacePathSyncP(this->pub.driver, strPath(storageReadName(source)));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -626,7 +623,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
     {
         result = storageReadMove(
             storageInterfaceNewReadP(
-                this->driver, storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible,
+                this->pub.driver, storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible,
                 .limit = param.limit),
             memContextPrior());
     }
@@ -663,7 +660,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     {
         result = storageWriteMove(
             storageInterfaceNewWriteP(
-                this->driver, storagePathP(this, fileExp), .modeFile = param.modeFile != 0 ? param.modeFile : this->modeFile,
+                this->pub.driver, storagePathP(this, fileExp), .modeFile = param.modeFile != 0 ? param.modeFile : this->modeFile,
                 .modePath = param.modePath != 0 ? param.modePath : this->modePath, .user = param.user, .group = param.group,
                 .timeModified = param.timeModified, .createPath = !param.noCreatePath, .syncFile = !param.noSyncFile,
                 .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .compressible = param.compressible),
@@ -788,7 +785,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->interface.pathCreate != NULL && storageFeature(this, storageFeaturePath));
+    ASSERT(this->pub.interface.pathCreate != NULL && storageFeature(this, storageFeaturePath));
     ASSERT(this->write);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -798,7 +795,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 
         // Call driver function
         storageInterfacePathCreateP(
-            this->driver, path, param.errorOnExists, param.noParentCreate, param.mode != 0 ? param.mode : this->modePath);
+            this->pub.driver, path, param.errorOnExists, param.noParentCreate, param.mode != 0 ? param.mode : this->modePath);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -846,7 +843,7 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
         String *path = storagePathP(this, pathExp);
 
         // Call driver function
-        if (!storageInterfacePathRemoveP(this->driver, path, param.recurse) && param.errorOnMissing)
+        if (!storageInterfacePathRemoveP(this->pub.driver, path, param.recurse) && param.errorOnMissing)
         {
             THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_MISSING, strZ(path));
         }
@@ -868,11 +865,11 @@ void storagePathSync(const Storage *this, const String *pathExp)
     ASSERT(this->write);
 
     // Not all storage requires path sync so just do nothing if the function is not implemented
-    if (this->interface.pathSync != NULL)
+    if (this->pub.interface.pathSync != NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            storageInterfacePathSyncP(this->driver, storagePathP(this, pathExp));
+            storageInterfacePathSyncP(this->pub.driver, storagePathP(this, pathExp));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -917,7 +914,7 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
         String *file = storagePathP(this, fileExp);
 
         // Call driver function
-        storageInterfaceRemoveP(this->driver, file, .errorOnMissing = param.errorOnMissing);
+        storageInterfaceRemoveP(this->pub.driver, file, .errorOnMissing = param.errorOnMissing);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -925,62 +922,9 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /**********************************************************************************************************************************/
-void *
-storageDriver(const Storage *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->driver);
-}
-
-/**********************************************************************************************************************************/
-bool
-storageFeature(const Storage *this, StorageFeature feature)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, this);
-        FUNCTION_TEST_PARAM(ENUM, feature);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface.feature >> feature & 1);
-}
-
-/**********************************************************************************************************************************/
-StorageInterface
-storageInterface(const Storage *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface);
-}
-
-/**********************************************************************************************************************************/
-const String *
-storageType(const Storage *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->type);
-}
-
-/**********************************************************************************************************************************/
 String *
 storageToLog(const Storage *this)
 {
     return strNewFmt(
-        "{type: %s, path: %s, write: %s}", strZ(this->type), strZ(strToLog(this->path)), cvtBoolToConstZ(this->write));
+        "{type: %s, path: %s, write: %s}", strZ(storageType(this)), strZ(strToLog(this->path)), cvtBoolToConstZ(this->write));
 }

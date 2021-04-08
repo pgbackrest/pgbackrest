@@ -4,7 +4,7 @@ CIFS Storage
 #ifndef STORAGE_CIFS_STORAGE_H
 #define STORAGE_CIFS_STORAGE_H
 
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type

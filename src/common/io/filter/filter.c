@@ -7,7 +7,6 @@ IO Filter Interface
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -22,9 +21,6 @@ struct IoFilter
 
     bool flushing;                                                  // Has the filter started flushing?
 };
-
-OBJECT_DEFINE_MOVE(IO_FILTER);
-OBJECT_DEFINE_FREE(IO_FILTER);
 
 /***********************************************************************************************************************************
 Allocations will be in the memory context of the caller.

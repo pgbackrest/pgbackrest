@@ -13,7 +13,6 @@ Ini Handler
 #include "common/ini.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -23,9 +22,6 @@ struct Ini
     MemContext *memContext;                                         // Context that contains the ini
     KeyValue *store;                                                // Key value store that contains the ini data
 };
-
-OBJECT_DEFINE_MOVE(INI);
-OBJECT_DEFINE_FREE(INI);
 
 /**********************************************************************************************************************************/
 Ini *

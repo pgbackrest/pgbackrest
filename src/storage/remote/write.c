@@ -16,9 +16,6 @@ Remote Storage File write
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_WRITE_REMOTE_TYPE                                   StorageWriteRemote
-#define STORAGE_WRITE_REMOTE_PREFIX                                 storageWriteRemote
-
 typedef struct StorageWriteRemote
 {
     MemContext *memContext;                                         // Object mem context
@@ -43,13 +40,23 @@ Macros for function logging
 /***********************************************************************************************************************************
 Close file on the remote
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_REMOTE, LOG, logLevelTrace)
+static void
+storageWriteRemoteFreeResource(THIS_VOID)
 {
+    THIS(StorageWriteRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_REMOTE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "-1"));
     ioWriteFlush(protocolClientIoWrite(this->client));
     protocolClientReadOutput(this->client, false);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file

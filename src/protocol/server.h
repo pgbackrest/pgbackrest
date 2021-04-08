@@ -7,13 +7,11 @@ Protocol Server
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_SERVER_TYPE                                        ProtocolServer
-#define PROTOCOL_SERVER_PREFIX                                      protocolServer
-
 typedef struct ProtocolServer ProtocolServer;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/object.h"
 #include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
@@ -52,7 +50,11 @@ void protocolServerProcess(
 void protocolServerResponse(ProtocolServer *this, const Variant *output);
 
 // Move to a new parent mem context
-ProtocolServer *protocolServerMove(ProtocolServer *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline ProtocolServer *
+protocolServerMove(ProtocolServer *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Write a line
 void protocolServerWriteLine(const ProtocolServer *this, const String *line);
@@ -69,7 +71,11 @@ IoWrite *protocolServerIoWrite(const ProtocolServer *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolServerFree(ProtocolServer *this);
+__attribute__((always_inline)) static inline void
+protocolServerFree(ProtocolServer *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -192,7 +192,8 @@ testRun(void)
 
         TEST_RESULT_VOID(expireBackup(infoBackup, full1, 0), "expire backup with both manifest files");
         TEST_RESULT_BOOL(
-            (strLstSize(storageListP(storageTest, full1Path)) && strLstExistsZ(storageListP(storageTest, full1Path), "bogus")),
+            (strLstSize(storageListP(storageTest, full1Path)) &&
+                strLstExists(storageListP(storageTest, full1Path), STRDEF("bogus"))),
             true, "full1 - only manifest files removed");
 
         TEST_RESULT_VOID(expireBackup(infoBackup, full2, 0), "expire backup with no manifest - does not error");

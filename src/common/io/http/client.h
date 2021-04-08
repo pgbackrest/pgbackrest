@@ -19,9 +19,6 @@ completes and tries to call httpClientReuse() on an HttpClient that has been fre
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_CLIENT_TYPE                                            HttpClient
-#define HTTP_CLIENT_PREFIX                                          httpClient
-
 typedef struct HttpClient HttpClient;
 
 #include "common/io/client.h"
@@ -48,6 +45,21 @@ Constructors
 HttpClient *httpClientNew(IoClient *ioClient, TimeMSec timeout);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct HttpClientPub
+{
+    TimeMSec timeout;                                               // Request timeout
+} HttpClientPub;
+
+__attribute__((always_inline)) static inline TimeMSec
+httpClientTimeout(const HttpClient *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const HttpClientPub *)this)->timeout;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Open a new session
@@ -55,11 +67,6 @@ HttpSession *httpClientOpen(HttpClient *this);
 
 // Request/response finished cleanly so session can be reused
 void httpClientReuse(HttpClient *this, HttpSession *session);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-TimeMSec httpClientTimeout(const HttpClient *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

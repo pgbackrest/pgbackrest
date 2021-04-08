@@ -20,9 +20,6 @@ STRING_STATIC(GCS_QUERY_ALT_STR,                                    "alt");
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_READ_GCS_TYPE                                       StorageReadGcs
-#define STORAGE_READ_GCS_PREFIX                                     storageReadGcs
-
 typedef struct StorageReadGcs
 {
     MemContext *memContext;                                         // Object mem context

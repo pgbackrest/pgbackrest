@@ -205,6 +205,36 @@ Don't use a macro when a function could be used instead. Macros make it hard to 
 
 Object-oriented programming is used extensively. The object pointer is always referred to as `this`.
 
+An object can expose internal struct members by defining a public struct that contains the members to be exposed and using inline functions to get/set the members.
+
+The header file:
+```c
+/***********************************************************************************************************************************
+Getters/setters
+***********************************************************************************************************************************/
+typedef struct ListPub
+{
+    unsigned int listSize;                                          // List size
+} ListPub;
+
+// List size
+__attribute__((always_inline)) static inline unsigned int
+lstSize(const List *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((const ListPub *)this)->listSize;
+}
+```
+And the C file:
+```c
+struct List
+{
+    ListPub pub;                                                    // Publicly accessible variables
+    ...
+};
+```
+The public struct must be the first member of the private struct. The naming convention for the public struct is to add `Pub` to the end of the private struct name.
+
 ### Variadic Functions
 
 Variadic functions can take a variable number of parameters. While the `printf()` pattern is variadic, it is not very flexible in terms of optional parameters given in any order.

@@ -174,8 +174,9 @@ testRun(void)
         TEST_RESULT_UINT(backupDataPtr->backupInfoSizeDelta, 163866, "    backup delta");
         TEST_RESULT_STR_Z(backupDataPtr->backupPrior, "20161219-212741F", "    backup prior exists");
         TEST_RESULT_BOOL(
-            (strLstSize(backupDataPtr->backupReference) == 1 && strLstExistsZ(backupDataPtr->backupReference, "20161219-212741F")), true,
-            "    backup reference exists");
+            (strLstSize(backupDataPtr->backupReference) == 1 &&
+                strLstExists(backupDataPtr->backupReference, STRDEF("20161219-212741F"))),
+            true, "    backup reference exists");
         TEST_RESULT_PTR(infoBackupDataByLabel(infoBackup, STRDEF("20161219-12345")), NULL, "    backup label does not exist");
 
         backupData = infoBackupData(infoBackup, 2);
@@ -185,8 +186,9 @@ testRun(void)
         TEST_RESULT_STR_Z(backupData.backupType, "incr", "    backup type incr");
         TEST_RESULT_STR_Z(backupData.backupPrior, "20161219-212741F", "    backup prior exists");
         TEST_RESULT_BOOL(
-            (strLstSize(backupData.backupReference) == 2 && strLstExistsZ(backupData.backupReference, "20161219-212741F") &&
-            strLstExistsZ(backupData.backupReference, "20161219-212741F_20161219-212803D")), true, "    backup reference exists");
+            (strLstSize(backupData.backupReference) == 2 && strLstExists(backupData.backupReference, STRDEF("20161219-212741F")) &&
+                strLstExists(backupData.backupReference, STRDEF("20161219-212741F_20161219-212803D"))),
+            true, "    backup reference exists");
         TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "    option archive check");
         TEST_RESULT_BOOL(backupData.optionArchiveCopy, false, "    option archive copy");
         TEST_RESULT_BOOL(backupData.optionBackupStandby, false, "    option backup standby");

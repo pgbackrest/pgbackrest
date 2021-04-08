@@ -4,7 +4,7 @@
 
 pgBackRest aims to be a reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads by utilizing algorithms that are optimized for database-specific requirements.
 
-pgBackRest [v2.32](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.32) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.33](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.33) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
 Documentation for v1 can be found [here](http://www.pgbackrest.org/1). No further releases are planned for v1 because v2 is backward-compatible with v1 options and repositories.
 
@@ -19,6 +19,10 @@ Utilizing multiple cores for compression makes it possible to achieve 1TB/hr raw
 ### Local or Remote Operation
 
 A custom protocol allows pgBackRest to backup, restore, and archive locally or remotely via SSH with minimal configuration. An interface to query PostgreSQL is also provided via the protocol layer so that remote access to PostgreSQL is never required, which enhances security.
+
+### Multiple Repositories
+
+Multiple repositories allow, for example, a local repository with minimal retention for fast restores and a remote repository with a longer retention for redundancy and access across the enterprise.
 
 ### Full, Incremental, & Differential Backups
 
@@ -74,9 +78,9 @@ Tablespaces are fully supported and on restore tablespaces can be remapped to an
 
 File and directory links are supported for any file or directory in the PostgreSQL cluster. When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.
 
-### S3 and Azure Compatible Object Store Support
+### S3, Azure, and GCS Compatible Object Store Support
 
-pgBackRest repositories can be located in S3 and Azure compatible object stores to allow for virtually unlimited capacity and retention.
+pgBackRest repositories can be located in S3, Azure, and GCS compatible object stores to allow for virtually unlimited capacity and retention.
 
 ### Encryption
 
@@ -100,7 +104,7 @@ pgBackRest strives to be easy to configure and operate:
 
 Contributions to pgBackRest are always welcome!
 
-Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). You may want to check the [Feature Backlog](https://github.com/pgbackrest/pgbackrest/wiki#backlog) to see if your suggestion has already been submitted.
+Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). You may want to check the [Project Boards](https://github.com/pgbackrest/pgbackrest/projects) to see if your suggestion has already been submitted.
 
 Bug reports should be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). Please provide as much information as possible to aid in determining the cause of the problem.
 

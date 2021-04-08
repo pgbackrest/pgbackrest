@@ -19,7 +19,6 @@ Execute Process
 #include "common/io/io.h"
 #include "common/io/read.intern.h"
 #include "common/io/write.intern.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -45,8 +44,6 @@ struct Exec
     IoRead *ioReadExec;                                             // Wrapper for file descriptor read interface
     IoWrite *ioWriteExec;                                           // Wrapper for file descriptor write interface
 };
-
-OBJECT_DEFINE_FREE(EXEC);
 
 /***********************************************************************************************************************************
 Macro to close file descriptors after dup2() in the child process
@@ -74,8 +71,17 @@ other code.
 /***********************************************************************************************************************************
 Free exec file descriptors and ensure process is shut down
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(EXEC, LOG, logLevelTrace)
+static void
+execFreeResource(THIS_VOID)
 {
+    THIS(Exec);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(EXEC, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     // Close file descriptors
     close(this->fdRead);
     close(this->fdWrite);
@@ -103,8 +109,9 @@ OBJECT_DEFINE_FREE_RESOURCE_BEGIN(EXEC, LOG, logLevelTrace)
         }
         MEM_CONTEXT_TEMP_END();
     }
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 Exec *

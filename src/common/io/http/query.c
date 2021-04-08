@@ -8,7 +8,6 @@ HTTP Query
 #include "common/io/http/query.h"
 #include "common/memContext.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -19,9 +18,6 @@ struct HttpQuery
     KeyValue *kv;                                                   // KeyValue store
     const StringList *redactList;                                   // List of keys to redact values for
 };
-
-OBJECT_DEFINE_MOVE(HTTP_QUERY);
-OBJECT_DEFINE_FREE(HTTP_QUERY);
 
 /**********************************************************************************************************************************/
 HttpQuery *

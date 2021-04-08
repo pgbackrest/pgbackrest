@@ -11,6 +11,7 @@ Gz Decompress
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 
@@ -22,9 +23,6 @@ STRING_EXTERN(GZ_DECOMPRESS_FILTER_TYPE_STR,                        GZ_DECOMPRES
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define GZ_DECOMPRESS_TYPE                                          GzDecompress
-#define GZ_DECOMPRESS_PREFIX                                        gzDecompress
-
 typedef struct GzDecompress
 {
     MemContext *memContext;                                         // Context to store data
@@ -54,11 +52,21 @@ gzDecompressToLog(const GzDecompress *this)
 /***********************************************************************************************************************************
 Free inflate stream
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(GZ_DECOMPRESS, LOG, logLevelTrace)
+static void
+gzDecompressFreeResource(THIS_VOID)
 {
+    THIS(GzDecompress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(GZ_DECOMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     inflateEnd(&this->stream);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Decompress data

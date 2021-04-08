@@ -7,7 +7,6 @@ HTTP Header
 #include "common/io/http/header.h"
 #include "common/memContext.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -18,9 +17,6 @@ struct HttpHeader
     const StringList *redactList;                                   // List of headers to redact during logging
     KeyValue *kv;                                                   // KeyValue store
 };
-
-OBJECT_DEFINE_MOVE(HTTP_HEADER);
-OBJECT_DEFINE_FREE(HTTP_HEADER);
 
 /**********************************************************************************************************************************/
 HttpHeader *

@@ -7,12 +7,10 @@ Protocol Parallel Executor
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_PARALLEL_TYPE                                      ProtocolParallel
-#define PROTOCOL_PARALLEL_PREFIX                                    protocolParallel
-
 typedef struct ProtocolParallel ProtocolParallel;
 
 #include "common/time.h"
+#include "common/type/object.h"
 #include "protocol/client.h"
 #include "protocol/parallelJob.h"
 
@@ -50,7 +48,11 @@ ProtocolParallelJob *protocolParallelResult(ProtocolParallel *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolParallelFree(ProtocolParallel *this);
+__attribute__((always_inline)) static inline void
+protocolParallelFree(ProtocolParallel *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

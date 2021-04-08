@@ -24,9 +24,6 @@ STRING_EXTERN(LZ4_DECOMPRESS_FILTER_TYPE_STR,                       LZ4_DECOMPRE
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define LZ4_DECOMPRESS_TYPE                                         Lz4Decompress
-#define LZ4_DECOMPRESS_PREFIX                                       lz4Decompress
-
 typedef struct Lz4Decompress
 {
     MemContext *memContext;                                         // Context to store data
@@ -58,11 +55,21 @@ lz4DecompressToLog(const Lz4Decompress *this)
 /***********************************************************************************************************************************
 Free decompression context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(LZ4_DECOMPRESS, LOG, logLevelTrace)
+static void
+lz4DecompressFreeResource(THIS_VOID)
 {
+    THIS(Lz4Decompress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(LZ4_DECOMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     LZ4F_freeDecompressionContext(this->context);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Decompress data

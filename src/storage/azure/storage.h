@@ -4,7 +4,7 @@ Azure Storage
 #ifndef STORAGE_AZURE_STORAGE_H
 #define STORAGE_AZURE_STORAGE_H
 
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type

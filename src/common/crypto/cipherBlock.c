@@ -35,9 +35,6 @@ Header constants and sizes
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define CIPHER_BLOCK_TYPE                                           CipherBlock
-#define CIPHER_BLOCK_PREFIX                                         cipherBlock
-
 typedef struct CipherBlock
 {
     MemContext *memContext;                                         // Context to store data
@@ -75,11 +72,21 @@ cipherBlockToLog(const CipherBlock *this)
 /***********************************************************************************************************************************
 Free cipher context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(CIPHER_BLOCK, LOG, logLevelTrace)
+static void
+cipherBlockFreeResource(THIS_VOID)
 {
+    THIS(CipherBlock);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(CIPHER_BLOCK, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     EVP_CIPHER_CTX_free(this->cipherContext);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Determine how large the destination buffer should be

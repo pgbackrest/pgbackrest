@@ -6,7 +6,6 @@ Database Client
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 #include "db/db.h"
 #include "db/protocol.h"
@@ -37,20 +36,27 @@ struct Db
     const String *archiveCommand;                                   // The archive_command reported by the database
 };
 
-OBJECT_DEFINE_MOVE(DB);
-OBJECT_DEFINE_FREE(DB);
-
 /***********************************************************************************************************************************
 Close protocol connection.  No need to close a locally created PgClient since it has its own destructor.
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(DB, LOG, logLevelTrace)
+static void
+dbFreeResource(THIS_VOID)
 {
+    THIS(Db);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE);
     protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
 
     protocolClientExecute(this->remoteClient, command, false);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 Db *

@@ -8,7 +8,6 @@ Protocol Command
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 #include "protocol/command.h"
 
 /***********************************************************************************************************************************
@@ -26,9 +25,6 @@ struct ProtocolCommand
     StringId command;
     Variant *parameterList;
 };
-
-OBJECT_DEFINE_MOVE(PROTOCOL_COMMAND);
-OBJECT_DEFINE_FREE(PROTOCOL_COMMAND);
 
 /**********************************************************************************************************************************/
 ProtocolCommand *

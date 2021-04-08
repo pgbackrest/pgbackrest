@@ -27,6 +27,75 @@ Define the console width - use a fixed with of 80 since this should be safe on v
 #define CONSOLE_WIDTH                                               80
 
 /***********************************************************************************************************************************
+Helper function to split a string into a string list based on a delimiter and max size per item. In other words each item in the
+list will be no longer than size even if multiple delimiters are skipped. This is useful for breaking up text on spaces, for
+example.
+***********************************************************************************************************************************/
+static StringList *
+helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, string);
+        FUNCTION_TEST_PARAM(STRINGZ, delimiter);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(string != NULL);
+    ASSERT(delimiter != NULL);
+    ASSERT(size > 0);
+
+    // Create the list
+    StringList *this = strLstNew();
+
+    // Base points to the beginning of the string that is being searched
+    const char *stringBase = strZ(string);
+
+    // Match points to the next delimiter match that has been found
+    const char *stringMatchLast = NULL;
+    const char *stringMatch = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        do
+        {
+            // Find a delimiter match
+            stringMatch = strstr(stringMatchLast == NULL ? stringBase : stringMatchLast, delimiter);
+
+            // If a match was found then add the string
+            if (stringMatch != NULL)
+            {
+                if ((size_t)(stringMatch - stringBase) >= size)
+                {
+                    if (stringMatchLast != NULL)
+                        stringMatch = stringMatchLast - strlen(delimiter);
+
+                    strLstAdd(this, strNewN(stringBase, (size_t)(stringMatch - stringBase)));
+                    stringBase = stringMatch + strlen(delimiter);
+                    stringMatchLast = NULL;
+                }
+                else
+                    stringMatchLast = stringMatch + strlen(delimiter);
+            }
+            // Else make whatever is left the last string
+            else
+            {
+                if (stringMatchLast != NULL && strlen(stringBase) - strlen(delimiter) >= size)
+                {
+                    strLstAdd(this, strNewN(stringBase, (size_t)((stringMatchLast - strlen(delimiter)) - stringBase)));
+                    stringBase = stringMatchLast;
+                }
+
+                strLstAdd(this, strNew(stringBase));
+            }
+        }
+        while (stringMatch != NULL);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
 Helper function for helpRender() to make output look good on a console
 ***********************************************************************************************************************************/
 static String *
@@ -55,7 +124,7 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
             strCat(result, LF_STR);
 
         // Split the paragraph into lines that don't exceed the line length
-        StringList *partList = strLstNewSplitSizeZ(strLstGet(lineList, lineIdx), " ", length - indent);
+        StringList *partList = helpRenderSplitSize(strLstGet(lineList, lineIdx), " ", length - indent);
 
         for (unsigned int partIdx = 0; partIdx < strLstSize(partList); partIdx++)
         {

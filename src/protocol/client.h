@@ -7,13 +7,11 @@ Protocol Client
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_CLIENT_TYPE                                        ProtocolClient
-#define PROTOCOL_CLIENT_PREFIX                                      protocolClient
-
 typedef struct ProtocolClient ProtocolClient;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/object.h"
 #include "protocol/command.h"
 
 /***********************************************************************************************************************************
@@ -47,7 +45,13 @@ Functions
 ***********************************************************************************************************************************/
 // Execute a protocol command and get the output
 const Variant *protocolClientExecute(ProtocolClient *this, const ProtocolCommand *command, bool outputRequired);
-ProtocolClient *protocolClientMove(ProtocolClient *this, MemContext *parentNew);
+
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline ProtocolClient *
+protocolClientMove(ProtocolClient *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Send noop to test connection or keep it alive
 void protocolClientNoOp(ProtocolClient *this);
@@ -73,7 +77,11 @@ IoWrite *protocolClientIoWrite(const ProtocolClient *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolClientFree(ProtocolClient *this);
+__attribute__((always_inline)) static inline void
+protocolClientFree(ProtocolClient *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

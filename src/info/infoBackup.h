@@ -7,11 +7,9 @@ Backup Info Handler
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define INFO_BACKUP_TYPE                                            InfoBackup
-#define INFO_BACKUP_PREFIX                                          infoBackup
-
 typedef struct InfoBackup InfoBackup;
 
+#include "common/type/object.h"
 #include "common/type/string.h"
 #include "common/type/stringList.h"
 #include "info/infoPg.h"
@@ -75,7 +73,11 @@ void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 
 // Move to a new parent mem context
-InfoBackup *infoBackupMove(InfoBackup *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline InfoBackup *
+infoBackupMove(InfoBackup *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -105,7 +107,11 @@ const String *infoBackupCipherPass(const InfoBackup *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void infoBackupFree(InfoBackup *this);
+__attribute__((always_inline)) static inline void
+infoBackupFree(InfoBackup *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Helper functions

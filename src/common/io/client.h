@@ -10,18 +10,20 @@ opened with ioClientOpen().
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_CLIENT_TYPE                                             IoClient
-#define IO_CLIENT_PREFIX                                           ioClient
-
 typedef struct IoClient IoClient;
 
 #include "common/io/session.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-IoClient *ioClientMove(IoClient *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline IoClient *
+ioClientMove(IoClient *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Open session
 IoSession *ioClientOpen(IoClient *this);
@@ -35,7 +37,11 @@ const String *ioClientName(IoClient *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioClientFree(IoClient *this);
+__attribute__((always_inline)) static inline void
+ioClientFree(IoClient *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

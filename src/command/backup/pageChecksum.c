@@ -7,6 +7,7 @@ Page Checksum Filter
 #include "common/io/filter/filter.intern.h"
 #include "command/backup/pageChecksum.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "postgres/interface.h"

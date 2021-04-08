@@ -15,7 +15,6 @@ Archive Info Handler
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -36,9 +35,6 @@ struct InfoArchive
     MemContext *memContext;                                         // Mem context
     InfoPg *infoPg;                                                 // Contents of the DB data
 };
-
-OBJECT_DEFINE_MOVE(INFO_ARCHIVE);
-OBJECT_DEFINE_FREE(INFO_ARCHIVE);
 
 /***********************************************************************************************************************************
 Internal constructor

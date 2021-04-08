@@ -532,8 +532,8 @@ testRun(void)
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
 
         // With the expected backupCopyResultCopy, unset the storageFeatureCompress bit for the storageRepo for code coverage
-        uint64_t feature = storageRepo()->interface.feature;
-        ((Storage *)storageRepo())->interface.feature = feature & ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
+        uint64_t feature = storageRepo()->pub.interface.feature;
+        ((Storage *)storageRepo())->pub.interface.feature = feature & ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
 
         // Create tmp file to make it look like a prior backup file failed partway through to ensure that retries work
         TEST_RESULT_VOID(
@@ -547,7 +547,7 @@ testRun(void)
                 cipherTypeNone, NULL),
             "pg file exists and shrunk, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
 
-        ((Storage *)storageRepo())->interface.feature = feature;
+        ((Storage *)storageRepo())->pub.interface.feature = feature;
 
         TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
@@ -1898,18 +1898,18 @@ testRun(void)
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
 
             // Disable storageFeaturePath so paths will not be created before files are copied
-            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeaturePath;
+            ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeaturePath;
 
             // Disable storageFeaturePathSync so paths will not be synced
-            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeaturePathSync;
+            ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeaturePathSync;
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Enable storage features
-            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeaturePath;
-            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeaturePathSync;
+            ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePath;
+            ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePathSync;
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
@@ -2396,18 +2396,18 @@ testRun(void)
                 NULL);
 
             // Disable storageFeatureSymLink so tablespace (and latest) symlinks will not be created
-            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureSymLink;
+            ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureSymLink;
 
             // Disable storageFeatureHardLink so hardlinks will not be created
-            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureHardLink;
+            ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Reset storage features
-            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeatureSymLink;
-            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeatureHardLink;
+            ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureSymLink;
+            ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureHardLink;
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"

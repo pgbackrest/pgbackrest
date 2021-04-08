@@ -5,7 +5,7 @@ Remote Storage
 #define STORAGE_REMOTE_STORAGE_H
 
 #include "protocol/client.h"
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type

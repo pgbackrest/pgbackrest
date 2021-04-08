@@ -11,13 +11,11 @@ allocate/open or deallocate/free resources.  An example of an IoWrite object is 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_WRITE_TYPE                                               IoWrite
-#define IO_WRITE_PREFIX                                             ioWrite
-
 typedef struct IoWrite IoWrite;
 
 #include "common/io/filter/group.h"
 #include "common/type/buffer.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Functions
@@ -67,7 +65,11 @@ int ioWriteFd(const IoWrite *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioWriteFree(IoWrite *this);
+__attribute__((always_inline)) static inline void
+ioWriteFree(IoWrite *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

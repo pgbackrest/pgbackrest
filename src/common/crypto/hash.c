@@ -43,9 +43,6 @@ Include local MD5 code
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define CRYPTO_HASH_TYPE                                            CryptoHash
-#define CRYPTO_HASH_PREFIX                                          cryptoHash
-
 typedef struct CryptoHash
 {
     MemContext *memContext;                                         // Context to store data
@@ -66,11 +63,21 @@ Macros for function logging
 /***********************************************************************************************************************************
 Free hash context
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(CRYPTO_HASH, LOG, logLevelTrace)
+static void
+cryptoHashFreeResource(THIS_VOID)
 {
+    THIS(CryptoHash);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(CRYPTO_HASH, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     EVP_MD_CTX_destroy(this->hashContext);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Add message data to the hash from a Buffer

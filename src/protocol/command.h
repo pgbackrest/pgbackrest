@@ -7,11 +7,9 @@ Protocol Command
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_TYPE                                       ProtocolCommand
-#define PROTOCOL_COMMAND_PREFIX                                     protocolCommand
-
 typedef struct ProtocolCommand ProtocolCommand;
 
+#include "common/type/object.h"
 #include "common/type/stringId.h"
 #include "common/type/variant.h"
 
@@ -32,7 +30,12 @@ ProtocolCommand *protocolCommandNew(const StringId command);
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-ProtocolCommand *protocolCommandMove(ProtocolCommand *this, MemContext *parentNew);
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline ProtocolCommand *
+protocolCommandMove(ProtocolCommand *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Read the command output
 ProtocolCommand *protocolCommandParamAdd(ProtocolCommand *this, const Variant *param);
@@ -46,7 +49,11 @@ String *protocolCommandJson(const ProtocolCommand *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolCommandFree(ProtocolCommand *this);
+__attribute__((always_inline)) static inline void
+protocolCommandFree(ProtocolCommand *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

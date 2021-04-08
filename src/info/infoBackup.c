@@ -19,7 +19,6 @@ Backup Info Handler
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
-#include "common/type/object.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -65,9 +64,6 @@ struct InfoBackup
     InfoPg *infoPg;                                                 // Contents of the DB data
     List *backup;                                                   // List of current backups and their associated data
 };
-
-OBJECT_DEFINE_MOVE(INFO_BACKUP);
-OBJECT_DEFINE_FREE(INFO_BACKUP);
 
 /***********************************************************************************************************************************
 Internal constructor

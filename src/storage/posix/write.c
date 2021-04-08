@@ -21,9 +21,6 @@ Posix Storage File write
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_WRITE_POSIX_TYPE                                    StorageWritePosix
-#define STORAGE_WRITE_POSIX_PREFIX                                  storageWritePosix
-
 typedef struct StorageWritePosix
 {
     MemContext *memContext;                                         // Object mem context
@@ -54,11 +51,21 @@ Since open is called more than once use constants to make sure these parameters 
 /***********************************************************************************************************************************
 Close file descriptor
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_POSIX, LOG, logLevelTrace)
+static void
+storageWritePosixFreeResource(THIS_VOID)
 {
+    THIS(StorageWritePosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file

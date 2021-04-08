@@ -7,7 +7,6 @@ Io Client Interface
 #include "common/io/client.intern.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -18,9 +17,6 @@ struct IoClient
     void *driver;                                                   // Driver object
     const IoClientInterface *interface;                             // Driver interface
 };
-
-OBJECT_DEFINE_MOVE(IO_CLIENT);
-OBJECT_DEFINE_FREE(IO_CLIENT);
 
 /**********************************************************************************************************************************/
 IoClient *

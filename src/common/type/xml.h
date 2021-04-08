@@ -11,14 +11,12 @@ There are many capabilities of libxml2 that are not exposed here and may need to
 /***********************************************************************************************************************************
 Objects
 ***********************************************************************************************************************************/
-#define XML_DOCUMENT_TYPE                                           XmlDocument
-#define XML_DOCUMENT_PREFIX                                         xmlDocument
-
 typedef struct XmlDocument XmlDocument;
 typedef struct XmlNode XmlNode;
 typedef struct XmlNodeList XmlNodeList;
 
 #include "common/memContext.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -48,7 +46,11 @@ XmlNode *xmlDocumentRoot(const XmlDocument *this);
 /***********************************************************************************************************************************
 Document Destructor
 ***********************************************************************************************************************************/
-void xmlDocumentFree(XmlDocument *this);
+__attribute__((always_inline)) static inline void
+xmlDocumentFree(XmlDocument *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Node Functions

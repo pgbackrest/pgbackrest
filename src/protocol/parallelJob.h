@@ -7,9 +7,6 @@ Protocol Parallel Job
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_PARALLEL_JOB_TYPE                                  ProtocolParallelJob
-#define PROTOCOL_PARALLEL_JOB_PREFIX                                protocolParallelJob
-
 typedef struct ProtocolParallelJob ProtocolParallelJob;
 
 /***********************************************************************************************************************************
@@ -23,6 +20,7 @@ typedef enum
 } ProtocolParallelJobState;
 
 #include "common/time.h"
+#include "common/type/object.h"
 #include "protocol/client.h"
 
 /***********************************************************************************************************************************
@@ -34,7 +32,11 @@ ProtocolParallelJob *protocolParallelJobNew(const Variant *key, ProtocolCommand 
 Functions
 ***********************************************************************************************************************************/
 // Move to new parent mem context
-ProtocolParallelJob *protocolParallelJobMove(ProtocolParallelJob *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline ProtocolParallelJob *
+protocolParallelJobMove(ProtocolParallelJob *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -65,7 +67,11 @@ void protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobS
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolParallelJobFree(ProtocolParallelJob *this);
+__attribute__((always_inline)) static inline void
+protocolParallelJobFree(ProtocolParallelJob *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

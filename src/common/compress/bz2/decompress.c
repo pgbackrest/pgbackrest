@@ -11,6 +11,7 @@ BZ2 Decompress
 #include "common/debug.h"
 #include "common/io/filter/filter.intern.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 
@@ -22,9 +23,6 @@ STRING_EXTERN(BZ2_DECOMPRESS_FILTER_TYPE_STR,                        BZ2_DECOMPR
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define BZ2_DECOMPRESS_TYPE                                          Bz2Decompress
-#define BZ2_DECOMPRESS_PREFIX                                        bz2Decompress
-
 typedef struct Bz2Decompress
 {
     MemContext *memContext;                                         // Context to store data
@@ -54,11 +52,21 @@ bz2DecompressToLog(const Bz2Decompress *this)
 /***********************************************************************************************************************************
 Free inflate stream
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(BZ2_DECOMPRESS, LOG, logLevelTrace)
+static void
+bz2DecompressFreeResource(THIS_VOID)
 {
+    THIS(Bz2Decompress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BZ2_DECOMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     BZ2_bzDecompressEnd(&this->stream);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Decompress data

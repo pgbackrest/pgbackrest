@@ -9,7 +9,6 @@ Key Value Handler
 #include "common/memContext.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
-#include "common/type/object.h"
 #include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
@@ -26,9 +25,6 @@ struct KeyValue
     List *list;                                                     // List of keys/values
     VariantList *keyList;                                           // List of keys
 };
-
-OBJECT_DEFINE_MOVE(KEY_VALUE);
-OBJECT_DEFINE_FREE(KEY_VALUE);
 
 /***********************************************************************************************************************************
 Contains information about an individual key/value pair
