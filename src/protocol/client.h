@@ -41,6 +41,32 @@ Constructors
 ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ProtocolClientPub
+{
+    MemContext *memContext;                                         // Mem context
+    IoRead *read;                                                   // Read interface
+    IoWrite *write;                                                 // Write interface
+} ProtocolClientPub;
+
+// Read interface
+__attribute__((always_inline)) static inline IoRead *
+protocolClientIoRead(ProtocolClient *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolClientPub *)this)->read;
+}
+
+// Write interface
+__attribute__((always_inline)) static inline IoWrite *
+protocolClientIoWrite(ProtocolClient *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolClientPub *)this)->write;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Execute a protocol command and get the output
@@ -64,15 +90,6 @@ const Variant *protocolClientReadOutput(ProtocolClient *this, bool outputRequire
 
 // Write the protocol command
 void protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Read interface
-IoRead *protocolClientIoRead(const ProtocolClient *this);
-
-// Write interface
-IoWrite *protocolClientIoWrite(const ProtocolClient *this);
 
 /***********************************************************************************************************************************
 Destructor

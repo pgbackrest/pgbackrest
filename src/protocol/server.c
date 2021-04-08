@@ -22,10 +22,8 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolServer
 {
-    MemContext *memContext;
+    ProtocolServerPub pub;                                          // Publicly accessible variables
     const String *name;
-    IoRead *read;
-    IoWrite *write;
 };
 
 /**********************************************************************************************************************************/
@@ -51,10 +49,13 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
         *this = (ProtocolServer)
         {
-            .memContext = memContextCurrent(),
+            .pub =
+            {
+                .memContext = memContextCurrent(),
+                .read = read,
+                .write = write,
+            },
             .name = strDup(name),
-            .read = read,
-            .write = write,
         };
 
         // Send the protocol greeting
@@ -65,8 +66,8 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_SERVICE_STR), VARSTR(service));
             kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_VERSION_STR), VARSTRZ(PROJECT_VERSION));
 
-            ioWriteStrLine(this->write, jsonFromKv(greetingKv));
-            ioWriteFlush(this->write);
+            ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(greetingKv));
+            ioWriteFlush(protocolServerIoWrite(this));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -96,8 +97,8 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
     kvPut(error, VARSTR(PROTOCOL_OUTPUT_STR), VARSTR(message));
     kvPut(error, VARSTR(PROTOCOL_ERROR_STACK_STR), VARSTR(stack));
 
-    ioWriteStrLine(this->write, jsonFromKv(error));
-    ioWriteFlush(this->write);
+    ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(error));
+    ioWriteFlush(protocolServerIoWrite(this));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -129,7 +130,7 @@ protocolServerProcess(
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Read command
-                KeyValue *commandKv = jsonToKv(ioReadLine(this->read));
+                KeyValue *commandKv = jsonToKv(ioReadLine(protocolServerIoRead(this)));
                 const StringId command = strIdFromStr(stringIdBit5, varStr(kvGet(commandKv, VARSTR(PROTOCOL_KEY_COMMAND_STR))));
                 VariantList *paramList = varVarLst(kvGet(commandKv, VARSTR(PROTOCOL_KEY_PARAMETER_STR)));
 
@@ -150,7 +151,7 @@ protocolServerProcess(
                 {
                     // Send the command to the handler.  Run the handler in the server's memory context in case any persistent data
                     // needs to be stored by the handler.
-                    MEM_CONTEXT_BEGIN(this->memContext)
+                    MEM_CONTEXT_BEGIN(this->pub.memContext)
                     {
                         // Initialize retries in case of command failure
                         bool retry = false;
@@ -251,15 +252,15 @@ protocolServerResponse(ProtocolServer *this, const Variant *output)
     if (output != NULL)
         kvAdd(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
 
-    ioWriteStrLine(this->write, jsonFromKv(result));
-    ioWriteFlush(this->write);
+    ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(result));
+    ioWriteFlush(protocolServerIoWrite(this));
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 void
-protocolServerWriteLine(const ProtocolServer *this, const String *line)
+protocolServerWriteLine(ProtocolServer *this, const String *line)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
@@ -269,42 +270,16 @@ protocolServerWriteLine(const ProtocolServer *this, const String *line)
     ASSERT(this != NULL);
 
     // Dot indicates the start of an lf-terminated line
-    ioWrite(this->write, DOT_BUF);
+    ioWrite(protocolServerIoWrite(this), DOT_BUF);
 
     // Write the line if it exists
     if (line != NULL)
-        ioWriteStr(this->write, line);
+        ioWriteStr(protocolServerIoWrite(this), line);
 
     // Terminate with a linefeed
-    ioWrite(this->write, LF_BUF);
+    ioWrite(protocolServerIoWrite(this), LF_BUF);
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-IoRead *
-protocolServerIoRead(const ProtocolServer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->read);
-}
-
-/**********************************************************************************************************************************/
-IoWrite *
-protocolServerIoWrite(const ProtocolServer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->write);
 }
 
 /**********************************************************************************************************************************/

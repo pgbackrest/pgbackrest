@@ -28,15 +28,6 @@ Constructors
 ProtocolParallel *protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Add client
-void protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client);
-
-// Process jobs
-unsigned int protocolParallelProcess(ProtocolParallel *this);
-
-/***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Are all jobs done?
@@ -44,6 +35,15 @@ bool protocolParallelDone(ProtocolParallel *this);
 
 // Completed job result
 ProtocolParallelJob *protocolParallelResult(ProtocolParallel *this);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Add client
+void protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client);
+
+// Process jobs
+unsigned int protocolParallelProcess(ProtocolParallel *this);
 
 /***********************************************************************************************************************************
 Destructor

@@ -29,11 +29,9 @@ Object type
 ***********************************************************************************************************************************/
 struct ProtocolClient
 {
-    MemContext *memContext;
+    ProtocolClientPub pub;                                          // Publicly accessible variables
     const String *name;
     const String *errorPrefix;
-    IoRead *read;
-    IoWrite *write;
     TimeMSec keepAliveTime;
 };
 
@@ -84,18 +82,21 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 
         *this = (ProtocolClient)
         {
-            .memContext = memContextCurrent(),
+            .pub =
+            {
+                .memContext = memContextCurrent(),
+                .read = read,
+                .write = write,
+            },
             .name = strDup(name),
             .errorPrefix = strNewFmt("raised from %s", strZ(name)),
-            .read = read,
-            .write = write,
             .keepAliveTime = timeMSec(),
         };
 
         // Read, parse, and check the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *greeting = ioReadLine(this->read);
+            String *greeting = ioReadLine(protocolClientIoRead(this));
             KeyValue *greetingKv = jsonToKv(greeting);
 
             const String *expected[] =
@@ -134,7 +135,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         protocolClientNoOp(this);
 
         // Set a callback to shutdown the protocol
-        memContextCallbackSet(this->memContext, protocolClientFreeResource, this);
+        memContextCallbackSet(this->pub.memContext, protocolClientFreeResource, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -200,7 +201,7 @@ protocolClientReadOutput(ProtocolClient *this, bool outputRequired)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Read the response
-        String *response = ioReadLine(this->read);
+        String *response = ioReadLine(protocolClientIoRead(this));
         KeyValue *responseKv = varKv(jsonToVar(response));
 
         // Process error if any
@@ -239,8 +240,8 @@ protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *command)
     ASSERT(command != NULL);
 
     // Write out the command
-    ioWriteStrLine(this->write, protocolCommandJson(command));
-    ioWriteFlush(this->write);
+    ioWriteStrLine(protocolClientIoWrite(this), protocolCommandJson(command));
+    ioWriteFlush(protocolClientIoWrite(this));
 
     // Reset the keep alive time
     this->keepAliveTime = timeMSec();
@@ -299,7 +300,7 @@ protocolClientReadLine(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = ioReadLine(this->read);
+        result = ioReadLine(protocolClientIoRead(this));
 
         if (strSize(result) == 0)
         {
@@ -327,32 +328,6 @@ protocolClientReadLine(ProtocolClient *this)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING, result);
-}
-
-/**********************************************************************************************************************************/
-IoRead *
-protocolClientIoRead(const ProtocolClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->read);
-}
-
-/**********************************************************************************************************************************/
-IoWrite *
-protocolClientIoWrite(const ProtocolClient *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PROTOCOL_CLIENT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->write);
 }
 
 /**********************************************************************************************************************************/

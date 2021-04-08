@@ -27,24 +27,6 @@ Constants
 #define PROTOCOL_REMOTE_TYPE_REPO                                   "repo"
 
 /***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Send keepalives to all remotes
-void protocolKeepAlive(void);
-
-// Local protocol client
-ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId);
-
-// Free (shutdown) a local
-void protocolLocalFree(unsigned int protocolId);
-
-// Remote protocol client
-ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
-
-// Free (shutdown) a remote
-void protocolRemoteFree(unsigned int hostId);
-
-/***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Is pg local?
@@ -63,6 +45,24 @@ void repoIsLocalVerifyIdx(unsigned int repoIdx);
 // Get enum/string for protocol storage type
 ProtocolStorageType protocolStorageTypeEnum(const String *type);
 const String *protocolStorageTypeStr(ProtocolStorageType type);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Send keepalives to all remotes
+void protocolKeepAlive(void);
+
+// Local protocol client
+ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId);
+
+// Free (shutdown) a local
+void protocolLocalFree(unsigned int protocolId);
+
+// Remote protocol client
+ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
+
+// Free (shutdown) a remote
+void protocolRemoteFree(unsigned int hostId);
 
 /***********************************************************************************************************************************
 Destructor
