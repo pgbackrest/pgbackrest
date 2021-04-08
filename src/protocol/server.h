@@ -35,6 +35,32 @@ Constructors
 ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ProtocolServerPub
+{
+    MemContext *memContext;                                         // Mem context
+    IoRead *read;                                                   // Read interface
+    IoWrite *write;                                                 // Write interface
+} ProtocolServerPub;
+
+// Read interface
+__attribute__((always_inline)) static inline IoRead *
+protocolServerIoRead(ProtocolServer *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolServerPub *)this)->read;
+}
+
+// Write interface
+__attribute__((always_inline)) static inline IoWrite *
+protocolServerIoWrite(ProtocolServer *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolServerPub *)this)->write;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Return an error
@@ -56,16 +82,7 @@ protocolServerMove(ProtocolServer *this, MemContext *parentNew)
 }
 
 // Write a line
-void protocolServerWriteLine(const ProtocolServer *this, const String *line);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Read interface
-IoRead *protocolServerIoRead(const ProtocolServer *this);
-
-// Write interface
-IoWrite *protocolServerIoWrite(const ProtocolServer *this);
+void protocolServerWriteLine(ProtocolServer *this, const String *line);
 
 /***********************************************************************************************************************************
 Destructor

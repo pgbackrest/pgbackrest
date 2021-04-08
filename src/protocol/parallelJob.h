@@ -29,6 +29,84 @@ Constructors
 ProtocolParallelJob *protocolParallelJobNew(const Variant *key, ProtocolCommand *command);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ProtocolParallelJobPub
+{
+    MemContext *memContext;                                         // Mem context
+    const Variant *key;                                             // Unique key used to identify the job
+    const ProtocolCommand *command;                                 // Command to be executed
+    unsigned int processId;                                         // Process that executed this job
+    ProtocolParallelJobState state;                                 // Current state of the job
+    int code;                                                       // Non-zero result indicates an error
+    String *message;                                                // Message if there was a error
+    const Variant *result;                                          // Result if job was successful
+} ProtocolParallelJobPub;
+
+// Job command
+__attribute__((always_inline)) static inline const ProtocolCommand *
+protocolParallelJobCommand(const ProtocolParallelJob *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolParallelJobPub *)this)->command;
+}
+
+// Job error
+__attribute__((always_inline)) static inline int
+protocolParallelJobErrorCode(const ProtocolParallelJob *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolParallelJobPub *)this)->code;
+}
+
+__attribute__((always_inline)) static inline const String *
+protocolParallelJobErrorMessage(const ProtocolParallelJob *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolParallelJobPub *)this)->message;
+}
+
+void protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message);
+
+// Job key
+__attribute__((always_inline)) static inline const Variant *
+protocolParallelJobKey(const ProtocolParallelJob *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolParallelJobPub *)this)->key;
+}
+
+// Process Id
+__attribute__((always_inline)) static inline unsigned int
+protocolParallelJobProcessId(const ProtocolParallelJob *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolParallelJobPub *)this)->processId;
+}
+
+void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
+
+// Job result
+__attribute__((always_inline)) static inline const Variant *
+protocolParallelJobResult(const ProtocolParallelJob *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolParallelJobPub *)this)->result;
+}
+
+void protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result);
+
+// Job state
+__attribute__((always_inline)) static inline ProtocolParallelJobState
+protocolParallelJobState(const ProtocolParallelJob *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ProtocolParallelJobPub *)this)->state;
+}
+
+void protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state);
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to new parent mem context
@@ -37,32 +115,6 @@ protocolParallelJobMove(ProtocolParallelJob *this, MemContext *parentNew)
 {
     return objMove(this, parentNew);
 }
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Job command
-const ProtocolCommand *protocolParallelJobCommand(const ProtocolParallelJob *this);
-
-// Job error
-int protocolParallelJobErrorCode(const ProtocolParallelJob *this);
-const String *protocolParallelJobErrorMessage(const ProtocolParallelJob *this);
-void protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message);
-
-// Job key
-const Variant *protocolParallelJobKey(const ProtocolParallelJob *this);
-
-// Process Id
-unsigned int protocolParallelJobProcessId(const ProtocolParallelJob *this);
-void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
-
-// Job result
-const Variant *protocolParallelJobResult(const ProtocolParallelJob *this);
-void protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result);
-
-// Job state
-ProtocolParallelJobState protocolParallelJobState(const ProtocolParallelJob *this);
-void protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state);
 
 /***********************************************************************************************************************************
 Destructor
