@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
 Represent Short Strings as Integers
 
-It is often useful to represent indentifiers as strings when they cannot easily be represented as an enum/integer, e.g. because they
+It is often useful to represent identifiers as strings when they cannot easily be represented as an enum/integer, e.g. because they
 are distributed among a number of unrelated modules or need to be passed to remote processes. Strings are also more helpful in
 debugging since they can be recognized without cross-referencing the source. However, strings are awkward to work with in C since
-they cannot be directly used in switch statments leading to less efficient if-else structures.
+they cannot be directly used in switch statements leading to less efficient if-else structures.
 
 A StringId encodes a short string into an integer so it can be used in switch statements but may also be readily converted back into
 a string for debugging purposes. StringIds may also be suitable for matching user input providing the strings are short enough.
