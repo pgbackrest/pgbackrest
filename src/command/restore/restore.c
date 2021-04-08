@@ -1279,7 +1279,7 @@ restoreSelectiveExpression(Manifest *manifest)
 
     String *result = NULL;
 
-    // Continue if db-include is specified
+    // Continue if databases to include or exclude have been specified
     if (cfgOptionTest(cfgOptDbExclude) || cfgOptionTest(cfgOptDbInclude))
     {
         MEM_CONTEXT_TEMP_BEGIN()
@@ -1393,7 +1393,7 @@ restoreSelectiveExpression(Manifest *manifest)
                     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
 
                 // Error if the db id is in the exclude list
-                if(strLstExists(excludeDbIdList, includeDb))
+                if (strLstExists(excludeDbIdList, includeDb))
                     THROW_FMT(DbInvalidError, "database to include '%s' is in the exclude list", strZ(includeDb));
 
                 // Remove from list of DBs to zero
@@ -1402,6 +1402,7 @@ restoreSelectiveExpression(Manifest *manifest)
 
             // Remove the system databases from list of DBs to zero unless they are excluded explicitly
             strLstSort(systemDbIdList, sortOrderAsc);
+            strLstSort(excludeDbIdList, sortOrderAsc);
             systemDbIdList = strLstMergeAnti(systemDbIdList, excludeDbIdList);
             dbList = strLstMergeAnti(dbList, systemDbIdList);
 

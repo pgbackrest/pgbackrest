@@ -1353,6 +1353,32 @@ testRun(void)
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on system database with non-systemId selected");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=16385");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            restoreSelectiveExpression(manifest), DbInvalidError,
+            "system databases (template0, postgres, etc.) are included by default");
+
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on system database with non-systemId selected, by name");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=postgres");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            restoreSelectiveExpression(manifest), DbInvalidError,
+            "system databases (template0, postgres, etc.) are included by default");
+
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
+        
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing database selected");
 
         argList = strLstDup(argListClean);
