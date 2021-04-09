@@ -22,6 +22,50 @@ Constructors
 Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationName);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct DbPub
+{
+    MemContext *memContext;                                         // Mem context
+    const String *archiveMode;                                      // The archive_mode reported by the database
+    const String *archiveCommand;                                   // The archive_command reported by the database
+    const String *pgDataPath;                                       // Data directory reported by the database
+    unsigned int pgVersion;                                         // Version as reported by the database
+} DbPub;
+
+// Archive mode loaded from the archive_mode GUC
+__attribute__((always_inline)) static inline const String *
+dbArchiveMode(const Db *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((DbPub *)this)->archiveMode;
+}
+
+// Archive command loaded from the archive_command GUC
+__attribute__((always_inline)) static inline const String *
+dbArchiveCommand(const Db *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((DbPub *)this)->archiveCommand;
+}
+
+// Data path loaded from the data_directory GUC
+__attribute__((always_inline)) static inline const String *
+dbPgDataPath(const Db *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((DbPub *)this)->pgDataPath;
+}
+
+// Version loaded from the server_version_num GUC
+__attribute__((always_inline)) static inline unsigned int
+dbPgVersion(const Db *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((DbPub *)this)->pgVersion;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Open the db connection
@@ -72,21 +116,6 @@ dbMove(Db *this, MemContext *parentNew)
 {
     return objMove(this, parentNew);
 }
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Data path loaded from the data_directory GUC
-const String *dbPgDataPath(const Db *this);
-
-// Version loaded from the server_version_num GUC
-unsigned int dbPgVersion(const Db *this);
-
-// Archive mode loaded from the archive_mode GUC
-const String *dbArchiveMode(const Db *this);
-
-// Archive command loaded from the archive_command GUC
-const String *dbArchiveCommand(const Db *this);
 
 /***********************************************************************************************************************************
 Destructor
