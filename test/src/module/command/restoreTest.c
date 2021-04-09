@@ -114,17 +114,17 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
     MEM_CONTEXT_NEW_BEGIN("Manifest")
     {
         result = manifestNewInternal();
-        result->info = infoNew(NULL);
+        result->pub.info = infoNew(NULL);
 
-        result->data.backupLabel = strDup(label);
-        result->data.pgVersion = pgVersion;
+        result->pub.data.backupLabel = strDup(label);
+        result->pub.data.pgVersion = pgVersion;
 
         if (strEndsWithZ(label, "I"))
-            result->data.backupType = backupTypeIncr;
+            result->pub.data.backupType = backupTypeIncr;
         else if (strEndsWithZ(label, "D"))
-            result->data.backupType = backupTypeDiff;
+            result->pub.data.backupType = backupTypeDiff;
         else
-            result->data.backupType = backupTypeFull;
+            result->pub.data.backupType = backupTypeFull;
 
         ManifestTarget targetBase = {.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath};
         manifestTargetAdd(result, &targetBase);
@@ -813,7 +813,7 @@ testRun(void)
             "P00   INFO: map tablespace 'pg_tblspc/2' to '/2-3'");
 
         // Remap all tablespaces with tablespace-map-all and update version to 9.2 to test warning
-        manifest->data.pgVersion = PG_VERSION_92;
+        manifest->pub.data.pgVersion = PG_VERSION_92;
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -1198,7 +1198,7 @@ testRun(void)
 
         TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
-        manifest->data.pgVersion = PG_VERSION_12;
+        manifest->pub.data.pgVersion = PG_VERSION_12;
 
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
@@ -1268,7 +1268,7 @@ testRun(void)
         MEM_CONTEXT_NEW_BEGIN("Manifest")
         {
             manifest = manifestNewInternal();
-            manifest->data.pgVersion = PG_VERSION_84;
+            manifest->pub.data.pgVersion = PG_VERSION_84;
 
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
             manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION)});
@@ -1283,7 +1283,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("database id is missing on disk");
 
-        MEM_CONTEXT_BEGIN(manifest->memContext)
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             // Give non-systemId to postgres db
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("postgres"), .id = 16385, .lastSystemId = 12168});
@@ -1307,7 +1307,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("all databases selected");
 
-        MEM_CONTEXT_BEGIN(manifest->memContext)
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             manifestFileAdd(
                 manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16384/" PG_FILE_PGVERSION)});
@@ -1373,7 +1373,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("select database by id");
 
-        MEM_CONTEXT_BEGIN(manifest->memContext)
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
             manifestFileAdd(
@@ -1394,7 +1394,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one database selected without tablespace id");
 
-        MEM_CONTEXT_BEGIN(manifest->memContext)
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             manifestTargetAdd(
                 manifest, &(ManifestTarget){
@@ -1415,10 +1415,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one database selected with tablespace id");
 
-        manifest->data.pgVersion = PG_VERSION_94;
-        manifest->data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_94);
+        manifest->pub.data.pgVersion = PG_VERSION_94;
+        manifest->pub.data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_94);
 
-        MEM_CONTEXT_BEGIN(manifest->memContext)
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test3"), .id = 65536, .lastSystemId = 12168});
             manifestFileAdd(
@@ -1854,11 +1854,11 @@ testRun(void)
         MEM_CONTEXT_NEW_BEGIN("Manifest")
         {
             manifest = manifestNewInternal();
-            manifest->info = infoNew(NULL);
-            manifest->data.backupLabel = strNew(TEST_LABEL);
-            manifest->data.pgVersion = PG_VERSION_84;
-            manifest->data.backupType = backupTypeFull;
-            manifest->data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
+            manifest->pub.info = infoNew(NULL);
+            manifest->pub.data.backupLabel = strNew(TEST_LABEL);
+            manifest->pub.data.pgVersion = PG_VERSION_84;
+            manifest->pub.data.backupType = backupTypeFull;
+            manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
             // Data directory
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath});
@@ -1916,10 +1916,10 @@ testRun(void)
                     .group = groupName(), .user = userName()});
 
             // Always sort
-            lstSort(manifest->targetList, sortOrderAsc);
-            lstSort(manifest->fileList, sortOrderAsc);
-            lstSort(manifest->linkList, sortOrderAsc);
-            lstSort(manifest->pathList, sortOrderAsc);
+            lstSort(manifest->pub.targetList, sortOrderAsc);
+            lstSort(manifest->pub.fileList, sortOrderAsc);
+            lstSort(manifest->pub.linkList, sortOrderAsc);
+            lstSort(manifest->pub.pathList, sortOrderAsc);
         }
         MEM_CONTEXT_NEW_END();
 
@@ -2034,7 +2034,7 @@ testRun(void)
             symlink("/bogus", strZ(strNewFmt("%s/pg_tblspc/1", strZ(pgPath)))) == -1, FileOpenError,
             "unable to create symlink");
 
-        MEM_CONTEXT_BEGIN(manifest->memContext)
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
@@ -2058,10 +2058,10 @@ testRun(void)
                 BUFSTRDEF(PG_VERSION_84_STR "\n"));
 
             // Always sort
-            lstSort(manifest->targetList, sortOrderAsc);
-            lstSort(manifest->fileList, sortOrderAsc);
-            lstSort(manifest->linkList, sortOrderAsc);
-            lstSort(manifest->pathList, sortOrderAsc);
+            lstSort(manifest->pub.targetList, sortOrderAsc);
+            lstSort(manifest->pub.fileList, sortOrderAsc);
+            lstSort(manifest->pub.linkList, sortOrderAsc);
+            lstSort(manifest->pub.pathList, sortOrderAsc);
         }
         MEM_CONTEXT_END();
 
@@ -2197,12 +2197,12 @@ testRun(void)
         MEM_CONTEXT_NEW_BEGIN("Manifest")
         {
             manifest = manifestNewInternal();
-            manifest->info = infoNew(NULL);
-            manifest->data.backupLabel = strNew(TEST_LABEL);
-            manifest->data.pgVersion = PG_VERSION_10;
-            manifest->data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_10);
-            manifest->data.backupType = backupTypeFull;
-            manifest->data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
+            manifest->pub.info = infoNew(NULL);
+            manifest->pub.data.backupLabel = strNew(TEST_LABEL);
+            manifest->pub.data.pgVersion = PG_VERSION_10;
+            manifest->pub.data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_10);
+            manifest->pub.data.backupType = backupTypeFull;
+            manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
             // Data directory
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath});
@@ -2431,10 +2431,10 @@ testRun(void)
                     .destination = strNewFmt("%s/ts/1", testPath()), .group = groupName(), .user = userName()});
 
             // Always sort
-            lstSort(manifest->targetList, sortOrderAsc);
-            lstSort(manifest->fileList, sortOrderAsc);
-            lstSort(manifest->linkList, sortOrderAsc);
-            lstSort(manifest->pathList, sortOrderAsc);
+            lstSort(manifest->pub.targetList, sortOrderAsc);
+            lstSort(manifest->pub.fileList, sortOrderAsc);
+            lstSort(manifest->pub.linkList, sortOrderAsc);
+            lstSort(manifest->pub.pathList, sortOrderAsc);
         }
         MEM_CONTEXT_NEW_END();
 

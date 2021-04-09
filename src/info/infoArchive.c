@@ -32,8 +32,7 @@ Object type
 ***********************************************************************************************************************************/
 struct InfoArchive
 {
-    MemContext *memContext;                                         // Mem context
-    InfoPg *infoPg;                                                 // Contents of the DB data
+    InfoArchivePub pub;                                             // Publicly accessible variables
 };
 
 /***********************************************************************************************************************************
@@ -48,7 +47,10 @@ infoArchiveNewInternal(void)
 
     *this = (InfoArchive)
     {
-        .memContext = memContextCurrent(),
+        .pub =
+        {
+            .memContext = memContextCurrent(),
+        },
     };
 
     FUNCTION_TEST_RETURN(this);
@@ -73,7 +75,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
         this = infoArchiveNewInternal();
 
         // Initialize the pg data
-        this->infoPg = infoPgNew(infoPgArchive, cipherPassSub);
+        this->pub.infoPg = infoPgNew(infoPgArchive, cipherPassSub);
         infoArchivePgSet(this, pgVersion, pgSystemId);
     }
     MEM_CONTEXT_NEW_END();
@@ -96,7 +98,7 @@ infoArchiveNewLoad(IoRead *read)
     MEM_CONTEXT_NEW_BEGIN("InfoArchive")
     {
         this = infoArchiveNewInternal();
-        this->infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);
+        this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -184,45 +186,6 @@ infoArchiveSave(InfoArchive *this, IoWrite *write)
 }
 
 /**********************************************************************************************************************************/
-const String *
-infoArchiveId(const InfoArchive *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(infoPgArchiveId(this->infoPg, infoPgDataCurrentId(this->infoPg)));
-}
-
-/**********************************************************************************************************************************/
-const String *
-infoArchiveCipherPass(const InfoArchive *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
-}
-
-/**********************************************************************************************************************************/
-InfoPg *
-infoArchivePg(const InfoArchive *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->infoPg);
-}
-
-/**********************************************************************************************************************************/
 InfoArchive *
 infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
@@ -234,7 +197,7 @@ infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 
     ASSERT(this != NULL);
 
-    this->infoPg = infoPgSet(this->infoPg, infoPgArchive, pgVersion, pgSystemId, 0);
+    this->pub.infoPg = infoPgSet(infoArchivePg(this), infoPgArchive, pgVersion, pgSystemId, 0);
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
