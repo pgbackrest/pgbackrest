@@ -28,12 +28,6 @@ XmlDocument *xmlDocumentNew(const String *rootNode);
 // Document from Buffer
 XmlDocument *xmlDocumentNewBuf(const Buffer *);
 
-// Document from C buffer
-XmlDocument *xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize);
-
-// Document from zero-terminated string
-XmlDocument *xmlDocumentNewZ(const char *string);
-
 /***********************************************************************************************************************************
 Document Getters
 ***********************************************************************************************************************************/

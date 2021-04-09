@@ -411,15 +411,14 @@ xmlDocumentNew(const String *rootName)
 
 /**********************************************************************************************************************************/
 XmlDocument *
-xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize)
+xmlDocumentNewBuf(const Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(UCHARDATA, buffer);
-        FUNCTION_TEST_PARAM(SIZE, bufferSize);
+        FUNCTION_TEST_PARAM(BUFFER, buffer);
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
-    ASSERT(bufferSize > 0);
+    ASSERT(!bufEmpty(buffer));
 
     xmlInit();
 
@@ -435,7 +434,7 @@ xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize)
             .memContext = MEM_CONTEXT_NEW(),
         };
 
-        if ((this->xml = xmlReadMemory((const char *)buffer, (int)bufferSize, "noname.xml", NULL, 0)) == NULL)
+        if ((this->xml = xmlReadMemory((const char *)bufPtrConst(buffer), (int)bufUsed(buffer), "noname.xml", NULL, 0)) == NULL)
             THROW_FMT(FormatError, "invalid xml");
 
         // Set callback to ensure xml document is freed
@@ -447,34 +446,6 @@ xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize)
     MEM_CONTEXT_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
-}
-
-/**********************************************************************************************************************************/
-XmlDocument *
-xmlDocumentNewBuf(const Buffer *buffer)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, buffer);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-    ASSERT(!bufEmpty(buffer));
-
-    FUNCTION_TEST_RETURN(xmlDocumentNewC(bufPtrConst(buffer), bufUsed(buffer)));
-}
-
-/**********************************************************************************************************************************/
-XmlDocument *
-xmlDocumentNewZ(const char *string)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, string);
-    FUNCTION_TEST_END();
-
-    ASSERT(string != NULL);
-    ASSERT(strlen(string) > 0);
-
-    FUNCTION_TEST_RETURN(xmlDocumentNewC((const unsigned char *)string, strlen(string)));
 }
 
 /**********************************************************************************************************************************/
