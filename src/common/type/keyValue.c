@@ -12,18 +12,12 @@ Key Value Handler
 #include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
-Constant to indicate key not found
-***********************************************************************************************************************************/
-#define KEY_NOT_FOUND                                               UINT_MAX
-
-/***********************************************************************************************************************************
 Contains information about the key value store
 ***********************************************************************************************************************************/
 struct KeyValue
 {
-    MemContext *memContext;                                         // Mem context for the store
+    KeyValuePub pub;                                                // Publicly accessible variables
     List *list;                                                     // List of keys/values
-    VariantList *keyList;                                           // List of keys
 };
 
 /***********************************************************************************************************************************
@@ -50,9 +44,12 @@ kvNew(void)
 
         *this = (KeyValue)
         {
-            .memContext = MEM_CONTEXT_NEW(),
+            .pub =
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+                .keyList = varLstNew(),
+            },
             .list = lstNewP(sizeof(KeyValuePair)),
-            .keyList = varLstNew(),
         };
     }
     MEM_CONTEXT_NEW_END();
@@ -86,15 +83,13 @@ kvDup(const KeyValue *source)
         lstAdd(this->list, &pair);
     }
 
-    this->keyList = varLstDup(source->keyList);
+    this->pub.keyList = varLstDup(kvKeyList(source));
 
     FUNCTION_TEST_RETURN(this);
 }
 
-/***********************************************************************************************************************************
-Get key index if it exists
-***********************************************************************************************************************************/
-static unsigned int
+/**********************************************************************************************************************************/
+unsigned int
 kvGetIdx(const KeyValue *this, const Variant *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -121,31 +116,6 @@ kvGetIdx(const KeyValue *this, const Variant *key)
     }
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-bool
-kvKeyExists(const KeyValue *this, const Variant *key)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(KEY_VALUE, this);
-        FUNCTION_TEST_PARAM(VARIANT, key);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(kvGetIdx(this, key) != KEY_NOT_FOUND);
-}
-
-/**********************************************************************************************************************************/
-const VariantList *
-kvKeyList(const KeyValue *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(KEY_VALUE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->keyList);
 }
 
 /***********************************************************************************************************************************
@@ -180,7 +150,7 @@ kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
         lstAdd(this->list, &pair);
 
         // Add to the key list
-        varLstAdd(this->keyList, varDup(key));
+        varLstAdd(this->pub.keyList, varDup(key));
     }
     // Else update it
     else
@@ -209,7 +179,7 @@ kvPut(KeyValue *this, const Variant *key, const Variant *value)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         kvPutInternal(this, key, varDup(value));
     }
@@ -231,7 +201,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         // Find the key
         unsigned int listIdx = kvGetIdx(this, key);
@@ -278,7 +248,7 @@ kvPutKv(KeyValue *this, const Variant *key)
 
     KeyValue *result = NULL;
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         result = kvNew();
         kvPutInternal(this, key, varNewKv(result));
