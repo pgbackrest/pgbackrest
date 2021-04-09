@@ -253,7 +253,7 @@ testRun(void)
 
         // Create bogus client and exec with the freed memcontext to generate errors
         ProtocolClient client = {.pub = {.memContext = memContext}, .name = STRDEF("test")};
-        Exec exec = {.memContext = memContext, .name = STRDEF("test"), .command = strNew("test")};
+        Exec exec = {.pub = {.memContext = memContext}, .name = STRDEF("test"), .command = strNew("test")};
         ProtocolHelperClient protocolHelperClient = {.client = &client, .exec = &exec};
 
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");

@@ -25,22 +25,44 @@ Constructors
 Exec *execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct DbPub
+{
+    MemContext *memContext;                                         // Mem context
+    IoRead *ioReadExec;                                             // Wrapper for file descriptor read interface
+    IoWrite *ioWriteExec;                                           // Wrapper for file descriptor write interface
+} ExecPub;
+
+// Read interface
+__attribute__((always_inline)) static inline IoRead *
+execIoRead(Exec *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ExecPub *)this)->ioReadExec;
+}
+
+// Write interface
+__attribute__((always_inline)) static inline IoWrite *
+execIoWrite(Exec *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ExecPub *)this)->ioWriteExec;
+}
+
+// Exec MemContext
+__attribute__((always_inline)) static inline MemContext *
+execMemContext(Exec *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((ExecPub *)this)->memContext;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Execute command
 void execOpen(Exec *this);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Read interface
-IoRead *execIoRead(const Exec *this);
-
-// Write interface
-IoWrite *execIoWrite(const Exec *this);
-
-// Exec MemContext
-MemContext *execMemContext(const Exec *this);
 
 /***********************************************************************************************************************************
 Destructor
