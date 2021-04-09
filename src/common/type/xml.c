@@ -11,7 +11,6 @@ Xml Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/list.h"
 #include "common/type/xml.h"
 
 /***********************************************************************************************************************************
@@ -32,9 +31,8 @@ Document type
 ***********************************************************************************************************************************/
 struct XmlDocument
 {
-    MemContext *memContext;
+    XmlDocumentPub pub;                                             // Publicly accessible variables
     xmlDocPtr xml;
-    XmlNode *root;
 };
 
 /***********************************************************************************************************************************
@@ -77,51 +75,11 @@ xmlInit(void)
 }
 
 /**********************************************************************************************************************************/
-XmlNodeList *
+static XmlNodeList *
 xmlNodeLstNew(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN((XmlNodeList *)lstNewP(sizeof(XmlNode *)));
-}
-
-/**********************************************************************************************************************************/
-XmlNode *
-xmlNodeLstGet(const XmlNodeList *this, unsigned int listIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE_LIST, this);
-        FUNCTION_TEST_PARAM(UINT, listIdx);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(*(XmlNode **)lstGet((List *)this, listIdx));
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-xmlNodeLstSize(const XmlNodeList *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE_LIST, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize((List *)this));
-}
-
-/**********************************************************************************************************************************/
-void
-xmlNodeLstFree(XmlNodeList *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE_LIST, this);
-    FUNCTION_TEST_END();
-
-    lstFree((List *)this);
-
-    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -305,20 +263,6 @@ xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool 
     FUNCTION_TEST_RETURN(child);
 }
 
-XmlNode *
-xmlNodeChild(const XmlNode *this, const String *name, bool errorOnMissing)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    FUNCTION_TEST_RETURN(xmlNodeChildN(this, name, 0, errorOnMissing));
-}
-
 /**********************************************************************************************************************************/
 unsigned int
 xmlNodeChildTotal(const XmlNode *this, const String *name)
@@ -394,15 +338,18 @@ xmlDocumentNew(const String *rootName)
 
         *this = (XmlDocument)
         {
-            .memContext = MEM_CONTEXT_NEW(),
+            .pub =
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+            },
             .xml = xmlNewDoc(BAD_CAST "1.0"),
         };
 
         // Set callback to ensure xml document is freed
-        memContextCallbackSet(this->memContext, xmlDocumentFreeResource, this);
+        memContextCallbackSet(this->pub.memContext, xmlDocumentFreeResource, this);
 
-        this->root = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strZ(rootName)));
-        xmlDocSetRootElement(this->xml, this->root->node);
+        this->pub.root = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strZ(rootName)));
+        xmlDocSetRootElement(this->xml, xmlDocumentRoot(this)->node);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -431,17 +378,20 @@ xmlDocumentNewBuf(const Buffer *buffer)
 
         *this = (XmlDocument)
         {
-            .memContext = MEM_CONTEXT_NEW(),
+            .pub =
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+            },
         };
 
         if ((this->xml = xmlReadMemory((const char *)bufPtrConst(buffer), (int)bufUsed(buffer), "noname.xml", NULL, 0)) == NULL)
             THROW_FMT(FormatError, "invalid xml");
 
         // Set callback to ensure xml document is freed
-        memContextCallbackSet(this->memContext, xmlDocumentFreeResource, this);
+        memContextCallbackSet(this->pub.memContext, xmlDocumentFreeResource, this);
 
         // Get the root node
-        this->root = xmlNodeNew(xmlDocGetRootElement(this->xml));
+        this->pub.root = xmlNodeNew(xmlDocGetRootElement(this->xml));
     }
     MEM_CONTEXT_NEW_END();
 
@@ -466,17 +416,4 @@ xmlDocumentBuf(const XmlDocument *this)
     xmlFree(xml);
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-XmlNode *
-xmlDocumentRoot(const XmlDocument *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_DOCUMENT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->root);
 }
