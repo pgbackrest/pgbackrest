@@ -21,8 +21,8 @@ See strIdGenerate() for information on StringId constants.
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
-Maximum number of characters in a StringId. This is a safe buffer size when calling strIdToZN. If the buffer needs to be
-zero-terminated then an extra byte should be added.
+Maximum number of characters in the string representation of a StringId, including the + prefix indicator when present. This is a
+safe buffer size when calling strIdToZN. If the buffer needs to be zero-terminated then an extra byte should be added.
 ***********************************************************************************************************************************/
 // Maximum for specific encodings (e.g. 5-bit, 6-bit)
 #define STRID5_MAX                                                  13
