@@ -18,6 +18,10 @@ AC_PROG_CC_C99
 AC_CANONICAL_HOST
 AC_SUBST(CFLAGS, "${CFLAGS} -std=c99")
 
+# default path for configuration file
+default_configdir="/etc"
+
+
 case $host_os in
     darwin*)
         AC_SUBST(CPPFLAGS, "${CPPFLAGS} -D_DARWIN_C_SOURCE")
@@ -26,6 +30,13 @@ case $host_os in
     linux*)
         AC_SUBST(CPPFLAGS, "${CPPFLAGS} -D_POSIX_C_SOURCE=200809L")
         ;;
+   freebsd*)
+   	  if (test "x${configdir}" = "x"); then
+        	default_configdir="${ac_default_prefix}/etc"
+	    else
+	        default_configdir="${configdir}"
+   	  fi
+    ;;
 esac
 
 # Check if the C compiler supports _Static_assert()
@@ -152,10 +163,12 @@ AC_CHECK_LIB(
 
 # Set configuration path
 # ----------------------------------------------------------------------------------------------------------------------------------
+
+
 AC_ARG_WITH(
     [configdir], [AS_HELP_STRING([--with-configdir=DIR], [default configuration path])],
     [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["${withval}"])],
-    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["/etc/" PROJECT_BIN])])
+    [AC_DEFINE_UNQUOTED([CFGOPTDEF_CONFIG_PATH], ["${default_configdir}"])])
 
 # Write output
 # ----------------------------------------------------------------------------------------------------------------------------------
