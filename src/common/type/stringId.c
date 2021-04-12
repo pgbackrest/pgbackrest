@@ -57,7 +57,7 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
-                if (size == STRID5_MAX)
+                if (bufferIdx == STRID5_MAX - 1)
                     break;
 
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
@@ -74,7 +74,7 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
                 default:
                 {
                     // If size is greater then can be encoded set the prefix flag
-                    if (size == STRID5_MAX)
+                    if (size >= STRID5_MAX)
                         result |= STRING_ID_PREFIX;
 
                     result |= (uint64_t)map[(uint8_t)buffer[11]] << 59;
@@ -147,7 +147,7 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
-                if (size == STRID6_MAX)
+                if (bufferIdx == STRID6_MAX - 1)
                     break;
 
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
@@ -164,7 +164,7 @@ StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size
                 default:
                 {
                     // If size is greater then can be encoded set the prefix flag
-                    if (size == STRID6_MAX)
+                    if (size >= STRID6_MAX)
                         result |= STRING_ID_PREFIX;
 
                     result |= (uint64_t)map[(uint8_t)buffer[9]] << 58;

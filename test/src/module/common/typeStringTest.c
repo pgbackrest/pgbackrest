@@ -528,6 +528,7 @@ testRun(void)
         TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zk", 6), TEST_STR5ID6, "5 bits 6 chars");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz1-ym4", 12), TEST_STR5ID12, "5 bits 12 chars");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz1-ym4?", 13), TEST_STR5ID13, "5 bits 13 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit5, "abc-zkz1-ym4??", 14), TEST_STR5ID13, "5 bits 14 chars");
 
         #define TEST_STR6ID1                                        (stringIdBit6 | (uint16_t)('a' - 96) << 4)
         #define TEST_STR6ID2                                        (TEST_STR6ID1 | (uint16_t)('b' - 96) << 10)
@@ -545,6 +546,7 @@ testRun(void)
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-4", 5), TEST_STR6ID5, "6 bits 5 chars");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9", 10), TEST_STR6ID10, "6 bits 10 chars");
         TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9?", 11), TEST_STR6ID11, "6 bits 11 chars");
+        TEST_RESULT_UINT(strIdFromZN(stringIdBit6, "abC-40MzZ9??", 12), TEST_STR6ID11, "6 bits 12 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STRID*()");
