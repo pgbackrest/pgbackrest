@@ -5,7 +5,7 @@ GCS Storage File Write
 
 #include "common/crypto/hash.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/json.h"

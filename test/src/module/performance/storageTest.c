@@ -14,7 +14,7 @@ stress testing as needed.
 #include "common/crypto/hash.h"
 #include "common/compress/gz/compress.h"
 #include "common/compress/lz4/compress.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/io/filter/sink.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"

@@ -18,7 +18,6 @@ Each filter has a type that allows it to be identified in the filter list.
 #ifndef COMMON_IO_FILTER_FILTER_INTERN_H
 #define COMMON_IO_FILTER_FILTER_INTERN_H
 
-#include "common/io/filter/filter.h"
 #include "common/type/variantList.h"
 
 /***********************************************************************************************************************************
@@ -55,6 +54,57 @@ typedef struct IoFilterInterface
 IoFilter *ioFilterNew(const String *type, void *driver, VariantList *paramList, IoFilterInterface);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct IoFilterPub
+{
+    MemContext *memContext;                                         // Mem context
+    const String *type;                                             // Filter type
+    IoFilterInterface interface;                                    // Filter interface
+    void *driver;                                                   // Filter driver
+    const VariantList *paramList;                                   // Filter parameters
+} IoFilterPub;
+
+// Is the filter done?
+bool ioFilterDone(const IoFilter *this);
+
+// Driver for the filter
+__attribute__((always_inline)) static inline void *
+ioFilterDriver(IoFilter *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((IoFilterPub *)this)->driver;
+}
+
+// Does the filter need the same input again? If the filter cannot get all its output into the output buffer then it may need access
+// to the same input again.
+bool ioFilterInputSame(const IoFilter *this);
+
+// Interface for the filter
+__attribute__((always_inline)) static inline const IoFilterInterface *
+ioFilterInterface(const IoFilter *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return &((IoFilterPub *)this)->interface;
+}
+
+// Does filter produce output? All In filters produce output.
+__attribute__((always_inline)) static inline bool
+ioFilterOutput(const IoFilter *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((IoFilterPub *)this)->interface.inOut != NULL;
+}
+
+// List of filter parameters
+__attribute__((always_inline)) static inline const VariantList *
+ioFilterParamList(const IoFilter *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((IoFilterPub *)this)->paramList;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Filter input only (a result is expected)
@@ -69,28 +119,6 @@ ioFilterMove(IoFilter *this, MemContext *parentNew)
 {
     return objMove(this, parentNew);
 }
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Is the filter done?
-bool ioFilterDone(const IoFilter *this);
-
-// Driver for the filter
-void *ioFilterDriver(IoFilter *this);
-
-// Does the filter need the same input again? If the filter cannot get all its output into the output buffer then it may need access
-// to the same input again.
-bool ioFilterInputSame(const IoFilter *this);
-
-// Interface for the filter
-const IoFilterInterface *ioFilterInterface(const IoFilter *this);
-
-// Does filter produce output? All In filters produce output.
-bool ioFilterOutput(const IoFilter *this);
-
-// List of filter parameters
-const VariantList *ioFilterParamList(const IoFilter *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

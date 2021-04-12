@@ -14,7 +14,7 @@ Developed against version r131 using the documentation in https://github.com/lz4
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
