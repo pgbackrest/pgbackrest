@@ -20,12 +20,12 @@ Macros to access internal functions
 #define STACK_TRACE_PUSH(logLevel)                                                                                                 \
     stackTracePush(__FILE__, __func__, logLevel)
 
-#ifdef NDEBUG
-    #define STACK_TRACE_POP(test)                                                                                                  \
-        stackTracePop();
-#else
+#ifdef DEBUG
     #define STACK_TRACE_POP(test)                                                                                                  \
         stackTracePop(__FILE__, __func__, test);
+#else
+    #define STACK_TRACE_POP(test)                                                                                                  \
+        stackTracePop();
 #endif
 
 /***********************************************************************************************************************************
@@ -36,7 +36,7 @@ Internal Functions
     void stackTraceInit(const char *exe);
 #endif
 
-#ifndef NDEBUG
+#ifdef DEBUG
     // Enable/disable test function logging
     void stackTraceTestStart(void);
     void stackTraceTestStop(void);

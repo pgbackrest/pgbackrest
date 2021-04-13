@@ -34,7 +34,7 @@ typedef struct IoFilterGroupPub
     bool inputSame;                                                 // Same input required again?
     bool done;                                                      // Is processing done?
 
-#ifndef NDEBUG
+#ifdef DEBUG
     bool opened;                                                    // Has the filter set been opened?
     bool closed;                                                    // Has the filter set been closed?
 #endif

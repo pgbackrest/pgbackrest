@@ -3,6 +3,7 @@ C Test Wrapper
 
 This wrapper runs the the C unit tests.
 ***********************************************************************************************************************************/
+#include "build.auto.h"
 
 /***********************************************************************************************************************************
 C files to be tested
@@ -156,7 +157,7 @@ main(int argListSize, const char *argList[])
         CATCH_ANY()
         {
             // If a test was running then throw a detailed result exception
-#ifndef NDEBUG
+#ifdef DEBUG
         if (!errorInstanceOf(&TestError))
 #endif
             hrnTestResultException();
@@ -186,7 +187,7 @@ main(int argListSize, const char *argList[])
             errorName(), errorMessage());
 
         // If not a TestError (which is detailed) then also print the stack trace
-#ifndef NDEBUG
+#ifdef DEBUG
         if (!errorInstanceOf(&TestError))
 #endif
             fprintf(stderr, "\nTHROWN AT:\n%s\n", errorStackTrace());

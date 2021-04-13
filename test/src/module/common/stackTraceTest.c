@@ -44,7 +44,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("stackTraceTestStart(), stackTraceTestStop(), and stackTraceTest()"))
     {
-#ifndef NDEBUG
+#ifdef DEBUG
         assert(stackTraceTest());
 
         stackTraceTestStop();

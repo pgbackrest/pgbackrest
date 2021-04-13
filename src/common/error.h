@@ -54,7 +54,7 @@ typedef struct ErrorType ErrorType;
 #include "common/error.auto.h"
 
 // Declare test error
-#ifndef NDEBUG
+#ifdef DEBUG
     ERROR_DECLARE(TestError);
 #else
     // Must always be defined since it might be needed to compile (though not used) during profiling

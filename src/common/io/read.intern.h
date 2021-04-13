@@ -43,7 +43,7 @@ typedef struct IoReadPub
     IoFilterGroup *filterGroup;                                     // IO filters
     bool eofAll;                                                    // Is the read done (read and filters complete)?
 
-#ifndef NDEBUG
+#ifdef DEBUG
     bool opened;                                                    // Has the io been opened?
     bool closed;                                                    // Has the io been closed?
 #endif
