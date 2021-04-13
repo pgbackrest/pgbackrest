@@ -44,9 +44,8 @@ typedef struct IoFilterGroupPub
 __attribute__((always_inline)) static inline bool
 ioFilterGroupDone(const IoFilterGroup *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    ASSERT_INLINE(((IoFilterGroupPub *)this)->opened && !((IoFilterGroupPub *)this)->closed);
-    return ((IoFilterGroupPub *)this)->done;
+    ASSERT_INLINE(THIS_PUB(IoFilterGroup)->opened && !THIS_PUB(IoFilterGroup)->closed);
+    return THIS_PUB(IoFilterGroup)->done;
 }
 
 // Should the same input be passed again? A buffer of input can produce multiple buffers of output, e.g. when a file containing all
@@ -54,9 +53,8 @@ ioFilterGroupDone(const IoFilterGroup *const this)
 __attribute__((always_inline)) static inline bool
 ioFilterGroupInputSame(const IoFilterGroup *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    ASSERT_INLINE(((IoFilterGroupPub *)this)->opened && !((IoFilterGroupPub *)this)->closed);
-    return ((IoFilterGroupPub *)this)->inputSame;
+    ASSERT_INLINE(THIS_PUB(IoFilterGroup)->opened && !THIS_PUB(IoFilterGroup)->closed);
+    return THIS_PUB(IoFilterGroup)->inputSame;
 }
 
 // Get all filters and their parameters so they can be passed to a remote
@@ -73,8 +71,7 @@ void ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult)
 __attribute__((always_inline)) static inline unsigned int
 ioFilterGroupSize(const IoFilterGroup *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstSize(((IoFilterGroupPub *)this)->filterList);
+    return lstSize(THIS_PUB(IoFilterGroup)->filterList);
 }
 
 /***********************************************************************************************************************************

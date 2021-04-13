@@ -72,8 +72,7 @@ bool ioFilterDone(const IoFilter *this);
 __attribute__((always_inline)) static inline void *
 ioFilterDriver(IoFilter *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoFilterPub *)this)->driver;
+    return THIS_PUB(IoFilter)->driver;
 }
 
 // Does the filter need the same input again? If the filter cannot get all its output into the output buffer then it may need access
@@ -84,24 +83,21 @@ bool ioFilterInputSame(const IoFilter *this);
 __attribute__((always_inline)) static inline const IoFilterInterface *
 ioFilterInterface(const IoFilter *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return &((IoFilterPub *)this)->interface;
+    return &THIS_PUB(IoFilter)->interface;
 }
 
 // Does filter produce output? All In filters produce output.
 __attribute__((always_inline)) static inline bool
 ioFilterOutput(const IoFilter *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoFilterPub *)this)->interface.inOut != NULL;
+    return THIS_PUB(IoFilter)->interface.inOut != NULL;
 }
 
 // List of filter parameters
 __attribute__((always_inline)) static inline const VariantList *
 ioFilterParamList(const IoFilter *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoFilterPub *)this)->paramList;
+    return THIS_PUB(IoFilter)->paramList;
 }
 
 /***********************************************************************************************************************************

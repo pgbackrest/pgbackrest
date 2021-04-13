@@ -31,8 +31,7 @@ Variant *ioFilterResult(const IoFilter *this);
 __attribute__((always_inline)) static inline const String *
 ioFilterType(const IoFilter *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoFilterPub *)this)->type;
+    return THIS_PUB(IoFilter)->type;
 }
 
 /***********************************************************************************************************************************

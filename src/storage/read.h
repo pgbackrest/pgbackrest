@@ -36,40 +36,35 @@ typedef struct StorageReadPub
 __attribute__((always_inline)) static inline bool
 storageReadIgnoreMissing(const StorageRead *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const StorageReadPub *)this)->interface->ignoreMissing;
+    return THIS_PUB(StorageRead)->interface->ignoreMissing;
 }
 
 // Read interface
 __attribute__((always_inline)) static inline IoRead *
 storageReadIo(const StorageRead *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const StorageReadPub *)this)->io;
+    return THIS_PUB(StorageRead)->io;
 }
 
 // Is there a read limit? NULL for no limit.
 __attribute__((always_inline)) static inline const Variant *
 storageReadLimit(const StorageRead *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const StorageReadPub *)this)->interface->limit;
+    return THIS_PUB(StorageRead)->interface->limit;
 }
 
 // File name
 __attribute__((always_inline)) static inline const String *
 storageReadName(const StorageRead *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const StorageReadPub *)this)->interface->name;
+    return THIS_PUB(StorageRead)->interface->name;
 }
 
 // Get file type
 __attribute__((always_inline)) static inline const String *
 storageReadType(const StorageRead *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const StorageReadPub *)this)->interface->type;
+    return THIS_PUB(StorageRead)->interface->type;
 }
 
 /***********************************************************************************************************************************

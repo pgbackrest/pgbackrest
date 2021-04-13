@@ -26,25 +26,22 @@ Getters/Setters
 __attribute__((always_inline)) static inline bool
 ioReadBlock(const IoRead *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoReadPub *)this)->interface.block;
+    return THIS_PUB(IoRead)->interface.block;
 }
 
 // Is IO at EOF? All driver reads are complete and all data has been flushed from the filters (if any).
 __attribute__((always_inline)) static inline bool
 ioReadEof(const IoRead *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    ASSERT_INLINE(((IoReadPub *)this)->opened && !((IoReadPub *)this)->closed);
-    return ((const IoReadPub *)this)->eofAll;
+    ASSERT_INLINE(THIS_PUB(IoRead)->opened && !THIS_PUB(IoRead)->closed);
+    return THIS_PUB(IoRead)->eofAll;
 }
 
 // Get filter group if filters need to be added
 __attribute__((always_inline)) static inline IoFilterGroup *
 ioReadFilterGroup(IoRead *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoReadPub *)this)->filterGroup;
+    return THIS_PUB(IoRead)->filterGroup;
 }
 
 // File descriptor for the read object. Not all read objects have a file descriptor and -1 will be returned in that case.
@@ -69,7 +66,6 @@ String *ioReadLineParam(IoRead *this, bool allowEof);
 __attribute__((always_inline)) static inline String *
 ioReadLine(IoRead *const this)
 {
-    ASSERT_INLINE(this != NULL);
     return ioReadLineParam(this, false);
 }
 

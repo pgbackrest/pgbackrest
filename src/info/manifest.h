@@ -177,23 +177,20 @@ typedef struct ManifestPub
 __attribute__((always_inline)) static inline const String *
 manifestCipherSubPass(const Manifest *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return infoCipherPass(((const ManifestPub *)this)->info);
+    return infoCipherPass(THIS_PUB(Manifest)->info);
 }
 
 __attribute__((always_inline)) static inline void
 manifestCipherSubPassSet(Manifest *const this, const String *const cipherSubPass)
 {
-    ASSERT_INLINE(this != NULL);
-    infoCipherPassSet(((const ManifestPub *)this)->info, cipherSubPass);
+    infoCipherPassSet(THIS_PUB(Manifest)->info, cipherSubPass);
 }
 
 // Get manifest configuration and options
 __attribute__((always_inline)) static inline const ManifestData *
 manifestData(const Manifest *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return &(((const ManifestPub *)this)->data);
+    return &(THIS_PUB(Manifest)->data);
 }
 
 // Set backup label
@@ -240,8 +237,7 @@ Db functions and getters/setters
 __attribute__((always_inline)) static inline const ManifestDb *
 manifestDb(const Manifest *const this, const unsigned int dbIdx)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstGet(((const ManifestPub *)this)->dbList, dbIdx);
+    return lstGet(THIS_PUB(Manifest)->dbList, dbIdx);
 }
 
 const ManifestDb *manifestDbFind(const Manifest *this, const String *name);
@@ -250,16 +246,14 @@ const ManifestDb *manifestDbFind(const Manifest *this, const String *name);
 __attribute__((always_inline)) static inline const ManifestDb *
 manifestDbFindDefault(const Manifest *const this, const String *const name, const ManifestDb *const dbDefault)
 {
-    ASSERT_INLINE(this != NULL);
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(((const ManifestPub *)this)->dbList, &name, (void *)dbDefault);
+    return lstFindDefault(THIS_PUB(Manifest)->dbList, &name, (void *)dbDefault);
 }
 
 __attribute__((always_inline)) static inline unsigned int
 manifestDbTotal(const Manifest *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstSize(((const ManifestPub *)this)->dbList);
+    return lstSize(THIS_PUB(Manifest)->dbList);
 }
 
 /***********************************************************************************************************************************
@@ -268,8 +262,7 @@ File functions and getters/setters
 __attribute__((always_inline)) static inline const ManifestFile *
 manifestFile(const Manifest *const this, const unsigned int fileIdx)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstGet(((const ManifestPub *)this)->fileList, fileIdx);
+    return lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
 }
 
 void manifestFileAdd(Manifest *this, const ManifestFile *file);
@@ -279,9 +272,8 @@ const ManifestFile *manifestFileFind(const Manifest *this, const String *name);
 __attribute__((always_inline)) static inline const ManifestFile *
 manifestFileFindDefault(const Manifest *const this, const String *const name, const ManifestFile *const fileDefault)
 {
-    ASSERT_INLINE(this != NULL);
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(((const ManifestPub *)this)->fileList, &name, (void *)fileDefault);
+    return lstFindDefault(THIS_PUB(Manifest)->fileList, &name, (void *)fileDefault);
 }
 
 void manifestFileRemove(const Manifest *this, const String *name);
@@ -289,8 +281,7 @@ void manifestFileRemove(const Manifest *this, const String *name);
 __attribute__((always_inline)) static inline unsigned int
 manifestFileTotal(const Manifest *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstSize(((const ManifestPub *)this)->fileList);
+    return lstSize(THIS_PUB(Manifest)->fileList);
 }
 
 // Update a file with new data
@@ -304,8 +295,7 @@ Link functions and getters/setters
 __attribute__((always_inline)) static inline const ManifestLink *
 manifestLink(const Manifest *const this, const unsigned int linkIdx)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstGet(((const ManifestPub *)this)->linkList, linkIdx);
+    return lstGet(THIS_PUB(Manifest)->linkList, linkIdx);
 }
 
 const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
@@ -314,9 +304,8 @@ const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
 __attribute__((always_inline)) static inline const ManifestLink *
 manifestLinkFindDefault(const Manifest *const this, const String *const name, const ManifestLink *const linkDefault)
 {
-    ASSERT_INLINE(this != NULL);
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(((const ManifestPub *)this)->linkList, &name, (void *)linkDefault);
+    return lstFindDefault(THIS_PUB(Manifest)->linkList, &name, (void *)linkDefault);
 }
 
 void manifestLinkRemove(const Manifest *this, const String *name);
@@ -324,8 +313,7 @@ void manifestLinkRemove(const Manifest *this, const String *name);
 __attribute__((always_inline)) static inline unsigned int
 manifestLinkTotal(const Manifest *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstSize(((const ManifestPub *)this)->linkList);
+    return lstSize(THIS_PUB(Manifest)->linkList);
 }
 
 void manifestLinkUpdate(const Manifest *this, const String *name, const String *path);
@@ -336,8 +324,7 @@ Path functions and getters/setters
 __attribute__((always_inline)) static inline const ManifestPath *
 manifestPath(const Manifest *const this, const unsigned int pathIdx)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstGet(((const ManifestPub *)this)->pathList, pathIdx);
+    return lstGet(THIS_PUB(Manifest)->pathList, pathIdx);
 }
 
 const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
@@ -346,9 +333,8 @@ const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
 __attribute__((always_inline)) static inline const ManifestPath *
 manifestPathFindDefault(const Manifest *const this, const String *const name, const ManifestPath *const pathDefault)
 {
-    ASSERT_INLINE(this != NULL);
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(((const ManifestPub *)this)->pathList, &name, (void *)pathDefault);
+    return lstFindDefault(THIS_PUB(Manifest)->pathList, &name, (void *)pathDefault);
 }
 
 // Data directory relative path for any manifest file/link/path/target name
@@ -357,8 +343,7 @@ String *manifestPathPg(const String *manifestPath);
 __attribute__((always_inline)) static inline unsigned int
 manifestPathTotal(const Manifest *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstSize(((const ManifestPub *)this)->pathList);
+    return lstSize(THIS_PUB(Manifest)->pathList);
 }
 
 /***********************************************************************************************************************************
@@ -367,8 +352,7 @@ Target functions and getters/setters
 __attribute__((always_inline)) static inline const ManifestTarget *
 manifestTarget(const Manifest *const this, const unsigned int targetIdx)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstGet(((const ManifestPub *)this)->targetList, targetIdx);
+    return lstGet(THIS_PUB(Manifest)->targetList, targetIdx);
 }
 
 const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
@@ -388,8 +372,7 @@ void manifestTargetRemove(const Manifest *this, const String *name);
 __attribute__((always_inline)) static inline unsigned int
 manifestTargetTotal(const Manifest *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstSize(((const ManifestPub *)this)->targetList);
+    return lstSize(THIS_PUB(Manifest)->targetList);
 }
 
 void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);

@@ -43,24 +43,21 @@ int ioSessionFd(IoSession *this);
 __attribute__((always_inline)) static inline IoRead *
 ioSessionIoRead(IoSession *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoSessionPub *)this)->interface->ioRead(((IoSessionPub *)this)->driver);
+    return THIS_PUB(IoSession)->interface->ioRead(THIS_PUB(IoSession)->driver);
 }
 
 // Write interface
 __attribute__((always_inline)) static inline IoWrite *
 ioSessionIoWrite(IoSession *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoSessionPub *)this)->interface->ioWrite(((IoSessionPub *)this)->driver);
+    return THIS_PUB(IoSession)->interface->ioWrite(THIS_PUB(IoSession)->driver);
 }
 
 // Session role
 __attribute__((always_inline)) static inline IoSessionRole
 ioSessionRole(const IoSession *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const IoSessionPub *)this)->interface->role(((const IoSessionPub *)this)->driver);
+    return THIS_PUB(IoSession)->interface->role(THIS_PUB(IoSession)->driver);
 }
 
 /***********************************************************************************************************************************
@@ -70,8 +67,7 @@ Functions
 __attribute__((always_inline)) static inline void
 ioSessionClose(IoSession *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoSessionPub *)this)->interface->close(((IoSessionPub *)this)->driver);
+    return THIS_PUB(IoSession)->interface->close(THIS_PUB(IoSession)->driver);
 }
 
 // Move to a new parent mem context

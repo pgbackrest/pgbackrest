@@ -38,24 +38,21 @@ typedef struct DbPub
 __attribute__((always_inline)) static inline IoRead *
 execIoRead(Exec *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ExecPub *)this)->ioReadExec;
+    return THIS_PUB(Exec)->ioReadExec;
 }
 
 // Write interface
 __attribute__((always_inline)) static inline IoWrite *
 execIoWrite(Exec *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ExecPub *)this)->ioWriteExec;
+    return THIS_PUB(Exec)->ioWriteExec;
 }
 
 // Exec MemContext
 __attribute__((always_inline)) static inline MemContext *
 execMemContext(Exec *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ExecPub *)this)->memContext;
+    return THIS_PUB(Exec)->memContext;
 }
 
 /***********************************************************************************************************************************

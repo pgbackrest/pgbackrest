@@ -6,6 +6,7 @@ These macros and functions implement common object functionality.
 #ifndef COMMON_TYPE_OBJECT_H
 #define COMMON_TYPE_OBJECT_H
 
+#include "common/assert.h"
 #include "common/memContext.h"
 
 /***********************************************************************************************************************************
@@ -21,6 +22,27 @@ This macro should not be used unless the function is assigned to an interface or
 Create a local "this" variable of the correct type from a THIS_VOID parameter
 ***********************************************************************************************************************************/
 #define THIS(type)                                                  type *this = thisVoid
+
+/***********************************************************************************************************************************
+Cast this private struct, e.g. List, to the associated public struct, e.g. ListPub. Note that the public struct must be the first
+member of the private struct. For example:
+
+__attribute__((always_inline)) static inline unsigned int
+lstSize(const List *const this)
+{
+    return THIS_PUB(List)->listSize;
+}
+
+The macro also ensures that this != NULL so there is no need to do that in the calling function.
+***********************************************************************************************************************************/
+#define THIS_PUB(type)                                              ((type##Pub *)thisNotNull(this))
+
+__attribute__((always_inline)) static inline const void *
+thisNotNull(const void *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return this;
+}
 
 /***********************************************************************************************************************************
 Functions

@@ -36,8 +36,7 @@ typedef struct KeyValuePub
 __attribute__((always_inline)) static inline const VariantList *
 kvKeyList(const KeyValue *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((KeyValuePub *)this)->keyList;
+    return THIS_PUB(KeyValue)->keyList;
 }
 
 /***********************************************************************************************************************************

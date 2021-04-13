@@ -53,16 +53,14 @@ typedef struct IoReadPub
 __attribute__((always_inline)) static inline void *
 ioReadDriver(IoRead *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoReadPub *)this)->driver;
+    return THIS_PUB(IoRead)->driver;
 }
 
 // Interface for the read object
 __attribute__((always_inline)) static inline const IoReadInterface *
 ioReadInterface(const IoRead *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return &((IoReadPub *)this)->interface;
+    return &THIS_PUB(IoRead)->interface;
 }
 
 /***********************************************************************************************************************************

@@ -56,40 +56,35 @@ typedef struct HttpUrlPub
 __attribute__((always_inline)) static inline HttpProtocolType
 httpUrlProtocolType(const HttpUrl *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->type;
+    return THIS_PUB(HttpUrl)->type;
 }
 
 // Host
 __attribute__((always_inline)) static inline const String *
 httpUrlHost(const HttpUrl *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->host;
+    return THIS_PUB(HttpUrl)->host;
 }
 
 // Path
 __attribute__((always_inline)) static inline const String *
 httpUrlPath(const HttpUrl *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->path;
+    return THIS_PUB(HttpUrl)->path;
 }
 
 // Port
 __attribute__((always_inline)) static inline unsigned int
 httpUrlPort(const HttpUrl *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->port;
+    return THIS_PUB(HttpUrl)->port;
 }
 
 // URL (exactly as originally passed)
 __attribute__((always_inline)) static inline const String *
 httpUrl(const HttpUrl *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->url;
+    return THIS_PUB(HttpUrl)->url;
 }
 
 /***********************************************************************************************************************************

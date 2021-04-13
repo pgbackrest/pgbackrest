@@ -66,8 +66,7 @@ String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
 __attribute__((always_inline)) static inline Info *
 infoPgInfo(const InfoPg *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((InfoPgPub *)this)->info;
+    return THIS_PUB(InfoPg)->info;
 }
 
 // Return the cipher passphrase
@@ -93,8 +92,7 @@ unsigned int infoPgDataCurrentId(const InfoPg *this);
 __attribute__((always_inline)) static inline unsigned int
 infoPgDataTotal(const InfoPg *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstSize(((InfoPgPub *)this)->history);
+    return lstSize(THIS_PUB(InfoPg)->history);
 }
 
 /***********************************************************************************************************************************

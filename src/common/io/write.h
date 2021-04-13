@@ -31,8 +31,7 @@ typedef struct IoWritePub
 __attribute__((always_inline)) static inline IoFilterGroup *
 ioWriteFilterGroup(IoWrite *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((IoWritePub *)this)->filterGroup;
+    return THIS_PUB(IoWrite)->filterGroup;
 }
 
 // File descriptor for the write object. Not all write objects have a file descriptor and -1 will be returned in that case.

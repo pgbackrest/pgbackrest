@@ -30,8 +30,7 @@ typedef struct IoClientPub
 __attribute__((always_inline)) static inline const String *
 ioClientName(const IoClient *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const IoClientPub *)this)->interface->name(((const IoClientPub *)this)->driver);
+    return THIS_PUB(IoClient)->interface->name(THIS_PUB(IoClient)->driver);
 }
 
 /***********************************************************************************************************************************
@@ -48,8 +47,7 @@ ioClientMove(IoClient *this, MemContext *parentNew)
 __attribute__((always_inline)) static inline IoSession *
 ioClientOpen(IoClient *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const IoClientPub *)this)->interface->open(((const IoClientPub *)this)->driver);
+    return THIS_PUB(IoClient)->interface->open(THIS_PUB(IoClient)->driver);
 }
 
 /***********************************************************************************************************************************

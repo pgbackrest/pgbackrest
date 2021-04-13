@@ -45,7 +45,6 @@ Buffer *xmlDocumentBuf(const XmlDocument *this);
 __attribute__((always_inline)) static inline XmlNode *
 xmlDocumentRoot(const XmlDocument *const this)
 {
-    ASSERT_INLINE(this != NULL);
     return ((XmlDocumentPub *const)this)->root;
 }
 

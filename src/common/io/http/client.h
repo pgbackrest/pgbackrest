@@ -55,8 +55,7 @@ typedef struct HttpClientPub
 __attribute__((always_inline)) static inline TimeMSec
 httpClientTimeout(const HttpClient *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpClientPub *)this)->timeout;
+    return THIS_PUB(HttpClient)->timeout;
 }
 
 /***********************************************************************************************************************************

@@ -91,32 +91,28 @@ typedef struct HttpRequestPub
 __attribute__((always_inline)) static inline const String *
 httpRequestPath(const HttpRequest *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpRequestPub *)this)->path;
+    return THIS_PUB(HttpRequest)->path;
 }
 
 // Request query
 __attribute__((always_inline)) static inline const HttpQuery *
 httpRequestQuery(const HttpRequest *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpRequestPub *)this)->query;
+    return THIS_PUB(HttpRequest)->query;
 }
 
 // Request headers
 __attribute__((always_inline)) static inline const HttpHeader *
 httpRequestHeader(const HttpRequest *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpRequestPub *)this)->header;
+    return THIS_PUB(HttpRequest)->header;
 }
 
 // Request verb
 __attribute__((always_inline)) static inline const String *
 httpRequestVerb(const HttpRequest *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpRequestPub *)this)->verb;
+    return THIS_PUB(HttpRequest)->verb;
 }
 
 /***********************************************************************************************************************************

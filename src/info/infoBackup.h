@@ -77,8 +77,7 @@ typedef struct InfoBackupPub
 __attribute__((always_inline)) static inline InfoPg *
 infoBackupPg(const InfoBackup *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((InfoBackupPub *)this)->infoPg;
+    return THIS_PUB(InfoBackup)->infoPg;
 }
 
 InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
@@ -97,17 +96,15 @@ InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx
 __attribute__((always_inline)) static inline InfoBackupData *
 infoBackupDataByLabel(const InfoBackup *const this, const String *const backupLabel)
 {
-    ASSERT_INLINE(this != NULL);
     ASSERT_INLINE(backupLabel != NULL);
-    return lstFind(((InfoBackupPub *)this)->backup, &backupLabel);
+    return lstFind(THIS_PUB(InfoBackup)->backup, &backupLabel);
 }
 
 // Get total current backups
 __attribute__((always_inline)) static inline unsigned int
 infoBackupDataTotal(const InfoBackup *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return lstSize(((InfoBackupPub *)this)->backup);
+    return lstSize(THIS_PUB(InfoBackup)->backup);
 }
 
 /***********************************************************************************************************************************

@@ -47,8 +47,7 @@ typedef struct InfoArchivePub
 __attribute__((always_inline)) static inline InfoPg *
 infoArchivePg(const InfoArchive *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((InfoArchivePub *)this)->infoPg;
+    return THIS_PUB(InfoArchive)->infoPg;
 }
 
 InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);

@@ -253,16 +253,14 @@ Getters/Setters
 __attribute__((always_inline)) static inline bool
 storageFeature(const Storage *this, StorageFeature feature)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const StoragePub *)this)->interface.feature >> feature & 1;
+    return THIS_PUB(Storage)->interface.feature >> feature & 1;
 }
 
 // Storage type (posix, cifs, etc.)
 __attribute__((always_inline)) static inline const String *
 storageType(const Storage *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const StoragePub *)this)->type;
+    return THIS_PUB(Storage)->type;
 }
 
 /***********************************************************************************************************************************

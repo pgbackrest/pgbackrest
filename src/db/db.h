@@ -37,32 +37,28 @@ typedef struct DbPub
 __attribute__((always_inline)) static inline const String *
 dbArchiveMode(const Db *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((DbPub *)this)->archiveMode;
+    return THIS_PUB(Db)->archiveMode;
 }
 
 // Archive command loaded from the archive_command GUC
 __attribute__((always_inline)) static inline const String *
 dbArchiveCommand(const Db *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((DbPub *)this)->archiveCommand;
+    return THIS_PUB(Db)->archiveCommand;
 }
 
 // Data path loaded from the data_directory GUC
 __attribute__((always_inline)) static inline const String *
 dbPgDataPath(const Db *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((DbPub *)this)->pgDataPath;
+    return THIS_PUB(Db)->pgDataPath;
 }
 
 // Version loaded from the server_version_num GUC
 __attribute__((always_inline)) static inline unsigned int
 dbPgVersion(const Db *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((DbPub *)this)->pgVersion;
+    return THIS_PUB(Db)->pgVersion;
 }
 
 /***********************************************************************************************************************************

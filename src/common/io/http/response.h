@@ -46,32 +46,28 @@ typedef struct HttpResponsePub
 __attribute__((always_inline)) static inline IoRead *
 httpResponseIoRead(HttpResponse *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpResponsePub *)this)->contentRead;
+    return THIS_PUB(HttpResponse)->contentRead;
 }
 
 // Response code
 __attribute__((always_inline)) static inline unsigned int
 httpResponseCode(const HttpResponse *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpResponsePub *)this)->code;
+    return THIS_PUB(HttpResponse)->code;
 }
 
 // Response headers
 __attribute__((always_inline)) static inline const HttpHeader *
 httpResponseHeader(const HttpResponse *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpResponsePub *)this)->header;
+    return THIS_PUB(HttpResponse)->header;
 }
 
 // Response reason
 __attribute__((always_inline)) static inline const String *
 httpResponseReason(const HttpResponse *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpResponsePub *)this)->reason;
+    return THIS_PUB(HttpResponse)->reason;
 }
 
 /***********************************************************************************************************************************

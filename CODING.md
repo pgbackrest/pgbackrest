@@ -219,12 +219,13 @@ typedef struct ListPub
 
 // List size
 __attribute__((always_inline)) static inline unsigned int
-lstSize(const List *this)
+lstSize(const List *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const ListPub *)this)->listSize;
+    return THIS_PUB(List)->listSize;
 }
 ```
+`THIS_PUB()` ensures that `this != NULL` so there is no need to check that in the calling function.
+
 And the C file:
 ```c
 struct List

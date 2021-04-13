@@ -55,8 +55,7 @@ typedef struct InfoPub
 __attribute__((always_inline)) static inline const String *
 infoCipherPass(const Info *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((InfoPub *)this)->cipherPass;
+    return THIS_PUB(Info)->cipherPass;
 }
 
 void infoCipherPassSet(Info *this, const String *cipherPass);
@@ -65,8 +64,7 @@ void infoCipherPassSet(Info *this, const String *cipherPass);
 __attribute__((always_inline)) static inline const String *
 infoBackrestVersion(const Info *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((InfoPub *)this)->backrestVersion;
+    return THIS_PUB(Info)->backrestVersion;
 }
 
 /***********************************************************************************************************************************
