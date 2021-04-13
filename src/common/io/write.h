@@ -14,8 +14,29 @@ Object type
 typedef struct IoWrite IoWrite;
 
 #include "common/io/filter/group.h"
+#include "common/io/write.intern.h"
 #include "common/type/buffer.h"
 #include "common/type/object.h"
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct IoWritePub
+{
+    MemContext *memContext;                                         // Mem context
+    IoFilterGroup *filterGroup;                                     // IO filters
+} IoWritePub;
+
+// Filter group. Filters must be set before open and cannot be reset
+__attribute__((always_inline)) static inline IoFilterGroup *
+ioWriteFilterGroup(IoWrite *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((IoWritePub *)this)->filterGroup;
+}
+
+// File descriptor for the write object. Not all write objects have a file descriptor and -1 will be returned in that case.
+int ioWriteFd(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Functions
@@ -52,15 +73,6 @@ void ioWriteFlush(IoWrite *this);
 
 // Close the IO and write any additional data that has not been written yet
 void ioWriteClose(IoWrite *this);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Filter group. Filters must be set before open and cannot be reset
-IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
-
-// File descriptor for the write object. Not all write objects have a file descriptor and -1 will be returned in that case.
-int ioWriteFd(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Destructor

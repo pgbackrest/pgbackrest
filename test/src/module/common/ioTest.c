@@ -316,7 +316,7 @@ testRun(void)
             ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioTestFilterMultiplyNew("double", 2, 3, 'X')),
             "    add filter to filter group");
         TEST_RESULT_PTR(
-            ioFilterGroupInsert(ioReadFilterGroup(bufferRead), 0, sizeFilter), bufferRead->filterGroup,
+            ioFilterGroupInsert(ioReadFilterGroup(bufferRead), 0, sizeFilter), bufferRead->pub.filterGroup,
             "    add filter to filter group");
         TEST_RESULT_VOID(ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioSizeNew()), "    add filter to filter group");
         IoFilter *bufferFilter = ioBufferNew();
@@ -572,8 +572,8 @@ testRun(void)
 
                 ioReadOpen(read);
                 TEST_RESULT_INT(ioReadFd(read), ((IoFdRead *)ioReadDriver(read))->fd, "check fd");
-                TEST_RESULT_PTR(ioReadInterface(read), &read->interface, "check interface");
-                TEST_RESULT_PTR(ioReadDriver(read), read->driver, "check driver");
+                TEST_RESULT_PTR(ioReadInterface(read), &read->pub.interface, "check interface");
+                TEST_RESULT_PTR(ioReadDriver(read), read->pub.driver, "check driver");
 
                 // Read a string
                 TEST_RESULT_STR_Z(ioReadLine(read), "test string 1", "read test string");
@@ -581,9 +581,9 @@ testRun(void)
                 // Only part of the buffer is written before timeout
                 Buffer *buffer = bufNew(16);
 
-                ((IoFdRead *)read->driver)->timeout = 1;
+                ((IoFdRead *)read->pub.driver)->timeout = 1;
                 TEST_RESULT_BOOL(ioReadReadyP(read), false, "read is not ready (without throwing error)");
-                ((IoFdRead *)read->driver)->timeout = 1000;
+                ((IoFdRead *)read->pub.driver)->timeout = 1000;
 
                 TEST_ERROR(ioRead(read, buffer), FileReadError, "timeout after 1000ms waiting for read from 'read test'");
                 TEST_RESULT_UINT(bufSize(buffer), 16, "buffer is only partially read");

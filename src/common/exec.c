@@ -17,8 +17,8 @@ Execute Process
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
-#include "common/io/read.intern.h"
-#include "common/io/write.intern.h"
+#include "common/io/read.h"
+#include "common/io/write.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************

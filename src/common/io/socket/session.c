@@ -10,7 +10,7 @@ Socket Session
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/io/socket/client.h"
-#include "common/io/session.intern.h"
+#include "common/io/session.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 

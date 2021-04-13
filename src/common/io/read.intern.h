@@ -35,11 +35,35 @@ IoRead *ioReadNew(void *driver, IoReadInterface interface);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct IoReadPub
+{
+    MemContext *memContext;                                         // Mem context
+    void *driver;                                                   // Driver object
+    IoReadInterface interface;                                      // Driver interface
+    IoFilterGroup *filterGroup;                                     // IO filters
+    bool eofAll;                                                    // Is the read done (read and filters complete)?
+
+#ifndef NDEBUG
+    bool opened;                                                    // Has the io been opened?
+    bool closed;                                                    // Has the io been closed?
+#endif
+} IoReadPub;
+
 // Driver for the read object
-void *ioReadDriver(IoRead *this);
+__attribute__((always_inline)) static inline void *
+ioReadDriver(IoRead *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((IoReadPub *)this)->driver;
+}
 
 // Interface for the read object
-const IoReadInterface *ioReadInterface(const IoRead *this);
+__attribute__((always_inline)) static inline const IoReadInterface *
+ioReadInterface(const IoRead *this)
+{
+    ASSERT_INLINE(this != NULL);
+    return &((IoReadPub *)this)->interface;
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

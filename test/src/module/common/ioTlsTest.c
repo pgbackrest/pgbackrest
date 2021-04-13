@@ -393,7 +393,7 @@ testRun(void)
                 hrnServerScriptAccept(tls);
 
                 TEST_ASSIGN(session, ioClientOpen(client), "open client");
-                TlsSession *tlsSession = (TlsSession *)session->driver;
+                TlsSession *tlsSession = (TlsSession *)session->pub.driver;
 
                 TEST_RESULT_INT(ioSessionFd(session), -1, "no fd for tls session");
 
@@ -445,11 +445,11 @@ testRun(void)
                 hrnServerScriptSleep(tls, 500);
 
                 output = bufNew(12);
-                ((IoFdRead *)((SocketSession *)tlsSession->ioSession->driver)->read->driver)->timeout = 100;
+                ((IoFdRead *)((SocketSession *)tlsSession->ioSession->pub.driver)->read->pub.driver)->timeout = 100;
                 TEST_ERROR_FMT(
                     ioRead(ioSessionIoRead(session), output), FileReadError,
                     "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnServerHost()), hrnServerPort(0));
-                ((IoFdRead *)((SocketSession *)tlsSession->ioSession->driver)->read->driver)->timeout = 5000;
+                ((IoFdRead *)((SocketSession *)tlsSession->ioSession->pub.driver)->read->pub.driver)->timeout = 5000;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("second protocol exchange");
