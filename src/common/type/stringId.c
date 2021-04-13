@@ -15,7 +15,8 @@ Constants used to extract information from the header
 #define STRING_ID_PREFIX                                            4
 
 /**********************************************************************************************************************************/
-StringId strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
+StringId
+strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, bit);
