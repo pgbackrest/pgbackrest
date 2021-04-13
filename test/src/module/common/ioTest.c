@@ -365,8 +365,8 @@ testRun(void)
             varUInt64(varLstGet(varVarLst(ioFilterGroupResult(ioReadFilterGroup(bufferRead), ioFilterType(sizeFilter))), 1)), 9,
             "    check filter result");
 
-        TEST_RESULT_PTR(ioFilterDriver(bufferFilter), bufferFilter->driver, "    check filter driver");
-        TEST_RESULT_PTR(ioFilterInterface(bufferFilter), &bufferFilter->interface, "    check filter interface");
+        TEST_RESULT_PTR(ioFilterDriver(bufferFilter), bufferFilter->pub.driver, "    check filter driver");
+        TEST_RESULT_PTR(ioFilterInterface(bufferFilter), &bufferFilter->pub.interface, "    check filter interface");
 
         TEST_RESULT_VOID(ioFilterFree(bufferFilter), "    free buffer filter");
         TEST_RESULT_VOID(ioFilterGroupFree(ioReadFilterGroup(bufferRead)), "    free filter group object");
@@ -374,10 +374,10 @@ testRun(void)
         // Set filter group results
         // -------------------------------------------------------------------------------------------------------------------------
         IoFilterGroup *filterGroup = ioFilterGroupNew();
-        filterGroup->opened = true;
+        filterGroup->pub.opened = true;
         TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, NULL), "null result");
         TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, jsonToVar(strNew("{\"test\":777}"))), "add result");
-        filterGroup->closed = true;
+        filterGroup->pub.closed = true;
         TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, strNew("test"))), 777, "    check filter result");
 
         // Read a zero-size buffer to ensure filters are still processed even when there is no input.  Some filters (e.g. encryption

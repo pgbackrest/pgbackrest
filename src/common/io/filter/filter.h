@@ -16,6 +16,7 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct IoFilter IoFilter;
 
+#include "common/io/filter/filter.intern.h"
 #include "common/type/object.h"
 #include "common/type/string.h"
 #include "common/type/variant.h"
@@ -27,7 +28,12 @@ Getters/Setters
 Variant *ioFilterResult(const IoFilter *this);
 
 // Identifies the filter and is used when pulling results from the filter group
-const String *ioFilterType(const IoFilter *this);
+__attribute__((always_inline)) static inline const String *
+ioFilterType(const IoFilter *const this)
+{
+    ASSERT_INLINE(this != NULL);
+    return ((IoFilterPub *)this)->type;
+}
 
 /***********************************************************************************************************************************
 Destructor

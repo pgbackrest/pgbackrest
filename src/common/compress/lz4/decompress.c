@@ -11,7 +11,7 @@ LZ4 Decompress
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/decompress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"

@@ -11,7 +11,7 @@ Block Cipher
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"

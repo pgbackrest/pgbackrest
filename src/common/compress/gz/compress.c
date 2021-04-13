@@ -9,7 +9,7 @@ Gz Compress
 #include "common/compress/gz/common.h"
 #include "common/compress/gz/compress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/macro.h"
 #include "common/memContext.h"
