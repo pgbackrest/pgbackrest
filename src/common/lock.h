@@ -34,10 +34,6 @@ Functions
 bool lockAcquire(
     const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock);
 
-// Clear the lock without releasing it.  This is used by a master process after it has spawned a child so the child can keep the
-// lock and the master process won't try to free it.
-bool lockClear(bool failOnNoLock);
-
 // Release a lock
 bool lockRelease(bool failOnNoLock);
 
