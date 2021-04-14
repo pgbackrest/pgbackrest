@@ -117,7 +117,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("lockAcquire(), lockRelease(), and lockClear()"))
+    if (testBegin("lockAcquire(), lockRelease()"))
     {
         String *stanza = strNew("test");
         String *lockPath = strNew(testPath());
@@ -128,9 +128,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(lockRelease(true), AssertError, "no lock is held by this process");
         TEST_RESULT_BOOL(lockRelease(false), false, "release when there is no lock");
-
-        TEST_ERROR(lockClear(true), AssertError, "no lock is held by this process");
-        TEST_RESULT_BOOL(lockClear(false), false, "release when there is no lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, STRDEF("1-test"), 0, true), "archive lock by file");
@@ -178,38 +175,26 @@ testRun(void)
         TEST_ERROR(
             lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeAll, 0, false), AssertError,
             "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
-        TEST_RESULT_VOID(lockRelease(true), "release all lock");
+        TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
-
-        lockFdTest = lockFd[lockTypeBackup];
-        String *lockFileTest = strDup(lockFile[lockTypeBackup]);
-
-        TEST_RESULT_VOID(lockClear(true), "clear backup lock");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file still exists");
-        lockReleaseFile(lockFdTest, lockFileTest);
+        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), false, "archive lock file was removed");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), false, "backup lock file was removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("acquire lock on the same exec-id and release");
 
         TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
 
+        // Make it look there is no lock
         lockFdTest = lockFd[lockTypeBackup];
-        lockFileTest = strDup(lockFile[lockTypeBackup]);
-
-        TEST_RESULT_VOID(lockClear(true), "clear backup lock");
+        String *lockFileTest = strDup(lockFile[lockTypeBackup]);
+        lockTypeHeld = lockTypeNone;
 
         TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock again");
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
+        // Release lock manually
         lockReleaseFile(lockFdTest, lockFileTest);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(lockAcquire(lockPath, stanza, STRDEF("1-test"), lockTypeAll, 0, true), true, "all lock");
-        TEST_RESULT_VOID(lockClear(true), "clear all lock");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file still exists");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file still exists");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
