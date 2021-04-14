@@ -1067,9 +1067,49 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,[]]}\n", "check result");
         TEST_STORAGE_LIST(
-            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n");
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n",
+            .remove = true);
 
         bufUsedSet(serverWrite, 0);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no segments to find with existing ok file");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "10");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        strLstAddZ(argList, "000000010000000100000001");
+        strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=2\n"
+            "\n"
+            "[db:history]\n"
+            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+
+        TEST_SYSTEM_FMT("rm -rf %s/lock/*", testDataPath());
+
+        // TEST_STORAGE_REMOVE(storageLocalWrite(), strZ(strNewFmt("%s/lock", testDataPath())));
+
+        // Put a warning in the file to show that it was read and later overwritten
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "0\ntest warning");
+
+        TEST_RESULT_VOID(cmdArchiveGet(), "get async");
+
+        harnessLogResult(
+            "P00   WARN: test warning\n"
+            "P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+
+        // Check that the ok file is empty which shows that it was overwritten
+        // TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", .remove = true);
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

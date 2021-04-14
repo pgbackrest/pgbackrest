@@ -675,11 +675,8 @@ unit:
         coverage:
           - command/archive/common
           - command/archive/get/file
-          # - command/archive/get/get
-          - command/archive/get/protocol
-
-        include:
           - command/archive/get/get
+          - command/archive/get/protocol
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: archive-push
