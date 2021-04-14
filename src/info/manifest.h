@@ -215,7 +215,7 @@ void manifestBuildComplete(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Ensure that symlinks do not point to the same directory or a subdirectory of another link
+// Ensure that symlinks do not point to the same file, directory, or subdirectory of another link
 void manifestLinkCheck(const Manifest *this);
 
 // Move to a new parent mem context

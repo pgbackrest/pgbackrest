@@ -381,7 +381,13 @@ manifestNewInternal(void)
     FUNCTION_TEST_RETURN(this);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Ensure that symlinks do not point to the same file, directory, or subdirectory of another link
+
+There are two implementations: manifestLinkCheck(), which is externed, and manifestLinkCheckOne(), which is intended to be
+used internally during processing. manifestLinkCheck() works simply by calling manifestLinkCheckOne() for every link in the target
+list. manifestLinkCheckOne() is optimized to work quickly on a single link.
+***********************************************************************************************************************************/
 // Data needed in link list
 typedef struct ManifestLinkCheckItem
 {
@@ -513,7 +519,7 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
                             strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
                     }
 
-                    // Stop once the first prior path link has been checked since it must be the parent (if there is one)
+                    // Stop once the first prior path link has been checked since it must be a parent (if there is one)
                     if (priorLink->file == NULL)
                         break;
                 }
