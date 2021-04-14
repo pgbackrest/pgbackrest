@@ -631,10 +631,10 @@ cmdArchiveGet(void)
         // Async get can only be performed on WAL segments, history or other files must use synchronous mode
         if (cfgOptionBool(cfgOptArchiveAsync) && walIsSegment(walSegment))
         {
+            bool first = true;                                          // Is the first time the loop has run?
             bool found = false;                                         // Has the WAL segment been found yet?
             bool queueFull = false;                                     // Is the queue half or more full?
             bool forked = false;                                        // Has the async process been forked yet?
-            bool throwOnError = false;                                  // Should we throw errors?
 
             // Loop and wait for the WAL segment to be pushed
             Wait *wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
@@ -645,14 +645,19 @@ cmdArchiveGet(void)
                 found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
 
                 // Check for errors or missing files. For archive-get ok indicates that the process succeeded but there is no WAL
-                // file to download, or that there was a warning.
-                if (archiveAsyncStatus(archiveModeGet, walSegment, throwOnError))
+                // file to download, or that there was a warning. Done error on the first run so the async process can be spawned to
+                // correct any errors from a previous run.
+                if (archiveAsyncStatus(archiveModeGet, walSegment, !first))
                 {
                     storageRemoveP(
                         storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s" STATUS_EXT_OK, strZ(walSegment)),
                         .errorOnMissing = true);
 
-                    if (!found)
+                    // Break if an ok file was found but no segment exists, which means the segment was missing. However, don't
+                    // break if this is the first time through the loop since this means the ok file was written by an async process
+                    // spawned by a prior archive-get execution, which means we should get again to see if the file exists. This
+                    // also prevents spool files from a previous recovery interfering with the current recovery.
+                    if (!found && !first)
                         break;
                 }
 
@@ -746,8 +751,8 @@ cmdArchiveGet(void)
                 if (found)
                     break;
 
-                // Now that the async process has been launched, throw any errors that are found
-                throwOnError = true;
+                // No longer the first run, so errors will be thrown and missing files will be reported
+                first = false;
             }
             while (waitMore(wait));
 
