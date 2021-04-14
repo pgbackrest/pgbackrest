@@ -101,7 +101,6 @@ Array and object types:
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/type/convert.h"
-#include "common/type/object.h"
 #include "common/type/pack.h"
 
 /***********************************************************************************************************************************
@@ -211,8 +210,6 @@ struct PackRead
     PackTagStack *tagStackTop;                                      // Top tag on the stack
 };
 
-OBJECT_DEFINE_FREE(PACK_READ);
-
 struct PackWrite
 {
     MemContext *memContext;                                         // Mem context
@@ -222,8 +219,6 @@ struct PackWrite
     List *tagStack;                                                 // Stack of object/array tags
     PackTagStack *tagStackTop;                                      // Top tag on the stack
 };
-
-OBJECT_DEFINE_FREE(PACK_WRITE);
 
 /**********************************************************************************************************************************/
 // Helper to create common data
@@ -958,7 +953,7 @@ pckReadToLog(const PackRead *this)
 {
     return strNewFmt(
         "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", lstSize(this->tagStack),
-        this->tagStackTop != NULL ? this->tagStackTop->idLast : 0, this->tagNextId, this->tagNextType, this->tagNextValue);
+        this->tagStackTop->idLast, this->tagNextId, this->tagNextType, this->tagNextValue);
 }
 
 /**********************************************************************************************************************************/
@@ -1576,7 +1571,7 @@ pckWriteEnd(PackWrite *this)
 String *
 pckWriteToLog(const PackWrite *this)
 {
-    return strNewFmt("{depth: %u, idLast: %u}", lstSize(this->tagStack), this->tagStackTop == NULL ? 0 : this->tagStackTop->idLast);
+    return strNewFmt("{depth: %u, idLast: %u}", lstSize(this->tagStack), this->tagStackTop->idLast);
 }
 
 /**********************************************************************************************************************************/

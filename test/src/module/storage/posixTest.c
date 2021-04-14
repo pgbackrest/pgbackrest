@@ -80,7 +80,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageNew() and storageFree()"))
+    if (testBegin("storageNew()"))
     {
         Storage *storageTest = NULL;
         TEST_ASSIGN(storageTest, storagePosixNewP(strNew("/")), "new storage (defaults)");
@@ -102,13 +102,11 @@ testRun(void)
         TEST_RESULT_BOOL(storageTest->write, true, "    check write");
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction != NULL, true, "    check expression function is set");
 
-        TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->interface.info, "    check interface");
-        TEST_RESULT_PTR(storageDriver(storageTest), storageTest->driver, "    check driver");
-        TEST_RESULT_STR(storageType(storageTest), storageTest->type, "    check type");
+        TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->pub.interface.info, "    check interface");
+        TEST_RESULT_PTR(storageDriver(storageTest), storageDriver(storageTest), "    check driver");
+        TEST_RESULT_STR(storageType(storageTest), storageType(storageTest), "    check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeatureCompress), true, "    check compress feature");
-
-        TEST_RESULT_VOID(storageFree(storageTest), "free storage");
     }
 
     // *****************************************************************************************************************************

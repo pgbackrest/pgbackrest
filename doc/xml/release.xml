@@ -13,6 +13,20 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.34dev" title="UNDER DEVELOPMENT">
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1365"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="isaac.yuen"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify that <br-option>repo-s3-role</br-option> is not an <id>ARN</id>.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2021-04-05" version="2.33" title="Multi-Repository and GCS Support">
@@ -9530,6 +9544,11 @@
         <contributor id="ibrahim.edib.kokdemir">
             <contributor-name-display>Ibrahim Edib Kokdemir</contributor-name-display>
             <contributor-id type="github">Edib</contributor-id>
+        </contributor>
+
+        <contributor id="isaac.yuen">
+            <contributor-name-display>Isaac Yuen</contributor-name-display>
+            <contributor-id type="github">Isaacwhyuenac</contributor-id>
         </contributor>
 
         <contributor id="james.badger">

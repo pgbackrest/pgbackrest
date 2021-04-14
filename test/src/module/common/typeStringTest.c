@@ -341,8 +341,8 @@ testRun(void)
         TEST_ASSIGN(list, strLstNew(), "new list");
         TEST_RESULT_VOID(strLstAddIfMissing(list, STRDEF("item1")), "add item 1");
         TEST_RESULT_UINT(strLstSize(list), 1, "check size");
-        TEST_RESULT_BOOL(strLstExistsZ(list, "item1"), true, "check exists");
-        TEST_RESULT_BOOL(strLstExistsZ(list, NULL), false, "check null exists");
+        TEST_RESULT_BOOL(strLstExists(list, STRDEF("item1")), true, "check exists");
+        TEST_RESULT_BOOL(strLstExists(list, NULL), false, "check null exists");
         TEST_RESULT_VOID(strLstAddIfMissing(list, STRDEF("item1")), "add item 1 again");
         TEST_RESULT_UINT(strLstSize(list), 1, "check size");
         TEST_RESULT_BOOL(strLstEmpty(list), false, "    not empty");
@@ -359,24 +359,6 @@ testRun(void)
         TEST_RESULT_STR_Z(strLstJoin(strLstNewSplit(STRDEF(""), STRDEF(", ")), ", "), "", "empty list");
         TEST_RESULT_STR_Z(strLstJoin(strLstNewSplit(STRDEF("item1"), STRDEF(", ")), ", "), "item1", "one item");
         TEST_RESULT_STR_Z(strLstJoin(strLstNewSplit(STRDEF("item1, item2"), STRDEF(", ")), ", "), "item1, item2", "two items");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("strLstNewSplitSize()"))
-    {
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewSplitSize(STRDEF(""), STRDEF(" "), 0), ", "), "", "empty list");
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def"), " ", 3), "-"), "abc-def", "two items");
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def"), " ", 4), "-"), "abc-def", "one items");
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def ghi"), " ", 4), "-"), "abc-def-ghi", "three items");
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def ghi"), " ", 8), "-"), "abc def-ghi", "three items");
-        TEST_RESULT_STR_Z(strLstJoin(strLstNewSplitSizeZ(STRDEF("abc def "), " ", 4), "-"), "abc-def ", "two items");
-
-        TEST_RESULT_STR_Z(
-            strLstJoin(strLstNewSplitSize(STRDEF("this is a short sentence"), STRDEF(" "), 10), "\n"),
-            "this is a\n"
-            "short\n"
-            "sentence",
-            "empty list");
     }
 
     // *****************************************************************************************************************************
@@ -430,7 +412,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strLstExists() and strLstExistsZ()"))
+    if (testBegin("strLstExists()"))
     {
         StringList *list = strLstNew();
         strLstAddZ(list, "A");
@@ -438,8 +420,6 @@ testRun(void)
 
         TEST_RESULT_BOOL(strLstExists(list, STRDEF("B")), false, "string does not exist");
         TEST_RESULT_BOOL(strLstExists(list, STRDEF("C")), true, "string exists");
-        TEST_RESULT_BOOL(strLstExistsZ(list, "B"), false, "string does not exist");
-        TEST_RESULT_BOOL(strLstExistsZ(list, "C"), true, "string exists");
     }
 
     // *****************************************************************************************************************************
@@ -531,11 +511,11 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strLstToLog(list), "{[]}", "format empty list");
 
-        strLstInsertZ(list, 0, "item3");
+        strLstInsert(list, 0, STRDEF("item3"));
         TEST_RESULT_STR_Z(strLstToLog(list), "{[\"item3\"]}", "format 1 item list");
 
         strLstInsert(list, 0, STRDEF("item1"));
-        strLstInsertZ(list, 1, "item2");
+        strLstInsert(list, 1, STRDEF("item2"));
         TEST_RESULT_STR_Z(strLstToLog(list), "{[\"item1\", \"item2\", \"item3\"]}", "format 3 item list");
     }
 

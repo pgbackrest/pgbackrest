@@ -11,11 +11,11 @@ auto_cancellation: $CIRRUS_BRANCH != 'integration'
 # ----------------------------------------------------------------------------------------------------------------------------------
 freebsd_12_task:
   freebsd_instance:
-    image_family: freebsd-12-1
+    image_family: freebsd-12-2
     cpu: 4
     memory: 4G
 
-  install_script: pkg install -y git postgresql-libpqxx pkgconf libxml2 gmake perl5 p5-YAML-LibYAML rsync
+  install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 p5-YAML-LibYAML rsync
 
   script:
     - perl ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup

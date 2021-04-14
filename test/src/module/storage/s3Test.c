@@ -388,7 +388,7 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(0, true);
-                StorageS3 *driver = (StorageS3 *)s3->driver;
+                StorageS3 *driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
@@ -446,7 +446,7 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
-                driver = (StorageS3 *)s3->driver;
+                driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_STR(driver->credRole, credRole, "check role");
@@ -1020,7 +1020,7 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
-                driver = (StorageS3 *)s3->driver;
+                driver = (StorageS3 *)storageDriver(s3);
 
                 // Set deleteMax to a small value for testing
                 driver->deleteMax = 2;

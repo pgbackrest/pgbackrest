@@ -27,7 +27,7 @@ struct ErrorType
     const ErrorType name = {code, #name, &parentType}
 
 // Define test error
-#ifndef NDEBUG
+#ifdef DEBUG
     ERROR_DEFINE(1, TestError, RuntimeError);
 #endif
 

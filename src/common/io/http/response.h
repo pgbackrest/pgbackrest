@@ -10,14 +10,12 @@ cached content, etc. will still be available for the lifetime of the object.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_RESPONSE_TYPE                                          HttpResponse
-#define HTTP_RESPONSE_PREFIX                                        httpResponse
-
 typedef struct HttpResponse HttpResponse;
 
 #include "common/io/http/header.h"
 #include "common/io/http/session.h"
 #include "common/io/read.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 HTTP Response Constants
@@ -32,40 +30,74 @@ Constructors
 HttpResponse *httpResponseNew(HttpSession *session, const String *verb, bool contentCache);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct HttpResponsePub
+{
+    MemContext *memContext;                                         // Mem context
+    IoRead *contentRead;                                            // Read interface for response content
+    unsigned int code;                                              // Response code (e.g. 200, 404)
+    HttpHeader *header;                                             // Response headers
+    String *reason;                                                 // Response reason e.g. (OK, Not Found)
+} HttpResponsePub;
+
+// Read interface used to get the response content. This is intended for reading content that may be very large and will not be held
+// in memory all at once. If the content must be loaded completely for processing (e.g. XML) then httpResponseContent() is simpler.
+__attribute__((always_inline)) static inline IoRead *
+httpResponseIoRead(HttpResponse *this)
+{
+    return THIS_PUB(HttpResponse)->contentRead;
+}
+
+// Response code
+__attribute__((always_inline)) static inline unsigned int
+httpResponseCode(const HttpResponse *this)
+{
+    return THIS_PUB(HttpResponse)->code;
+}
+
+// Response headers
+__attribute__((always_inline)) static inline const HttpHeader *
+httpResponseHeader(const HttpResponse *this)
+{
+    return THIS_PUB(HttpResponse)->header;
+}
+
+// Response reason
+__attribute__((always_inline)) static inline const String *
+httpResponseReason(const HttpResponse *this)
+{
+    return THIS_PUB(HttpResponse)->reason;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Is this response code OK, i.e. 2XX?
-bool httpResponseCodeOk(const HttpResponse *this);
+__attribute__((always_inline)) static inline bool
+httpResponseCodeOk(const HttpResponse *this)
+{
+    return httpResponseCode(this) / 100 == 2;
+}
 
 // Fetch all response content. Content will be cached so it can be retrieved again without additional cost.
 const Buffer *httpResponseContent(HttpResponse *this);
 
 // Move to a new parent mem context
-HttpResponse *httpResponseMove(HttpResponse *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Is the response still being read?
-bool httpResponseBusy(const HttpResponse *this);
-
-// Read interface used to get the response content. This is intended for reading content that may be very large and will not be held
-// in memory all at once. If the content must be loaded completely for processing (e.g. XML) then httpResponseContent() is simpler.
-IoRead *httpResponseIoRead(HttpResponse *this);
-
-// Response code
-unsigned int httpResponseCode(const HttpResponse *this);
-
-// Response headers
-const HttpHeader *httpResponseHeader(const HttpResponse *this);
-
-// Response reason
-const String *httpResponseReason(const HttpResponse *this);
+__attribute__((always_inline)) static inline HttpResponse *
+httpResponseMove(HttpResponse *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpResponseFree(HttpResponse *this);
+__attribute__((always_inline)) static inline void
+httpResponseFree(HttpResponse *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

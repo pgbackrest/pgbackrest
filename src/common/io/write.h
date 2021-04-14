@@ -11,13 +11,31 @@ allocate/open or deallocate/free resources.  An example of an IoWrite object is 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_WRITE_TYPE                                               IoWrite
-#define IO_WRITE_PREFIX                                             ioWrite
-
 typedef struct IoWrite IoWrite;
 
 #include "common/io/filter/group.h"
+#include "common/io/write.intern.h"
 #include "common/type/buffer.h"
+#include "common/type/object.h"
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct IoWritePub
+{
+    MemContext *memContext;                                         // Mem context
+    IoFilterGroup *filterGroup;                                     // IO filters
+} IoWritePub;
+
+// Filter group. Filters must be set before open and cannot be reset
+__attribute__((always_inline)) static inline IoFilterGroup *
+ioWriteFilterGroup(IoWrite *const this)
+{
+    return THIS_PUB(IoWrite)->filterGroup;
+}
+
+// File descriptor for the write object. Not all write objects have a file descriptor and -1 will be returned in that case.
+int ioWriteFd(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Functions
@@ -56,18 +74,13 @@ void ioWriteFlush(IoWrite *this);
 void ioWriteClose(IoWrite *this);
 
 /***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Filter group. Filters must be set before open and cannot be reset
-IoFilterGroup *ioWriteFilterGroup(const IoWrite *this);
-
-// File descriptor for the write object. Not all write objects have a file descriptor and -1 will be returned in that case.
-int ioWriteFd(const IoWrite *this);
-
-/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioWriteFree(IoWrite *this);
+__attribute__((always_inline)) static inline void
+ioWriteFree(IoWrite *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

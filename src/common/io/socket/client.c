@@ -10,7 +10,7 @@ Socket Client
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/io/client.intern.h"
+#include "common/io/client.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
@@ -34,9 +34,6 @@ STRING_EXTERN(SOCKET_STAT_SESSION_STR,                              SOCKET_STAT_
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define SOCKET_CLIENT_TYPE                                          SocketClient
-#define SOCKET_CLIENT_PREFIX                                        sckClient
-
 typedef struct SocketClient
 {
     MemContext *memContext;                                         // Mem context

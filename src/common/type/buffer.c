@@ -8,7 +8,6 @@ Buffer Handler
 
 #include "common/debug.h"
 #include "common/type/buffer.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Constant buffers that are generally useful
@@ -31,11 +30,7 @@ struct Buffer
 {
     BUFFER_COMMON                                                   // Variables that are common to static and dynamic buffers
     unsigned char *buffer;                                          // Internal buffer
-    MemContext *memContext;                                         // Mem context for dynamic buffers
 };
-
-OBJECT_DEFINE_MOVE(BUFFER);
-OBJECT_DEFINE_FREE(BUFFER);
 
 /**********************************************************************************************************************************/
 Buffer *

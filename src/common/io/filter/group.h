@@ -13,18 +13,66 @@ only call ioFilterGroupNew(), ioFilterGroupAdd(), and ioFilterGroupResult().
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_FILTER_GROUP_TYPE                                        IoFilterGroup
-#define IO_FILTER_GROUP_PREFIX                                      ioFilterGroup
-
 typedef struct IoFilterGroup IoFilterGroup;
 
 #include "common/io/filter/filter.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 IoFilterGroup *ioFilterGroupNew(void);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct IoFilterGroupPub
+{
+    MemContext *memContext;                                         // Mem context
+    List *filterList;                                               // List of filters to apply
+    bool inputSame;                                                 // Same input required again?
+    bool done;                                                      // Is processing done?
+
+#ifdef DEBUG
+    bool opened;                                                    // Has the filter set been opened?
+    bool closed;                                                    // Has the filter set been closed?
+#endif
+} IoFilterGroupPub;
+
+// Is the filter group done processing?
+__attribute__((always_inline)) static inline bool
+ioFilterGroupDone(const IoFilterGroup *const this)
+{
+    ASSERT_INLINE(THIS_PUB(IoFilterGroup)->opened && !THIS_PUB(IoFilterGroup)->closed);
+    return THIS_PUB(IoFilterGroup)->done;
+}
+
+// Should the same input be passed again? A buffer of input can produce multiple buffers of output, e.g. when a file containing all
+// zeroes is being decompressed.
+__attribute__((always_inline)) static inline bool
+ioFilterGroupInputSame(const IoFilterGroup *const this)
+{
+    ASSERT_INLINE(THIS_PUB(IoFilterGroup)->opened && !THIS_PUB(IoFilterGroup)->closed);
+    return THIS_PUB(IoFilterGroup)->inputSame;
+}
+
+// Get all filters and their parameters so they can be passed to a remote
+Variant *ioFilterGroupParamAll(const IoFilterGroup *this);
+
+// Get filter results
+const Variant *ioFilterGroupResult(const IoFilterGroup *this, const String *filterType);
+
+// Get/set all filter results
+const Variant *ioFilterGroupResultAll(const IoFilterGroup *this);
+void ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult);
+
+// Return total number of filters
+__attribute__((always_inline)) static inline unsigned int
+ioFilterGroupSize(const IoFilterGroup *const this)
+{
+    return lstSize(THIS_PUB(IoFilterGroup)->filterList);
+}
 
 /***********************************************************************************************************************************
 Functions
@@ -48,34 +96,13 @@ void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *outp
 void ioFilterGroupClose(IoFilterGroup *this);
 
 /***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Is the filter group done processing?
-bool ioFilterGroupDone(const IoFilterGroup *this);
-
-// Should the same input be passed again? A buffer of input can produce multiple buffers of output, e.g. when a file containing all
-// zeroes is being decompressed.
-bool ioFilterGroupInputSame(const IoFilterGroup *this);
-
-// Get all filters and their parameters so they can be passed to a remote
-Variant *ioFilterGroupParamAll(const IoFilterGroup *this);
-
-// Get filter results
-const Variant *ioFilterGroupResult(const IoFilterGroup *this, const String *filterType);
-
-// Get all filter results
-const Variant *ioFilterGroupResultAll(const IoFilterGroup *this);
-
-// Set all filter results
-void ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult);
-
-// Return total number of filters
-unsigned int ioFilterGroupSize(const IoFilterGroup *this);
-
-/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioFilterGroupFree(IoFilterGroup *this);
+__attribute__((always_inline)) static inline void
+ioFilterGroupFree(IoFilterGroup *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

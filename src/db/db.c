@@ -6,7 +6,6 @@ Database Client
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 #include "db/db.h"
 #include "db/protocol.h"
@@ -25,32 +24,34 @@ Object type
 ***********************************************************************************************************************************/
 struct Db
 {
-    MemContext *memContext;
+    DbPub pub;                                                      // Publicly accessible variables
     PgClient *client;                                               // Local PostgreSQL client
     ProtocolClient *remoteClient;                                   // Protocol client for remote db queries
     unsigned int remoteIdx;                                         // Index provided by the remote on open for subsequent calls
     const String *applicationName;                                  // Used to identify this connection in PostgreSQL
-
-    unsigned int pgVersion;                                         // Version as reported by the database
-    const String *pgDataPath;                                       // Data directory reported by the database
-    const String *archiveMode;                                      // The archive_mode reported by the database
-    const String *archiveCommand;                                   // The archive_command reported by the database
 };
-
-OBJECT_DEFINE_MOVE(DB);
-OBJECT_DEFINE_FREE(DB);
 
 /***********************************************************************************************************************************
 Close protocol connection.  No need to close a locally created PgClient since it has its own destructor.
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(DB, LOG, logLevelTrace)
+static void
+dbFreeResource(THIS_VOID)
 {
+    THIS(Db);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE_STR);
     protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
 
     protocolClientExecute(this->remoteClient, command, false);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /**********************************************************************************************************************************/
 Db *
@@ -73,12 +74,15 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const String *applicationN
 
         *this = (Db)
         {
-            .memContext = memContextCurrent(),
+            .pub =
+            {
+                .memContext = memContextCurrent(),
+            },
             .remoteClient = remoteClient,
             .applicationName = strDup(applicationName),
         };
 
-        this->client = pgClientMove(client, this->memContext);
+        this->client = pgClientMove(client, this->pub.memContext);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -198,7 +202,7 @@ dbOpen(Db *this)
             this->remoteIdx = varUIntForce(protocolClientExecute(this->remoteClient, command, true));
 
             // Set a callback to notify the remote when a connection is closed
-            memContextCallbackSet(this->memContext, dbFreeResource, this);
+            memContextCallbackSet(this->pub.memContext, dbFreeResource, this);
         }
         else
             pgClientOpen(this->client);
@@ -234,25 +238,25 @@ dbOpen(Db *this)
 
         // Strip the minor version off since we don't need it.  In the future it might be a good idea to warn users when they are
         // running an old minor version.
-        this->pgVersion = varUIntForce(varLstGet(row, 0)) / 100 * 100;
+        this->pub.pgVersion = varUIntForce(varLstGet(row, 0)) / 100 * 100;
 
         // Store the data directory that PostgreSQL is running in, the archive mode, and archive command. These can be compared to
         // the configured pgBackRest directory, and archive settings checked for validity, when validating the configuration.
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(this->pub.memContext)
         {
-            this->pgDataPath = strDup(varStr(varLstGet(row, 1)));
-            this->archiveMode = strDup(varStr(varLstGet(row, 2)));
-            this->archiveCommand = strDup(varStr(varLstGet(row, 3)));
+            this->pub.pgDataPath = strDup(varStr(varLstGet(row, 1)));
+            this->pub.archiveMode = strDup(varStr(varLstGet(row, 2)));
+            this->pub.archiveCommand = strDup(varStr(varLstGet(row, 3)));
         }
         MEM_CONTEXT_END();
 
         // Set application name to help identify the backup session
-        if (this->pgVersion >= PG_VERSION_APPLICATION_NAME)
+        if (dbPgVersion(this) >= PG_VERSION_APPLICATION_NAME)
             dbExec(this, strNewFmt("set application_name = '%s'", strZ(this->applicationName)));
 
         // There is no need to have parallelism enabled in a backup session. In particular, 9.6 marks pg_stop_backup() as
         // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
-        if (this->pgVersion >= PG_VERSION_PARALLEL_QUERY)
+        if (dbPgVersion(this) >= PG_VERSION_PARALLEL_QUERY)
             dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
     }
     MEM_CONTEXT_TEMP_END();
@@ -457,7 +461,7 @@ dbIsStandby(Db *this)
 
     bool result = false;
 
-    if (this->pgVersion >= PG_VERSION_HOT_STANDBY)
+    if (dbPgVersion(this) >= PG_VERSION_HOT_STANDBY)
     {
         result = varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()")));
     }
@@ -631,11 +635,11 @@ dbWalSwitch(Db *this)
     {
         // Create a restore point to ensure current WAL will be archived.  For versions < 9.1 activity will need to be generated by
         // the user if there have been no writes since the last WAL switch.
-        if (this->pgVersion >= PG_VERSION_RESTORE_POINT)
+        if (dbPgVersion(this) >= PG_VERSION_RESTORE_POINT)
             dbQueryColumn(this, STRDEF("select pg_catalog.pg_create_restore_point('" PROJECT_NAME " Archive Check')::text"));
 
         // Request a WAL segment switch
-        const char *walName = strZ(pgWalName(this->pgVersion));
+        const char *walName = strZ(pgWalName(dbPgVersion(this)));
         const String *walFileName = varStr(
             dbQueryColumn(this, strNewFmt("select pg_catalog.pg_%sfile_name(pg_catalog.pg_switch_%s())::text", walName, walName)));
 
@@ -649,58 +653,6 @@ dbWalSwitch(Db *this)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING, result);
-}
-
-/**********************************************************************************************************************************/
-const String *
-dbPgDataPath(const Db *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->pgDataPath);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-dbPgVersion(const Db *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->pgVersion);
-}
-
-/**********************************************************************************************************************************/
-const String *
-dbArchiveMode(const Db *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->archiveMode);
-}
-
-/**********************************************************************************************************************************/
-const String *
-dbArchiveCommand(const Db *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DB, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->archiveCommand);
 }
 
 /**********************************************************************************************************************************/

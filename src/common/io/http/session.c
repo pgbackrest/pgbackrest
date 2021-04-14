@@ -8,7 +8,6 @@ HTTP Session
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -19,9 +18,6 @@ struct HttpSession
     HttpClient *httpClient;                                         // HTTP client
     IoSession *ioSession;                                           // IO session
 };
-
-OBJECT_DEFINE_MOVE(HTTP_SESSION);
-OBJECT_DEFINE_FREE(HTTP_SESSION);
 
 /**********************************************************************************************************************************/
 HttpSession *

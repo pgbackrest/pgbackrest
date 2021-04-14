@@ -7,13 +7,12 @@ IO Filter Group
 
 #include "common/debug.h"
 #include "common/io/filter/buffer.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/io/filter/group.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/list.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Filter and buffer structure
@@ -39,21 +38,14 @@ Object type
 ***********************************************************************************************************************************/
 struct IoFilterGroup
 {
-    MemContext *memContext;                                         // Mem context
-    List *filterList;                                               // List of filters to apply
+    IoFilterGroupPub pub;                                           // Publicly accessible variables
     const Buffer *input;                                            // Input buffer passed in for processing
     KeyValue *filterResult;                                         // Filter results (if any)
-    bool inputSame;                                                 // Same input required again?
-    bool done;                                                      // Is processing done?
 
 #ifdef DEBUG
-    bool opened;                                                    // Has the filter set been opened?
     bool flushing;                                                  // Is output being flushed?
-    bool closed;                                                    // Has the filter set been closed?
 #endif
 };
-
-OBJECT_DEFINE_FREE(IO_FILTER_GROUP);
 
 /**********************************************************************************************************************************/
 IoFilterGroup *
@@ -69,9 +61,12 @@ ioFilterGroupNew(void)
 
         *this = (IoFilterGroup)
         {
-            .memContext = memContextCurrent(),
-            .done = false,
-            .filterList = lstNewP(sizeof(IoFilterData)),
+            .pub =
+            {
+                .memContext = memContextCurrent(),
+                .done = false,
+                .filterList = lstNewP(sizeof(IoFilterData)),
+            },
         };
     }
     MEM_CONTEXT_NEW_END();
@@ -89,15 +84,15 @@ ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(!this->opened && !this->closed);
+    ASSERT(!this->pub.opened && !this->pub.closed);
     ASSERT(filter != NULL);
 
     // Move the filter to this object's mem context
-    ioFilterMove(filter, this->memContext);
+    ioFilterMove(filter, this->pub.memContext);
 
     // Add the filter
     IoFilterData filterData = {.filter = filter};
-    lstAdd(this->filterList, &filterData);
+    lstAdd(this->pub.filterList, &filterData);
 
     FUNCTION_LOG_RETURN(IO_FILTER_GROUP, this);
 }
@@ -112,15 +107,15 @@ ioFilterGroupInsert(IoFilterGroup *this, unsigned int listIdx, IoFilter *filter)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(!this->opened && !this->closed);
+    ASSERT(!this->pub.opened && !this->pub.closed);
     ASSERT(filter != NULL);
 
     // Move the filter to this object's mem context
-    ioFilterMove(filter, this->memContext);
+    ioFilterMove(filter, this->pub.memContext);
 
     // Add the filter
     IoFilterData filterData = {.filter = filter};
-    lstInsert(this->filterList, listIdx, &filterData);
+    lstInsert(this->pub.filterList, listIdx, &filterData);
 
     FUNCTION_LOG_RETURN(IO_FILTER_GROUP, this);
 }
@@ -138,7 +133,7 @@ ioFilterGroupGet(const IoFilterGroup *this, unsigned int filterIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN((IoFilterData *)lstGet(this->filterList, filterIdx));
+    FUNCTION_TEST_RETURN((IoFilterData *)lstGet(this->pub.filterList, filterIdx));
 }
 
 /**********************************************************************************************************************************/
@@ -150,12 +145,12 @@ ioFilterGroupClear(IoFilterGroup *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(!this->opened);
+    ASSERT(!this->pub.opened);
 
     for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
         ioFilterFree(ioFilterGroupGet(this, filterIdx)->filter);
 
-    lstClear(this->filterList);
+    lstClear(this->pub.filterList);
 
     FUNCTION_LOG_RETURN(IO_FILTER_GROUP, this);
 }
@@ -172,7 +167,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         // If the last filter is not an output filter then add a filter to buffer/copy data.  Input filters won't copy to an output
         // buffer so we need some way to get the data to the output buffer.
@@ -217,7 +212,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
 
     // Filter group is open
 #ifdef DEBUG
-    this->opened = true;
+    this->pub.opened = true;
 #endif
 
     FUNCTION_LOG_RETURN_VOID();
@@ -234,7 +229,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->opened && !this->closed);
+    ASSERT(this->pub.opened && !this->pub.closed);
     ASSERT(input == NULL || !bufEmpty(input));
     ASSERT(!this->flushing || input == NULL);
     ASSERT(output != NULL);
@@ -258,9 +253,9 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 
         // Search from the end of the list for a filter that needs the same input.  This indicates that the filter was not able to
         // empty the input buffer on the last call.  Maybe it won't this time either -- we can but try.
-        if (this->inputSame)
+        if (ioFilterGroupInputSame(this))
         {
-            this->inputSame = false;
+            this->pub.inputSame = false;
             filterIdx = ioFilterGroupSize(this);
 
             do
@@ -269,7 +264,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 
                 if (ioFilterInputSame((ioFilterGroupGet(this, filterIdx))->filter))
                 {
-                    this->inputSame = true;
+                    this->pub.inputSame = true;
                     break;
                 }
             }
@@ -277,7 +272,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 
             // If no filter is found that needs the same input that means we are done with the current input.  So end the loop and
             // get some more input.
-            if (!this->inputSame)
+            if (!ioFilterGroupInputSame(this))
                 break;
         }
 
@@ -299,7 +294,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                     // the same input once the output buffer is cleared
                     if (ioFilterInputSame(filterData->filter))
                     {
-                        this->inputSame = true;
+                        this->pub.inputSame = true;
                     }
                     // Else clear the buffer if it was locally allocated.  If the input buffer was passed in then the caller is
                     // responsible for clearing it.
@@ -321,29 +316,29 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
                 filterData->output = NULL;
         }
     }
-    while (!bufFull(output) && this->inputSame);
+    while (!bufFull(output) && ioFilterGroupInputSame(this));
 
-    // Scan the filter list to determine if inputSame is set or done is not set for any filter.  We can't trust this->inputSame
-    // when it is true without going through the loop above again.  We need to scan to set this->done anyway so set this->inputSame
-    // in the same loop.
-    this->done = true;
-    this->inputSame = false;
+    // Scan the filter list to determine if inputSame is set or done is not set for any filter. We can't trust
+    // ioFilterGroupInputSame() when it is true without going through the loop above again. We need to scan to set this->pub.done
+    // anyway so set this->pub.inputSame in the same loop.
+    this->pub.done = true;
+    this->pub.inputSame = false;
 
     for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
     {
         IoFilterData *filterData = ioFilterGroupGet(this, filterIdx);
 
-        // When inputSame then this->done = false and we can exit the loop immediately
+        // When inputSame then this->pub.done = false and we can exit the loop immediately
         if (ioFilterInputSame(filterData->filter))
         {
-            this->done = false;
-            this->inputSame = true;
+            this->pub.done = false;
+            this->pub.inputSame = true;
             break;
         }
 
-        // Set this->done = false if any filter is not done
+        // Set this->pub.done = false if any filter is not done
         if (!ioFilterDone(filterData->filter))
-            this->done = false;
+            this->pub.done = false;
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -358,7 +353,7 @@ ioFilterGroupClose(IoFilterGroup *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->opened && !this->closed);
+    ASSERT(this->pub.opened && !this->pub.closed);
 
     for (unsigned int filterIdx = 0; filterIdx < ioFilterGroupSize(this); filterIdx++)
     {
@@ -367,7 +362,7 @@ ioFilterGroupClose(IoFilterGroup *this)
 
         if (this->filterResult == NULL)
         {
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(this->pub.memContext)
             {
                 this->filterResult = kvNew();
             }
@@ -383,38 +378,10 @@ ioFilterGroupClose(IoFilterGroup *this)
 
     // Filter group is open
 #ifdef DEBUG
-    this->closed = true;
+    this->pub.closed = true;
 #endif
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-bool
-ioFilterGroupDone(const IoFilterGroup *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER_GROUP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->opened && !this->closed);
-
-    FUNCTION_TEST_RETURN(this->done);
-}
-
-/**********************************************************************************************************************************/
-bool
-ioFilterGroupInputSame(const IoFilterGroup *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER_GROUP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->opened && !this->closed);
-
-    FUNCTION_TEST_RETURN(this->inputSame);
 }
 
 /**********************************************************************************************************************************/
@@ -426,8 +393,8 @@ ioFilterGroupParamAll(const IoFilterGroup *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(!this->opened);
-    ASSERT(this->filterList != NULL);
+    ASSERT(!this->pub.opened);
+    ASSERT(this->pub.filterList != NULL);
 
     VariantList *result = varLstNew();
 
@@ -454,7 +421,7 @@ ioFilterGroupResult(const IoFilterGroup *this, const String *filterType)
         FUNCTION_LOG_PARAM(STRING, filterType);
     FUNCTION_LOG_END();
 
-    ASSERT(this->opened);
+    ASSERT(this->pub.opened);
     ASSERT(filterType != NULL);
 
     const Variant *result = NULL;
@@ -477,7 +444,7 @@ ioFilterGroupResultAll(const IoFilterGroup *this)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->closed);
+    ASSERT(this->pub.closed);
 
     FUNCTION_LOG_RETURN_CONST(VARIANT, varNewKv(this->filterResult));
 }
@@ -494,7 +461,7 @@ ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult)
 
     if (filterResult != NULL)
     {
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_BEGIN(this->pub.memContext)
         {
             this->filterResult = kvDup(varKv(filterResult));
         }
@@ -502,17 +469,6 @@ ioFilterGroupResultAllSet(IoFilterGroup *this, const Variant *filterResult)
     }
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-ioFilterGroupSize(const IoFilterGroup *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_FILTER_GROUP, this);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(lstSize(this->filterList));
 }
 
 /**********************************************************************************************************************************/
@@ -525,9 +481,9 @@ ioFilterGroupToLog(const IoFilterGroup *this)
             ", opened %s, flushing %s, closed %s"
 #endif
             "}",
-        cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done)
+        cvtBoolToConstZ(this->pub.inputSame), cvtBoolToConstZ(this->pub.done)
 #ifdef DEBUG
-        , cvtBoolToConstZ(this->opened), cvtBoolToConstZ(this->flushing), cvtBoolToConstZ(this->closed)
+        , cvtBoolToConstZ(this->pub.opened), cvtBoolToConstZ(this->flushing), cvtBoolToConstZ(this->pub.closed)
 #endif
     );
 }

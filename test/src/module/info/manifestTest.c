@@ -1228,33 +1228,33 @@ testRun(void)
         TEST_TITLE("don't check for delta if already enabled and test online timestamp");
 
         Manifest *manifest = manifestNewInternal();
-        manifest->data.backupOptionOnline = true;
+        manifest->pub.data.backupOptionOnline = true;
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, true, 1482182860, false), "validate manifest");
-        TEST_RESULT_INT(manifest->data.backupTimestampCopyStart, 1482182861, "check copy start");
-        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
-        TEST_RESULT_UINT(manifest->data.backupOptionCompressType, compressTypeNone, "check compress");
+        TEST_RESULT_INT(manifest->pub.data.backupTimestampCopyStart, 1482182861, "check copy start");
+        TEST_RESULT_BOOL(varBool(manifest->pub.data.backupOptionDelta), true, "check delta");
+        TEST_RESULT_UINT(manifest->pub.data.backupOptionCompressType, compressTypeNone, "check compress");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timestamp in past does not force delta");
 
-        manifest->data.backupOptionOnline = false;
+        manifest->pub.data.backupOptionOnline = false;
 
         manifestFileAdd(
             manifest,
             &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860});
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182860, false), "validate manifest");
-        TEST_RESULT_INT(manifest->data.backupTimestampCopyStart, 1482182860, "check copy start");
-        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), false, "check delta");
+        TEST_RESULT_INT(manifest->pub.data.backupTimestampCopyStart, 1482182860, "check copy start");
+        TEST_RESULT_BOOL(varBool(manifest->pub.data.backupOptionDelta), false, "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timestamp in future forces delta");
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182859, compressTypeGz), "validate manifest");
-        TEST_RESULT_INT(manifest->data.backupTimestampCopyStart, 1482182859, "check copy start");
-        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta");
-        TEST_RESULT_UINT(manifest->data.backupOptionCompressType, compressTypeGz, "check compress");
+        TEST_RESULT_INT(manifest->pub.data.backupTimestampCopyStart, 1482182859, "check copy start");
+        TEST_RESULT_BOOL(varBool(manifest->pub.data.backupOptionDelta), true, "check delta");
+        TEST_RESULT_UINT(manifest->pub.data.backupOptionCompressType, compressTypeGz, "check compress");
 
         TEST_RESULT_LOG("P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum");
     }
@@ -1307,10 +1307,10 @@ testRun(void)
         TEST_TITLE("delta disabled and not enabled during validation");
 
         Manifest *manifest = manifestNewInternal();
-        manifest->info = infoNew(NULL);
-        manifest->data.pgVersion = PG_VERSION_96;
-        manifest->data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_96);
-        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+        manifest->pub.info = infoNew(NULL);
+        manifest->pub.data.pgVersion = PG_VERSION_96;
+        manifest->pub.data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_96);
+        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
 
         manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
         manifestPathAdd(
@@ -1338,7 +1338,7 @@ testRun(void)
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         Manifest *manifestPrior = manifestNewInternal();
-        manifestPrior->data.backupLabel = strNew("20190101-010101F");
+        manifestPrior->pub.data.backupLabel = strNew("20190101-010101F");
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){
@@ -1385,8 +1385,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("delta enabled before validation");
 
-        manifest->data.backupOptionDelta = BOOL_TRUE_VAR;
-        lstClear(manifest->fileList);
+        manifest->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
+        lstClear(manifest->pub.fileList);
         manifestFileAdd(
             manifest,
             &(ManifestFile){
@@ -1435,8 +1435,8 @@ testRun(void)
         TEST_TITLE("delta enabled by timestamp validation and copy checksum error");
 
         // Clear manifest and add a single file
-        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
-        lstClear(manifest->fileList);
+        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
+        lstClear(manifest->pub.fileList);
 
         manifestFileAdd(
             manifest,
@@ -1445,7 +1445,7 @@ testRun(void)
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         // Clear prior manifest and add a single file with later timestamp and checksum error
-        lstClear(manifestPrior->fileList);
+        lstClear(manifestPrior->pub.fileList);
 
         VariantList *checksumPageErrorList = varLstNew();
         varLstAdd(checksumPageErrorList, varNewUInt(77));
@@ -1487,8 +1487,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("delta enabled by size validation");
 
-        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
-        lstClear(manifest->fileList);
+        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
+        lstClear(manifest->pub.fileList);
         manifestFileAdd(
             manifest,
             &(ManifestFile){
@@ -1538,8 +1538,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("delta enabled by timeline change");
 
-        manifestPrior->data.archiveStop = STRDEF("000000030000000300000003");
-        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+        manifestPrior->pub.data.archiveStop = STRDEF("000000030000000300000003");
+        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")), "incremental manifest");
@@ -1548,22 +1548,22 @@ testRun(void)
             "P00   WARN: a timeline switch has occurred since the 20190101-010101F backup, enabling delta checksum\n"
             "            HINT: this is normal after restoring from backup or promoting a standby.");
 
-        TEST_RESULT_BOOL(varBool(manifest->data.backupOptionDelta), true, "check delta is enabled");
+        TEST_RESULT_BOOL(varBool(manifest->pub.data.backupOptionDelta), true, "check delta is enabled");
 
-        manifest->data.backupOptionDelta = BOOL_FALSE_VAR;
+        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("delta enabled by online option change");
 
-        manifest->data.backupOptionOnline = BOOL_FALSE_VAR;
-        lstClear(manifest->fileList);
+        manifest->pub.data.backupOptionOnline = BOOL_FALSE_VAR;
+        lstClear(manifest->pub.fileList);
         manifestFileAdd(
             manifest,
             &(ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
-        manifest->data.backupOptionOnline = BOOL_TRUE_VAR;
+        manifest->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){

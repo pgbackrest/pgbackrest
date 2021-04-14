@@ -8,7 +8,6 @@ Regular Expression Handler
 
 #include "common/debug.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/regExp.h"
 
 /***********************************************************************************************************************************
@@ -22,16 +21,24 @@ struct RegExp
     size_t matchSize;
 };
 
-OBJECT_DEFINE_FREE(REGEXP);
-
 /***********************************************************************************************************************************
 Free regular expression
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(REGEXP, TEST, )
+static void
+regExpFreeResource(THIS_VOID)
 {
+    THIS(RegExp);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(REGEXP, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
     regfree(&this->regExp);
+
+    FUNCTION_TEST_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(TEST);
 
 /***********************************************************************************************************************************
 Handle errors

@@ -14,9 +14,9 @@ in the description of each function.
 #define STORAGE_STORAGE_INTERN_H
 
 #include "common/type/param.h"
-#include "storage/read.intern.h"
-#include "storage/storage.h"
-#include "storage/write.intern.h"
+#include "storage/info.h"
+#include "storage/read.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Default file and path modes
@@ -157,8 +157,8 @@ typedef struct StorageInterfaceInfoListParam
 } StorageInterfaceInfoListParam;
 
 typedef bool StorageInterfaceInfoList(
-    void *thisVoid, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param);
+    void *thisVoid, const String *path, StorageInfoLevel level, void (*callback)(void *callbackData, const StorageInfo *info),
+    void *callbackData, StorageInterfaceInfoListParam param);
 
 #define storageInterfaceInfoListP(thisVoid, path, level, callback, callbackData, ...)                                              \
     STORAGE_COMMON_INTERFACE(thisVoid).infoList(                                                                                   \
@@ -282,11 +282,26 @@ typedef struct StorageCommon
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct StoragePub
+{
+    const String *type;                                             // Storage type
+    void *driver;                                                   // Storage driver
+    StorageInterface interface;                                     // Storage interface
+} StoragePub;
+
 // Storage driver
-void *storageDriver(const Storage *this);
+__attribute__((always_inline)) static inline void *
+storageDriver(const Storage *this)
+{
+    return THIS_PUB(Storage)->driver;
+}
 
 // Storage interface
-StorageInterface storageInterface(const Storage *this);
+__attribute__((always_inline)) static inline StorageInterface
+storageInterface(const Storage *this)
+{
+    return THIS_PUB(Storage)->interface;
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

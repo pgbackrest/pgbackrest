@@ -9,11 +9,9 @@ Object to track HTTP headers.  Headers can be marked as redacted so they are not
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_HEADER_TYPE                                            HttpHeader
-#define HTTP_HEADER_PREFIX                                          httpHeader
-
 typedef struct HttpHeader HttpHeader;
 
+#include "common/type/object.h"
 #include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
@@ -35,7 +33,11 @@ const String *httpHeaderGet(const HttpHeader *this, const String *key);
 StringList *httpHeaderList(const HttpHeader *this);
 
 // Move to a new parent mem context
-HttpHeader *httpHeaderMove(HttpHeader *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline HttpHeader *
+httpHeaderMove(HttpHeader *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Put a header
 HttpHeader *httpHeaderPut(HttpHeader *this, const String *header, const String *value);
@@ -46,7 +48,11 @@ bool httpHeaderRedact(const HttpHeader *this, const String *key);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpHeaderFree(HttpHeader *this);
+__attribute__((always_inline)) static inline void
+httpHeaderFree(HttpHeader *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

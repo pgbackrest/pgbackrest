@@ -48,6 +48,23 @@ testRun(void)
         helpVersion));
 
     // *****************************************************************************************************************************
+    if (testBegin("helpRenderSplitSize()"))
+    {
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def"), " ", 3), "-"), "abc-def", "two items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def"), " ", 4), "-"), "abc-def", "one items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 4), "-"), "abc-def-ghi", "three items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 8), "-"), "abc def-ghi", "three items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def "), " ", 4), "-"), "abc-def ", "two items");
+
+        TEST_RESULT_STR_Z(
+            strLstJoin(helpRenderSplitSize(STRDEF("this is a short sentence"), " ", 10), "\n"),
+            "this is a\n"
+            "short\n"
+            "sentence",
+            "empty list");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("helpRenderText()"))
     {
         TEST_RESULT_STR_Z(helpRenderText(strNew("this is a short sentence"), 0, false, 80), "this is a short sentence", "one line");

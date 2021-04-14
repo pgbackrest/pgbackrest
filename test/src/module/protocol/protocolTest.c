@@ -252,8 +252,8 @@ testRun(void)
         memContextFree(memContext);
 
         // Create bogus client and exec with the freed memcontext to generate errors
-        ProtocolClient client = {.memContext = memContext, .name = STRDEF("test")};
-        Exec exec = {.memContext = memContext, .name = STRDEF("test"), .command = strNew("test")};
+        ProtocolClient client = {.pub = {.memContext = memContext}, .name = STRDEF("test")};
+        Exec exec = {.pub = {.memContext = memContext}, .name = STRDEF("test"), .command = strNew("test")};
         ProtocolHelperClient protocolHelperClient = {.client = &client, .exec = &exec};
 
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
@@ -578,8 +578,8 @@ testRun(void)
                 }
                 MEM_CONTEXT_TEMP_END();
 
-                TEST_RESULT_PTR(protocolClientIoRead(client), client->read, "get read io");
-                TEST_RESULT_PTR(protocolClientIoWrite(client), client->write, "get write io");
+                TEST_RESULT_PTR(protocolClientIoRead(client), client->pub.read, "get read io");
+                TEST_RESULT_PTR(protocolClientIoWrite(client), client->pub.write, "get write io");
 
                 // Throw errors
                 TEST_ERROR(
@@ -726,8 +726,8 @@ testRun(void)
                 }
                 MEM_CONTEXT_TEMP_END();
 
-                TEST_RESULT_PTR(protocolServerIoRead(server), server->read, "get read io");
-                TEST_RESULT_PTR(protocolServerIoWrite(server), server->write, "get write io");
+                TEST_RESULT_PTR(protocolServerIoRead(server), server->pub.read, "get read io");
+                TEST_RESULT_PTR(protocolServerIoWrite(server), server->pub.write, "get write io");
 
                 static const ProtocolServerHandler commandHandler[] =
                 {
