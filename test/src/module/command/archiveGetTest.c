@@ -1105,7 +1105,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,[]]}\n", "check result");
         TEST_STORAGE_LIST(
-            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n");
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n",
+            .remove = true);
 
         bufUsedSet(serverWrite, 0);
     }
