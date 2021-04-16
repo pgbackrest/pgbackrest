@@ -1058,6 +1058,18 @@ cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionIdxInternal(optionId, optionIdx, varTypeString, true)));
 }
 
+StringId
+cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+        FUNCTION_LOG_PARAM(UINT, optionIdx);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        STRING_ID, strIdFromStr(stringIdBit5, varStr(cfgOptionIdxInternal(optionId, optionIdx, varTypeString, true))));
+}
+
 /**********************************************************************************************************************************/
 void
 cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)

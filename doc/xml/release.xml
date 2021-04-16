@@ -16,7 +16,10 @@
             <release-core-list>
                 <release-development-list>
                     <release-item>
-                        <github-pull-request id="1358"/>
+                        <commit subject="Add StringId type.">
+                            <github-pull-request id="1358"/>
+                        </commit>
+                        <commit subject="Add cfgOptionIdxStrId()."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>

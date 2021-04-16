@@ -9,6 +9,7 @@ config/parse.c sets the command and options and determines which options are val
 
 #include "common/lock.h"
 #include "common/log.h"
+#include "common/type/stringId.h"
 #include "common/type/stringList.h"
 #include "config/config.auto.h"
 
@@ -127,6 +128,7 @@ const VariantList *cfgOptionLst(ConfigOption optionId);
 const VariantList *cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStr(ConfigOption optionId);
 const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx);
+StringId cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStrNull(ConfigOption optionId);
 const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx);
 unsigned int cfgOptionUInt(ConfigOption optionId);

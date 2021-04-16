@@ -1200,6 +1200,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionNegate(cfgOptConfig), true, "    config is negated");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "db", "    stanza is set");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptStanza, 0), strIdFromZ(stringIdBit5, "db"), "    stanza is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptStanza), cfgSourceParam, "    stanza is source param");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceParam, "    pg1-path is source param");
