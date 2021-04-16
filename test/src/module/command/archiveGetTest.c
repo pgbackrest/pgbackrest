@@ -654,17 +654,17 @@ testRun(void)
 
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
-        TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout getting WAL segment");
-
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+        TEST_ERROR(
+            cmdArchiveGet(), ArchiveTimeoutError,
+            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
 
         // Check for missing WAL
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok");
 
-        TEST_RESULT_INT(cmdArchiveGet(), 1, "successful get of missing WAL");
-
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+        TEST_ERROR(
+            cmdArchiveGet(), ArchiveTimeoutError,
+            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok")), false,
@@ -737,9 +737,9 @@ testRun(void)
                 // Wait for the child to acquire the lock
                 ioReadLine(read);
 
-                TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout waiting for lock");
-
-                harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+                TEST_ERROR(
+                    cmdArchiveGet(), ArchiveTimeoutError,
+                    "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
 
                 // Notify the child to release the lock
                 ioWriteLine(write, bufNew(0));

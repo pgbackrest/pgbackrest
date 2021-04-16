@@ -633,6 +633,7 @@ cmdArchiveGet(void)
         {
             bool first = true;                                          // Is the first time the loop has run?
             bool found = false;                                         // Has the WAL segment been found yet?
+            bool foundOk = false;                                       // Was an OK file found which confirms the file was missing?
             bool queueFull = false;                                     // Is the queue half or more full?
             bool forked = false;                                        // Has the async process been forked yet?
 
@@ -658,7 +659,10 @@ cmdArchiveGet(void)
                     // spawned by a prior archive-get execution, which means we should get again to see if the file exists. This
                     // also prevents spool files from a previous recovery interfering with the current recovery.
                     if (!found && !first)
+                    {
+                        foundOk = true;
                         break;
+                    }
                 }
 
                 // If found then move the WAL segment to the destination directory
@@ -756,9 +760,21 @@ cmdArchiveGet(void)
             }
             while (waitMore(wait));
 
-            // Log that the file was not found
-            if (result == 1)
-                LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
+            // If the WAL segment was not found
+            if (!found)
+            {
+                // If no ok file was found then something may be wrong with the async process. It's better to thrown an error here
+                // than report not found for debugging purposes. Either way PostgreSQL will stop if it has not reached consistency.
+                if (!foundOk)
+                {
+                    THROW_FMT(
+                        ArchiveTimeoutError, "unable to get WAL file '%s' from the archive asynchronously after %s second(s)",
+                        strZ(walSegment), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)));
+                }
+                // Else just report that the WAL segment could not be found
+                else
+                    LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
+            }
         }
         // Else perform synchronous get
         else
@@ -987,7 +1003,9 @@ cmdArchiveGetAsync(void)
                 archiveAsyncStatusErrorWrite(
                     archiveModeGet, checkResult.errorFile, errorTypeCode(checkResult.errorType), message);
             }
-            // Else log a warning if any files were missing
+            // If any files were missing write an ok file for the first missing file and add any warnings. It is important that this
+            // happen right before the async process exits so the main process can immediately respawn the async process to retry
+            // missing files.
             else if (archiveFileMissing != NULL)
             {
                 LOG_DETAIL_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(archiveFileMissing));
