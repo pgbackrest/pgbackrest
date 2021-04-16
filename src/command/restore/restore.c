@@ -2125,7 +2125,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
                 // Create restore job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARUINT(jobData->repoIdx));
                 protocolCommandParamAdd(

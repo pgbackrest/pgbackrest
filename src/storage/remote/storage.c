@@ -78,7 +78,7 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO);
         protocolCommandParamAdd(command, VARSTR(file));
         protocolCommandParamAdd(command, VARUINT(level));
         protocolCommandParamAdd(command, VARBOOL(param.followLink));
@@ -129,7 +129,7 @@ storageRemoteInfoList(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST);
         protocolCommandParamAdd(command, VARSTR(path));
         protocolCommandParamAdd(command, VARUINT(level));
 
@@ -244,7 +244,7 @@ storageRemotePathCreate(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_CREATE_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_CREATE);
         protocolCommandParamAdd(command, VARSTR(path));
         protocolCommandParamAdd(command, VARBOOL(errorOnExists));
         protocolCommandParamAdd(command, VARBOOL(noParentCreate));
@@ -277,7 +277,7 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInte
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_REMOVE);
         protocolCommandParamAdd(command, VARSTR(path));
         protocolCommandParamAdd(command, VARBOOL(recurse));
 
@@ -305,7 +305,7 @@ storageRemotePathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPar
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_SYNC_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_PATH_SYNC);
         protocolCommandParamAdd(command, VARSTR(path));
 
         protocolClientExecute(this->client, command, false);
@@ -332,7 +332,7 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_REMOVE);
         protocolCommandParamAdd(command, VARSTR(file));
         protocolCommandParamAdd(command, VARBOOL(param.errorOnMissing));
 
@@ -394,7 +394,7 @@ storageRemoteNew(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Send command
-            protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE_STR));
+            protocolClientWriteCommand(driver->client, protocolCommandNew(PROTOCOL_COMMAND_STORAGE_FEATURE));
 
             // Read values
             path = jsonToStr(protocolClientReadLine(driver->client));

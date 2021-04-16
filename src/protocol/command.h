@@ -10,6 +10,7 @@ Object type
 typedef struct ProtocolCommand ProtocolCommand;
 
 #include "common/type/object.h"
+#include "common/type/stringId.h"
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
@@ -23,7 +24,7 @@ Constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-ProtocolCommand *protocolCommandNew(const String *command);
+ProtocolCommand *protocolCommandNew(const StringId command);
 
 /***********************************************************************************************************************************
 Getters/Setters
