@@ -154,7 +154,7 @@ sckSessionRole(const THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoSessionInterface sckSessionInterface =
 {
-    .type = &IO_CLIENT_SOCKET_TYPE_STR,
+    .type = IO_CLIENT_SOCKET_TYPE,
     .close = sckSessionClose,
     .fd = sckSessionFd,
     .ioRead = sckSessionIoRead,

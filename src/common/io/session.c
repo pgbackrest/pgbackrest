@@ -27,7 +27,7 @@ ioSessionNew(void *driver, const IoSessionInterface *interface)
 
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
-    ASSERT(interface->type != NULL);
+    ASSERT(interface->type != 0);
     ASSERT(interface->close != NULL);
     ASSERT(interface->ioRead != NULL);
     ASSERT(interface->ioWrite != NULL);
@@ -67,6 +67,6 @@ String *
 ioSessionToLog(const IoSession *this)
 {
     return strNewFmt(
-        "{type: %s, role: %s, driver: %s}", strZ(*this->pub.interface->type), strZ(strIdToStr(ioSessionRole(this))),
+        "{type: %s, role: %s, driver: %s}", strZ(strIdToStr(this->pub.interface->type)), strZ(strIdToStr(ioSessionRole(this))),
          strZ(this->pub.interface->toLog(this->pub.driver)));
 }
