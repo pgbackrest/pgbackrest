@@ -21,6 +21,7 @@
                         </commit>
                         <commit subject="Add cfgOptionIdxStrId()."/>
                         <commit subject="Convert storage driver type to StringId."/>
+                        <commit subject="Convert IoSessionRole enum to StringId."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>

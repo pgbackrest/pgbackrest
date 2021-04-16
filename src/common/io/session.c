@@ -67,6 +67,6 @@ String *
 ioSessionToLog(const IoSession *this)
 {
     return strNewFmt(
-        "{type: %s, role: %s, driver: %s}", strZ(*this->pub.interface->type),
-        ioSessionRole(this) == ioSessionRoleClient ? "client" : "server", strZ(this->pub.interface->toLog(this->pub.driver)));
+        "{type: %s, role: %s, driver: %s}", strZ(*this->pub.interface->type), strZ(strIdToStr(ioSessionRole(this))),
+         strZ(this->pub.interface->toLog(this->pub.driver)));
 }
