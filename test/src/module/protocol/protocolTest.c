@@ -434,7 +434,7 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(command, protocolCommandNew(strIdFromZ(stringIdBit6, "cmd1")), "create command");
+            TEST_ASSIGN(command, protocolCommandNew(strIdFromZ(stringIdBit5, "cmd1")), "create command");
             TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param1"))), command, "add param");
             TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param2"))), command, "add param");
 
@@ -447,7 +447,7 @@ testRun(void)
         TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"cmd1\",\"param\":[\"param1\",\"param2\"]}", "check json");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(command, protocolCommandNew(strIdFromZ(stringIdBit6, "cmd2")), "create command");
+        TEST_ASSIGN(command, protocolCommandNew(strIdFromZ(stringIdBit5, "cmd2")), "create command");
         TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: cmd2}", "check log");
         TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"cmd2\"}", "check json");
 
@@ -520,7 +520,7 @@ testRun(void)
                 ioWriteFlush(write);
 
                 // unexpected output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"u-0\"}", "unexpected output");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"u-zero\"}", "unexpected output");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
@@ -621,7 +621,7 @@ testRun(void)
 
                 // Unexpected output
                 TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit6, "u-0"))),
+                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "u-zero"))),
                     "execute command that returns unexpected output");
                 TEST_ERROR(protocolClientReadLine(client), FormatError, "expected error but got output");
 
@@ -895,13 +895,13 @@ testRun(void)
                 protocolClientFree(clientError);
 
                 // Add jobs
-                ProtocolCommand *command = protocolCommandNew(strIdFromZ(stringIdBit6, "c1"));
+                ProtocolCommand *command = protocolCommandNew(strIdFromZ(stringIdBit5, "c1"));
                 protocolCommandParamAdd(command, varNewStr(strNew("param1")));
                 protocolCommandParamAdd(command, varNewStr(strNew("param2")));
                 ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(strNew("job1")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strIdFromZ(stringIdBit6, "c2"));
+                command = protocolCommandNew(strIdFromZ(stringIdBit5, "c2"));
                 protocolCommandParamAdd(command, varNewStr(strNew("param1")));
                 job = protocolParallelJobNew(varNewStr(strNew("job2")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");

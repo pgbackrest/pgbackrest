@@ -24,8 +24,8 @@ typedef void (*ProtocolServerCommandHandler)(const VariantList *paramList, Proto
 
 typedef struct ProtocolServerHandler
 {
-    StringId command;
-    ProtocolServerCommandHandler handler;
+    StringId command;                                               // 5-bit StringId that identifies the protocol command
+    ProtocolServerCommandHandler handler;                           // Function that handles the protocol command
 } ProtocolServerHandler;
 
 #define PROTOCOL_SERVER_HANDLER_LIST_SIZE(list)                     (sizeof(list) / sizeof(ProtocolServerHandler))
