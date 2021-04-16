@@ -9,6 +9,10 @@ they cannot be directly used in switch statements leading to less efficient if-e
 A StringId encodes a short string into an integer so it can be used in switch statements but may also be readily converted back into
 a string for debugging purposes. StringIds may also be suitable for matching user input providing the strings are short enough.
 
+strIdFromStr("mytest0123a") will return the StringId 0x7de75c51315464d5. Using the value, the string representation can be retrieved
+strIdToStr(0x7de75c51315464d5) which returns "mytest0123+" where the plus at the end signals that the original string was equal to
+or longer than the maximum allowed.
+
 See strIdGenerate() for information on StringId constants.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_STRINGID_H
