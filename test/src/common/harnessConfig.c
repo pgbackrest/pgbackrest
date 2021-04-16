@@ -161,6 +161,21 @@ hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey,
 }
 
 void
+hrnCfgArgRawStrId(StringList *argList, ConfigOption optionId, StringId value)
+{
+    hrnCfgArgKeyRawStrId(argList, optionId, 1, value);
+}
+
+void
+hrnCfgArgKeyRawStrId(StringList *argList, ConfigOption optionId, unsigned optionKey, StringId value)
+{
+    char buffer[STRID_MAX + 1];
+    strIdToZ(value, buffer);
+
+    hrnCfgArgKeyRawZ(argList, optionId, optionKey, buffer);
+}
+
+void
 hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value)
 {
     hrnCfgArgKeyRawBool(argList, optionId, 1, value);

@@ -25,6 +25,7 @@
                         <commit subject="Convert IoClient/IoSession type to StringId."/>
                         <commit subject="Convert ProtocolParallelJobState enum to StringId."/>
                         <commit subject="Convert ArchiveMode enum to StringId."/>
+                        <commit subject="Add hrnCfgArgRawStrId() and hrnCfgArgKeyRawStrId()."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
