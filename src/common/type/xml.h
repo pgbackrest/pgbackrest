@@ -16,6 +16,7 @@ typedef struct XmlNode XmlNode;
 typedef struct XmlNodeList XmlNodeList;
 
 #include "common/memContext.h"
+#include "common/type/list.h"
 #include "common/type/object.h"
 #include "common/type/string.h"
 
@@ -28,20 +29,24 @@ XmlDocument *xmlDocumentNew(const String *rootNode);
 // Document from Buffer
 XmlDocument *xmlDocumentNewBuf(const Buffer *);
 
-// Document from C buffer
-XmlDocument *xmlDocumentNewC(const unsigned char *buffer, size_t bufferSize);
-
-// Document from zero-terminated string
-XmlDocument *xmlDocumentNewZ(const char *string);
-
 /***********************************************************************************************************************************
 Document Getters
 ***********************************************************************************************************************************/
+typedef struct XmlDocumentPub
+{
+    MemContext *memContext;                                         // Mem context
+    XmlNode *root;                                                  // Root node
+} XmlDocumentPub;
+
 // Dump document to a buffer
 Buffer *xmlDocumentBuf(const XmlDocument *this);
 
 // Root node
-XmlNode *xmlDocumentRoot(const XmlDocument *this);
+__attribute__((always_inline)) static inline XmlNode *
+xmlDocumentRoot(const XmlDocument *const this)
+{
+    return ((XmlDocumentPub *const)this)->root;
+}
 
 /***********************************************************************************************************************************
 Document Destructor
@@ -65,8 +70,13 @@ Node Getters/Setters
 String *xmlNodeAttribute(const XmlNode *this, const String *name);
 
 // Node child (by name or index)
-XmlNode *xmlNodeChild(const XmlNode *this, const String *name, bool errorOnMissing);
 XmlNode *xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
+
+__attribute__((always_inline)) static inline XmlNode *
+xmlNodeChild(const XmlNode *const this, const String *const name, const bool errorOnMissing)
+{
+    return xmlNodeChildN(this, name, 0, errorOnMissing);
+}
 
 // List of child nodes
 XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
@@ -87,15 +97,27 @@ void xmlNodeFree(XmlNode *this);
 Node List Getters
 ***********************************************************************************************************************************/
 // Get a node from the list
-XmlNode *xmlNodeLstGet(const XmlNodeList *this, unsigned int listIdx);
+__attribute__((always_inline)) static inline XmlNode *
+xmlNodeLstGet(const XmlNodeList *const this, const unsigned int listIdx)
+{
+    return *(XmlNode **)lstGet((List *const)this, listIdx);
+}
 
 // Node list size
-unsigned int xmlNodeLstSize(const XmlNodeList *this);
+__attribute__((always_inline)) static inline unsigned int
+xmlNodeLstSize(const XmlNodeList *const this)
+{
+    return lstSize((List *const)this);
+}
 
 /***********************************************************************************************************************************
 Node List Destructor
 ***********************************************************************************************************************************/
-void xmlNodeLstFree(XmlNodeList *this);
+__attribute__((always_inline)) static inline void
+xmlNodeLstFree(XmlNodeList *const this)
+{
+    lstFree((List *const)this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

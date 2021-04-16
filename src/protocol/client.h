@@ -54,16 +54,14 @@ typedef struct ProtocolClientPub
 __attribute__((always_inline)) static inline IoRead *
 protocolClientIoRead(ProtocolClient *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ProtocolClientPub *)this)->read;
+    return THIS_PUB(ProtocolClient)->read;
 }
 
 // Write interface
 __attribute__((always_inline)) static inline IoWrite *
 protocolClientIoWrite(ProtocolClient *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ProtocolClientPub *)this)->write;
+    return THIS_PUB(ProtocolClient)->write;
 }
 
 /***********************************************************************************************************************************

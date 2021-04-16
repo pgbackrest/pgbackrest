@@ -612,7 +612,7 @@
                     <config-key id="repo-s3-role" name="S3 Repository Role">
                         <summary>S3 repository role.</summary>
 
-                        <text>AWS role used to retrieve temporary credentials when <br-option>repo-s3-key-type=auto</br-option>.</text>
+                        <text>The AWS role name (not the full ARN) used to retrieve temporary credentials when <br-option>repo-s3-key-type=auto</br-option>.</text>
 
                         <example>authrole</example>
                     </config-key>

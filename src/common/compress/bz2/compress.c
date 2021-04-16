@@ -9,7 +9,7 @@ BZ2 Compress
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/compress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/macro.h"
 #include "common/memContext.h"

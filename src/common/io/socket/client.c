@@ -10,7 +10,7 @@ Socket Client
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/io/client.intern.h"
+#include "common/io/client.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"

@@ -30,8 +30,7 @@ typedef struct WaitPub
 __attribute__((always_inline)) static inline TimeMSec
 waitRemaining(const Wait *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const WaitPub *)this)->remainTime;
+    return THIS_PUB(Wait)->remainTime;
 }
 
 /***********************************************************************************************************************************

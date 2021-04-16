@@ -5,7 +5,7 @@ Remote Storage File write
 
 #include "common/compress/helper.h"
 #include "common/debug.h"
-#include "common/io/write.intern.h"
+#include "common/io/write.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"

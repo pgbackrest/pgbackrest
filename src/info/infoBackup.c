@@ -60,9 +60,7 @@ Object type
 ***********************************************************************************************************************************/
 struct InfoBackup
 {
-    MemContext *memContext;                                         // Mem context
-    InfoPg *infoPg;                                                 // Contents of the DB data
-    List *backup;                                                   // List of current backups and their associated data
+    InfoBackupPub pub;                                              // Publicly accessible variables
 };
 
 /***********************************************************************************************************************************
@@ -77,8 +75,11 @@ infoBackupNewInternal(void)
 
     *this = (InfoBackup)
     {
-        .memContext = memContextCurrent(),
-        .backup = lstNewP(sizeof(InfoBackupData), .comparator =  lstComparatorStr),
+        .pub =
+        {
+            .memContext = memContextCurrent(),
+            .backup = lstNewP(sizeof(InfoBackupData), .comparator =  lstComparatorStr),
+        },
     };
 
     FUNCTION_TEST_RETURN(this);
@@ -104,7 +105,7 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalo
         this = infoBackupNewInternal();
 
         // Initialize the pg data
-        this->infoPg = infoPgNew(infoPgBackup, cipherPassSub);
+        this->pub.infoPg = infoPgNew(infoPgBackup, cipherPassSub);
         infoBackupPgSet(this, pgVersion, pgSystemId, pgCatalogVersion);
     }
     MEM_CONTEXT_NEW_END();
@@ -137,7 +138,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
     {
         const KeyValue *backupKv = varKv(value);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(infoBackup->backup))
+        MEM_CONTEXT_BEGIN(lstMemContext(infoBackup->pub.backup))
         {
             InfoBackupData infoBackupData =
             {
@@ -174,7 +175,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
             };
 
             // Add the backup data to the list
-            lstAdd(infoBackup->backup, &infoBackupData);
+            lstAdd(infoBackup->pub.backup, &infoBackupData);
         }
         MEM_CONTEXT_END();
     }
@@ -197,7 +198,7 @@ infoBackupNewLoad(IoRead *read)
     MEM_CONTEXT_NEW_BEGIN("InfoBackup")
     {
         this = infoBackupNewInternal();
-        this->infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);
+        this->pub.infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -293,18 +294,6 @@ infoBackupSave(InfoBackup *this, IoWrite *write)
 }
 
 /**********************************************************************************************************************************/
-InfoPg *
-infoBackupPg(const InfoBackup *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->infoPg);
-}
-
 InfoBackup *
 infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion)
 {
@@ -315,22 +304,9 @@ infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, u
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
     FUNCTION_LOG_END();
 
-    this->infoPg = infoPgSet(this->infoPg, infoPgBackup, pgVersion, pgSystemId, pgCatalogVersion);
+    this->pub.infoPg = infoPgSet(infoBackupPg(this), infoPgBackup, pgVersion, pgSystemId, pgCatalogVersion);
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-infoBackupDataTotal(const InfoBackup *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(lstSize(this->backup));
 }
 
 /**********************************************************************************************************************************/
@@ -344,22 +320,7 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *(InfoBackupData *)lstGet(this->backup, backupDataIdx));
-}
-
-/**********************************************************************************************************************************/
-InfoBackupData *
-infoBackupDataByLabel(const InfoBackup *this, const String *backupLabel)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-        FUNCTION_TEST_PARAM(STRING, backupLabel);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(backupLabel != NULL);
-
-    FUNCTION_TEST_RETURN(lstFind(this->backup, &backupLabel));
+    FUNCTION_LOG_RETURN(INFO_BACKUP_DATA, *(InfoBackupData *)lstGet(this->pub.backup, backupDataIdx));
 }
 
 /**********************************************************************************************************************************/
@@ -402,7 +363,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
             }
         }
 
-        MEM_CONTEXT_BEGIN(lstMemContext(this->backup))
+        MEM_CONTEXT_BEGIN(lstMemContext(this->pub.backup))
         {
             InfoBackupData infoBackupData =
             {
@@ -439,10 +400,10 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
             }
 
             // Add the backup data to the current backup list
-            lstAdd(this->backup, &infoBackupData);
+            lstAdd(this->pub.backup, &infoBackupData);
 
             // Ensure the list is sorted ascending by the backupLabel
-            lstSort(this->backup, sortOrderAsc);
+            lstSort(this->pub.backup, sortOrderAsc);
         }
         MEM_CONTEXT_END();
     }
@@ -467,7 +428,7 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
         InfoBackupData backupData = infoBackupData(this, idx);
 
         if (strCmp(backupData.backupLabel, backupDeleteLabel) == 0)
-            lstRemoveIdx(this->backup, idx);
+            lstRemoveIdx(this->pub.backup, idx);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -539,19 +500,6 @@ infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING_LIST, result);
-}
-
-/**********************************************************************************************************************************/
-const String *
-infoBackupCipherPass(const InfoBackup *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(infoPgCipherPass(this->infoPg));
 }
 
 /**********************************************************************************************************************************/
@@ -716,14 +664,14 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
                 {
                     bool found = false;
                     const Manifest *manifest = manifestLoadFile(
-                        storage, manifestFileName, cipherType, infoPgCipherPass(infoBackup->infoPg));
+                        storage, manifestFileName, cipherType, infoPgCipherPass(infoBackupPg(infoBackup)));
                     const ManifestData *manData = manifestData(manifest);
 
                     // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match
                     // then warn that the backup is not valid
-                    for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackup->infoPg); pgIdx++)
+                    for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackupPg(infoBackup)); pgIdx++)
                     {
-                        InfoPgData pgHistory = infoPgData(infoBackup->infoPg, pgIdx);
+                        InfoPgData pgHistory = infoPgData(infoBackupPg(infoBackup), pgIdx);
 
                         // If there is an exact match with the history, system and version and there is no backup-prior dependency
                         // or there is a backup-prior and it is in the list, then add this backup to the current backup list

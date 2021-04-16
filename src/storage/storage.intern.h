@@ -293,16 +293,14 @@ typedef struct StoragePub
 __attribute__((always_inline)) static inline void *
 storageDriver(const Storage *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const StoragePub *)this)->driver;
+    return THIS_PUB(Storage)->driver;
 }
 
 // Storage interface
 __attribute__((always_inline)) static inline StorageInterface
 storageInterface(const Storage *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const StoragePub *)this)->interface;
+    return THIS_PUB(Storage)->interface;
 }
 
 /***********************************************************************************************************************************

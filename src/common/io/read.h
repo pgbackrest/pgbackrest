@@ -15,8 +15,37 @@ Object type
 typedef struct IoRead IoRead;
 
 #include "common/io/filter/group.h"
+#include "common/io/read.intern.h"
 #include "common/type/buffer.h"
 #include "common/type/object.h"
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+// Do reads block when more bytes are requested than are available to read?
+__attribute__((always_inline)) static inline bool
+ioReadBlock(const IoRead *const this)
+{
+    return THIS_PUB(IoRead)->interface.block;
+}
+
+// Is IO at EOF? All driver reads are complete and all data has been flushed from the filters (if any).
+__attribute__((always_inline)) static inline bool
+ioReadEof(const IoRead *const this)
+{
+    ASSERT_INLINE(THIS_PUB(IoRead)->opened && !THIS_PUB(IoRead)->closed);
+    return THIS_PUB(IoRead)->eofAll;
+}
+
+// Get filter group if filters need to be added
+__attribute__((always_inline)) static inline IoFilterGroup *
+ioReadFilterGroup(IoRead *const this)
+{
+    return THIS_PUB(IoRead)->filterGroup;
+}
+
+// File descriptor for the read object. Not all read objects have a file descriptor and -1 will be returned in that case.
+int ioReadFd(const IoRead *this);
 
 /***********************************************************************************************************************************
 Functions
@@ -30,11 +59,15 @@ size_t ioRead(IoRead *this, Buffer *buffer);
 // Same as ioRead() but optimized for small reads (intended for making repetitive reads that are smaller than ioBufferSize())
 size_t ioReadSmall(IoRead *this, Buffer *buffer);
 
-// Read linefeed-terminated string
-String *ioReadLine(IoRead *this);
-
 // Read linefeed-terminated string and optionally error on eof
 String *ioReadLineParam(IoRead *this, bool allowEof);
+
+// Read linefeed-terminated string
+__attribute__((always_inline)) static inline String *
+ioReadLine(IoRead *const this)
+{
+    return ioReadLineParam(this, false);
+}
 
 // Are there bytes ready to read immediately? There are no guarantees on how much data is available to read but it must be at least
 // one byte.
@@ -51,21 +84,6 @@ bool ioReadReady(IoRead *this, IoReadReadyParam param);
 
 // Close the IO
 void ioReadClose(IoRead *this);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Do reads block when more bytes are requested than are available to read?
-bool ioReadBlock(const IoRead *this);
-
-// Is IO at EOF? All driver reads are complete and all data has been flushed from the filters (if any).
-bool ioReadEof(const IoRead *this);
-
-// Get filter group if filters need to be added
-IoFilterGroup *ioReadFilterGroup(const IoRead *this);
-
-// File descriptor for the read object. Not all read objects have a file descriptor and -1 will be returned in that case.
-int ioReadFd(const IoRead *this);
 
 /***********************************************************************************************************************************
 Destructor

@@ -10,13 +10,6 @@ Debug Routines
 #include "common/type/stringz.h"
 
 /***********************************************************************************************************************************
-NDEBUG indicates to C library routines that debugging is off -- set a more readable flag to use when debugging is on
-***********************************************************************************************************************************/
-#ifndef NDEBUG
-    #define DEBUG
-#endif
-
-/***********************************************************************************************************************************
 Extern variables that are needed for unit testing
 ***********************************************************************************************************************************/
 #ifdef DEBUG_UNIT
@@ -296,13 +289,13 @@ Function Test Macros
 In debug builds these macros will update the stack trace with function names and parameters but will not log. In production builds
 all test macros are compiled out (except for return statements).
 
-Ignore DEBUG_TEST_TRACE_MACRO if NDEBUG is defined because the underlying functions that support the macros will not be present.
+Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying functions that support the macros will not be present.
 ***********************************************************************************************************************************/
-#ifndef NDEBUG
+#ifdef DEBUG
 #ifdef DEBUG_TEST_TRACE
     #define DEBUG_TEST_TRACE_MACRO
 #endif // DEBUG_TEST_TRACE
-#endif // NDEBUG
+#endif // DEBUG
 
 #ifdef DEBUG_TEST_TRACE_MACRO
     #define FUNCTION_TEST_BEGIN()                                                                                                  \

@@ -9,7 +9,7 @@ Posix Storage File write
 #include <utime.h>
 
 #include "common/debug.h"
-#include "common/io/write.intern.h"
+#include "common/io/write.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"

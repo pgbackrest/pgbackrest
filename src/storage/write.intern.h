@@ -4,7 +4,7 @@ Storage Write Interface Internal
 #ifndef STORAGE_WRITE_INTERN_H
 #define STORAGE_WRITE_INTERN_H
 
-#include "common/io/write.intern.h"
+#include "common/io/write.h"
 #include "version.h"
 
 /***********************************************************************************************************************************

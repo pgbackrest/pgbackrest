@@ -35,6 +35,38 @@ InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSyste
 InfoArchive *infoArchiveNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct InfoArchivePub
+{
+    MemContext *memContext;                                         // Mem context
+    InfoPg *infoPg;                                                 // Contents of the DB data
+} InfoArchivePub;
+
+// PostgreSQL info
+__attribute__((always_inline)) static inline InfoPg *
+infoArchivePg(const InfoArchive *const this)
+{
+    return THIS_PUB(InfoArchive)->infoPg;
+}
+
+InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
+
+// Current archive id
+__attribute__((always_inline)) static inline const String *
+infoArchiveId(const InfoArchive *const this)
+{
+    return infoPgArchiveId(infoArchivePg(this), infoPgDataCurrentId(infoArchivePg(this)));
+}
+
+// Cipher passphrase
+__attribute__((always_inline)) static inline const String *
+infoArchiveCipherPass(const InfoArchive *const this)
+{
+    return infoPgCipherPass(infoArchivePg(this));
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Given a backrest history id and postgres systemId and version, return the archiveId of the best match
@@ -47,19 +79,6 @@ infoArchiveMove(InfoArchive *this, MemContext *parentNew)
 {
     return objMove(this, parentNew);
 }
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Current archive id
-const String *infoArchiveId(const InfoArchive *this);
-
-// Cipher passphrase
-const String *infoArchiveCipherPass(const InfoArchive *this);
-
-// PostgreSQL info
-InfoPg *infoArchivePg(const InfoArchive *this);
-InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Destructor

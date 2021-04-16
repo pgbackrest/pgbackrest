@@ -27,7 +27,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(exec, execNew(strNew("cat"), NULL, strNew("cat"), 1000), "new cat exec");
-        TEST_RESULT_PTR(execMemContext(exec), exec->memContext, "get mem context");
+        TEST_RESULT_PTR(execMemContext(exec), exec->pub.memContext, "get mem context");
         TEST_RESULT_INT(execFdRead(exec), exec->fdRead, "check read file descriptor");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 

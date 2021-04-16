@@ -8,7 +8,7 @@ File Descriptor Io Read
 #include "common/debug.h"
 #include "common/io/fd.h"
 #include "common/io/fdRead.h"
-#include "common/io/read.intern.h"
+#include "common/io/read.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"

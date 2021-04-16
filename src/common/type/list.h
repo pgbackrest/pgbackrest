@@ -77,16 +77,14 @@ List *lstComparatorSet(List *this, ListComparator *comparator);
 __attribute__((always_inline)) static inline MemContext *
 lstMemContext(const List *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const ListPub *)this)->memContext;
+    return THIS_PUB(List)->memContext;
 }
 
 // List size
 __attribute__((always_inline)) static inline unsigned int
 lstSize(const List *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const ListPub *)this)->listSize;
+    return THIS_PUB(List)->listSize;
 }
 
 // Is the list empty?

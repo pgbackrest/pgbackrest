@@ -4,7 +4,7 @@ Storage Read Interface Internal
 #ifndef STORAGE_READ_INTERN_H
 #define STORAGE_READ_INTERN_H
 
-#include "common/io/read.intern.h"
+#include "common/io/read.h"
 
 /***********************************************************************************************************************************
 Constructors

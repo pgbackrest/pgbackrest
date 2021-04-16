@@ -43,6 +43,31 @@ Info *infoNew(const String *cipherPassSub);
 Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct InfoPub
+{
+    const String *backrestVersion;                                  // pgBackRest version
+    const String *cipherPass;                                       // Cipher passphrase if set
+} InfoPub;
+
+// Cipher passphrase if set
+__attribute__((always_inline)) static inline const String *
+infoCipherPass(const Info *const this)
+{
+    return THIS_PUB(Info)->cipherPass;
+}
+
+void infoCipherPassSet(Info *this, const String *cipherPass);
+
+// pgBackRest version
+__attribute__((always_inline)) static inline const String *
+infoBackrestVersion(const Info *const this)
+{
+    return THIS_PUB(Info)->backrestVersion;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Save to file
@@ -53,13 +78,6 @@ bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String
 
 // Save a JSON formatted value and update checksum
 void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-const String *infoCipherPass(const Info *this);
-void infoCipherPassSet(Info *this, const String *cipherPass);
-const String *infoBackrestVersion(const Info *this);
 
 /***********************************************************************************************************************************
 Helper functions

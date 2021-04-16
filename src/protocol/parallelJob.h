@@ -47,23 +47,20 @@ typedef struct ProtocolParallelJobPub
 __attribute__((always_inline)) static inline const ProtocolCommand *
 protocolParallelJobCommand(const ProtocolParallelJob *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ProtocolParallelJobPub *)this)->command;
+    return THIS_PUB(ProtocolParallelJob)->command;
 }
 
 // Job error
 __attribute__((always_inline)) static inline int
 protocolParallelJobErrorCode(const ProtocolParallelJob *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ProtocolParallelJobPub *)this)->code;
+    return THIS_PUB(ProtocolParallelJob)->code;
 }
 
 __attribute__((always_inline)) static inline const String *
 protocolParallelJobErrorMessage(const ProtocolParallelJob *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ProtocolParallelJobPub *)this)->message;
+    return THIS_PUB(ProtocolParallelJob)->message;
 }
 
 void protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message);
@@ -72,16 +69,14 @@ void protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const Stri
 __attribute__((always_inline)) static inline const Variant *
 protocolParallelJobKey(const ProtocolParallelJob *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ProtocolParallelJobPub *)this)->key;
+    return THIS_PUB(ProtocolParallelJob)->key;
 }
 
 // Process Id
 __attribute__((always_inline)) static inline unsigned int
 protocolParallelJobProcessId(const ProtocolParallelJob *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ProtocolParallelJobPub *)this)->processId;
+    return THIS_PUB(ProtocolParallelJob)->processId;
 }
 
 void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
@@ -90,8 +85,7 @@ void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int pro
 __attribute__((always_inline)) static inline const Variant *
 protocolParallelJobResult(const ProtocolParallelJob *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ProtocolParallelJobPub *)this)->result;
+    return THIS_PUB(ProtocolParallelJob)->result;
 }
 
 void protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *result);
@@ -100,8 +94,7 @@ void protocolParallelJobResultSet(ProtocolParallelJob *this, const Variant *resu
 __attribute__((always_inline)) static inline ProtocolParallelJobState
 protocolParallelJobState(const ProtocolParallelJob *this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((ProtocolParallelJobPub *)this)->state;
+    return THIS_PUB(ProtocolParallelJob)->state;
 }
 
 void protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state);

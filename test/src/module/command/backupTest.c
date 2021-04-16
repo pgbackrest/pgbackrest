@@ -1288,10 +1288,10 @@ testRun(void)
         TEST_TITLE("cannot resume when pgBackRest version has changed");
 
         Manifest *manifestResume = manifestNewInternal();
-        manifestResume->info = infoNew(NULL);
-        manifestResume->data.backupType = backupTypeFull;
-        manifestResume->data.backupLabel = STRDEF("20191003-105320F");
-        manifestResume->data.pgVersion = PG_VERSION_12;
+        manifestResume->pub.info = infoNew(NULL);
+        manifestResume->pub.data.backupType = backupTypeFull;
+        manifestResume->pub.data.backupLabel = STRDEF("20191003-105320F");
+        manifestResume->pub.data.pgVersion = PG_VERSION_12;
 
         manifestTargetAdd(manifestResume, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
         manifestPathAdd(manifestResume, &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR});
@@ -1304,8 +1304,8 @@ testRun(void)
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
         Manifest *manifest = manifestNewInternal();
-        manifest->data.backupType = backupTypeFull;
-        manifest->data.backrestVersion = STRDEF("BOGUS");
+        manifest->pub.data.backupType = backupTypeFull;
+        manifest->pub.data.backrestVersion = STRDEF("BOGUS");
 
         TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
 
@@ -1316,13 +1316,13 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifest->data.backrestVersion = STRDEF(PROJECT_VERSION);
+        manifest->pub.data.backrestVersion = STRDEF(PROJECT_VERSION);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when backup labels do not match (resumable is null)");
 
-        manifest->data.backupType = backupTypeFull;
-        manifest->data.backupLabelPrior = STRDEF("20191003-105320F");
+        manifest->pub.data.backupType = backupTypeFull;
+        manifest->pub.data.backupLabelPrior = STRDEF("20191003-105320F");
 
         manifestSave(
             manifestResume,
@@ -1339,13 +1339,13 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifest->data.backupLabelPrior = NULL;
+        manifest->pub.data.backupLabelPrior = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when backup labels do not match (new is null)");
 
-        manifest->data.backupType = backupTypeFull;
-        manifestResume->data.backupLabelPrior = STRDEF("20191003-105320F");
+        manifest->pub.data.backupType = backupTypeFull;
+        manifestResume->pub.data.backupLabelPrior = STRDEF("20191003-105320F");
 
         manifestSave(
             manifestResume,
@@ -1362,12 +1362,12 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifestResume->data.backupLabelPrior = NULL;
+        manifestResume->pub.data.backupLabelPrior = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when compression does not match");
 
-        manifestResume->data.backupOptionCompressType = compressTypeGz;
+        manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
 
         manifestSave(
             manifestResume,
@@ -1384,7 +1384,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifestResume->data.backupOptionCompressType = compressTypeNone;
+        manifestResume->pub.data.backupOptionCompressType = compressTypeNone;
     }
 
     // *****************************************************************************************************************************
