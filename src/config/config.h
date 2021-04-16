@@ -128,6 +128,7 @@ const VariantList *cfgOptionLst(ConfigOption optionId);
 const VariantList *cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStr(ConfigOption optionId);
 const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx);
+StringId cfgOptionStrId(ConfigOption optionId);
 StringId cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStrNull(ConfigOption optionId);
 const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx);
