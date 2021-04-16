@@ -22,11 +22,6 @@ Posix Storage
 #include "storage/posix/write.h"
 
 /***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_POSIX_TYPE_STR,                               STORAGE_POSIX_TYPE);
-
-/***********************************************************************************************************************************
 Define PATH_MAX if it is not defined
 ***********************************************************************************************************************************/
 #ifndef PATH_MAX
@@ -567,11 +562,11 @@ static const StorageInterface storageInterfacePosix =
 
 Storage *
 storagePosixNewInternal(
-    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, bool pathSync)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
@@ -580,7 +575,6 @@ storagePosixNewInternal(
         FUNCTION_LOG_PARAM(BOOL, pathSync);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
     ASSERT(path != NULL);
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
@@ -606,7 +600,7 @@ storagePosixNewInternal(
             driver->interface.pathSync = NULL;
 
         // If this is a posix driver then add link features
-        if (strEq(type, STORAGE_POSIX_TYPE_STR))
+        if (type == STORAGE_POSIX_TYPE)
             driver->interface.feature |=
                 1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync |
                 1 << storageFeatureInfoDetail;
@@ -632,6 +626,6 @@ storagePosixNew(const String *path, StoragePosixNewParam param)
     FUNCTION_LOG_RETURN(
         STORAGE,
         storagePosixNewInternal(
-            STORAGE_POSIX_TYPE_STR, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
+            STORAGE_POSIX_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
             param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, true));
 }

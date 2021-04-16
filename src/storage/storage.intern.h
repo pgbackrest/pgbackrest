@@ -260,7 +260,7 @@ typedef struct StorageInterface
     storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
 
 Storage *storageNew(
-    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************
@@ -284,7 +284,7 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct StoragePub
 {
-    const String *type;                                             // Storage type
+    StringId type;                                                  // Storage type
     void *driver;                                                   // Storage driver
     StorageInterface interface;                                     // Storage interface
 } StoragePub;

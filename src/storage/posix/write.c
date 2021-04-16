@@ -260,7 +260,7 @@ storageWritePosixNew(
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_POSIX_TYPE_STR,
+                .type = STORAGE_POSIX_TYPE,
                 .name = strDup(name),
                 .atomic = atomic,
                 .createPath = createPath,

@@ -22,11 +22,6 @@ S3 Storage
 #include "storage/s3/write.h"
 
 /***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_S3_TYPE_STR,                                  STORAGE_S3_TYPE);
-
-/***********************************************************************************************************************************
 Defaults
 ***********************************************************************************************************************************/
 #define STORAGE_S3_DELETE_MAX                                       1000
@@ -1016,8 +1011,7 @@ storageS3New(
         strLstAdd(driver->headerRedactList, S3_HEADER_DATE_STR);
         strLstAdd(driver->headerRedactList, S3_HEADER_TOKEN_STR);
 
-        this = storageNew(
-            STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        this = storageNew(STORAGE_S3_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 

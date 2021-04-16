@@ -13,6 +13,7 @@ typedef struct StorageWrite StorageWrite;
 #include "common/type/buffer.h"
 #include "common/type/object.h"
 #include "common/type/string.h"
+#include "common/type/stringId.h"
 #include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
@@ -93,8 +94,8 @@ storageWriteSyncPath(const StorageWrite *this)
 }
 
 // File type
-__attribute__((always_inline)) static inline const String *
-storageWriteType(const StorageWrite *this)
+__attribute__((always_inline)) static inline StringId
+storageWriteType(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->interface->type;
 }

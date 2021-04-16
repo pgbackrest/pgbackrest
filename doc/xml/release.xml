@@ -20,6 +20,7 @@
                             <github-pull-request id="1358"/>
                         </commit>
                         <commit subject="Add cfgOptionIdxStrId()."/>
+                        <commit subject="Convert storage driver type to StringId."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
