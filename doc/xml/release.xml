@@ -23,6 +23,7 @@
                         <commit subject="Convert storage driver type to StringId."/>
                         <commit subject="Convert IoSessionRole enum to StringId."/>
                         <commit subject="Convert IoClient/IoSession type to StringId."/>
+                        <commit subject="Convert ProtocolParallelJobState enum to StringId."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
