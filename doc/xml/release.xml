@@ -27,6 +27,7 @@
                         <commit subject="Convert ArchiveMode enum to StringId."/>
                         <commit subject="Add hrnCfgArgRawStrId() and hrnCfgArgKeyRawStrId()."/>
                         <commit subject="Add cfgOptionStrId()."/>
+                        <commit subject="Convert BackupType enum to StringId."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>

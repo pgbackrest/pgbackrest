@@ -154,7 +154,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
                 // When reading timestamps, read as uint64 to ensure always positive value (guarantee no backups before 1970)
                 .backupTimestampStart = (time_t)varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR)),
                 .backupTimestampStop= (time_t)varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR)),
-                .backupType = varStrForce(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR)),
+                .backupType = (BackupType)strIdFromStr(stringIdBit5, varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR))),
 
                 // Possible NULL values
                 .backupArchiveStart = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR))),
@@ -173,6 +173,10 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
                 .optionHardlink = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_HARDLINK_VAR)),
                 .optionOnline = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR)),
             };
+
+            ASSERT(
+                infoBackupData.backupType == backupTypeFull || infoBackupData.backupType == backupTypeDiff ||
+                infoBackupData.backupType == backupTypeIncr);
 
             // Add the backup data to the list
             lstAdd(infoBackup->pub.backup, &infoBackupData);
@@ -255,7 +259,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             // When storing time_t treat as signed int to avoid casting
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR, VARINT64(backupData.backupTimestampStart));
             kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARINT64(backupData.backupTimestampStop));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR, VARSTR(backupData.backupType));
+            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR, VARSTR(strIdToStr(backupData.backupType)));
 
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
             kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
@@ -377,7 +381,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .backupPgId = manData->pgId,
                 .backupTimestampStart = manData->backupTimestampStart,
                 .backupTimestampStop= manData->backupTimestampStop,
-                .backupType = backupTypeStr(manData->backupType),
+                .backupType = manData->backupType,
 
                 .backupArchiveStart = strDup(manData->archiveStart),
                 .backupArchiveStop = strDup(manData->archiveStop),

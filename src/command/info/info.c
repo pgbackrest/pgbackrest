@@ -398,7 +398,7 @@ backupListAdd(
 
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
-    kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(backupData->backupType));
+    kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(strIdToStr(backupData->backupType)));
     kvPut(
         varKv(backupInfo), BACKUP_KEY_PRIOR_VAR,
         (backupData->backupPrior != NULL ? VARSTR(backupData->backupPrior) : NULL));
