@@ -53,12 +53,17 @@ with the auto-generated values.
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE                             STRID5("preserve", 0x2da45996500)
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE_Z                           "preserve"
 
-#define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF              "diff"
-#define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL              "full"
-#define CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_INCR              "incr"
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                  STRID5("diff", 0x319240)
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF_Z                "diff"
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL                  STRID5("full", 0x632a60)
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL_Z                "full"
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR                  STRID5("incr", 0x90dc90)
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR_Z                "incr"
 
-#define CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_COUNT                "count"
-#define CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_TIME                 "time"
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT                    STRID5("count", 0x14755e30)
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT_Z                  "count"
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME                     STRID5("time", 0x2b5340)
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME_Z                   "time"
 
 #define CFGOPTVAL_TARGET_ACTION_PAUSE                               STRID5("pause", 0x59d4300)
 #define CFGOPTVAL_TARGET_ACTION_PAUSE_Z                             "pause"
