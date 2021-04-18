@@ -40,10 +40,6 @@ Recovery constants
 #define RECOVERY_TARGET_XID                                         "recovery_target_xid"
 
 #define RECOVERY_TARGET_ACTION                                      "recovery_target_action"
-#define RECOVERY_TARGET_ACTION_PAUSE                                "pause"
-    STRING_STATIC(RECOVERY_TARGET_ACTION_PAUSE_STR,                 RECOVERY_TARGET_ACTION_PAUSE);
-#define RECOVERY_TARGET_ACTION_SHUTDOWN                             "shutdown"
-    STRING_STATIC(RECOVERY_TARGET_ACTION_SHUTDOWN_STR,              RECOVERY_TARGET_ACTION_SHUTDOWN);
 
 #define RECOVERY_TARGET_INCLUSIVE                                   "recovery_target_inclusive"
 #define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
@@ -51,23 +47,7 @@ Recovery constants
 #define STANDBY_MODE                                                "standby_mode"
     STRING_STATIC(STANDBY_MODE_STR,                                 STANDBY_MODE);
 
-#define RECOVERY_TYPE_DEFAULT                                       "default"
-    STRING_STATIC(RECOVERY_TYPE_DEFAULT_STR,                        RECOVERY_TYPE_DEFAULT);
-#define RECOVERY_TYPE_IMMEDIATE                                     "immediate"
-    STRING_STATIC(RECOVERY_TYPE_IMMEDIATE_STR,                      RECOVERY_TYPE_IMMEDIATE);
-#define RECOVERY_TYPE_NONE                                          "none"
-    STRING_STATIC(RECOVERY_TYPE_NONE_STR,                           RECOVERY_TYPE_NONE);
-#define RECOVERY_TYPE_PRESERVE                                      "preserve"
-    STRING_STATIC(RECOVERY_TYPE_PRESERVE_STR,                       RECOVERY_TYPE_PRESERVE);
-#define RECOVERY_TYPE_STANDBY                                       "standby"
-    STRING_STATIC(RECOVERY_TYPE_STANDBY_STR,                        RECOVERY_TYPE_STANDBY);
-#define RECOVERY_TYPE_TIME                                          "time"
-    STRING_STATIC(RECOVERY_TYPE_TIME_STR,                           RECOVERY_TYPE_TIME);
-
 #define ARCHIVE_MODE                                                "archive_mode"
-#define ARCHIVE_MODE_OFF                                            "off"
-    STRING_STATIC(ARCHIVE_MODE_OFF_STR,                             ARCHIVE_MODE_OFF);
-STRING_STATIC(ARCHIVE_MODE_PRESERVE_STR,                            "preserve");
 
 /***********************************************************************************************************************************
 Validate restore path
@@ -270,7 +250,7 @@ restoreBackupSet(void)
         // set that satisfies the time condition, else we will use the backup provided
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
-            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_TIME_STR))
+            if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_TIME)
                 timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
         }
         else
@@ -1023,7 +1003,7 @@ restoreCleanBuild(Manifest *manifest)
             strLstAdd(cleanData->fileIgnore, BACKUP_MANIFEST_FILE_STR);
 
             // Also ignore recovery files when recovery type = preserve
-            if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+            if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
             {
                 // If recovery GUCs then three files must be preserved
                 if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC)
@@ -1119,8 +1099,7 @@ restoreCleanBuild(Manifest *manifest)
         }
 
         // Skip postgresql.auto.conf if preserve is set and the PostgreSQL version supports recovery GUCs
-        if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC &&
-            strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR) &&
+        if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC && cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE &&
             manifestFileFindDefault(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF), NULL) != NULL)
         {
             LOG_DETAIL_FMT("skip '" PG_FILE_POSTGRESQLAUTOCONF "' -- recovery type is preserve");
@@ -1475,9 +1454,7 @@ restoreRecoveryOption(unsigned int pgVersion)
         }
 
         // If archive-mode is not preserve
-        const String *archiveMode = cfgOptionStr(cfgOptArchiveMode);
-
-        if (!strEq(archiveMode, ARCHIVE_MODE_PRESERVE_STR))
+        if (cfgOptionStrId(cfgOptArchiveMode) != CFGOPTVAL_ARCHIVE_MODE_PRESERVE)
         {
             if (pgVersion < PG_VERSION_12)
             {
@@ -1488,10 +1465,10 @@ restoreRecoveryOption(unsigned int pgVersion)
             }
 
             // The only other valid option is off
-            ASSERT(strEq(archiveMode, ARCHIVE_MODE_OFF_STR));
+            ASSERT(cfgOptionStrId(cfgOptArchiveMode) == CFGOPTVAL_ARCHIVE_MODE_OFF);
 
             // If archive-mode=off then set archive_mode=off
-            kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTR(ARCHIVE_MODE_OFF_STR));
+            kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTRDEF(CFGOPTVAL_ARCHIVE_MODE_OFF_Z));
         }
 
         // Write restore_command
@@ -1521,19 +1498,19 @@ restoreRecoveryOption(unsigned int pgVersion)
         }
 
         // If recovery type is immediate
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_IMMEDIATE_STR))
+        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_IMMEDIATE)
         {
-            kvPut(result, VARSTRZ(RECOVERY_TARGET), VARSTRZ(RECOVERY_TYPE_IMMEDIATE));
+            kvPut(result, VARSTRZ(RECOVERY_TARGET), VARSTRZ(CFGOPTVAL_TYPE_IMMEDIATE_Z));
         }
         // Else recovery type is standby
-        else if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
+        else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_STANDBY)
         {
             // Write standby_mode for PostgreSQL versions that support it
             if (pgVersion < PG_VERSION_RECOVERY_GUC)
                 kvPut(result, VARSTR(STANDBY_MODE_STR), VARSTRDEF("on"));
         }
         // Else recovery type is not default so write target options
-        else if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_DEFAULT_STR))
+        else if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_DEFAULT)
         {
             // Write the recovery target
             kvPut(
@@ -1548,24 +1525,24 @@ restoreRecoveryOption(unsigned int pgVersion)
         // Write pause_at_recovery_target/recovery_target_action
         if (cfgOptionTest(cfgOptTargetAction))
         {
-            const String *targetAction = cfgOptionStr(cfgOptTargetAction);
+            StringId targetAction = cfgOptionStrId(cfgOptTargetAction);
 
-            if (!strEq(targetAction, RECOVERY_TARGET_ACTION_PAUSE_STR))
+            if (targetAction != CFGOPTVAL_TARGET_ACTION_PAUSE)
             {
                 // Write recovery_target on supported PostgreSQL versions
                 if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
                 {
-                    kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(targetAction));
+                    kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
                 }
                 // Write pause_at_recovery_target on supported PostgreSQL versions
                 else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
                 {
                     // Shutdown action is not supported with pause_at_recovery_target setting
-                    if (strEq(targetAction, RECOVERY_TARGET_ACTION_SHUTDOWN_STR))
+                    if (targetAction == CFGOPTVAL_TARGET_ACTION_SHUTDOWN)
                     {
                         THROW_FMT(
                             OptionInvalidError,
-                            CFGOPT_TARGET_ACTION "=" RECOVERY_TARGET_ACTION_SHUTDOWN " is only available in PostgreSQL >= %s",
+                            CFGOPT_TARGET_ACTION "=" CFGOPTVAL_TARGET_ACTION_SHUTDOWN_Z " is only available in PostgreSQL >= %s",
                             strZ(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
                     }
 
@@ -1641,7 +1618,7 @@ restoreRecoveryWriteConf(const Manifest *manifest, unsigned int pgVersion, const
     FUNCTION_LOG_END();
 
     // Only write recovery.conf if recovery type != none
-    if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+    if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
     {
         LOG_INFO_FMT("write %s", strZ(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
 
@@ -1713,7 +1690,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             }
 
             // If settings will be appended then format the file so a blank line will be between old and new settings
-            if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+            if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
             {
                 strTrim(content);
                 strCatZ(content, "\n\n");
@@ -1721,7 +1698,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
         }
 
         // If recovery was requested then write the recovery options
-        if (!strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_NONE_STR))
+        if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
         {
             // If the user specified standby_mode as a recovery option then error.  It's tempting to just set type=standby in this
             // case but since config parsing has already happened the target options could be in an invalid state.
@@ -1743,7 +1720,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                         THROW_FMT(
                             OptionInvalidError,
                             "'" STANDBY_MODE "' setting is not valid for " PG_NAME " >= %s\n"
-                            "HINT: use --" CFGOPT_TYPE "=" RECOVERY_TYPE_STANDBY " instead of --" CFGOPT_RECOVERY_OPTION "="
+                            "HINT: use --" CFGOPT_TYPE "=" CFGOPTVAL_TYPE_STANDBY_Z " instead of --" CFGOPT_RECOVERY_OPTION "="
                                 STANDBY_MODE "=on.",
                             strZ(pgVersionToStr(PG_VERSION_RECOVERY_GUC)));
                     }
@@ -1768,7 +1745,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
             BUFSTR(content));
 
         // The standby.signal file is required for standby mode
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_STANDBY_STR))
+        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_STANDBY)
         {
             storagePutP(
                 storageNewWriteP(
@@ -1804,7 +1781,7 @@ restoreRecoveryWrite(const Manifest *manifest)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If recovery type is preserve then leave recovery file as it is
-        if (strEq(cfgOptionStr(cfgOptType), RECOVERY_TYPE_PRESERVE_STR))
+        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
         {
             // Determine which file recovery setttings will be written to
             const String *recoveryFile = pgVersion >= PG_VERSION_RECOVERY_GUC ?
@@ -1813,7 +1790,7 @@ restoreRecoveryWrite(const Manifest *manifest)
             if (!storageExistsP(storagePg(), recoveryFile))
             {
                 LOG_WARN_FMT(
-                    "recovery type is " RECOVERY_TYPE_PRESERVE " but recovery file does not exist at '%s'",
+                    "recovery type is " CFGOPTVAL_TYPE_PRESERVE_Z " but recovery file does not exist at '%s'",
                     strZ(storagePathP(storagePg(), recoveryFile)));
             }
         }
