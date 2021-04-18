@@ -53,6 +53,11 @@ with the auto-generated values.
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE                             STRID5("preserve", 0x2da45996500)
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE_Z                           "preserve"
 
+#define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
+#define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
+#define CFGOPTVAL_OUTPUT_JSON                                       STRID5("json", 0x73e6a0)
+#define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
+
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                  STRID5("diff", 0x319240)
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF_Z                "diff"
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL                  STRID5("full", 0x632a60)

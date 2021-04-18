@@ -124,7 +124,7 @@ storageListRender(IoWrite *write)
         THROW(ParamInvalidError, "only one path may be specified");
 
     // Get options
-    bool json = strEqZ(cfgOptionStr(cfgOptOutput), "json") ? true : false;
+    bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON ? true : false;
     const String *expression = cfgOptionStrNull(cfgOptFilter);
     RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
 
