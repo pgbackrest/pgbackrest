@@ -107,12 +107,18 @@ storageListRender(IoWrite *write)
     // Get sort order
     SortOrder sortOrder = sortOrderAsc;
 
-    if (strEqZ(cfgOptionStr(cfgOptSort), "desc"))
-        sortOrder = sortOrderDesc;
-    else if (!strEqZ(cfgOptionStr(cfgOptSort), "asc"))
+    switch (cfgOptionStrId(cfgOptSort))
     {
-        ASSERT(strEqZ(cfgOptionStr(cfgOptSort), "none"));
-        sortOrder = sortOrderNone;
+        case CFGOPTVAL_SORT_DESC:
+            sortOrder = sortOrderDesc;
+            break;
+
+        case CFGOPTVAL_SORT_NONE:
+            sortOrder = sortOrderNone;
+            break;
+
+        default:
+            ASSERT(cfgOptionStrId(cfgOptSort) == CFGOPTVAL_SORT_ASC);
     }
 
     // Get path

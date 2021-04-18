@@ -75,6 +75,13 @@ with the auto-generated values.
 #define CFGOPTVAL_TARGET_ACTION_SHUTDOWN                            STRID5("shutdown", 0x75de4a55130)
 #define CFGOPTVAL_TARGET_ACTION_SHUTDOWN_Z                          "shutdown"
 
+#define CFGOPTVAL_SORT_ASC                                          STRID5("asc", 0xe610)
+#define CFGOPTVAL_SORT_ASC_Z                                        "asc"
+#define CFGOPTVAL_SORT_DESC                                         STRID5("desc", 0x1cca40)
+#define CFGOPTVAL_SORT_DESC_Z                                       "desc"
+#define CFGOPTVAL_SORT_NONE                                         STRID5("none", 0x2b9ee0)
+#define CFGOPTVAL_SORT_NONE_Z                                       "none"
+
 #define CFGOPTVAL_TYPE_DEFAULT                                      STRID5("default", 0x5195098a40)
 #define CFGOPTVAL_TYPE_DEFAULT_Z                                    "default"
 #define CFGOPTVAL_TYPE_IMMEDIATE                                    STRID5("immediate", 0x5a05242b5a90)
