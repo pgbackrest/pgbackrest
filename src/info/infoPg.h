@@ -38,8 +38,8 @@ Info types for determining data in DB section
 ***********************************************************************************************************************************/
 typedef enum
 {
-    infoPgArchive,                                                  // archive info file
-    infoPgBackup,                                                   // backup info file
+    infoPgArchive = STRID5("archive", 0x16c940e410),                // archive info file
+    infoPgBackup = STRID5("backup", 0x21558c220),                   // backup info file
 } InfoPgType;
 
 /***********************************************************************************************************************************
