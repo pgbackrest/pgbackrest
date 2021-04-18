@@ -152,18 +152,6 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
     // *****************************************************************************************************************************
-    if (testBegin("protocolStorageTypeEnum() and protocolStorageTypeEnum()"))
-    {
-        TEST_RESULT_UINT(protocolStorageTypeEnum(PROTOCOL_REMOTE_TYPE_PG_STR), protocolStorageTypePg, "pg enum");
-        TEST_RESULT_UINT(protocolStorageTypeEnum(PROTOCOL_REMOTE_TYPE_REPO_STR), protocolStorageTypeRepo, "repo enum");
-        TEST_ERROR(protocolStorageTypeEnum(STRDEF(BOGUS_STR)), AssertError, "invalid protocol storage type 'BOGUS'");
-
-        TEST_RESULT_STR(protocolStorageTypeStr(protocolStorageTypePg), PROTOCOL_REMOTE_TYPE_PG_STR, "pg str");
-        TEST_RESULT_STR(protocolStorageTypeStr(protocolStorageTypeRepo), PROTOCOL_REMOTE_TYPE_REPO_STR, "repo str");
-        TEST_ERROR(protocolStorageTypeStr((ProtocolStorageType)999), AssertError, "invalid protocol storage type 999");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("repoIsLocal() and pgIsLocal()"))
     {
         StringList *argList = strLstNew();
@@ -234,7 +222,7 @@ testRun(void)
         strLstAddZ(argList, "--pg7-path=/path/to");
         strLstAddZ(argList, "--pg7-host=test1");
         hrnCfgArgRawZ(argList, cfgOptPg, "7");
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
         strLstAddZ(argList, "--process=0");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -352,7 +340,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--process=3");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -392,7 +380,7 @@ testRun(void)
         strLstAddZ(argList, "--pg1-port=1111");
         strLstAddZ(argList, "--pg2-path=/path/to/2");
         strLstAddZ(argList, "--pg2-host=pg2-host");
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -414,7 +402,7 @@ testRun(void)
         strLstAddZ(argList, "--pg3-host=pg3-host");
         strLstAddZ(argList, "--pg3-socket-path=/socket3");
         strLstAddZ(argList, "--pg3-port=3333");
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -1037,7 +1025,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
         strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
         strLstAddZ(argList, "--process=999");
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass before");

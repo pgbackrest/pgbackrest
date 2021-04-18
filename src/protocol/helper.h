@@ -9,8 +9,8 @@ Protocol storage type enum
 ***********************************************************************************************************************************/
 typedef enum
 {
-    protocolStorageTypeRepo,
-    protocolStorageTypePg,
+    protocolStorageTypePg = STRID5("pg", 0xf00),
+    protocolStorageTypeRepo = STRID5("repo", 0x7c0b20),
 } ProtocolStorageType;
 
 #include "protocol/client.h"
@@ -22,9 +22,6 @@ Constants
     STRING_DECLARE(PROTOCOL_SERVICE_LOCAL_STR);
 #define PROTOCOL_SERVICE_REMOTE                                     "remote"
     STRING_DECLARE(PROTOCOL_SERVICE_REMOTE_STR);
-
-#define PROTOCOL_REMOTE_TYPE_PG                                     "pg"
-#define PROTOCOL_REMOTE_TYPE_REPO                                   "repo"
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -41,10 +38,6 @@ bool repoIsLocal(unsigned int repoIdx);
 // Error if the repository is not local
 void repoIsLocalVerify(void);
 void repoIsLocalVerifyIdx(unsigned int repoIdx);
-
-// Get enum/string for protocol storage type
-ProtocolStorageType protocolStorageTypeEnum(const String *type);
-const String *protocolStorageTypeStr(ProtocolStorageType type);
 
 /***********************************************************************************************************************************
 Functions

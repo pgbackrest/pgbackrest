@@ -630,7 +630,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         strLstAdd(argList, strNew("--log-level-file=warn"));
         hrnCfgArgRawZ(argList, cfgOptExecId, "1111-fe70d611");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
@@ -644,7 +644,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
         strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
         strLstAdd(argList, strNew("--process=0"));
@@ -661,7 +661,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
         strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
         strLstAdd(argList, strNew("--process=1"));
@@ -678,7 +678,7 @@ testRun(void)
         strLstAdd(argList, strNew("pgbackrest"));
         strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
         strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);

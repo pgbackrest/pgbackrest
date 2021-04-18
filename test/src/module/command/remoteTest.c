@@ -34,7 +34,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--process=1");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 harnessCfgLoadRole(cfgCmdInfo, cfgCmdRoleRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());
@@ -66,7 +66,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, testProjectExe());
                 strLstAddZ(argList, "--process=0");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 strLstAddZ(argList, "--lock-path=/bogus");
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
@@ -104,7 +104,7 @@ testRun(void)
                 strLstAddZ(argList, testProjectExe());
                 strLstAddZ(argList, "--stanza=test");
                 strLstAddZ(argList, "--process=0");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 strLstAddZ(argList, "--lock-path=/bogus");
                 strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_REMOTE);
                 harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -138,7 +138,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
                 strLstAddZ(argList, "--process=0");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
 
@@ -177,7 +177,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--stanza=test");
                 strLstAddZ(argList, "--process=0");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
 
                 cmdRemote(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());

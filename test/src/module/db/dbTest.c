@@ -73,7 +73,7 @@ testRun(void)
                 strLstAddZ(argList, "--stanza=test1");
                 strLstAddZ(argList, "--pg1-path=/path/to/pg");
                 strLstAddZ(argList, "--pg1-database=testdb");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_PG);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
                 strLstAddZ(argList, "--process=0");
                 harnessCfgLoadRole(cfgCmdBackup, cfgCmdRoleRemote, argList);
 
