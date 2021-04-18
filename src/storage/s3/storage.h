@@ -16,24 +16,18 @@ Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageS3KeyTypeShared,
-    storageS3KeyTypeAuto,
+    storageS3KeyTypeShared = STRID5("shared", 0x85905130),
+    storageS3KeyTypeAuto = STRID5("auto", 0x7d2a10),
 } StorageS3KeyType;
-
-#define STORAGE_S3_KEY_TYPE_SHARED                                  "shared"
-#define STORAGE_S3_KEY_TYPE_AUTO                                    "auto"
 
 /***********************************************************************************************************************************
 URI style
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageS3UriStyleHost,
-    storageS3UriStylePath,
+    storageS3UriStyleHost = STRID5("host", 0xa4de80),
+    storageS3UriStylePath = STRID5("path", 0x450300),
 } StorageS3UriStyle;
-
-#define STORAGE_S3_URI_STYLE_HOST                                   "host"
-#define STORAGE_S3_URI_STYLE_PATH                                   "path"
 
 /***********************************************************************************************************************************
 Defaults

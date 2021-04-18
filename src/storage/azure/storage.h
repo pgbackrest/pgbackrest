@@ -16,12 +16,9 @@ Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageAzureKeyTypeShared,
-    storageAzureKeyTypeSas,
+    storageAzureKeyTypeShared = STRID5("shared", 0x85905130),
+    storageAzureKeyTypeSas = STRID5("sas", 0x4c330),
 } StorageAzureKeyType;
-
-#define STORAGE_AZURE_KEY_TYPE_SHARED                               "shared"
-#define STORAGE_AZURE_KEY_TYPE_SAS                                  "sas"
 
 /***********************************************************************************************************************************
 Defaults

@@ -202,7 +202,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptRepoType, strIdToStr(STORAGE_GCS_TYPE));
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-        hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, STORAGE_GCS_KEY_TYPE_TOKEN);
+        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
         hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 

@@ -941,9 +941,9 @@ storageS3New(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING, endPoint);
-        FUNCTION_LOG_PARAM(ENUM, uriStyle);
+        FUNCTION_LOG_PARAM(STRING_ID, uriStyle);
         FUNCTION_LOG_PARAM(STRING, region);
-        FUNCTION_LOG_PARAM(ENUM, keyType);
+        FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);

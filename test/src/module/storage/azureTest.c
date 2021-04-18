@@ -729,7 +729,7 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                hrnCfgArgRawZ(argList, cfgOptRepoAzureKeyType, STORAGE_AZURE_KEY_TYPE_SAS);
+                hrnCfgArgRawStrId(argList, cfgOptRepoAzureKeyType, storageAzureKeyTypeSas);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SAS);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 

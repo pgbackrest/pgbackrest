@@ -16,12 +16,9 @@ Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageGcsKeyTypeService,
-    storageGcsKeyTypeToken,
+    storageGcsKeyTypeService = STRID5("service", 0x1469b48b30),
+    storageGcsKeyTypeToken = STRID5("token", 0xe2adf40),
 } StorageGcsKeyType;
-
-#define STORAGE_GCS_KEY_TYPE_SERVICE                                "service"
-#define STORAGE_GCS_KEY_TYPE_TOKEN                                  "token"
 
 /***********************************************************************************************************************************
 Defaults

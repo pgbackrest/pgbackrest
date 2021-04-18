@@ -361,8 +361,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 result = storageAzureNew(
                     cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
                     cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx),
-                    strEqZ(cfgOptionIdxStr(cfgOptRepoAzureKeyType, repoIdx), STORAGE_AZURE_KEY_TYPE_SHARED) ?
-                        storageAzureKeyTypeShared : storageAzureKeyTypeSas,
+                    (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx),
                     cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
                     cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
                     cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx), ioTimeoutMs(),
@@ -382,10 +381,8 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 result = storageGcsNew(
                     cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
                     cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx),
-                    strEqZ(cfgOptionIdxStr(cfgOptRepoGcsKeyType, repoIdx), STORAGE_GCS_KEY_TYPE_SERVICE) ?
-                        storageGcsKeyTypeService : storageGcsKeyTypeToken,
-                    cfgOptionIdxStr(cfgOptRepoGcsKey, repoIdx), STORAGE_GCS_CHUNKSIZE_DEFAULT,
-                    cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), ioTimeoutMs(),
+                    (StorageGcsKeyType)cfgOptionIdxStrId(cfgOptRepoGcsKeyType, repoIdx), cfgOptionIdxStr(cfgOptRepoGcsKey, repoIdx),
+                    STORAGE_GCS_CHUNKSIZE_DEFAULT, cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), ioTimeoutMs(),
                     cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
                 break;
@@ -407,11 +404,8 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 result = storageS3New(
                     cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
                     cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
-                    strEqZ(cfgOptionIdxStr(cfgOptRepoS3UriStyle, repoIdx), STORAGE_S3_URI_STYLE_HOST) ?
-                        storageS3UriStyleHost : storageS3UriStylePath,
-                    cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
-                    strEqZ(cfgOptionIdxStr(cfgOptRepoS3KeyType, repoIdx), STORAGE_S3_KEY_TYPE_SHARED) ?
-                        storageS3KeyTypeShared : storageS3KeyTypeAuto,
+                    (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
+                    cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
                     STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),

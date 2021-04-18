@@ -862,7 +862,7 @@ storageGcsNew(
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
-        FUNCTION_LOG_PARAM(ENUM, keyType);
+        FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, chunkSize);
         FUNCTION_LOG_PARAM(STRING, endpoint);
