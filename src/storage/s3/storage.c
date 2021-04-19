@@ -206,8 +206,8 @@ storageS3Auth(
             const String *headerKey = strLstGet(headerList, headerIdx);
             const String *headerKeyLower = strLower(strDup(headerKey));
 
-            // Skip the authorization header -- if it exists this is a retry
-            if (strEq(headerKeyLower, HTTP_HEADER_AUTHORIZATION_STR))
+            // Skip the authorization (exists on retry) and content-length headers since they do not need to be signed
+            if (strEq(headerKeyLower, HTTP_HEADER_AUTHORIZATION_STR) || strEq(headerKeyLower, HTTP_HEADER_CONTENT_LENGTH_STR))
                 continue;
 
             strCatFmt(canonicalRequest, "%s:%s\n", strZ(headerKeyLower), strZ(httpHeaderGet(httpHeader, headerKey)));
@@ -673,8 +673,13 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
     {
         const HttpHeader *httpHeader = httpResponseHeader(httpResponse);
 
-        result.size = cvtZToUInt64(strZ(httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR)));
-        result.timeModified = httpDateToTime(httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR));
+        const String *const contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
+        CHECK(contentLength != NULL);
+        result.size = cvtZToUInt64(strZ(contentLength));
+
+        const String *const lastModified = httpHeaderGet(httpHeader, HTTP_HEADER_LAST_MODIFIED_STR);
+        CHECK(lastModified != NULL);
+        result.timeModified = httpDateToTime(lastModified);
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);

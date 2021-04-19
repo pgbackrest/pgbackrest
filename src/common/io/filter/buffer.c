@@ -7,7 +7,7 @@ IO Buffer Filter
 
 #include "common/debug.h"
 #include "common/io/filter/buffer.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"

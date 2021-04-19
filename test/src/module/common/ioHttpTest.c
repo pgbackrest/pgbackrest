@@ -306,7 +306,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no output from server");
 
-                client->timeout = 0;
+                client->pub.timeout = 0;
 
                 hrnServerScriptAccept(http);
 
@@ -469,7 +469,7 @@ testRun(void)
                 httpQueryAdd(query, strNew("name"), strNew("/path/A Z.txt"));
                 httpQueryAdd(query, strNew("type"), strNew("test"));
 
-                client->timeout = 5000;
+                client->pub.timeout = 5000;
 
                 HttpRequest *request = NULL;
                 HttpResponse *response = NULL;

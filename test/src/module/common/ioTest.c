@@ -316,7 +316,7 @@ testRun(void)
             ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioTestFilterMultiplyNew("double", 2, 3, 'X')),
             "    add filter to filter group");
         TEST_RESULT_PTR(
-            ioFilterGroupInsert(ioReadFilterGroup(bufferRead), 0, sizeFilter), bufferRead->filterGroup,
+            ioFilterGroupInsert(ioReadFilterGroup(bufferRead), 0, sizeFilter), bufferRead->pub.filterGroup,
             "    add filter to filter group");
         TEST_RESULT_VOID(ioFilterGroupAdd(ioReadFilterGroup(bufferRead), ioSizeNew()), "    add filter to filter group");
         IoFilter *bufferFilter = ioBufferNew();
@@ -365,8 +365,8 @@ testRun(void)
             varUInt64(varLstGet(varVarLst(ioFilterGroupResult(ioReadFilterGroup(bufferRead), ioFilterType(sizeFilter))), 1)), 9,
             "    check filter result");
 
-        TEST_RESULT_PTR(ioFilterDriver(bufferFilter), bufferFilter->driver, "    check filter driver");
-        TEST_RESULT_PTR(ioFilterInterface(bufferFilter), &bufferFilter->interface, "    check filter interface");
+        TEST_RESULT_PTR(ioFilterDriver(bufferFilter), bufferFilter->pub.driver, "    check filter driver");
+        TEST_RESULT_PTR(ioFilterInterface(bufferFilter), &bufferFilter->pub.interface, "    check filter interface");
 
         TEST_RESULT_VOID(ioFilterFree(bufferFilter), "    free buffer filter");
         TEST_RESULT_VOID(ioFilterGroupFree(ioReadFilterGroup(bufferRead)), "    free filter group object");
@@ -374,10 +374,10 @@ testRun(void)
         // Set filter group results
         // -------------------------------------------------------------------------------------------------------------------------
         IoFilterGroup *filterGroup = ioFilterGroupNew();
-        filterGroup->opened = true;
+        filterGroup->pub.opened = true;
         TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, NULL), "null result");
         TEST_RESULT_VOID(ioFilterGroupResultAllSet(filterGroup, jsonToVar(strNew("{\"test\":777}"))), "add result");
-        filterGroup->closed = true;
+        filterGroup->pub.closed = true;
         TEST_RESULT_UINT(varUInt64(ioFilterGroupResult(filterGroup, strNew("test"))), 777, "    check filter result");
 
         // Read a zero-size buffer to ensure filters are still processed even when there is no input.  Some filters (e.g. encryption
@@ -572,8 +572,8 @@ testRun(void)
 
                 ioReadOpen(read);
                 TEST_RESULT_INT(ioReadFd(read), ((IoFdRead *)ioReadDriver(read))->fd, "check fd");
-                TEST_RESULT_PTR(ioReadInterface(read), &read->interface, "check interface");
-                TEST_RESULT_PTR(ioReadDriver(read), read->driver, "check driver");
+                TEST_RESULT_PTR(ioReadInterface(read), &read->pub.interface, "check interface");
+                TEST_RESULT_PTR(ioReadDriver(read), read->pub.driver, "check driver");
 
                 // Read a string
                 TEST_RESULT_STR_Z(ioReadLine(read), "test string 1", "read test string");
@@ -581,9 +581,9 @@ testRun(void)
                 // Only part of the buffer is written before timeout
                 Buffer *buffer = bufNew(16);
 
-                ((IoFdRead *)read->driver)->timeout = 1;
+                ((IoFdRead *)read->pub.driver)->timeout = 1;
                 TEST_RESULT_BOOL(ioReadReadyP(read), false, "read is not ready (without throwing error)");
-                ((IoFdRead *)read->driver)->timeout = 1000;
+                ((IoFdRead *)read->pub.driver)->timeout = 1000;
 
                 TEST_ERROR(ioRead(read, buffer), FileReadError, "timeout after 1000ms waiting for read from 'read test'");
                 TEST_RESULT_UINT(bufSize(buffer), 16, "buffer is only partially read");

@@ -7,12 +7,10 @@ Archive Info Handler
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define INFO_ARCHIVE_TYPE                                           InfoArchive
-#define INFO_ARCHIVE_PREFIX                                         infoArchive
-
 typedef struct InfoArchive InfoArchive;
 
 #include "common/crypto/common.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 #include "info/infoPg.h"
 #include "storage/storage.h"
@@ -37,6 +35,38 @@ InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSyste
 InfoArchive *infoArchiveNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct InfoArchivePub
+{
+    MemContext *memContext;                                         // Mem context
+    InfoPg *infoPg;                                                 // Contents of the DB data
+} InfoArchivePub;
+
+// PostgreSQL info
+__attribute__((always_inline)) static inline InfoPg *
+infoArchivePg(const InfoArchive *const this)
+{
+    return THIS_PUB(InfoArchive)->infoPg;
+}
+
+InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
+
+// Current archive id
+__attribute__((always_inline)) static inline const String *
+infoArchiveId(const InfoArchive *const this)
+{
+    return infoPgArchiveId(infoArchivePg(this), infoPgDataCurrentId(infoArchivePg(this)));
+}
+
+// Cipher passphrase
+__attribute__((always_inline)) static inline const String *
+infoArchiveCipherPass(const InfoArchive *const this)
+{
+    return infoPgCipherPass(infoArchivePg(this));
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Given a backrest history id and postgres systemId and version, return the archiveId of the best match
@@ -44,25 +74,20 @@ const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
 
 // Move to a new parent mem context
-InfoArchive *infoArchiveMove(InfoArchive *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Current archive id
-const String *infoArchiveId(const InfoArchive *this);
-
-// Cipher passphrase
-const String *infoArchiveCipherPass(const InfoArchive *this);
-
-// PostgreSQL info
-InfoPg *infoArchivePg(const InfoArchive *this);
-InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
+__attribute__((always_inline)) static inline InfoArchive *
+infoArchiveMove(InfoArchive *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void infoArchiveFree(InfoArchive *this);
+__attribute__((always_inline)) static inline void
+infoArchiveFree(InfoArchive *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Helper functions

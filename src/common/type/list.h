@@ -9,12 +9,10 @@ List Handler
 /***********************************************************************************************************************************
 List object
 ***********************************************************************************************************************************/
-#define LIST_TYPE                                                   List
-#define LIST_PREFIX                                                 lst
-
 typedef struct List List;
 
 #include "common/memContext.h"
+#include "common/type/object.h"
 #include "common/type/param.h"
 #include "common/type/string.h"
 
@@ -64,45 +62,30 @@ typedef struct ListParam
 List *lstNew(size_t itemSize, ListParam param);
 
 /***********************************************************************************************************************************
-Functions
+Getters/Setters
 ***********************************************************************************************************************************/
-// Add an item to the end of the list
-void *lstAdd(List *this, const void *item);
+typedef struct ListPub
+{
+    MemContext *memContext;                                         // Mem context
+    unsigned int listSize;                                          // List size
+} ListPub;
 
-// Clear items from a list
-List *lstClear(List *this);
-
-// Get an item from the list
-void *lstGet(const List *this, unsigned int listIdx);
-void *lstGetLast(const List *this);
-
-// Does an item exist in the list?
-bool lstExists(const List *this, const void *item);
-
-// Find an item in the list
-void *lstFind(const List *this, const void *item);
-void *lstFindDefault(const List *this, const void *item, void *itemDefault);
-unsigned int lstFindIdx(const List *this, const void *item);
-
-// Get the index of a list item
-unsigned int lstIdx(const List *this, const void *item);
-
-// Insert an item into the list
-void *lstInsert(List *this, unsigned int listIdx, const void *item);
+// Set a new comparator
+List *lstComparatorSet(List *this, ListComparator *comparator);
 
 // Memory context for this list
-MemContext *lstMemContext(const List *this);
+__attribute__((always_inline)) static inline MemContext *
+lstMemContext(const List *this)
+{
+    return THIS_PUB(List)->memContext;
+}
 
-// Move to a new parent mem context
-List *lstMove(List *this, MemContext *parentNew);
-
-// Remove an item from the list
-bool lstRemove(List *this, const void *item);
-List *lstRemoveIdx(List *this, unsigned int listIdx);
-List *lstRemoveLast(List *this);
-
-// Return list size
-unsigned int lstSize(const List *this);
+// List size
+__attribute__((always_inline)) static inline unsigned int
+lstSize(const List *this)
+{
+    return THIS_PUB(List)->listSize;
+}
 
 // Is the list empty?
 __attribute__((always_inline)) static inline bool
@@ -111,19 +94,64 @@ lstEmpty(const List *this)
     return lstSize(this) == 0;
 }
 
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Clear items from a list
+List *lstClear(List *this);
+
+// Get an item from the list
+void *lstGet(const List *this, unsigned int listIdx);
+void *lstGetLast(const List *this);
+
+// Find an item in the list
+void *lstFind(const List *this, const void *item);
+void *lstFindDefault(const List *this, const void *item, void *itemDefault);
+unsigned int lstFindIdx(const List *this, const void *item);
+
+// Does an item exist in the list?
+__attribute__((always_inline)) static inline bool
+lstExists(const List *this, const void *item)
+{
+    return lstFind(this, item) != NULL;
+}
+
+// Get the index of a list item
+unsigned int lstIdx(const List *this, const void *item);
+
+// Insert an item into the list
+void *lstInsert(List *this, unsigned int listIdx, const void *item);
+
+// Add an item to the end of the list
+__attribute__((always_inline)) static inline void *
+lstAdd(List *this, const void *item)
+{
+    return lstInsert(this, lstSize(this), item);
+}
+
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline List *
+lstMove(List *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
+
+// Remove an item from the list
+bool lstRemove(List *this, const void *item);
+List *lstRemoveIdx(List *this, unsigned int listIdx);
+List *lstRemoveLast(List *this);
+
 // List sort
 List *lstSort(List *this, SortOrder sortOrder);
 
 /***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Set a new comparator
-List *lstComparatorSet(List *this, ListComparator *comparator);
-
-/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void lstFree(List *this);
+__attribute__((always_inline)) static inline void
+lstFree(List *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -260,7 +260,7 @@ archiveGetFind(
             {
                 getCheckResult->errorType = &RepoInvalidError;
                 getCheckResult->errorFile = strDup(archiveFileRequest);
-                getCheckResult->errorMessage = strNewFmt(UNABLE_TO_FIND_VALID_REPO_MSG);
+                getCheckResult->errorMessage = strNew(UNABLE_TO_FIND_VALID_REPO_MSG);
                 getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
             }
             MEM_CONTEXT_END();
@@ -828,7 +828,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
         const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
         jobData->archiveFileIdx++;
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE_STR);
         protocolCommandParamAdd(command, VARSTR(archiveFileMap->request));
 
         // Add actual files to get

@@ -409,6 +409,30 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("archive-header-check"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+        ),
+
+        PARSE_RULE_OPTION_OPTIONAL_LIST
+        (
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("1"),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("archive-mode"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_REQUIRED(true),
@@ -6543,6 +6567,21 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveGetQueueMax,
     },
 
+    // archive-header-check option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "archive-header-check",
+        .val = PARSE_OPTION_FLAG | cfgOptArchiveHeaderCheck,
+    },
+    {
+        .name = "no-archive-header-check",
+        .val = PARSE_OPTION_FLAG | PARSE_NEGATE_FLAG | cfgOptArchiveHeaderCheck,
+    },
+    {
+        .name = "reset-archive-header-check",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptArchiveHeaderCheck,
+    },
+
     // archive-mode option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -10582,6 +10621,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptStanza,
     cfgOptArchiveAsync,
     cfgOptArchiveGetQueueMax,
+    cfgOptArchiveHeaderCheck,
     cfgOptArchiveMode,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,

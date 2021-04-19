@@ -14,9 +14,6 @@ Azure Storage Read
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_READ_AZURE_TYPE                                     StorageReadAzure
-#define STORAGE_READ_AZURE_PREFIX                                   storageReadAzure
-
 typedef struct StorageReadAzure
 {
     MemContext *memContext;                                         // Object mem context

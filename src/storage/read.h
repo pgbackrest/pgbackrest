@@ -7,40 +7,74 @@ Storage Read Interface
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_READ_TYPE                                           StorageRead
-#define STORAGE_READ_PREFIX                                         storageRead
-
 typedef struct StorageRead StorageRead;
 
 #include "common/io/read.h"
+#include "common/type/object.h"
+#include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-StorageRead *storageReadMove(StorageRead *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline StorageRead *
+storageReadMove(StorageRead *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct StorageReadPub
+{
+    MemContext *memContext;                                         // Mem context
+    const StorageReadInterface *interface;                          // File data (name, driver type, etc.)
+    IoRead *io;                                                     // Read interface
+} StorageReadPub;
+
 // Should a missing file be ignored?
-bool storageReadIgnoreMissing(const StorageRead *this);
+__attribute__((always_inline)) static inline bool
+storageReadIgnoreMissing(const StorageRead *this)
+{
+    return THIS_PUB(StorageRead)->interface->ignoreMissing;
+}
 
 // Read interface
-IoRead *storageReadIo(const StorageRead *this);
+__attribute__((always_inline)) static inline IoRead *
+storageReadIo(const StorageRead *this)
+{
+    return THIS_PUB(StorageRead)->io;
+}
 
 // Is there a read limit? NULL for no limit.
-const Variant *storageReadLimit(const StorageRead *this);
+__attribute__((always_inline)) static inline const Variant *
+storageReadLimit(const StorageRead *this)
+{
+    return THIS_PUB(StorageRead)->interface->limit;
+}
 
 // File name
-const String *storageReadName(const StorageRead *this);
+__attribute__((always_inline)) static inline const String *
+storageReadName(const StorageRead *this)
+{
+    return THIS_PUB(StorageRead)->interface->name;
+}
 
 // Get file type
-const String *storageReadType(const StorageRead *this);
+__attribute__((always_inline)) static inline const String *
+storageReadType(const StorageRead *this)
+{
+    return THIS_PUB(StorageRead)->interface->type;
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void storageReadFree(StorageRead *this);
+__attribute__((always_inline)) static inline void
+storageReadFree(StorageRead *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

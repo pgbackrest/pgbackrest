@@ -203,6 +203,10 @@ src/build/config.sub:
   class: build
   type: make
 
+src/build/config/config.yaml:
+  class: build
+  type: yaml
+
 src/build/configure.ac:
   class: build
   type: make
@@ -675,14 +679,6 @@ src/common/encode.h:
   class: core
   type: c/h
 
-src/common/encode/base64.c:
-  class: core
-  type: c
-
-src/common/encode/base64.h:
-  class: core
-  type: c/h
-
 src/common/error.auto.c:
   class: core/auto
   type: c
@@ -880,6 +876,14 @@ src/common/io/http/session.c:
   type: c
 
 src/common/io/http/session.h:
+  class: core
+  type: c/h
+
+src/common/io/http/url.c:
+  class: core
+  type: c
+
+src/common/io/http/url.h:
   class: core
   type: c/h
 
@@ -1467,6 +1471,34 @@ src/storage/cifs/storage.h:
   class: core
   type: c/h
 
+src/storage/gcs/read.c:
+  class: core
+  type: c
+
+src/storage/gcs/read.h:
+  class: core
+  type: c/h
+
+src/storage/gcs/storage.c:
+  class: core
+  type: c
+
+src/storage/gcs/storage.h:
+  class: core
+  type: c/h
+
+src/storage/gcs/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/gcs/write.c:
+  class: core
+  type: c
+
+src/storage/gcs/write.h:
+  class: core
+  type: c/h
+
 src/storage/helper.c:
   class: core
   type: c
@@ -1764,6 +1796,10 @@ test/lib/pgBackRestTest/Env/Host/HostDbSyntheticTest.pm:
   type: perl
 
 test/lib/pgBackRestTest/Env/Host/HostDbTest.pm:
+  class: test/harness
+  type: perl
+
+test/lib/pgBackRestTest/Env/Host/HostGcsTest.pm:
   class: test/harness
   type: perl
 
@@ -2164,6 +2200,10 @@ test/src/module/storage/azureTest.c:
   type: c
 
 test/src/module/storage/cifsTest.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/gcsTest.c:
   class: test/module
   type: c
 

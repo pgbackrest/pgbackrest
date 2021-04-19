@@ -24,14 +24,12 @@ Object type
 ***********************************************************************************************************************************/
 struct HttpClient
 {
+    HttpClientPub pub;                                              // Publicly accessible variables
     MemContext *memContext;                                         // Mem context
-    TimeMSec timeout;                                               // Request timeout
     IoClient *ioClient;                                             // Io client (e.g. TLS or socket client)
 
     List *sessionReuseList;                                         // List of HTTP sessions that can be reused
 };
-
-OBJECT_DEFINE_GET(Timeout, const, HTTP_CLIENT, TimeMSec, timeout);
 
 /**********************************************************************************************************************************/
 HttpClient *
@@ -52,8 +50,11 @@ httpClientNew(IoClient *ioClient, TimeMSec timeout)
 
         *this = (HttpClient)
         {
+            .pub =
+            {
+                .timeout = timeout,
+            },
             .memContext = MEM_CONTEXT_NEW(),
-            .timeout = timeout,
             .ioClient = ioClient,
             .sessionReuseList = lstNewP(sizeof(HttpSession *)),
         };
@@ -121,5 +122,5 @@ httpClientToLog(const HttpClient *this)
 {
     return strNewFmt(
         "{ioClient: %s, reusable: %u, timeout: %" PRIu64"}", strZ(ioClientToLog(this->ioClient)), lstSize(this->sessionReuseList),
-        this->timeout);
+        httpClientTimeout(this));
 }

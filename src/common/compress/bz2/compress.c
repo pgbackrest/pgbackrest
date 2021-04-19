@@ -9,8 +9,9 @@ BZ2 Compress
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/compress.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 
@@ -22,9 +23,6 @@ STRING_EXTERN(BZ2_COMPRESS_FILTER_TYPE_STR,                         BZ2_COMPRESS
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define BZ2_COMPRESS_TYPE                                           Bz2Compress
-#define BZ2_COMPRESS_PREFIX                                         bz2Compress
-
 typedef struct Bz2Compress
 {
     MemContext *memContext;                                         // Context to store data
@@ -54,11 +52,21 @@ bz2CompressToLog(const Bz2Compress *this)
 /***********************************************************************************************************************************
 Free compression stream
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(BZ2_COMPRESS, LOG, logLevelTrace)
+static void
+bz2CompressFreeResource(THIS_VOID)
 {
+    THIS(Bz2Compress);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BZ2_COMPRESS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     BZ2_bzCompressEnd(&this->stream);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Compress data

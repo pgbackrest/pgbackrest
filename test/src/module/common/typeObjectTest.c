@@ -1,56 +1,35 @@
 /***********************************************************************************************************************************
 Test Object Helper Macros
 ***********************************************************************************************************************************/
-#include "common/debug.h"
-#include "common/log.h"
-#include "common/memContext.h"
+#include "common/macro.h"
 
 /***********************************************************************************************************************************
 TestObject Type
 ***********************************************************************************************************************************/
-#define TEST_OBJECT_TYPE                                            TestObject
-#define TEST_OBJECT_PREFIX                                          testObject
-
 typedef struct TestObject
 {
     MemContext *memContext;                                         // Mem context
 } TestObject;
 
 /***********************************************************************************************************************************
-Macros for function logging
+Standard object methods
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_TEST_OBJECT_TYPE                                                                                              \
-    TestObject *
-#define FUNCTION_LOG_TEST_OBJECT_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, STRINGIFY(TestObject), buffer, bufferSize)
-
-/***********************************************************************************************************************************
-Free object
-***********************************************************************************************************************************/
-void testObjectFree(TestObject *this);
-
-OBJECT_DEFINE_MOVE(TEST_OBJECT);
-OBJECT_DEFINE_FREE(TEST_OBJECT);
-
-/***********************************************************************************************************************************
-Free object resource
-***********************************************************************************************************************************/
-bool testObjectFreeResourceCalled = false;
-
-static void testObjectFreeResource(void *thisVoid);
-
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(TEST_OBJECT, LOG, logLevelTrace)
+TestObject *
+testObjectMove(TestObject *this, MemContext *parentNew)
 {
-    testObjectFreeResourceCalled = true;
+    return objMove(this, parentNew);
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
+
+void
+testObjectFree(TestObject *this)
+{
+    objFree(this);
+}
 
 /**********************************************************************************************************************************/
 TestObject *
 testObjectNew(void)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
-
     TestObject *this = NULL;
 
     MEM_CONTEXT_NEW_BEGIN(STRINGIFY(TestObject))
@@ -61,12 +40,10 @@ testObjectNew(void)
         {
             .memContext = MEM_CONTEXT_NEW(),
         };
-
-        memContextCallbackSet(this->memContext, testObjectFreeResource, (void *)1);
     }
     MEM_CONTEXT_NEW_END();
 
-    FUNCTION_LOG_RETURN(TEST_OBJECT, this);
+    return this;
 }
 
 /***********************************************************************************************************************************
@@ -91,7 +68,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_VOID(testObjectFree(testObject), "    free object");
-        TEST_RESULT_BOOL(testObjectFreeResourceCalled, true, "    check callback");
+        TEST_RESULT_VOID(testObjectFree(NULL), "    free null object");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

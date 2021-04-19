@@ -14,7 +14,7 @@ stress testing as needed.
 #include "common/crypto/hash.h"
 #include "common/compress/gz/compress.h"
 #include "common/compress/lz4/compress.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/io/filter/sink.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -178,8 +178,9 @@ testRun(void)
                 ioWriteOpen(write);
 
                 ProtocolServer *server = protocolServerNew(strNew("storage test server"), strNew("test"), read, write);
-                protocolServerHandlerAdd(server, storageRemoteProtocol);
-                protocolServerProcess(server, NULL);
+
+                static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
+                protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
 
             }
             HARNESS_FORK_CHILD_END();

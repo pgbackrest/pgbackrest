@@ -17,47 +17,39 @@ Constants
 STRING_EXTERN(PROTOCOL_COMMAND_CONFIG_OPTION_STR,                   PROTOCOL_COMMAND_CONFIG_OPTION);
 
 /**********************************************************************************************************************************/
-bool
-configProtocol(const String *command, const VariantList *paramList, ProtocolServer *server)
+void
+configOptionProtocol(const VariantList *paramList, ProtocolServer *server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(VARIANT_LIST, paramList);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
-    ASSERT(command != NULL);
-
-    // Attempt to satisfy the request -- we may get requests that are meant for other handlers
-    bool found = true;
+    ASSERT(paramList != NULL);
+    ASSERT(server != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(command, PROTOCOL_COMMAND_CONFIG_OPTION_STR))
+        VariantList *optionList = varLstNew();
+
+        for (unsigned int optionIdx = 0; optionIdx < varLstSize(paramList); optionIdx++)
         {
-            VariantList *optionList = varLstNew();
+            CfgParseOptionResult option = cfgParseOption(varStr(varLstGet(paramList, optionIdx)));
+            CHECK(option.found);
 
-            for (unsigned int optionIdx = 0; optionIdx < varLstSize(paramList); optionIdx++)
-            {
-                CfgParseOptionResult option = cfgParseOption(varStr(varLstGet(paramList, optionIdx)));
-                CHECK(option.found);
-
-                varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
-            }
-
-            protocolServerResponse(server, varNewVarLst(optionList));
+            varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
         }
-        else
-            found = false;
+
+        protocolServerResponse(server, varNewVarLst(optionList));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, found);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 VariantList *
-configProtocolOption(ProtocolClient *client, const VariantList *paramList)
+configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);

@@ -293,7 +293,7 @@ encodeToStrSizeBase64Url(size_t sourceSize)
     // Calculate how many groups of three are in the source. Each group of three is encoded with four bytes.
     size_t encodeTotal = sourceSize / 3 * 4;
 
-    // Dertermine additional required bytes for the partial group, if any
+    // Determine additional required bytes for the partial group, if any
     switch (sourceSize % 3)
     {
         // One byte requires two characters to encode

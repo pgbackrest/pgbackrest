@@ -6,7 +6,6 @@ Wait Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
@@ -14,17 +13,12 @@ Object type
 ***********************************************************************************************************************************/
 struct Wait
 {
-    MemContext *memContext;                                         // Context that contains the wait handler
+    WaitPub pub;                                                    // Publicly accessible variables
     TimeMSec waitTime;                                              // Total time to wait (in usec)
-    TimeMSec remainTime;                                            // Wait time remaining (in usec)
     TimeMSec sleepTime;                                             // Next sleep time (in usec)
     TimeMSec sleepPrevTime;                                         // Previous time slept (in usec)
     TimeMSec beginTime;                                             // Time the wait began (in epoch usec)
 };
-
-OBJECT_DEFINE_GET(Remaining, const, WAIT, TimeMSec, remainTime);
-
-OBJECT_DEFINE_FREE(WAIT);
 
 /**********************************************************************************************************************************/
 Wait *
@@ -46,9 +40,12 @@ waitNew(TimeMSec waitTime)
 
         *this = (Wait)
         {
-            .memContext = MEM_CONTEXT_NEW(),
+            .pub =
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+                .remainTime = waitTime,
+            },
             .waitTime = waitTime,
-            .remainTime = waitTime,
         };
 
         // Calculate first sleep time -- start with 1/10th of a second for anything >= 1 second
@@ -100,7 +97,7 @@ waitMore(Wait *this)
             // Store new sleep times
             this->sleepPrevTime = this->sleepTime;
             this->sleepTime = sleepNextTime;
-            this->remainTime = this->waitTime - elapsedTime;
+            this->pub.remainTime = this->waitTime - elapsedTime;
         }
         // Else set sleep to zero so next call will return false
         else

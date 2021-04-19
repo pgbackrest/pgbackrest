@@ -5,6 +5,7 @@ Io Session Interface Internal
 #define COMMON_IO_SESSION_INTERN_H
 
 #include "common/io/session.h"
+#include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Interface

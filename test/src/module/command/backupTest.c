@@ -470,7 +470,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("backupFile(), backupProtocol"))
+    if (testBegin("backupFile() and backupFileProtocol()"))
     {
         // Load Parameters
         StringList *argList = strLstNew();
@@ -513,8 +513,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - skip");
+        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - skip");
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[3,0,0,null,null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
 
@@ -533,8 +532,8 @@ testRun(void)
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
 
         // With the expected backupCopyResultCopy, unset the storageFeatureCompress bit for the storageRepo for code coverage
-        uint64_t feature = storageRepo()->interface.feature;
-        ((Storage *)storageRepo())->interface.feature = feature & ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
+        uint64_t feature = storageRepo()->pub.interface.feature;
+        ((Storage *)storageRepo())->pub.interface.feature = feature & ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
 
         // Create tmp file to make it look like a prior backup file failed partway through to ensure that retries work
         TEST_RESULT_VOID(
@@ -548,7 +547,7 @@ testRun(void)
                 cipherTypeNone, NULL),
             "pg file exists and shrunk, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
 
-        ((Storage *)storageRepo())->interface.feature = feature;
+        ((Storage *)storageRepo())->pub.interface.feature = feature;
 
         TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "    copy file");
@@ -606,8 +605,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - pageChecksum");
+        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - pageChecksum");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite),
             "{\"out\":[1,12,12,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",{\"align\":false,\"valid\":false}]}\n",
@@ -650,8 +648,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - noop");
+        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - noop");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite), "{\"out\":[4,12,0,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
@@ -793,8 +790,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - copy, compress");
+        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - copy, compress");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite), "{\"out\":[0,9,29,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
@@ -817,10 +813,6 @@ testRun(void)
             (storageExistsP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/zerofile", strZ(backupLabel))) &&
                 result.pageChecksumResult == NULL),
             true, "    copy zero file to repo success");
-
-        // Check invalid protocol function
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(backupProtocol(strNew(BOGUS_STR), paramList, server), false, "invalid function");
     }
 
     // *****************************************************************************************************************************
@@ -913,8 +905,7 @@ testRun(void)
         varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));  // cipherType
         varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
 
-        TEST_RESULT_BOOL(
-            backupProtocol(PROTOCOL_COMMAND_BACKUP_FILE_STR, paramList, server), true, "protocol backup file - recopy, encrypt");
+        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - recopy, encrypt");
         TEST_RESULT_STR_Z(
             strNewBuf(serverWrite), "{\"out\":[2,9,32,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
         bufUsedSet(serverWrite, 0);
@@ -1297,10 +1288,10 @@ testRun(void)
         TEST_TITLE("cannot resume when pgBackRest version has changed");
 
         Manifest *manifestResume = manifestNewInternal();
-        manifestResume->info = infoNew(NULL);
-        manifestResume->data.backupType = backupTypeFull;
-        manifestResume->data.backupLabel = STRDEF("20191003-105320F");
-        manifestResume->data.pgVersion = PG_VERSION_12;
+        manifestResume->pub.info = infoNew(NULL);
+        manifestResume->pub.data.backupType = backupTypeFull;
+        manifestResume->pub.data.backupLabel = STRDEF("20191003-105320F");
+        manifestResume->pub.data.pgVersion = PG_VERSION_12;
 
         manifestTargetAdd(manifestResume, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
         manifestPathAdd(manifestResume, &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR});
@@ -1313,8 +1304,8 @@ testRun(void)
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
         Manifest *manifest = manifestNewInternal();
-        manifest->data.backupType = backupTypeFull;
-        manifest->data.backrestVersion = STRDEF("BOGUS");
+        manifest->pub.data.backupType = backupTypeFull;
+        manifest->pub.data.backrestVersion = STRDEF("BOGUS");
 
         TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
 
@@ -1325,13 +1316,13 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifest->data.backrestVersion = STRDEF(PROJECT_VERSION);
+        manifest->pub.data.backrestVersion = STRDEF(PROJECT_VERSION);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when backup labels do not match (resumable is null)");
 
-        manifest->data.backupType = backupTypeFull;
-        manifest->data.backupLabelPrior = STRDEF("20191003-105320F");
+        manifest->pub.data.backupType = backupTypeFull;
+        manifest->pub.data.backupLabelPrior = STRDEF("20191003-105320F");
 
         manifestSave(
             manifestResume,
@@ -1348,13 +1339,13 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifest->data.backupLabelPrior = NULL;
+        manifest->pub.data.backupLabelPrior = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when backup labels do not match (new is null)");
 
-        manifest->data.backupType = backupTypeFull;
-        manifestResume->data.backupLabelPrior = STRDEF("20191003-105320F");
+        manifest->pub.data.backupType = backupTypeFull;
+        manifestResume->pub.data.backupLabelPrior = STRDEF("20191003-105320F");
 
         manifestSave(
             manifestResume,
@@ -1371,12 +1362,12 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifestResume->data.backupLabelPrior = NULL;
+        manifestResume->pub.data.backupLabelPrior = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when compression does not match");
 
-        manifestResume->data.backupOptionCompressType = compressTypeGz;
+        manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
 
         manifestSave(
             manifestResume,
@@ -1393,7 +1384,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F")), false, "check backup path removed");
 
-        manifestResume->data.backupOptionCompressType = compressTypeNone;
+        manifestResume->pub.data.backupOptionCompressType = compressTypeNone;
     }
 
     // *****************************************************************************************************************************
@@ -1907,18 +1898,18 @@ testRun(void)
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
 
             // Disable storageFeaturePath so paths will not be created before files are copied
-            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeaturePath;
+            ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeaturePath;
 
             // Disable storageFeaturePathSync so paths will not be synced
-            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeaturePathSync;
+            ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeaturePathSync;
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Enable storage features
-            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeaturePath;
-            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeaturePathSync;
+            ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePath;
+            ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePathSync;
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
@@ -2405,18 +2396,18 @@ testRun(void)
                 NULL);
 
             // Disable storageFeatureSymLink so tablespace (and latest) symlinks will not be created
-            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureSymLink;
+            ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureSymLink;
 
             // Disable storageFeatureHardLink so hardlinks will not be created
-            ((Storage *)storageRepoWrite())->interface.feature ^= 1 << storageFeatureHardLink;
+            ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Reset storage features
-            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeatureSymLink;
-            ((Storage *)storageRepoWrite())->interface.feature |= 1 << storageFeatureHardLink;
+            ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureSymLink;
+            ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureHardLink;
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"

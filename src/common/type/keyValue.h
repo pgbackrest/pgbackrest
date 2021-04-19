@@ -7,12 +7,15 @@ Key Value Handler
 /***********************************************************************************************************************************
 KeyValue object
 ***********************************************************************************************************************************/
-#define KEY_VALUE_TYPE                                              KeyValue
-#define KEY_VALUE_PREFIX                                            kv
-
 typedef struct KeyValue KeyValue;
 
+#include "common/type/object.h"
 #include "common/type/variantList.h"
+
+/***********************************************************************************************************************************
+Constant to indicate key not found
+***********************************************************************************************************************************/
+#define KEY_NOT_FOUND                                               UINT_MAX
 
 /***********************************************************************************************************************************
 Constructors
@@ -21,15 +24,33 @@ KeyValue *kvNew(void);
 KeyValue *kvDup(const KeyValue *source);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct KeyValuePub
+{
+    MemContext *memContext;                                         // Mem context
+    VariantList *keyList;                                           // List of keys
+} KeyValuePub;
+
+// List of keys
+__attribute__((always_inline)) static inline const VariantList *
+kvKeyList(const KeyValue *const this)
+{
+    return THIS_PUB(KeyValue)->keyList;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Add value to key -- if the key does not exist then this works the same as kvPut()
 KeyValue *kvAdd(KeyValue *this, const Variant *key, const Variant *value);
 
-// List of keys
-const VariantList *kvKeyList(const KeyValue *this);
-
-KeyValue *kvMove(KeyValue *this, MemContext *parentNew);
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline KeyValue *
+kvMove(KeyValue *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Put key/value pair
 KeyValue *kvPut(KeyValue *this, const Variant *key, const Variant *value);
@@ -44,8 +65,15 @@ const Variant *kvGet(const KeyValue *this, const Variant *key);
 // Get a value using the key and return a default if not found
 const Variant *kvGetDefault(const KeyValue *this, const Variant *key, const Variant *defaultValue);
 
+// Get key index if it exists
+unsigned int kvGetIdx(const KeyValue *this, const Variant *key);
+
 // Does the key exist (even if the value is NULL)
-bool kvKeyExists(const KeyValue *this, const Variant *key);
+__attribute__((always_inline)) static inline bool
+kvKeyExists(const KeyValue *const this, const Variant *const key)
+{
+    return kvGetIdx(this, key) != KEY_NOT_FOUND;
+}
 
 // Get a value as a list (even if there is only one value) using the key
 VariantList *kvGetList(const KeyValue *this, const Variant *key);
@@ -53,7 +81,11 @@ VariantList *kvGetList(const KeyValue *this, const Variant *key);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void kvFree(KeyValue *this);
+__attribute__((always_inline)) static inline void
+kvFree(KeyValue *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

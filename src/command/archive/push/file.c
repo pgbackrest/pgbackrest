@@ -29,6 +29,23 @@ typedef enum
     archivePushFileIoTypeClose,
 } ArchivePushFileIoType;
 
+// Helper to add errors to the list
+static void
+archivePushErrorAdd(StringList *errorList, unsigned int repoIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, errorList);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+    FUNCTION_TEST_END();
+
+    strLstAdd(
+        errorList,
+        strNewFmt(
+            "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static bool
 archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buffer, unsigned int repoIdx, StringList *errorList)
 {
@@ -67,10 +84,7 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
     // Handle errors
     CATCH_ANY()
     {
-        strLstAdd(
-            errorList,
-            strNewFmt(
-                "repo%u: [%s] %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+        archivePushErrorAdd(errorList, repoIdx);
         result = false;
     }
     TRY_END();
@@ -81,36 +95,37 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
 /**********************************************************************************************************************************/
 ArchivePushFileResult
 archivePushFile(
-    const String *walSource, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile, CompressType compressType,
-    int compressLevel, const ArchivePushFileRepoData *repoData)
+    const String *walSource, bool headerCheck, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
+    CompressType compressType, int compressLevel, const List *const repoList, const StringList *const priorErrorList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSource);
+        FUNCTION_LOG_PARAM(BOOL, headerCheck);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(STRING, archiveFile);
         FUNCTION_LOG_PARAM(ENUM, compressType);
         FUNCTION_LOG_PARAM(INT, compressLevel);
-        FUNCTION_LOG_PARAM_P(VOID, repoData);
+        FUNCTION_LOG_PARAM_P(VOID, repoList);
+        FUNCTION_LOG_PARAM(STRING_LIST, priorErrorList);
     FUNCTION_LOG_END();
 
     ASSERT(walSource != NULL);
     ASSERT(archiveFile != NULL);
-    ASSERT(repoData != NULL);
+    ASSERT(repoList != NULL);
+    ASSERT(priorErrorList != NULL);
+    ASSERT(lstSize(repoList) > 0);
 
     ArchivePushFileResult result = {.warnList = strLstNew()};
-    StringList *errorList = strLstNew();
+    StringList *errorList = strLstDup(priorErrorList);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Total repos to push files to
-        unsigned int repoTotal = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
-
         // Is this a WAL segment?
         bool isSegment = walIsSegment(archiveFile);
 
         // If this is a segment compare archive version and systemId to the WAL header
-        if (isSegment)
+        if (headerCheck && isSegment)
         {
             PgWal walInfo = pgWalFromFile(walSource, storageLocal());
 
@@ -129,10 +144,10 @@ archivePushFile(
 
         // Assume that all repos need a copy of the archive file
         bool destinationCopyAny = true;
-        bool *destinationCopy = memNew(sizeof(bool) * repoTotal);
+        bool *destinationCopy = memNew(sizeof(bool) * lstSize(repoList));
 
-        for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
-            destinationCopy[repoIdx] = true;
+        for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
+            destinationCopy[repoListIdx] = true;
 
         // Get wal segment checksum and compare it to what exists in the repo, if any
         if (isSegment)
@@ -148,11 +163,29 @@ archivePushFile(
             const String *walSegmentChecksum = varStr(ioFilterGroupResult(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE_STR));
 
             // Check each repo for the WAL segment
-            for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
-                // If the wal segment already exists in the repo then compare checksums
-                const String *walSegmentFile = walSegmentFind(storageRepoIdx(repoIdx), repoData[repoIdx].archiveId, archiveFile, 0);
+                const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
 
+                // Check if the WAL segement already exists in the repo
+                const String *walSegmentFile = NULL;
+
+                TRY_BEGIN()
+                {
+                    walSegmentFile = walSegmentFind(storageRepoIdx(repoData->repoIdx), repoData->archiveId, archiveFile, 0);
+                }
+                CATCH_ANY()
+                {
+                    archivePushErrorAdd(errorList, repoData->repoIdx);
+                    destinationCopy[repoListIdx] = false;
+                }
+                TRY_END();
+
+                // If there was an error try the next repo
+                if (!destinationCopy[repoListIdx])
+                    continue;
+
+                // If the WAL segment was found validate the checksum
                 if (walSegmentFile != NULL)
                 {
                     String *walSegmentRepoChecksum = strSubN(walSegmentFile, strSize(archiveFile) + 1, HASH_TYPE_SHA1_SIZE_HEX);
@@ -168,19 +201,20 @@ archivePushFile(
                                 strNewFmt(
                                     "WAL file '%s' already exists in the repo%u archive with the same checksum"
                                     "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                    strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx)));
+                                    strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoData->repoIdx)));
                         }
                         MEM_CONTEXT_PRIOR_END();
 
                         // No need to copy to this repo
-                        destinationCopy[repoIdx] = false;
+                        destinationCopy[repoListIdx] = false;
                     }
-                    // Else error so we don't overwrite the existing segment
+                    // Else error so we don't overwrite the existing segment. Do not continue processing after this error since it
+                    // indicates corruption, split brain, or some other unrecoverable error.
                     else
                     {
                         THROW_FMT(
                             ArchiveDuplicateError, "WAL file '%s' already exists in the repo%u archive with a different checksum",
-                            strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+                            strZ(archiveFile), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoData->repoIdx));
                     }
                 }
                 // Else the repo needs a copy
@@ -210,26 +244,27 @@ archivePushFile(
             }
 
             // Initialize per-repo destination files
-            StorageWrite **destination = memNew(sizeof(StorageWrite *) * repoTotal);
+            StorageWrite **destination = memNew(sizeof(StorageWrite *) * lstSize(repoList));
 
-            for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
+                const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
+
                 // Does this repo need a copy?
-                if (destinationCopy[repoIdx])
+                if (destinationCopy[repoListIdx])
                 {
                     // Create destination file
-                    destination[repoIdx] = storageNewWriteP(
-                        storageRepoIdxWrite(repoIdx),
-                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData[repoIdx].archiveId), strZ(archiveDestination)),
+                    destination[repoListIdx] = storageNewWriteP(
+                        storageRepoIdxWrite(repoData->repoIdx),
+                        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData->archiveId), strZ(archiveDestination)),
                         .compressible = compressible);
 
                     // If there is a cipher then add the encrypt filter
-                    if (repoData[repoIdx].cipherType != cipherTypeNone)
+                    if (repoData->cipherType != cipherTypeNone)
                     {
                         ioFilterGroupAdd(
-                            ioWriteFilterGroup(storageWriteIo(destination[repoIdx])),
-                            cipherBlockNew(
-                                cipherModeEncrypt, repoData[repoIdx].cipherType, BUFSTR(repoData[repoIdx].cipherPass), NULL));
+                            ioWriteFilterGroup(storageWriteIo(destination[repoListIdx])),
+                            cipherBlockNew(cipherModeEncrypt, repoData->cipherType, BUFSTR(repoData->cipherPass), NULL));
                     }
                 }
             }
@@ -238,12 +273,14 @@ archivePushFile(
             ioReadOpen(storageReadIo(source));
 
             // Open the destination files now that we know the source file exists and is readable
-            for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
-                if (destinationCopy[repoIdx])
+                const unsigned int repoIdx = ((ArchivePushFileRepoData *)lstGet(repoList, repoListIdx))->repoIdx;
+
+                if (destinationCopy[repoListIdx])
                 {
-                    destinationCopy[repoIdx] = archivePushFileIo(
-                        archivePushFileIoTypeOpen, storageWriteIo(destination[repoIdx]), NULL, repoIdx, errorList);
+                    destinationCopy[repoListIdx] = archivePushFileIo(
+                        archivePushFileIoTypeOpen, storageWriteIo(destination[repoListIdx]), NULL, repoIdx, errorList);
                 }
             }
 
@@ -256,12 +293,14 @@ archivePushFile(
                 ioRead(storageReadIo(source), read);
 
                 // Write to each destination
-                for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+                for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
                 {
-                    if (destinationCopy[repoIdx])
+                    const unsigned int repoIdx = ((ArchivePushFileRepoData *)lstGet(repoList, repoListIdx))->repoIdx;
+
+                    if (destinationCopy[repoListIdx])
                     {
-                        destinationCopy[repoIdx] = archivePushFileIo(
-                            archivePushFileIoTypeWrite, storageWriteIo(destination[repoIdx]), read, repoIdx, errorList);
+                        destinationCopy[repoListIdx] = archivePushFileIo(
+                            archivePushFileIoTypeWrite, storageWriteIo(destination[repoListIdx]), read, repoIdx, errorList);
                     }
                 }
 
@@ -273,19 +312,21 @@ archivePushFile(
             // Close the source and destination files
             ioReadClose(storageReadIo(source));
 
-            for (unsigned int repoIdx = 0; repoIdx < repoTotal; repoIdx++)
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
-                if (destinationCopy[repoIdx])
+                const unsigned int repoIdx = ((ArchivePushFileRepoData *)lstGet(repoList, repoListIdx))->repoIdx;
+
+                if (destinationCopy[repoListIdx])
                 {
-                    destinationCopy[repoIdx] = archivePushFileIo(
-                        archivePushFileIoTypeClose, storageWriteIo(destination[repoIdx]), NULL, repoIdx, errorList);
+                    destinationCopy[repoListIdx] = archivePushFileIo(
+                        archivePushFileIoTypeClose, storageWriteIo(destination[repoListIdx]), NULL, repoIdx, errorList);
                 }
             }
         }
     }
     MEM_CONTEXT_TEMP_END();
 
-    // Throw any errors, even if some files were successful. It is important that PostgreSQL recieves an error so it does not
+    // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it does not
     // remove the file.
     if (strLstSize(errorList) > 0)
         THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));

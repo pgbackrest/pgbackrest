@@ -8,6 +8,7 @@ casts to queries to output one of these types.
 #ifndef POSTGRES_QUERY_H
 #define POSTGRES_QUERY_H
 
+#include "common/type/object.h"
 #include "common/type/string.h"
 #include "common/type/variantList.h"
 #include "common/time.h"
@@ -15,9 +16,6 @@ casts to queries to output one of these types.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PG_CLIENT_TYPE                                               PgClient
-#define PG_CLIENT_PREFIX                                             pgClient
-
 typedef struct PgClient PgClient;
 
 /***********************************************************************************************************************************
@@ -33,7 +31,11 @@ Functions
 PgClient *pgClientOpen(PgClient *this);
 
 // Move to a new parent mem context
-PgClient *pgClientMove(PgClient *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline PgClient *
+pgClientMove(PgClient *this, MemContext *parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Execute a query and return results
 VariantList *pgClientQuery(PgClient *this, const String *query);
@@ -44,7 +46,11 @@ void pgClientClose(PgClient *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void pgClientFree(PgClient *this);
+__attribute__((always_inline)) static inline void
+pgClientFree(PgClient *this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

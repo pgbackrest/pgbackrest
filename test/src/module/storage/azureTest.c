@@ -188,13 +188,13 @@ testRun(void)
         Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->account, TEST_ACCOUNT_STR, "    check account");
-        TEST_RESULT_STR(((StorageAzure *)storage->driver)->container, TEST_CONTAINER_STR, "    check container");
+        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->account, TEST_ACCOUNT_STR, "    check account");
+        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->container, TEST_CONTAINER_STR, "    check container");
         TEST_RESULT_STR(
-            strNewEncode(encodeBase64, ((StorageAzure *)storage->driver)->sharedKey), TEST_KEY_SHARED_STR, "    check key");
-        TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
-        TEST_RESULT_STR_Z(((StorageAzure *)storage->driver)->pathPrefix, "/" TEST_CONTAINER, "    check path prefix");
-        TEST_RESULT_UINT(((StorageAzure *)storage->driver)->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
+            strNewEncode(encodeBase64, ((StorageAzure *)storageDriver(storage))->sharedKey), TEST_KEY_SHARED_STR, "    check key");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".blob.core.windows.net", "    check host");
+        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "    check path prefix");
+        TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "    check block size");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
     }
@@ -298,7 +298,7 @@ testRun(void)
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
-                driver = (StorageAzure *)storage->driver;
+                driver = (StorageAzure *)storageDriver(storage);
                 TEST_RESULT_STR(driver->host, hrnServerHost(), "    check host");
                 TEST_RESULT_STR_Z(driver->pathPrefix,  "/" TEST_ACCOUNT "/" TEST_CONTAINER, "    check path prefix");
                 TEST_RESULT_BOOL(driver->fileId == 0, false, "    check file id");
@@ -474,6 +474,11 @@ testRun(void)
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, strNew("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for / does not exist");
+
+                TEST_RESULT_BOOL(storageInfoP(storage, NULL, .ignoreMissing = true).exists, false, "info for /");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
@@ -730,7 +735,7 @@ testRun(void)
 
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
-                driver = (StorageAzure *)storage->driver;
+                driver = (StorageAzure *)storageDriver(storage);
                 TEST_RESULT_PTR_NE(driver->sasKey, NULL, "check sas key");
 
                 hrnServerScriptAccept(service);

@@ -57,14 +57,13 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     {
         strCatFmt(
             request,
-                "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,"
-                    "SignedHeaders=content-length",
-                param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
+            "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,SignedHeaders=",
+            param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
 
         if (param.content != NULL)
-            strCatZ(request, ";content-md5");
+            strCatZ(request, "content-md5;");
 
-        strCatZ(request, ";host;x-amz-content-sha256;x-amz-date");
+        strCatZ(request, "host;x-amz-content-sha256;x-amz-date");
 
         if (securityToken != NULL)
             strCatZ(request, ";x-amz-security-token");
@@ -389,7 +388,7 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(0, true);
-                StorageS3 *driver = (StorageS3 *)s3->driver;
+                StorageS3 *driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
@@ -447,7 +446,7 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
-                driver = (StorageS3 *)s3->driver;
+                driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_STR(driver->credRole, credRole, "check role");
@@ -734,6 +733,11 @@ testRun(void)
                 TEST_RESULT_BOOL(storageExistsP(s3, strNew("BOGUS")), false, "check");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for / does not exist");
+
+                TEST_RESULT_BOOL(storageInfoP(s3, NULL, .ignoreMissing = true).exists, false, "info for /");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
 
                 // File missing
@@ -1016,7 +1020,7 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
-                driver = (StorageS3 *)s3->driver;
+                driver = (StorageS3 *)storageDriver(s3);
 
                 // Set deleteMax to a small value for testing
                 driver->deleteMax = 2;

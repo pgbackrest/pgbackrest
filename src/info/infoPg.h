@@ -9,9 +9,6 @@ PostgreSQL Info Handler
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define INFO_PG_TYPE                                                InfoPg
-#define INFO_PG_PREFIX                                              infoPg
-
 typedef struct InfoPg InfoPg;
 
 #include "common/crypto/common.h"
@@ -54,26 +51,30 @@ InfoPg *infoPgNew(InfoPgType type, const String *cipherPassSub);
 InfoPg *infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Add Postgres data to the history list at position 0 to ensure the latest history is always first in the list
-void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
-
-// Save to IO
-void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
-
-// Set the InfoPg object data based on values passed
-InfoPg *infoPgSet(
-    InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion);
-
-/***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct InfoPgPub
+{
+    Info *info;                                                     // Info contents
+    List *history;                                                  // A list of InfoPgData
+} InfoPgPub;
+
 // Archive id
 String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
 
+// Base info
+__attribute__((always_inline)) static inline Info *
+infoPgInfo(const InfoPg *const this)
+{
+    return THIS_PUB(InfoPg)->info;
+}
+
 // Return the cipher passphrase
-const String *infoPgCipherPass(const InfoPg *this);
+__attribute__((always_inline)) static inline const String *
+infoPgCipherPass(const InfoPg *const this)
+{
+    return infoCipherPass(infoPgInfo(this));
+}
 
 // Return current pgId from the history
 unsigned int infoPgCurrentDataId(const InfoPg *this);
@@ -88,10 +89,24 @@ InfoPgData infoPgDataCurrent(const InfoPg *this);
 unsigned int infoPgDataCurrentId(const InfoPg *this);
 
 // Total PostgreSQL data in the history
-unsigned int infoPgDataTotal(const InfoPg *this);
+__attribute__((always_inline)) static inline unsigned int
+infoPgDataTotal(const InfoPg *const this)
+{
+    return lstSize(THIS_PUB(InfoPg)->history);
+}
 
-// Base info
-Info *infoPgInfo(const InfoPg *this);
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Add Postgres data to the history list at position 0 to ensure the latest history is always first in the list
+void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
+
+// Save to IO
+void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
+
+// Set the InfoPg object data based on values passed
+InfoPg *infoPgSet(
+    InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion);
 
 /***********************************************************************************************************************************
 Macros for function logging

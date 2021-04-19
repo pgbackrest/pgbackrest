@@ -16,7 +16,7 @@ C Debug Harness
 
     // Set line numer of the current function in the stack trace. This is used to give more detailed info about which test macro
     // caused an error.
-    #ifndef NDEBUG
+    #ifdef DEBUG
         #define FUNCTION_HARNESS_STACK_TRACE_LINE_SET(lineNo)                                                                      \
             stackTraceTestFileLineSet((unsigned int)lineNo)
     #else
