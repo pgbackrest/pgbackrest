@@ -68,8 +68,6 @@ Option constants
     STRING_DECLARE(CFGOPT_ARCHIVE_COPY_STR);
 #define CFGOPT_ARCHIVE_GET_QUEUE_MAX                                "archive-get-queue-max"
     STRING_DECLARE(CFGOPT_ARCHIVE_GET_QUEUE_MAX_STR);
-#define CFGOPT_ARCHIVE_HEADER_CHECK                                 "archive-header-check"
-    STRING_DECLARE(CFGOPT_ARCHIVE_HEADER_CHECK_STR);
 #define CFGOPT_ARCHIVE_MODE                                         "archive-mode"
     STRING_DECLARE(CFGOPT_ARCHIVE_MODE_STR);
 #define CFGOPT_ARCHIVE_MODE_CHECK                                   "archive-mode-check"
@@ -102,6 +100,8 @@ Option constants
     STRING_DECLARE(CFGOPT_CONFIG_INCLUDE_PATH_STR);
 #define CFGOPT_CONFIG_PATH                                          "config-path"
     STRING_DECLARE(CFGOPT_CONFIG_PATH_STR);
+#define CFGOPT_DB_EXCLUDE                                           "db-exclude"
+    STRING_DECLARE(CFGOPT_DB_EXCLUDE_STR);
 #define CFGOPT_DB_INCLUDE                                           "db-include"
     STRING_DECLARE(CFGOPT_DB_INCLUDE_STR);
 #define CFGOPT_DB_TIMEOUT                                           "db-timeout"
@@ -259,7 +259,6 @@ typedef enum
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
     cfgOptArchiveGetQueueMax,
-    cfgOptArchiveHeaderCheck,
     cfgOptArchiveMode,
     cfgOptArchiveModeCheck,
     cfgOptArchivePushQueueMax,
@@ -276,6 +275,7 @@ typedef enum
     cfgOptConfig,
     cfgOptConfigIncludePath,
     cfgOptConfigPath,
+    cfgOptDbExclude,
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,
