@@ -46,7 +46,7 @@ Number of bits to use for encoding. The number of bits affects the character set
 ***********************************************************************************************************************************/
 typedef enum
 {
-    stringIdBit5 = 0,                                               // 5-bit encoding for a-z, 1-4, and - characters
+    stringIdBit5 = 0,                                               // 5-bit encoding for a-z, 2, 5, 6, and - characters
     stringIdBit6 = 1,                                               // 6-bit encoding for a-z, 0-9, A-Z, and - characters
 } StringIdBit;
 

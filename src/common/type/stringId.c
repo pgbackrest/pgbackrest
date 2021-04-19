@@ -39,7 +39,7 @@ strIdFromZN(const StringIdBit bit, const char *const buffer, const size_t size)
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 27,  0,  0,
-                 0, 28, 29, 30, 31,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+                 0,  0, 28,  0,  0, 29, 30,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
@@ -232,7 +232,7 @@ strIdToZN(StringId strId, char *const buffer)
         case stringIdBit5:
         {
             // Map to convert encoding to characters
-            const char map[32] = "!abcdefghijklmnopqrstuvwxyz-1234";
+            const char map[32] = "!abcdefghijklmnopqrstuvwxyz-256!";
 
             // Macro to decode all but the last character
             #define STR5ID_TO_ZN_IDX(idx)                                                                                          \
