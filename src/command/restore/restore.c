@@ -1400,15 +1400,19 @@ restoreSelectiveExpression(Manifest *manifest)
                 strLstRemove(dbList, includeDb);
             }
 
-            // Remove the system databases from list of DBs to zero unless they are excluded explicitly
-            strLstSort(systemDbIdList, sortOrderAsc);
-            strLstSort(excludeDbIdList, sortOrderAsc);
-            systemDbIdList = strLstMergeAnti(systemDbIdList, excludeDbIdList);
-            dbList = strLstMergeAnti(dbList, systemDbIdList);
-
             // Only exclude specified db in case no db to include has been provided
-            if (strLstSize(includeList) <= 0)
+            if (strLstEmpty(includeList))
+            {
                 dbList = strLstDup(excludeDbIdList);
+            }
+            // Else, remove the system databases from list of DBs to zero unless they are excluded explicitly
+            else
+            {
+                strLstSort(systemDbIdList, sortOrderAsc);
+                strLstSort(excludeDbIdList, sortOrderAsc);
+                systemDbIdList = strLstMergeAnti(systemDbIdList, excludeDbIdList);
+                dbList = strLstMergeAnti(dbList, systemDbIdList);
+            }
 
             // Build regular expression to identify files that will be zeroed
             String *expression = NULL;

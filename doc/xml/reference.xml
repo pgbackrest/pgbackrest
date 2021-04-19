@@ -937,7 +937,7 @@
 
                         <text>Databases excluded will be restored as sparse, zeroed files to save space but still allow <postgres/> to perform recovery. After recovery, those databases will not be accessible but can be removed with the <id>drop database</id> command. The <setting>{[dash]}-db-exclude</setting> option can be passed multiple times to specify more than one database to exclude.
 
-                        When used in combination with the <setting>{[dash]}-db-include</setting> option, <setting>{[dash]}-db-exclude</setting> will only affect standard system databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>).</text>
+                        When used in combination with the <setting>{[dash]}-db-include</setting> option, <setting>{[dash]}-db-exclude</setting> will only apply to standard system databases (<id>template0</id>, <id>template1</id>, and <id>postgres</id>).</text>
 
                         <example>db_main</example>
                     </config-key>
