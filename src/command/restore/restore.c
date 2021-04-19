@@ -1279,8 +1279,8 @@ restoreSelectiveExpression(Manifest *manifest)
 
     String *result = NULL;
 
-    // Continue if db-include is specified
-    if (cfgOptionTest(cfgOptDbInclude))
+    // Continue if databases to include or exclude have been specified
+    if (cfgOptionTest(cfgOptDbExclude) || cfgOptionTest(cfgOptDbInclude))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1345,6 +1345,30 @@ restoreSelectiveExpression(Manifest *manifest)
             // Log databases found
             LOG_DETAIL_FMT("databases found for selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
+            // Generate list with ids of databases to exclude
+            StringList *excludeDbIdList = strLstNew();
+            const StringList *excludeList = strLstNewVarLst(cfgOptionLst(cfgOptDbExclude));
+
+            for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
+            {
+                const String *excludeDb = strLstGet(excludeList, excludeIdx);
+
+                // If the db to exclude is not in the list as an id then search by name
+                if (!strLstExists(dbList, excludeDb))
+                {
+                    const ManifestDb *db = manifestDbFindDefault(manifest, excludeDb, NULL);
+
+                    if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
+                        THROW_FMT(DbMissingError, "database to exclude '%s' does not exist", strZ(excludeDb));
+
+                    // Set the exclude db to the id if the name mapping was successful
+                    excludeDb = varStrForce(VARUINT(db->id));
+                }
+
+                // Add to exclude list
+                strLstAdd(excludeDbIdList, excludeDb);
+            }
+
             // Remove included databases from the list
             const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
 
@@ -1368,13 +1392,27 @@ restoreSelectiveExpression(Manifest *manifest)
                 if (strLstExists(systemDbIdList, includeDb))
                     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
 
+                // Error if the db id is in the exclude list
+                if (strLstExists(excludeDbIdList, includeDb))
+                    THROW_FMT(DbInvalidError, "database to include '%s' is in the exclude list", strZ(includeDb));
+
                 // Remove from list of DBs to zero
                 strLstRemove(dbList, includeDb);
             }
 
-            // Exclude the system databases from the list
-            strLstSort(systemDbIdList, sortOrderAsc);
-            dbList = strLstMergeAnti(dbList, systemDbIdList);
+            // Only exclude specified db in case no db to include has been provided
+            if (strLstEmpty(includeList))
+            {
+                dbList = strLstDup(excludeDbIdList);
+            }
+            // Else, remove the system databases from list of DBs to zero unless they are excluded explicitly
+            else
+            {
+                strLstSort(systemDbIdList, sortOrderAsc);
+                strLstSort(excludeDbIdList, sortOrderAsc);
+                systemDbIdList = strLstMergeAnti(systemDbIdList, excludeDbIdList);
+                dbList = strLstMergeAnti(dbList, systemDbIdList);
+            }
 
             // Build regular expression to identify files that will be zeroed
             String *expression = NULL;
