@@ -99,10 +99,11 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
 Helper function for helpRender() to make output look good on a console
 ***********************************************************************************************************************************/
 static String *
-helpRenderText(const String *text, size_t indent, bool indentFirst, size_t length)
+helpRenderText(const String *text, const bool internal, size_t indent, bool indentFirst, size_t length)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, text);
+        FUNCTION_LOG_PARAM(BOOL, internal);
         FUNCTION_LOG_PARAM(SIZE, indent);
         FUNCTION_LOG_PARAM(BOOL, indentFirst);
         FUNCTION_LOG_PARAM(SIZE, length);
@@ -114,7 +115,8 @@ helpRenderText(const String *text, size_t indent, bool indentFirst, size_t lengt
     String *result = strNew("");
 
     // Split the text into paragraphs
-    StringList *lineList = strLstNewSplitZ(text, "\n");
+    StringList *lineList = strLstNewSplitZ(
+        strNewFmt("%s%s", strZ(text), internal ? "\n\nFOR INTERNAL USE ONLY. DO NOT USE IN PRODUCTION." : ""), "\n");
 
     // Iterate through each paragraph and split the lines according to the line length
     for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
@@ -296,7 +298,7 @@ helpRender(void)
                 strCatFmt(
                     result, "    %s%*s%s\n", cfgCommandName(commandId),
                     (int)(commandSizeMax - strlen(cfgCommandName(commandId)) + 2), "",
-                    strZ(helpRenderText(commandData[commandId].summary, commandSizeMax + 6, false, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(commandData[commandId].summary, false, commandSizeMax + 6, false, CONSOLE_WIDTH)));
             }
 
             // Construct message for more help
@@ -376,7 +378,9 @@ helpRender(void)
             // If no additional params then this is command help
             if (strLstEmpty(cfgCommandParam()))
             {
-                // Output command summary and description
+                // Output command summary and description. Add a warning for internal commands.
+                CHECK(commandData[commandId].summary != NULL && commandData[commandId].description != NULL);
+
                 strCatFmt(
                     result,
                     " help\n"
@@ -384,8 +388,10 @@ helpRender(void)
                     "%s\n"
                     "\n"
                     "%s\n",
-                    strZ(helpRenderText(commandData[commandId].summary, 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(commandData[commandId].description, 0, true, CONSOLE_WIDTH)));
+                    strZ(helpRenderText(commandData[commandId].summary, false, 0, true, CONSOLE_WIDTH)),
+                    strZ(
+                        helpRenderText(
+                            commandData[commandId].description, commandData[commandId].internal, 0, true, CONSOLE_WIDTH)));
 
                 // Construct key/value of sections and options
                 KeyValue *optionKv = kvNew();
@@ -463,7 +469,7 @@ helpRender(void)
                         strCatFmt(
                             result, "  --%s%*s%s\n",
                             cfgParseOptionName(optionId), (int)(optionSizeMax - strlen(cfgParseOptionName(optionId)) + 2), "",
-                            strZ(helpRenderText(summary, optionSizeMax + 6, false, CONSOLE_WIDTH)));
+                            strZ(helpRenderText(summary, false, optionSizeMax + 6, false, CONSOLE_WIDTH)));
                     }
                 }
 
@@ -482,72 +488,55 @@ helpRender(void)
                 const String *optionName = strLstGet(cfgCommandParam(), 0);
                 CfgParseOptionResult option = cfgParseOption(optionName);
 
-                // If the option was not found it might be an indexed option without the index, e.g. repo-host instead of
-                // repo1.host. This is valid for help even though the parser will reject it.
                 if (!option.found)
                 {
                     int optionId = cfgParseOptionId(strZ(optionName));
 
-                    if (optionId != -1)
-                    {
+                    if (optionId == -1)
+                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
+                    else
                         option.id = (unsigned int)optionId;
-                        option.found = true;
-                    }
                 }
 
-                // Error when option is not found or is invalid for the current command
-                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleDefault, option.id))
-                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
-
-                // Output option summary. If there is no summary then this is an internal option without help.
-                const String *summary = optionData[option.id].summary;
-
-                if (summary == NULL)
-                    summary = STRDEF("no help available for internal option.");
+                // Output option summary and description. Add a warning for internal options.
+                CHECK(optionData[option.id].summary != NULL && optionData[option.id].description != NULL);
 
                 strCatFmt(
                     result,
                     " - '%s' option help\n"
                     "\n"
+                    "%s\n"
+                    "\n"
                     "%s\n",
-                    cfgParseOptionName(option.id), strZ(helpRenderText(summary, 0, true, CONSOLE_WIDTH)));
+                    cfgParseOptionName(option.id),
+                    strZ(helpRenderText(optionData[option.id].summary, false, 0, true, CONSOLE_WIDTH)),
+                    strZ(
+                        helpRenderText(optionData[option.id].description, optionData[option.id].internal, 0, true, CONSOLE_WIDTH)));
 
-                // Output option description, current value, default, etc. if there is a summary
-                if (summary != NULL)
+                // Ouput current and default values if they exist
+                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
+                const String *value = NULL;
+
+                if (cfgOptionIdxSource(option.id, 0) != cfgSourceDefault)
+                    value = helpRenderValue(cfgOptionIdx(option.id, 0), cfgParseOptionType(option.id));
+
+                if (value != NULL || defaultValue != NULL)
                 {
-                    CHECK(optionData[option.id].description != NULL);
+                    strCat(result, LF_STR);
 
+                    if (value != NULL)
+                        strCatFmt(result, "current: %s\n", cfgParseOptionSecure(option.id) ? "<redacted>" : strZ(value));
+
+                    if (defaultValue != NULL)
+                        strCatFmt(result, "default: %s\n", strZ(defaultValue));
+                }
+
+                // Output alternate name (call it deprecated so the user will know not to use it)
+                if (optionData[option.id].deprecatedNames != NULL)
+                {
                     strCatFmt(
-                        result,
-                        "\n"
-                        "%s\n",
-                        strZ(helpRenderText(optionData[option.id].description, 0, true, CONSOLE_WIDTH)));
-
-                    // Ouput current and default values if they exist
-                    const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
-                    const String *value = NULL;
-
-                    if (cfgOptionIdxSource(option.id, 0) != cfgSourceDefault)
-                        value = helpRenderValue(cfgOptionIdx(option.id, 0), cfgParseOptionType(option.id));
-
-                    if (value != NULL || defaultValue != NULL)
-                    {
-                        strCat(result, LF_STR);
-
-                        if (value != NULL)
-                            strCatFmt(result, "current: %s\n", cfgParseOptionSecure(option.id) ? "<redacted>" : strZ(value));
-
-                        if (defaultValue != NULL)
-                            strCatFmt(result, "default: %s\n", strZ(defaultValue));
-                    }
-
-                    // Output alternate name (call it deprecated so the user will know not to use it)
-                    if (optionData[option.id].deprecatedNames != NULL)
-                    {
-                        strCatFmt(
-                            result, "\ndeprecated name%s: %s\n", strLstSize(optionData[option.id].deprecatedNames) > 1 ? "s" : "",
-                            strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
-                    }
+                        result, "\ndeprecated name%s: %s\n", strLstSize(optionData[option.id].deprecatedNames) > 1 ? "s" : "",
+                        strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
                 }
             }
         }
