@@ -212,9 +212,6 @@ sub process
 
     foreach my $strOption (sort(keys(%{$oOptionDefine})))
     {
-        # Skip options that are internal only for all commands (test options)
-        next if $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
-
         # Iterate through all commands
         my @stryCommandList = sort(keys(%{defined($$oOptionDefine{$strOption}{&CFGDEF_COMMAND}) ?
                               $$oOptionDefine{$strOption}{&CFGDEF_COMMAND} : $$oConfigHash{&CONFIG_HELP_COMMAND}}));
@@ -232,9 +229,6 @@ sub process
             {
                 next;
             }
-
-            # Skip options that are internal only for the current command
-            next if $oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL};
 
             my $oCommandDoc = $oDoc->nodeGet('operation')->nodeGet('command-list')->nodeGetById('command', $strCommand);
 
@@ -286,11 +280,14 @@ sub process
 
                     # If a section is specified then use it, otherwise the option should be general since it is not for a specific
                     # command
-                    $strSection = $oOptionDoc->paramGet('section', false);
-
-                    if (!defined($strSection))
+                    if (defined($oOptionDoc))
                     {
-                        $strSection = "general";
+                        $strSection = $oOptionDoc->paramGet('section', false);
+
+                        if (!defined($strSection))
+                        {
+                            $strSection = "general";
+                        }
                     }
                 }
             }

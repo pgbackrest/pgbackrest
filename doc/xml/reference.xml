@@ -210,6 +210,24 @@
                         <example>120</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="job-retry" name="Job Retry">
+                        <summary>Will local jobs be retried?</summary>
+
+                        <text>!!!</text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="job-retry-interval" name="Job Retry Interval">
+                        <summary>!!!</summary>
+
+                        <text>!!!</text>
+
+                        <example>!!!</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - LOCK-PATH KEY -->
                     <config-key id="lock-path" name="Lock Path">
                         <summary>Path where lock files are stored.</summary>
@@ -263,6 +281,15 @@
                         <text>Sets the timeout, in seconds, that the local or remote process will wait for a new message to be received on the protocol layer.  This prevents processes from waiting indefinitely for a message. <admonition type="note">The <br-option>protocol-timeout</br-option> option must be greater than the <br-option>db-timeout</br-option> option.</admonition></text>
 
                         <example>630</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="sck-block" name="Socket Blocking">
+                        <summary>Socket blocking enable.</summary>
+
+                        <text>!!!</text>
+
+                        <example>y</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - SCK-KEEP-ALIVE KEY -->
@@ -484,6 +511,15 @@
                         <summary>Hardlink files between backups in the repository.</summary>
 
                         <text>Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each backup is a full backup at the file-system level.  Be careful, though, because modifying files that are hard-linked can affect all the backups in the set.</text>
+
+                        <example>y</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-local" name="Repository Locality">
+                        <summary>!!!</summary>
+
+                        <text>!!!</text>
 
                         <example>y</example>
                     </config-key>
@@ -1096,6 +1132,15 @@
                         <example>backupdb</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-local" name="PostgreSQL Locality">
+                        <summary>!!!</summary>
+
+                        <text>!!!</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - STANZA SECTION - PG-PATH KEY -->
                     <config-key id="pg-path" name="PostgreSQL Path">
                         <summary><postgres/> data directory.</summary>
@@ -1208,6 +1253,15 @@
                     <summary>Execute a dry-run for the command.</summary>
 
                     <text>The <br-option>{[dash]}-dry-run</br-option> option is a command-line only option and can be passed when it is desirable to determine what modifications will be made by the command without the command actually making any modifications.</text>
+
+                    <example>y</example>
+                </option>
+
+                <!-- =========================================================================================================== -->
+                <option id="exec-id" name="Execution Identifier">
+                    <summary>Unique identifier for the process.</summary>
+
+                    <text>!!!</text>
 
                     <example>y</example>
                 </option>
