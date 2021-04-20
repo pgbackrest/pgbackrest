@@ -12,6 +12,7 @@ typedef struct ProtocolServer ProtocolServer;
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/type/object.h"
+#include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
 Protocol command handler type and structure
@@ -23,8 +24,8 @@ typedef void (*ProtocolServerCommandHandler)(const VariantList *paramList, Proto
 
 typedef struct ProtocolServerHandler
 {
-    const char *const command;
-    ProtocolServerCommandHandler handler;
+    StringId command;                                               // 5-bit StringId that identifies the protocol command
+    ProtocolServerCommandHandler handler;                           // Function that handles the protocol command
 } ProtocolServerHandler;
 
 #define PROTOCOL_SERVER_HANDLER_LIST_SIZE(list)                     (sizeof(list) / sizeof(ProtocolServerHandler))
