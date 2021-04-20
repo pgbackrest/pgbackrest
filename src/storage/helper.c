@@ -403,12 +403,12 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 result = storageS3New(
                     cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
                     cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
-                    (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
-                    cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),
-                    STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+                    cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
+                    cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx),STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(),
+                    cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
 
                 break;
             }

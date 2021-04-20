@@ -85,10 +85,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     // Add host
     if (s3 != NULL)
     {
-        if (driver->uriStyle == storageS3UriStyleHost)
-        strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
-    else
-        strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
+        if (driver->uriStyle == STORAGE_S3_URI_STYLE_HOST)
+            strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
+        else
+            strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
     }
     else
         strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
@@ -442,7 +442,7 @@ testRun(void)
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
-                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeAuto);
+                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, STORAGE_S3_KEY_TYPE_AUTO);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
@@ -1013,7 +1013,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawStrId(argList, cfgOptRepoS3UriStyle, storageS3UriStylePath);
+                hrnCfgArgRawStrId(argList, cfgOptRepoS3UriStyle, STORAGE_S3_URI_STYLE_PATH);
                 hrnCfgArgRaw(argList, cfgOptRepoStorageHost, host);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
