@@ -155,7 +155,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
                 strLstAddZ(argList, "--" CFGOPT_PROCESS "=0");
-                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
+                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
                 harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
 
                 // Create a driver to test remote performance of storageInfoList() and inject it into storageRepo()

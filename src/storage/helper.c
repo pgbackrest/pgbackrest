@@ -361,12 +361,11 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 result = storageAzureNew(
                     cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
                     cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx),
-                    (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx),
-                    cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN,
-                    cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx),
-                    cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx), ioTimeoutMs(),
-                    cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+                    cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx),
+                    STORAGE_AZURE_BLOCKSIZE_MIN, cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx),
+                    cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx), cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx),
+                    ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
                 break;
 
             // Use CIFS storage
@@ -380,9 +379,9 @@ storageRepoGet(unsigned int repoIdx, bool write)
             case STORAGE_GCS_TYPE:
                 result = storageGcsNew(
                     cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoPathExpression,
-                    cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx),
-                    (StorageGcsKeyType)cfgOptionIdxStrId(cfgOptRepoGcsKeyType, repoIdx), cfgOptionIdxStr(cfgOptRepoGcsKey, repoIdx),
-                    STORAGE_GCS_CHUNKSIZE_DEFAULT, cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), ioTimeoutMs(),
+                    cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx), cfgOptionIdxStrId(cfgOptRepoGcsKeyType, repoIdx),
+                    cfgOptionIdxStr(cfgOptRepoGcsKey, repoIdx), STORAGE_GCS_CHUNKSIZE_DEFAULT,
+                    cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), ioTimeoutMs(),
                     cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
                 break;
@@ -414,7 +413,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 break;
             }
 
-            // Use Posix storage. Keep this as the default to prevent code churn since it is always present.
+            // Use Posix storage. Keep this as the default to prevent code churn.
             default:
             {
                 CHECK(type == STORAGE_POSIX_TYPE);

@@ -210,7 +210,7 @@ testRun(void)
             storage,
             (StorageAzure *)storageDriver(
                 storageAzureNew(
-                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
+                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, STORAGE_AZURE_KEY_TYPE_SHARED,
                     TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), 443, 1000, true, NULL, NULL)),
             "new azure storage - shared key");
 
@@ -249,8 +249,8 @@ testRun(void)
             storage,
             (StorageAzure *)storageDriver(
                 storageAzureNew(
-                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
-                    16, NULL, STRDEF("blob.core.usgovcloudapi.net"), 443, 1000, true, NULL, NULL)),
+                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, STORAGE_AZURE_KEY_TYPE_SAS,
+                    TEST_KEY_SAS_STR, 16, NULL, STRDEF("blob.core.usgovcloudapi.net"), 443, 1000, true, NULL, NULL)),
             "new azure storage - sas key");
 
         query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
@@ -729,7 +729,7 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                hrnCfgArgRawStrId(argList, cfgOptRepoAzureKeyType, storageAzureKeyTypeSas);
+                hrnCfgArgRawStrId(argList, cfgOptRepoAzureKeyType, STORAGE_AZURE_KEY_TYPE_SAS);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SAS);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 

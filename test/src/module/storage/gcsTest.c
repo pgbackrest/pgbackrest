@@ -202,7 +202,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptRepoType, strIdToStr(STORAGE_GCS_TYPE));
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
+        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, STORAGE_GCS_KEY_TYPE_TOKEN);
         hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -231,7 +231,7 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, STORAGE_GCS_KEY_TYPE_SERVICE, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
                     TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
@@ -256,7 +256,7 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, STORAGE_GCS_KEY_TYPE_SERVICE, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
                     TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read/write gcs storage - service key");
 

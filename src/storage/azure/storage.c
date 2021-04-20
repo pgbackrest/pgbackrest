@@ -685,7 +685,7 @@ static const StorageInterface storageInterfaceAzure =
 Storage *
 storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host,
+    const String *account, StringId keyType, const String *key, size_t blockSize, const String *host,
     const String *endpoint, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -730,7 +730,7 @@ storageAzureNew(
         };
 
         // Store shared key or parse sas query
-        if (keyType == storageAzureKeyTypeShared)
+        if (keyType == STORAGE_AZURE_KEY_TYPE_SHARED)
             driver->sharedKey = bufNewDecode(encodeBase64, key);
         else
             driver->sasKey = httpQueryNewStr(key);
