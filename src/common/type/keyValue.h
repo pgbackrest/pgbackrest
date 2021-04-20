@@ -47,7 +47,7 @@ KeyValue *kvAdd(KeyValue *this, const Variant *key, const Variant *value);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline KeyValue *
-kvMove(KeyValue *this, MemContext *parentNew)
+kvMove(KeyValue *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -82,7 +82,7 @@ VariantList *kvGetList(const KeyValue *this, const Variant *key);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-kvFree(KeyValue *this)
+kvFree(KeyValue *const this)
 {
     objFree(this);
 }

@@ -34,7 +34,7 @@ StringList *httpHeaderList(const HttpHeader *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline HttpHeader *
-httpHeaderMove(HttpHeader *this, MemContext *parentNew)
+httpHeaderMove(HttpHeader *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -49,7 +49,7 @@ bool httpHeaderRedact(const HttpHeader *this, const String *key);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-httpHeaderFree(HttpHeader *this)
+httpHeaderFree(HttpHeader *const this)
 {
     objFree(this);
 }

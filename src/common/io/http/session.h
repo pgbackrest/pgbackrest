@@ -27,7 +27,7 @@ Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline HttpSession *
-httpSessionMove(HttpSession *this, MemContext *parentNew)
+httpSessionMove(HttpSession *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -48,7 +48,7 @@ IoWrite *httpSessionIoWrite(HttpSession *this);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-httpSessionFree(HttpSession *this)
+httpSessionFree(HttpSession *const this)
 {
     objFree(this);
 }

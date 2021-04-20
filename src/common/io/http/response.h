@@ -44,28 +44,28 @@ typedef struct HttpResponsePub
 // Read interface used to get the response content. This is intended for reading content that may be very large and will not be held
 // in memory all at once. If the content must be loaded completely for processing (e.g. XML) then httpResponseContent() is simpler.
 __attribute__((always_inline)) static inline IoRead *
-httpResponseIoRead(HttpResponse *this)
+httpResponseIoRead(HttpResponse *const this)
 {
     return THIS_PUB(HttpResponse)->contentRead;
 }
 
 // Response code
 __attribute__((always_inline)) static inline unsigned int
-httpResponseCode(const HttpResponse *this)
+httpResponseCode(const HttpResponse *const this)
 {
     return THIS_PUB(HttpResponse)->code;
 }
 
 // Response headers
 __attribute__((always_inline)) static inline const HttpHeader *
-httpResponseHeader(const HttpResponse *this)
+httpResponseHeader(const HttpResponse *const this)
 {
     return THIS_PUB(HttpResponse)->header;
 }
 
 // Response reason
 __attribute__((always_inline)) static inline const String *
-httpResponseReason(const HttpResponse *this)
+httpResponseReason(const HttpResponse *const this)
 {
     return THIS_PUB(HttpResponse)->reason;
 }
@@ -75,7 +75,7 @@ Functions
 ***********************************************************************************************************************************/
 // Is this response code OK, i.e. 2XX?
 __attribute__((always_inline)) static inline bool
-httpResponseCodeOk(const HttpResponse *this)
+httpResponseCodeOk(const HttpResponse *const this)
 {
     return httpResponseCode(this) / 100 == 2;
 }
@@ -85,7 +85,7 @@ const Buffer *httpResponseContent(HttpResponse *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline HttpResponse *
-httpResponseMove(HttpResponse *this, MemContext *parentNew)
+httpResponseMove(HttpResponse *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -94,7 +94,7 @@ httpResponseMove(HttpResponse *this, MemContext *parentNew)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-httpResponseFree(HttpResponse *this)
+httpResponseFree(HttpResponse *const this)
 {
     objFree(this);
 }
