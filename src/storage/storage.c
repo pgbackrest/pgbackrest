@@ -32,11 +32,11 @@ struct Storage
 /**********************************************************************************************************************************/
 Storage *
 storageNew(
-    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
@@ -46,7 +46,7 @@ storageNew(
         FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
     ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
     ASSERT(driver != NULL);
     ASSERT(interface.info != NULL);
@@ -575,8 +575,8 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
     ASSERT(source != NULL);
     ASSERT(destination != NULL);
     ASSERT(!storageReadIgnoreMissing(source));
-    ASSERT(strEq(storageType(this), storageReadType(source)));
-    ASSERT(strEq(storageReadType(source), storageWriteType(destination)));
+    ASSERT(storageType(this) == storageReadType(source));
+    ASSERT(storageReadType(source) == storageWriteType(destination));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -926,5 +926,6 @@ String *
 storageToLog(const Storage *this)
 {
     return strNewFmt(
-        "{type: %s, path: %s, write: %s}", strZ(storageType(this)), strZ(strToLog(this->path)), cvtBoolToConstZ(this->write));
+        "{type: %s, path: %s, write: %s}", strZ(strIdToStr(storageType(this))), strZ(strToLog(this->path)),
+        cvtBoolToConstZ(this->write));
 }

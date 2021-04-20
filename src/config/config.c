@@ -1058,6 +1058,49 @@ cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN_CONST(STRING, varStr(cfgOptionIdxInternal(optionId, optionIdx, varTypeString, true)));
 }
 
+// Helper to convert option String values to StringIds. Some options need 6-bit encoding while most work fine with 5-bit encoding.
+// At some point the config parser will work with StringIds directly and this code can be removed, but for now it protects the
+// callers from this logic and hopefully means no changes to the callers when the parser is updated.
+static StringId
+cfgOptionStrIdInternal(
+    const ConfigOption optionId, const unsigned int optionIdx, const VariantType typeRequested, const bool nullAllowed)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionIdx);
+        FUNCTION_TEST_PARAM(ENUM, typeRequested);
+        FUNCTION_TEST_PARAM(BOOL, nullAllowed);
+    FUNCTION_TEST_END();
+
+    const String *const value = varStr(cfgOptionIdxInternal(optionId, optionIdx, typeRequested, nullAllowed));
+
+    if (optionId == cfgOptRepoType)
+        FUNCTION_TEST_RETURN(strIdFromStr(stringIdBit6, value));
+
+    FUNCTION_TEST_RETURN(strIdFromStr(stringIdBit5, value));
+}
+
+StringId
+cfgOptionStrId(ConfigOption optionId)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(STRING_ID, cfgOptionStrIdInternal(optionId, cfgOptionIdxDefault(optionId), varTypeString, false));
+}
+
+StringId
+cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+        FUNCTION_LOG_PARAM(UINT, optionIdx);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(STRING_ID, cfgOptionStrIdInternal(optionId, optionIdx, varTypeString, true));
+}
+
 /**********************************************************************************************************************************/
 void
 cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)

@@ -234,7 +234,7 @@ storageReadPosixNew(StoragePosix *storage, const String *name, bool ignoreMissin
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_POSIX_TYPE_STR,
+                .type = STORAGE_POSIX_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
                 .limit = varDup(limit),

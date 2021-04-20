@@ -155,7 +155,7 @@ testRun(void)
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
                 strLstAddZ(argList, "--" CFGOPT_PROCESS "=0");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleRemote, argList);
 
                 // Create a driver to test remote performance of storageInfoList() and inject it into storageRepo()
@@ -169,7 +169,7 @@ testRun(void)
 
                 storageHelper.storageRepo = memNew(sizeof(Storage *));
                 storageHelper.storageRepo[0] = storageNew(
-                    STRDEF("TEST"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
+                    strIdFromZ(stringIdBit5, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
 
                 // Setup handler for remote storage protocol
                 IoRead *read = ioFdReadNew(strNew("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);

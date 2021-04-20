@@ -132,7 +132,7 @@ storageReadAzureNew(StorageAzure *storage, const String *name, bool ignoreMissin
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_AZURE_TYPE_STR,
+                .type = STORAGE_AZURE_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
 

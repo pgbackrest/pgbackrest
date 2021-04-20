@@ -135,7 +135,7 @@ storageReadS3New(StorageS3 *storage, const String *name, bool ignoreMissing)
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_S3_TYPE_STR,
+                .type = STORAGE_S3_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
 

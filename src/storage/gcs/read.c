@@ -139,7 +139,7 @@ storageReadGcsNew(StorageGcs *storage, const String *name, bool ignoreMissing)
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_GCS_TYPE_STR,
+                .type = STORAGE_GCS_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
 

@@ -22,11 +22,6 @@ S3 Storage
 #include "storage/s3/write.h"
 
 /***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_S3_TYPE_STR,                                  STORAGE_S3_TYPE);
-
-/***********************************************************************************************************************************
 Defaults
 ***********************************************************************************************************************************/
 #define STORAGE_S3_DELETE_MAX                                       1000
@@ -946,9 +941,9 @@ storageS3New(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING, endPoint);
-        FUNCTION_LOG_PARAM(ENUM, uriStyle);
+        FUNCTION_LOG_PARAM(STRING_ID, uriStyle);
         FUNCTION_LOG_PARAM(STRING, region);
-        FUNCTION_LOG_PARAM(ENUM, keyType);
+        FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
@@ -1016,8 +1011,7 @@ storageS3New(
         strLstAdd(driver->headerRedactList, S3_HEADER_DATE_STR);
         strLstAdd(driver->headerRedactList, S3_HEADER_TOKEN_STR);
 
-        this = storageNew(
-            STORAGE_S3_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        this = storageNew(STORAGE_S3_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 
