@@ -318,6 +318,8 @@ sub process
             $$oCommandOption{&CONFIG_HELP_SUMMARY} = $oOptionDoc->nodeGet('summary')->textGet();
             $$oCommandOption{&CONFIG_HELP_DESCRIPTION} = $oOptionDoc->textGet();
             $$oCommandOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
+            $oCommandOption->{&CONFIG_HELP_INTERNAL} =
+                cfgDefineCommand()->{$strCommand}{&CFGDEF_INTERNAL} ? true : $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
 
             $$oCommandOption{&CONFIG_HELP_NAME} = $oOptionDoc->paramGet('name');
 
@@ -361,6 +363,7 @@ sub process
                 $oOption->{&CONFIG_HELP_NAME_ALT} = $oCommandOption->{&CONFIG_HELP_NAME_ALT};
                 $$oOption{&CONFIG_HELP_DESCRIPTION} = $$oCommandOption{&CONFIG_HELP_DESCRIPTION};
                 $$oOption{&CONFIG_HELP_EXAMPLE} = $oOptionDoc->fieldGet('example');
+                $oOption->{&CONFIG_HELP_INTERNAL} = $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
             }
         }
     }
@@ -453,6 +456,9 @@ sub manGet
 
     foreach my $strOption (sort(keys(%{$$hConfig{&CONFIG_HELP_OPTION}})))
     {
+        # Skip internal options
+        next if $hConfig->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_INTERNAL};
+
         my $hOption = $$hConfig{&CONFIG_HELP_OPTION}{$strOption};
         $iOptionMaxLen = length($strOption) > $iOptionMaxLen ? length($strOption) : $iOptionMaxLen;
         my $strSection = defined($$hOption{&CONFIG_HELP_SECTION}) ? $$hOption{&CONFIG_HELP_SECTION} : CFGDEF_GENERAL;
@@ -639,6 +645,9 @@ sub helpConfigDocGet
 
         foreach my $strOption (sort(keys(%{$$oSectionHash{$strSection}})))
         {
+            # Skip internal options
+            next if $oConfigHash->{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_INTERNAL};
+
             $self->helpOptionGet(undef, $strOption, $oSectionElement, $$oConfigHash{&CONFIG_HELP_OPTION}{$strOption});
         }
     }
@@ -705,6 +714,9 @@ sub helpCommandDocGet
 
             foreach my $strOption (sort(keys(%{$$oCommandHash{&CONFIG_HELP_OPTION}})))
             {
+                # Skip internal options
+                next if $rhConfigDefine->{$strOption}{&CFGDEF_INTERNAL};
+
                 # Skip secure options that can't be defined on the command line
                 next if ($rhConfigDefine->{$strOption}{&CFGDEF_SECURE});
 
