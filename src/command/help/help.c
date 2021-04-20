@@ -482,15 +482,22 @@ helpRender(void)
                 const String *optionName = strLstGet(cfgCommandParam(), 0);
                 CfgParseOptionResult option = cfgParseOption(optionName);
 
+                // If the option was not found it might be an indexed option without the index, e.g. repo-host instead of
+                // repo1-host. This is valid for help even though the parser will reject it.
                 if (!option.found)
                 {
                     int optionId = cfgParseOptionId(strZ(optionName));
 
-                    if (optionId == -1)
-                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
-                    else
+                    if (optionId != -1)
+                    {
                         option.id = (unsigned int)optionId;
+                        option.found = true;
+                    }
                 }
+
+                // Error when option is not found or is invalid for the current command
+                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleDefault, option.id))
+                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
 
                 // Output option summary and description
                 strCatFmt(
@@ -498,39 +505,39 @@ helpRender(void)
                     " - '%s' option help\n"
                     "\n"
                     "%s\n"
-                    "\n"
-                    "%s\n",
+                        "\n"
+                        "%s\n",
                     cfgParseOptionName(option.id),
                     strZ(helpRenderText(optionData[option.id].summary, 0, true, CONSOLE_WIDTH)),
-                    strZ(helpRenderText(optionData[option.id].description, 0, true, CONSOLE_WIDTH)));
+                        strZ(helpRenderText(optionData[option.id].description, 0, true, CONSOLE_WIDTH)));
 
-                // Ouput current and default values if they exist
-                const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
-                const String *value = NULL;
+                    // Ouput current and default values if they exist
+                    const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
+                    const String *value = NULL;
 
-                if (cfgOptionIdxSource(option.id, 0) != cfgSourceDefault)
-                    value = helpRenderValue(cfgOptionIdx(option.id, 0), cfgParseOptionType(option.id));
+                    if (cfgOptionIdxSource(option.id, 0) != cfgSourceDefault)
+                        value = helpRenderValue(cfgOptionIdx(option.id, 0), cfgParseOptionType(option.id));
 
-                if (value != NULL || defaultValue != NULL)
-                {
-                    strCat(result, LF_STR);
+                    if (value != NULL || defaultValue != NULL)
+                    {
+                        strCat(result, LF_STR);
 
-                    if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgParseOptionSecure(option.id) ? "<redacted>" : strZ(value));
+                        if (value != NULL)
+                            strCatFmt(result, "current: %s\n", cfgParseOptionSecure(option.id) ? "<redacted>" : strZ(value));
 
-                    if (defaultValue != NULL)
-                        strCatFmt(result, "default: %s\n", strZ(defaultValue));
-                }
+                        if (defaultValue != NULL)
+                            strCatFmt(result, "default: %s\n", strZ(defaultValue));
+                    }
 
-                // Output alternate name (call it deprecated so the user will know not to use it)
-                if (optionData[option.id].deprecatedNames != NULL)
-                {
-                    strCatFmt(
-                        result, "\ndeprecated name%s: %s\n", strLstSize(optionData[option.id].deprecatedNames) > 1 ? "s" : "",
-                        strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
+                    // Output alternate name (call it deprecated so the user will know not to use it)
+                    if (optionData[option.id].deprecatedNames != NULL)
+                    {
+                        strCatFmt(
+                            result, "\ndeprecated name%s: %s\n", strLstSize(optionData[option.id].deprecatedNames) > 1 ? "s" : "",
+                            strZ(strLstJoin(optionData[option.id].deprecatedNames, ", ")));
+                    }
                 }
             }
-        }
 
         // If there is more help available output a message to let the user know
         if (more != NULL)

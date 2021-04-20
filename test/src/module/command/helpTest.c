@@ -307,6 +307,14 @@ testRun(void)
         TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse bogus option");
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
 
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "archive-push");
+        strLstAddZ(argList, CFGOPT_PROCESS);
+        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse option invalid for command");
+        TEST_ERROR(helpRender(), OptionInvalidError, "option 'process' is not valid for command 'archive-push'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         const char *optionHelp = strZ(strNewFmt(
             "%s - 'archive-push' command - 'buffer-size' option help\n"
