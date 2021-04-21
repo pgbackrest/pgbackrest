@@ -606,11 +606,15 @@ cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionTyp
     FUNCTION_TEST_END();
 
     ASSERT(value != NULL);
-    ASSERT(optionType != cfgOptTypeBoolean && optionType != cfgOptTypeHash && optionType != cfgOptTypeList);
+    ASSERT(optionType != cfgOptTypeHash && optionType != cfgOptTypeList);
 
     if (varType(value) == varTypeString)
     {
         FUNCTION_TEST_RETURN(varStr(value));
+    }
+    else if (optionType == cfgOptTypeBoolean)
+    {
+        FUNCTION_TEST_RETURN(varBool(value) ? TRUE_STR : FALSE_STR);
     }
     else if (optionType == cfgOptTypeTime)
     {

@@ -217,8 +217,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "50.5");
         TEST_ERROR(
             harnessCfgLoad(cfgCmdCheck, argList), OptionInvalidValueError,
-            "'50500' is not valid for 'protocol-timeout' option\n"
-                "HINT 'protocol-timeout' option (50500) should be greater than 'db-timeout' option (100000000).");
+            "'50.5' is not valid for 'protocol-timeout' option\n"
+                "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("very small protocol-timeout triggers db-timeout special handling");

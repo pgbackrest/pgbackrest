@@ -1885,7 +1885,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (index == cfgOptionGroupIdxTotal(groupId))
                 {
                     THROW_FMT(
-                        OptionInvalidValueError, "key '%u' is not valid for '%s' option", cfgOptionUInt(defaultOptionId),
+                        OptionInvalidValueError, "key '%s' is not valid for '%s' option", strZ(cfgOptionDisplay(defaultOptionId)),
                         cfgOptionName(defaultOptionId));
                 }
 

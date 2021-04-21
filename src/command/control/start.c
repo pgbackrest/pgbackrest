@@ -30,7 +30,7 @@ cmdStart(void)
         {
             LOG_WARN_FMT(
                 "stop file does not exist%s",
-                (cfgOptionTest(cfgOptStanza) ? strZ(strNewFmt(" for stanza %s", strZ(cfgOptionStr(cfgOptStanza)))) : ""));
+                (cfgOptionTest(cfgOptStanza) ? strZ(strNewFmt(" for stanza %s", strZ(cfgOptionDisplay(cfgOptStanza)))) : ""));
         }
     }
     MEM_CONTEXT_TEMP_END();

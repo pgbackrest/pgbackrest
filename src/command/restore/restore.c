@@ -82,7 +82,7 @@ restorePathValidate(void)
         // The PGDATA directory must exist
         // ??? We should remove this requirement in a separate commit.  What's the harm in creating the dir assuming we have perms?
         if (!storagePathExistsP(storagePg(), NULL))
-            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strZ(cfgOptionStr(cfgOptPgPath)));
+            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strZ(cfgOptionDisplay(cfgOptPgPath)));
 
         // PostgreSQL must not be running
         if (storageExistsP(storagePg(), PG_FILE_POSTMASTERPID_STR))
@@ -92,7 +92,7 @@ restorePathValidate(void)
                 "unable to restore while PostgreSQL is running\n"
                     "HINT: presence of '" PG_FILE_POSTMASTERPID "' in '%s' indicates PostgreSQL is running.\n"
                     "HINT: remove '" PG_FILE_POSTMASTERPID "' only if PostgreSQL is not running.",
-                strZ(cfgOptionStr(cfgOptPgPath)));
+                strZ(cfgOptionDisplay(cfgOptPgPath)));
         }
 
         // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
@@ -103,7 +103,7 @@ restorePathValidate(void)
                 "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" BACKUP_MANIFEST_FILE "' in '%s' to"
                     " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                     " exist in the destination directories the restore will be aborted.",
-               strZ(cfgOptionStr(cfgOptPgPath)));
+               strZ(cfgOptionDisplay(cfgOptPgPath)));
 
             // Disable delta and force so restore will fail if the directories are not empty
             cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
@@ -391,7 +391,7 @@ restoreBackupSet(void)
 
                 LOG_WARN_FMT(
                     "unable to find backup set with stop time less than '%s', repo%u: latest backup set will be used",
-                    strZ(cfgOptionStr(cfgOptTarget)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, result.repoIdx));
+                    strZ(cfgOptionDisplay(cfgOptTarget)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, result.repoIdx));
             }
             else
                 THROW(BackupSetInvalidError, "no backup set found to restore");
