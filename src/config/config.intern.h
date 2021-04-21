@@ -25,6 +25,7 @@ typedef struct ConfigOptionValue
     bool negate;                                                // Is the option negated?
     bool reset;                                                 // Is the option reset?
     unsigned int source;                                        // Where the option came from, i.e. ConfigSource enum
+    const String *display;                                      // Current display value, if any. Used for messages, etc.
     const Variant *value;                                       // Value
 } ConfigOptionValue;
 

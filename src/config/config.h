@@ -134,6 +134,10 @@ unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
 uint64_t cfgOptionUInt64(ConfigOption optionId);
 uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int optionIdx);
 
+// !!!
+const String *cfgOptionDisplay(const ConfigOption optionId);
+const String *cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx);
+
 // Option name by id
 const char *cfgOptionName(ConfigOption optionId);
 const char *cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx);

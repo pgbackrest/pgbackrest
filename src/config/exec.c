@@ -110,16 +110,11 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                         {
                             valueList = strLstNewVarLst(varVarLst(value));
                         }
-                        else if (cfgParseOptionType(optionId) == cfgOptTypeTime)
-                        {
-                            valueList = strLstNew();
-                            strLstAdd(valueList, strNewDbl((double)varInt64(value) / MSEC_PER_SEC));
-                        }
                         // Else only one value
                         else
                         {
                             valueList = strLstNew();
-                            strLstAdd(valueList, varStrForce(value));
+                            strLstAdd(valueList, cfgOptionIdxDisplay(optionId, optionIdx));
                         }
 
                         // Output options and values
