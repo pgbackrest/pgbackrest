@@ -1939,7 +1939,7 @@ testRun(void)
 
         manifestTargetAdd(
             manifest, &(ManifestTarget){
-               .name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/base-2")});
+               .name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/base-2/")});
         TEST_ERROR(
             manifestLinkCheck(manifest), LinkDestinationError,
             "link 'base/2' (/pg/base-1/base-2) destination is a subdirectory of link 'base/1' (/pg/base-1)");
@@ -1950,7 +1950,7 @@ testRun(void)
 
         manifestTargetAdd(
             manifest,
-            &(ManifestTarget){.name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1")});
+            &(ManifestTarget){.name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/")});
         TEST_ERROR(
             manifestLinkCheck(manifest), LinkDestinationError,
             "link 'base/2' (/pg/base-1) destination is the same directory as link 'base/1' (/pg/base-1)");
