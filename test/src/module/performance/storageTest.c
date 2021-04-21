@@ -169,7 +169,7 @@ testRun(void)
 
                 storageHelper.storageRepo = memNew(sizeof(Storage *));
                 storageHelper.storageRepo[0] = storageNew(
-                    strIdFromZ(stringIdBit5, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
+                    strIdFromZ(stringIdBit6, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
 
                 // Setup handler for remote storage protocol
                 IoRead *read = ioFdReadNew(strNew("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);
