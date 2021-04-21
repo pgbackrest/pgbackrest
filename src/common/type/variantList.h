@@ -33,14 +33,14 @@ Getters/Setters
 ***********************************************************************************************************************************/
 // List size
 __attribute__((always_inline)) static inline unsigned int
-varLstSize(const VariantList *this)
+varLstSize(const VariantList *const this)
 {
     return lstSize((List *)this);
 }
 
 // Is the list empty?
 __attribute__((always_inline)) static inline bool
-varLstEmpty(const VariantList *this)
+varLstEmpty(const VariantList *const this)
 {
     return varLstSize(this) == 0;
 }
@@ -50,7 +50,7 @@ Functions
 ***********************************************************************************************************************************/
 // Add to list
 __attribute__((always_inline)) static inline VariantList *
-varLstAdd(VariantList *this, Variant *data)
+varLstAdd(VariantList *const this, Variant *const data)
 {
     lstAdd((List *)this, &data);
     return this;
@@ -58,14 +58,14 @@ varLstAdd(VariantList *this, Variant *data)
 
 // Get by index
 __attribute__((always_inline)) static inline Variant *
-varLstGet(const VariantList *this, const unsigned int listIdx)
+varLstGet(const VariantList *const this, const unsigned int listIdx)
 {
     return *(Variant **)lstGet((List *)this, listIdx);
 }
 
 // Move to new parent mem context
 __attribute__((always_inline)) static inline VariantList *
-varLstMove(VariantList *this, MemContext *parentNew)
+varLstMove(VariantList *const this, MemContext *const parentNew)
 {
     return (VariantList *)lstMove((List *)this, parentNew);
 }
@@ -74,7 +74,7 @@ varLstMove(VariantList *this, MemContext *parentNew)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-varLstFree(VariantList *this)
+varLstFree(VariantList *const this)
 {
     lstFree((List *)this);
 }

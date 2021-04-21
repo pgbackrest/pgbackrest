@@ -28,7 +28,7 @@ strLstNew(void)
 StringList *strLstNewSplitZ(const String *string, const char *delimiter);
 
 __attribute__((always_inline)) static inline StringList *
-strLstNewSplit(const String *string, const String *delimiter)
+strLstNewSplit(const String *const string, const String *const delimiter)
 {
     return strLstNewSplitZ(string, strZ(delimiter));
 }
@@ -44,21 +44,21 @@ Getters/Setters
 ***********************************************************************************************************************************/
 // Set a new comparator
 __attribute__((always_inline)) static inline StringList *
-strLstComparatorSet(StringList *this, ListComparator *comparator)
+strLstComparatorSet(StringList *const this, ListComparator *const comparator)
 {
     return (StringList *)lstComparatorSet((List *)this, comparator);
 }
 
 // List size
 __attribute__((always_inline)) static inline unsigned int
-strLstSize(const StringList *this)
+strLstSize(const StringList *const this)
 {
     return lstSize((List *)this);
 }
 
 // Is the list empty?
 __attribute__((always_inline)) static inline bool
-strLstEmpty(const StringList *this)
+strLstEmpty(const StringList *const this)
 {
     return strLstSize(this) == 0;
 }
@@ -73,7 +73,7 @@ String *strLstAddIfMissing(StringList *this, const String *string);
 
 // Does the specified string exist in the list?
 __attribute__((always_inline)) static inline bool
-strLstExists(const StringList *this, const String *string)
+strLstExists(const StringList *const this, const String *const string)
 {
     return lstExists((List *)this, &string);
 }
@@ -83,7 +83,7 @@ String *strLstInsert(StringList *this, unsigned int listIdx, const String *strin
 
 // Get a string by index
 __attribute__((always_inline)) static inline String *
-strLstGet(const StringList *this, unsigned int listIdx)
+strLstGet(const StringList *const this, const unsigned int listIdx)
 {
     return *(String **)lstGet((List *)this, listIdx);
 }
@@ -93,7 +93,7 @@ String *strLstJoinQuote(const StringList *this, const char *separator, const cha
 
 // Join a list of strings into a single string using the specified separator
 __attribute__((always_inline)) static inline String *
-strLstJoin(const StringList *this, const char *separator)
+strLstJoin(const StringList *const this, const char *const separator)
 {
     return strLstJoinQuote(this, separator, "");
 }
@@ -104,7 +104,7 @@ StringList *strLstMergeAnti(const StringList *this, const StringList *anti);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline StringList *
-strLstMove(StringList *this, MemContext *parentNew)
+strLstMove(StringList *const this, MemContext *const parentNew)
 {
     return (StringList *)lstMove((List *)this, parentNew);
 }
@@ -115,20 +115,20 @@ const char **strLstPtr(const StringList *this);
 
 // Remove an item from the list
 __attribute__((always_inline)) static inline bool
-strLstRemove(StringList *this, const String *item)
+strLstRemove(StringList *const this, const String *const item)
 {
     return lstRemove((List *)this, &item);
 }
 
 __attribute__((always_inline)) static inline StringList *
-strLstRemoveIdx(StringList *this, unsigned int listIdx)
+strLstRemoveIdx(StringList *const this, const unsigned int listIdx)
 {
     return (StringList *)lstRemoveIdx((List *)this, listIdx);
 }
 
 // List sort
 __attribute__((always_inline)) static inline StringList *
-strLstSort(StringList *this, SortOrder sortOrder)
+strLstSort(StringList *const this, const SortOrder sortOrder)
 {
     return (StringList *)lstSort((List *)this, sortOrder);
 }
@@ -137,7 +137,7 @@ strLstSort(StringList *this, SortOrder sortOrder)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-strLstFree(StringList *this)
+strLstFree(StringList *const this)
 {
     lstFree((List *)this);
 }

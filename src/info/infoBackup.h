@@ -124,7 +124,7 @@ StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expres
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline InfoBackup *
-infoBackupMove(InfoBackup *this, MemContext *parentNew)
+infoBackupMove(InfoBackup *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -133,7 +133,7 @@ infoBackupMove(InfoBackup *this, MemContext *parentNew)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-infoBackupFree(InfoBackup *this)
+infoBackupFree(InfoBackup *const this)
 {
     objFree(this);
 }

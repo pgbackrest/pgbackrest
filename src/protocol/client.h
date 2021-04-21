@@ -52,14 +52,14 @@ typedef struct ProtocolClientPub
 
 // Read interface
 __attribute__((always_inline)) static inline IoRead *
-protocolClientIoRead(ProtocolClient *this)
+protocolClientIoRead(ProtocolClient *const this)
 {
     return THIS_PUB(ProtocolClient)->read;
 }
 
 // Write interface
 __attribute__((always_inline)) static inline IoWrite *
-protocolClientIoWrite(ProtocolClient *this)
+protocolClientIoWrite(ProtocolClient *const this)
 {
     return THIS_PUB(ProtocolClient)->write;
 }
@@ -72,7 +72,7 @@ const Variant *protocolClientExecute(ProtocolClient *this, const ProtocolCommand
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolClient *
-protocolClientMove(ProtocolClient *this, MemContext *parentNew)
+protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -93,7 +93,7 @@ void protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *com
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-protocolClientFree(ProtocolClient *this)
+protocolClientFree(ProtocolClient *const this)
 {
     objFree(this);
 }

@@ -77,7 +77,7 @@ void ioWriteClose(IoWrite *this);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-ioWriteFree(IoWrite *this)
+ioWriteFree(IoWrite *const this)
 {
     objFree(this);
 }

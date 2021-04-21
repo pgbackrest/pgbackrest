@@ -38,7 +38,7 @@ Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline IoClient *
-ioClientMove(IoClient *this, MemContext *parentNew)
+ioClientMove(IoClient *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -54,7 +54,7 @@ ioClientOpen(IoClient *const this)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-ioClientFree(IoClient *this)
+ioClientFree(IoClient *const this)
 {
     objFree(this);
 }

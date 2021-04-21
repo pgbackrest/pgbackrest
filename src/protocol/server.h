@@ -47,14 +47,14 @@ typedef struct ProtocolServerPub
 
 // Read interface
 __attribute__((always_inline)) static inline IoRead *
-protocolServerIoRead(ProtocolServer *this)
+protocolServerIoRead(ProtocolServer *const this)
 {
     return THIS_PUB(ProtocolServer)->read;
 }
 
 // Write interface
 __attribute__((always_inline)) static inline IoWrite *
-protocolServerIoWrite(ProtocolServer *this)
+protocolServerIoWrite(ProtocolServer *const this)
 {
     return THIS_PUB(ProtocolServer)->write;
 }
@@ -75,7 +75,7 @@ void protocolServerResponse(ProtocolServer *this, const Variant *output);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolServer *
-protocolServerMove(ProtocolServer *this, MemContext *parentNew)
+protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -87,7 +87,7 @@ void protocolServerWriteLine(ProtocolServer *this, const String *line);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-protocolServerFree(ProtocolServer *this)
+protocolServerFree(ProtocolServer *const this)
 {
     objFree(this);
 }

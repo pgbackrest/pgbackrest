@@ -220,7 +220,7 @@ void manifestLinkCheck(const Manifest *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline Manifest *
-manifestMove(Manifest *this, MemContext *parentNew)
+manifestMove(Manifest *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -381,7 +381,7 @@ void manifestTargetUpdate(const Manifest *this, const String *name, const String
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-manifestFree(Manifest *this)
+manifestFree(Manifest *const this)
 {
     objFree(this);
 }

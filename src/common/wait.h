@@ -28,7 +28,7 @@ typedef struct WaitPub
 
 // How much time is remaining? Recalculated each time waitMore() is called.
 __attribute__((always_inline)) static inline TimeMSec
-waitRemaining(const Wait *this)
+waitRemaining(const Wait *const this)
 {
     return THIS_PUB(Wait)->remainTime;
 }
@@ -43,7 +43,7 @@ bool waitMore(Wait *this);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-waitFree(Wait *this)
+waitFree(Wait *const this)
 {
     objFree(this);
 }
