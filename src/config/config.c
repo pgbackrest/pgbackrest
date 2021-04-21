@@ -597,7 +597,29 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 
 
 /**********************************************************************************************************************************/
-// Helper to enforce contraints when getting options
+const String *
+cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT, value);
+        FUNCTION_TEST_PARAM(UINT, optionType);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+    ASSERT(optionType != cfgOptTypeBoolean && optionType != cfgOptTypeHash && optionType != cfgOptTypeList);
+
+    if (varType(value) == varTypeString)
+    {
+        FUNCTION_TEST_RETURN(varStr(value));
+    }
+    else if (optionType == cfgOptTypeTime)
+    {
+        FUNCTION_TEST_RETURN(strNewDbl((double)varInt64(value) / MSEC_PER_SEC));
+    }
+
+    FUNCTION_TEST_RETURN(varStrForce(value));
+}
+
 const String *
 cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
 {
@@ -612,9 +634,6 @@ cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
         (!configLocal->option[optionId].group && optionIdx == 0) ||
         (configLocal->option[optionId].group && optionIdx <
             configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
-    ASSERT(
-        cfgParseOptionType(optionId) != cfgOptTypeBoolean && cfgParseOptionType(optionId) != cfgOptTypeHash &&
-        cfgParseOptionType(optionId) != cfgOptTypeList);
 
     // Check that the option is valid for the current command
     if (!cfgOptionValid(optionId))
@@ -627,29 +646,8 @@ cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
         FUNCTION_TEST_RETURN(display);
 
     // Generate the display value based on the type
-    const Variant *const value = configLocal->option[optionId].index[optionIdx].value;
-    ASSERT(value != NULL);
-
-    if (varType(value) == varTypeString)
-    {
-        configLocal->option[optionId].index[optionIdx].display = varStr(value);
-    }
-    else if (cfgParseOptionType(optionId) == cfgOptTypeTime)
-    {
-        MEM_CONTEXT_BEGIN(configLocal->memContext)
-        {
-            configLocal->option[optionId].index[optionIdx].display = strNewDbl((double)varInt64(value) / MSEC_PER_SEC);
-        }
-        MEM_CONTEXT_END();
-    }
-    else
-    {
-        MEM_CONTEXT_BEGIN(configLocal->memContext)
-        {
-            configLocal->option[optionId].index[optionIdx].display = varStrForce(value);
-        }
-        MEM_CONTEXT_END();
-    }
+    configLocal->option[optionId].index[optionIdx].display = cfgOptionDisplayVar(
+        configLocal->option[optionId].index[optionIdx].value, cfgParseOptionType(optionId));
 
     FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].display);
 }

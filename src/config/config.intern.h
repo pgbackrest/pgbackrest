@@ -10,6 +10,7 @@ The general-purpose functions for querying the current configuration are found i
 #define CONFIG_CONFIG_INTERN_H
 
 #include "config/config.h"
+#include "config/parse.auto.h"
 
 /***********************************************************************************************************************************
 The maximum number of keys that an indexed option can have, e.g. pg256-path would be the maximum pg-path option
@@ -88,6 +89,9 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
+// !!!
+const String *cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType);
+
 // Convert the key used in the original configuration to a group index. This is used when an option key must be translated into the
 // local group index, e.g. during parsing or when getting the value of specific options from a remote.
 unsigned int cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key);
