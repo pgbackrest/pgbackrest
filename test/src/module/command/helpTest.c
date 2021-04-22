@@ -309,8 +309,8 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
-        strLstAddZ(argList, "help");
-        strLstAddZ(argList, "archive-push");
+        strLstAddZ(argList, CFGCMD_HELP);
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH);
         strLstAddZ(argList, CFGOPT_PROCESS);
         TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse option invalid for command");
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'process' is not valid for command 'archive-push'");
