@@ -24,10 +24,8 @@ Constants
 #define PROTOCOL_GREETING_VERSION                                   "version"
     STRING_DECLARE(PROTOCOL_GREETING_VERSION_STR);
 
-#define PROTOCOL_COMMAND_EXIT                                       "exit"
-    STRING_DECLARE(PROTOCOL_COMMAND_EXIT_STR);
-#define PROTOCOL_COMMAND_NOOP                                       "noop"
-    STRING_DECLARE(PROTOCOL_COMMAND_NOOP_STR);
+#define PROTOCOL_COMMAND_EXIT                                       STRID5("exit", 0xa27050)
+#define PROTOCOL_COMMAND_NOOP                                       STRID5("noop", 0x83dee0)
 
 #define PROTOCOL_ERROR                                              "err"
     STRING_DECLARE(PROTOCOL_ERROR_STR);
@@ -54,14 +52,14 @@ typedef struct ProtocolClientPub
 
 // Read interface
 __attribute__((always_inline)) static inline IoRead *
-protocolClientIoRead(ProtocolClient *this)
+protocolClientIoRead(ProtocolClient *const this)
 {
     return THIS_PUB(ProtocolClient)->read;
 }
 
 // Write interface
 __attribute__((always_inline)) static inline IoWrite *
-protocolClientIoWrite(ProtocolClient *this)
+protocolClientIoWrite(ProtocolClient *const this)
 {
     return THIS_PUB(ProtocolClient)->write;
 }
@@ -74,7 +72,7 @@ const Variant *protocolClientExecute(ProtocolClient *this, const ProtocolCommand
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolClient *
-protocolClientMove(ProtocolClient *this, MemContext *parentNew)
+protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -95,7 +93,7 @@ void protocolClientWriteCommand(ProtocolClient *this, const ProtocolCommand *com
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-protocolClientFree(ProtocolClient *this)
+protocolClientFree(ProtocolClient *const this)
 {
     objFree(this);
 }

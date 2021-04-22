@@ -32,7 +32,7 @@ PgClient *pgClientOpen(PgClient *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline PgClient *
-pgClientMove(PgClient *this, MemContext *parentNew)
+pgClientMove(PgClient *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -47,7 +47,7 @@ void pgClientClose(PgClient *this);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-pgClientFree(PgClient *this)
+pgClientFree(PgClient *const this)
 {
     objFree(this);
 }

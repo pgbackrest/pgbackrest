@@ -111,6 +111,7 @@ SRCS = \
 	common/type/object.c \
 	common/type/pack.c \
 	common/type/string.c \
+	common/type/stringId.c \
 	common/type/stringList.c \
 	common/type/variant.c \
 	common/type/variantList.c \

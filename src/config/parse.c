@@ -395,7 +395,7 @@ Find an option by name in the option list
 ***********************************************************************************************************************************/
 // Helper to parse the option info into a structure
 __attribute__((always_inline)) static inline CfgParseOptionResult
-cfgParseOptionInfo(int info)
+cfgParseOptionInfo(const int info)
 {
     return (CfgParseOptionResult)
     {

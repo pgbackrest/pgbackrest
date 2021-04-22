@@ -68,7 +68,7 @@ String *bufHex(const Buffer *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline Buffer *
-bufMove(Buffer *this, MemContext *parentNew)
+bufMove(Buffer *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -82,7 +82,7 @@ void bufLimitSet(Buffer *this, size_t limit);
 
 // Buffer size
 __attribute__((always_inline)) static inline size_t
-bufSize(const Buffer *this)
+bufSize(const Buffer *const this)
 {
     ASSERT_INLINE(this != NULL);
     return ((const BufferConst *)this)->size;
@@ -90,7 +90,7 @@ bufSize(const Buffer *this)
 
 // Allocated buffer size. This may be different from bufSize() if a limit has been set.
 __attribute__((always_inline)) static inline size_t
-bufSizeAlloc(const Buffer *this)
+bufSizeAlloc(const Buffer *const this)
 {
     ASSERT_INLINE(this != NULL);
     return ((const BufferConst *)this)->sizeAlloc;
@@ -99,7 +99,7 @@ bufSizeAlloc(const Buffer *this)
 // Amount of the buffer actually used. This will be updated automatically when possible but if the buffer is modified by using
 // bufPtr() then the user is responsible for updating used.
 __attribute__((always_inline)) static inline size_t
-bufUsed(const Buffer *this)
+bufUsed(const Buffer *const this)
 {
     ASSERT_INLINE(this != NULL);
     return ((const BufferConst *)this)->used;
@@ -111,21 +111,21 @@ void bufUsedZero(Buffer *this);
 
 // Is the buffer empty?
 __attribute__((always_inline)) static inline bool
-bufEmpty(const Buffer *this)
+bufEmpty(const Buffer *const this)
 {
     return bufUsed(this) == 0;
 }
 
 // Remaining space in the buffer
 __attribute__((always_inline)) static inline size_t
-bufRemains(const Buffer *this)
+bufRemains(const Buffer *const this)
 {
     return bufSize(this) - bufUsed(this);
 }
 
 // Is the buffer full?
 __attribute__((always_inline)) static inline bool
-bufFull(const Buffer *this)
+bufFull(const Buffer *const this)
 {
     return bufUsed(this) == bufSize(this);
 }
@@ -135,7 +135,7 @@ Getters/Setters
 ***********************************************************************************************************************************/
 // Buffer pointer
 __attribute__((always_inline)) static inline unsigned char *
-bufPtr(Buffer *this)
+bufPtr(Buffer *const this)
 {
     ASSERT_INLINE(this != NULL);
     return (void *)((BufferConst *)this)->buffer;
@@ -143,7 +143,7 @@ bufPtr(Buffer *this)
 
 // Const buffer pointer
 __attribute__((always_inline)) static inline const unsigned char *
-bufPtrConst(const Buffer *this)
+bufPtrConst(const Buffer *const this)
 {
     ASSERT_INLINE(this != NULL);
     return ((const BufferConst *)this)->buffer;
@@ -151,7 +151,7 @@ bufPtrConst(const Buffer *this)
 
 // Pointer to remaining buffer space (after used space)
 __attribute__((always_inline)) static inline unsigned char *
-bufRemainsPtr(Buffer *this)
+bufRemainsPtr(Buffer *const this)
 {
     return bufPtr(this) + bufUsed(this);
 }
@@ -160,7 +160,7 @@ bufRemainsPtr(Buffer *this)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-bufFree(Buffer *this)
+bufFree(Buffer *const this)
 {
     objFree(this);
 }

@@ -75,7 +75,7 @@ const String *infoArchiveIdHistoryMatch(
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline InfoArchive *
-infoArchiveMove(InfoArchive *this, MemContext *parentNew)
+infoArchiveMove(InfoArchive *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -84,7 +84,7 @@ infoArchiveMove(InfoArchive *this, MemContext *parentNew)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-infoArchiveFree(InfoArchive *this)
+infoArchiveFree(InfoArchive *const this)
 {
     objFree(this);
 }

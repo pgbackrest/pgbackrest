@@ -9,12 +9,6 @@ Verify Protocol Handler
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_VERIFY_FILE                                "verifyFile"
-    STRING_DECLARE(PROTOCOL_COMMAND_VERIFY_FILE_STR);
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
@@ -23,6 +17,8 @@ void verifyFileProtocol(const VariantList *paramList, ProtocolServer *server);
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_VERIFY_FILE                                STRID5("vf-f", 0x36cd60)
+
 #define PROTOCOL_SERVER_HANDLER_VERIFY_LIST                                                                                        \
     {.command = PROTOCOL_COMMAND_VERIFY_FILE, .handler = verifyFileProtocol},
 

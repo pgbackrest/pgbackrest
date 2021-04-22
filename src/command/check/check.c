@@ -100,7 +100,7 @@ checkStandby(const DbGetResult dbGroup, unsigned int pgPathDefinedTotal)
     // If backup from standby is true then warn when a standby not found
     else if (cfgOptionBool(cfgOptBackupStandby))
     {
-        LOG_WARN_FMT("option '%s' is enabled but standby is not properly configured", cfgOptionName(cfgOptBackupStandby));
+        LOG_WARN("option '" CFGOPT_BACKUP_STANDBY "' is enabled but standby is not properly configured");
     }
 
     FUNCTION_LOG_RETURN_VOID();

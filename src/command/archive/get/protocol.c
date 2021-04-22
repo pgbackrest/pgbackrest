@@ -13,11 +13,6 @@ Archive Get Protocol Handler
 #include "storage/helper.h"
 #include "storage/write.intern.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_ARCHIVE_GET_FILE_STR,                PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
-
 /**********************************************************************************************************************************/
 void
 archiveGetFileProtocol(const VariantList *paramList, ProtocolServer *server)
