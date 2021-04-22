@@ -101,8 +101,6 @@ testRun(void)
         TEST_RESULT_PTR_NE(cipherBlock->digest, NULL, "digest is set");
         TEST_RESULT_PTR(cipherBlock->cipherContext, NULL, "cipher context is not set");
 
-        TEST_RESULT_STR_Z(strIdToStr(cipherTypeAes256Cbc), "aes-256-cbc", "!!!");
-
         // Encrypt
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *encryptBuffer = bufNew(TEST_BUFFER_SIZE);

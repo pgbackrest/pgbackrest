@@ -389,11 +389,11 @@ cipherBlockInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 IoFilter *
-cipherBlockNew(CipherMode mode, uint64_t cipherType, const Buffer *pass, const String *digestName)
+cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, mode);
-        FUNCTION_LOG_PARAM(UINT64, cipherType);
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(BUFFER, pass);                          // Use FUNCTION_TEST so passphrase is not logged
         FUNCTION_LOG_PARAM(STRING, digestName);
     FUNCTION_LOG_END();
@@ -465,7 +465,7 @@ IoFilter *
 cipherBlockNewVar(const VariantList *paramList)
 {
     return cipherBlockNew(
-        (CipherMode)varUIntForce(varLstGet(paramList, 0)), (CipherType)varUIntForce(varLstGet(paramList, 1)),
+        (CipherMode)varUIntForce(varLstGet(paramList, 0)), (CipherType)varUInt64(varLstGet(paramList, 1)),
         BUFSTR(varStr(varLstGet(paramList, 2))), varLstGet(paramList, 3) == NULL ? NULL : varStr(varLstGet(paramList, 3)));
 }
 
