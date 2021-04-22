@@ -269,7 +269,7 @@ hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, Hr
     }
 
     // Add encrypted filter
-    if (param.cipherType != cipherTypeNone)
+    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
     {
         // Default to main cipher pass
         if (param.cipherPass == NULL)
@@ -293,7 +293,7 @@ hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer,
         strCatFmt(log, "cmp[%s]", strZ(compressTypeStr(param.compressType)));
 
     // Add encryption detail
-    if (param.cipherType != cipherTypeNone)
+    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
     {
         if (param.cipherPass == NULL)
             param.cipherPass = TEST_CIPHER_PASS;
