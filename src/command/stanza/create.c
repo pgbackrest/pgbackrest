@@ -35,7 +35,7 @@ cmdStanzaCreate(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         if (cfgOptionBool(cfgOptForce))
-            LOG_WARN("option --force is no longer supported");
+            LOG_WARN("option --" CFGOPT_FORCE " is no longer supported");
 
         // Get the version and system information - validating it if the database is online
         PgControl pgControl = pgValidate();
