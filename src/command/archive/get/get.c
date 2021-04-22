@@ -839,7 +839,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
             protocolCommandParamAdd(command, VARSTR(actual->file));
             protocolCommandParamAdd(command, VARUINT(actual->repoIdx));
             protocolCommandParamAdd(command, VARSTR(actual->archiveId));
-            protocolCommandParamAdd(command, VARUINT(actual->cipherType));
+            protocolCommandParamAdd(command, VARUINT64(actual->cipherType));
             protocolCommandParamAdd(command, VARSTR(actual->cipherPassArchive));
         }
 

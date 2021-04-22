@@ -1098,7 +1098,7 @@ testRun(void)
             paramList, varNewStrZ("10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
         varLstAdd(paramList, varNewUInt(1));
         varLstAdd(paramList, varNewStrZ("10-1"));
-        varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));
+        varLstAdd(paramList, varNewUInt64(cipherTypeAes256Cbc));
         varLstAdd(paramList, varNewStrZ(TEST_CIPHER_PASS_ARCHIVE));
 
         TEST_RESULT_VOID(archiveGetFileProtocol(paramList, server), "protocol archive get");

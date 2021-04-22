@@ -478,7 +478,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
 
             protocolCommandParamAdd(command, VARUINT(data->repoIdx));
             protocolCommandParamAdd(command, VARSTR(data->archiveId));
-            protocolCommandParamAdd(command, VARUINT(data->cipherType));
+            protocolCommandParamAdd(command, VARUINT64(data->cipherType));
             protocolCommandParamAdd(command, VARSTR(data->cipherPass));
         }
 

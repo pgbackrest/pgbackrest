@@ -1494,7 +1494,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 protocolCommandParamAdd(command, VARINT(jobData->compressLevel));
                 protocolCommandParamAdd(command, VARSTR(jobData->backupLabel));
                 protocolCommandParamAdd(command, VARBOOL(jobData->delta));
-                protocolCommandParamAdd(command, VARUINT(jobData->cipherType));
+                protocolCommandParamAdd(command, VARUINT64(jobData->cipherType));
                 protocolCommandParamAdd(command, VARSTR(jobData->cipherSubPass));
 
                 // Remove job from the queue
