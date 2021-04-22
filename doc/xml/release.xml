@@ -14,6 +14,19 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.34dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-pull-request id="1375"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <cmd>help</cmd> when a valid option is invalid for the specified command.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-issue id="986"/>
