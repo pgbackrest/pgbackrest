@@ -409,8 +409,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter " CFGOPT_COMPRESS_TYPE " option to '%s', reset to value in %s",
-                        strZ(cfgOptionStr(cfgOptType)), strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
-                        strZ(backupLabelPrior));
+                        strZ(cfgOptionStr(cfgOptType)), strZ(cfgOptionStr(cfgOptCompressType)), strZ(backupLabelPrior));
 
                     // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
                     // could store compression type on a per file basis, but it seems simplest and safest for now.
@@ -743,7 +742,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             {
                                 reason = strNewFmt(
                                     "new compression '%s' does not match resumable compression '%s'",
-                                    strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
+                                    strZ(cfgOptionStr(cfgOptCompressType)),
                                     strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
                             }
                             else

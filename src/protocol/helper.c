@@ -145,7 +145,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
         KeyValue *optionReplace = kvNew();
 
         // Add the process id -- used when more than one process will be called
-        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARUINT(processId));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_PROCESS), VARUINT(processId));
 
         // Add the pg default. Don't do this for repos because the repo default should come from the user or the local should
         // handle all the repos equally. Repos don't get special handling like pg primaries or standbys.
@@ -153,18 +153,18 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
             kvPut(optionReplace, VARSTRDEF(CFGOPT_PG), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, hostIdx)));
 
         // Add the remote type
-        kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
         // Only enable file logging on the local when requested
         kvPut(
-            optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR),
+            optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE),
             cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : VARSTRDEF("off"));
 
         // Always output errors on stderr for debugging purposes
-        kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("error"));
 
         // Disable output to stdout since it is used by the protocol
-        kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
 
         result = strLstMove(cfgExecParam(cfgCommand(), cfgCmdRoleLocal, optionReplace, true, false), memContextPrior());
     }
@@ -332,20 +332,20 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     unsigned int optConfig = isRepo ? cfgOptRepoHostConfig : cfgOptPgHostConfig;
 
     kvPut(
-        optionReplace, VARSTR(CFGOPT_CONFIG_STR),
+        optionReplace, VARSTRDEF(CFGOPT_CONFIG),
         cfgOptionIdxSource(optConfig, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfig, hostIdx)) : NULL);
 
     unsigned int optConfigIncludePath = isRepo ? cfgOptRepoHostConfigIncludePath : cfgOptPgHostConfigIncludePath;
 
     kvPut(
-        optionReplace, VARSTR(CFGOPT_CONFIG_INCLUDE_PATH_STR),
+        optionReplace, VARSTRDEF(CFGOPT_CONFIG_INCLUDE_PATH),
         cfgOptionIdxSource(optConfigIncludePath, hostIdx) != cfgSourceDefault ?
             VARSTR(cfgOptionIdxStr(optConfigIncludePath, hostIdx)) : NULL);
 
     unsigned int optConfigPath = isRepo ? cfgOptRepoHostConfigPath : cfgOptPgHostConfigPath;
 
     kvPut(
-        optionReplace, VARSTR(CFGOPT_CONFIG_PATH_STR),
+        optionReplace, VARSTRDEF(CFGOPT_CONFIG_PATH),
         cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
 
     // Update/remove repo/pg options that are sent to the remote
@@ -408,25 +408,25 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     // Add the process id if not set. This means that the remote is being started from the main process and should always get a
     // process id of 0.
     if (!cfgOptionTest(cfgOptProcess))
-        kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_STR), VARINT(0));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_PROCESS), VARINT(0));
 
     // Don't pass log-path or lock-path since these are host specific
-    kvPut(optionReplace, VARSTR(CFGOPT_LOG_PATH_STR), NULL);
-    kvPut(optionReplace, VARSTR(CFGOPT_LOCK_PATH_STR), NULL);
+    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_PATH), NULL);
+    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOCK_PATH), NULL);
 
     // Only enable file logging on the remote when requested
     kvPut(
-        optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR),
+        optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE),
         cfgOptionBool(cfgOptLogSubprocess) ? cfgOption(cfgOptLogLevelFile) : VARSTRDEF("off"));
 
     // Always output errors on stderr for debugging purposes
-    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("error"));
+    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("error"));
 
     // Disable output to stdout since it is used by the protocol
-    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
+    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
 
     // Add the remote type
-    kvPut(optionReplace, VARSTR(CFGOPT_REMOTE_TYPE_STR), VARSTR(protocolStorageTypeStr(protocolStorageType)));
+    kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(protocolStorageTypeStr(protocolStorageType)));
 
     StringList *commandExec = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true);
     strLstInsert(commandExec, 0, cfgOptionIdxStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd, hostIdx));
