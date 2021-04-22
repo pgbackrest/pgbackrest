@@ -389,11 +389,11 @@ cipherBlockInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 IoFilter *
-cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName)
+cipherBlockNew(CipherMode mode, uint64_t cipherType, const Buffer *pass, const String *digestName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, mode);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_LOG_PARAM(UINT64, cipherType);
         FUNCTION_TEST_PARAM(BUFFER, pass);                          // Use FUNCTION_TEST so passphrase is not logged
         FUNCTION_LOG_PARAM(STRING, digestName);
     FUNCTION_LOG_END();
@@ -445,7 +445,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
         // Create param list
         VariantList *paramList = varLstNew();
         varLstAdd(paramList, varNewUInt(mode));
-        varLstAdd(paramList, varNewUInt(cipherType));
+        varLstAdd(paramList, varNewUInt64(cipherType));
         // ??? Using a string here is not correct since the passphrase is being passed as a buffer so may contain null characters.
         // However, since strings are used to hold the passphrase in the rest of the code this is currently valid.
         varLstAdd(paramList, varNewStr(strNewBuf(pass)));
