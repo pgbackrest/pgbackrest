@@ -86,7 +86,7 @@ cipherTypeName(CipherType type)
     if (type == cipherTypeAes256Cbc)
         result = CIPHER_TYPE_AES_256_CBC_STR;
     else if (type != cipherTypeNone)
-        THROW_FMT(AssertError, "invalid cipher type %u", type);
+        THROW_FMT(AssertError, "invalid cipher type %" PRIu64, type);
 
     FUNCTION_TEST_RETURN(result);
 }

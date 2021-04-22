@@ -4,6 +4,8 @@ Crypto Common
 #ifndef COMMON_CRYPTO_COMMON_H
 #define COMMON_CRYPTO_COMMON_H
 
+#include <common/type/stringId.h>
+
 /***********************************************************************************************************************************
 Cipher modes
 ***********************************************************************************************************************************/
@@ -18,11 +20,9 @@ Cipher types
 ***********************************************************************************************************************************/
 typedef enum
 {
-    cipherTypeNone,
-    cipherTypeAes256Cbc,
+    cipherTypeNone = STRID5("none", 0x2b9ee0),
+    cipherTypeAes256Cbc = STRID5("aes-256-cbc", 0xc43dfbbcdcca10),
 } CipherType;
-
-#include <common/type/string.h>
 
 #define CIPHER_TYPE_NONE                                            "none"
     STRING_DECLARE(CIPHER_TYPE_NONE_STR);
