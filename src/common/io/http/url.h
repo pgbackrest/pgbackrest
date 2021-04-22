@@ -54,35 +54,35 @@ typedef struct HttpUrlPub
 
 // Protocol type
 __attribute__((always_inline)) static inline HttpProtocolType
-httpUrlProtocolType(const HttpUrl *this)
+httpUrlProtocolType(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->type;
 }
 
 // Host
 __attribute__((always_inline)) static inline const String *
-httpUrlHost(const HttpUrl *this)
+httpUrlHost(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->host;
 }
 
 // Path
 __attribute__((always_inline)) static inline const String *
-httpUrlPath(const HttpUrl *this)
+httpUrlPath(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->path;
 }
 
 // Port
 __attribute__((always_inline)) static inline unsigned int
-httpUrlPort(const HttpUrl *this)
+httpUrlPort(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->port;
 }
 
 // URL (exactly as originally passed)
 __attribute__((always_inline)) static inline const String *
-httpUrl(const HttpUrl *this)
+httpUrl(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->url;
 }
@@ -91,7 +91,7 @@ httpUrl(const HttpUrl *this)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-httpUrlFree(HttpUrl *this)
+httpUrlFree(HttpUrl *const this)
 {
     objFree(this);
 }

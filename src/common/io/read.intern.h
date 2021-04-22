@@ -58,7 +58,7 @@ ioReadDriver(IoRead *const this)
 
 // Interface for the read object
 __attribute__((always_inline)) static inline const IoReadInterface *
-ioReadInterface(const IoRead *this)
+ioReadInterface(const IoRead *const this)
 {
     return &THIS_PUB(IoRead)->interface;
 }

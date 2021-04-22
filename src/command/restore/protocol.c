@@ -12,11 +12,6 @@ Restore Protocol Handler
 #include "config/config.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_RESTORE_FILE_STR,                    PROTOCOL_COMMAND_RESTORE_FILE);
-
 /**********************************************************************************************************************************/
 void
 restoreFileProtocol(const VariantList *paramList, ProtocolServer *server)

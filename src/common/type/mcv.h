@@ -36,7 +36,7 @@ const Variant *mcvResult(const MostCommonValue *this);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-mcvFree(MostCommonValue *this)
+mcvFree(MostCommonValue *const this)
 {
     objFree(this);
 }

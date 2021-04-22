@@ -161,52 +161,52 @@ helpRenderValue(const Variant *value, ConfigOptionType type)
 
     if (value != NULL)
     {
-    if (varType(value) == varTypeBool)
-    {
-        if (varBool(value))
-            result = Y_STR;
+        if (varType(value) == varTypeBool)
+        {
+            if (varBool(value))
+                result = Y_STR;
+            else
+                result = N_STR;
+        }
+        else if (varType(value) == varTypeKeyValue)
+        {
+            String *resultTemp = strNew("");
+
+            const KeyValue *optionKv = varKv(value);
+            const VariantList *keyList = kvKeyList(optionKv);
+
+            for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+            {
+                if (keyIdx != 0)
+                    strCatZ(resultTemp, ", ");
+
+                strCatFmt(
+                    resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+            }
+
+            result = resultTemp;
+        }
+        else if (varType(value) == varTypeVariantList)
+        {
+            String *resultTemp = strNew("");
+
+            const VariantList *list = varVarLst(value);
+
+            for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
+            {
+                if (listIdx != 0)
+                    strCatZ(resultTemp, ", ");
+
+                strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
+            }
+
+            result = resultTemp;
+        }
+        else if (type == cfgOptTypeTime)
+            result = strNewDbl((double)varInt64(value) / MSEC_PER_SEC);
         else
-            result = N_STR;
-    }
-    else if (varType(value) == varTypeKeyValue)
-    {
-        String *resultTemp = strNew("");
-
-        const KeyValue *optionKv = varKv(value);
-        const VariantList *keyList = kvKeyList(optionKv);
-
-        for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
-        {
-            if (keyIdx != 0)
-                strCatZ(resultTemp, ", ");
-
-            strCatFmt(
-                resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
-        }
-
-        result = resultTemp;
-    }
-    else if (varType(value) == varTypeVariantList)
-    {
-        String *resultTemp = strNew("");
-
-        const VariantList *list = varVarLst(value);
-
-        for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
-        {
-            if (listIdx != 0)
-                strCatZ(resultTemp, ", ");
-
-            strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
-        }
-
-        result = resultTemp;
-    }
-    else if (type == cfgOptTypeTime)
-        result = strNewDbl((double)varInt64(value) / MSEC_PER_SEC);
-    else
-        result = varStrForce(value);
+            result = varStrForce(value);
     }
 
     FUNCTION_LOG_RETURN_CONST(STRING, result);

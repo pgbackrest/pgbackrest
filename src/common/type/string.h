@@ -148,7 +148,7 @@ String *strPathAbsolute(const String *this, const String *base);
 
 // Pointer to zero-terminated string. strZNull() returns NULL when the String is NULL.
 __attribute__((always_inline)) static inline const char *
-strZ(const String *this)
+strZ(const String *const this)
 {
     ASSERT_INLINE(this != NULL);
     return ((const StringConst *)this)->buffer;
@@ -165,7 +165,7 @@ String *strReplaceChr(String *this, char find, char replace);
 
 // String size minus null-terminator, i.e. the same value that strlen() would return
 __attribute__((always_inline)) static inline size_t
-strSize(const String *this)
+strSize(const String *const this)
 {
     ASSERT_INLINE(this != NULL);
     return ((const StringConst *)this)->size;

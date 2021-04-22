@@ -1478,7 +1478,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
                 // Create backup job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE_STR);
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
 
                 protocolCommandParamAdd(command, VARSTR(manifestPathPg(file->name)));
                 protocolCommandParamAdd(
