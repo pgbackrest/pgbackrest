@@ -14,14 +14,20 @@ Storage type
 /***********************************************************************************************************************************
 Key type
 ***********************************************************************************************************************************/
-#define STORAGE_S3_KEY_TYPE_SHARED                                  STRID5("shared", 0x85905130)
-#define STORAGE_S3_KEY_TYPE_AUTO                                    STRID5("auto", 0x7d2a10)
+typedef enum
+{
+    storageS3KeyTypeShared = STRID5("shared", 0x85905130),
+    storageS3KeyTypeAuto = STRID5("auto", 0x7d2a10),
+} StorageS3KeyType;
 
 /***********************************************************************************************************************************
 URI style
 ***********************************************************************************************************************************/
-#define STORAGE_S3_URI_STYLE_HOST                                   STRID5("host", 0xa4de80)
-#define STORAGE_S3_URI_STYLE_PATH                                   STRID5("path", 0x450300)
+typedef enum
+{
+    storageS3UriStyleHost = STRID5("host", 0xa4de80),
+    storageS3UriStylePath = STRID5("path", 0x450300),
+} StorageS3UriStyle;
 
 /***********************************************************************************************************************************
 Defaults
@@ -33,7 +39,7 @@ Constructors
 ***********************************************************************************************************************************/
 Storage *storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, StringId uriStyle, const String *region, StringId keyType, const String *accessKey,
+    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
     const String *secretAccessKey, const String *securityToken, const String *credRole, size_t partSize, const String *host,
     unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 

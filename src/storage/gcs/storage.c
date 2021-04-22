@@ -89,7 +89,7 @@ struct StorageGcs
     const String *endpoint;                                         // Endpoint
     size_t chunkSize;                                               // Block size for resumable upload
 
-    StringId keyType;                                               // Auth key type
+    StorageGcsKeyType keyType;                                      // Auth key type
     const String *credential;                                       // Credential (client email)
     const String *privateKey;                                       // Private key in PEM format
     String *token;                                                  // Token
@@ -269,7 +269,7 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
         switch (this->keyType)
         {
             // Service key authentication requests a token then drops through to normal token authentication
-            case STORAGE_GCS_KEY_TYPE_SERVICE:
+            case storageGcsKeyTypeService:
             {
                 time_t timeBegin = time(NULL);
 
@@ -291,8 +291,8 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
                 }
             }
 
-            // Token authentication. Keep this as the default to prevent code churn.
-            default:
+            // Token authentication
+            case storageGcsKeyTypeToken:
                 httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
                 break;
         }
@@ -854,7 +854,7 @@ static const StorageInterface storageInterfaceGcs =
 Storage *
 storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    StringId keyType, const String *key, size_t chunkSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
+    StorageGcsKeyType keyType, const String *key, size_t chunkSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
     const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -894,10 +894,10 @@ storageGcsNew(
         };
 
         // Handle auth key types
-        switch (driver->keyType)
+        switch (keyType)
         {
             // Read data from file for service keys
-            case STORAGE_GCS_KEY_TYPE_SERVICE:
+            case storageGcsKeyTypeService:
             {
                 KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
                 driver->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
@@ -913,14 +913,10 @@ storageGcsNew(
                 break;
             }
 
-            // Store the authentication token. Keep this as the default to prevent code churn.
-            default:
-            {
-                ASSERT(driver->keyType == STORAGE_GCS_KEY_TYPE_TOKEN);
-
+            // Store the authentication token
+            case storageGcsKeyTypeToken:
                 driver->token = strDup(key);
                 break;
-            }
         }
 
         // Parse the endpoint to extract the host and port

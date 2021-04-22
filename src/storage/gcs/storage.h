@@ -14,8 +14,11 @@ Storage type
 /***********************************************************************************************************************************
 Key type
 ***********************************************************************************************************************************/
-#define STORAGE_GCS_KEY_TYPE_SERVICE                                STRID5("service", 0x1469b48b30)
-#define STORAGE_GCS_KEY_TYPE_TOKEN                                  STRID5("token", 0xe2adf40)
+typedef enum
+{
+    storageGcsKeyTypeService = STRID5("service", 0x1469b48b30),
+    storageGcsKeyTypeToken = STRID5("token", 0xe2adf40),
+} StorageGcsKeyType;
 
 /***********************************************************************************************************************************
 Defaults
@@ -27,7 +30,7 @@ Constructors
 ***********************************************************************************************************************************/
 Storage *storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    StringId keyType, const String *key, size_t blockSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
+    StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
     const String *caFile, const String *caPath);
 
 #endif

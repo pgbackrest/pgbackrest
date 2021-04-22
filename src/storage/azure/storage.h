@@ -14,8 +14,11 @@ Storage type
 /***********************************************************************************************************************************
 Key type
 ***********************************************************************************************************************************/
-#define STORAGE_AZURE_KEY_TYPE_SHARED                               STRID5("shared", 0x85905130)
-#define STORAGE_AZURE_KEY_TYPE_SAS                                  STRID5("sas", 0x4c330)
+typedef enum
+{
+    storageAzureKeyTypeShared = STRID5("shared", 0x85905130),
+    storageAzureKeyTypeSas = STRID5("sas", 0x4c330),
+} StorageAzureKeyType;
 
 /***********************************************************************************************************************************
 Defaults
@@ -27,7 +30,7 @@ Constructors
 ***********************************************************************************************************************************/
 Storage *storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StringId keyType, const String *key, size_t blockSize, const String *host, const String *endpoint,
-    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
+    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *host,
+    const String *endpoint, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif

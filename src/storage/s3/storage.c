@@ -106,13 +106,13 @@ struct StorageS3
 
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
-    StringId keyType;                                               // Key type (shared or auto)
+    StorageS3KeyType keyType;                                       // Key type (shared or temp)
     String *accessKey;                                              // Access key
     String *secretAccessKey;                                        // Secret access key
     String *securityToken;                                          // Security token, if any
     size_t partSize;                                                // Part size for multi-part upload
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
-    StringId uriStyle;                                              // Path or host style URIs
+    StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
 
     // For retrieving temporary security credentials
@@ -306,11 +306,11 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         }
 
         // When using path-style URIs the bucket name needs to be prepended
-        if (this->uriStyle == STORAGE_S3_URI_STYLE_PATH)
+        if (this->uriStyle == storageS3UriStylePath)
             path = strNewFmt("/%s%s", strZ(this->bucket), strZ(path));
 
         // If temp crendentials will be expiring soon then renew them
-        if (this->keyType == STORAGE_S3_KEY_TYPE_AUTO && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
+        if (this->keyType == storageS3KeyTypeAuto && (this->credExpirationTime - time(NULL)) < S3_CREDENTIAL_RENEW_SEC)
         {
             // Set content-length and host headers
             HttpHeader *credHeader = httpHeaderNew(NULL);
@@ -931,7 +931,7 @@ static const StorageInterface storageInterfaceS3 =
 Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    const String *endPoint, StringId uriStyle, const String *region, StringId keyType, const String *accessKey,
+    const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
     const String *secretAccessKey, const String *securityToken, const String *credRole, size_t partSize, const String *host,
     unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
@@ -962,8 +962,8 @@ storageS3New(
     ASSERT(endPoint != NULL);
     ASSERT(region != NULL);
     ASSERT(
-        (keyType == STORAGE_S3_KEY_TYPE_SHARED && accessKey != NULL && secretAccessKey != NULL) ||
-        (keyType == STORAGE_S3_KEY_TYPE_AUTO && accessKey == NULL && secretAccessKey == NULL && securityToken == NULL));
+        (keyType == storageS3KeyTypeShared && accessKey != NULL && secretAccessKey != NULL) ||
+        (keyType == storageS3KeyTypeAuto && accessKey == NULL && secretAccessKey == NULL && securityToken == NULL));
     ASSERT(partSize != 0);
 
     Storage *this = NULL;
@@ -985,7 +985,7 @@ storageS3New(
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,
-            .bucketEndpoint = uriStyle == STORAGE_S3_URI_STYLE_HOST ?
+            .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
                 strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
             .credHost = S3_CREDENTIAL_HOST_STR,
             .credRole = strDup(credRole),
@@ -1002,7 +1002,7 @@ storageS3New(
             tlsClientNew(sckClientNew(host, port, timeout), host, timeout, verifyPeer, caFile, caPath), timeout);
 
         // Create the HTTP client used to retreive temporary security credentials
-        if (driver->keyType == STORAGE_S3_KEY_TYPE_AUTO)
+        if (driver->keyType == storageS3KeyTypeAuto)
             driver->credHttpClient = httpClientNew(sckClientNew(driver->credHost, S3_CREDENTIAL_PORT, timeout), timeout);
 
         // Create list of redacted headers
