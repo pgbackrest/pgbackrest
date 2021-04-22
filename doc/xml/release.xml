@@ -14,6 +14,32 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.34dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1368"/>
+                        <github-pull-request id="1374"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="francisco.miguel.biete"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Free no longer needed remotes so they do not timeout during <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1375"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <cmd>help</cmd> when a valid option is invalid for the specified command.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-issue id="986"/>
@@ -9538,6 +9564,11 @@
         <contributor id="floris.van.nee">
             <contributor-name-display>Floris van Nee</contributor-name-display>
             <contributor-id type="github">fvannee</contributor-id>
+        </contributor>
+
+        <contributor id="francisco.miguel.biete">
+            <contributor-name-display>Francisco Miguel Biete</contributor-name-display>
+            <contributor-id type="github">fmbiete</contributor-id>
         </contributor>
 
         <contributor id="vidhya.gurumoorthi">

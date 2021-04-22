@@ -2230,6 +2230,9 @@ cmdRestore(void)
             strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
             backupData.backupCipherPass);
 
+        // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
+        protocolFree();
+
         // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);
 
