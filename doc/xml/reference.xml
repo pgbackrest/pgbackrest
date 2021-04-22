@@ -223,7 +223,7 @@
                     <config-key id="job-retry-interval" name="Job Retry Interval">
                         <summary>Retry interval after first retry.</summary>
 
-                        <text>The first retry is always performed immediately. This options specifies the interval to wait (in seconds) before performing each additional retry.</text>
+                        <text>The first retry is always performed immediately. This option specifies the interval to wait (in seconds) before performing each additional retry.</text>
 
                         <example>30</example>
                     </config-key>
@@ -519,7 +519,7 @@
                     <config-key id="repo-local" name="Repository Locality">
                         <summary>Repository is local.</summary>
 
-                        <text>Indicates that the repository for the specified index is local and any repository host settings (e.g. <setting>repo1-host</setting>) should be ignored.</text>
+                        <text>Indicates that the repository for the specified index is local and any repository host settings for that index (e.g. <setting>repo1-host</setting>) should be ignored.</text>
 
                         <example>y</example>
                     </config-key>
@@ -1136,7 +1136,7 @@
                     <config-key id="pg-local" name="PostgreSQL Locality">
                         <summary><postgres/> is local.</summary>
 
-                        <text>Indicates that <postgres/> for the specified index is local and any <postgres/> host settings (e.g. <setting>pg1-host</setting>) should be ignored.</text>
+                        <text>Indicates that <postgres/> for the specified index is local and any <postgres/> host settings for that index (e.g. <setting>pg1-host</setting>) should be ignored.</text>
 
                         <example>y</example>
                     </config-key>
