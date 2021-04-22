@@ -1373,7 +1373,7 @@ testRun(void)
             "system databases (template0, postgres, etc.) are included by default");
 
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
-        
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing database selected");
 
@@ -2051,7 +2051,7 @@ testRun(void)
         // Add encryption filter and save the encrypted manifest
         #define TEST_CIPHER_PASS_MANIFEST "backpass"
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, 1)), cipherModeEncrypt,
+            ioWriteFilterGroup(write), cfgOptionIdxStr(cfgOptRepoCipherType, 1), cipherModeEncrypt,
             STRDEF(TEST_CIPHER_PASS_MANIFEST));
         manifestSave(manifestEncrypted, write);
 

@@ -73,24 +73,24 @@ cmdStanzaCreate(void)
                 }
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
-                String *cipherPassSub = cipherPassGen(cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)));
+                String *cipherPassSub = cipherPassGen(cfgOptionIdxStrid(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save archive info
                 infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherPassSub);
 
                 infoArchiveSaveFile(
                     infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR,
-                    cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent backup files
-                cipherPassSub = cipherPassGen(cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)));
+                cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save backup info
                 infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherPassSub);
 
                 infoBackupSaveFile(
                     infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR,
-                    cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             }
             // Else if at least one archive and one backup info file exists, then ensure both are valid
             else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
@@ -99,7 +99,7 @@ cmdStanzaCreate(void)
                 // current database
                 checkStanzaInfoPg(
                     storageRepoReadStanza, pgControl.version, pgControl.systemId,
-                    cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
                 // The files are valid - upgrade
                 const String *sourceFile = NULL;

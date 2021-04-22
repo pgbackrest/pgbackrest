@@ -1232,7 +1232,7 @@ infoRender(void)
             repoErrorList[repoIdx] = (InfoRepoData)
             {
                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
-                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx),
                 .error = NULL,
             };
@@ -1304,7 +1304,7 @@ infoRender(void)
                             stanzaRepo.repoList[repoListIdx] = (InfoRepoData)
                             {
                                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
-                                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
+                                .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoListIdx),
                                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
                                 .error = NULL,
                             };

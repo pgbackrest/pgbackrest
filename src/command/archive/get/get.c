@@ -390,7 +390,7 @@ archiveGetCheck(const StringList *archiveRequestList)
                 ArchiveGetFindCacheRepo cacheRepo =
                 {
                     .repoIdx = repoIdx,
-                    .cipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    .cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     .archiveList = lstNewP(sizeof(ArchiveGetFindCacheArchive)),
                     .warnList = strLstNew(),
                 };

@@ -397,7 +397,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             {
                 result = manifestLoadFile(
                     storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabelPrior)),
-                    cipherType(cfgOptionStr(cfgOptRepoCipherType)), infoPgCipherPass(infoBackupPg(infoBackup)));
+                    cfgOptionStrId(cfgOptRepoCipherType), infoPgCipherPass(infoBackupPg(infoBackup)));
                 const ManifestData *manifestPriorData = manifestData(result);
 
                 LOG_INFO_FMT(
@@ -709,7 +709,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                         TRY_BEGIN()
                         {
                             manifestResume = manifestLoadFile(
-                                storageRepo(), manifestFile, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherPassBackup);
+                                storageRepo(), manifestFile, cfgOptionStrId(cfgOptRepoCipherType), cipherPassBackup);
                             const ManifestData *manifestResumeData = manifestData(manifestResume);
 
                             // Check pgBackRest version. This allows the resume implementation to be changed with each version of
@@ -963,7 +963,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(
-                filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, manifestCipherSubPass(manifest));
+                filterGroup, cfgOptionStr(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
 
             // Add size filter last to calculate repo size
             ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -1253,7 +1253,7 @@ backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
 
         // Add encryption filter if required
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt, cipherPassBackup);
+            ioWriteFilterGroup(write), cfgOptionStr(cfgOptRepoCipherType), cipherModeEncrypt, cipherPassBackup);
 
         // Save file
         manifestSave(manifest, write);
@@ -1585,7 +1585,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .backupStandby = backupStandby,
             .compressType = compressTypeEnum(cfgOptionStr(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
-            .cipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
             .lsnStart = cfgOptionBool(cfgOptOnline) ? pgLsnFromStr(lsnStart) : 0xFFFFFFFFFFFFFFFF,
@@ -1757,7 +1757,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
             // Loop through all the segments in the lsn range
             InfoArchive *infoArchive = infoArchiveLoadFile(
-                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
                 cfgOptionStrNull(cfgOptRepoCipherPass));
             const String *archiveId = infoArchiveId(infoArchive);
 
@@ -1790,7 +1790,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                         // Decrypt with archive key if encrypted
                         cipherBlockFilterGroupAdd(
-                            filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
+                            filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
                             infoArchiveCipherPass(infoArchive));
 
                         // Compress/decompress if archive and backup do not have the same compression settings
@@ -1808,8 +1808,7 @@ backupArchiveCheckCopy(Manifest *manifest, unsigned int walSegmentSize, const St
 
                         // Encrypt with backup key if encrypted
                         cipherBlockFilterGroupAdd(
-                            filterGroup, cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
-                            manifestCipherSubPass(manifest));
+                            filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
 
                         // Add size filter last to calculate repo size
                         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -1893,7 +1892,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
                 storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
 
         cipherBlockFilterGroupAdd(
-            ioReadFilterGroup(storageReadIo(manifestRead)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeDecrypt,
+            ioReadFilterGroup(storageReadIo(manifestRead)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
             infoPgCipherPass(infoBackupPg(infoBackup)));
 
         StorageWrite *manifestWrite = storageNewWriteP(
@@ -1905,7 +1904,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGz, 9));
 
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherType(cfgOptionStr(cfgOptRepoCipherType)), cipherModeEncrypt,
+            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt,
             infoPgCipherPass(infoBackupPg(infoBackup)));
 
         storageCopyP(manifestRead, manifestWrite);
@@ -1924,7 +1923,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         infoBackupDataAdd(infoBackup, manifest);
 
         infoBackupSaveFile(
-            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
+            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
             cfgOptionStrNull(cfgOptRepoCipherPass));
     }
     MEM_CONTEXT_TEMP_END();
@@ -1956,8 +1955,7 @@ cmdBackup(void)
 
         // Load backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionStr(cfgOptRepoCipherType)),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
+            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType), cfgOptionStrNull(cfgOptRepoCipherPass));
         InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
         const String *cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
 
@@ -1984,7 +1982,7 @@ cmdBackup(void)
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
-            manifestCipherSubPassSet(manifest, cipherPassGen(cipherType(cfgOptionStr(cfgOptRepoCipherType))));
+            manifestCipherSubPassSet(manifest, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
