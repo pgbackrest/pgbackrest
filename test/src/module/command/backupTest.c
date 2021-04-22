@@ -902,7 +902,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
         varLstAdd(paramList, varNewBool(false));                // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeAes256Cbc));  // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeAes256Cbc));// cipherType
         varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - recopy, encrypt");

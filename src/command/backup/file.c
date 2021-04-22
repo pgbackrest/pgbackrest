@@ -55,7 +55,7 @@ backupFile(
         FUNCTION_LOG_PARAM(INT,  repoFileCompressLevel);            // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING, backupLabel);                    // Label of current backup
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
-        FUNCTION_LOG_PARAM(ENUM, cipherType);                       // Encryption type
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
     FUNCTION_LOG_END();
 
