@@ -2028,7 +2028,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152850F_20181119-152252D");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         harnessCfgLoad(cfgCmdExpire, argList);
 

@@ -1949,7 +1949,7 @@ testRun(void)
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPathEncrpyt);
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         strLstAddZ(argList, "--set=20161219-212741F");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         harnessCfgLoad(cfgCmdRestore, argList);
 
@@ -2051,7 +2051,7 @@ testRun(void)
         // Add encryption filter and save the encrypted manifest
         #define TEST_CIPHER_PASS_MANIFEST "backpass"
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cfgOptionIdxStr(cfgOptRepoCipherType, 1), cipherModeEncrypt,
+            ioWriteFilterGroup(write), cfgOptionIdxStrId(cfgOptRepoCipherType, 1), cipherModeEncrypt,
             STRDEF(TEST_CIPHER_PASS_MANIFEST));
         manifestSave(manifestEncrypted, write);
 
@@ -2115,7 +2115,7 @@ testRun(void)
         strLstAddZ(argList, "--set=20161219-212741F");
         strLstAddZ(argList, "--" CFGOPT_DELTA);
         strLstAddZ(argList, "--force");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         harnessCfgLoad(cfgCmdRestore, argList);
 

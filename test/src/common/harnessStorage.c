@@ -301,7 +301,7 @@ hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer,
         if (param.compressType != compressTypeNone)
             strCatZ(log, "/");
 
-        strCatFmt(log, "enc[%s,%s]", strZ(cipherTypeName(param.cipherType)), param.cipherPass);
+        strCatFmt(log, "enc[%s,%s]", strZ(strIdToStr(param.cipherType)), param.cipherPass);
     }
 
     // Add a space if compression/encryption defined

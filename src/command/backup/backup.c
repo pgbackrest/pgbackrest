@@ -963,7 +963,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(
-                filterGroup, cfgOptionStr(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
+                filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
 
             // Add size filter last to calculate repo size
             ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -1253,7 +1253,7 @@ backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
 
         // Add encryption filter if required
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cfgOptionStr(cfgOptRepoCipherType), cipherModeEncrypt, cipherPassBackup);
+            ioWriteFilterGroup(write), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, cipherPassBackup);
 
         // Save file
         manifestSave(manifest, write);

@@ -73,7 +73,7 @@ cmdStanzaCreate(void)
                 }
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
-                String *cipherPassSub = cipherPassGen(cfgOptionIdxStrid(cfgOptRepoCipherType, repoIdx));
+                String *cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save archive info
                 infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherPassSub);

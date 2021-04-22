@@ -229,7 +229,7 @@ archivePushCheck(bool pgPathSet)
                 storageRepoIdx(repoIdx);
 
                 // Get cipher type
-                CipherType repoCipherType = cfgOptionIdxStrid(cfgOptRepoCipherType, repoIdx);
+                CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
 
                 // Attempt to load the archive info file
                 InfoArchive *info = infoArchiveLoadFile(

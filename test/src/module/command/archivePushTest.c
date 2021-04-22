@@ -538,7 +538,7 @@ testRun(void)
         hrnCfgArgRawZ(argListTemp, cfgOptStanza, "test");
         hrnCfgArgKeyRawFmt(argListTemp, cfgOptPgPath, 1, "%s/pg", testPath());
         hrnCfgArgKeyRawFmt(argListTemp, cfgOptRepoPath, 2, "%s/repo2", testPath());
-        hrnCfgArgKeyRawZ(argListTemp, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argListTemp, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "badpassphrase");
         hrnCfgArgKeyRawFmt(argListTemp, cfgOptRepoPath, 3, "%s/repo3", testPath());
         hrnCfgArgRawNegate(argListTemp, cfgOptCompress);

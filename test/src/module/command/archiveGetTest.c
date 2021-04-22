@@ -960,7 +960,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH_REPO "-bogus");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         strLstAddZ(argList, "01ABCDEF01ABCDEF01ABCDEF");
