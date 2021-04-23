@@ -52,7 +52,7 @@ xmlDocumentRoot(const XmlDocument *const this)
 Document Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-xmlDocumentFree(XmlDocument *this)
+xmlDocumentFree(XmlDocument *const this)
 {
     objFree(this);
 }

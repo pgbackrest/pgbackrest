@@ -1,8 +1,8 @@
 # Cirrus CI Build Definitions
 # ----------------------------------------------------------------------------------------------------------------------------------
 
-# Build the branch if it is integration or ends in -ci/-cic (-cic targets only Cirrus CI)
-only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_BRANCH =~ '.*-ci$' || $CIRRUS_BRANCH =~ '.*-cic$'
+# Build the branch if it is integration, a pull request, or ends in -ci/-cic (-cic targets only Cirrus CI)
+only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_PR != '' || $CIRRUS_BRANCH =~ '.*-ci$' || $CIRRUS_BRANCH =~ '.*-cic$'
 
 # No auto-cancel on integration
 auto_cancellation: $CIRRUS_BRANCH != 'integration'

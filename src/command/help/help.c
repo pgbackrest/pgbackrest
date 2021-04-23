@@ -163,52 +163,52 @@ helpRenderValue(const Variant *value, ConfigOptionType type)
 
     if (value != NULL)
     {
-    if (varType(value) == varTypeBool)
-    {
-        if (varBool(value))
-            result = Y_STR;
+        if (varType(value) == varTypeBool)
+        {
+            if (varBool(value))
+                result = Y_STR;
+            else
+                result = N_STR;
+        }
+        else if (varType(value) == varTypeKeyValue)
+        {
+            String *resultTemp = strNew("");
+
+            const KeyValue *optionKv = varKv(value);
+            const VariantList *keyList = kvKeyList(optionKv);
+
+            for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+            {
+                if (keyIdx != 0)
+                    strCatZ(resultTemp, ", ");
+
+                strCatFmt(
+                    resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+            }
+
+            result = resultTemp;
+        }
+        else if (varType(value) == varTypeVariantList)
+        {
+            String *resultTemp = strNew("");
+
+            const VariantList *list = varVarLst(value);
+
+            for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
+            {
+                if (listIdx != 0)
+                    strCatZ(resultTemp, ", ");
+
+                strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
+            }
+
+            result = resultTemp;
+        }
+        else if (type == cfgOptTypeTime)
+            result = strNewDbl((double)varInt64(value) / MSEC_PER_SEC);
         else
-            result = N_STR;
-    }
-    else if (varType(value) == varTypeKeyValue)
-    {
-        String *resultTemp = strNew("");
-
-        const KeyValue *optionKv = varKv(value);
-        const VariantList *keyList = kvKeyList(optionKv);
-
-        for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
-        {
-            if (keyIdx != 0)
-                strCatZ(resultTemp, ", ");
-
-            strCatFmt(
-                resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
-        }
-
-        result = resultTemp;
-    }
-    else if (varType(value) == varTypeVariantList)
-    {
-        String *resultTemp = strNew("");
-
-        const VariantList *list = varVarLst(value);
-
-        for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
-        {
-            if (listIdx != 0)
-                strCatZ(resultTemp, ", ");
-
-            strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
-        }
-
-        result = resultTemp;
-    }
-    else if (type == cfgOptTypeTime)
-        result = strNewDbl((double)varInt64(value) / MSEC_PER_SEC);
-    else
-        result = varStrForce(value);
+            result = varStrForce(value);
     }
 
     FUNCTION_LOG_RETURN_CONST(STRING, result);
@@ -488,15 +488,22 @@ helpRender(void)
                 const String *optionName = strLstGet(cfgCommandParam(), 0);
                 CfgParseOptionResult option = cfgParseOption(optionName);
 
+                // If the option was not found it might be an indexed option without the index, e.g. repo-host instead of
+                // repo1-host. This is valid for help even though the parser will reject it.
                 if (!option.found)
                 {
                     int optionId = cfgParseOptionId(strZ(optionName));
 
-                    if (optionId == -1)
-                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
-                    else
+                    if (optionId != -1)
+                    {
                         option.id = (unsigned int)optionId;
+                        option.found = true;
+                    }
                 }
+
+                // Error when option is not found or is invalid for the current command
+                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleDefault, option.id))
+                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
 
                 // Output option summary and description. Add a warning for internal options.
                 CHECK(optionData[option.id].summary != NULL && optionData[option.id].description != NULL);

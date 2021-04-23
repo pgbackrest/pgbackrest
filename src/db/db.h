@@ -108,7 +108,7 @@ void dbClose(Db *this);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline Db *
-dbMove(Db *this, MemContext *parentNew)
+dbMove(Db *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -117,7 +117,7 @@ dbMove(Db *this, MemContext *parentNew)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-dbFree(Db *this)
+dbFree(Db *const this)
 {
     objFree(this);
 }

@@ -2163,7 +2163,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
                 // Create restore job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARUINT(jobData->repoIdx));
                 protocolCommandParamAdd(
@@ -2229,6 +2229,9 @@ cmdRestore(void)
             storageRepoIdx(backupData.repoIdx),
             strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
             backupData.backupCipherPass);
+
+        // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
+        protocolFree();
 
         // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);

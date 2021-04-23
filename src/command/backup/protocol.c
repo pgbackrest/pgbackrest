@@ -12,11 +12,6 @@ Backup Protocol Handler
 #include "config/config.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_BACKUP_FILE_STR,                     PROTOCOL_COMMAND_BACKUP_FILE);
-
 /**********************************************************************************************************************************/
 void
 backupFileProtocol(const VariantList *paramList, ProtocolServer *server)

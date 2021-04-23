@@ -65,7 +65,7 @@ void execOpen(Exec *this);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-execFree(Exec *this)
+execFree(Exec *const this)
 {
     objFree(this);
 }
