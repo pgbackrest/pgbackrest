@@ -535,11 +535,6 @@ testRun(void)
         uint64_t feature = storageRepo()->pub.interface.feature;
         ((Storage *)storageRepo())->pub.interface.feature = feature & ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
 
-        // Create tmp file to make it look like a prior backup file failed partway through to ensure that retries work
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), strNewFmt("%s.pgbackrest.tmp", strZ(backupPathFile))), NULL),
-            "    create tmp file");
-
         TEST_ASSIGN(
             result,
             backupFile(
@@ -556,9 +551,6 @@ testRun(void)
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy file to repo success");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(storageRepoWrite(), strNewFmt("%s.pgbackrest.tmp", strZ(backupPathFile))), false,
-            "    check temp file removed");
         TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), backupPathFile), "    remove repo file");
 
         // -------------------------------------------------------------------------------------------------------------------------
