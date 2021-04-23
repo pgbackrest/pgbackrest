@@ -42,7 +42,10 @@ kvKeyList(const KeyValue *const this)
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Add value to key -- if the key does not exist then this works the same as kvPut()
+// Add a value to an existing key. If the key does not exist then this works the same as kvPut(). If the key does exist then the
+// value is converted to a VariantList with the existing value and the new value as list items. Subsequent calls expand the list.
+//
+// NOTE: this function is seldom required and kvPut() should be used when a key is expected to have a single value.
 KeyValue *kvAdd(KeyValue *this, const Variant *key, const Variant *value);
 
 // Move to a new parent mem context
