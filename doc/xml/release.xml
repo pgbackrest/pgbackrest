@@ -84,7 +84,12 @@
                     </release-item>
 
                     <release-item>
-                        <github-pull-request id="1358"/>
+                        <commit subject="Add StringId type.">
+                            <github-pull-request id="1358"/>
+                        </commit>
+                        <commit subject="Update storage module to use StringIds.">
+                            <github-pull-request id="1379"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>

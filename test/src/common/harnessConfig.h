@@ -49,6 +49,9 @@ void hrnCfgArgKeyRawFmt(StringList *argList, ConfigOption optionId, unsigned opt
 void hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value);
 void hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *value);
 
+void hrnCfgArgRawStrId(StringList *argList, ConfigOption optionId, StringId value);
+void hrnCfgArgKeyRawStrId(StringList *argList, ConfigOption optionId, unsigned optionKey, StringId);
+
 void hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value);
 void hrnCfgArgKeyRawBool(StringList *argList, ConfigOption optionId, unsigned optionKey, bool value);
 

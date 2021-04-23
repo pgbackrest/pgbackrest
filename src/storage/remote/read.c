@@ -207,7 +207,7 @@ storageReadRemoteNew(
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_REMOTE_TYPE_STR,
+                .type = STORAGE_REMOTE_TYPE,
                 .name = strDup(name),
                 .compressible = compressible,
                 .compressLevel = compressLevel,
