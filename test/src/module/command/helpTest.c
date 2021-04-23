@@ -67,24 +67,30 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("helpRenderText()"))
     {
-        TEST_RESULT_STR_Z(helpRenderText(strNew("this is a short sentence"), 0, false, 80), "this is a short sentence", "one line");
+        TEST_RESULT_STR_Z(
+            helpRenderText(strNew("this is a short sentence"), false, 0, false, 80), "this is a short sentence", "one line");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("this is a short sentence"), 4, false, 14),
+            helpRenderText(strNew("this is a short sentence"), false, 4, false, 14),
             "this is a\n"
             "    short\n"
             "    sentence",
             "three lines, no indent first");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), 2, true, 16),
+            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), true, 2, true, 16),
             "  This is a\n"
             "  short\n"
             "  paragraph.\n"
             "\n"
             "  Here is\n"
-            "  another one.",
-            "two paragraphs, indent first");
+            "  another one.\n"
+            "\n"
+            "  FOR INTERNAL\n"
+            "  USE ONLY. DO\n"
+            "  NOT USE IN\n"
+            "  PRODUCTION.",
+            "two paragraphs, indent first, internal");
     }
 
     // *****************************************************************************************************************************
@@ -306,6 +312,14 @@ testRun(void)
         strLstAddZ(argList, BOGUS_STR);
         TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse bogus option");
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, CFGCMD_HELP);
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH);
+        strLstAddZ(argList, CFGOPT_PROCESS);
+        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse option invalid for command");
+        TEST_ERROR(helpRender(), OptionInvalidError, "option 'process' is not valid for command 'archive-push'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const char *optionHelp = strZ(strNewFmt(

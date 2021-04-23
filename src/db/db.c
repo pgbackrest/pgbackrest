@@ -45,7 +45,7 @@ dbFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE_STR);
+    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE);
     protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
 
     protocolClientExecute(this->remoteClient, command, false);
@@ -108,7 +108,7 @@ dbQuery(Db *this, const String *query)
     // Query remotely
     if (this->remoteClient != NULL)
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY);
         protocolCommandParamAdd(command, VARUINT(this->remoteIdx));
         protocolCommandParamAdd(command, VARSTR(query));
 
@@ -198,7 +198,7 @@ dbOpen(Db *this)
         // Open the connection
         if (this->remoteClient != NULL)
         {
-            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_OPEN_STR);
+            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_OPEN);
             this->remoteIdx = varUIntForce(protocolClientExecute(this->remoteClient, command, true));
 
             // Set a callback to notify the remote when a connection is closed

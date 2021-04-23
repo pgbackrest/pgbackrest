@@ -89,28 +89,28 @@ typedef struct HttpRequestPub
 
 // Request path
 __attribute__((always_inline)) static inline const String *
-httpRequestPath(const HttpRequest *this)
+httpRequestPath(const HttpRequest *const this)
 {
     return THIS_PUB(HttpRequest)->path;
 }
 
 // Request query
 __attribute__((always_inline)) static inline const HttpQuery *
-httpRequestQuery(const HttpRequest *this)
+httpRequestQuery(const HttpRequest *const this)
 {
     return THIS_PUB(HttpRequest)->query;
 }
 
 // Request headers
 __attribute__((always_inline)) static inline const HttpHeader *
-httpRequestHeader(const HttpRequest *this)
+httpRequestHeader(const HttpRequest *const this)
 {
     return THIS_PUB(HttpRequest)->header;
 }
 
 // Request verb
 __attribute__((always_inline)) static inline const String *
-httpRequestVerb(const HttpRequest *this)
+httpRequestVerb(const HttpRequest *const this)
 {
     return THIS_PUB(HttpRequest)->verb;
 }
@@ -126,7 +126,7 @@ void httpRequestError(const HttpRequest *this, HttpResponse *response) __attribu
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline HttpRequest *
-httpRequestMove(HttpRequest *this, MemContext *parentNew)
+httpRequestMove(HttpRequest *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -135,7 +135,7 @@ httpRequestMove(HttpRequest *this, MemContext *parentNew)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-httpRequestFree(HttpRequest *this)
+httpRequestFree(HttpRequest *const this)
 {
     objFree(this);
 }

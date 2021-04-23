@@ -19,9 +19,6 @@ STRING_EXTERN(PROTOCOL_GREETING_NAME_STR,                           PROTOCOL_GRE
 STRING_EXTERN(PROTOCOL_GREETING_SERVICE_STR,                        PROTOCOL_GREETING_SERVICE);
 STRING_EXTERN(PROTOCOL_GREETING_VERSION_STR,                        PROTOCOL_GREETING_VERSION);
 
-STRING_EXTERN(PROTOCOL_COMMAND_NOOP_STR,                            PROTOCOL_COMMAND_NOOP);
-STRING_EXTERN(PROTOCOL_COMMAND_EXIT_STR,                            PROTOCOL_COMMAND_EXIT);
-
 STRING_EXTERN(PROTOCOL_ERROR_STR,                                   PROTOCOL_ERROR);
 STRING_EXTERN(PROTOCOL_ERROR_STACK_STR,                             PROTOCOL_ERROR_STACK);
 
@@ -55,7 +52,7 @@ protocolClientFreeResource(THIS_VOID)
     // Send an exit command but don't wait to see if it succeeds
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT_STR));
+        protocolClientWriteCommand(this, protocolCommandNew(PROTOCOL_COMMAND_EXIT));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -282,7 +279,7 @@ protocolClientNoOp(ProtocolClient *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolClientExecute(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP_STR), false);
+        protocolClientExecute(this, protocolCommandNew(PROTOCOL_COMMAND_NOOP), false);
     }
     MEM_CONTEXT_TEMP_END();
 

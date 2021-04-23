@@ -210,6 +210,24 @@
                         <example>120</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="job-retry" name="Job Retry Count">
+                        <summary>Retry count for local jobs.</summary>
+
+                        <text>The number of retries for jobs run in the local process, e.g. file backup.</text>
+
+                        <example>5</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="job-retry-interval" name="Job Retry Interval">
+                        <summary>Retry interval after first retry.</summary>
+
+                        <text>The first retry is always performed immediately. This option specifies the interval to wait (in seconds) before performing each additional retry.</text>
+
+                        <example>30</example>
+                    </config-key>
+
                     <!-- CONFIG - GENERAL SECTION - LOCK-PATH KEY -->
                     <config-key id="lock-path" name="Lock Path">
                         <summary>Path where lock files are stored.</summary>
@@ -263,6 +281,15 @@
                         <text>Sets the timeout, in seconds, that the local or remote process will wait for a new message to be received on the protocol layer.  This prevents processes from waiting indefinitely for a message. <admonition type="note">The <br-option>protocol-timeout</br-option> option must be greater than the <br-option>db-timeout</br-option> option.</admonition></text>
 
                         <example>630</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="sck-block" name="Socket Blocking">
+                        <summary>Socket blocking enable.</summary>
+
+                        <text>Enable blocking on socket connections.</text>
+
+                        <example>y</example>
                     </config-key>
 
                     <!-- CONFIG - GENERAL SECTION - SCK-KEEP-ALIVE KEY -->
@@ -484,6 +511,15 @@
                         <summary>Hardlink files between backups in the repository.</summary>
 
                         <text>Enable hard-linking of files in differential and incremental backups to their full backups.  This gives the appearance that each backup is a full backup at the file-system level.  Be careful, though, because modifying files that are hard-linked can affect all the backups in the set.</text>
+
+                        <example>y</example>
+                    </config-key>
+
+                    <!-- ======================================================================================================= -->
+                    <config-key id="repo-local" name="Repository Locality">
+                        <summary>Repository is local.</summary>
+
+                        <text>Indicates that the repository for the specified index is local and any repository host settings for that index (e.g. <setting>repo1-host</setting>) should be ignored.</text>
 
                         <example>y</example>
                     </config-key>
@@ -1096,6 +1132,15 @@
                         <example>backupdb</example>
                     </config-key>
 
+                    <!-- ======================================================================================================= -->
+                    <config-key id="pg-local" name="PostgreSQL Locality">
+                        <summary><postgres/> is local.</summary>
+
+                        <text>Indicates that <postgres/> for the specified index is local and any <postgres/> host settings for that index (e.g. <setting>pg1-host</setting>) should be ignored.</text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <!-- CONFIG - STANZA SECTION - PG-PATH KEY -->
                     <config-key id="pg-path" name="PostgreSQL Path">
                         <summary><postgres/> data directory.</summary>
@@ -1167,9 +1212,7 @@
                 <option id="cipher-pass" name="Ad Hoc Cipher Passphrase">
                     <summary>Cipher passphrase for current command.</summary>
 
-                    <text>Specify an ad hoc cipher passphrase for the current command.
-
-                    <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+                    <text>Specify an ad hoc cipher passphrase for the current command.</text>
 
                     <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
                 </option>
@@ -1208,6 +1251,17 @@
                     <summary>Execute a dry-run for the command.</summary>
 
                     <text>The <br-option>{[dash]}-dry-run</br-option> option is a command-line only option and can be passed when it is desirable to determine what modifications will be made by the command without the command actually making any modifications.</text>
+
+                    <example>y</example>
+                </option>
+
+                <!-- =========================================================================================================== -->
+                <option id="exec-id" name="Execution Identifier">
+                    <summary>Unique identifier for the process.</summary>
+
+                    <text>A locally unique identifier used to identify a process when resolving locks on a remote host.
+
+                    The <setting>exec-id</setting> option is generated automatically when needed but it is possible to set it explicitly, which saves a bit of time at startup but introduces the problem of selecting a unique value.</text>
 
                     <example>y</example>
                 </option>
@@ -1348,9 +1402,7 @@
             <command id="repo-create" name="Create Repository">
                 <summary>Create the repository.</summary>
 
-                <text>Create the repository (path, bucket, etc.) on the default repository. If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified. If <setting>repo-type=s3</setting> the bucket will be created.
-
-                <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+                <text>Create the repository (path, bucket, etc.) on the default repository. If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified. If <setting>repo-type=s3</setting> the bucket will be created.</text>
 
             </command>
 
@@ -1447,9 +1499,7 @@
 
                 <text>Similar to the unix <cmd>tee</cmd> command by copying from stdin to a file but options and behavior are different. This command requires a fully qualified file name and is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
 
-                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.
-
-                <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</text>
             </command>
 
             <!-- OPERATION - REPO-RM COMMAND -->
@@ -1458,9 +1508,7 @@
 
                 <text>Similar to the unix <cmd>rm</cmd> command but options are different. This command accepts a path, absolute or relative to the repository path defined by the <br-option>{[dash]}-repo-path</br-option> option, and is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.
 
-                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.
-
-                <b>FOR INTERNAL USE ONLY. DO NOT USE ON A PRODUCTION REPOSITORY.</b></text>
+                If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</text>
 
                 <option-list>
                     <!-- OPERATION - REPO-RM COMMAND - RECURSE OPTION -->

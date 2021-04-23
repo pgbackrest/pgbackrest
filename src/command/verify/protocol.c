@@ -12,11 +12,6 @@ Verify Protocol Handler
 #include "config/config.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_COMMAND_VERIFY_FILE_STR,                     PROTOCOL_COMMAND_VERIFY_FILE);
-
 /**********************************************************************************************************************************/
 void
 verifyFileProtocol(const VariantList *paramList, ProtocolServer *server)

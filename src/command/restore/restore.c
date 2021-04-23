@@ -1540,15 +1540,15 @@ restoreRecoveryOption(unsigned int pgVersion)
             // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 
-            kvPut(optionReplace, VARSTR(CFGOPT_EXEC_ID_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_INTERVAL_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_SUBPROCESS_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_TIMESTAMP_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_MAX_STR), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_EXEC_ID), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_JOB_RETRY), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_JOB_RETRY_INTERVAL), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_SUBPROCESS), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_TIMESTAMP), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_PROCESS_MAX), NULL);
 
             kvPut(
                 result, VARSTRZ(RESTORE_COMMAND),
@@ -2163,7 +2163,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
                 // Create restore job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARUINT(jobData->repoIdx));
                 protocolCommandParamAdd(
@@ -2229,6 +2229,9 @@ cmdRestore(void)
             storageRepoIdx(backupData.repoIdx),
             strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
             backupData.backupCipherPass);
+
+        // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
+        protocolFree();
 
         // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);

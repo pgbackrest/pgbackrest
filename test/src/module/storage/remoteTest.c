@@ -464,7 +464,7 @@ testRun(void)
         varLstAdd(paramList, varNewStr(strNewFmt("%s/repo/test.txt", testPath())));
         varLstAdd(paramList, varNewBool(false));
         varLstAdd(paramList, NULL);
-        varLstAdd(paramList, varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvAdd(kvNew(), varNewStrZ("bogus"), NULL)))));
+        varLstAdd(paramList, varNewVarLst(varLstAdd(varLstNew(), varNewKv(kvPut(kvNew(), varNewStrZ("bogus"), NULL)))));
 
         TEST_ERROR(storageRemoteOpenReadProtocol(paramList, server), AssertError, "unable to add filter 'bogus'");
     }

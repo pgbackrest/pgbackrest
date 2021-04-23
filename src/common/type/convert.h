@@ -41,25 +41,25 @@ int64_t cvtZToInt64Base(const char *value, int base);
 // bits as possible into the low order bits which is good for other types of encoding, e.g. base-128. See
 // http://neurocline.github.io/dev/2015/09/17/zig-zag-encoding.html for details.
 __attribute__((always_inline)) static inline uint32_t
-cvtInt32ToZigZag(int32_t value)
+cvtInt32ToZigZag(const int32_t value)
 {
     return ((uint32_t)value << 1) ^ (uint32_t)(value >> 31);
 }
 
 __attribute__((always_inline)) static inline int32_t
-cvtInt32FromZigZag(uint32_t value)
+cvtInt32FromZigZag(const uint32_t value)
 {
     return (int32_t)((value >> 1) ^ (~(value & 1) + 1));
 }
 
 __attribute__((always_inline)) static inline uint64_t
-cvtInt64ToZigZag(int64_t value)
+cvtInt64ToZigZag(const int64_t value)
 {
     return ((uint64_t)value << 1) ^ (uint64_t)(value >> 63);
 }
 
 __attribute__((always_inline)) static inline int64_t
-cvtInt64FromZigZag(uint64_t value)
+cvtInt64FromZigZag(const uint64_t value)
 {
     return (int64_t)((value >> 1) ^ (~(value & 1) + 1));
 }

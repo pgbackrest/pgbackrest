@@ -1388,7 +1388,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report job error");
 
-        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(STRDEF("command")));
+        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ(stringIdBit5, "x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
         TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0), AssertError, "error message");
@@ -1397,7 +1397,7 @@ testRun(void)
         TEST_TITLE("report host/100% progress on noop result");
 
         // Create job that skips file
-        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(STRDEF("command")));
+        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(strIdFromZ(stringIdBit5, "x")));
 
         VariantList *result = varLstNew();
         varLstAdd(result, varNewUInt64(backupCopyResultNoOp));

@@ -10,16 +10,6 @@ Db Protocol Handler
 #include "protocol/server.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define PROTOCOL_COMMAND_DB_OPEN                                    "dbOpen"
-    STRING_DECLARE(PROTOCOL_COMMAND_DB_OPEN_STR);
-#define PROTOCOL_COMMAND_DB_QUERY                                   "dbQuery"
-    STRING_DECLARE(PROTOCOL_COMMAND_DB_QUERY_STR);
-#define PROTOCOL_COMMAND_DB_CLOSE                                   "dbClose"
-    STRING_DECLARE(PROTOCOL_COMMAND_DB_CLOSE_STR);
-
-/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Process db protocol requests
@@ -30,6 +20,10 @@ void dbCloseProtocol(const VariantList *paramList, ProtocolServer *server);
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
 ***********************************************************************************************************************************/
+#define PROTOCOL_COMMAND_DB_OPEN                                    STRID5("db-o", 0x7ec440)
+#define PROTOCOL_COMMAND_DB_QUERY                                   STRID5("db-q", 0x8ec440)
+#define PROTOCOL_COMMAND_DB_CLOSE                                   STRID5("db-c", 0x1ec440)
+
 #define PROTOCOL_SERVER_HANDLER_DB_LIST                                                                                            \
     {.command = PROTOCOL_COMMAND_DB_OPEN, .handler = dbOpenProtocol},                                                              \
     {.command = PROTOCOL_COMMAND_DB_QUERY, .handler = dbQueryProtocol},                                                            \
