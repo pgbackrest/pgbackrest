@@ -7,6 +7,22 @@ Test Strings
 STRING_STATIC(TEST_STRING, "a very interesting string!");
 
 /***********************************************************************************************************************************
+Test enum and function to ensure 64-bit enums work properly
+***********************************************************************************************************************************/
+typedef enum
+{
+    testStringIdEnumAes256Cbc = STRID5("aes-256-cbc", 0xc43dfbbcdcca10),
+    testStringIdEnumRemote = STRID6("remote", 0x1543cd1521),
+    testStringIdEnumTest = STRID5("test", 0xa4cb40),
+} TestStringIdEnum;
+
+TestStringIdEnum
+testStringIdEnumFunc(TestStringIdEnum testEnum)
+{
+    return testEnum;
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 void
@@ -636,6 +652,16 @@ testRun(void)
         TEST_RESULT_Z(buffer, "a", "    check");
         TEST_RESULT_UINT(strIdToZ(TEST_STR5ID4, buffer), 4, "4 chars");
         TEST_RESULT_Z(buffer, "abc-", "    check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("64-bit enum");
+
+        TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumFunc(testStringIdEnumAes256Cbc)), "aes-256-cbc", "pass to enum param");
+
+        TestStringIdEnum testEnum = testStringIdEnumRemote;
+        TEST_RESULT_STR_Z(strIdToStr(testEnum), "remote", "assign to enum");
+
+        TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumTest), "test", "pass to StringId param");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdGenerate()");

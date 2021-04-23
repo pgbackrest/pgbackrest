@@ -289,7 +289,7 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId,
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_AZURE_TYPE_STR,
+                .type = STORAGE_AZURE_TYPE,
                 .name = strDup(name),
                 .atomic = true,
                 .createPath = true,

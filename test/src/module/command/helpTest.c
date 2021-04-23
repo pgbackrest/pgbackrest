@@ -67,24 +67,30 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("helpRenderText()"))
     {
-        TEST_RESULT_STR_Z(helpRenderText(strNew("this is a short sentence"), 0, false, 80), "this is a short sentence", "one line");
+        TEST_RESULT_STR_Z(
+            helpRenderText(strNew("this is a short sentence"), false, 0, false, 80), "this is a short sentence", "one line");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("this is a short sentence"), 4, false, 14),
+            helpRenderText(strNew("this is a short sentence"), false, 4, false, 14),
             "this is a\n"
             "    short\n"
             "    sentence",
             "three lines, no indent first");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), 2, true, 16),
+            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), true, 2, true, 16),
             "  This is a\n"
             "  short\n"
             "  paragraph.\n"
             "\n"
             "  Here is\n"
-            "  another one.",
-            "two paragraphs, indent first");
+            "  another one.\n"
+            "\n"
+            "  FOR INTERNAL\n"
+            "  USE ONLY. DO\n"
+            "  NOT USE IN\n"
+            "  PRODUCTION.",
+            "two paragraphs, indent first, internal");
     }
 
     // *****************************************************************************************************************************

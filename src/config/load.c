@@ -86,9 +86,9 @@ cfgLoadUpdateOption(void)
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
             // If the repo is local and either posix or cifs
-            if (!(cfgOptionIdxTest(cfgOptRepoHost, optionIdx)) &&
-                (strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), STORAGE_POSIX_TYPE_STR) ||
-                strEq(cfgOptionIdxStr(cfgOptRepoType, optionIdx), STORAGE_CIFS_TYPE_STR)))
+            if (!cfgOptionIdxTest(cfgOptRepoHost, optionIdx) &&
+                (cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_POSIX_TYPE ||
+                 cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_CIFS_TYPE))
             {
                 // Ensure a local repo does not have the same path as another local repo of the same type
                 for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)

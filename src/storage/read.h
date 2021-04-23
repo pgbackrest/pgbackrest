@@ -11,6 +11,7 @@ typedef struct StorageRead StorageRead;
 
 #include "common/io/read.h"
 #include "common/type/object.h"
+#include "common/type/stringId.h"
 #include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
@@ -61,7 +62,7 @@ storageReadName(const StorageRead *const this)
 }
 
 // Get file type
-__attribute__((always_inline)) static inline const String *
+__attribute__((always_inline)) static inline StringId
 storageReadType(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->type;

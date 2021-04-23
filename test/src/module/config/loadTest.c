@@ -111,8 +111,8 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, STORAGE_CIFS_TYPE);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, STORAGE_CIFS_TYPE);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 1, STORAGE_CIFS_TYPE);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 2, STORAGE_CIFS_TYPE);
         TEST_ERROR(
             harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidValueError,
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
@@ -122,8 +122,8 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, STORAGE_POSIX_TYPE);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, STORAGE_CIFS_TYPE);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 1, STORAGE_POSIX_TYPE);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 2, STORAGE_CIFS_TYPE);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 3, "s3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 3, "cool-bucket");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 3, "region");

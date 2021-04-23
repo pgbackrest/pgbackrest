@@ -120,7 +120,7 @@ statToKv(void)
         Stat *stat = lstGet(statLocalData.stat, statIdx);
 
         KeyValue *statKv = kvPutKv(result, VARSTR(stat->key));
-        kvAdd(statKv, STAT_VALUE_TOTAL_VAR, VARUINT64(stat->total));
+        kvPut(statKv, STAT_VALUE_TOTAL_VAR, VARUINT64(stat->total));
     }
 
     FUNCTION_TEST_RETURN(result);

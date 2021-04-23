@@ -404,7 +404,7 @@ ioFilterGroupParamAll(const IoFilterGroup *this)
         const VariantList *paramList = ioFilterParamList(filter);
 
         KeyValue *filterParam = kvNew();
-        kvAdd(filterParam, VARSTR(ioFilterType(filter)), paramList ? varNewVarLst(paramList) : NULL);
+        kvPut(filterParam, VARSTR(ioFilterType(filter)), paramList ? varNewVarLst(paramList) : NULL);
 
         varLstAdd(result, varNewKv(filterParam));
     }
