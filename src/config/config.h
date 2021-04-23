@@ -134,7 +134,7 @@ unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
 uint64_t cfgOptionUInt64(ConfigOption optionId);
 uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int optionIdx);
 
-// Configuration value suitable for display to the user or passing on a command line. If the value was set by the user via the
+// Format the configuration value for display to the user or passing on a command line. If the value was set by the user via the
 // command line, config, etc., then that exact value will be displayed. This makes it easier for the user to recognize the value and
 // saves having to format it into something reasonable, especially for time and size option types. Note that cfgOptTypeHash and
 // cfgOptTypeList option types are not supported by these functions, but they are generally not displayed to the user as a whole.
