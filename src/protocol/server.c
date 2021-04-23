@@ -250,7 +250,7 @@ protocolServerResponse(ProtocolServer *this, const Variant *output)
     KeyValue *result = kvNew();
 
     if (output != NULL)
-        kvAdd(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
+        kvPut(result, VARSTR(PROTOCOL_OUTPUT_STR), output);
 
     ioWriteStrLine(protocolServerIoWrite(this), jsonFromKv(result));
     ioWriteFlush(protocolServerIoWrite(this));
