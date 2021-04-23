@@ -228,7 +228,7 @@ backupFile(
             }
 
             // Setup the repo file for write. There is no need to write the file atomically (e.g. via a temp file on Posix) because
-            // checksums are tested on resume after a failed backup. The path does not need be synced for each file because all
+            // checksums are tested on resume after a failed backup. The path does not need to be synced for each file because all
             // paths are synced at the end of the backup.
             StorageWrite *write = storageNewWriteP(
                 storageRepoWrite(), repoPathFile, .compressible = compressible, .noAtomic = true, .noSyncPath = true);
