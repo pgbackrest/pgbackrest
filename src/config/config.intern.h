@@ -89,7 +89,8 @@ unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
-// !!!
+// Format a variant for display using the supplied option type. cfgOptionDisplay()/cfgOptionIdxDisplay() should be used whenever
+// possible, but sometimes the variant needs to be manipulated before being formatted.
 const String *cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType);
 
 // Convert the key used in the original configuration to a group index. This is used when an option key must be translated into the
