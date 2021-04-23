@@ -480,15 +480,22 @@ helpRender(void)
                 const String *optionName = strLstGet(cfgCommandParam(), 0);
                 CfgParseOptionResult option = cfgParseOption(optionName);
 
+                // If the option was not found it might be an indexed option without the index, e.g. repo-host instead of
+                // repo1-host. This is valid for help even though the parser will reject it.
                 if (!option.found)
                 {
                     int optionId = cfgParseOptionId(strZ(optionName));
 
-                    if (optionId == -1)
-                        THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
-                    else
+                    if (optionId != -1)
+                    {
                         option.id = (unsigned int)optionId;
+                        option.found = true;
+                    }
                 }
+
+                // Error when option is not found or is invalid for the current command
+                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleDefault, option.id))
+                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
 
                 // Output option summary and description
                 strCatFmt(
