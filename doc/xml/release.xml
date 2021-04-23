@@ -56,6 +56,19 @@
 
                 <release-development-list>
                     <release-item>
+                        <github-pull-request id="1377"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="cynthia.shang"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add help for all internal options valid for default roles.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1358"/>
 
                         <release-item-contributor-list>
