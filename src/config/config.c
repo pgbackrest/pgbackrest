@@ -644,16 +644,20 @@ cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
         THROW_FMT(AssertError, "option '%s' is not valid for the current command", cfgOptionIdxName(optionId, optionIdx));
 
     // If there is already a display value set then return that
-    const String *const display = configLocal->option[optionId].index[optionIdx].display;
+    ConfigOptionValue *const option = &configLocal->option[optionId].index[optionIdx];
 
-    if (display != NULL)
-        FUNCTION_TEST_RETURN(display);
+    if (option->display != NULL)
+        FUNCTION_TEST_RETURN(option->display);
 
     // Generate the display value based on the type
-    configLocal->option[optionId].index[optionIdx].display = cfgOptionDisplayVar(
-        configLocal->option[optionId].index[optionIdx].value, cfgParseOptionType(optionId));
+    MEM_CONTEXT_BEGIN(configLocal->memContext)
+    {
+        option->display = cfgOptionDisplayVar(option->value, cfgParseOptionType(optionId));
+    }
+    MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].display);
+
+    FUNCTION_TEST_RETURN(option->display);
 }
 
 const String *
