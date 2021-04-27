@@ -257,7 +257,7 @@ storageFeature(const Storage *const this, const StorageFeature feature)
 }
 
 // Storage type (posix, cifs, etc.)
-__attribute__((always_inline)) static inline const String *
+__attribute__((always_inline)) static inline StringId
 storageType(const Storage *const this)
 {
     return THIS_PUB(Storage)->type;

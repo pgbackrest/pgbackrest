@@ -178,7 +178,7 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
         hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
@@ -285,7 +285,7 @@ testRun(void)
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-                hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
                 hrnCfgArgRaw(argList, cfgOptRepoStorageHost, hrnServerHost());
@@ -729,7 +729,7 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                hrnCfgArgRawZ(argList, cfgOptRepoAzureKeyType, STORAGE_AZURE_KEY_TYPE_SAS);
+                hrnCfgArgRawStrId(argList, cfgOptRepoAzureKeyType, storageAzureKeyTypeSas);
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SAS);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 

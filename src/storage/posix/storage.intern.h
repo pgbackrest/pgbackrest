@@ -11,7 +11,7 @@ Posix Storage Internal
 Constructors
 ***********************************************************************************************************************************/
 Storage *storagePosixNewInternal(
-    const String *type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, bool pathSync);
 
 /***********************************************************************************************************************************

@@ -210,7 +210,7 @@ storageWriteRemoteNew(
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_REMOTE_TYPE_STR,
+                .type = STORAGE_REMOTE_TYPE,
                 .name = strDup(name),
                 .atomic = atomic,
                 .compressible = compressible,

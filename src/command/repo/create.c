@@ -21,23 +21,32 @@ cmdRepoCreate(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        if (strEq(storageType(storageRepo()), STORAGE_S3_TYPE_STR))
+        switch (storageType(storageRepo()))
         {
-            storageS3RequestP((StorageS3 *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, FSLASH_STR);
-        }
-        else if (strEq(storageType(storageRepo()), STORAGE_AZURE_TYPE_STR))
-        {
+            case STORAGE_AZURE_TYPE:
             storageAzureRequestP(
                 (StorageAzure *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR,
                 .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
-        }
-        else if (strEq(storageType(storageRepo()), STORAGE_GCS_TYPE_STR))
+                break;
+
+            case STORAGE_GCS_TYPE:
         {
-            KeyValue *kvContent = kvPut(kvNew(), GCS_JSON_NAME_VAR, VARSTR(cfgOptionStr(cfgOptRepoGcsBucket)));
+                const KeyValue *const kvContent = kvPut(kvNew(), GCS_JSON_NAME_VAR, VARSTR(cfgOptionStr(cfgOptRepoGcsBucket)));
 
             storageGcsRequestP(
                 (StorageGcs *)storageDriver(storageRepoWrite()), HTTP_VERB_POST_STR, .noBucket = true,
                 .content = BUFSTR(jsonFromKv(kvContent)));
+
+                break;
+            }
+
+            case STORAGE_S3_TYPE:
+                storageS3RequestP((StorageS3 *)storageDriver(storageRepoWrite()), HTTP_VERB_PUT_STR, FSLASH_STR);
+                break;
+
+            // Other storage types do not require the repo to be created
+            default:
+                break;
         }
     }
     MEM_CONTEXT_TEMP_END();
