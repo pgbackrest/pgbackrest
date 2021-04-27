@@ -1049,6 +1049,21 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("db-exclude"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeList),
+        PARSE_RULE_OPTION_REQUIRED(false),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_MULTI(true),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("db-include"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeList),
         PARSE_RULE_OPTION_REQUIRED(false),
@@ -6768,6 +6783,18 @@ static const struct option optionList[] =
         .val = PARSE_OPTION_FLAG | cfgOptConfigPath,
     },
 
+    // db-exclude option
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {
+        .name = "db-exclude",
+        .has_arg = required_argument,
+        .val = PARSE_OPTION_FLAG | cfgOptDbExclude,
+    },
+    {
+        .name = "reset-db-exclude",
+        .val = PARSE_OPTION_FLAG | PARSE_RESET_FLAG | cfgOptDbExclude,
+    },
+
     // db-include option
     // -----------------------------------------------------------------------------------------------------------------------------
     {
@@ -10610,6 +10637,7 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptConfig,
     cfgOptConfigIncludePath,
     cfgOptConfigPath,
+    cfgOptDbExclude,
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,

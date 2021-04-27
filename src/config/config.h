@@ -9,6 +9,7 @@ config/parse.c sets the command and options and determines which options are val
 
 #include "common/lock.h"
 #include "common/log.h"
+#include "common/type/stringId.h"
 #include "common/type/stringList.h"
 #include "config/config.auto.h"
 
@@ -127,12 +128,21 @@ const VariantList *cfgOptionLst(ConfigOption optionId);
 const VariantList *cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStr(ConfigOption optionId);
 const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx);
+StringId cfgOptionStrId(ConfigOption optionId);
+StringId cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx);
 const String *cfgOptionStrNull(ConfigOption optionId);
 const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx);
 unsigned int cfgOptionUInt(ConfigOption optionId);
 unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
 uint64_t cfgOptionUInt64(ConfigOption optionId);
 uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int optionIdx);
+
+// Format the configuration value for display to the user or passing on a command line. If the value was set by the user via the
+// command line, config, etc., then that exact value will be displayed. This makes it easier for the user to recognize the value and
+// saves having to format it into something reasonable, especially for time and size option types. Note that cfgOptTypeHash and
+// cfgOptTypeList option types are not supported by these functions, but they are generally not displayed to the user as a whole.
+const String *cfgOptionDisplay(const ConfigOption optionId);
+const String *cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx);
 
 // Option name by id
 const char *cfgOptionName(ConfigOption optionId);

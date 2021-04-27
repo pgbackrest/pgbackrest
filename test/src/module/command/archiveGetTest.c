@@ -787,7 +787,7 @@ testRun(void)
                 " '18072658121562454734'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg version does not match archive.info");
+        TEST_TITLE("pg system id does not match archive.info");
 
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,

@@ -60,7 +60,7 @@ HttpQuery *httpQueryMerge(HttpQuery *this, const HttpQuery *query);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline HttpQuery *
-httpQueryMove(HttpQuery *this, MemContext *parentNew)
+httpQueryMove(HttpQuery *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -87,7 +87,7 @@ String *httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-httpQueryFree(HttpQuery *this)
+httpQueryFree(HttpQuery *const this)
 {
     objFree(this);
 }

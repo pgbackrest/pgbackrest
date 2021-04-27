@@ -535,11 +535,6 @@ testRun(void)
         uint64_t feature = storageRepo()->pub.interface.feature;
         ((Storage *)storageRepo())->pub.interface.feature = feature & ((1 << storageFeatureCompress) ^ 0xFFFFFFFFFFFFFFFF);
 
-        // Create tmp file to make it look like a prior backup file failed partway through to ensure that retries work
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), strNewFmt("%s.pgbackrest.tmp", strZ(backupPathFile))), NULL),
-            "    create tmp file");
-
         TEST_ASSIGN(
             result,
             backupFile(
@@ -556,9 +551,6 @@ testRun(void)
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    copy file to repo success");
 
-        TEST_RESULT_BOOL(
-            storageExistsP(storageRepoWrite(), strNewFmt("%s.pgbackrest.tmp", strZ(backupPathFile))), false,
-            "    check temp file removed");
         TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), backupPathFile), "    remove repo file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1396,7 +1388,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report job error");
 
-        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(STRDEF("command")));
+        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ(stringIdBit5, "x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
         TEST_ERROR(backupJobResult((Manifest *)1, NULL, STRDEF("log"), strLstNew(), job, 0, 0), AssertError, "error message");
@@ -1405,7 +1397,7 @@ testRun(void)
         TEST_TITLE("report host/100% progress on noop result");
 
         // Create job that skips file
-        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(STRDEF("command")));
+        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(strIdFromZ(stringIdBit5, "x")));
 
         VariantList *result = varLstNew();
         varLstAdd(result, varNewUInt64(backupCopyResultNoOp));

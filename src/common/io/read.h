@@ -89,7 +89,7 @@ void ioReadClose(IoRead *this);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-ioReadFree(IoRead *this)
+ioReadFree(IoRead *const this)
 {
     objFree(this);
 }

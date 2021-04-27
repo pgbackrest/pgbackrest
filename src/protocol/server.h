@@ -12,6 +12,7 @@ typedef struct ProtocolServer ProtocolServer;
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/type/object.h"
+#include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
 Protocol command handler type and structure
@@ -23,8 +24,8 @@ typedef void (*ProtocolServerCommandHandler)(const VariantList *paramList, Proto
 
 typedef struct ProtocolServerHandler
 {
-    const char *const command;
-    ProtocolServerCommandHandler handler;
+    StringId command;                                               // 5-bit StringId that identifies the protocol command
+    ProtocolServerCommandHandler handler;                           // Function that handles the protocol command
 } ProtocolServerHandler;
 
 #define PROTOCOL_SERVER_HANDLER_LIST_SIZE(list)                     (sizeof(list) / sizeof(ProtocolServerHandler))
@@ -46,14 +47,14 @@ typedef struct ProtocolServerPub
 
 // Read interface
 __attribute__((always_inline)) static inline IoRead *
-protocolServerIoRead(ProtocolServer *this)
+protocolServerIoRead(ProtocolServer *const this)
 {
     return THIS_PUB(ProtocolServer)->read;
 }
 
 // Write interface
 __attribute__((always_inline)) static inline IoWrite *
-protocolServerIoWrite(ProtocolServer *this)
+protocolServerIoWrite(ProtocolServer *const this)
 {
     return THIS_PUB(ProtocolServer)->write;
 }
@@ -74,7 +75,7 @@ void protocolServerResponse(ProtocolServer *this, const Variant *output);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolServer *
-protocolServerMove(ProtocolServer *this, MemContext *parentNew)
+protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -86,7 +87,7 @@ void protocolServerWriteLine(ProtocolServer *this, const String *line);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-protocolServerFree(ProtocolServer *this)
+protocolServerFree(ProtocolServer *const this)
 {
     objFree(this);
 }

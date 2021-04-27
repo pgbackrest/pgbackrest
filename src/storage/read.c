@@ -60,6 +60,6 @@ String *
 storageReadToLog(const StorageRead *this)
 {
     return strNewFmt(
-        "{type: %s, name: %s, ignoreMissing: %s}", strZ(storageReadType(this)), strZ(strToLog(storageReadName(this))),
+        "{type: %s, name: %s, ignoreMissing: %s}", strZ(strIdToStr(storageReadType(this))), strZ(strToLog(storageReadName(this))),
         cvtBoolToConstZ(storageReadIgnoreMissing(this)));
 }

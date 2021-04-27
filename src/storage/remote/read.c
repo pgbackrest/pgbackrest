@@ -69,7 +69,7 @@ storageReadRemoteOpen(THIS_VOID)
                 ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGz, (int)this->interface.compressLevel));
         }
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
         protocolCommandParamAdd(command, VARBOOL(this->interface.ignoreMissing));
         protocolCommandParamAdd(command, this->interface.limit);
@@ -207,7 +207,7 @@ storageReadRemoteNew(
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_REMOTE_TYPE_STR,
+                .type = STORAGE_REMOTE_TYPE,
                 .name = strDup(name),
                 .compressible = compressible,
                 .compressLevel = compressLevel,

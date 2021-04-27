@@ -434,7 +434,7 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(command, protocolCommandNew(strNew("command1")), "create command");
+            TEST_ASSIGN(command, protocolCommandNew(strIdFromZ(stringIdBit5, "cmd-one")), "create command");
             TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param1"))), command, "add param");
             TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param2"))), command, "add param");
 
@@ -443,13 +443,13 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: command1}", "check log");
-        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "check json");
+        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: cmd-one}", "check log");
+        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"cmd-one\",\"param\":[\"param1\",\"param2\"]}", "check json");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(command, protocolCommandNew(strNew("command2")), "create command");
-        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: command2}", "check log");
-        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"command2\"}", "check json");
+        TEST_ASSIGN(command, protocolCommandNew(strIdFromZ(stringIdBit5, "cmd2")), "create command");
+        TEST_RESULT_STR_Z(protocolCommandToLog(command), "{command: cmd2}", "check log");
+        TEST_RESULT_STR_Z(protocolCommandJson(command), "{\"cmd\":\"cmd2\"}", "check json");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(protocolCommandFree(command), "free command");
@@ -515,17 +515,17 @@ testRun(void)
                 ioWriteFlush(write);
 
                 // error instead of output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"error-instead-of-output\"}", "error instead of output command");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"err-i-o\"}", "error instead of output command");
                 ioWriteStrLine(write, strNew("{\"err\":255}"));
                 ioWriteFlush(write);
 
                 // unexpected output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"unexpected-output\"}", "unexpected output");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"unexp-output\"}", "unexpected output");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
                 // invalid prefix
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"invalid-prefix\"}", "invalid prefix");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"i-pr\"}", "invalid prefix");
                 ioWriteStrLine(write, strNew("~line"));
                 ioWriteFlush(write);
 
@@ -599,7 +599,8 @@ testRun(void)
                 const VariantList *output = NULL;
 
                 TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strNew("test"))), "execute command with output");
+                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "test"))),
+                    "execute command with output");
                 TEST_RESULT_STR_Z(protocolClientReadLine(client), "OUTPUT", "check output");
                 TEST_ASSIGN(output, varVarLst(protocolClientReadOutput(client, true)), "execute command with output");
                 TEST_RESULT_UINT(varLstSize(output), 2, "check output size");
@@ -608,25 +609,25 @@ testRun(void)
 
                 // Invalid line
                 TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strNew("invalid-line"))),
+                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "invalid-line"))),
                     "execute command that returns invalid line");
                 TEST_ERROR(protocolClientReadLine(client), FormatError, "unexpected empty line");
 
                 // Error instead of output
                 TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strNew("error-instead-of-output"))),
+                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "err-i-o"))),
                     "execute command that returns error instead of output");
                 TEST_ERROR(protocolClientReadLine(client), UnknownError, "raised from test client: no details available");
 
                 // Unexpected output
                 TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strNew("unexpected-output"))),
+                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "unexp-output"))),
                     "execute command that returns unexpected output");
                 TEST_ERROR(protocolClientReadLine(client), FormatError, "expected error but got output");
 
                 // Invalid prefix
                 TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strNew("invalid-prefix"))),
+                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "i-pr"))),
                     "execute command that returns an invalid prefix");
                 TEST_ERROR(protocolClientReadLine(client), FormatError, "invalid prefix in '~line'");
 
@@ -667,11 +668,12 @@ testRun(void)
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush bogus");
                 TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
                 TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 39, "    check code");
-                TEST_RESULT_STR_Z(varStr(kvGet(result, VARSTRDEF("out"))), "invalid command 'bogus'", "    check message");
+                TEST_RESULT_STR_Z(
+                    varStr(kvGet(result, VARSTRDEF("out"))), "invalid command 'bogus' (0x13a9de20)", "    check message");
                 TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Simple request
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"request-simple\"}")), "write simple request");
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"r-s\"}")), "write simple request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "simple request result");
 
@@ -684,7 +686,7 @@ testRun(void)
                 TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Complex request -- after process loop has been restarted
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"request-complex\"}")), "write complex request");
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"r-c\"}")), "write complex request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush complex request");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":false}", "complex request result");
                 TEST_RESULT_STR_Z(ioReadLine(read), ".LINEOFTEXT", "complex request result");
@@ -695,7 +697,7 @@ testRun(void)
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
 
                 // Retry errors until success
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"error-until-0\"}")), "write error-until-0");
+                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"ezero\"}")), "write error-until-0");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush error-until-0");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "error-until-0 result");
 
@@ -729,12 +731,12 @@ testRun(void)
                 TEST_RESULT_PTR(protocolServerIoRead(server), server->pub.read, "get read io");
                 TEST_RESULT_PTR(protocolServerIoWrite(server), server->pub.write, "get write io");
 
-                static const ProtocolServerHandler commandHandler[] =
+                ProtocolServerHandler commandHandler[] =
                 {
-                    {.command = "assert", .handler = testServerAssertProtocol},
-                    {.command = "request-simple", .handler = testServerRequestSimpleProtocol},
-                    {.command = "request-complex", .handler = testServerRequestComplexProtocol},
-                    {.command = "error-until-0", .handler = testServerErrorUntil0Protocol},
+                    {.command = strIdFromZ(stringIdBit5, "assert"), .handler = testServerAssertProtocol},
+                    {.command = strIdFromZ(stringIdBit5, "r-s"), .handler = testServerRequestSimpleProtocol},
+                    {.command = strIdFromZ(stringIdBit5, "r-c"), .handler = testServerRequestComplexProtocol},
+                    {.command = strIdFromZ(stringIdBit5, "ezero"), .handler = testServerErrorUntil0Protocol},
                 };
 
                 TEST_RESULT_VOID(
@@ -771,7 +773,9 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(job, protocolParallelJobNew(varNewStr(strNew("test")), protocolCommandNew(strNew("command"))), "new job");
+            TEST_ASSIGN(
+                job,
+                protocolParallelJobNew(varNewStr(strNew("test")), protocolCommandNew(strIdFromZ(stringIdBit5, "c"))), "new job");
             TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
             TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
         }
@@ -807,7 +811,7 @@ testRun(void)
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"command1\",\"param\":[\"param1\",\"param2\"]}", "command1");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"c-one\",\"param\":[\"param1\",\"param2\"]}", "command1");
                 sleepMSec(4000);
                 ioWriteStrLine(write, strNew("{\"out\":1}"));
                 ioWriteFlush(write);
@@ -833,12 +837,12 @@ testRun(void)
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"command2\",\"param\":[\"param1\"]}", "command2");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"c2\",\"param\":[\"param1\"]}", "command2");
                 sleepMSec(1000);
                 ioWriteStrLine(write, strNew("{\"out\":2}"));
                 ioWriteFlush(write);
 
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"command3\",\"param\":[\"param1\"]}", "command3");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"c-three\",\"param\":[\"param1\"]}", "command3");
 
                 ioWriteStrLine(write, strNew("{\"err\":39,\"out\":\"very serious error\"}"));
                 ioWriteFlush(write);
@@ -891,18 +895,18 @@ testRun(void)
                 protocolClientFree(clientError);
 
                 // Add jobs
-                ProtocolCommand *command = protocolCommandNew(strNew("command1"));
+                ProtocolCommand *command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-one"));
                 protocolCommandParamAdd(command, varNewStr(strNew("param1")));
                 protocolCommandParamAdd(command, varNewStr(strNew("param2")));
                 ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(strNew("job1")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strNew("command2"));
+                command = protocolCommandNew(strIdFromZ(stringIdBit5, "c2"));
                 protocolCommandParamAdd(command, varNewStr(strNew("param1")));
                 job = protocolParallelJobNew(varNewStr(strNew("job2")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strNew("command3"));
+                command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-three"));
                 protocolCommandParamAdd(command, varNewStr(strNew("param1")));
                 job = protocolParallelJobNew(varNewStr(strNew("job3")), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");

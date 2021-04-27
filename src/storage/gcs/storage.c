@@ -28,11 +28,6 @@ GCS Storage
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_GCS_TYPE_STR,                                 STORAGE_GCS_TYPE);
-
-/***********************************************************************************************************************************
 HTTP headers
 ***********************************************************************************************************************************/
 STRING_EXTERN(GCS_HEADER_UPLOAD_ID_STR,                             GCS_HEADER_UPLOAD_ID);
@@ -867,7 +862,7 @@ storageGcsNew(
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
-        FUNCTION_LOG_PARAM(ENUM, keyType);
+        FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, chunkSize);
         FUNCTION_LOG_PARAM(STRING, endpoint);
@@ -943,7 +938,7 @@ storageGcsNew(
         driver->queryRedactList = strLstNew();
         strLstAdd(driver->queryRedactList, GCS_QUERY_UPLOAD_ID_STR);
 
-        this = storageNew(STORAGE_GCS_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        this = storageNew(STORAGE_GCS_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 

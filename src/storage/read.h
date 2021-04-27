@@ -11,13 +11,14 @@ typedef struct StorageRead StorageRead;
 
 #include "common/io/read.h"
 #include "common/type/object.h"
+#include "common/type/stringId.h"
 #include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline StorageRead *
-storageReadMove(StorageRead *this, MemContext *parentNew)
+storageReadMove(StorageRead *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -34,35 +35,35 @@ typedef struct StorageReadPub
 
 // Should a missing file be ignored?
 __attribute__((always_inline)) static inline bool
-storageReadIgnoreMissing(const StorageRead *this)
+storageReadIgnoreMissing(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->ignoreMissing;
 }
 
 // Read interface
 __attribute__((always_inline)) static inline IoRead *
-storageReadIo(const StorageRead *this)
+storageReadIo(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->io;
 }
 
 // Is there a read limit? NULL for no limit.
 __attribute__((always_inline)) static inline const Variant *
-storageReadLimit(const StorageRead *this)
+storageReadLimit(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->limit;
 }
 
 // File name
 __attribute__((always_inline)) static inline const String *
-storageReadName(const StorageRead *this)
+storageReadName(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->name;
 }
 
 // Get file type
-__attribute__((always_inline)) static inline const String *
-storageReadType(const StorageRead *this)
+__attribute__((always_inline)) static inline StringId
+storageReadType(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->type;
 }
@@ -71,7 +72,7 @@ storageReadType(const StorageRead *this)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-storageReadFree(StorageRead *this)
+storageReadFree(StorageRead *const this)
 {
     objFree(this);
 }

@@ -99,7 +99,7 @@ void ioFilterGroupClose(IoFilterGroup *this);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-ioFilterGroupFree(IoFilterGroup *this)
+ioFilterGroupFree(IoFilterGroup *const this)
 {
     objFree(this);
 }

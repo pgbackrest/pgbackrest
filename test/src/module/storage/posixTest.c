@@ -103,8 +103,8 @@ testRun(void)
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction != NULL, true, "    check expression function is set");
 
         TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->pub.interface.info, "    check interface");
-        TEST_RESULT_PTR(storageDriver(storageTest), storageDriver(storageTest), "    check driver");
-        TEST_RESULT_STR(storageType(storageTest), storageType(storageTest), "    check type");
+        TEST_RESULT_PTR(storageDriver(storageTest), storageTest->pub.driver, "    check driver");
+        TEST_RESULT_UINT(storageType(storageTest), storageTest->pub.type, "    check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeatureCompress), true, "    check compress feature");
     }
@@ -960,7 +960,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "   open file");
         TEST_RESULT_STR(storageReadName(file), fileName, "    check file name");
-        TEST_RESULT_STR_Z(storageReadType(file), "posix", "    check file type");
+        TEST_RESULT_UINT(storageReadType(file), STORAGE_POSIX_TYPE, "    check file type");
         TEST_RESULT_UINT(varUInt64(storageReadLimit(file)), 44, "    check limit");
 
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "    load data");
@@ -1068,7 +1068,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(storageWriteName(file), fileName, "    check file name");
-        TEST_RESULT_STR_Z(storageWriteType(file), "posix", "    check file type");
+        TEST_RESULT_UINT(storageWriteType(file), STORAGE_POSIX_TYPE, "    check file type");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "    open file");
 
         // Rename the file back to original name from tmp -- this will cause the rename in close to fail

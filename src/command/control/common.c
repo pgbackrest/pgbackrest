@@ -33,7 +33,7 @@ lockStopTest(void)
         if (cfgOptionTest(cfgOptStanza))
         {
             if (storageExistsP(storageLocal(), lockStopFileName(cfgOptionStr(cfgOptStanza))))
-                THROW_FMT(StopError, "stop file exists for stanza %s", strZ(cfgOptionStr(cfgOptStanza)));
+                THROW_FMT(StopError, "stop file exists for stanza %s", strZ(cfgOptionDisplay(cfgOptStanza)));
         }
 
         // Check all stanzas

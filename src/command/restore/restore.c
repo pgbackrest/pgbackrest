@@ -82,7 +82,7 @@ restorePathValidate(void)
         // The PGDATA directory must exist
         // ??? We should remove this requirement in a separate commit.  What's the harm in creating the dir assuming we have perms?
         if (!storagePathExistsP(storagePg(), NULL))
-            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strZ(cfgOptionStr(cfgOptPgPath)));
+            THROW_FMT(PathMissingError, "$PGDATA directory '%s' does not exist", strZ(cfgOptionDisplay(cfgOptPgPath)));
 
         // PostgreSQL must not be running
         if (storageExistsP(storagePg(), PG_FILE_POSTMASTERPID_STR))
@@ -92,7 +92,7 @@ restorePathValidate(void)
                 "unable to restore while PostgreSQL is running\n"
                     "HINT: presence of '" PG_FILE_POSTMASTERPID "' in '%s' indicates PostgreSQL is running.\n"
                     "HINT: remove '" PG_FILE_POSTMASTERPID "' only if PostgreSQL is not running.",
-                strZ(cfgOptionStr(cfgOptPgPath)));
+                strZ(cfgOptionDisplay(cfgOptPgPath)));
         }
 
         // If the restore will be destructive attempt to verify that PGDATA looks like a valid PostgreSQL directory
@@ -103,7 +103,7 @@ restorePathValidate(void)
                 "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" BACKUP_MANIFEST_FILE "' in '%s' to"
                     " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                     " exist in the destination directories the restore will be aborted.",
-               strZ(cfgOptionStr(cfgOptPgPath)));
+               strZ(cfgOptionDisplay(cfgOptPgPath)));
 
             // Disable delta and force so restore will fail if the directories are not empty
             cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
@@ -391,7 +391,7 @@ restoreBackupSet(void)
 
                 LOG_WARN_FMT(
                     "unable to find backup set with stop time less than '%s', repo%u: latest backup set will be used",
-                    strZ(cfgOptionStr(cfgOptTarget)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, result.repoIdx));
+                    strZ(cfgOptionDisplay(cfgOptTarget)), cfgOptionGroupIdxToKey(cfgOptGrpRepo, result.repoIdx));
             }
             else
                 THROW(BackupSetInvalidError, "no backup set found to restore");
@@ -1279,8 +1279,8 @@ restoreSelectiveExpression(Manifest *manifest)
 
     String *result = NULL;
 
-    // Continue if db-include is specified
-    if (cfgOptionTest(cfgOptDbInclude))
+    // Continue if databases to include or exclude have been specified
+    if (cfgOptionTest(cfgOptDbExclude) || cfgOptionTest(cfgOptDbInclude))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1345,6 +1345,30 @@ restoreSelectiveExpression(Manifest *manifest)
             // Log databases found
             LOG_DETAIL_FMT("databases found for selective restore (%s)", strZ(strLstJoin(dbList, ", ")));
 
+            // Generate list with ids of databases to exclude
+            StringList *excludeDbIdList = strLstNew();
+            const StringList *excludeList = strLstNewVarLst(cfgOptionLst(cfgOptDbExclude));
+
+            for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
+            {
+                const String *excludeDb = strLstGet(excludeList, excludeIdx);
+
+                // If the db to exclude is not in the list as an id then search by name
+                if (!strLstExists(dbList, excludeDb))
+                {
+                    const ManifestDb *db = manifestDbFindDefault(manifest, excludeDb, NULL);
+
+                    if (db == NULL || !strLstExists(dbList, varStrForce(VARUINT(db->id))))
+                        THROW_FMT(DbMissingError, "database to exclude '%s' does not exist", strZ(excludeDb));
+
+                    // Set the exclude db to the id if the name mapping was successful
+                    excludeDb = varStrForce(VARUINT(db->id));
+                }
+
+                // Add to exclude list
+                strLstAdd(excludeDbIdList, excludeDb);
+            }
+
             // Remove included databases from the list
             const StringList *includeList = strLstNewVarLst(cfgOptionLst(cfgOptDbInclude));
 
@@ -1368,13 +1392,27 @@ restoreSelectiveExpression(Manifest *manifest)
                 if (strLstExists(systemDbIdList, includeDb))
                     THROW(DbInvalidError, "system databases (template0, postgres, etc.) are included by default");
 
+                // Error if the db id is in the exclude list
+                if (strLstExists(excludeDbIdList, includeDb))
+                    THROW_FMT(DbInvalidError, "database to include '%s' is in the exclude list", strZ(includeDb));
+
                 // Remove from list of DBs to zero
                 strLstRemove(dbList, includeDb);
             }
 
-            // Exclude the system databases from the list
-            strLstSort(systemDbIdList, sortOrderAsc);
-            dbList = strLstMergeAnti(dbList, systemDbIdList);
+            // Only exclude specified db in case no db to include has been provided
+            if (strLstEmpty(includeList))
+            {
+                dbList = strLstDup(excludeDbIdList);
+            }
+            // Else, remove the system databases from list of DBs to zero unless they are excluded explicitly
+            else
+            {
+                strLstSort(systemDbIdList, sortOrderAsc);
+                strLstSort(excludeDbIdList, sortOrderAsc);
+                systemDbIdList = strLstMergeAnti(systemDbIdList, excludeDbIdList);
+                dbList = strLstMergeAnti(dbList, systemDbIdList);
+            }
 
             // Build regular expression to identify files that will be zeroed
             String *expression = NULL;
@@ -1502,15 +1540,15 @@ restoreRecoveryOption(unsigned int pgVersion)
             // better than, for example, passing --process-max=32 to archive-get because it was specified for restore.
             KeyValue *optionReplace = kvNew();
 
-            kvPut(optionReplace, VARSTR(CFGOPT_EXEC_ID_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_JOB_RETRY_INTERVAL_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_FILE_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_SUBPROCESS_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_LOG_TIMESTAMP_STR), NULL);
-            kvPut(optionReplace, VARSTR(CFGOPT_PROCESS_MAX_STR), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_EXEC_ID), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_JOB_RETRY), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_JOB_RETRY_INTERVAL), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_SUBPROCESS), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_TIMESTAMP), NULL);
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_PROCESS_MAX), NULL);
 
             kvPut(
                 result, VARSTRZ(RESTORE_COMMAND),
@@ -2125,7 +2163,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 const ManifestFile *file = *(ManifestFile **)lstGet(queue, 0);
 
                 // Create restore job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE_STR);
+                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
                 protocolCommandParamAdd(command, VARSTR(file->name));
                 protocolCommandParamAdd(command, VARUINT(jobData->repoIdx));
                 protocolCommandParamAdd(
@@ -2191,6 +2229,9 @@ cmdRestore(void)
             storageRepoIdx(backupData.repoIdx),
             strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
             backupData.backupCipherPass);
+
+        // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
+        protocolFree();
 
         // Validate manifest.  Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);

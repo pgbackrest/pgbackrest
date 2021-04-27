@@ -24,7 +24,7 @@ Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline Ini *
-iniMove(Ini *this, MemContext *parentNew)
+iniMove(Ini *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -61,7 +61,7 @@ StringList *iniSectionList(const Ini *this);
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-iniFree(Ini *this)
+iniFree(Ini *const this)
 {
     objFree(this);
 }

@@ -24,7 +24,7 @@ testRun(void)
 
         const Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, true), "get cifs repo storage");
-        TEST_RESULT_STR_Z(storageType(storage), "cifs", "check storage type");
+        TEST_RESULT_UINT(storageType(storage), STORAGE_CIFS_TYPE, "check storage type");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), true, "    check compress feature");
 
