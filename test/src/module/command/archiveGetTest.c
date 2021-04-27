@@ -1141,8 +1141,7 @@ testRun(void)
             "P00   WARN: test warning\n"
             "P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
 
-        // Check that the ok file is empty which shows that it was overwritten
-        // TEST_STORAGE_GET_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", .remove = true);
+        // Check that the ok file is missing since it should have been removed on the first loop
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
     }
 
