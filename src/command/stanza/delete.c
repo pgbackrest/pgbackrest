@@ -79,7 +79,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                 THROW_FMT(
                     FileMissingError, "stop file does not exist for stanza '%s'\n"
                     "HINT: has the pgbackrest stop command been run on this server for this stanza?",
-                    strZ(cfgOptionStr(cfgOptStanza)));
+                    strZ(cfgOptionDisplay(cfgOptStanza)));
             }
 
             // If a force has not been issued and Postgres is running, then error
@@ -88,9 +88,9 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
                 THROW_FMT(
                     PgRunningError, PG_FILE_POSTMASTERPID " exists - looks like " PG_NAME " is running. "
                     "To delete stanza '%s' on repo%u, shut down " PG_NAME " for stanza '%s' and try again, or use --force.",
-                    strZ(cfgOptionStr(cfgOptStanza)),
+                    strZ(cfgOptionDisplay(cfgOptStanza)),
                     cfgOptionGroupIdxToKey(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
-                    strZ(cfgOptionStr(cfgOptStanza)));
+                    strZ(cfgOptionDisplay(cfgOptStanza)));
             }
 
             // Delete the archive info files

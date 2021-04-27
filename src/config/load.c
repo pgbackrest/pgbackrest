@@ -101,7 +101,7 @@ cfgLoadUpdateOption(void)
                             OptionInvalidValueError,
                             "local repo%u and repo%u paths are both '%s' but must be different",
                             cfgOptionGroupIdxToKey(cfgOptGrpRepo, optionIdx), cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
-                            strZ(cfgOptionIdxStr(cfgOptRepoPath, repoIdx)));
+                            strZ(cfgOptionIdxDisplay(cfgOptRepoPath, repoIdx)));
                     }
                 }
             }
@@ -145,8 +145,8 @@ cfgLoadUpdateOption(void)
                 OptionInvalidValueError,
                 "'%s' is not valid for '" CFGOPT_PROTOCOL_TIMEOUT "' option\nHINT '" CFGOPT_PROTOCOL_TIMEOUT "' option (%s)"
                     " should be greater than '" CFGOPT_DB_TIMEOUT "' option (%s).",
-                strZ(varStrForce(cfgOption(cfgOptProtocolTimeout))),  strZ(varStrForce(cfgOption(cfgOptProtocolTimeout))),
-                strZ(varStrForce(cfgOption(cfgOptDbTimeout))));
+                strZ(cfgOptionDisplay(cfgOptProtocolTimeout)),  strZ(cfgOptionDisplay(cfgOptProtocolTimeout)),
+                strZ(cfgOptionDisplay(cfgOptDbTimeout)));
         }
     }
 
@@ -186,7 +186,7 @@ cfgLoadUpdateOption(void)
                     "option '%s' is not set for '%s=%s', the repository may run out of space"
                     "\nHINT: to retain full backups indefinitely (without warning), set option '%s' to the maximum.",
                     cfgOptionIdxName(cfgOptRepoRetentionFull, optionIdx), cfgOptionIdxName(cfgOptRepoRetentionFullType, optionIdx),
-                    strZ(cfgOptionIdxStr(cfgOptRepoRetentionFullType, optionIdx)),
+                    strZ(cfgOptionIdxDisplay(cfgOptRepoRetentionFullType, optionIdx)),
                     cfgOptionIdxName(cfgOptRepoRetentionFull, optionIdx));
             }
         }
@@ -277,7 +277,7 @@ cfgLoadUpdateOption(void)
                     "\nHINT: RFC-2818 forbids dots in wildcard matches."
                     "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
                     "\nHINT: remove dots from the bucket name.",
-                strZ(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx)), cfgOptionIdxName(cfgOptRepoS3Bucket, repoIdx));
+                strZ(cfgOptionIdxDisplay(cfgOptRepoS3Bucket, repoIdx)), cfgOptionIdxName(cfgOptRepoS3Bucket, repoIdx));
         }
     }
 

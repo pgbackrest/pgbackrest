@@ -12,7 +12,7 @@ Help Command
 #include "common/io/fdWrite.h"
 #include "common/memContext.h"
 #include "common/type/pack.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "config/parse.h"
 #include "version.h"
 
@@ -205,10 +205,8 @@ helpRenderValue(const Variant *value, ConfigOptionType type)
 
             result = resultTemp;
         }
-        else if (type == cfgOptTypeTime)
-            result = strNewDbl((double)varInt64(value) / MSEC_PER_SEC);
         else
-            result = varStrForce(value);
+            result = cfgOptionDisplayVar(value, type);
     }
 
     FUNCTION_LOG_RETURN_CONST(STRING, result);

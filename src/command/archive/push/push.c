@@ -390,7 +390,7 @@ cmdArchivePush(void)
             {
                 THROW_FMT(
                     ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %s second(s)",
-                    strZ(archiveFile), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)));
+                    strZ(archiveFile), strZ(cfgOptionDisplay(cfgOptArchiveTimeout)));
             }
 
             // Log success
