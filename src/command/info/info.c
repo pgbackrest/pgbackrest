@@ -640,7 +640,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         VariantList *repoSection = varLstNew();
 
         int stanzaStatusCode = -1;
-        uint64_t stanzaCipherType = 0;
+        uint64_t stanzaCipherType = cipherTypeNone;
 
         // Set the stanza name and initialize the overall stanza variables
         kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
