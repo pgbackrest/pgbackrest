@@ -22,7 +22,7 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_PTR(bufPtr(buffer), buffer->buffer, "buffer pointer");
+        TEST_RESULT_PTR(bufPtr(buffer), buffer->pub.buffer, "buffer pointer");
         TEST_RESULT_UINT(bufSize(buffer), 256, "buffer size");
         TEST_RESULT_UINT(bufSizeAlloc(buffer), 256, "buffer allocation size");
 
@@ -99,7 +99,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when used > new limit");
 
-        TEST_ERROR(bufLimitSet(buffer, 64), AssertError, "assertion 'limit >= this->used' failed");
+        TEST_ERROR(bufLimitSet(buffer, 64), AssertError, "assertion 'limit >= bufUsed(this)' failed");
         TEST_RESULT_VOID(bufUsedSet(buffer, 64), "set used");
 
         // Use limits to change size reporting
