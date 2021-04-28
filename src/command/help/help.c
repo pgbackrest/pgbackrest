@@ -12,7 +12,7 @@ Help Command
 #include "common/io/fdWrite.h"
 #include "common/memContext.h"
 #include "common/type/pack.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "config/parse.h"
 #include "version.h"
 
@@ -205,10 +205,8 @@ helpRenderValue(const Variant *value, ConfigOptionType type)
 
             result = resultTemp;
         }
-        else if (type == cfgOptTypeTime)
-            result = strNewDbl((double)varInt64(value) / MSEC_PER_SEC);
         else
-            result = varStrForce(value);
+            result = cfgOptionDisplayVar(value, type);
     }
 
     FUNCTION_LOG_RETURN_CONST(STRING, result);
@@ -440,7 +438,7 @@ helpRender(void)
                         if (!isupper(strZ(summary)[1]) && !isdigit(strZ(summary)[1]))
                             strFirstLower(summary);
 
-                        // Ouput current and default values if they exist
+                        // Output current and default values if they exist
                         const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgParseOptionType(optionId));
                         const String *value = NULL;
 
@@ -520,7 +518,7 @@ helpRender(void)
                     strZ(
                         helpRenderText(optionData[option.id].description, optionData[option.id].internal, 0, true, CONSOLE_WIDTH)));
 
-                // Ouput current and default values if they exist
+                // Output current and default values if they exist
                 const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
                 const String *value = NULL;
 

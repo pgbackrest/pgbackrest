@@ -44,7 +44,7 @@ cmdStanzaCreate(void)
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
             LOG_INFO_FMT(
-                CFGCMD_STANZA_CREATE " for stanza '%s' on repo%u", strZ(cfgOptionStr(cfgOptStanza)),
+                CFGCMD_STANZA_CREATE " for stanza '%s' on repo%u", strZ(cfgOptionDisplay(cfgOptStanza)),
                 cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
 
             const Storage *storageRepoReadStanza = storageRepoIdx(repoIdx);
@@ -133,7 +133,7 @@ cmdStanzaCreate(void)
                 if (sourceFile == NULL)
                 {
                     LOG_INFO_FMT(
-                        "stanza '%s' already exists on repo%u and is valid", strZ(cfgOptionStr(cfgOptStanza)),
+                        "stanza '%s' already exists on repo%u and is valid", strZ(cfgOptionDisplay(cfgOptStanza)),
                         cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
                 }
             }

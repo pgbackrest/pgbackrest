@@ -35,7 +35,7 @@ testRun(void)
     {
         // We don't want this struct to grow since there are generally a lot of strings, so make sure it doesn't grow without us
         // knowing about it
-        TEST_RESULT_UINT(sizeof(StringConst), TEST_64BIT() ? 16 : 12, "check StringConst struct size");
+        TEST_RESULT_UINT(sizeof(StringPub), TEST_64BIT() ? 16 : 12, "check StringConst struct size");
 
         // Test the size macro
         TEST_RESULT_VOID(CHECK_SIZE(555), "valid size");
@@ -77,8 +77,8 @@ testRun(void)
         TEST_TITLE("empty string is allocated extra space");
 
         TEST_ASSIGN(string, strNew(""), "new empty string");
-        TEST_RESULT_UINT(string->size, 0, "    check size");
-        TEST_RESULT_UINT(string->extra, 64, "    check extra");
+        TEST_RESULT_UINT(string->pub.size, 0, "    check size");
+        TEST_RESULT_UINT(string->pub.extra, 64, "    check extra");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strNewEncode()");
@@ -126,19 +126,19 @@ testRun(void)
         String *string2 = strNew("ZZZZ");
 
         TEST_RESULT_STR_Z(strCat(string, STRDEF("YYYY")), "XXXXYYYY", "cat string");
-        TEST_RESULT_UINT(string->extra, 60, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatFmt(string, "%05d", 777), "XXXXYYYY00777", "cat formatted string");
-        TEST_RESULT_UINT(string->extra, 55, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 55, "check extra");
         TEST_RESULT_STR_Z(strCatChr(string, '!'), "XXXXYYYY00777!", "cat chr");
-        TEST_RESULT_UINT(string->extra, 54, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 54, "check extra");
         TEST_RESULT_STR_Z(
             strCatZN(string, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*", 55),
             "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
-        TEST_RESULT_UINT(string->extra, 34, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 34, "check extra");
         TEST_RESULT_STR_Z(
             strCatEncode(string, encodeBase64, BUFSTRDEF("zzzzz")),
             "XXXXYYYY00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=", "cat encode");
-        TEST_RESULT_UINT(string->extra, 26, "check extra");
+        TEST_RESULT_UINT(string->pub.extra, 26, "check extra");
 
         TEST_RESULT_STR_Z(string2, "ZZZZ", "check unaltered string");
     }
@@ -265,8 +265,8 @@ testRun(void)
         String *val = strNew("abcdef");
         TEST_ERROR(
             strTrunc(val, (int)(strSize(val) + 1)), AssertError,
-            "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
-        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= this->size' failed");
+            "assertion 'idx >= 0 && (size_t)idx <= strSize(this)' failed");
+        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= strSize(this)' failed");
 
         TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'd')), "abc", "simple string truncated");
         strCatZ(val, "\r\n to end");

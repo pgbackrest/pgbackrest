@@ -1667,6 +1667,13 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                 {
                                     int64_t valueInt64 = 0;
 
+                                    // Preserve original value to display
+                                    MEM_CONTEXT_BEGIN(config->memContext)
+                                    {
+                                        configOptionValue->display = strDup(value);
+                                    }
+                                    MEM_CONTEXT_END();
+
                                     // Check that the value can be converted
                                     TRY_BEGIN()
                                     {
@@ -1726,7 +1733,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
                                 }
-                                // Else if path make sure it is valid
+                                // Else if string make sure it is valid
                                 else
                                 {
                                     // Make sure it is long enough to be a path
@@ -1737,6 +1744,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                     }
 
+                                    // If path make sure it is valid
                                     if (optionType == cfgOptTypePath)
                                     {
                                         // Make sure it starts with /
@@ -1877,7 +1885,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (index == cfgOptionGroupIdxTotal(groupId))
                 {
                     THROW_FMT(
-                        OptionInvalidValueError, "key '%u' is not valid for '%s' option", cfgOptionUInt(defaultOptionId),
+                        OptionInvalidValueError, "key '%s' is not valid for '%s' option", strZ(cfgOptionDisplay(defaultOptionId)),
                         cfgOptionName(defaultOptionId));
                 }
 

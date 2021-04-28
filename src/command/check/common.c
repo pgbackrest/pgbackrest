@@ -65,7 +65,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
                 DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
                 PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\nHINT: the %s and %s settings likely reference different clusters.",
                 strZ(pgVersionToStr(dbVersion)), strZ(dbPath), strZ(pgVersionToStr(pgVersion)),
-                strZ(cfgOptionIdxStr(cfgOptPgPath, pgIdx)), strZ(cfgOptionIdxStr(cfgOptPgPath, pgIdx)),
+                strZ(cfgOptionIdxDisplay(cfgOptPgPath, pgIdx)), strZ(cfgOptionIdxDisplay(cfgOptPgPath, pgIdx)),
                 cfgOptionIdxName(cfgOptPgPath, pgIdx), cfgOptionIdxName(cfgOptPgPort, pgIdx));
         }
 
