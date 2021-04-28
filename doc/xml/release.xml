@@ -95,6 +95,7 @@
                         </commit>
                         <commit subject="Convert ProtocolParallelJobState enum to StringId."/>
                         <commit subject="Convert ProtocolStorageType enum to StringId."/>
+                        <commit subject="Convert ArchiveMode enum to StringId."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
