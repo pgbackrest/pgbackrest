@@ -23,9 +23,6 @@ Constants
 STRING_EXTERN(PROTOCOL_SERVICE_LOCAL_STR,                           PROTOCOL_SERVICE_LOCAL);
 STRING_EXTERN(PROTOCOL_SERVICE_REMOTE_STR,                          PROTOCOL_SERVICE_REMOTE);
 
-STRING_STATIC(PROTOCOL_REMOTE_TYPE_PG_STR,                          PROTOCOL_REMOTE_TYPE_PG);
-STRING_STATIC(PROTOCOL_REMOTE_TYPE_REPO_STR,                        PROTOCOL_REMOTE_TYPE_REPO);
-
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
@@ -132,7 +129,7 @@ static StringList *
 protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
+        FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, hostIdx);
         FUNCTION_LOG_PARAM(UINT, processId);
     FUNCTION_LOG_END();
@@ -153,7 +150,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
             kvPut(optionReplace, VARSTRDEF(CFGOPT_PG), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, hostIdx)));
 
         // Add the remote type
-        kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(protocolStorageTypeStr(protocolStorageType)));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
 
         // Only enable file logging on the local when requested
         kvPut(
@@ -178,7 +175,7 @@ ProtocolClient *
 protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
+        FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, hostIdx);
         FUNCTION_LOG_PARAM(UINT, processId);
     FUNCTION_LOG_END();
@@ -293,7 +290,7 @@ static StringList *
 protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
+        FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, hostIdx);
     FUNCTION_LOG_END();
 
@@ -426,7 +423,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
 
     // Add the remote type
-    kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(protocolStorageTypeStr(protocolStorageType)));
+    kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
 
     StringList *commandExec = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true);
     strLstInsert(commandExec, 0, cfgOptionIdxStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd, hostIdx));
@@ -440,7 +437,7 @@ ProtocolClient *
 protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, protocolStorageType);
+        FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, hostIdx);
     FUNCTION_LOG_END();
 
@@ -549,45 +546,6 @@ protocolKeepAlive(void)
     }
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-ProtocolStorageType
-protocolStorageTypeEnum(const String *type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, type);
-    FUNCTION_TEST_END();
-
-    ASSERT(type != NULL);
-
-    if (strEq(type, PROTOCOL_REMOTE_TYPE_PG_STR))
-        FUNCTION_TEST_RETURN(protocolStorageTypePg);
-    else if (strEq(type, PROTOCOL_REMOTE_TYPE_REPO_STR))
-        FUNCTION_TEST_RETURN(protocolStorageTypeRepo);
-
-    THROW_FMT(AssertError, "invalid protocol storage type '%s'", strZ(type));
-}
-
-const String *
-protocolStorageTypeStr(ProtocolStorageType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
-
-    switch (type)
-    {
-        case protocolStorageTypePg:
-            FUNCTION_TEST_RETURN(PROTOCOL_REMOTE_TYPE_PG_STR);
-
-        case protocolStorageTypeRepo:
-            FUNCTION_TEST_RETURN(PROTOCOL_REMOTE_TYPE_REPO_STR);
-    }
-
-    THROW_FMT(AssertError, "invalid protocol storage type %u", type);
 }
 
 /**********************************************************************************************************************************/

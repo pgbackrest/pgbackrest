@@ -786,7 +786,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/path/to/2");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
@@ -805,7 +805,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAdd(argList, strNew("--process=1"));
         strLstAdd(argList, strNew("--stanza=db"));
-        strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+        hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_REMOTE);
 
