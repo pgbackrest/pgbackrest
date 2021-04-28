@@ -93,6 +93,7 @@
                         <commit subject="Update CipherType/CipherMode to StringId.">
                             <github-pull-request id="1384"/>
                         </commit>
+                        <commit subject="Convert ProtocolParallelJobState enum to StringId."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>

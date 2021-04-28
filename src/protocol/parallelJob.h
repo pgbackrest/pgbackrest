@@ -4,6 +4,8 @@ Protocol Parallel Job
 #ifndef PROTOCOL_PARALLEL_JOB_H
 #define PROTOCOL_PARALLEL_JOB_H
 
+#include "common/type/stringId.h"
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -14,9 +16,9 @@ Job state enum
 ***********************************************************************************************************************************/
 typedef enum
 {
-    protocolParallelJobStatePending,
-    protocolParallelJobStateRunning,
-    protocolParallelJobStateDone,
+    protocolParallelJobStatePending = STRID5("pending", 0x1dc9238b00),
+    protocolParallelJobStateRunning = STRID5("running", 0x1dc973ab20),
+    protocolParallelJobStateDone = STRID5("done", 0x2b9e40),
 } ProtocolParallelJobState;
 
 #include "common/time.h"
@@ -121,7 +123,6 @@ protocolParallelJobFree(ProtocolParallelJob *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-const char *protocolParallelJobToConstZ(ProtocolParallelJobState state);
 String *protocolParallelJobToLog(const ProtocolParallelJob *this);
 
 #define FUNCTION_LOG_PROTOCOL_PARALLEL_JOB_TYPE                                                                                    \
