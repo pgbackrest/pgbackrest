@@ -584,12 +584,90 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionIdxTotal(optionId); optionIdx++)
         {
             if (configLocal->option[optionId].index[optionIdx].source == cfgSourceDefault)
+            {
                 configLocal->option[optionId].index[optionIdx].value = configLocal->option[optionId].defaultValue;
+                configLocal->option[optionId].index[optionIdx].display = NULL;
+            }
         }
     }
     MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+
+/**********************************************************************************************************************************/
+const String *
+cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT, value);
+        FUNCTION_TEST_PARAM(UINT, optionType);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+    ASSERT(optionType != cfgOptTypeHash && optionType != cfgOptTypeList);
+
+    if (varType(value) == varTypeString)
+    {
+        FUNCTION_TEST_RETURN(varStr(value));
+    }
+    else if (optionType == cfgOptTypeBoolean)
+    {
+        FUNCTION_TEST_RETURN(varBool(value) ? TRUE_STR : FALSE_STR);
+    }
+    else if (optionType == cfgOptTypeTime)
+    {
+        FUNCTION_TEST_RETURN(strNewDbl((double)varInt64(value) / MSEC_PER_SEC));
+    }
+
+    FUNCTION_TEST_RETURN(varStrForce(value));
+}
+
+const String *
+cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionIdx);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(configLocal != NULL);
+    ASSERT(
+        (!configLocal->option[optionId].group && optionIdx == 0) ||
+        (configLocal->option[optionId].group && optionIdx <
+            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+
+    // Check that the option is valid for the current command
+    if (!cfgOptionValid(optionId))
+        THROW_FMT(AssertError, "option '%s' is not valid for the current command", cfgOptionIdxName(optionId, optionIdx));
+
+    // If there is already a display value set then return that
+    ConfigOptionValue *const option = &configLocal->option[optionId].index[optionIdx];
+
+    if (option->display != NULL)
+        FUNCTION_TEST_RETURN(option->display);
+
+    // Generate the display value based on the type
+    MEM_CONTEXT_BEGIN(configLocal->memContext)
+    {
+        option->display = cfgOptionDisplayVar(option->value, cfgParseOptionType(optionId));
+    }
+    MEM_CONTEXT_END();
+
+
+    FUNCTION_TEST_RETURN(option->display);
+}
+
+const String *
+cfgOptionDisplay(const ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(cfgOptionIdxDisplay(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 /**********************************************************************************************************************************/
@@ -1063,16 +1141,14 @@ cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx)
 // callers from this logic and hopefully means no changes to the callers when the parser is updated.
 static StringId
 cfgOptionStrIdInternal(
-    const ConfigOption optionId, const unsigned int optionIdx, const VariantType typeRequested, const bool nullAllowed)
+    const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
         FUNCTION_TEST_PARAM(UINT, optionIdx);
-        FUNCTION_TEST_PARAM(ENUM, typeRequested);
-        FUNCTION_TEST_PARAM(BOOL, nullAllowed);
     FUNCTION_TEST_END();
 
-    const String *const value = varStr(cfgOptionIdxInternal(optionId, optionIdx, typeRequested, nullAllowed));
+    const String *const value = varStr(cfgOptionIdxInternal(optionId, optionIdx, varTypeString, false));
 
     if (optionId == cfgOptRepoType)
         FUNCTION_TEST_RETURN(strIdFromStr(stringIdBit6, value));
@@ -1087,7 +1163,7 @@ cfgOptionStrId(ConfigOption optionId)
         FUNCTION_LOG_PARAM(ENUM, optionId);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(STRING_ID, cfgOptionStrIdInternal(optionId, cfgOptionIdxDefault(optionId), varTypeString, false));
+    FUNCTION_LOG_RETURN(STRING_ID, cfgOptionStrIdInternal(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 StringId
@@ -1098,7 +1174,7 @@ cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx)
         FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(STRING_ID, cfgOptionStrIdInternal(optionId, optionIdx, varTypeString, true));
+    FUNCTION_LOG_RETURN(STRING_ID, cfgOptionStrIdInternal(optionId, optionIdx));
 }
 
 /**********************************************************************************************************************************/
@@ -1185,6 +1261,9 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
         }
         else
             configLocal->option[optionId].index[optionIdx].value = NULL;
+
+        // Clear the display value, which will be generated when needed
+        configLocal->option[optionId].index[optionIdx].display = NULL;
     }
     MEM_CONTEXT_END();
 

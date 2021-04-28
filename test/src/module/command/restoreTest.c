@@ -1305,6 +1305,17 @@ testRun(void)
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16385)");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("database id to exclude is missing on disk");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-exclude=" UTF8_DB_NAME);
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to exclude '" UTF8_DB_NAME "' does not exist");
+
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16385)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("all databases selected");
 
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
@@ -1313,6 +1324,10 @@ testRun(void)
                 manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/16384/" PG_FILE_PGVERSION)});
         }
         MEM_CONTEXT_END();
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=" UTF8_DB_NAME);
+        harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_RESULT_STR(restoreSelectiveExpression(manifest), NULL, "all databases selected");
 
@@ -1358,7 +1373,7 @@ testRun(void)
             "system databases (template0, postgres, etc.) are included by default");
 
         TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385)");
-
+        
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing database selected");
 
@@ -1436,6 +1451,99 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)\n"
             "P00 DETAIL: databases excluded (zeroed) from selective restore (32768, 65536)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exclude database by id");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-exclude=16384");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(
+            restoreSelectiveExpression(manifest),
+            "(^pg_data/base/16384/)|(^pg_tblspc/16387/PG_9.4_201409291/16384/)",
+            "check expression");
+
+        TEST_RESULT_LOG(
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (16384)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exclude database by name");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-exclude=" UTF8_DB_NAME);
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(
+            restoreSelectiveExpression(manifest),
+            "(^pg_data/base/16384/)|(^pg_tblspc/16387/PG_9.4_201409291/16384/)",
+            "check expression");
+
+        TEST_RESULT_LOG(
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (16384)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exclude system database");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-exclude=16385");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(
+            restoreSelectiveExpression(manifest),
+            "(^pg_data/base/16385/)|(^pg_tblspc/16387/PG_9.4_201409291/16385/)",
+            "check expression");
+
+        TEST_RESULT_LOG(
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (16385)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on missing database to exclude selected");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-exclude=7777777");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ERROR(restoreSelectiveExpression(manifest), DbMissingError, "database to exclude '7777777' does not exist");
+
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on combining include and exclude options");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=test2");
+        strLstAddZ(argList, "--db-exclude=test2");
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_ERROR(restoreSelectiveExpression(manifest), DbInvalidError, "database to include '32768' is in the exclude list");
+
+        TEST_RESULT_LOG("P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("combine include and exclude options");
+
+        argList = strLstDup(argListClean);
+        strLstAddZ(argList, "--db-include=16384");
+        strLstAddZ(argList, "--db-exclude=1");
+        strLstAddZ(argList, "--db-exclude=16385");
+        strLstAddZ(argList, "--db-exclude=32768");  // user databases excluded will be silently ignored
+        harnessCfgLoad(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(
+            restoreSelectiveExpression(manifest),
+            "(^pg_data/base/1/)|(^pg_tblspc/16387/PG_9.4_201409291/1/)|"
+            "(^pg_data/base/16385/)|(^pg_tblspc/16387/PG_9.4_201409291/16385/)|"
+            "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_9.4_201409291/32768/)|"
+            "(^pg_data/base/65536/)|(^pg_tblspc/16387/PG_9.4_201409291/65536/)",
+            "check expression");
+
+        TEST_RESULT_LOG(
+            "P00 DETAIL: databases found for selective restore (1, 12168, 16380, 16381, 16384, 16385, 32768, 65536)\n"
+            "P00 DETAIL: databases excluded (zeroed) from selective restore (1, 16385, 32768, 65536)");
     }
 
     // *****************************************************************************************************************************

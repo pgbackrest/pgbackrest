@@ -103,7 +103,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageTest->pathExpressionFunction != NULL, true, "    check expression function is set");
 
         TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->pub.interface.info, "    check interface");
-        TEST_RESULT_PTR(storageDriver(storageTest), storageDriver(storageTest), "    check driver");
+        TEST_RESULT_PTR(storageDriver(storageTest), storageTest->pub.driver, "    check driver");
         TEST_RESULT_UINT(storageType(storageTest), storageTest->pub.type, "    check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeatureCompress), true, "    check compress feature");

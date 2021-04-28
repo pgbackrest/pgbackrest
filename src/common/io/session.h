@@ -74,7 +74,7 @@ ioSessionClose(IoSession *const this)
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline IoSession *
-ioSessionMove(IoSession *this, MemContext *parentNew)
+ioSessionMove(IoSession *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -83,7 +83,7 @@ ioSessionMove(IoSession *this, MemContext *parentNew)
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-ioSessionFree(IoSession *this)
+ioSessionFree(IoSession *const this)
 {
     objFree(this);
 }

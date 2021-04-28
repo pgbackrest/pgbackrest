@@ -409,8 +409,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter " CFGOPT_COMPRESS_TYPE " option to '%s', reset to value in %s",
-                        strZ(cfgOptionStr(cfgOptType)), strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
-                        strZ(backupLabelPrior));
+                        strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptCompressType)), strZ(backupLabelPrior));
 
                     // Set the compression type back to whatever was in the prior backup.  This is not strictly needed since we
                     // could store compression type on a per file basis, but it seems simplest and safest for now.
@@ -434,8 +433,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                 {
                     LOG_WARN_FMT(
                         "%s backup cannot alter hardlink option to '%s', reset to value in %s",
-                        strZ(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptRepoHardlink)),
-                        strZ(backupLabelPrior));
+                        strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptRepoHardlink)), strZ(backupLabelPrior));
                     cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
                 }
 
@@ -456,7 +454,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     {
                         LOG_WARN_FMT(
                             "%s backup cannot alter '" CFGOPT_CHECKSUM_PAGE "' option to '%s', reset to '%s' from %s",
-                            strZ(cfgOptionStr(cfgOptType)), cvtBoolToConstZ(cfgOptionBool(cfgOptChecksumPage)),
+                            strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptChecksumPage)),
                             cvtBoolToConstZ(checksumPagePrior), strZ(manifestData(result)->backupLabel));
                     }
 
@@ -467,7 +465,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             }
             else
             {
-                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionStr(cfgOptType)));
+                LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)));
                 cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(strIdToStr(backupTypeFull)));
             }
         }
@@ -726,7 +724,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             {
                                 reason = strNewFmt(
                                     "new backup type '%s' does not match resumable backup type '%s'",
-                                    strZ(cfgOptionStr(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
+                                    strZ(cfgOptionDisplay(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
                             }
                             // Check prior backup label ??? Do we really care about the prior backup label?
                             else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
@@ -743,7 +741,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             {
                                 reason = strNewFmt(
                                     "new compression '%s' does not match resumable compression '%s'",
-                                    strZ(compressTypeStr(compressTypeEnum(cfgOptionStr(cfgOptCompressType)))),
+                                    strZ(cfgOptionDisplay(cfgOptCompressType)),
                                     strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
                             }
                             else

@@ -239,9 +239,9 @@ testRun(void)
         // Embed a keyValue section to test recursion
         Variant *sectionKey = varNewStr(strNew("section"));
         KeyValue *sectionKv = kvPutKv(varKv(keyValue), sectionKey);
-        kvAdd(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
-        kvAdd(sectionKv, varNewStr(strNew("key2")), (Variant *)NULL);
-        kvAdd(sectionKv, varNewStr(strNew("key3")), varNewStr(strNew("value2")));
+        kvPut(sectionKv, varNewStr(strNew("key1")), varNewStr(strNew("value1")));
+        kvPut(sectionKv, varNewStr(strNew("key2")), (Variant *)NULL);
+        kvPut(sectionKv, varNewStr(strNew("key3")), varNewStr(strNew("value2")));
         kvAdd(sectionKv, varNewStr(strNew("escape")), varNewStr(strNew("\"\\/\b\n\r\t\f")));
 
         TEST_ASSIGN(json, jsonFromVar(keyValue), "KeyValue");

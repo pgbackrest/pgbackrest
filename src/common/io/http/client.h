@@ -53,7 +53,7 @@ typedef struct HttpClientPub
 } HttpClientPub;
 
 __attribute__((always_inline)) static inline TimeMSec
-httpClientTimeout(const HttpClient *this)
+httpClientTimeout(const HttpClient *const this)
 {
     return THIS_PUB(HttpClient)->timeout;
 }

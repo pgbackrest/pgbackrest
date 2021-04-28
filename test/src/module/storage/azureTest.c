@@ -178,7 +178,7 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        hrnCfgArgRaw(argList, cfgOptRepoType, strIdToStr(STORAGE_AZURE_TYPE));
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
         hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
@@ -285,7 +285,7 @@ testRun(void)
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-                hrnCfgArgRaw(argList, cfgOptRepoType, strIdToStr(STORAGE_AZURE_TYPE));
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
                 hrnCfgArgRaw(argList, cfgOptRepoStorageHost, hrnServerHost());

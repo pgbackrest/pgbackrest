@@ -383,8 +383,8 @@ storageRepoGet(unsigned int repoIdx, bool write)
                     cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx),
                     (StorageGcsKeyType)cfgOptionIdxStrId(cfgOptRepoGcsKeyType, repoIdx), cfgOptionIdxStr(cfgOptRepoGcsKey, repoIdx),
                     STORAGE_GCS_CHUNKSIZE_DEFAULT, cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), ioTimeoutMs(),
-                    cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+                    cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
+                    cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
                 break;
 
             // Use S3 storage
@@ -414,7 +414,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
                 break;
             }
 
-            // Use Posix storage
+            // Use Posix storage. Keep this as the default to prevent code churn.
             default:
             {
                 CHECK(type == STORAGE_POSIX_TYPE);

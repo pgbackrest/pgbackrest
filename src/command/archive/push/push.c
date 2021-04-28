@@ -358,8 +358,8 @@ cmdArchivePush(void)
                     // The async process should not output on the console at all
                     KeyValue *optionReplace = kvNew();
 
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_CONSOLE_STR), VARSTRDEF("off"));
-                    kvPut(optionReplace, VARSTR(CFGOPT_LOG_LEVEL_STDERR_STR), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
+                    kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("off"));
 
                     // Generate command options
                     StringList *commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
@@ -390,7 +390,7 @@ cmdArchivePush(void)
             {
                 THROW_FMT(
                     ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %s second(s)",
-                    strZ(archiveFile), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)));
+                    strZ(archiveFile), strZ(cfgOptionDisplay(cfgOptArchiveTimeout)));
             }
 
             // Log success

@@ -106,7 +106,7 @@ struct StorageS3
 
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
-    StorageS3KeyType keyType;                                       // Key type (shared or temp)
+    StorageS3KeyType keyType;                                       // Key type (e.g. storageS3KeyTypeShared)
     String *accessKey;                                              // Access key
     String *secretAccessKey;                                        // Secret access key
     String *securityToken;                                          // Security token, if any

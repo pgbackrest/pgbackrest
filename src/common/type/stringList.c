@@ -16,7 +16,7 @@ String List Handler
 Internal add -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline String *
-strLstAddInternal(StringList *this, String *string)
+strLstAddInternal(StringList *const this, String *const string)
 {
     return *(String **)lstAdd((List *)this, &string);
 }
@@ -25,7 +25,7 @@ strLstAddInternal(StringList *this, String *string)
 Internal insert -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline  String *
-strLstInsertInternal(StringList *this, unsigned int listIdx, String *string)
+strLstInsertInternal(StringList *const this, const unsigned int listIdx, String *const string)
 {
     return *(String **)lstInsert((List *)this, listIdx, &string);
 }

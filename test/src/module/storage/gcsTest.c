@@ -199,7 +199,7 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        hrnCfgArgRaw(argList, cfgOptRepoType, strIdToStr(STORAGE_GCS_TYPE));
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
         hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
@@ -310,7 +310,7 @@ testRun(void)
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-                hrnCfgArgRaw(argList, cfgOptRepoType, strIdToStr(STORAGE_GCS_TYPE));
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
                 hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), hrnServerPort(0));

@@ -38,7 +38,7 @@ Functions
 // Move to a new parent mem context
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline ProtocolCommand *
-protocolCommandMove(ProtocolCommand *this, MemContext *parentNew)
+protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
@@ -50,7 +50,7 @@ ProtocolCommand *protocolCommandParamAdd(ProtocolCommand *this, const Variant *p
 Destructor
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
-protocolCommandFree(ProtocolCommand *this)
+protocolCommandFree(ProtocolCommand *const this)
 {
     objFree(this);
 }

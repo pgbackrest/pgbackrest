@@ -508,7 +508,7 @@ testRun(void)
                 ioWriteFlush(write);
 
                 // unexpected output
-                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"u-zero\"}", "unexpected output");
+                TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"unexp-output\"}", "unexpected output");
                 ioWriteStrLine(write, strNew("{}"));
                 ioWriteFlush(write);
 
@@ -609,7 +609,7 @@ testRun(void)
 
                 // Unexpected output
                 TEST_RESULT_VOID(
-                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "u-zero"))),
+                    protocolClientWriteCommand(client, protocolCommandNew(strIdFromZ(stringIdBit5, "unexp-output"))),
                     "execute command that returns unexpected output");
                 TEST_ERROR(protocolClientReadLine(client), FormatError, "expected error but got output");
 

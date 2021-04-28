@@ -575,6 +575,7 @@ storagePosixNewInternal(
         FUNCTION_LOG_PARAM(BOOL, pathSync);
     FUNCTION_LOG_END();
 
+    ASSERT(type != 0);
     ASSERT(path != NULL);
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);

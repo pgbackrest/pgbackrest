@@ -213,7 +213,7 @@ hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned option
 
 /**********************************************************************************************************************************/
 __attribute__((always_inline)) static inline const char *
-hrnCfgEnvName(ConfigOption optionId, unsigned optionKey)
+hrnCfgEnvName(const ConfigOption optionId, const unsigned optionKey)
 {
     return strZ(
         strReplaceChr(strUpper(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))), '-', '_'));
