@@ -305,7 +305,7 @@ hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer,
     }
 
     // Add a space if compression/encryption defined
-    if (param.compressType != compressTypeNone || param.cipherType != cipherTypeNone)
+    if (param.compressType != compressTypeNone || (param.cipherType != 0 && param.cipherType != cipherTypeNone))
         strCatZ(log, " ");
 
     // Add file name
