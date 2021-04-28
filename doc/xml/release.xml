@@ -98,6 +98,7 @@
                         <commit subject="Convert ArchiveMode enum to StringId."/>
                         <commit subject="Convert ArchivePushFileIoType enum to StringId."/>
                         <commit subject="Update IoClient/IoSession to use StringIds."/>
+                        <commit subject="Convert InfoPgType enum to StringId."/>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
