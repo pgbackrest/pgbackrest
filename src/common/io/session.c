@@ -4,23 +4,17 @@ Io Session Interface
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/io/session.intern.h"
+#include "common/io/session.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct IoSession
 {
-    MemContext *memContext;                                         // Mem context
-    void *driver;                                                   // Driver object
-    const IoSessionInterface *interface;                            // Driver interface
+    IoSessionPub pub;                                               // Publicly accessible variables
 };
-
-OBJECT_DEFINE_MOVE(IO_SESSION);
-OBJECT_DEFINE_FREE(IO_SESSION);
 
 /**********************************************************************************************************************************/
 IoSession *
@@ -44,27 +38,15 @@ ioSessionNew(void *driver, const IoSessionInterface *interface)
 
     *this = (IoSession)
     {
-        .memContext = memContextCurrent(),
-        .driver = driver,
-        .interface = interface,
+        .pub =
+        {
+            .memContext = memContextCurrent(),
+            .driver = driver,
+            .interface = interface,
+        },
     };
 
     FUNCTION_LOG_RETURN(IO_SESSION, this);
-}
-
-/**********************************************************************************************************************************/
-void
-ioSessionClose(IoSession *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_SESSION, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    this->interface->close(this->driver);
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -77,46 +59,7 @@ ioSessionFd(IoSession *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->interface->fd == NULL ? -1 : this->interface->fd(this->driver));
-}
-
-/**********************************************************************************************************************************/
-IoRead *
-ioSessionIoRead(IoSession *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_SESSION, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->ioRead(this->driver));
-}
-
-/**********************************************************************************************************************************/
-IoWrite *
-ioSessionIoWrite(IoSession *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_SESSION, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->ioWrite(this->driver));
-}
-
-/**********************************************************************************************************************************/
-IoSessionRole
-ioSessionRole(const IoSession *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_SESSION, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->role(this->driver));
+    FUNCTION_TEST_RETURN(this->pub.interface->fd == NULL ? -1 : this->pub.interface->fd(this->pub.driver));
 }
 
 /**********************************************************************************************************************************/
@@ -124,6 +67,6 @@ String *
 ioSessionToLog(const IoSession *this)
 {
     return strNewFmt(
-        "{type: %s, role: %s, driver: %s}", strZ(*this->interface->type),
-        ioSessionRole(this) == ioSessionRoleClient ? "client" : "server", strZ(this->interface->toLog(this->driver)));
+        "{type: %s, role: %s, driver: %s}", strZ(*this->pub.interface->type),
+        ioSessionRole(this) == ioSessionRoleClient ? "client" : "server", strZ(this->pub.interface->toLog(this->pub.driver)));
 }

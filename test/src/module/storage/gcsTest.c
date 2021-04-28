@@ -199,20 +199,20 @@ testRun(void)
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-        hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-        hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, STORAGE_GCS_KEY_TYPE_TOKEN);
+        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
         hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
         TEST_RESULT_STR_Z(storage->path, "/repo", "    check path");
-        TEST_RESULT_STR(((StorageGcs *)storage->driver)->bucket, TEST_BUCKET_STR, "    check bucket");
-        TEST_RESULT_STR_Z(((StorageGcs *)storage->driver)->endpoint, "storage.googleapis.com", "    check endpoint");
-        TEST_RESULT_UINT(((StorageGcs *)storage->driver)->chunkSize, STORAGE_GCS_CHUNKSIZE_DEFAULT, "    check chunk size");
-        TEST_RESULT_STR(((StorageGcs *)storage->driver)->token, TEST_TOKEN_STR, "    check token");
+        TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->bucket, TEST_BUCKET_STR, "    check bucket");
+        TEST_RESULT_STR_Z(((StorageGcs *)storageDriver(storage))->endpoint, "storage.googleapis.com", "    check endpoint");
+        TEST_RESULT_UINT(((StorageGcs *)storageDriver(storage))->chunkSize, STORAGE_GCS_CHUNKSIZE_DEFAULT, "    check chunk size");
+        TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->token, TEST_TOKEN_STR, "    check token");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "    check path feature");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeatureCompress), false, "    check compress feature");
     }
@@ -310,7 +310,7 @@ testRun(void)
 
                 StringList *argList = strLstNew();
                 strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
-                hrnCfgArgRawZ(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
                 hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), hrnServerPort(0));
@@ -322,11 +322,11 @@ testRun(void)
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
                 // Tests need the chunk size to be 16
-                ((StorageGcs *)storage->driver)->chunkSize = 16;
+                ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
 
                 // Generate the auth request. The JWT part will need to be ? since it can vary in content and size.
                 const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
-                const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storage->driver), time(NULL));
+                const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storageDriver(storage)), time(NULL));
 
                 String *const authRequest = strNewFmt(
                     "POST /token HTTP/1.1\r\n"
@@ -354,7 +354,7 @@ testRun(void)
                 testResponseP(service);
 
                 storageGcsRequestP(
-                    (StorageGcs *)storage->driver, HTTP_VERB_POST_STR, .noBucket = true,
+                    (StorageGcs *)storageDriver(storage), HTTP_VERB_POST_STR, .noBucket = true,
                     .content = BUFSTR(jsonFromKv(kvPut(kvNew(), GCS_JSON_NAME_VAR, VARSTRDEF("bucket")))));
 
                 // -----------------------------------------------------------------------------------------------------------------

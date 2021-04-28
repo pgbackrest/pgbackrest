@@ -86,9 +86,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     if (s3 != NULL)
     {
         if (driver->uriStyle == storageS3UriStyleHost)
-        strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
-    else
-        strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
+            strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
+        else
+            strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
     }
     else
         strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
@@ -388,7 +388,7 @@ testRun(void)
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(0, true);
-                StorageS3 *driver = (StorageS3 *)s3->driver;
+                StorageS3 *driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
@@ -442,11 +442,11 @@ testRun(void)
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
-                hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, STORAGE_S3_KEY_TYPE_AUTO);
+                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeAuto);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
-                driver = (StorageS3 *)s3->driver;
+                driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_STR(driver->credRole, credRole, "check role");
@@ -1013,14 +1013,14 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawZ(argList, cfgOptRepoS3UriStyle, STORAGE_S3_URI_STYLE_PATH);
+                hrnCfgArgRawStrId(argList, cfgOptRepoS3UriStyle, storageS3UriStylePath);
                 hrnCfgArgRaw(argList, cfgOptRepoStorageHost, host);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
-                driver = (StorageS3 *)s3->driver;
+                driver = (StorageS3 *)storageDriver(s3);
 
                 // Set deleteMax to a small value for testing
                 driver->deleteMax = 2;

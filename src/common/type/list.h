@@ -9,12 +9,10 @@ List Handler
 /***********************************************************************************************************************************
 List object
 ***********************************************************************************************************************************/
-#define LIST_TYPE                                                   List
-#define LIST_PREFIX                                                 lst
-
 typedef struct List List;
 
 #include "common/memContext.h"
+#include "common/type/object.h"
 #include "common/type/param.h"
 #include "common/type/string.h"
 
@@ -64,11 +62,41 @@ typedef struct ListParam
 List *lstNew(size_t itemSize, ListParam param);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ListPub
+{
+    MemContext *memContext;                                         // Mem context
+    unsigned int listSize;                                          // List size
+} ListPub;
+
+// Set a new comparator
+List *lstComparatorSet(List *this, ListComparator *comparator);
+
+// Memory context for this list
+__attribute__((always_inline)) static inline MemContext *
+lstMemContext(const List *const this)
+{
+    return THIS_PUB(List)->memContext;
+}
+
+// List size
+__attribute__((always_inline)) static inline unsigned int
+lstSize(const List *const this)
+{
+    return THIS_PUB(List)->listSize;
+}
+
+// Is the list empty?
+__attribute__((always_inline)) static inline bool
+lstEmpty(const List *const this)
+{
+    return lstSize(this) == 0;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Add an item to the end of the list
-void *lstAdd(List *this, const void *item);
-
 // Clear items from a list
 List *lstClear(List *this);
 
@@ -76,13 +104,17 @@ List *lstClear(List *this);
 void *lstGet(const List *this, unsigned int listIdx);
 void *lstGetLast(const List *this);
 
-// Does an item exist in the list?
-bool lstExists(const List *this, const void *item);
-
 // Find an item in the list
 void *lstFind(const List *this, const void *item);
 void *lstFindDefault(const List *this, const void *item, void *itemDefault);
 unsigned int lstFindIdx(const List *this, const void *item);
+
+// Does an item exist in the list?
+__attribute__((always_inline)) static inline bool
+lstExists(const List *const this, const void *const item)
+{
+    return lstFind(this, item) != NULL;
+}
 
 // Get the index of a list item
 unsigned int lstIdx(const List *this, const void *item);
@@ -90,40 +122,36 @@ unsigned int lstIdx(const List *this, const void *item);
 // Insert an item into the list
 void *lstInsert(List *this, unsigned int listIdx, const void *item);
 
-// Memory context for this list
-MemContext *lstMemContext(const List *this);
+// Add an item to the end of the list
+__attribute__((always_inline)) static inline void *
+lstAdd(List *const this, const void *const item)
+{
+    return lstInsert(this, lstSize(this), item);
+}
 
 // Move to a new parent mem context
-List *lstMove(List *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline List *
+lstMove(List *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Remove an item from the list
 bool lstRemove(List *this, const void *item);
 List *lstRemoveIdx(List *this, unsigned int listIdx);
 List *lstRemoveLast(List *this);
 
-// Return list size
-unsigned int lstSize(const List *this);
-
-// Is the list empty?
-__attribute__((always_inline)) static inline bool
-lstEmpty(const List *this)
-{
-    return lstSize(this) == 0;
-}
-
 // List sort
 List *lstSort(List *this, SortOrder sortOrder);
 
 /***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Set a new comparator
-List *lstComparatorSet(List *this, ListComparator *comparator);
-
-/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void lstFree(List *this);
+__attribute__((always_inline)) static inline void
+lstFree(List *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

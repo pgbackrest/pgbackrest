@@ -34,7 +34,7 @@ testRun(void)
         "    expire          Expire backups that exceed retention.\n"
         "    help            Get help.\n"
         "    info            Retrieve information about backups.\n"
-        "    repo-get        Get files from a repository.\n"
+        "    repo-get        Get a file from a repository.\n"
         "    repo-ls         List files in a repository.\n"
         "    restore         Restore a database cluster.\n"
         "    stanza-create   Create the required stanza data.\n"
@@ -48,26 +48,49 @@ testRun(void)
         helpVersion));
 
     // *****************************************************************************************************************************
-    if (testBegin("helpRenderText()"))
+    if (testBegin("helpRenderSplitSize()"))
     {
-        TEST_RESULT_STR_Z(helpRenderText(strNew("this is a short sentence"), 0, false, 80), "this is a short sentence", "one line");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def"), " ", 3), "-"), "abc-def", "two items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def"), " ", 4), "-"), "abc-def", "one items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 4), "-"), "abc-def-ghi", "three items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def ghi"), " ", 8), "-"), "abc def-ghi", "three items");
+        TEST_RESULT_STR_Z(strLstJoin(helpRenderSplitSize(STRDEF("abc def "), " ", 4), "-"), "abc-def ", "two items");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("this is a short sentence"), 4, false, 14),
+            strLstJoin(helpRenderSplitSize(STRDEF("this is a short sentence"), " ", 10), "\n"),
+            "this is a\n"
+            "short\n"
+            "sentence",
+            "empty list");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("helpRenderText()"))
+    {
+        TEST_RESULT_STR_Z(
+            helpRenderText(strNew("this is a short sentence"), false, 0, false, 80), "this is a short sentence", "one line");
+
+        TEST_RESULT_STR_Z(
+            helpRenderText(strNew("this is a short sentence"), false, 4, false, 14),
             "this is a\n"
             "    short\n"
             "    sentence",
             "three lines, no indent first");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), 2, true, 16),
+            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), true, 2, true, 16),
             "  This is a\n"
             "  short\n"
             "  paragraph.\n"
             "\n"
             "  Here is\n"
-            "  another one.",
-            "two paragraphs, indent first");
+            "  another one.\n"
+            "\n"
+            "  FOR INTERNAL\n"
+            "  USE ONLY. DO\n"
+            "  NOT USE IN\n"
+            "  PRODUCTION.",
+            "two paragraphs, indent first, internal");
     }
 
     // *****************************************************************************************************************************
@@ -124,11 +147,11 @@ testRun(void)
             "Restore a database cluster.\n"
             "\n"
             "The restore command automatically defaults to selecting the latest backup from\n"
-            "the first repository where backups exist. The order in which the repositories\n"
-            "are checked is dictated by the pgbackrest.conf (e.g. repo1 will be checked\n"
-            "before repo2). To select from a specific repository, the --repo option can be\n"
-            "passed (e.g. --repo=1). The --set option can be passed if a backup other than\n"
-            "the latest is desired.\n"
+            "the first repository where backups exist (see Quick Start - Restore a Backup).\n"
+            "The order in which the repositories are checked is dictated by the\n"
+            "pgbackrest.conf (e.g. repo1 will be checked before repo2). To select from a\n"
+            "specific repository, the --repo option can be passed (e.g. --repo=1). The --set\n"
+            "option can be passed if a backup other than the latest is desired.\n"
             "\n"
             "For PITR, --type=time must be provided and the target time specified with the\n"
             "--target option. If a backup is not specified via the --set option, then the\n"
@@ -141,6 +164,7 @@ testRun(void)
             "\n"
             "  --archive-mode                   preserve or disable archiving on restored\n"
             "                                   cluster [default=preserve]\n"
+            "  --db-exclude                     restore excluding the specified databases\n"
             "  --db-include                     restore only specified databases\n"
             "                                   [current=db1, db2]\n"
             "  --force                          force a restore [default=n]\n"
@@ -288,6 +312,14 @@ testRun(void)
         strLstAddZ(argList, BOGUS_STR);
         TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse bogus option");
         TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, CFGCMD_HELP);
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH);
+        strLstAddZ(argList, CFGOPT_PROCESS);
+        TEST_RESULT_VOID(harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList)), "parse option invalid for command");
+        TEST_ERROR(helpRender(), OptionInvalidError, "option 'process' is not valid for command 'archive-push'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const char *optionHelp = strZ(strNewFmt(

@@ -8,7 +8,6 @@ Buffer Handler
 
 #include "common/debug.h"
 #include "common/type/buffer.h"
-#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Constant buffers that are generally useful
@@ -29,13 +28,8 @@ Contains information about the buffer
 ***********************************************************************************************************************************/
 struct Buffer
 {
-    BUFFER_COMMON                                                   // Variables that are common to static and dynamic buffers
-    unsigned char *buffer;                                          // Internal buffer
-    MemContext *memContext;                                         // Mem context for dynamic buffers
+    BufferPub pub;                                                  // Publicly accessible variables
 };
-
-OBJECT_DEFINE_MOVE(BUFFER);
-OBJECT_DEFINE_FREE(BUFFER);
 
 /**********************************************************************************************************************************/
 Buffer *
@@ -54,14 +48,17 @@ bufNew(size_t size)
 
         *this = (Buffer)
         {
-            .memContext = MEM_CONTEXT_NEW(),
-            .sizeAlloc = size,
-            .size = size,
+            .pub =
+            {
+                .memContext = MEM_CONTEXT_NEW(),
+                .sizeAlloc = size,
+                .size = size,
+            },
         };
 
         // Allocate buffer
         if (size > 0)
-            this->buffer = memNew(this->sizeAlloc);
+            this->pub.buffer = memNew(this->pub.sizeAlloc);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -81,8 +78,8 @@ bufNewC(const void *buffer, size_t size)
 
     // Create object and copy data
     Buffer *this = bufNew(size);
-    memcpy(this->buffer, buffer, this->size);
-    this->used = this->size;
+    memcpy(this->pub.buffer, buffer, bufSize(this));
+    this->pub.used = bufSize(this);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -115,9 +112,9 @@ bufDup(const Buffer *buffer)
     ASSERT(buffer != NULL);
 
     // Create object and copy data
-    Buffer *this = bufNew(buffer->used);
-    memcpy(this->buffer, buffer->buffer, this->size);
-    this->used = this->size;
+    Buffer *this = bufNew(buffer->pub.used);
+    memcpy(this->pub.buffer, buffer->pub.buffer, bufSize(this));
+    this->pub.used = bufSize(this);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -134,7 +131,7 @@ bufCat(Buffer *this, const Buffer *cat)
     ASSERT(this != NULL);
 
     if (cat != NULL)
-        bufCatC(this, cat->buffer, 0, cat->used);
+        bufCatC(this, cat->pub.buffer, 0, cat->pub.used);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -155,14 +152,14 @@ bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize
 
     if (catSize > 0)
     {
-        if (this->used + catSize > bufSize(this))
-            bufResize(this, this->used + catSize);
+        if (bufUsed(this) + catSize > bufSize(this))
+            bufResize(this, bufUsed(this) + catSize);
 
         // Just here to silence nonnull warnings from clang static analyzer
-        ASSERT(this->buffer != NULL);
+        ASSERT(bufPtr(this) != NULL);
 
-        memcpy(this->buffer + this->used, cat + catOffset, catSize);
-        this->used += catSize;
+        memcpy(bufPtr(this) + bufUsed(this), cat + catOffset, catSize);
+        this->pub.used += catSize;
     }
 
     FUNCTION_TEST_RETURN(this);
@@ -183,10 +180,10 @@ bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
 
     if (cat != NULL)
     {
-        ASSERT(catOffset <= cat->used);
-        ASSERT(catSize <= cat->used - catOffset);
+        ASSERT(catOffset <= cat->pub.used);
+        ASSERT(catSize <= cat->pub.used - catOffset);
 
-        bufCatC(this, cat->buffer, catOffset, catSize);
+        bufCatC(this, cat->pub.buffer, catOffset, catSize);
     }
 
     FUNCTION_TEST_RETURN(this);
@@ -204,12 +201,10 @@ bufEq(const Buffer *this, const Buffer *compare)
     ASSERT(this != NULL);
     ASSERT(compare != NULL);
 
-    bool result = false;
+    if (bufUsed(this) == bufUsed(compare))
+        FUNCTION_TEST_RETURN(memcmp(bufPtrConst(this), bufPtrConst(compare), bufUsed(compare)) == 0);
 
-    if (this->used == compare->used)
-        result = memcmp(this->buffer, compare->buffer, compare->used) == 0;
-
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(false);
 }
 
 /**********************************************************************************************************************************/
@@ -225,7 +220,7 @@ bufHex(const Buffer *this)
     String *result = strNew("");
 
     for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(this); bufferIdx++)
-        strCatFmt(result, "%02x", this->buffer[bufferIdx]);
+        strCatFmt(result, "%02x", bufPtrConst(this)[bufferIdx]);
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -242,45 +237,45 @@ bufResize(Buffer *this, size_t size)
     ASSERT(this != NULL);
 
     // Only resize if it the new size is different
-    if (this->sizeAlloc != size)
+    if (bufSizeAlloc(this) != size)
     {
         // If new size is zero then free memory if allocated
         if (size == 0)
         {
             // When setting size down to 0 the buffer should always be allocated
-            ASSERT(this->buffer != NULL);
+            ASSERT(bufPtrConst(this) != NULL);
 
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(this->pub.memContext)
             {
-                memFree(this->buffer);
+                memFree(bufPtr(this));
             }
             MEM_CONTEXT_END();
 
-            this->buffer = NULL;
-            this->sizeAlloc = 0;
+            this->pub.buffer = NULL;
+            this->pub.sizeAlloc = 0;
         }
         // Else allocate or resize
         else
         {
-            MEM_CONTEXT_BEGIN(this->memContext)
+            MEM_CONTEXT_BEGIN(this->pub.memContext)
             {
-                if (this->buffer == NULL)
-                    this->buffer = memNew(size);
+                if (bufPtrConst(this) == NULL)
+                    this->pub.buffer = memNew(size);
                 else
-                    this->buffer = memResize(this->buffer, size);
+                    this->pub.buffer = memResize(bufPtr(this), size);
             }
             MEM_CONTEXT_END();
 
-            this->sizeAlloc = size;
+            this->pub.sizeAlloc = size;
         }
 
-        if (this->used > this->sizeAlloc)
-            this->used = this->sizeAlloc;
+        if (bufUsed(this) > bufSizeAlloc(this))
+            this->pub.used = bufSizeAlloc(this);
 
-        if (!this->sizeLimit)
-            this->size = this->sizeAlloc;
-        else if (this->size > this->sizeAlloc)
-            this->size = this->sizeAlloc;
+        if (!bufSizeLimit(this))
+            this->pub.size = bufSizeAlloc(this);
+        else if (bufSize(this) > bufSizeAlloc(this))
+            this->pub.size = bufSizeAlloc(this);
     }
 
     FUNCTION_TEST_RETURN(this);
@@ -296,8 +291,8 @@ bufLimitClear(Buffer *this)
 
     ASSERT(this != NULL);
 
-    this->sizeLimit = false;
-    this->size = this->sizeAlloc;
+    this->pub.sizeLimit = false;
+    this->pub.size = bufSizeAlloc(this);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -311,11 +306,11 @@ bufLimitSet(Buffer *this, size_t limit)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(limit <= this->sizeAlloc);
-    ASSERT(limit >= this->used);
+    ASSERT(limit <= bufSizeAlloc(this));
+    ASSERT(limit >= bufUsed(this));
 
-    this->size = limit;
-    this->sizeLimit = true;
+    this->pub.size = limit;
+    this->pub.sizeLimit = true;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -330,9 +325,9 @@ bufUsedInc(Buffer *this, size_t inc)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->used + inc <= bufSize(this));
+    ASSERT(bufUsed(this) + inc <= bufSize(this));
 
-    this->used += inc;
+    this->pub.used += inc;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -348,7 +343,7 @@ bufUsedSet(Buffer *this, size_t used)
     ASSERT(this != NULL);
     ASSERT(used <= bufSize(this));
 
-    this->used = used;
+    this->pub.used = used;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -362,7 +357,7 @@ bufUsedZero(Buffer *this)
 
     ASSERT(this != NULL);
 
-    this->used = 0;
+    this->pub.used = 0;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -372,8 +367,8 @@ String *
 bufToLog(const Buffer *this)
 {
     String *result = strNewFmt(
-        "{used: %zu, size: %zu%s", this->used, this->size,
-        this->sizeLimit ? strZ(strNewFmt(", sizeAlloc: %zu}", this->sizeAlloc)) : "}");
+        "{used: %zu, size: %zu%s", bufUsed(this), bufSize(this),
+        bufSizeLimit(this) ? strZ(strNewFmt(", sizeAlloc: %zu}", bufSizeAlloc(this))) : "}");
 
     return result;
 }

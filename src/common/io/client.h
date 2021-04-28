@@ -10,32 +10,54 @@ opened with ioClientOpen().
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_CLIENT_TYPE                                             IoClient
-#define IO_CLIENT_PREFIX                                           ioClient
-
 typedef struct IoClient IoClient;
 
+#include "common/io/client.intern.h"
 #include "common/io/session.h"
+#include "common/type/object.h"
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct IoClientPub
+{
+    MemContext *memContext;                                         // Mem context
+    void *driver;                                                   // Driver object
+    const IoClientInterface *interface;                             // Driver interface
+} IoClientPub;
+
+// Name that identifies the client
+__attribute__((always_inline)) static inline const String *
+ioClientName(const IoClient *const this)
+{
+    return THIS_PUB(IoClient)->interface->name(THIS_PUB(IoClient)->driver);
+}
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-IoClient *ioClientMove(IoClient *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline IoClient *
+ioClientMove(IoClient *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Open session
-IoSession *ioClientOpen(IoClient *this);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Name that identifies the client
-const String *ioClientName(IoClient *this);
+__attribute__((always_inline)) static inline IoSession *
+ioClientOpen(IoClient *const this)
+{
+    return THIS_PUB(IoClient)->interface->open(THIS_PUB(IoClient)->driver);
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioClientFree(IoClient *this);
+__attribute__((always_inline)) static inline void
+ioClientFree(IoClient *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

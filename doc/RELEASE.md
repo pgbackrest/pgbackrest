@@ -4,7 +4,7 @@
 
 This makes the rest of the commands in the document easier to run (change to your repo path):
 ```
-export PGBR_REPO=/backrest
+export PGBR_REPO=~/pgbackrest
 ```
 
 ## Create a branch to test the release

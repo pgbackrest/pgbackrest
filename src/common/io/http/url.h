@@ -9,12 +9,10 @@ Parse a URL into component parts.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_URL_TYPE                                             HttpUrl
-#define HTTP_URL_PREFIX                                           httpUrl
-
 typedef struct HttpUrl HttpUrl;
 
 #include "common/type/param.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 
 /***********************************************************************************************************************************
@@ -46,6 +44,7 @@ Getters/setters
 ***********************************************************************************************************************************/
 typedef struct HttpUrlPub
 {
+    MemContext *memContext;                                         // Mem context
     const String *url;                                              // Original URL
     HttpProtocolType type;                                          // Protocol type, e.g. http
     const String *host;                                             // Host
@@ -55,48 +54,47 @@ typedef struct HttpUrlPub
 
 // Protocol type
 __attribute__((always_inline)) static inline HttpProtocolType
-httpUrlProtocolType(const HttpUrl *this)
+httpUrlProtocolType(const HttpUrl *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->type;
+    return THIS_PUB(HttpUrl)->type;
 }
 
 // Host
 __attribute__((always_inline)) static inline const String *
-httpUrlHost(const HttpUrl *this)
+httpUrlHost(const HttpUrl *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->host;
+    return THIS_PUB(HttpUrl)->host;
 }
 
 // Path
 __attribute__((always_inline)) static inline const String *
-httpUrlPath(const HttpUrl *this)
+httpUrlPath(const HttpUrl *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->path;
+    return THIS_PUB(HttpUrl)->path;
 }
 
 // Port
 __attribute__((always_inline)) static inline unsigned int
-httpUrlPort(const HttpUrl *this)
+httpUrlPort(const HttpUrl *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->port;
+    return THIS_PUB(HttpUrl)->port;
 }
 
 // URL (exactly as originally passed)
 __attribute__((always_inline)) static inline const String *
-httpUrl(const HttpUrl *this)
+httpUrl(const HttpUrl *const this)
 {
-    ASSERT_INLINE(this != NULL);
-    return ((const HttpUrlPub *)this)->url;
+    return THIS_PUB(HttpUrl)->url;
 }
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpUrlFree(HttpUrl *this);
+__attribute__((always_inline)) static inline void
+httpUrlFree(HttpUrl *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

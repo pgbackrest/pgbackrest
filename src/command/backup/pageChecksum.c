@@ -4,9 +4,10 @@ Page Checksum Filter
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "command/backup/pageChecksum.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
 #include "postgres/interface.h"

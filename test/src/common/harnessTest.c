@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 C Test Harness
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
@@ -490,7 +492,7 @@ hrnTestResultException(void)
     if (harnessTestLocal.result.running)
     {
         THROW_FMT(
-#ifndef NDEBUG
+#ifdef DEBUG
             TestError,
 #else
             AssertError,
@@ -520,7 +522,7 @@ static void hrnTestResultDiff(const char *actual, const char *expected)
     if (actual != NULL && expected != NULL && (strstr(actual, "\n") != NULL || strstr(expected, "\n") != NULL))
     {
         THROW_FMT(
-#ifndef NDEBUG
+#ifdef DEBUG
             TestError,
 #else
             AssertError,
@@ -531,7 +533,7 @@ static void hrnTestResultDiff(const char *actual, const char *expected)
     else
     {
         THROW_FMT(
-#ifndef NDEBUG
+#ifdef DEBUG
             TestError,
 #else
             AssertError,

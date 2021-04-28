@@ -124,7 +124,7 @@ testRun(void)
                 "[db:backup] key=\"value\"\n"
                 "[later] key=\"value\"\n",
             "    check callback content");
-        TEST_RESULT_INT(lstSize(infoPg->history), 1, "    history record added");
+        TEST_RESULT_INT(lstSize(infoPg->pub.history), 1, "    history record added");
 
         InfoPgData pgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgData.id, 1, "    id set");

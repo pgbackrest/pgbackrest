@@ -247,37 +247,6 @@ lockAcquire(
 
 /**********************************************************************************************************************************/
 bool
-lockClear(bool failOnNoLock)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
-    FUNCTION_LOG_END();
-
-    bool result = false;
-
-    if (lockTypeHeld == lockTypeNone)
-    {
-        if (failOnNoLock)
-            THROW(AssertError, "no lock is held by this process");
-    }
-    else
-    {
-        // Clear locks
-        LockType lockMin = lockTypeHeld == lockTypeAll ? lockTypeArchive : lockTypeHeld;
-        LockType lockMax = lockTypeHeld == lockTypeAll ? (lockTypeAll - 1) : lockTypeHeld;
-
-        for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
-            strFree(lockFile[lockIdx]);
-
-        lockTypeHeld = lockTypeNone;
-        result = true;
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
-bool
 lockRelease(bool failOnNoLock)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

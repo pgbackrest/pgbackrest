@@ -5,6 +5,8 @@ Io Client Interface Internal
 #define COMMON_IO_CLIENT_INTERN_H
 
 #include "common/io/client.h"
+#include "common/io/session.h"
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Interface

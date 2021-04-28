@@ -252,7 +252,8 @@ testRun(void)
         driver.interface.info = storageTestManifestNewBuildInfo;
         driver.interface.infoList = storageTestManifestNewBuildInfoList;
 
-        Storage *storagePg = storageNew(STRDEF("TEST"), STRDEF("/pg"), 0, 0, false, NULL, &driver, driver.interface);
+        const Storage *const storagePg = storageNew(
+            strIdFromZ(stringIdBit6, "test"), STRDEF("/pg"), 0, 0, false, NULL, &driver, driver.interface);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build manifest");

@@ -12,19 +12,48 @@ execution.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define EXEC_TYPE                                                   Exec
-#define EXEC_PREFIX                                                 exec
-
 typedef struct Exec Exec;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/time.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 Exec *execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct DbPub
+{
+    MemContext *memContext;                                         // Mem context
+    IoRead *ioReadExec;                                             // Wrapper for file descriptor read interface
+    IoWrite *ioWriteExec;                                           // Wrapper for file descriptor write interface
+} ExecPub;
+
+// Read interface
+__attribute__((always_inline)) static inline IoRead *
+execIoRead(Exec *const this)
+{
+    return THIS_PUB(Exec)->ioReadExec;
+}
+
+// Write interface
+__attribute__((always_inline)) static inline IoWrite *
+execIoWrite(Exec *const this)
+{
+    return THIS_PUB(Exec)->ioWriteExec;
+}
+
+// Exec MemContext
+__attribute__((always_inline)) static inline MemContext *
+execMemContext(Exec *const this)
+{
+    return THIS_PUB(Exec)->memContext;
+}
 
 /***********************************************************************************************************************************
 Functions
@@ -33,21 +62,13 @@ Functions
 void execOpen(Exec *this);
 
 /***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Read interface
-IoRead *execIoRead(const Exec *this);
-
-// Write interface
-IoWrite *execIoWrite(const Exec *this);
-
-// Exec MemContext
-MemContext *execMemContext(const Exec *this);
-
-/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void execFree(Exec *this);
+__attribute__((always_inline)) static inline void
+execFree(Exec *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

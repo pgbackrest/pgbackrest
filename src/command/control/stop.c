@@ -101,7 +101,7 @@ cmdStop(void)
         {
             LOG_WARN_FMT(
                 "stop file already exists for %s",
-                cfgOptionTest(cfgOptStanza) ? strZ(strNewFmt("stanza %s", strZ(cfgOptionStr(cfgOptStanza)))) : "all stanzas");
+                cfgOptionTest(cfgOptStanza) ? strZ(strNewFmt("stanza %s", strZ(cfgOptionDisplay(cfgOptStanza)))) : "all stanzas");
         }
     }
     MEM_CONTEXT_TEMP_END();

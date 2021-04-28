@@ -9,11 +9,9 @@ Object to track HTTP queries and output them with proper escaping.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_QUERY_TYPE                                             HttpQuery
-#define HTTP_QUERY_PREFIX                                           httpQuery
-
 typedef struct HttpQuery HttpQuery;
 
+#include "common/type/object.h"
 #include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
@@ -61,7 +59,11 @@ StringList *httpQueryList(const HttpQuery *this);
 HttpQuery *httpQueryMerge(HttpQuery *this, const HttpQuery *query);
 
 // Move to a new parent mem context
-HttpQuery *httpQueryMove(HttpQuery *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline HttpQuery *
+httpQueryMove(HttpQuery *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Put a query item
 HttpQuery *httpQueryPut(HttpQuery *this, const String *header, const String *value);
@@ -84,7 +86,11 @@ String *httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpQueryFree(HttpQuery *this);
+__attribute__((always_inline)) static inline void
+httpQueryFree(HttpQuery *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

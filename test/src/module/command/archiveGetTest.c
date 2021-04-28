@@ -6,6 +6,8 @@ Test Archive Get Command
 #include "common/harnessFork.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
@@ -701,15 +703,51 @@ testRun(void)
 
         // Make sure the process times out when it can't get a lock
         // -------------------------------------------------------------------------------------------------------------------------
+        HARNESS_FORK_BEGIN()
+        {
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                ioWriteOpen(write);
+
         TEST_RESULT_VOID(
             lockAcquire(
-                cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("999-dededede"), cfgLockType(), 30000, true),
+                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("999-dededede"), cfgLockType(), 30000,
+                        true),
             "acquire lock");
-        TEST_RESULT_VOID(lockClear(true), "clear lock");
+
+                // Let the parent know the lock has been acquired and wait for the parent to allow lock release
+                ioWriteStrLine(write, strNew(""));
+                ioWriteFlush(write);
+                ioReadLine(read);
+
+                lockRelease(true);
+            }
+            HARNESS_FORK_CHILD_END();
+
+            HARNESS_FORK_PARENT_BEGIN()
+            {
+                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                ioReadOpen(read);
+                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                ioWriteOpen(write);
+
+                // Wait for the child to acquire the lock
+                ioReadLine(read);
 
         TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout waiting for lock");
 
         harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+
+                // Notify the child to release the lock
+                ioWriteLine(write, bufNew(0));
+                ioWriteFlush(write);
+            }
+            HARNESS_FORK_PARENT_END();
+        }
+        HARNESS_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, BOGUS_STR);
@@ -749,7 +787,7 @@ testRun(void)
                 " '18072658121562454734'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg version does not match archive.info");
+        TEST_TITLE("pg system id does not match archive.info");
 
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
@@ -1067,7 +1105,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[0,[]]}\n", "check result");
         TEST_STORAGE_LIST(
-            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n");
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n01ABCDEF01ABCDEF01ABCDEF.pgbackrest.tmp\n",
+            .remove = true);
 
         bufUsedSet(serverWrite, 0);
     }

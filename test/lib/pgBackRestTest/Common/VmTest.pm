@@ -103,6 +103,8 @@ use constant VM_U16                                                 => 'u16';
     push @EXPORT, qw(VM_U16);
 use constant VM_U18                                                 => 'u18';
     push @EXPORT, qw(VM_U18);
+use constant VM_U20                                                 => 'u20';
+    push @EXPORT, qw(VM_U20);
 use constant VM_D8                                                  => 'd8';
     push @EXPORT, qw(VM_D8);
 use constant VM_D9                                                  => 'd9';
@@ -379,6 +381,48 @@ my $oyVm =
         [
             PG_VERSION_83,
             PG_VERSION_84,
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
+            PG_VERSION_13,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_92,
+            PG_VERSION_93,
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
+            PG_VERSION_13,
+        ],
+    },
+
+    # Ubuntu 20.04
+    &VM_U20 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_OS => VM_OS_UBUNTU,
+        &VM_OS_REPO => 'focal',
+        &VM_IMAGE => 'ubuntu:20.04',
+        &VM_ARCH => VM_ARCH_AMD64,
+        &VMDEF_COVERAGE_C => true,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+
+        &VMDEF_WITH_BACKTRACE => true,
+        &VMDEF_WITH_ZST => true,
+
+        &VM_DB =>
+        [
             PG_VERSION_90,
             PG_VERSION_91,
             PG_VERSION_92,

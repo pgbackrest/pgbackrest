@@ -10,13 +10,7 @@ be closed when work with them is done but they also contain destructors to do cl
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_SESSION_TYPE                                             IoSession
-#define IO_SESSION_PREFIX                                           ioSession
-
 typedef struct IoSession IoSession;
-
-#include "common/io/read.h"
-#include "common/io/write.h"
 
 /***********************************************************************************************************************************
 Session roles
@@ -27,34 +21,70 @@ typedef enum
     ioSessionRoleServer,                                            // Server session
 } IoSessionRole;
 
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Close the session
-void ioSessionClose(IoSession *this);
-
-// Move to a new parent mem context
-IoSession *ioSessionMove(IoSession *this, MemContext *parentNew);
+#include "common/io/read.h"
+#include "common/io/session.intern.h"
+#include "common/io/write.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct IoSessionPub
+{
+    MemContext *memContext;                                         // Mem context
+    void *driver;                                                   // Driver object
+    const IoSessionInterface *interface;                            // Driver interface
+} IoSessionPub;
+
 // Session file descriptor, -1 if none
 int ioSessionFd(IoSession *this);
 
 // Read interface
-IoRead *ioSessionIoRead(IoSession *this);
+__attribute__((always_inline)) static inline IoRead *
+ioSessionIoRead(IoSession *const this)
+{
+    return THIS_PUB(IoSession)->interface->ioRead(THIS_PUB(IoSession)->driver);
+}
 
 // Write interface
-IoWrite *ioSessionIoWrite(IoSession *this);
+__attribute__((always_inline)) static inline IoWrite *
+ioSessionIoWrite(IoSession *const this)
+{
+    return THIS_PUB(IoSession)->interface->ioWrite(THIS_PUB(IoSession)->driver);
+}
 
 // Session role
-IoSessionRole ioSessionRole(const IoSession *this);
+__attribute__((always_inline)) static inline IoSessionRole
+ioSessionRole(const IoSession *const this)
+{
+    return THIS_PUB(IoSession)->interface->role(THIS_PUB(IoSession)->driver);
+}
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Close the session
+__attribute__((always_inline)) static inline void
+ioSessionClose(IoSession *const this)
+{
+    return THIS_PUB(IoSession)->interface->close(THIS_PUB(IoSession)->driver);
+}
+
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline IoSession *
+ioSessionMove(IoSession *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioSessionFree(IoSession *this);
+__attribute__((always_inline)) static inline void
+ioSessionFree(IoSession *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

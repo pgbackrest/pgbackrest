@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
+#include "build.auto.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,7 +74,7 @@ harnessCfgLoadRole(ConfigCommand commandId, ConfigCommandRole commandRoleId, con
 
     // Set job retry to 0 if it is valid
     if (cfgParseOptionValid(commandId, commandRoleId, cfgOptJobRetry))
-        strLstInsertZ(argList, 0, "--" CFGOPT_JOB_RETRY "=0");
+        strLstInsert(argList, 0, STRDEF("--" CFGOPT_JOB_RETRY "=0"));
 
     // Set log path if valid
     if (cfgParseOptionValid(commandId, commandRoleId, cfgOptLogPath))
@@ -159,6 +161,21 @@ hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey,
 }
 
 void
+hrnCfgArgRawStrId(StringList *argList, ConfigOption optionId, StringId value)
+{
+    hrnCfgArgKeyRawStrId(argList, optionId, 1, value);
+}
+
+void
+hrnCfgArgKeyRawStrId(StringList *argList, ConfigOption optionId, unsigned optionKey, StringId value)
+{
+    char buffer[STRID_MAX + 1];
+    strIdToZ(value, buffer);
+
+    hrnCfgArgKeyRawZ(argList, optionId, optionKey, buffer);
+}
+
+void
 hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value)
 {
     hrnCfgArgKeyRawBool(argList, optionId, 1, value);
@@ -196,7 +213,7 @@ hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned option
 
 /**********************************************************************************************************************************/
 __attribute__((always_inline)) static inline const char *
-hrnCfgEnvName(ConfigOption optionId, unsigned optionKey)
+hrnCfgEnvName(const ConfigOption optionId, const unsigned optionKey)
 {
     return strZ(
         strReplaceChr(strUpper(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))), '-', '_'));

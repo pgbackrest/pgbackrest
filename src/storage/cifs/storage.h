@@ -4,13 +4,12 @@ CIFS Storage
 #ifndef STORAGE_CIFS_STORAGE_H
 #define STORAGE_CIFS_STORAGE_H
 
-#include "storage/storage.intern.h"
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type
 ***********************************************************************************************************************************/
-#define STORAGE_CIFS_TYPE                                           "cifs"
-    STRING_DECLARE(STORAGE_CIFS_TYPE_STR);
+#define STORAGE_CIFS_TYPE                                           STRID6("cifs", 0x4c62431)
 
 /***********************************************************************************************************************************
 Constructors

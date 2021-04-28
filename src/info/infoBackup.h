@@ -7,11 +7,9 @@ Backup Info Handler
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define INFO_BACKUP_TYPE                                            InfoBackup
-#define INFO_BACKUP_PREFIX                                          infoBackup
-
 typedef struct InfoBackup InfoBackup;
 
+#include "common/type/object.h"
 #include "common/type/string.h"
 #include "common/type/stringList.h"
 #include "info/infoPg.h"
@@ -66,6 +64,50 @@ InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned 
 InfoBackup *infoBackupNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct InfoBackupPub
+{
+    MemContext *memContext;                                         // Mem context
+    InfoPg *infoPg;                                                 // Contents of the DB data
+    List *backup;                                                   // List of current backups and their associated data
+} InfoBackupPub;
+
+// PostgreSQL info
+__attribute__((always_inline)) static inline InfoPg *
+infoBackupPg(const InfoBackup *const this)
+{
+    return THIS_PUB(InfoBackup)->infoPg;
+}
+
+InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
+
+// Cipher passphrase
+__attribute__((always_inline)) static inline const String *
+infoBackupCipherPass(const InfoBackup *const this)
+{
+    return infoPgCipherPass(infoBackupPg(this));
+}
+
+// Return a structure of the backup data from a specific index
+InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
+
+// Return a pointer to a structure from the current backup data given a label, else NULL
+__attribute__((always_inline)) static inline InfoBackupData *
+infoBackupDataByLabel(const InfoBackup *const this, const String *const backupLabel)
+{
+    ASSERT_INLINE(backupLabel != NULL);
+    return lstFind(THIS_PUB(InfoBackup)->backup, &backupLabel);
+}
+
+// Get total current backups
+__attribute__((always_inline)) static inline unsigned int
+infoBackupDataTotal(const InfoBackup *const this)
+{
+    return lstSize(THIS_PUB(InfoBackup)->backup);
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Add backup to the current list
@@ -74,38 +116,27 @@ void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
 // Delete backup from the current backup list
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 
-// Move to a new parent mem context
-InfoBackup *infoBackupMove(InfoBackup *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Return a list of current backup labels, applying a regex expression if provided
-StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
-
-// PostgreSQL info
-InfoPg *infoBackupPg(const InfoBackup *this);
-InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
-
-// Return a structure of the backup data from a specific index
-InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
-
-// Return a pointer to a structure from the current backup data given a label, else NULL
-InfoBackupData *infoBackupDataByLabel(const InfoBackup *this, const String *backupLabel);
-
 // Given a backup label, get the dependency list
 StringList *infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel);
 
-// Get total current backups
-unsigned int infoBackupDataTotal(const InfoBackup *this);
+// Return a list of current backup labels, applying a regex expression if provided
+StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
 
-// Cipher passphrase
-const String *infoBackupCipherPass(const InfoBackup *this);
+// Move to a new parent mem context
+__attribute__((always_inline)) static inline InfoBackup *
+infoBackupMove(InfoBackup *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void infoBackupFree(InfoBackup *this);
+__attribute__((always_inline)) static inline void
+infoBackupFree(InfoBackup *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Helper functions

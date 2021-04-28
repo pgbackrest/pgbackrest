@@ -11,14 +11,12 @@ behavior.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define HTTP_REQUEST_TYPE                                          HttpRequest
-#define HTTP_REQUEST_PREFIX                                        httpRequest
-
 typedef struct HttpRequest HttpRequest;
 
 #include "common/io/http/header.h"
 #include "common/io/http/query.h"
 #include "common/io/http/response.h"
+#include "common/type/object.h"
 
 /***********************************************************************************************************************************
 HTTP Constants
@@ -78,6 +76,46 @@ typedef struct HttpRequestNewParam
 HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct HttpRequestPub
+{
+    MemContext *memContext;                                         // Mem context
+    const String *verb;                                             // HTTP verb (GET, POST, etc.)
+    const String *path;                                             // HTTP path
+    const HttpQuery *query;                                         // HTTP query
+    const HttpHeader *header;                                       // HTTP headers
+} HttpRequestPub;
+
+// Request path
+__attribute__((always_inline)) static inline const String *
+httpRequestPath(const HttpRequest *const this)
+{
+    return THIS_PUB(HttpRequest)->path;
+}
+
+// Request query
+__attribute__((always_inline)) static inline const HttpQuery *
+httpRequestQuery(const HttpRequest *const this)
+{
+    return THIS_PUB(HttpRequest)->query;
+}
+
+// Request headers
+__attribute__((always_inline)) static inline const HttpHeader *
+httpRequestHeader(const HttpRequest *const this)
+{
+    return THIS_PUB(HttpRequest)->header;
+}
+
+// Request verb
+__attribute__((always_inline)) static inline const String *
+httpRequestVerb(const HttpRequest *const this)
+{
+    return THIS_PUB(HttpRequest)->verb;
+}
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Wait for a response from the request
@@ -87,27 +125,20 @@ HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
 void httpRequestError(const HttpRequest *this, HttpResponse *response) __attribute__((__noreturn__));
 
 // Move to a new parent mem context
-HttpRequest *httpRequestMove(HttpRequest *this, MemContext *parentNew);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Request verb
-const String *httpRequestVerb(const HttpRequest *this);
-
-// Request path
-const String *httpRequestPath(const HttpRequest *this);
-
-// Request query
-const HttpQuery *httpRequestQuery(const HttpRequest *this);
-
-// Request headers
-const HttpHeader *httpRequestHeader(const HttpRequest *this);
+__attribute__((always_inline)) static inline HttpRequest *
+httpRequestMove(HttpRequest *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void httpRequestFree(HttpRequest *this);
+__attribute__((always_inline)) static inline void
+httpRequestFree(HttpRequest *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

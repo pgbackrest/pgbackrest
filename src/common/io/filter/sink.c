@@ -4,7 +4,7 @@ IO Sink Filter
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/io/filter/sink.h"
 #include "common/log.h"
 #include "common/memContext.h"

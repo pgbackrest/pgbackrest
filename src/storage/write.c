@@ -6,22 +6,16 @@ Storage Write Interface
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct StorageWrite
 {
-    MemContext *memContext;                                         // Object mem context
+    StorageWritePub pub;                                            // Publicly accessible variables
     void *driver;
-    const StorageWriteInterface *interface;
-    IoWrite *io;
 };
-
-OBJECT_DEFINE_MOVE(STORAGE_WRITE);
-OBJECT_DEFINE_FREE(STORAGE_WRITE);
 
 /***********************************************************************************************************************************
 Macros for function logging
@@ -50,130 +44,16 @@ storageWriteNew(void *driver, const StorageWriteInterface *interface)
 
     *this = (StorageWrite)
     {
-        .memContext = memContextCurrent(),
+        .pub =
+        {
+            .memContext = memContextCurrent(),
+            .interface = interface,
+            .io = ioWriteNew(driver, interface->ioInterface),
+        },
         .driver = driver,
-        .interface = interface,
-        .io = ioWriteNew(driver, interface->ioInterface),
     };
 
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
-}
-
-/**********************************************************************************************************************************/
-bool
-storageWriteAtomic(const StorageWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->atomic);
-}
-
-/**********************************************************************************************************************************/
-bool
-storageWriteCreatePath(const StorageWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->createPath);
-}
-
-/**********************************************************************************************************************************/
-IoWrite *
-storageWriteIo(const StorageWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->io);
-}
-
-/**********************************************************************************************************************************/
-mode_t
-storageWriteModeFile(const StorageWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->modeFile);
-}
-
-/**********************************************************************************************************************************/
-mode_t
-storageWriteModePath(const StorageWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->modePath);
-}
-
-/**********************************************************************************************************************************/
-const String *
-storageWriteName(const StorageWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->name);
-}
-
-/**********************************************************************************************************************************/
-bool
-storageWriteSyncFile(const StorageWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->syncFile);
-}
-
-/**********************************************************************************************************************************/
-bool
-storageWriteSyncPath(const StorageWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->syncPath);
-}
-
-/**********************************************************************************************************************************/
-const String *
-storageWriteType(const StorageWrite *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->interface->type);
 }
 
 /**********************************************************************************************************************************/
@@ -182,7 +62,7 @@ storageWriteToLog(const StorageWrite *this)
 {
     return strNewFmt(
         "{type: %s, name: %s, modeFile: %04o, modePath: %04o, createPath: %s, syncFile: %s, syncPath: %s, atomic: %s}",
-        strZ(storageWriteType(this)), strZ(strToLog(storageWriteName(this))), storageWriteModeFile(this),
+        strZ(strIdToStr(storageWriteType(this))), strZ(strToLog(storageWriteName(this))), storageWriteModeFile(this),
         storageWriteModePath(this), cvtBoolToConstZ(storageWriteCreatePath(this)), cvtBoolToConstZ(storageWriteSyncFile(this)),
         cvtBoolToConstZ(storageWriteSyncPath(this)), cvtBoolToConstZ(storageWriteAtomic(this)));
 }

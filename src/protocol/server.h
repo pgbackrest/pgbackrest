@@ -7,13 +7,12 @@ Protocol Server
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define PROTOCOL_SERVER_TYPE                                        ProtocolServer
-#define PROTOCOL_SERVER_PREFIX                                      protocolServer
-
 typedef struct ProtocolServer ProtocolServer;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
+#include "common/type/object.h"
+#include "common/type/stringId.h"
 
 /***********************************************************************************************************************************
 Protocol command handler type and structure
@@ -25,8 +24,8 @@ typedef void (*ProtocolServerCommandHandler)(const VariantList *paramList, Proto
 
 typedef struct ProtocolServerHandler
 {
-    const char *const command;
-    ProtocolServerCommandHandler handler;
+    StringId command;                                               // 5-bit StringId that identifies the protocol command
+    ProtocolServerCommandHandler handler;                           // Function that handles the protocol command
 } ProtocolServerHandler;
 
 #define PROTOCOL_SERVER_HANDLER_LIST_SIZE(list)                     (sizeof(list) / sizeof(ProtocolServerHandler))
@@ -35,6 +34,30 @@ typedef struct ProtocolServerHandler
 Constructors
 ***********************************************************************************************************************************/
 ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ProtocolServerPub
+{
+    MemContext *memContext;                                         // Mem context
+    IoRead *read;                                                   // Read interface
+    IoWrite *write;                                                 // Write interface
+} ProtocolServerPub;
+
+// Read interface
+__attribute__((always_inline)) static inline IoRead *
+protocolServerIoRead(ProtocolServer *const this)
+{
+    return THIS_PUB(ProtocolServer)->read;
+}
+
+// Write interface
+__attribute__((always_inline)) static inline IoWrite *
+protocolServerIoWrite(ProtocolServer *const this)
+{
+    return THIS_PUB(ProtocolServer)->write;
+}
 
 /***********************************************************************************************************************************
 Functions
@@ -51,24 +74,23 @@ void protocolServerProcess(
 void protocolServerResponse(ProtocolServer *this, const Variant *output);
 
 // Move to a new parent mem context
-ProtocolServer *protocolServerMove(ProtocolServer *this, MemContext *parentNew);
+__attribute__((always_inline)) static inline ProtocolServer *
+protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
+{
+    return objMove(this, parentNew);
+}
 
 // Write a line
-void protocolServerWriteLine(const ProtocolServer *this, const String *line);
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Read interface
-IoRead *protocolServerIoRead(const ProtocolServer *this);
-
-// Write interface
-IoWrite *protocolServerIoWrite(const ProtocolServer *this);
+void protocolServerWriteLine(ProtocolServer *this, const String *line);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolServerFree(ProtocolServer *this);
+__attribute__((always_inline)) static inline void
+protocolServerFree(ProtocolServer *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

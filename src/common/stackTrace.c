@@ -86,7 +86,7 @@ backTraceCallbackError(void *data, const char *msg, int errnum)
 #endif
 
 /**********************************************************************************************************************************/
-#ifndef NDEBUG
+#ifdef DEBUG
 
 static struct StackTraceTestLocal
 {
@@ -259,15 +259,7 @@ stackTraceParamLog(void)
 }
 
 /**********************************************************************************************************************************/
-#ifdef NDEBUG
-
-void
-stackTracePop(void)
-{
-    stackTraceLocal.stackSize--;
-}
-
-#else
+#ifdef DEBUG
 
 void
 stackTracePop(const char *fileName, const char *functionName, bool test)
@@ -283,6 +275,14 @@ stackTracePop(const char *fileName, const char *functionName, bool test)
         if (strcmp(data->fileName, fileName) != 0 || strcmp(data->functionName, functionName) != 0)
             THROW_FMT(AssertError, "popping %s:%s but expected %s:%s", fileName, functionName, data->fileName, data->functionName);
     }
+}
+
+#else
+
+void
+stackTracePop(void)
+{
+    stackTraceLocal.stackSize--;
 }
 
 #endif

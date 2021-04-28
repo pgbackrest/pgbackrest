@@ -9,7 +9,7 @@ Assert Routines
 /***********************************************************************************************************************************
 Asserts are used in test code to ensure that certain conditions are true.  They are omitted from production builds.
 ***********************************************************************************************************************************/
-#ifndef NDEBUG
+#ifdef DEBUG
     #define ASSERT(condition)                                                                                                      \
         do                                                                                                                         \
         {                                                                                                                          \

@@ -22,11 +22,6 @@ Azure Storage
 #include "storage/azure/write.h"
 
 /***********************************************************************************************************************************
-Storage type
-***********************************************************************************************************************************/
-STRING_EXTERN(STORAGE_AZURE_TYPE_STR,                               STORAGE_AZURE_TYPE);
-
-/***********************************************************************************************************************************
 Azure http headers
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_HEADER_VERSION_STR,                             "x-ms-version");
@@ -699,7 +694,7 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, container);
         FUNCTION_TEST_PARAM(STRING, account);
-        FUNCTION_LOG_PARAM(ENUM, keyType);
+        FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -756,7 +751,7 @@ storageAzureNew(
         // Generate starting file id
         cryptoRandomBytes((unsigned char *)&driver->fileId, sizeof(driver->fileId));
 
-        this = storageNew(STORAGE_AZURE_TYPE_STR, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
+        this = storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, pathExpressionFunction, driver, driver->interface);
     }
     MEM_CONTEXT_NEW_END();
 

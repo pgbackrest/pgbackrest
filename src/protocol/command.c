@@ -8,7 +8,6 @@ Protocol Command
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
-#include "common/type/object.h"
 #include "protocol/command.h"
 
 /***********************************************************************************************************************************
@@ -23,22 +22,19 @@ Object type
 struct ProtocolCommand
 {
     MemContext *memContext;
-    const String *command;
+    StringId command;
     Variant *parameterList;
 };
 
-OBJECT_DEFINE_MOVE(PROTOCOL_COMMAND);
-OBJECT_DEFINE_FREE(PROTOCOL_COMMAND);
-
 /**********************************************************************************************************************************/
 ProtocolCommand *
-protocolCommandNew(const String *command)
+protocolCommandNew(const StringId command)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, command);
+        FUNCTION_TEST_PARAM(STRING_ID, command);
     FUNCTION_TEST_END();
 
-    ASSERT(command != NULL);
+    ASSERT(command != 0);
 
     ProtocolCommand *this = NULL;
 
@@ -49,7 +45,7 @@ protocolCommandNew(const String *command)
         *this = (ProtocolCommand)
         {
             .memContext = memContextCurrent(),
-            .command = strDup(command),
+            .command = command,
         };
     }
     MEM_CONTEXT_NEW_END();
@@ -96,7 +92,10 @@ protocolCommandJson(const ProtocolCommand *this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        KeyValue *command = kvPut(kvNew(), VARSTR(PROTOCOL_KEY_COMMAND_STR), VARSTR(this->command));
+        char commandStrId[STRID_MAX + 1];
+        strIdToZ(this->command, commandStrId);
+
+        KeyValue *command = kvPut(kvNew(), VARSTR(PROTOCOL_KEY_COMMAND_STR), VARSTRZ(commandStrId));
 
         if (this->parameterList != NULL)
             kvPut(command, VARSTR(PROTOCOL_KEY_PARAMETER_STR), this->parameterList);
@@ -116,5 +115,5 @@ protocolCommandJson(const ProtocolCommand *this)
 String *
 protocolCommandToLog(const ProtocolCommand *this)
 {
-    return strNewFmt("{command: %s}", strZ(this->command));
+    return strNewFmt("{command: %s}", strZ(strIdToStr(this->command)));
 }

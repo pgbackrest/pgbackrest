@@ -41,10 +41,9 @@ Object type
 ***********************************************************************************************************************************/
 struct InfoPg
 {
+    InfoPgPub pub;                                                  // Publicly accessible variables
     MemContext *memContext;                                         // Mem context
-    Info *info;                                                     // Info contents
     InfoPgType type;                                                // Type of info file being loaded
-    List *history;                                                  // A list of InfoPgData
     unsigned int historyCurrent;                                    // Index of the current history item
 };
 
@@ -62,9 +61,12 @@ infoPgNewInternal(InfoPgType type)
 
     *this = (InfoPg)
     {
+        .pub =
+        {
+            .history = lstNewP(sizeof(InfoPgData)),
+        },
         .memContext = memContextCurrent(),
         .type = type,
-        .history = lstNewP(sizeof(InfoPgData)),
     };
 
     FUNCTION_TEST_RETURN(this);
@@ -84,7 +86,7 @@ infoPgNew(InfoPgType type, const String *cipherPassSub)
     MEM_CONTEXT_NEW_BEGIN("InfoPg")
     {
         this = infoPgNewInternal(type);
-        this->info = infoNew(cipherPassSub);
+        this->pub.info = infoNew(cipherPassSub);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -142,7 +144,7 @@ infoPgLoadCallback(void *data, const String *section, const String *key, const V
         };
 
         // Insert at beginning of list so the history is reverse ordered
-        lstInsert(loadData->infoPg->history, 0, &infoPgData);
+        lstInsert(loadData->infoPg->pub.history, 0, &infoPgData);
     }
     // Callback if set
     else if (loadData->callbackFunction != NULL)
@@ -182,18 +184,18 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
             .infoPg = this,
         };
 
-        this->info = infoNewLoad(read, infoPgLoadCallback, &loadData);
+        this->pub.info = infoNewLoad(read, infoPgLoadCallback, &loadData);
 
         // History must include at least one item or the file is corrupt
-        CHECK(!lstEmpty(this->history));
+        CHECK(!lstEmpty(this->pub.history));
 
         // If the current id was not found then the file is corrupt
         CHECK(loadData.currentId > 0);
 
         // Find the current history item
-        for (unsigned int historyIdx = 0; historyIdx < lstSize(this->history); historyIdx++)
+        for (unsigned int historyIdx = 0; historyIdx < lstSize(this->pub.history); historyIdx++)
         {
-            if (((InfoPgData *)lstGet(this->history, historyIdx))->id == loadData.currentId)
+            if (((InfoPgData *)lstGet(this->pub.history, historyIdx))->id == loadData.currentId)
                 this->historyCurrent = historyIdx;
         }
 
@@ -217,7 +219,7 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
     ASSERT(this != NULL);
     ASSERT(infoPgData != NULL);
 
-    lstInsert(this->history, 0, infoPgData);
+    lstInsert(this->pub.history, 0, infoPgData);
     this->historyCurrent = 0;
 
     FUNCTION_LOG_RETURN_VOID();
@@ -395,19 +397,6 @@ infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx)
 }
 
 /**********************************************************************************************************************************/
-const String *
-infoPgCipherPass(const InfoPg *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_PG, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(infoCipherPass(this->info));
-}
-
-/**********************************************************************************************************************************/
 InfoPgData
 infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 {
@@ -418,7 +407,7 @@ infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INFO_PG_DATA, *(InfoPgData *)lstGet(this->history, pgDataIdx));
+    FUNCTION_LOG_RETURN(INFO_PG_DATA, *(InfoPgData *)lstGet(this->pub.history, pgDataIdx));
 }
 
 /**********************************************************************************************************************************/
@@ -445,32 +434,6 @@ infoPgDataCurrentId(const InfoPg *this)
     ASSERT(this != NULL);
 
     FUNCTION_LOG_RETURN(UINT, this->historyCurrent);
-}
-
-/**********************************************************************************************************************************/
-Info *
-infoPgInfo(const InfoPg *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INFO_PG, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(this->info);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
-infoPgDataTotal(const InfoPg *this)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INFO_PG, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_LOG_RETURN(UINT, lstSize(this->history));
 }
 
 /**********************************************************************************************************************************/

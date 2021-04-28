@@ -14,11 +14,10 @@ Information on implementing a filter is in filter.internal.h.
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define IO_FILTER_TYPE                                              IoFilter
-#define IO_FILTER_PREFIX                                            ioFilter
-
 typedef struct IoFilter IoFilter;
 
+#include "common/io/filter/filter.intern.h"
+#include "common/type/object.h"
 #include "common/type/string.h"
 #include "common/type/variant.h"
 
@@ -29,12 +28,20 @@ Getters/Setters
 Variant *ioFilterResult(const IoFilter *this);
 
 // Identifies the filter and is used when pulling results from the filter group
-const String *ioFilterType(const IoFilter *this);
+__attribute__((always_inline)) static inline const String *
+ioFilterType(const IoFilter *const this)
+{
+    return THIS_PUB(IoFilter)->type;
+}
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void ioFilterFree(IoFilter *this);
+__attribute__((always_inline)) static inline void
+ioFilterFree(IoFilter *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -14,7 +14,7 @@ stress testing as needed.
 #include "common/crypto/hash.h"
 #include "common/compress/gz/compress.h"
 #include "common/compress/lz4/compress.h"
-#include "common/io/filter/filter.intern.h"
+#include "common/io/filter/filter.h"
 #include "common/io/filter/sink.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -169,7 +169,7 @@ testRun(void)
 
                 storageHelper.storageRepo = memNew(sizeof(Storage *));
                 storageHelper.storageRepo[0] = storageNew(
-                    STRDEF("TEST"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
+                    strIdFromZ(stringIdBit6, "test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
 
                 // Setup handler for remote storage protocol
                 IoRead *read = ioFdReadNew(strNew("storage server read"), HARNESS_FORK_CHILD_READ(), 60000);

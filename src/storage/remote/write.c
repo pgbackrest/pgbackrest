@@ -5,7 +5,7 @@ Remote Storage File write
 
 #include "common/compress/helper.h"
 #include "common/debug.h"
-#include "common/io/write.intern.h"
+#include "common/io/write.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/object.h"
@@ -16,9 +16,6 @@ Remote Storage File write
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_WRITE_REMOTE_TYPE                                   StorageWriteRemote
-#define STORAGE_WRITE_REMOTE_PREFIX                                 storageWriteRemote
-
 typedef struct StorageWriteRemote
 {
     MemContext *memContext;                                         // Object mem context
@@ -43,13 +40,23 @@ Macros for function logging
 /***********************************************************************************************************************************
 Close file on the remote
 ***********************************************************************************************************************************/
-OBJECT_DEFINE_FREE_RESOURCE_BEGIN(STORAGE_WRITE_REMOTE, LOG, logLevelTrace)
+static void
+storageWriteRemoteFreeResource(THIS_VOID)
 {
+    THIS(StorageWriteRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_REMOTE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
     ioWriteLine(protocolClientIoWrite(this->client), BUFSTRDEF(PROTOCOL_BLOCK_HEADER "-1"));
     ioWriteFlush(protocolClientIoWrite(this->client));
     protocolClientReadOutput(this->client, false);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
-OBJECT_DEFINE_FREE_RESOURCE_END(LOG);
 
 /***********************************************************************************************************************************
 Open the file
@@ -71,7 +78,7 @@ storageWriteRemoteOpen(THIS_VOID)
         if (this->interface.compressible)
             ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilter(compressTypeGz));
 
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE_STR);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_WRITE);
         protocolCommandParamAdd(command, VARSTR(this->interface.name));
         protocolCommandParamAdd(command, VARUINT(this->interface.modeFile));
         protocolCommandParamAdd(command, VARUINT(this->interface.modePath));
@@ -203,7 +210,7 @@ storageWriteRemoteNew(
 
             .interface = (StorageWriteInterface)
             {
-                .type = STORAGE_REMOTE_TYPE_STR,
+                .type = STORAGE_REMOTE_TYPE,
                 .name = strDup(name),
                 .atomic = atomic,
                 .compressible = compressible,

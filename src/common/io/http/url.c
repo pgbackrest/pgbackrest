@@ -6,7 +6,6 @@ HTTP URL
 #include "common/debug.h"
 #include "common/io/http/url.h"
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/type/stringList.h"
 #include "common/regExp.h"
 
@@ -27,10 +26,7 @@ Object type
 struct HttpUrl
 {
     HttpUrlPub pub;
-    MemContext *memContext;                                         // Mem context
 };
-
-OBJECT_DEFINE_FREE(HTTP_URL);
 
 /***********************************************************************************************************************************
 Convert protocol type to a string
@@ -74,9 +70,9 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 
         *this = (HttpUrl)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .pub =
             {
+                .memContext = MEM_CONTEXT_NEW(),
                 .url = strDup(url),
             },
         };

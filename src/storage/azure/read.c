@@ -14,9 +14,6 @@ Azure Storage Read
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-#define STORAGE_READ_AZURE_TYPE                                     StorageReadAzure
-#define STORAGE_READ_AZURE_PREFIX                                   storageReadAzure
-
 typedef struct StorageReadAzure
 {
     MemContext *memContext;                                         // Object mem context
@@ -135,7 +132,7 @@ storageReadAzureNew(StorageAzure *storage, const String *name, bool ignoreMissin
 
             .interface = (StorageReadInterface)
             {
-                .type = STORAGE_AZURE_TYPE_STR,
+                .type = STORAGE_AZURE_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
 
