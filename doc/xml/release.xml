@@ -90,12 +90,15 @@
                         <commit subject="Update storage module to use StringIds.">
                             <github-pull-request id="1379"/>
                         </commit>
+                        <commit subject="Update CipherType/CipherMode to StringId.">
+                            <github-pull-request id="1384"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
                         </release-item-contributor-list>
 
-                        <p>Add StringId type.</p>
+                        <p>Add <code>StringId</code> type.</p>
                     </release-item>
 
                     <release-item>
