@@ -868,6 +868,7 @@ manifestNewBuild(
         this->pub.data.backrestVersion = strNew(PROJECT_VERSION);
         this->pub.data.pgVersion = pgVersion;
         this->pub.data.pgCatalogVersion = pgCatalogVersion;
+        this->pub.data.backupType = backupTypeFull;
         this->pub.data.backupOptionOnline = online;
         this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
 
@@ -1113,7 +1114,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, archiveStart);
     FUNCTION_LOG_END();
 
@@ -1658,7 +1659,12 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
             else if (strEq(key, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR))
                 manifest->pub.data.backupTimestampStop = (time_t)varUInt64(value);
             else if (strEq(key, MANIFEST_KEY_BACKUP_TYPE_STR))
-                manifest->pub.data.backupType = backupType(varStr(value));
+            {
+                manifest->pub.data.backupType = (BackupType)strIdFromStr(stringIdBit5, varStr(value));
+                ASSERT(
+                    manifest->pub.data.backupType == backupTypeFull || manifest->pub.data.backupType == backupTypeDiff ||
+                    manifest->pub.data.backupType == backupTypeIncr);
+            }
         }
         MEM_CONTEXT_END();
     }
@@ -1920,7 +1926,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             jsonFromInt64(manifest->pub.data.backupTimestampStop));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TYPE_STR,
-            jsonFromStr(backupTypeStr(manifest->pub.data.backupType)));
+            jsonFromStr(strIdToStr(manifest->pub.data.backupType)));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
