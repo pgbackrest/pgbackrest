@@ -418,17 +418,12 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                     infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
                     break;
 
-                default:
-                {
-                    ASSERT(archiveRetentionType == backupTypeIncr);
-
+                case backupTypeIncr:
                     // Incrementals can depend on Full or Diff so get a list of all incrementals
                     globalBackupRetentionList = strLstSort(
                         infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)),
                         sortOrderDesc);
-
                     break;
-                }
             }
 
             // Expire archives. If no backups were found or the number of backups found is not enough to satify archive retention

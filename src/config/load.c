@@ -246,16 +246,11 @@ cfgLoadUpdateOption(void)
                         break;
                     }
 
-                    default:
-                    {
-                        ASSERT(archiveRetentionType == backupTypeIncr);
-
+                    case backupTypeIncr:
                         LOG_WARN_FMT(
                             "%s option '%s' is not set", strZ(msgArchiveOff),
                             cfgOptionIdxName(cfgOptRepoRetentionArchive, optionIdx));
-
                         break;
-                    }
                 }
             }
             else
