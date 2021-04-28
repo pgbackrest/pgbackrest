@@ -106,7 +106,7 @@ Data types and structures
 typedef struct InfoRepoData
 {
     unsigned int key;                                               // User-defined repo key
-    CipherType cipher;                                              // Encryption type (0 = none)
+    CipherType cipher;                                              // Encryption type
     const String *cipherPass;                                       // Passphrase if the repo is encrypted (else NULL)
     int stanzaStatus;                                               // Status code of the the stanza on this repo
     unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
@@ -640,7 +640,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         VariantList *repoSection = varLstNew();
 
         int stanzaStatusCode = -1;
-        unsigned int stanzaCipherType = 0;
+        uint64_t stanzaCipherType = cipherTypeNone;
 
         // Set the stanza name and initialize the overall stanza variables
         kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
@@ -652,7 +652,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 
             Variant *repoInfo = varNewKv(kvNew());
             kvPut(varKv(repoInfo), REPO_KEY_KEY_VAR, VARUINT(repoData->key));
-            kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(repoData->cipher)));
+            kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(repoData->cipher)));
 
             // If the stanza on this repo has the default status of ok but the backupInfo was not read, then the stanza exists on
             // other repos but not this one
@@ -745,7 +745,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 
         // Set the overall cipher type
         if (stanzaCipherType != INFO_STANZA_STATUS_CODE_MIXED)
-            kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(stanzaCipherType)));
+            kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(stanzaCipherType)));
         else
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTRDEF(INFO_STANZA_MIXED));
 
@@ -1232,7 +1232,7 @@ infoRender(void)
             repoErrorList[repoIdx] = (InfoRepoData)
             {
                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
-                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx),
                 .error = NULL,
             };
@@ -1304,7 +1304,7 @@ infoRender(void)
                             stanzaRepo.repoList[repoListIdx] = (InfoRepoData)
                             {
                                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
-                                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
+                                .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoListIdx),
                                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
                                 .error = NULL,
                             };

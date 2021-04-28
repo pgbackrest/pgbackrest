@@ -32,8 +32,8 @@ backupFileProtocol(const VariantList *paramList, ProtocolServer *server)
             varBool(varLstGet(paramList, 3)), varStr(varLstGet(paramList, 4)), varBool(varLstGet(paramList, 5)),
             varUInt64(varLstGet(paramList, 6)), varStr(varLstGet(paramList, 7)), varBool(varLstGet(paramList, 8)),
             (CompressType)varUIntForce(varLstGet(paramList, 9)), varIntForce(varLstGet(paramList, 10)),
-            varStr(varLstGet(paramList, 11)), varBool(varLstGet(paramList, 12)),
-            (CipherType)varUIntForce(varLstGet(paramList, 13)), varStr(varLstGet(paramList, 14)));
+            varStr(varLstGet(paramList, 11)), varBool(varLstGet(paramList, 12)), varUInt64(varLstGet(paramList, 13)),
+            varStr(varLstGet(paramList, 14)));
 
         // Return backup result
         VariantList *resultList = varLstNew();
