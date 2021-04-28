@@ -48,7 +48,7 @@ archiveGetFileProtocol(const VariantList *paramList, ProtocolServer *server)
                     .file = varStr(varLstGet(paramList, paramFixed + (actualIdx * paramActual))),
                     .repoIdx = varUIntForce(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 1)),
                     .archiveId = varStr(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 2)),
-                    .cipherType = (CipherType)varUIntForce(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 3)),
+                    .cipherType = varUInt64(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 3)),
                     .cipherPassArchive = varStr(varLstGet(paramList, paramFixed + (actualIdx * paramActual) + 4)),
                 });
         }

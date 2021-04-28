@@ -438,7 +438,7 @@ helpRender(void)
                         if (!isupper(strZ(summary)[1]) && !isdigit(strZ(summary)[1]))
                             strFirstLower(summary);
 
-                        // Ouput current and default values if they exist
+                        // Output current and default values if they exist
                         const String *defaultValue = helpRenderValue(cfgOptionDefault(optionId), cfgParseOptionType(optionId));
                         const String *value = NULL;
 
@@ -518,7 +518,7 @@ helpRender(void)
                     strZ(
                         helpRenderText(optionData[option.id].description, optionData[option.id].internal, 0, true, CONSOLE_WIDTH)));
 
-                // Ouput current and default values if they exist
+                // Output current and default values if they exist
                 const String *defaultValue = helpRenderValue(cfgOptionDefault(option.id), cfgParseOptionType(option.id));
                 const String *value = NULL;
 

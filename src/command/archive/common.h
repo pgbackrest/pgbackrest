@@ -6,6 +6,8 @@ Archive Common
 
 #include <sys/types.h>
 
+#include "common/type/stringId.h"
+
 /***********************************************************************************************************************************
 Archive mode enum
 
@@ -13,8 +15,8 @@ Used for functions that are common to both archive-push and archive-get so they 
 ***********************************************************************************************************************************/
 typedef enum
 {
-    archiveModePush,
-    archiveModeGet,
+    archiveModeGet = STRID5("get", 0x50a70),
+    archiveModePush = STRID5("push", 0x44eb00),
 } ArchiveMode;
 
 #include "common/compress/helper.h"

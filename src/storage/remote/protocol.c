@@ -140,8 +140,7 @@ storageRemoteFeatureProtocol(const VariantList *paramList, ProtocolServer *serve
     {
         // Get storage based on remote type
         const Storage *storage =
-            protocolStorageTypeEnum(cfgOptionStr(cfgOptRemoteType)) == protocolStorageTypeRepo ?
-                storageRepoWrite() : storagePgWrite();
+            cfgOptionStrId(cfgOptRemoteType) == protocolStorageTypeRepo ? storageRepoWrite() : storagePgWrite();
 
         // Store local variables in the server context
         if (storageRemoteProtocolLocal.memContext == NULL)

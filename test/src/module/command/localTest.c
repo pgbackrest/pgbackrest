@@ -34,7 +34,7 @@ testRun(void)
                 strLstAddZ(argList, "--stanza=test1");
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
                 strLstAddZ(argList, "--process=1");
-                strLstAddZ(argList, "--" CFGOPT_REMOTE_TYPE "=" PROTOCOL_REMOTE_TYPE_REPO);
+                hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
 
                 cmdLocal(HARNESS_FORK_CHILD_READ(), HARNESS_FORK_CHILD_WRITE());

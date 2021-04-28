@@ -432,7 +432,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
             {
                 // Attempt to load the archive info file
                 InfoArchive *infoArchive = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
                 InfoPg *infoArchivePgData = infoArchivePg(infoArchive);
@@ -831,7 +831,7 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
             else
             {
                 Manifest *manifestResume = manifestLoadFile(
-                    storageRepoIdx(repoIdx), manifestFileName, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    storageRepoIdx(repoIdx), manifestFileName, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     infoPgCipherPass(infoBackupPg(infoBackup)));
 
                 // If the ancestor of the resumable backup still exists in backup.info then do not remove the resumable backup
@@ -918,7 +918,7 @@ cmdExpire(void)
             {
                 // Load the backup.info
                 infoBackup = infoBackupLoadFileReconstruct(
-                    storageRepo, INFO_BACKUP_PATH_FILE_STR, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
                 // If a backupLabel was set, then attempt to expire the requested backup
@@ -963,8 +963,7 @@ cmdExpire(void)
                 {
                     infoBackupSaveFile(
                         infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR,
-                        cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
-                        cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                        cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
                 }
 
                 // Remove all files on disk that are now expired

@@ -12,8 +12,7 @@ A simple socket client intended to allow access to services that are exposed via
 /***********************************************************************************************************************************
 Io client type
 ***********************************************************************************************************************************/
-#define IO_CLIENT_SOCKET_TYPE                                       "socket"
-    STRING_DECLARE(IO_CLIENT_SOCKET_TYPE_STR);
+#define IO_CLIENT_SOCKET_TYPE                                       STRID5("socket", 0x28558df30)
 
 /***********************************************************************************************************************************
 Statistics constants

@@ -510,7 +510,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(0));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - skip");
@@ -594,7 +594,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - pageChecksum");
@@ -637,7 +637,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(true));             // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - noop");
@@ -779,7 +779,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - copy, compress");
@@ -894,7 +894,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
         varLstAdd(paramList, varNewBool(false));                // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));  // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeAes256Cbc));// cipherType
         varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - recopy, encrypt");
@@ -1583,7 +1583,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
