@@ -553,7 +553,7 @@ testRun(void)
         // Version mismatch
         TEST_ERROR_FMT(
             checkStanzaInfoPg(
-                storageRepoIdx(0), PG_VERSION_94, 6569239123849665679, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, 0)),
+                storageRepoIdx(0), PG_VERSION_94, 6569239123849665679, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
                 cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
             FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
@@ -563,7 +563,7 @@ testRun(void)
         // SystemId mismatch
         TEST_ERROR_FMT(
             checkStanzaInfoPg(
-                storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, 0)),
+                storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
                 cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
             FileInvalidError,
             "backup and archive info files exist but do not match the database\n"

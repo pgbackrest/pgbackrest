@@ -212,7 +212,7 @@ restoreBackupData(const String *backupLabel, unsigned int repoIdx, const String 
     {
         restoreBackup.backupSet = strDup(backupLabel);
         restoreBackup.repoIdx = repoIdx;
-        restoreBackup.repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+        restoreBackup.repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
         restoreBackup.backupCipherPass = strDup(backupCipherPass);
     }
     MEM_CONTEXT_PRIOR_END();
@@ -268,7 +268,7 @@ restoreBackupSet(void)
             TRY_BEGIN()
             {
                 infoBackup = infoBackupLoadFile(
-                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR,  cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR,  cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             }
             CATCH_ANY()

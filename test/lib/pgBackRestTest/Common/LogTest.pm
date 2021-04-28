@@ -167,7 +167,7 @@ sub supplementalAdd
         close($hFile);
     }
 
-    # Only ouput when the content of this file has changed
+    # Only output when the content of this file has changed
     if (!defined($hyExpectCache->{$strFileName}) || $hyExpectCache->{$strFileName} ne $strContent)
     {
         # $hyExpectCache->{$strFileName} = $strContent;
