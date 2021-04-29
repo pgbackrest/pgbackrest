@@ -960,7 +960,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH_REPO "-bogus");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, TEST_PATH_REPO);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         strLstAddZ(argList, "01ABCDEF01ABCDEF01ABCDEF");
@@ -1098,7 +1098,7 @@ testRun(void)
             paramList, varNewStrZ("10-1/01ABCDEF01ABCDEF/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz"));
         varLstAdd(paramList, varNewUInt(1));
         varLstAdd(paramList, varNewStrZ("10-1"));
-        varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));
+        varLstAdd(paramList, varNewUInt64(cipherTypeAes256Cbc));
         varLstAdd(paramList, varNewStrZ(TEST_CIPHER_PASS_ARCHIVE));
 
         TEST_RESULT_VOID(archiveGetFileProtocol(paramList, server), "protocol archive get");

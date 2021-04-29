@@ -277,6 +277,6 @@ String *
 protocolParallelToLog(const ProtocolParallel *this)
 {
     return strNewFmt(
-        "{state: %s, clientTotal: %u, jobTotal: %u}", protocolParallelJobToConstZ(this->state), lstSize(this->clientList),
+        "{state: %s, clientTotal: %u, jobTotal: %u}", strZ(strIdToStr(this->state)), lstSize(this->clientList),
         lstSize(this->jobList));
 }

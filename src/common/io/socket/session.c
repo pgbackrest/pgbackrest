@@ -154,7 +154,7 @@ sckSessionRole(const THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoSessionInterface sckSessionInterface =
 {
-    .type = &IO_CLIENT_SOCKET_TYPE_STR,
+    .type = IO_CLIENT_SOCKET_TYPE,
     .close = sckSessionClose,
     .fd = sckSessionFd,
     .ioRead = sckSessionIoRead,
@@ -167,7 +167,7 @@ IoSession *
 sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
-        FUNCTION_LOG_PARAM(ENUM, role);
+        FUNCTION_LOG_PARAM(STRING_ID, role);
         FUNCTION_LOG_PARAM(INT, fd);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);

@@ -229,7 +229,7 @@ archivePushCheck(bool pgPathSet)
                 storageRepoIdx(repoIdx);
 
                 // Get cipher type
-                CipherType repoCipherType = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx));
+                CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
 
                 // Attempt to load the archive info file
                 InfoArchive *info = infoArchiveLoadFile(
@@ -478,7 +478,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
 
             protocolCommandParamAdd(command, VARUINT(data->repoIdx));
             protocolCommandParamAdd(command, VARSTR(data->archiveId));
-            protocolCommandParamAdd(command, VARUINT(data->cipherType));
+            protocolCommandParamAdd(command, VARUINT64(data->cipherType));
             protocolCommandParamAdd(command, VARSTR(data->cipherPass));
         }
 

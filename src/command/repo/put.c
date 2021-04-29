@@ -39,7 +39,7 @@ storagePutProcess(IoRead *source)
         // Add encryption if needed
         if (!cfgOptionBool(cfgOptRaw))
         {
-            CipherType repoCipherType = cipherType(cfgOptionStr(cfgOptRepoCipherType));
+            CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
             if (repoCipherType != cipherTypeNone)
             {

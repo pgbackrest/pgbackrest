@@ -20,11 +20,6 @@ Socket Client
 #include "common/wait.h"
 
 /***********************************************************************************************************************************
-Io client type
-***********************************************************************************************************************************/
-STRING_EXTERN(IO_CLIENT_SOCKET_TYPE_STR,                            IO_CLIENT_SOCKET_TYPE);
-
-/***********************************************************************************************************************************
 Statistics constants
 ***********************************************************************************************************************************/
 STRING_EXTERN(SOCKET_STAT_CLIENT_STR,                               SOCKET_STAT_CLIENT);
@@ -176,7 +171,7 @@ sckClientName(THIS_VOID)
 /**********************************************************************************************************************************/
 static const IoClientInterface sckClientInterface =
 {
-    .type = &IO_CLIENT_SOCKET_TYPE_STR,
+    .type = IO_CLIENT_SOCKET_TYPE,
     .name = sckClientName,
     .open = sckClientOpen,
     .toLog = sckClientToLog,
