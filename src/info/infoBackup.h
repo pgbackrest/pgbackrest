@@ -28,11 +28,6 @@ typedef enum
 #include "info/manifest.h"
 #include "storage/storage.h"
 
-// Used to construct constant strings for warnings, errors, etc. Only BackupType should be used for logic.
-#define BACKUP_TYPE_FULL                                            "full"
-#define BACKUP_TYPE_DIFF                                            "diff"
-#define BACKUP_TYPE_INCR                                            "incr"
-
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/

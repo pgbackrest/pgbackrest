@@ -261,10 +261,11 @@ cfgLoadUpdateOption(void)
                 if (archiveRetentionType == backupTypeDiff && !cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx))
                 {
                     LOG_WARN_FMT(
-                        "option '%s' is not set for '%s=" BACKUP_TYPE_DIFF "'\n"
+                        "option '%s' is not set for '%s=%s'\n"
                         "HINT: to retain differential backups indefinitely (without warning), set option '%s' to the maximum.",
                         cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx),
                         cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
+                        strZ(strIdToStr(backupTypeDiff)),
                         cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx));
                 }
             }
