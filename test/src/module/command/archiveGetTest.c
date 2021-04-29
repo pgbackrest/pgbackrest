@@ -1133,15 +1133,14 @@ testRun(void)
             "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
 
         // Put a warning in the file to show that it was read and later overwritten
-        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "0\ntest warning");
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "0\nshould not be output");
 
         TEST_RESULT_VOID(cmdArchiveGet(), "get async");
 
-        harnessLogResult(
-            "P00   WARN: test warning\n"
-            "P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
 
-        // Check that the ok file is missing since it should have been removed on the first loop
+        // Check that the ok file is missing since it should have been removed on the first loop and removed again on a subsequent
+        // loop once the async process discovered that the file was missing and wrote the ok file again.
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
     }
 

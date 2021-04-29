@@ -646,9 +646,10 @@ cmdArchiveGet(void)
                 found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
 
                 // Check for errors or missing files. For archive-get ok indicates that the process succeeded but there is no WAL
-                // file to download, or that there was a warning. Done error on the first run so the async process can be spawned to
-                // correct any errors from a previous run.
-                if (archiveAsyncStatus(archiveModeGet, walSegment, !first))
+                // file to download, or that there was a warning. Do not error on the first run so the async process can be spawned
+                // to correct any errors from a previous run. Do no warn on the first run if the segment was not found so the async
+                // process can be spawned to check for the file again.
+                if (archiveAsyncStatus(archiveModeGet, walSegment, !first, found || !first))
                 {
                     storageRemoveP(
                         storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s" STATUS_EXT_OK, strZ(walSegment)),
@@ -764,14 +765,14 @@ cmdArchiveGet(void)
             if (!found)
             {
                 // If no ok file was found then something may be wrong with the async process. It's better to thrown an error here
-                // than report not found for debugging purposes. Either way PostgreSQL will stop if it has not reached consistency.
+                // than report not found for debugging purposes. Either way PostgreSQL will halt if it has not reached consistency.
                 if (!foundOk)
                 {
                     THROW_FMT(
                         ArchiveTimeoutError, "unable to get WAL file '%s' from the archive asynchronously after %s second(s)",
                         strZ(walSegment), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)));
                 }
-                // Else just report that the WAL segment could not be found
+                // Else report that the WAL segment could not be found
                 else
                     LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG " asynchronously", strZ(walSegment));
             }
