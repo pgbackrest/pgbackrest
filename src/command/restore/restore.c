@@ -2262,6 +2262,11 @@ cmdRestore(void)
         // Clean the data directory and build path/link structure
         restoreCleanBuild(jobData.manifest);
 
+        // Remove stanza archive spool path so existing files do not interfere with the new cluster. For instance, old archive-push
+        // acknowledgements could cause a new cluster to skip archiving. This should not happen if a new timeline is selected but
+        // better to be safe. Missing stanza spool paths are ignored.
+        storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_STR, .recurse = true);
+
         // Generate processing queues
         uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
 

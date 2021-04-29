@@ -22,6 +22,7 @@ Storage Helper
 /***********************************************************************************************************************************
 Storage path constants
 ***********************************************************************************************************************************/
+STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_STR,                            STORAGE_SPOOL_ARCHIVE);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
 
@@ -528,7 +529,14 @@ storageSpoolPathExpression(const String *expression, const String *path)
 
     String *result = NULL;
 
-    if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
+    if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE))
+    {
+        if (path == NULL)
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
+        else
+            result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(storageHelper.stanza), strZ(path));
+    }
+    else if (strEqZ(expression, STORAGE_SPOOL_ARCHIVE_IN))
     {
         if (path == NULL)
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/in", strZ(storageHelper.stanza));
