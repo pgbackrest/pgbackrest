@@ -380,7 +380,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
-        const StringId archiveRetentionType = cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx);
+        const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx);
         unsigned int archiveRetention = cfgOptionIdxTest(
             cfgOptRepoRetentionArchive, repoIdx) ? cfgOptionIdxUInt(cfgOptRepoRetentionArchive, repoIdx) : 0;
 
@@ -410,12 +410,12 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
             {
                 case backupTypeFull:
                     globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
+                        infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
                     break;
 
                 case backupTypeDiff:
                     globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
+                        infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
                     break;
 
                 case backupTypeIncr:

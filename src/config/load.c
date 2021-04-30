@@ -199,7 +199,7 @@ cfgLoadUpdateOption(void)
         // For each possible repo, check and adjust the settings as appropriate
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            const StringId archiveRetentionType = cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, optionIdx);
+            const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, optionIdx);
 
             const String *msgArchiveOff = strNewFmt(
                 "WAL segments will not be expired: option '%s=%s' but", cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
