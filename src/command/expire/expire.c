@@ -332,7 +332,7 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigne
                     (strLstSize(backupExpired) > 1 ? "set " : ""), strZ(strLstJoin(backupExpired, ", ")));
             }
 
-            if (strEqZ(cfgOptionIdxStr(cfgOptRepoRetentionArchiveType, repoIdx), CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL) &&
+            if (cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx) == backupTypeFull &&
                 !cfgOptionIdxTest(cfgOptRepoRetentionArchive, repoIdx) && numFullExpired > 0)
             {
                 cfgOptionIdxSet(
@@ -380,7 +380,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
-        const String *archiveRetentionType = cfgOptionIdxStr(cfgOptRepoRetentionArchiveType, repoIdx);
+        const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx);
         unsigned int archiveRetention = cfgOptionIdxTest(
             cfgOptRepoRetentionArchive, repoIdx) ? cfgOptionIdxUInt(cfgOptRepoRetentionArchive, repoIdx) : 0;
 
@@ -406,21 +406,24 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
             // remaining non-expired backups, from newest to oldest, based on the type.
             StringList *globalBackupRetentionList = NULL;
 
-            if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_FULL)) == 0)
+            switch (archiveRetentionType)
             {
-                globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
-            }
-            else if (strCmp(archiveRetentionType, STRDEF(CFGOPTVAL_TMP_REPO_RETENTION_ARCHIVE_TYPE_DIFF)) == 0)
-            {
-                globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
-            }
-            else
-            {   // Incrementals can depend on Full or Diff so get a list of all incrementals
-                globalBackupRetentionList = strLstSort(
-                    infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)),
-                    sortOrderDesc);
+                case backupTypeFull:
+                    globalBackupRetentionList = strLstSort(
+                        infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
+                    break;
+
+                case backupTypeDiff:
+                    globalBackupRetentionList = strLstSort(
+                        infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true)), sortOrderDesc);
+                    break;
+
+                case backupTypeIncr:
+                    // Incrementals can depend on Full or Diff so get a list of all incrementals
+                    globalBackupRetentionList = strLstSort(
+                        infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true, .incremental = true)),
+                        sortOrderDesc);
+                    break;
             }
 
             // Expire archives. If no backups were found or the number of backups found is not enough to satify archive retention

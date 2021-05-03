@@ -13,6 +13,10 @@ strIdFromStr("mytest0123a") will return the StringId 0x7de75c51315464d5. Using t
 strIdToStr(0x7de75c51315464d5) which returns "mytest0123+" where the plus at the end signals that the original string was equal to
 or longer than the maximum allowed.
 
+When assigning a StringId to an enum, it will be necessary to cast the StringId to the enum type if the enum contains all 32-bit
+values, since some compilers will complain about the implicit conversion without a cast. The enum will be 32-bit if all values of
+the enum are <= 0xffffffff.
+
 See strIdGenerate() for information on StringId constants.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_STRINGID_H
