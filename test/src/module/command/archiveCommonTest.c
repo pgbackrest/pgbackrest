@@ -8,6 +8,7 @@ Test Archive Common
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -88,6 +89,14 @@ testRun(void)
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "ok file with warning");
         harnessLogResult("P00   WARN: warning");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("ignore ok file warning");
+
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", "0\nwarning 2");
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, false), true, "check status");
+        TEST_RESULT_LOG("");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF("25\nerror"));
