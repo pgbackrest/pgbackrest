@@ -631,7 +631,7 @@ cmdArchiveGet(void)
         // Async get can only be performed on WAL segments, history or other files must use synchronous mode
         if (cfgOptionBool(cfgOptArchiveAsync) && walIsSegment(walSegment))
         {
-            bool first = true;                                          // Is the first time the loop has run?
+            bool first = true;                                          // Is this the first time the loop has run?
             bool found = false;                                         // Has the WAL segment been found yet?
             bool foundOk = false;                                       // Was an OK file found which confirms the file was missing?
             bool queueFull = false;                                     // Is the queue half or more full?
@@ -647,7 +647,7 @@ cmdArchiveGet(void)
 
                 // Check for errors or missing files. For archive-get ok indicates that the process succeeded but there is no WAL
                 // file to download, or that there was a warning. Do not error on the first run so the async process can be spawned
-                // to correct any errors from a previous run. Do no warn on the first run if the segment was not found so the async
+                // to correct any errors from a previous run. Do not warn on the first run if the segment was not found so the async
                 // process can be spawned to check for the file again.
                 if (archiveAsyncStatus(archiveModeGet, walSegment, !first, found || !first))
                 {
@@ -657,8 +657,9 @@ cmdArchiveGet(void)
 
                     // Break if an ok file was found but no segment exists, which means the segment was missing. However, don't
                     // break if this is the first time through the loop since this means the ok file was written by an async process
-                    // spawned by a prior archive-get execution, which means we should get again to see if the file exists. This
-                    // also prevents spool files from a previous recovery interfering with the current recovery.
+                    // spawned by a prior archive-get execution, which means we should spawn the async process again to see if the
+                    // file exists now. This also prevents spool files from a previous recovery interfering with the current
+                    // recovery.
                     if (!found && !first)
                     {
                         foundOk = true;
@@ -764,7 +765,7 @@ cmdArchiveGet(void)
             // If the WAL segment was not found
             if (!found)
             {
-                // If no ok file was found then something may be wrong with the async process. It's better to thrown an error here
+                // If no ok file was found then something may be wrong with the async process. It's better to throw an error here
                 // than report not found for debugging purposes. Either way PostgreSQL will halt if it has not reached consistency.
                 if (!foundOk)
                 {
