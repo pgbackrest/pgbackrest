@@ -46,54 +46,34 @@ typedef enum
 Constants for configuration option values
 
 ??? These should be generated automatically but for now just put them here so they are easy to find when it is time to replace them
-with the auto-generated values.
+with the auto-generated values. Note that the _Z variants of these constants are auto-generated.
 ***********************************************************************************************************************************/
 #define CFGOPTVAL_ARCHIVE_MODE_OFF                                  STRID5("off", 0x18cf0)
-#define CFGOPTVAL_ARCHIVE_MODE_OFF_Z                                "off"
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE                             STRID5("preserve", 0x2da45996500)
-#define CFGOPTVAL_ARCHIVE_MODE_PRESERVE_Z                           "preserve"
 
 #define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
-#define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
 #define CFGOPTVAL_OUTPUT_JSON                                       STRID5("json", 0x73e6a0)
-#define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
 
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                  STRID5("diff", 0x319240)
-#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF_Z                "diff"
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL                  STRID5("full", 0x632a60)
-#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL_Z                "full"
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR                  STRID5("incr", 0x90dc90)
-#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR_Z                "incr"
 
 #define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT                    STRID5("count", 0x14755e30)
-#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT_Z                  "count"
 #define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME                     STRID5("time", 0x2b5340)
-#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME_Z                   "time"
 
 #define CFGOPTVAL_TARGET_ACTION_PAUSE                               STRID5("pause", 0x59d4300)
-#define CFGOPTVAL_TARGET_ACTION_PAUSE_Z                             "pause"
 #define CFGOPTVAL_TARGET_ACTION_SHUTDOWN                            STRID5("shutdown", 0x75de4a55130)
-#define CFGOPTVAL_TARGET_ACTION_SHUTDOWN_Z                          "shutdown"
 
 #define CFGOPTVAL_SORT_ASC                                          STRID5("asc", 0xe610)
-#define CFGOPTVAL_SORT_ASC_Z                                        "asc"
 #define CFGOPTVAL_SORT_DESC                                         STRID5("desc", 0x1cca40)
-#define CFGOPTVAL_SORT_DESC_Z                                       "desc"
 #define CFGOPTVAL_SORT_NONE                                         STRID5("none", 0x2b9ee0)
-#define CFGOPTVAL_SORT_NONE_Z                                       "none"
 
 #define CFGOPTVAL_TYPE_DEFAULT                                      STRID5("default", 0x5195098a40)
-#define CFGOPTVAL_TYPE_DEFAULT_Z                                    "default"
 #define CFGOPTVAL_TYPE_IMMEDIATE                                    STRID5("immediate", 0x5a05242b5a90)
-#define CFGOPTVAL_TYPE_IMMEDIATE_Z                                  "immediate"
 #define CFGOPTVAL_TYPE_NONE                                         STRID5("none", 0x2b9ee0)
-#define CFGOPTVAL_TYPE_NONE_Z                                       "none"
 #define CFGOPTVAL_TYPE_PRESERVE                                     STRID5("preserve", 0x2da45996500)
-#define CFGOPTVAL_TYPE_PRESERVE_Z                                   "preserve"
 #define CFGOPTVAL_TYPE_STANDBY                                      STRID5("standby", 0x6444706930)
-#define CFGOPTVAL_TYPE_STANDBY_Z                                    "standby"
 #define CFGOPTVAL_TYPE_TIME                                         STRID5("time", 0x2b5340)
-#define CFGOPTVAL_TYPE_TIME_Z                                       "time"
 
 /***********************************************************************************************************************************
 Command Functions
