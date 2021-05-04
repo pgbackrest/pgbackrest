@@ -32,7 +32,7 @@ use constant BLDLCL_CONSTANT_OPTION_GROUP                           => '02-const
 use constant BLDLCL_CONSTANT_OPTION_GROUP_TOTAL                     => 'CFG_OPTION_GROUP_TOTAL';
 use constant BLDLCL_CONSTANT_OPTION                                 => '03-constantOption';
 use constant BLDLCL_CONSTANT_OPTION_TOTAL                           => 'CFG_OPTION_TOTAL';
-use constant BLDLCL_CONSTANT_OPTION_VALUE                           => '04-constantOption';
+use constant BLDLCL_CONSTANT_OPTION_VALUE                           => '04-constantOptionValue';
 
 use constant BLDLCL_DATA_COMMAND_CONSTANT                           => '01-commandConstant';
 use constant BLDLCL_DATA_COMMAND                                    => '02-command';
