@@ -263,7 +263,6 @@ sub buildConfig
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION}{&BLD_CONSTANT}
         {&BLDLCL_CONSTANT_OPTION_TOTAL}{&BLD_CONSTANT_VALUE} = $iOptionTotal;
 
-
     # Build option value constants
     #-------------------------------------------------------------------------------------------------------------------------------
     my $rhLastConstant = undef;
@@ -281,7 +280,6 @@ sub buildConfig
                 $rhLastConstant->{&BLD_CONSTANT_VALUE} .= "\n";
                 $rhLastConstant = undef;
             }
-
 
             # Add allowed values for the option, if any
             my $rhValueHash = {};
