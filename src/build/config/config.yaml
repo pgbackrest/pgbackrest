@@ -1783,6 +1783,18 @@ option:
     command-role:
       default: {}
 
+  repo-retention-history:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [0, 9999999]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      default: {}
+
   repo-s3-bucket:
     section: global
     group: repo

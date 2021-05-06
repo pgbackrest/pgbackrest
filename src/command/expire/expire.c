@@ -863,6 +863,88 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
     FUNCTION_LOG_RETURN_VOID();
 }
 
+
+/***********************************************************************************************************************************
+Remove expired backup history manifests from repo
+***********************************************************************************************************************************/
+static void
+removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        if (cfgOptionIdxTest(cfgOptRepoRetentionHistory, repoIdx))
+        {
+            // Get all the current backups in backup.info - these will not be expired.
+            StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
+
+            // If the full backup history manifests are expired, we should expire diff and incr too. So, format the oldest full
+            // backup label to retain.
+            const time_t minTimestamp = time(NULL) - (time_t)(cfgOptionIdxUInt(cfgOptRepoRetentionHistory, repoIdx) * SEC_PER_DAY);
+            char buffer[16];
+            THROW_ON_SYS_ERROR(strftime(
+                buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&minTimestamp)) == 0, AssertError, "unable to format time");
+            String *minBackupLabel = strNewFmt("%sF", buffer);
+
+            // Get all the history years.
+            const StringList *historyYearList = strLstSort(storageListP(
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
+                sortOrderDesc);
+            
+            for (unsigned int historyYearIdx = 0; historyYearIdx < strLstSize(historyYearList); historyYearIdx++)
+            {
+                // Get all the backup history manifests.
+                const String *historyYear = strLstGet(historyYearList, historyYearIdx);
+                const StringList *historyList = strLstSort(storageListP(
+                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(historyYear)),
+                        .expression = strNewFmt(
+                            "%s\\.manifest\\.%s$",
+                            strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
+                            strZ(compressTypeStr(compressTypeGz)))),
+                    sortOrderDesc);
+
+                for (unsigned int historyIdx = 0; historyIdx < strLstSize(historyList); historyIdx++)
+                {
+                    const String *historyBackupFile = strLstGet(historyList, historyIdx);
+                    const String *historyBackupLabel = strLstGet(strLstNewSplitZ(historyBackupFile, "."), 0);
+
+                    // Keep the history manifests for unexpired backups and compare dates, extracted from backup labels since the 
+                    // retention is set in days.
+                    if (!strLstExists(currentBackupList, historyBackupLabel) &&
+                        strCmp(strSubN(historyBackupLabel, 0, 8), strSubN(minBackupLabel, 0, 8)) < 0)
+                    {
+                        LOG_INFO_FMT(
+                        "repo%u: remove expired history backup manifest %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                        strZ(historyBackupFile));
+
+                        // Execute the real expiration and deletion only if the dry-run mode is disabled.
+                        if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                        {
+                            storageRemoveP(
+                                storageRepoIdxWrite(repoIdx),
+                                strNewFmt(
+                                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s",
+                                    strZ(historyYear), strZ(historyBackupFile)));
+                        }
+                    }
+                }
+
+                // Now that we removed the history manifests, we could remove the year directory if empty. However, it seems better
+                // to leave it there (and empty) to avoid the extra callback to the storage.                 
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 void
 cmdExpire(void)
@@ -968,7 +1050,8 @@ cmdExpire(void)
 
                 // Remove all files on disk that are now expired
                 removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);
-                removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);
+                removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);               
+                removeExpiredHistory(infoBackup, repoIdx);
             }
             CATCH_ANY()
             {

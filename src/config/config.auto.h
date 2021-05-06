@@ -137,7 +137,7 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            130
+#define CFG_OPTION_TOTAL                                            131
 
 /***********************************************************************************************************************************
 Option value constants
@@ -367,6 +367,7 @@ typedef enum
     cfgOptRepoRetentionDiff,
     cfgOptRepoRetentionFull,
     cfgOptRepoRetentionFullType,
+    cfgOptRepoRetentionHistory,
     cfgOptRepoS3Bucket,
     cfgOptRepoS3Endpoint,
     cfgOptRepoS3Key,
