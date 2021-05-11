@@ -1544,6 +1544,7 @@ option:
     group: repo
     default: service
     allow-list:
+      - auto
       - service
       - token
     command: repo-type

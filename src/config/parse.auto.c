@@ -3866,6 +3866,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_OPTIONAL_ALLOW_LIST
             (
+                "auto",
                 "service",
                 "token"
             ),
