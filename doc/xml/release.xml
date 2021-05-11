@@ -102,6 +102,9 @@
                         <commit subject="Convert BackupType enum to StringId.">
                             <github-pull-request id="1385"/>
                         </commit>
+                        <commit subject="Convert option values in commands to StringId.">
+                            <github-pull-request id="1388"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>

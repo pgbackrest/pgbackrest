@@ -911,8 +911,8 @@ cmdExpire(void)
             const Storage *storageRepo = storageRepoIdx(repoIdx);
             InfoBackup *infoBackup = NULL;
 
-            bool timeBasedFullRetention = strEqZ(
-                cfgOptionIdxStr(cfgOptRepoRetentionFullType, repoIdx), CFGOPTVAL_TMP_REPO_RETENTION_FULL_TYPE_TIME);
+            bool timeBasedFullRetention =
+                cfgOptionIdxStrId(cfgOptRepoRetentionFullType, repoIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME;
 
             TRY_BEGIN()
             {
