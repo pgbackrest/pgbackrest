@@ -334,7 +334,7 @@ eval
     }
 
     logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF, !$bNoLogTimestamp);
-    &log(INFO, "test begin - log level ${strLogLevel}");
+    &log(INFO, 'test begin on ' . hostArch() . " - log level ${strLogLevel}");
 
     if (@stryModuleTest != 0 && @stryModule != 1)
     {
