@@ -51,7 +51,7 @@
     <!-- ======================================================================================================================= -->
     <section id="environment">
         <title>Building a Development Environment</title>
-<!-- CSHANG - SAY SOMETHING LIKE: A vagrant file is provided in the test directory as an example of running in a virtual environment - SEE THE OLD README BUT DAVID SAYS WE"RE GOING TO MOVE TO DOCKER -->
+
         <p>This example is based on <proper>Ubuntu 18.04</proper>, but it should work on many versions of <proper>Debian</proper> and <proper>Ubuntu</proper>.</p>
 
         <host-add id="{[host-contrib-id]}" name="{[host-contrib]}" user="{[host-contrib-user]}" image="{[host-contrib-image]}" os="u18" option="-v /var/run/docker.sock:/var/run/docker.sock -v {[cwd]}/test:{[cwd]}/test" mount="/home/{[host-contrib-user]}/pgbackrest:/home/{[host-contrib-user]}/pgbackrest"/>
@@ -142,7 +142,6 @@
 
         <admonition type="note"><code>ERROR: [028]</code> regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.</admonition>
 
-<!-- CSHANG Is this information even relevant any more? -->
         <p>If using a RHEL system, the CPAN XML parser is required for running <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docs need only be run for HTML output.</p>
 
         <section id="running">
@@ -155,15 +154,16 @@
                 <list-item><setting>--test</setting> - the actual test set to be run</list-item>
                 <list-item><setting>--run</setting> - a number identifying the run within a test if testing a single run rather than the entire test</list-item>
                 <list-item><setting>--dev</setting> - sets several flags that are appropriate for development but should be omitted when performing final testing prior to submitting a Pull Request to the project.  Most importantly, it reuses object files from the previous test run to speed testing.</list-item>
-                <list-item><setting>--vm-out</setting> - displays the test output</list-item>
+                <list-item><setting>--vm-out</setting> - displays the test output (helpful for monitoring the progress)</list-item>
                 <list-item><setting>--vm</setting> - identifies the pre-build virtual machine when using Docker, otherwise the setting should be <code>none</code></list-item>
+                <list-item><setting>--coverage-only</setting> - selects a vm to use (although best when overridden with <setting>--vm=f32</setting>) and provides a coverage report in <file>test/result/coverage/coverage.html</file> or <file>test/result/coverage/lcov/index.html</file></list-item>
             </list>
 
             <p>For more options, run the test or documentation engine with the <setting>--help</setting> option:</p>
 
             <code-block>
-                pgbackrest/test/test.pl --help
-                pgbackrest/doc/doc.pl --help
+pgbackrest/test/test.pl --help
+pgbackrest/doc/doc.pl --help
             </code-block>
 
             <section id="without-docker">
@@ -205,7 +205,7 @@
             <section id="with-docker" depend="/environment">
                 <title>With Docker</title>
 
-                <p>Build a container to run tests.  The vm must be pre-configured but a variety are available.  The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
+                <p>Build a container to run tests.  The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
 
                 <execute-list host="{[host-contrib]}">
                     <title>Build a VM</title>
@@ -242,7 +242,7 @@
             <section id="define-yaml">
                 <title>define.yaml</title>
 
-                <p>Each module is separated by a line of asterisks (*) and each test within is separated by a line of dashes (-). In the example below, the module is <code>command</code> and the unit test is <code>check</code>. The number of calls to <code>testBegin()</code> in a unit test file will dictate the number following <code>total:</code>, in this case 4. Under <code>coverage:</code>, the list of files that will be tested must be listed.</p>
+                <p>Each module is separated by a line of asterisks (*) and each test within is separated by a line of dashes (-). In the example below, the module is <code>command</code> and the unit test is <code>check</code>. The number of calls to <code>testBegin()</code> in a unit test file will dictate the number following <code>total:</code>, in this case 4. Under <code>coverage:</code>, the list of files that will be tested.</p>
 
                 <code-block>
   # ********************************************************************************************************************************
@@ -264,7 +264,7 @@
             <section id="test-file">
                 <title>somefileTest.c</title>
 
-                <p>Unit test files are organized in the test/src/module directory with the same directory structure as the source code being tested. For example, if new code is added to src/<b>command/expire</b>.c then test/src/module/<b>command/expire</b>Test.c will need to be updated.</p>
+                <p>Unit test files are organized in the <code>test/src/module</code> directory with the same directory structure as the source code being tested. For example, if new code is added to src/<b>command/expire</b>.c then test/src/module/<b>command/expire</b>Test.c will need to be updated.</p>
 
                 <p>Assuming that a test file already exists, new unit tests will either go in a new <code>testBegin()</code> section or be added to an existing section. Each such section is a test run. The comment string passed to the <code>testBegin()</code> should reflect the function(s) being tested in the test run. Tests within a run should use <code>TEST_TITLE()</code> with a comment string describing the test.</p>
 
@@ -315,20 +315,86 @@ HRN_STORAGE_PUT_EMPTY(
 harnessLogResult(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
                 </code-block>
-<!-- CSHANG Should probably add something about shims and an example in here somewhere -->
+
+                <p><b>Testing using child process</b></p>
+                <p>Sometimes it is useful to use a child process for testing. Below is a simple example. See <file>harnessFork.h</file> for more details.</p>
+
+                <code-block>
+HARNESS_FORK_BEGIN()
+{
+    HARNESS_FORK_CHILD_BEGIN(0, false)
+    {
+        TEST_RESULT_INT_NE(
+            lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+            -1, "create backup/expire lock");
+
+        sleepMSec(1000);
+        lockRelease(true);
+    }
+    HARNESS_FORK_CHILD_END();
+
+    HARNESS_FORK_PARENT_BEGIN()
+    {
+        sleepMSec(250);
+
+        harnessCfgLoad(cfgCmdInfo, argListText);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (no valid backups, backup/expire running)\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4): none present\n",
+            "text - single stanza, no valid backups, backup/expire lock detected");
+
+    }
+    HARNESS_FORK_PARENT_END();
+}
+HARNESS_FORK_END();
+                </code-block>
+
+                <p><b>Testing using a shim</b></p>
+                <p>A <postgres/> libpq shim is provided to simulate interactions with <postgres/>. Below is a simple example. See <file>harnessPq.h</file> for more details.</p>
+
+                <code-block>
+// Set up two standbys but no primary
+harnessPqScriptSet((HarnessPq [])
+{
+    HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+    HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+
+    // Close the "inner" session first (8) then the outer (1)
+    HRNPQ_MACRO_CLOSE(8),
+    HRNPQ_MACRO_CLOSE(1),
+
+    HRNPQ_MACRO_DONE()
+});
+
+TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
+            </code-block>
+
             </section>
         </section>
 
         <section id="unit-test-run">
             <title>Running a Unit Test</title>
 
+            <p><b>Code Coverage</b></p>
             <p>Unit tests are run and coverage of the code being tested is provided by running the test with the option <code>--coverage-only</code>. The following example would run the test set from the <b>define.yaml</b> section detailed above.</p>
 
             <code-block>
 pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only
             </code-block>
 
-            <p>Because no test run is specified and <code>--coverage-only</code> has been requested, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage/lcov/index.html</file> and a file with only the highlighted code that has not been covered will be written to <file>test/result/coverage/coverage.html</file>.</p>
+<admonition type="note">If the message <code>
+ERROR: [125]: function not found at line</code> is displayed after <code>INFO: writing C coverage report</code> at the end of the test then try rerunning the test with <code>--vm=f32</code></admonition>
+
+            <p>Because no test run is specified and <code>--coverage-only</code> has been requested, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage/lcov/index.html</file> and a file with only the highlighted code that has not been covered will be written to <file>test/result/coverage/coverage.html</file>.
+
+            If 100 percent code coverage has not been achieved, an error message will be displayed, for example: <code>ERROR: [125]: c module command/check/check is not fully covered</code></p>
+
+            <p><b>Debugging with files</b></p>
 
             <p>Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option <code>--no-cleanup</code> provided. Again, continuing with the check command, from <b>define.yaml</b> above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.</p>
 
@@ -337,11 +403,11 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
             </code-block>
         </section>
     </section>
-<!-- CSHANG Stopped HERE -->
+
     <section id="option">
         <title>Adding an Option</title>
 
-        <p>Options can be added to a command or multiple commands. Options can be configuration file only, command-line only or valid for both. Once an option is added, <file>config.auto.*</file>, <file>define.auto.*</file> and <file>parse.auto.*</file> files will automatically be generated by the build system.</p>
+        <p>Options can be added to a command or multiple commands. Options can be configuration file only, command-line only or valid for both. Once an option is successfully added, <file>config.auto.*</file>, <file>define.auto.*</file> and <file>parse.auto.*</file> files will automatically be generated by the build system.</p>
 
         <p> To add an option, two files need be to be modified:</p>
         <list>
@@ -351,10 +417,10 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
 
         <p>These files are discussed in the following sections.</p>
 
-        <section id="data-file">
-            <title><file>src/build/config/config.yaml</file></title>
-
-            <p>There is a detailed comment at the top of this file on the configuration definitions which one can refer to in determining how to define the rules for the option.</p>
+        <section id="config-file">
+            <title>config.yaml</title>
+<!-- CSHANG Stopped HERE - we nede to discuss what is a config file option and what is a command-line options - bacically all?most? commands in the config file can be used on the command line (exception passphrase) and config file have "section"-->
+            <p>There are detailed comments throughout the file on the configuration definitions which one can refer to in determining how to define the rules for a command or option.</p>
 
             <section id="command-line-only">
                 <title>Command Line Only Options</title>
