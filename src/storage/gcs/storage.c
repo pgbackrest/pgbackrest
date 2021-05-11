@@ -268,6 +268,9 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
         // Process authentication type
         switch (this->keyType)
         {
+            case storageGcsKeyTypeAuto:
+                THROW(AssertError, "NOT YET SUPPORTED");
+
             // Service key authentication requests a token then drops through to normal token authentication
             case storageGcsKeyTypeService:
             {
@@ -896,6 +899,9 @@ storageGcsNew(
         // Handle auth key types
         switch (keyType)
         {
+            case storageGcsKeyTypeAuto:
+                THROW(AssertError, "NOT YET SUPPORTED");
+
             // Read data from file for service keys
             case storageGcsKeyTypeService:
             {
