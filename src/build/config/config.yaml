@@ -1536,7 +1536,11 @@ option:
     group: repo
     secure: true
     command: repo-type
-    depend: repo-gcs-bucket
+    depend:
+      option: repo-gcs-key-type
+      list:
+        - service
+        - token
 
   repo-gcs-key-type:
     section: global

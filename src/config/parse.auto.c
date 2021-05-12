@@ -3795,7 +3795,12 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
-            PARSE_RULE_OPTION_OPTIONAL_DEPEND(cfgOptRepoGcsKeyType),
+            PARSE_RULE_OPTION_OPTIONAL_DEPEND_LIST
+            (
+                cfgOptRepoGcsKeyType,
+                "service",
+                "token"
+            ),
         ),
     ),
 
