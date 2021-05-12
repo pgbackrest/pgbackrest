@@ -336,6 +336,8 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
                     strFree(this->token);
                     this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
 
+                    LOG_WARN_FMT("TOKEN IS %s", strZ(this->token));
+
                     // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
                     this->tokenTimeExpire =
                         tokenResult.timeExpire - ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
