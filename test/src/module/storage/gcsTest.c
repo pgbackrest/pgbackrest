@@ -303,7 +303,7 @@ testRun(void)
             {
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        ioFdReadNew(strNew("meta server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolSocket,
+                        ioFdReadNew(strNew("meta server read"), HARNESS_FORK_CHILD_READ(), 10000), hrnServerProtocolSocket,
                         .port = testPortMeta),
                     "meta server run");
             }
