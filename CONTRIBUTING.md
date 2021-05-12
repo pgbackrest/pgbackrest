@@ -61,16 +61,18 @@ Examples of test runs are provided in the following sections. There are several 
 
 - `--run` - a number identifying the run within a test if testing a single run rather than the entire test
 
-- `--dev` - sets several flags that are appropriate for development but should be omitted when performing final testing prior to submitting a contribution to the project. Most importantly, it reuses object files from the previous test run to speed testing.
+- `--dev` - sets several flags that are appropriate for development but should be omitted when performing final testing prior to submitting a Pull Request to the project. Most importantly, it reuses object files from the previous test run to speed testing.
 
-- `--vm-out` - displays the test output
+- `--vm-out` - displays the test output (helpful for monitoring the progress)
 
 - `--vm` - identifies the pre-build virtual machine when using Docker, otherwise the setting should be `none`
+
+- `--coverage-only` - selects a vm to use (although best when overridden with `--vm=f32`) and provides a coverage report in `test/result/coverage/coverage.html` or `test/result/coverage/lcov/index.html`
 
 For more options, run the test or documentation engine with the `--help` option:
 ```
 pgbackrest/test/test.pl --help
-                pgbackrest/doc/doc.pl --help
+pgbackrest/doc/doc.pl --help
 ```
 
 #### Without Docker
@@ -167,7 +169,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
 
 #### With Docker
 
-Build a container to run tests. The vm must be pre-configured but a variety are available. The vm names are all three character abbreviations, e.g. `u18` for Ubuntu 18.04.
+Build a container to run tests. The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. `u18` for Ubuntu 18.04.
 
 pgbackrest-dev => Build a VM
 ```
@@ -213,7 +215,7 @@ The goal of unit testing is to have 100 percent code coverage. Two files will us
 
 #### define.yaml
 
-Each module is separated by a line of asterisks (*) and each test within is separated by a line of dashes (-). In the example below, the module is `command` and the unit test is `check`. The number of calls to `testBegin()` in a unit test file will dictate the number following `total:`, in this case 4. Under `coverage:`, the list of files that will be tested must be listed.
+Each module is separated by a line of asterisks (*) and each test within is separated by a line of dashes (-). In the example below, the module is `command` and the unit test is `check`. The number of calls to `testBegin()` in a unit test file will dictate the number following `total:`, in this case 4. Under `coverage:`, the list of files that will be tested.
 ```
 # ********************************************************************************************************************************
   - name: command
@@ -231,7 +233,7 @@ Each module is separated by a line of asterisks (*) and each test within is sepa
 
 #### somefileTest.c
 
-Unit test files are organized in the test/src/module directory with the same directory structure as the source code being tested. For example, if new code is added to src/**command/expire**.c then test/src/module/**command/expire**Test.c will need to be updated.
+Unit test files are organized in the `test/src/module` directory with the same directory structure as the source code being tested. For example, if new code is added to src/**command/expire**.c then test/src/module/**command/expire**Test.c will need to be updated.
 
 Assuming that a test file already exists, new unit tests will either go in a new `testBegin()` section or be added to an existing section. Each such section is a test run. The comment string passed to the `testBegin()` should reflect the function(s) being tested in the test run. Tests within a run should use `TEST_TITLE()` with a comment string describing the test.
 ```
@@ -249,7 +251,8 @@ StringList *argList = strLstNew();                                      // creat
 hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);                 // add the --repo-path option
 harnessCfgLoad(cfgCmdInfo, argList);                                    // load the command and option list into the test harness
 
-TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text output - no stanzas");  // run the test
+TEST_RESULT_STR_Z(
+    infoRender(), "No stanzas exist in the repository.\n", "text output - no stanzas");  // run the test
 ```
 **Storing a file**
 
@@ -281,14 +284,79 @@ If a function being tested logs something with `LOG_WARN`, `LOG_INFO` or other `
 harnessLogResult(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
 ```
+**Testing using child process**
+
+Sometimes it is useful to use a child process for testing. Below is a simple example. See `harnessFork.h` for more details.
+```
+HARNESS_FORK_BEGIN()
+{
+    HARNESS_FORK_CHILD_BEGIN(0, false)
+    {
+        TEST_RESULT_INT_NE(
+            lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+            -1, "create backup/expire lock");
+
+        sleepMSec(1000);
+        lockRelease(true);
+    }
+    HARNESS_FORK_CHILD_END();
+
+    HARNESS_FORK_PARENT_BEGIN()
+    {
+        sleepMSec(250);
+
+        harnessCfgLoad(cfgCmdInfo, argListText);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (no valid backups, backup/expire running)\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.4): none present\n",
+            "text - single stanza, no valid backups, backup/expire lock detected");
+
+    }
+    HARNESS_FORK_PARENT_END();
+}
+HARNESS_FORK_END();
+```
+**Testing using a shim**
+
+A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Below is a simple example. See `harnessPq.h` for more details.
+```
+// Set up two standbys but no primary
+harnessPqScriptSet((HarnessPq [])
+{
+    HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+    HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+
+    // Close the "inner" session first (8) then the outer (1)
+    HRNPQ_MACRO_CLOSE(8),
+    HRNPQ_MACRO_CLOSE(1),
+
+    HRNPQ_MACRO_DONE()
+});
+
+TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
+```
 
 ### Running a Unit Test
+
+**Code Coverage**
 
 Unit tests are run and coverage of the code being tested is provided by running the test with the option `--coverage-only`. The following example would run the test set from the **define.yaml** section detailed above.
 ```
 pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only
 ```
+> **NOTE:** If the message `
+ERROR: [125]: function not found at line` is displayed after `INFO: writing C coverage report` at the end of the test then try rerunning the test with `--vm=f32`
+
 Because no test run is specified and `--coverage-only` has been requested, a coverage report will be generated and written to the local file system under the pgBackRest directory `test/result/coverage/lcov/index.html` and a file with only the highlighted code that has not been covered will be written to `test/result/coverage/coverage.html`.
+
+If 100 percent code coverage has not been achieved, an error message will be displayed, for example: `ERROR: [125]: c module command/check/check is not fully covered`
+
+**Debugging with files**
 
 Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option `--no-cleanup` provided. Again, continuing with the check command, from **define.yaml** above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.
 ```
@@ -297,7 +365,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
 
 ## Adding an Option
 
-Options can be added to a command or multiple commands. Options can be configuration file only, command-line only or valid for both. Once an option is added, `config.auto.*`, `define.auto.*` and `parse.auto.*` files will automatically be generated by the build system.
+Options can be added to a command or multiple commands. Options can be configuration file only, command-line only or valid for both. Once an option is successfully added, `config.auto.*`, `define.auto.*` and `parse.auto.*` files will automatically be generated by the build system.
 
 To add an option, two files need be to be modified:
 
@@ -305,55 +373,59 @@ To add an option, two files need be to be modified:
 
 - `doc/xml/reference.xml`
 
-These files are discussed in the following sections.
+These files are discussed in the following sections along with how to verify the `help` command output.
 
-### `src/build/config/config.yaml`
+### config.yaml
 
-There is a detailed comment at the top of this file on the configuration definitions which one can refer to in determining how to define the rules for the option.
+There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of passphrases, all configuration file options can be passed on the command line. To configure an option for the configuration file, the `section:` key must be present.
 
-#### Command Line Only Options
+The `option:` section is broken into sub-sections by a simple comment divider (e.g. `# Repository options`) under which the options are organized alphabetically by option name. To better explain this section, `online` will be used as an example:
 
-Command-line only options are options where `CFGDEF_SECTION` rule is not defined. There are two sections to be updated when adding a command-line only option, each of which is marked by the comment `Command-line only options`.
-
-- **Section 1:** Find the first section with the `Command-line only options` comment. This section defines and exports the constant for the actual option.
-
-- **Section 2:** Find the second section with the `Command-line only options` comment. This is where the rules for the option are defined.
-
-The steps for how to update these sections are detailed below.
-
-**Section 1**
-
-Copy the two lines ("use constant"/"push") of an existing option and paste them where the option would be in alphabetical order and rename it to the same name as the new option name. For example CFGOPT_DRY_RUN, defined as "dry-run".
-
-**Section 2**
-
-To better explain this section, `CFGOPT_ONLINE` will be used as an example:
+#### Example 1
 ```
-&CFGOPT_ONLINE =>
-    {
-        &CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &CFGDEF_NEGATE => true,
-        &CFGDEF_DEFAULT => true,
-        &CFGDEF_COMMAND =>
-        {
-            &CFGCMD_BACKUP => {},
-            &CFGCMD_STANZA_CREATE => {},
-            &CFGCMD_STANZA_UPGRADE => {},
-        }
-    },
+online:
+    type: boolean
+    default: true
+    negate: y
+    command:
+      backup: {}
+      stanza-create: {}
+      stanza-upgrade: {}
+    command-role:
+      default: {}
 ```
-Note that `CFGDEF_SECTION` is not present thereby making this a command-line only option. Each line is explained below:
 
-- `CFGOPT_ONLINE` - the name of the option as defined in **Section 1**
+Note that `section:` is not present thereby making this a command-line only option defined as follows:
 
-- `CFGDEF_TYPE` - the type of the option. Valid types are: `CFGDEF_TYPE_BOOLEAN`, `CFGDEF_TYPE_HASH`, `CFGDEF_TYPE_INTEGER`, `CFGDEF_TYPE_LIST`, `CFGDEF_TYPE_PATH`, `CFGDEF_TYPE_SIZE`, `CFGDEF_TYPE_STRING`, and `CFGDEF_TYPE_TIME`
+- `online` - the name of the option
+
+- `type` - the type of the option. Valid values for types are: `boolean`, `hash`, `integer`, `list`, `path`, `size`, `string`, and `time`
 
 
-- `CFGDEF_NEGATE` - being a command-line only boolean option, this rule would automatically default to false so it must be defined if the option is negatable. Ask yourself if negation makes sense, for example, would a --dry-run option make sense as --no-dry-run? If the answer is no, then this rule can be omitted as it would automatically default to false. Any boolean option that cannot be negatable, must be a command-line only and not a configuration file option as all configuration boolean options must be negatable.
+- `negate` - being a command-line only boolean option, this rule would automatically default to false so it must be defined if the option is negatable. Ask yourself if negation makes sense, for example, would a --dry-run option make sense as --no-dry-run? If the answer is no, then this rule can be omitted as it would automatically default to false. Any boolean option that cannot be negatable, must be a command-line only and not a configuration file option as all configuration boolean options must be negatable.
 
-- `CFGDEF_DEFAULT` - sets a default for the option if the option is not provided when the command is run. The default can be global or it can be specified for a specific command in the `CFGDEF_COMMAND` section. For example, if it was desirable for the default to be false for the `CFGCMD_STANZA_CREATE` then CFGDEF_NEGATE => would be set to `true` in each command listed except for `CFGCMD_STANZA_CREATE` where it would be `false` and it would not be specified (as it is here) in the global section (meaning global for all commands listed).
+- `default` - sets a default for the option if the option is not provided when the command is run. The default can be global or it can be specified for a specific command in the `command` section. However, boolean values always require a default, so if it were desirable for the default to be `false` for the `stanza-create` command then it would be coded as in the [Example 2](#example-2) below.
 
-- `CFGDEF_COMMAND` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it attempted to be used for that command.
+
+- `command` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command.
+
+#### Example 2
+```
+online:
+    type: boolean
+    default: true
+    command:
+      backup:
+        negate: y
+      stanza-create:
+        negate: n
+      stanza-upgrade:
+        negate: y
+    command-role:
+      default: {}
+```
+
+At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C code, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
 ### reference.xml
 
@@ -370,3 +442,5 @@ To add an option, add the following to the `<option-list>` section; if it does n
 </option>
 ```
 > **IMPORTANT:** currently a period (.) is required to end the `summary` section.
+
+### Testing the help

@@ -415,60 +415,65 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
             <list-item><file>doc/xml/reference.xml</file></list-item>
         </list>
 
-        <p>These files are discussed in the following sections.</p>
+        <p>These files are discussed in the following sections along with how to verify the <code>help</code> command output.</p>
 
         <section id="config-file">
             <title>config.yaml</title>
-<!-- CSHANG Stopped HERE - we nede to discuss what is a config file option and what is a command-line options - bacically all?most? commands in the config file can be used on the command line (exception passphrase) and config file have "section"-->
-            <p>There are detailed comments throughout the file on the configuration definitions which one can refer to in determining how to define the rules for a command or option.</p>
 
-            <section id="command-line-only">
-                <title>Command Line Only Options</title>
+            <p>There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of passphrases, all configuration file options can be passed on the command line. To configure an option for the configuration file, the <id>section:</id> key must be present.</p>
 
-                <p>Command-line only options are options where <id>CFGDEF_SECTION</id> rule is not defined. There are two sections to be updated when adding a command-line only option, each of which is marked by the comment <code>Command-line only options</code>.</p>
+            <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, <id>online</id> will be used as an example:</p>
 
-                <list>
-                    <list-item><b>Section 1:</b> Find the first section with the <code>Command-line only options</code> comment. This section defines and exports the constant for the actual option.</list-item>
-                    <list-item><b>Section 2:</b> Find the second section with the <code>Command-line only options</code> comment. This is where the rules for the option are defined.</list-item>
-                </list>
-
-                <p>The steps for how to update these sections are detailed below.</p>
-
-                <p><b>Section 1</b></p>
-
-                <p>Copy the two lines (<quote>use constant</quote>/<quote>push</quote>) of an existing option and paste them where the option would be in alphabetical order and rename it to the same name as the new option name. For example CFGOPT_DRY_RUN, defined as <quote>dry-run</quote>.</p>
-
-                <p><b>Section 2</b></p>
-
-                <p>To better explain this section, <id>CFGOPT_ONLINE</id> will be used as an example:</p>
-
-                <code-block>
-    &amp;CFGOPT_ONLINE =>
-    {
-        &amp;CFGDEF_TYPE => CFGDEF_TYPE_BOOLEAN,
-        &amp;CFGDEF_NEGATE => true,
-        &amp;CFGDEF_DEFAULT => true,
-        &amp;CFGDEF_COMMAND =>
-        {
-            &amp;CFGCMD_BACKUP => {},
-            &amp;CFGCMD_STANZA_CREATE => {},
-            &amp;CFGCMD_STANZA_UPGRADE => {},
-        }
-    },
-                </code-block>
-
-                <p>Note that <id>CFGDEF_SECTION</id> is not present thereby making this a command-line only option. Each line is explained below:</p>
-
-                <list>
-                    <list-item><id>CFGOPT_ONLINE</id> - the name of the option as defined in <b>Section 1</b></list-item>
-                    <list-item><id>CFGDEF_TYPE</id> - the type of the option. Valid types are: <id>CFGDEF_TYPE_BOOLEAN</id>, <id>CFGDEF_TYPE_HASH</id>, <id>CFGDEF_TYPE_INTEGER</id>, <id>CFGDEF_TYPE_LIST</id>, <id>CFGDEF_TYPE_PATH</id>, <id>CFGDEF_TYPE_SIZE</id>, <id>CFGDEF_TYPE_STRING</id>, and <id>CFGDEF_TYPE_TIME</id>
-                    </list-item>
-                    <list-item><id>CFGDEF_NEGATE</id> - being a command-line only boolean option, this rule would automatically default to false so it must be defined if the option is negatable. Ask yourself if negation makes sense, for example, would a --dry-run option make sense as --no-dry-run? If the answer is no, then this rule can be omitted as it would automatically default to false. Any boolean option that cannot be negatable, must be a command-line only and not a configuration file option as all configuration boolean options must be negatable.</list-item>
-                    <list-item><id>CFGDEF_DEFAULT</id> - sets a default for the option if the option is not provided when the command is run. The default can be global or it can be specified for a specific command in the <id>CFGDEF_COMMAND</id> section. For example, if it was desirable for the default to be false for the <id>CFGCMD_STANZA_CREATE</id> then CFGDEF_NEGATE =>  would be set to <id>true</id> in each command listed except for <id>CFGCMD_STANZA_CREATE</id> where it would be <id>false</id> and it would not be specified (as it is here) in the global section (meaning global for all commands listed).</list-item>
-                    <list-item><id>CFGDEF_COMMAND</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it attempted to be used for that command.</list-item>
-                </list>
+            <section id="online-ex1">
+                <title>Example 1</title>
+            <code-block>
+  online:
+    type: boolean
+    default: true
+    negate: y
+    command:
+      backup: {}
+      stanza-create: {}
+      stanza-upgrade: {}
+    command-role:
+      default: {}
+            </code-block>
 
             </section>
+
+            <p>Note that <id>section:</id> is not present thereby making this a command-line only option defined as follows:</p>
+
+            <list>
+                <list-item><id>online</id> - the name of the option</list-item>
+                <list-item><id>type</id> - the type of the option. Valid values for types are: <id>boolean</id>, <id>hash</id>, <id>integer</id>, <id>list</id>, <id>path</id>, <id>size</id>, <id>string</id>, and <id>time</id>
+                </list-item>
+                <list-item><id>negate</id> - being a command-line only boolean option, this rule would automatically default to false so it must be defined if the option is negatable. Ask yourself if negation makes sense, for example, would a --dry-run option make sense as --no-dry-run? If the answer is no, then this rule can be omitted as it would automatically default to false. Any boolean option that cannot be negatable, must be a command-line only and not a configuration file option as all configuration boolean options must be negatable.</list-item>
+                <list-item><id>default</id> - sets a default for the option if the option is not provided when the command is run. The default can be global or it can be specified for a specific command in the <id>command</id> section. However, boolean values always require a default, so if it were desirable for the default to be <code>false</code> for the <id>stanza-create</id> command then it would be coded as in the <link section="/option/config-file/online-ex2">Example 2</link> below.
+                </list-item>
+                <list-item><id>command</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command.</list-item>
+            </list>
+
+            <section id="online-ex2">
+                <title>Example 2</title>
+                <code-block>
+  online:
+    type: boolean
+    default: true
+    command:
+      backup:
+        negate: y
+      stanza-create:
+        negate: n
+      stanza-upgrade:
+        negate: y
+    command-role:
+      default: {}
+                </code-block>
+
+            </section>
+
+            <p>At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C code, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
+
         </section>
 
         <section id="reference-file">
@@ -488,6 +493,13 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
 &lt;/option&gt;
             </code-block>
             <admonition type="important">currently a period (.) is required to end the <code>summary</code> section.</admonition>
+        </section>
+
+        <section id="help-test">
+            <title>Testing the help</title>
+
+            <!-- CSHANG put something about running and updating the help -->
+
         </section>
     </section>
 </doc>
