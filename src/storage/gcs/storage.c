@@ -904,8 +904,8 @@ static const StorageInterface storageInterfaceGcs =
 Storage *
 storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    StorageGcsKeyType keyType, const String *key, size_t chunkSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath)
+    StorageGcsKeyType keyType, const String *key, size_t chunkSize, const String *endpoint, const String *metadata,
+    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -916,6 +916,7 @@ storageGcsNew(
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, chunkSize);
         FUNCTION_LOG_PARAM(STRING, endpoint);
+        FUNCTION_LOG_PARAM(STRING, metadata);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
@@ -949,8 +950,9 @@ storageGcsNew(
             // Auto authentication for GCE instances
             case storageGcsKeyTypeAuto:
             {
-                // !!! THIS NEEDS TO BE A PARAM
-                driver->authUrl = httpUrlNewParseP(STRDEF("metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"), .type = httpProtocolTypeHttp);
+                ASSERT(metadata != NULL);
+
+                driver->authUrl = httpUrlNewParseP(metadata, .type = httpProtocolTypeHttp);
                 driver->authClient = httpClientNew(
                     sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout), timeout);
 

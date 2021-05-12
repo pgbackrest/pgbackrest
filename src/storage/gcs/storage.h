@@ -25,13 +25,15 @@ typedef enum
 Defaults
 ***********************************************************************************************************************************/
 #define STORAGE_GCS_CHUNKSIZE_DEFAULT                               ((size_t)4 * 1024 * 1024)
+#define STORAGE_GCS_METADATA_DEFAULT                                                                                               \
+    "metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 Storage *storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath);
+    StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *endpoint, const String *metadata,
+    TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif
