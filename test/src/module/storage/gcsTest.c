@@ -444,7 +444,8 @@ testRun(void)
 
                 // Get token automatically from metadata
                 hrnServerScriptAccept(meta);
-                hrnServerScriptExpectZ(meta,
+                hrnServerScriptExpectZ(
+                    meta,
                     "GET /computeMetadata/v1/instance/service-accounts/default/token HTTP/1.1\r\n"
                     "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
                     "content-length:0\r\n"
