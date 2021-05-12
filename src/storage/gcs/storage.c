@@ -31,6 +31,8 @@ GCS Storage
 HTTP headers
 ***********************************************************************************************************************************/
 STRING_EXTERN(GCS_HEADER_UPLOAD_ID_STR,                             GCS_HEADER_UPLOAD_ID);
+STRING_STATIC(GCS_HEADER_METADATA_FLAVOR_STR,                       "metadata-flavor");
+STRING_STATIC(GCS_HEADER_GOOGLE_STR,                                "Google");
 
 /***********************************************************************************************************************************
 Query tokens
@@ -289,10 +291,13 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        HttpHeader *header = httpHeaderNew(NULL);
+        httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
+        httpHeaderAdd(header, GCS_HEADER_METADATA_FLAVOR_STR, GCS_HEADER_GOOGLE_STR);
+        httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+
         HttpRequest *request = httpRequestNewP(
-            this->authClient, HTTP_VERB_GET_STR, httpUrlPath(this->authUrl), NULL,
-            // !!! FIX CONSTANTS
-            .header = httpHeaderAdd(httpHeaderNew(NULL), STRDEF("metadata-flavor"), STRDEF("Google")));
+            this->authClient, HTTP_VERB_GET_STR, httpUrlPath(this->authUrl), NULL, .header = header);
 
         result = storageGcsAuthToken(request, timeBegin);
     }
