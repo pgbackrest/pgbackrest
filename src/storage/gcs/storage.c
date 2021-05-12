@@ -292,7 +292,7 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
         HttpRequest *request = httpRequestNewP(
             this->authClient, HTTP_VERB_GET_STR, httpUrlPath(this->authUrl), NULL,
             // !!! FIX CONSTANTS
-            .header = httpHeaderAdd(httpHeaderNew(NULL), STRDEF("metadata-flavor"), STRDEF("google")));
+            .header = httpHeaderAdd(httpHeaderNew(NULL), STRDEF("metadata-flavor"), STRDEF("Google")));
 
         result = storageGcsAuthToken(request, timeBegin);
     }
