@@ -1220,7 +1220,7 @@ testRun(void)
         strLstAdd(argList, strNew("--no-config"));
         strLstAdd(argList, strNew("--repo1-type"));
         strLstAdd(argList, strNew("s3"));                           // Argument for the option above
-        strLstAdd(argList, strNew("--repo1-s3-bucket=test"));
+        strLstAdd(argList, strNew("--repo1-s3-bucket= test "));
         strLstAdd(argList, strNew("--repo1-s3-endpoint=test"));
         strLstAdd(argList, strNew("--repo1-s3-region=test"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
@@ -1252,6 +1252,7 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceParam, "    pg1-path is source param");
         TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptRepoType, 0), strIdFromZ(stringIdBit6, "s3"), "    repo-type is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), " test ", "    repo1-s3-bucket is set and preserves spaces");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3KeySecret), "xxx", "    repo1-s3-secret is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "    repo1-s3-secret is source env");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");

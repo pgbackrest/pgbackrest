@@ -1004,7 +1004,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (equalPtr)
                 {
                     optionName = strNewN(arg, (size_t)(equalPtr - arg));
-                    optionArg = strTrim(strNew(equalPtr + 1));
+                    optionArg = strNew(equalPtr + 1);
                 }
                 else
                     optionName = strNew(arg);
