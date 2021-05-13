@@ -417,7 +417,7 @@ cfgParseOption(const String *optionName)
 
     ASSERT(optionName != NULL);
 
-    // Search for the option
+    // Search for an exact match
     unsigned int findIdx = 0;
 
     while (optionList[findIdx].name != NULL)
@@ -431,6 +431,26 @@ cfgParseOption(const String *optionName)
     // If the option was found
     if (optionList[findIdx].name != NULL)
         FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findIdx].val));
+
+    // Search for a single partial match
+    unsigned int findPartialIdx = 0;
+    unsigned int findPartialTotal = 0;
+
+    for (findIdx = 0; findIdx < sizeof(optionList) / sizeof(struct option) - 1; findIdx++)
+    {
+        if (strBeginsWith(STR(optionList[findIdx].name), optionName))
+        {
+            findPartialIdx = findIdx;
+            findPartialTotal++;
+
+            if (findPartialTotal > 1)
+                break;
+        }
+    }
+
+    // If a single partial match was found
+    if (findPartialTotal == 1)
+        FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findPartialIdx].val));
 
     FUNCTION_TEST_RETURN((CfgParseOptionResult){0});
 }

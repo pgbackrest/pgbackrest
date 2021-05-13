@@ -622,6 +622,15 @@ testRun(void)
             "invalid command 'BOGUS:BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on ambiguous partial option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--c");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError, "invalid option '--c'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--" BOGUS_STR));
@@ -780,7 +789,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--stanz=db"));                   // Partial option to test matching
         strLstAdd(argList, strNew("--pg1-path=/path1//path2"));
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
