@@ -615,7 +615,7 @@ testRun(void)
         strLstAdd(argList, strNew("--pg1-host"));
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option '--pg1-host' requires argument");
+            "option '--pg1-host' requires an argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
