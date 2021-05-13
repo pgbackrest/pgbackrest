@@ -575,6 +575,26 @@ testRun(void)
             "check that the option resolve list contains an entry for every option");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on single - option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "-bogus");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option '-bogus' must begin with --");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when option argument not allowed");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--online=bogus");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'online' does not allow an argument");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(BOGUS_STR));
@@ -1172,7 +1192,8 @@ testRun(void)
         strLstAdd(argList, strNew("--pg1-path=/path/to/db/"));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew("--no-config"));
-        strLstAdd(argList, strNew("--repo1-type=s3"));
+        strLstAdd(argList, strNew("--repo1-type"));
+        strLstAdd(argList, strNew("s3"));                           // argument for the option above
         strLstAdd(argList, strNew("--repo1-s3-bucket=test"));
         strLstAdd(argList, strNew("--repo1-s3-endpoint=test"));
         strLstAdd(argList, strNew("--repo1-s3-region=test"));
