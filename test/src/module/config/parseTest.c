@@ -1172,7 +1172,8 @@ testRun(void)
         strLstAdd(argList, strNew("--pg1-path=/path/to/db/"));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew("--no-config"));
-        strLstAdd(argList, strNew("--repo1-type=s3"));
+        strLstAdd(argList, strNew("--repo1-type"));
+        strLstAdd(argList, strNew("s3"));                           // Argument for the option above
         strLstAdd(argList, strNew("--repo1-s3-bucket=test"));
         strLstAdd(argList, strNew("--repo1-s3-endpoint=test"));
         strLstAdd(argList, strNew("--repo1-s3-region=test"));
