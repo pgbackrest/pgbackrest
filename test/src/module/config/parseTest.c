@@ -575,6 +575,26 @@ testRun(void)
             "check that the option resolve list contains an entry for every option");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on single - option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "-bogus");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option '-bogus' must begin with --");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when option argument not allowed");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--online=bogus");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'online' does not allow an argument");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(BOGUS_STR));
