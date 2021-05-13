@@ -654,17 +654,17 @@ testRun(void)
 
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
-        TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout getting WAL segment");
-
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+        TEST_ERROR(
+            cmdArchiveGet(), ArchiveTimeoutError,
+            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
 
         // Check for missing WAL
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok");
 
-        TEST_RESULT_INT(cmdArchiveGet(), 1, "successful get of missing WAL");
-
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+        TEST_ERROR(
+            cmdArchiveGet(), ArchiveTimeoutError,
+            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok")), false,
@@ -712,11 +712,11 @@ testRun(void)
                 IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
-        TEST_RESULT_VOID(
-            lockAcquire(
+                TEST_RESULT_VOID(
+                    lockAcquire(
                         cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), STRDEF("999-dededede"), cfgLockType(), 30000,
                         true),
-            "acquire lock");
+                    "acquire lock");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
                 ioWriteStrLine(write, strNew(""));
@@ -737,9 +737,9 @@ testRun(void)
                 // Wait for the child to acquire the lock
                 ioReadLine(read);
 
-        TEST_RESULT_INT(cmdArchiveGet(), 1, "timeout waiting for lock");
-
-        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+                TEST_ERROR(
+                    cmdArchiveGet(), ArchiveTimeoutError,
+                    "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
 
                 // Notify the child to release the lock
                 ioWriteLine(write, bufNew(0));
@@ -1109,6 +1109,39 @@ testRun(void)
             .remove = true);
 
         bufUsedSet(serverWrite, 0);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no segments to find with existing ok file");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "10");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        strLstAddZ(argList, "000000010000000100000001");
+        strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
+        harnessCfgLoad(cfgCmdArchiveGet, argList);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=2\n"
+            "\n"
+            "[db:history]\n"
+            "2={\"db-id\":18072658121562454734,\"db-version\":\"10\"}");
+
+        // Put a warning in the file to show that it was read and later overwritten
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok", "0\nshould not be output");
+
+        TEST_RESULT_VOID(cmdArchiveGet(), "get async");
+
+        harnessLogResult("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+
+        // Check that the ok file is missing since it should have been removed on the first loop and removed again on a subsequent
+        // loop once the async process discovered that the file was missing and wrote the ok file again.
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

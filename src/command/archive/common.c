@@ -71,12 +71,13 @@ archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
 
 /**********************************************************************************************************************************/
 bool
-archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError)
+archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError, bool warnOnOk)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(BOOL, throwOnError);
+        FUNCTION_LOG_PARAM(BOOL, warnOnOk);
     FUNCTION_LOG_END();
 
     ASSERT(walSegment != NULL);
@@ -143,7 +144,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
             if (okFileExists)
             {
                 // If there is content in the status file it is a warning
-                if (strSize(content) != 0)
+                if (strSize(content) != 0 && warnOnOk)
                 {
                     // If error code is not success, then this was a renamed error file
                     if (code != 0)

@@ -16,6 +16,22 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
+                        <github-issue id="1357"/>
+                        <github-pull-request id="1371"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="floris.van.nee"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="floris.van.nee"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issues with leftover spool files from a prior <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1368"/>
                         <github-pull-request id="1374"/>
 

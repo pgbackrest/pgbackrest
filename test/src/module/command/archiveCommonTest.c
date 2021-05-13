@@ -8,6 +8,7 @@ Test Archive Common
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -33,15 +34,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         String *segment = strNew("000000010000000100000001");
 
-        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "directory and status file not present");
-        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModeGet, segment, false), false, "directory and status file not present");
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "directory and status file not present");
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModeGet, segment, false, true), false, "directory and status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
         mkdir(strZ(strNewFmt("%s/archive", testPath())), 0750);
         mkdir(strZ(strNewFmt("%s/archive/db", testPath())), 0750);
         mkdir(strZ(strNewFmt("%s/archive/db/out", testPath())), 0750);
 
-        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "status file not present");
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("clear archive file errors");
@@ -62,34 +63,44 @@ testRun(void)
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF(BOGUS_STR));
         TEST_ERROR(
-            archiveAsyncStatus(archiveModePush, segment, false), FormatError,
+            archiveAsyncStatus(archiveModePush, segment, false, true), FormatError,
             "000000010000000100000001.ok content must have at least two lines");
 
         storagePutP(
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF(BOGUS_STR "\n"));
         TEST_ERROR(
-            archiveAsyncStatus(archiveModePush, segment, false), FormatError, "000000010000000100000001.ok message must be > 0");
+            archiveAsyncStatus(archiveModePush, segment, false, true), FormatError,
+            "000000010000000100000001.ok message must be > 0");
 
         storagePutP(
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF(BOGUS_STR "\nmessage"));
         TEST_ERROR(
-            archiveAsyncStatus(archiveModePush, segment, false), FormatError, "unable to convert base 10 string 'BOGUS' to int");
+            archiveAsyncStatus(archiveModePush, segment, false, true),
+            FormatError, "unable to convert base 10 string 'BOGUS' to int");
 
         storagePutP(storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))), NULL);
-        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file");
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "ok file");
 
         storagePutP(
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF("0\nwarning"));
-        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "ok file with warning");
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "ok file with warning");
         harnessLogResult("P00   WARN: warning");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("ignore ok file warning");
+
+        HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.ok", "0\nwarning 2");
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, false), true, "check status");
+        TEST_RESULT_LOG("");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.ok", strZ(segment))),
             BUFSTRDEF("25\nerror"));
-        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), true, "error status renamed to ok");
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), true, "error status renamed to ok");
         harnessLogResult(
             "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
         TEST_RESULT_VOID(
@@ -101,22 +112,22 @@ testRun(void)
         storagePutP(
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment))), bufNew(0));
         TEST_ERROR(
-            archiveAsyncStatus(archiveModePush, segment, true), AssertError,
+            archiveAsyncStatus(archiveModePush, segment, true, true), AssertError,
             "status file '000000010000000100000001.error' has no content");
 
         storagePutP(
             storageNewWriteP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s.error", strZ(segment))),
             BUFSTRDEF("25\nmessage"));
-        TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true), AssertError, "message");
+        TEST_ERROR(archiveAsyncStatus(archiveModePush, segment, true, true), AssertError, "message");
 
-        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false), false, "suppress error");
+        TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "suppress error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePutP(
             storageNewWriteP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_OUT "/global.error")),
             BUFSTRDEF("102\nexecute error"));
 
-        TEST_ERROR(archiveAsyncStatus(archiveModePush, strNew("anyfile"), true), ExecuteError, "execute error");
+        TEST_ERROR(archiveAsyncStatus(archiveModePush, strNew("anyfile"), true, true), ExecuteError, "execute error");
     }
 
     // *****************************************************************************************************************************
