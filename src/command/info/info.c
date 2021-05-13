@@ -29,8 +29,6 @@ Info Command
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_STATIC(CFGOPTVAL_INFO_OUTPUT_TEXT_STR,                       "text");
-
 // Naming convention: <sectionname>_KEY_<keyname>_VAR. If the key exists in multiple sections, then <sectionname>_ is omitted.
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
@@ -398,7 +396,7 @@ backupListAdd(
 
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
-    kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(backupData->backupType));
+    kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(strIdToStr(backupData->backupType)));
     kvPut(
         varKv(backupInfo), BACKUP_KEY_PRIOR_VAR,
         (backupData->backupPrior != NULL ? VARSTR(backupData->backupPrior) : NULL));
@@ -1207,8 +1205,8 @@ infoRender(void)
 
         // Since the --set option depends on the --stanza option, the parser will error before this if the backup label is
         // specified but a stanza is not
-        if (backupLabel != NULL && !strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
-            THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
+        if (backupLabel != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_TEXT)
+            THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for " CFGOPTVAL_OUTPUT_TEXT_Z " output");
 
         // Initialize the repo index
         unsigned int repoIdxMin = 0;
@@ -1387,7 +1385,7 @@ infoRender(void)
             infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxMin, repoIdxMax);
 
         // Format text output
-        if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
+        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
         {
             // Process any stanza directories
             if  (!varLstEmpty(infoList))
@@ -1519,7 +1517,10 @@ infoRender(void)
         }
         // Format json output
         else
+        {
+            ASSERT(cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON);
             resultStr = jsonFromVar(varNewVarLst(infoList));
+        }
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

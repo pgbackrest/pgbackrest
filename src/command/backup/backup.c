@@ -43,7 +43,7 @@ static String *
 backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
         FUNCTION_LOG_PARAM(TIME, timestamp);
     FUNCTION_LOG_END();
@@ -80,7 +80,7 @@ static String *
 backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
         FUNCTION_LOG_PARAM(TIME, timestamp);
     FUNCTION_LOG_END();
@@ -365,7 +365,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
     Manifest *result = NULL;
 
     // No incremental if backup type is full
-    BackupType type = backupType(cfgOptionStr(cfgOptType));
+    BackupType type = (BackupType)cfgOptionStrId(cfgOptType);
 
     if (type != backupTypeFull)
     {
@@ -380,7 +380,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                  InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
 
                 // The prior backup for a diff must be full
-                if (type == backupTypeDiff && backupType(backupPrior.backupType) != backupTypeFull)
+                if (type == backupTypeDiff && backupPrior.backupType != backupTypeFull)
                     continue;
 
                 // The backups must come from the same cluster ??? This should enable delta instead
@@ -466,7 +466,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
             else
             {
                 LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)));
-                cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(backupTypeStr(backupTypeFull)));
+                cfgOptionSet(cfgOptType, cfgSourceParam, VARSTR(strIdToStr(backupTypeFull)));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -499,7 +499,7 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *mani
             manifestMove(manifestPrior, MEM_CONTEXT_TEMP());
 
             // Build incremental manifest
-            manifestBuildIncr(manifest, manifestPrior, backupType(cfgOptionStr(cfgOptType)), archiveStart);
+            manifestBuildIncr(manifest, manifestPrior, (BackupType)cfgOptionStrId(cfgOptType), archiveStart);
 
             // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
             manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
@@ -720,11 +720,11 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                                     strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
                             }
                             // Check backup type because new backup label must be the same type as resume backup label
-                            else if (manifestResumeData->backupType != backupType(cfgOptionStr(cfgOptType)))
+                            else if (manifestResumeData->backupType != cfgOptionStrId(cfgOptType))
                             {
                                 reason = strNewFmt(
                                     "new backup type '%s' does not match resumable backup type '%s'",
-                                    strZ(cfgOptionDisplay(cfgOptType)), strZ(backupTypeStr(manifestResumeData->backupType)));
+                                    strZ(cfgOptionDisplay(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
                             }
                             // Check prior backup label ??? Do we really care about the prior backup label?
                             else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
@@ -1711,7 +1711,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             }
         }
 
-        LOG_INFO_FMT("%s backup size = %s", strZ(backupTypeStr(backupType)), strZ(strSizeFormat(sizeTotal)));
+        LOG_INFO_FMT("%s backup size = %s", strZ(strIdToStr(backupType)), strZ(strSizeFormat(sizeTotal)));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1991,7 +1991,8 @@ cmdBackup(void)
         {
             manifestBackupLabelSet(
                 manifest,
-                backupLabelCreate(backupType(cfgOptionStr(cfgOptType)), manifestData(manifest)->backupLabelPrior, timestampStart));
+                backupLabelCreate(
+                    (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
         }
 
         // Save the manifest before processing starts
