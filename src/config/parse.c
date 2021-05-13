@@ -1013,7 +1013,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 CfgParseOptionResult option = cfgParseOption(optionName);
 
                 if (!option.found)
-                    THROW_FMT(OptionInvalidError, "invalid option '--%s'", strZ(optionName));
+                    THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
 
                 // If the option requires an argument
                 if (parseRuleOption[option.id].type != cfgOptTypeBoolean && !option.negate && !option.reset)

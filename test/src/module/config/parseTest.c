@@ -631,6 +631,23 @@ testRun(void)
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError, "invalid option '--c'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on spaces in option name");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, " --config=/path/to");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), CommandInvalidError,
+            "invalid command ' --config=/path/to'");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--config =/path/to");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "invalid option '--config =/path/to'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--" BOGUS_STR));
