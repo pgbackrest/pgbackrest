@@ -914,15 +914,12 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
             // Looks like an option
             if (arg[0] == '-')
             {
-                // Consume first -
-                arg++;
+                // Options must start with --
+                if (arg[1] != '-')
+                    THROW_FMT(OptionInvalidError, "option '%s' must begin with --", arg);
 
-                // Options must start with --. !!! ERROR COULD BE IMPROVED BY PARSING OUT THE OPTION NAME
-                if (arg[0] != '-')
-                    THROW_FMT(OptionInvalidError, "option '-%s' must begin with --", arg);
-
-                // Consume second -
-                arg++;
+                // Consume --
+                arg += 2;
 
                 // Get the option name and the value when separated by =
                 const String *optionName = NULL;
@@ -950,9 +947,9 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     // If no argument was found with the option then try the next argument
                     if (optionArg == NULL)
                     {
-                        // Error if there are no more arguments in the list !!! ERROR BELOW WOULD BE BETTER AS "an argument"?
+                        // Error if there are no more arguments in the list
                         if (argListIdx == argListSize - 1)
-                            THROW_FMT(OptionInvalidError, "option '--%s' requires argument", strZ(optionName));
+                            THROW_FMT(OptionInvalidError, "option '--%s' requires an argument", strZ(optionName));
 
                         optionArg = strNew(argList[++argListIdx]);
                     }
@@ -994,8 +991,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 }
                 else
                 {
-                    // Make sure option is not negated more than once.  It probably wouldn't hurt anything to accept this case
-                    // but there's no point in allowing the user to be sloppy.
+                    // Make sure option is not negated more than once. It probably wouldn't hurt anything to accept this case but
+                    // there's no point in allowing the user to be sloppy.
                     if (optionValue->negate && option.negate)
                     {
                         THROW_FMT(
@@ -1003,7 +1000,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                     }
 
-                    // Make sure option is not reset more than once.  Same justification as negate.
+                    // Make sure option is not reset more than once. Same justification as negate.
                     if (optionValue->reset && option.reset)
                     {
                         THROW_FMT(
