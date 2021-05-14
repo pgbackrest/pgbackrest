@@ -15,6 +15,11 @@
         <variable key="host-contrib-user">{[host-user]}</variable>
         <variable key="host-contrib-image">pgbackrest/doc:contrib</variable>
 
+        <variable key="github-url-test">{[github-url-master]}/test/src</variable>
+        <variable key="github-url-test-common">{[github-url-master]}/test/src/common</variable>
+        <variable key="github-url-src">{[github-url-master]}/src</variable>
+        <variable key="github-url-src-common">{[github-url-src]}/common</variable>
+
         <variable key="cwd" eval="y">use Cwd qw(cwd); cwd()</variable>
     </variable-list>
 
@@ -45,7 +50,15 @@
     <section id="introduction">
         <title>Introduction</title>
 
-        <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.  Coding standards to follow are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link>. At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the <link section="/testing">Testing</link> section below for details.</p>
+        <p>This documentation is intended to assist contributors to <backrest/> by outlining some basic steps and guidelines for contributing to the project.
+
+        Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>. You may want to check the <link url="{[github-url-projects]}">Project Boards</link> to see if your suggestion has already been submitted.
+
+        Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>.  Please provide as much information as possible to aid in determining the cause of the problem.
+
+        You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.
+
+        Coding standards are defined in <link url="{[github-url-master]}/CODING.md">CODING.md</link> and some important coding details and an example are provided in the <link section="/coding">Coding</link> section below. At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the <link section="/testing">Testing</link> section below for details.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -118,6 +131,136 @@
                 </exe-cmd>
             </execute>
         </execute-list>
+
+        <p>If using a RHEL system, the CPAN XML parser is required for running <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docs need only be run for HTML output.</p>
+    </section>
+
+    <section id="coding">
+        <title>Coding</title>
+
+        <p>The following sections provide information on some important concepts needed for coding within <backrest/>.</p>
+
+        <section id="memory-context">
+            <title>Memory Context</title>
+
+            <p>Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use <code>MEM_CONTEXT_NEW_BEGIN("somename")</code> for objects and <code>MEM_CONTEXT_TEMP_BEGIN()</code> for functions. See <link url="{[github-url-src-common]}/memContext.h">memContext.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+        </section>
+
+        <section id="message-logging">
+            <title>Logging</title>
+
+            <p>Logging is used in debugging with the built-in macros FUNCTION_LOG_* and FUNCTION_TEST_*, which are used to trace parameters passed to/returned from functions. FUNCTION_LOG_* macros are used for production logging whereas FUNCTION_TEST_* macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+
+            <p>Logging is also used for providing information to the user via the LOG_* macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via THROW_* macros when throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+        </section>
+
+        <section id="coding-example">
+            <title>Coding Example</title>
+
+            <p>In the hypothetical example below, code comments (double-slash or slash-asterisk) will explain the example. Refer to the sections above and <link url="{[github-url-master]}/CODING.md">CODING.md</link> for an introduction to the details provided here.</p>
+
+            <section id="coding-ex1">
+                <title>Example: basic object construction</title>
+                <code-block type="c">
+// Declare the publicly accessible variables in a structure named <objectName>Pub
+typedef struct MyObjPub         // First letter upper case
+{
+    MemContext *memContext;     // Pointer to memContext in which this object resides
+    unsigned int myData;        // Contents of the myData variable
+} MyObjPub;
+
+// Declare the object type
+struct MyObj
+{
+    MyObjPub pub;               // Publicly accessible variables must be first and named "pub"
+    const String *name;         // Pointer to lightweight string object - see string.h
+};
+
+// Declare getters and setters inline for the publicly visible variables.
+// Only setters require "Set" appended to the name.
+__attribute__((always_inline)) static inline unsigned int
+myObjMyData(const MyObj *const this)
+{
+    return THIS_PUB(MyObj)->myData;    // Use the built-in THIS_PUB macro
+}
+
+// TYPE and FROMAT macros for function logging
+#define FUNCTION_LOG_MY_OBJ_TYPE                                            \
+    MyObj *
+#define FUNCTION_LOG_MY_OBJ_FORMAT(value, buffer, bufferSize)               \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, myObjToLog, buffer, bufferSize)
+
+// Create the logging function for displaying important information from the object
+String *
+myObjToLog(const MyObj *this)
+{
+    return strNewFmt(
+        "{name: %s, myData: %u}", this->name == NULL ? NULL_Z : strZ(this->name), myObjMyData(this));
+}
+
+// Object constructor
+MyObj *
+myObjNew(unsigned int myData, const String *secretName)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);              // Use FUNCTION_LOG_BEGIN with a log level for displaying in production
+        FUNCTION_LOG_PARAM(UINT, myData);           // When log level is debug, myData variable will be logged
+        FUNCTION_TEST_PARAM(STRING, secretName);    // FUNCTION_TEST_PARAM will not display secretName value in production logging
+    FUNCTION_LOG_END();
+
+    ASSERT((secretName != NULL || myData > 0);      // Development-only assertions (will be compiled out of production code)
+
+    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
+
+    MEM_CONTEXT_NEW_BEGIN("MyObj")      // Create a long lasting memory context with the name of the object
+    {
+        this = memNew(sizeof(MyObj));   // Allocate the memory size
+
+        *this = (MyObj)                 // Initialize the object
+        {
+            .pub =
+            {
+                .memContext = memContextCurrent(),      // Set the memory context to the current MyObj memory context
+                .myData = myData,                       // Copy the simple data type to the this object's memory context
+            },
+            .name = strDup(secretName),     // Duplicate the String data type to the this object's memory context
+        };
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(MyObj, this);
+}
+
+// Function using temporary memory context
+String *
+myObjDisplay(unsigned int myData)
+{
+    FUNCTION_TEST_BEGIN();                      // No parameters passed to this function will be logged in production
+        FUNCTION_TEST_PARAM(UINT, myData);
+    FUNCTION_TEST_END();
+
+    String *result = NULL;     // Result is created in the current memory context  (referred to as "prior context" below)
+    MEM_CONTEXT_TEMP_BEGIN()   // begins a new temporary context
+    {
+        String *resultStr = strNew("Hello");    // Allocates a string in the temporary memory context
+
+        if (myData > 1)
+            resultStr = strCatZ(" World");      // Appends a value to the string still in the temporary memory context
+        else
+            LOG_WARN("Am I not your World?");   // Logs a warning to the user
+
+        MEM_CONTEXT_PRIOR_BEGIN()           // Switch to the prior context so the duplication of the string is in that context
+        {
+            result = strDup(resultStr);     // Create a copy of the string in the prior context where "result" was created
+        }
+        MEM_CONTEXT_PRIOR_END();            // Switch back to the temporary context
+    }
+    MEM_CONTEXT_TEMP_END();      // Free everything created inside this temporary memory context - i.e resultStr
+
+    FUNCTION_TEST_RETURN(STRING, result);    // Return result but do not log the value in production
+}
+                </code-block>
+            </section>
+        </section>
     </section>
 
     <section id="testing">
@@ -134,15 +277,13 @@
             pgbackrest/test/test.pl --gen-only
         </code-block>
 
-        <p>Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under <code>pgbackrest/doc/output/html</code>. More details can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory.</p>
+        <p>Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under <code>pgbackrest/doc/output/html</code>. More details can be found in the <backrest/> <link url="{[github-url-master]}/doc/README.md">doc/README.md</link> file.</p>
 
         <code-block>
             pgbackrest/doc/doc.pl --out=html
         </code-block>
 
         <admonition type="note"><code>ERROR: [028]</code> regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.</admonition>
-
-        <p>If using a RHEL system, the CPAN XML parser is required for running <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docs need only be run for HTML output.</p>
 
         <section id="running">
             <title>Running Tests</title>
@@ -275,29 +416,39 @@ if (testBegin("expireBackup()"))
     //--------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("manifest file removal");
                 </code-block>
+            </section>
 
-                <p><b>Setting up the command to be run</b></p>
-                <p>The <file>test/src/common/harnessConfig.h</file> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command:</p>
+            <section id="test-command">
+                <title>Setting up the command to be run</title>
+
+                <p>The <link url="{[github-url-test-common]}harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command:</p>
 
                 <code-block>
-StringList *argList = strLstNew();                                      // create an empty string list
-hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);                 // add the --repo-path option
-harnessCfgLoad(cfgCmdInfo, argList);                                    // load the command and option list into the test harness
+StringList *argList = strLstNew();                              // Create an empty string list
+hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);         // Add the --repo-path option
+harnessCfgLoad(cfgCmdInfo, argList);                            // Load the command and option list into the test harness
 
+// Run the test
 TEST_RESULT_STR_Z(
-    infoRender(), "No stanzas exist in the repository.\n", "text output - no stanzas");  // run the test
+    infoRender(), "No stanzas exist in the repository.\n", "text output - no stanzas");
                 </code-block>
+            </section>
 
-                <p><b>Storing a file</b></p>
-                <p>Sometimes it is desirable to store or manipulate files before or during a test and then confirm the contents. The <file>test/src/common/harnessStorage.h</file> contains macros (e.g. <code>HRN_STORAGE_PUT</code> and <code>TEST_STORAGE_GET</code>) for doing this. In addition, <code>HRN_INFO_PUT</code> is convenient for writing out info files (archive.info, backup.info, backup.manifest) since it will automatically add header and checksum information.</p>
+            <section id="test-store">
+                <title>Storing a file</title>
+
+                <p>Sometimes it is desirable to store or manipulate files before or during a test and then confirm the contents. The <link url="{[github-url-test-common]}/harnessStorage.h">harnessStorage.h</link> file contains macros (e.g. <code>HRN_STORAGE_PUT</code> and <code>TEST_STORAGE_GET</code>) for doing this. In addition, <code>HRN_INFO_PUT</code> is convenient for writing out info files (archive.info, backup.info, backup.manifest) since it will automatically add header and checksum information.</p>
 
                 <code-block>
 HRN_STORAGE_PUT_EMPTY(
     storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
                 </code-block>
+            </section>
 
-                <p><b>Testing results</b></p>
-                <p>Tests are run and results confirmed via macros that are described in <file>test/src/common/harnessTest.h</file>. With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:</p>
+            <section id="test-results">
+                <title>Testing results</title>
+
+                <p>Tests are run and results confirmed via macros that are described in <link url="{[github-url-test-common]}/harnessTest.h">harnessTest.h</link>. With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:</p>
 
                 <list>
                     <list-item><id>TEST_RESULT_STR</id> - Test the actual value of the string returned by the function.</list-item>
@@ -307,17 +458,23 @@ HRN_STORAGE_PUT_EMPTY(
                     <list-item><id>TEST_RESULT_VOID</id> - The function being tested returns a <code>void</code>. This is then usually followed by tests that ensure other actions occurred (e.g. a file was written to disk).</list-item>
                     <list-item><id>TEST_ERROR</id> / <id>TEST_ERROR_FMT</id> - Test that a specific error code was raised with specific wording.</list-item>
                 </list>
+            </section>
 
-                <p><b>Testing a log message</b></p>
+            <section id="test-log">
+                <title>Testing a log message</title>
+
                 <p>If a function being tested logs something with <id>LOG_WARN</id>, <id>LOG_INFO</id> or other <id>LOG_</id> macro, then the logged message must be cleared before the end of the test by using the <code>harnessLogResult()</code> function.</p>
 
                 <code-block>
 harnessLogResult(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
                 </code-block>
+            </section>
 
-                <p><b>Testing using child process</b></p>
-                <p>Sometimes it is useful to use a child process for testing. Below is a simple example. See <file>harnessFork.h</file> for more details.</p>
+            <section id="test-child">
+                <title>Testing using child process</title>
+
+                <p>Sometimes it is useful to use a child process for testing. Below is a simple example. See <link url="{[github-url-test-common]}/harnessFork.h">harnessFork.h</link> for more details.</p>
 
                 <code-block>
 HARNESS_FORK_BEGIN()
@@ -353,8 +510,11 @@ HARNESS_FORK_BEGIN()
 }
 HARNESS_FORK_END();
                 </code-block>
+            </section>
 
-                <p><b>Testing using a shim</b></p>
+            <section id="test-shim">
+                <title>Testing using a shim</title>
+
                 <p>A <postgres/> libpq shim is provided to simulate interactions with <postgres/>. Below is a simple example. See <file>harnessPq.h</file> for more details.</p>
 
                 <code-block>
@@ -372,8 +532,7 @@ harnessPqScriptSet((HarnessPq [])
 });
 
 TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
-            </code-block>
-
+                </code-block>
             </section>
         </section>
 
@@ -409,7 +568,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
 
         <p>Options can be added to a command or multiple commands. Options can be configuration file only, command-line only or valid for both. Once an option is successfully added, <file>config.auto.*</file>, <file>define.auto.*</file> and <file>parse.auto.*</file> files will automatically be generated by the build system.</p>
 
-        <p> To add an option, two files need be to be modified:</p>
+        <p>To add an option, two files need be to be modified:</p>
         <list>
             <list-item><file>src/build/config/config.yaml</file></list-item>
             <list-item><file>doc/xml/reference.xml</file></list-item>
@@ -473,7 +632,6 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
             </section>
 
             <p>At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C code, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
-
         </section>
 
         <section id="reference-file">
@@ -495,25 +653,9 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
             <admonition type="important">currently a period (.) is required to end the <code>summary</code> section.</admonition>
         </section>
 
-        <section id="help-test">
-            <title>Testing the help</title>
-tell them to run the help unit test if they have added an option to ensure - otherwise will blow up in ci
-            <!-- CSHANG put something about running and updating the help -->
-<!-- CSHANG!!! NEED TO UPDATE README TO LINK TO THIS AND MOVE THAT TEXT TO BEGINNING OF DOC -->
-            pgbackrest/test/test.pl --vm=none --build-only
-            -- this just builds the executeable - this is generally a handy thing to do to test with the binary
-            then can do:
-            test/bin/none/pgbackrest help backup repo-type
+<!-- CSHANG Put HELP TEST here -->
 
-        </section>
 
-        <section id="doc-test">
-            <title>Testing with generated docker containers</title>
-link to general builds section on readme.doc
-also run with no-exe to see locally just the text
-            <!-- CSHANG should we say something about generating the docs so can exec into docker containers to test? We could update the README in the doc folder... -->
-            /pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache
-
-        </section>
+<!-- CSHANG Put DOC TEST here -->
     </section>
 </doc>

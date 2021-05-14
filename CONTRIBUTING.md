@@ -2,7 +2,15 @@
 
 ## Introduction
 
-This documentation is intended to assist contributors to pgBackRest by outlining some basic steps and guidelines for contributing to the project. Coding standards to follow are defined in [CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md). At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the [Testing](#testing) section below for details.
+This documentation is intended to assist contributors to pgBackRest by outlining some basic steps and guidelines for contributing to the project.
+
+Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). You may want to check the [Project Boards](https://github.com/pgbackrest/pgbackrest/projects) to see if your suggestion has already been submitted.
+
+Bug reports should be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). Please provide as much information as possible to aid in determining the cause of the problem.
+
+You will always receive credit in the [release notes](http://www.pgbackrest.org/release.html) for your contributions.
+
+Coding standards are defined in [CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md) and some important coding details and an example are provided in the [Coding](#coding) section below. At a minimum, unit tests must be written and run and the documentation generated before submitting a Pull Request; see the [Testing](#testing) section below for details.
 
 ## Building a Development Environment
 
@@ -31,6 +39,125 @@ pgbackrest-dev => Clone pgBackRest repository
 git clone https://github.com/pgbackrest/pgbackrest.git
 ```
 
+If using a RHEL system, the CPAN XML parser is required for running `test.pl` and `doc.pl`. Instructions for installing Docker and the XML parse can be found in the `README.md` file of the pgBackRest [doc](https://github.com/pgbackrest/pgbackrest/blob/master/doc) directory in the section "The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation". NOTE that the `Install latex (for building PDF)` is not required since testing of the docs need only be run for HTML output.
+
+## Coding
+
+The following sections provide information on some important concepts needed for coding within pgBackRest.
+
+### Memory Context
+
+Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use `MEM_CONTEXT_NEW_BEGIN("somename")` for objects and `MEM_CONTEXT_TEMP_BEGIN()` for functions. See [memContext.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/memContext.h) for more details and the [Coding Example](#coding-example) below.
+
+### Logging
+
+Logging is used in debugging with the built-in macros FUNCTION_LOG_* and FUNCTION_TEST_*, which are used to trace parameters passed to/returned from functions. FUNCTION_LOG_* macros are used for production logging whereas FUNCTION_TEST_* macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
+
+Logging is also used for providing information to the user via the LOG_* macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via THROW_* macros when throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/log.h) and[error.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
+
+### Coding Example
+
+In the hypothetical example below, code comments (double-slash or slash-asterisk) will explain the example. Refer to the sections above and [CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md) for an introduction to the details provided here.
+
+#### Example: basic object construction
+```c
+// Declare the publicly accessible variables in a structure named the object name with Pub appended
+typedef struct MyObjPub         // First letter upper case
+{
+    MemContext *memContext;     // Pointer to memContext in which this object resides
+    unsigned int myData;        // Contents of the myData variable
+} MyObjPub;
+
+// Declare the object type
+struct MyObj
+{
+    MyObjPub pub;               // Publicly accessible variables must be first and named "pub"
+    const String *name;         // Pointer to lightweight string object - see string.h
+};
+
+// Declare getters and setters inline for the publicly visible variables. Only setters require "Set" appended to the name.
+__attribute__((always_inline)) static inline unsigned int
+myObjMyData(const MyObj *const this)
+{
+    return THIS_PUB(MyObj)->myData;    // Use the built-in THIS_PUB macro
+}
+
+// TYPE and FROMAT macros for function logging
+#define FUNCTION_LOG_MY_OBJ_TYPE                                            \
+    MyObj *
+#define FUNCTION_LOG_MY_OBJ_FORMAT(value, buffer, bufferSize)               \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, myObjToLog, buffer, bufferSize)
+
+// Create the logging function for displaying important information from the object
+String *
+myObjToLog(const MyObj *this)
+{
+    return strNewFmt(
+        "{name: %s, myData: %u}", this->name == NULL ? NULL_Z : strZ(this->name), myObjMyData(this));
+}
+
+// Object constructor
+MyObj *
+myObjNew(unsigned int myData, const String *secretName)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);              // Use FUNCTION_LOG_BEGIN with a log level for displaying in production
+        FUNCTION_LOG_PARAM(UINT, myData);           // When log level is debug, myData variable will be logged
+        FUNCTION_TEST_PARAM(STRING, secretName);    // FUNCTION_TEST_PARAM will not display secretName value in production logging
+    FUNCTION_LOG_END();
+
+    ASSERT((secretName != NULL || myData > 0);      // Development-only assertions (will be compiled out of production code)
+
+    MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
+
+    MEM_CONTEXT_NEW_BEGIN("MyObj")      // Create a long lasting memory context with the name of the object
+    {
+        this = memNew(sizeof(MyObj));   // Allocate the memory size
+
+        *this = (MyObj)                 // Initialize the object
+        {
+            .pub =
+            {
+                .memContext = memContextCurrent(),      // Set the memory context to the current MyObj memory context
+                .myData = myData,                       // Copy the simple data type to the this object's memory context
+            },
+            .name = strDup(secretName),     // Duplicate the String data type to the this object's memory context
+        };
+    }
+    MEM_CONTEXT_NEW_END();
+
+    FUNCTION_LOG_RETURN(MyObj, this);
+}
+
+// Function using temporary memory context
+String *
+myObjDisplay(unsigned int myData)
+{
+    FUNCTION_TEST_BEGIN();                      // No parameters passed to this function will be logged in production
+        FUNCTION_TEST_PARAM(UINT, myData);
+    FUNCTION_TEST_END();
+
+    String *result = NULL;     // Result is created in the current memory context  (referred to as "prior context" below)
+    MEM_CONTEXT_TEMP_BEGIN()   // begins a new temporary context
+    {
+        String *resultStr = strNew("Hello");    // Allocates a string in the temporary memory context
+
+        if (myData > 1)
+            resultStr = strCatZ(" World");      // Appends a value to the string still in the temporary memory context
+        else
+            LOG_WARN("Am I not your World?");   // Logs a warning to the user
+
+        MEM_CONTEXT_PRIOR_BEGIN()           // Switch to the prior context so the duplication of the string is in that context
+        {
+            result = strDup(resultStr);     // Create a copy of the string in the prior context where "result" was created
+        }
+        MEM_CONTEXT_PRIOR_END();            // Switch back to the temporary context
+    }
+    MEM_CONTEXT_TEMP_END();      // Free everything created inside this temporary memory context - i.e resultStr
+
+    FUNCTION_TEST_RETURN(STRING, result);    // Return result but do not log the value in production
+}
+```
+
 ## Testing
 
 A list of all possible test combinations can be viewed by running:
@@ -41,13 +168,11 @@ While some files are automatically generated during `make`, others are generated
 ```
 pgbackrest/test/test.pl --gen-only
 ```
-Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under `pgbackrest/doc/output/html`. More details can be found in the `README.md` file of the pgBackRest [doc](https://github.com/pgbackrest/pgbackrest/blob/master/doc) directory.
+Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under `pgbackrest/doc/output/html`. More details can be found in the pgBackRest [doc/README.md](https://github.com/pgbackrest/pgbackrest/blob/master/doc/README.md) file.
 ```
 pgbackrest/doc/doc.pl --out=html
 ```
 > **NOTE:** `ERROR: [028]` regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.
-
-If using a RHEL system, the CPAN XML parser is required for running `test.pl` and `doc.pl`. Instructions for installing Docker and the XML parse can be found in the `README.md` file of the pgBackRest [doc](https://github.com/pgbackrest/pgbackrest/blob/master/doc) directory in the section "The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation". NOTE that the `Install latex (for building PDF)` is not required since testing of the docs need only be run for HTML output.
 
 ### Running Tests
 
@@ -243,9 +368,10 @@ if (testBegin("expireBackup()"))
     //--------------------------------------------------------------------------------------------------------------------------
     TEST_TITLE("manifest file removal");
 ```
-**Setting up the command to be run**
 
-The `test/src/common/harnessConfig.h` describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the function `harnessCfgLoad()` with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command:
+#### Setting up the command to be run
+
+The [/harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/commonharnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the function `harnessCfgLoad()` with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command:
 ```
 StringList *argList = strLstNew();                                      // create an empty string list
 hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);                 // add the --repo-path option
@@ -254,16 +380,18 @@ harnessCfgLoad(cfgCmdInfo, argList);                                    // load 
 TEST_RESULT_STR_Z(
     infoRender(), "No stanzas exist in the repository.\n", "text output - no stanzas");  // run the test
 ```
-**Storing a file**
 
-Sometimes it is desirable to store or manipulate files before or during a test and then confirm the contents. The `test/src/common/harnessStorage.h` contains macros (e.g. `HRN_STORAGE_PUT` and `TEST_STORAGE_GET`) for doing this. In addition, `HRN_INFO_PUT` is convenient for writing out info files (archive.info, backup.info, backup.manifest) since it will automatically add header and checksum information.
+#### Storing a file
+
+Sometimes it is desirable to store or manipulate files before or during a test and then confirm the contents. The [harnessStorage.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessStorage.h) file contains macros (e.g. `HRN_STORAGE_PUT` and `TEST_STORAGE_GET`) for doing this. In addition, `HRN_INFO_PUT` is convenient for writing out info files (archive.info, backup.info, backup.manifest) since it will automatically add header and checksum information.
 ```
 HRN_STORAGE_PUT_EMPTY(
     storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
 ```
-**Testing results**
 
-Tests are run and results confirmed via macros that are described in `test/src/common/harnessTest.h`. With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:
+#### Testing results
+
+Tests are run and results confirmed via macros that are described in [harnessTest.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessTest.h). With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:
 
 - `TEST_RESULT_STR` - Test the actual value of the string returned by the function.
 
@@ -277,16 +405,17 @@ Tests are run and results confirmed via macros that are described in `test/src/c
 
 - `TEST_ERROR` / `TEST_ERROR_FMT` - Test that a specific error code was raised with specific wording.
 
-**Testing a log message**
+#### Testing a log message
 
 If a function being tested logs something with `LOG_WARN`, `LOG_INFO` or other `LOG_` macro, then the logged message must be cleared before the end of the test by using the `harnessLogResult()` function.
 ```
 harnessLogResult(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
 ```
-**Testing using child process**
 
-Sometimes it is useful to use a child process for testing. Below is a simple example. See `harnessFork.h` for more details.
+#### Testing using child process
+
+Sometimes it is useful to use a child process for testing. Below is a simple example. See [harnessFork.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessFork.h) for more details.
 ```
 HARNESS_FORK_BEGIN()
 {
@@ -321,7 +450,8 @@ HARNESS_FORK_BEGIN()
 }
 HARNESS_FORK_END();
 ```
-**Testing using a shim**
+
+#### Testing using a shim
 
 A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Below is a simple example. See `harnessPq.h` for more details.
 ```
@@ -379,7 +509,7 @@ These files are discussed in the following sections along with how to verify the
 
 There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of passphrases, all configuration file options can be passed on the command line. To configure an option for the configuration file, the `section:` key must be present.
 
-The `option:` section is broken into sub-sections by a simple comment divider (e.g. `# Repository options`) under which the options are organized alphabetically by option name. To better explain this section, `online` will be used as an example:
+The `option:` section is broken into sub-sections by a simple comment divider (e.g. `# Repository options`) under which the options are organized alphabetically by option name. To better explain this section, the `online` option will be used as an example:
 
 #### Example 1
 ```
@@ -442,5 +572,3 @@ To add an option, add the following to the `<option-list>` section; if it does n
 </option>
 ```
 > **IMPORTANT:** currently a period (.) is required to end the `summary` section.
-
-### Testing the help
