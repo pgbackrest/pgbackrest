@@ -342,7 +342,7 @@ storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mo
 
             <p>If the majority of functions in a module or object are variadic it is best to provide macros for all functions even if they do not have variable parameters.  Do not use the base function when variadic macros exist.</p>
         </section>
-
+<!-- CSHANG MOVE THESE TO CONTRIBUTING -->
         <section id="memory-context">
             <title>Memory Context</title>
 

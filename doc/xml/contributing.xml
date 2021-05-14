@@ -422,7 +422,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
 
             <p>There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of passphrases, all configuration file options can be passed on the command line. To configure an option for the configuration file, the <id>section:</id> key must be present.</p>
 
-            <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, <id>online</id> will be used as an example:</p>
+            <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, the <id>online</id> option will be used as an example:</p>
 
             <section id="online-ex1">
                 <title>Example 1</title>
@@ -497,8 +497,22 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
 
         <section id="help-test">
             <title>Testing the help</title>
-
+tell them to run the help unit test if they have added an option to ensure - otherwise will blow up in ci
             <!-- CSHANG put something about running and updating the help -->
+<!-- CSHANG!!! NEED TO UPDATE README TO LINK TO THIS AND MOVE THAT TEXT TO BEGINNING OF DOC -->
+            pgbackrest/test/test.pl --vm=none --build-only
+            -- this just builds the executeable - this is generally a handy thing to do to test with the binary
+            then can do:
+            test/bin/none/pgbackrest help backup repo-type
+
+        </section>
+
+        <section id="doc-test">
+            <title>Testing with generated docker containers</title>
+link to general builds section on readme.doc
+also run with no-exe to see locally just the text
+            <!-- CSHANG should we say something about generating the docs so can exec into docker containers to test? We could update the README in the doc folder... -->
+            /pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache
 
         </section>
     </section>
