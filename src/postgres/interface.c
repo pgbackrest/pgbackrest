@@ -513,11 +513,10 @@ pgWalFromFile(const String *walFile, const Storage *storage)
 
 /**********************************************************************************************************************************/
 String *
-pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
+pgTablespaceId(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
-        FUNCTION_TEST_PARAM(UINT, pgCatalogVersion);
     FUNCTION_TEST_END();
 
     String *result = NULL;
@@ -530,7 +529,7 @@ pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = strNewFmt("PG_%s_%u", strZ(pgVersionStr), pgCatalogVersion);
+                result = strNewFmt("PG_%s_%u", strZ(pgVersionStr), pgVersionInfo(pgVersion).catalogVersion);
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -713,21 +712,6 @@ pgXactPath(unsigned int pgVersion)
 /**********************************************************************************************************************************/
 #ifdef DEBUG
 
-unsigned int
-pgCatalogTestVersion(unsigned int pgVersion)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(pgVersionInfo(pgVersion).catalogVersion);
-}
-
-#endif
-
-/**********************************************************************************************************************************/
-#ifdef DEBUG
-
 Buffer *
 pgControlTestToBuffer(PgControl pgControl)
 {
@@ -738,8 +722,6 @@ pgControlTestToBuffer(PgControl pgControl)
     // Set defaults if values are not passed
     pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : pgControl.pageSize;
     pgControl.walSegmentSize = pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize;
-    pgControl.catalogVersion = pgControl.catalogVersion == 0 ?
-        pgVersionInfo(pgControl.version).catalogVersion : pgControl.catalogVersion;
 
     // Create the buffer and clear it
     Buffer *result = bufNew(PG_CONTROL_SIZE);

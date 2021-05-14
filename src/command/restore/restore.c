@@ -1020,8 +1020,7 @@ restoreCleanBuild(Manifest *manifest)
             // If this is a tablespace append the tablespace identifier
             if (cleanData->target->type == manifestTargetTypeLink && cleanData->target->tablespaceId != 0)
             {
-                const String *tablespaceId = pgTablespaceId(
-                    manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
+                const String *tablespaceId = pgTablespaceId(manifestData(manifest)->pgVersion);
 
                 // Only PostgreSQL >= 9.0 has tablespace indentifiers
                 if (tablespaceId != NULL)
@@ -1268,8 +1267,7 @@ restoreSelectiveExpression(Manifest *manifest)
 
             // Generate tablespace expression
             RegExp *tablespaceRegExp = NULL;
-            const String *tablespaceId = pgTablespaceId(
-                manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
+            const String *tablespaceId = pgTablespaceId(manifestData(manifest)->pgVersion);
 
             if (tablespaceId == NULL)
                 tablespaceRegExp = regExpNew(STRDEF("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/[0-9]+/" PG_FILE_PGVERSION));

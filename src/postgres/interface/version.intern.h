@@ -69,7 +69,6 @@ Read the version specific pg_control into a general data structure
         return (PgControl)                                                                                                         \
         {                                                                                                                          \
             .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
-            .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
             .pageChecksum = ((ControlFileData *)controlFile)->data_checksum_version != 0,                                          \
@@ -88,7 +87,6 @@ Read the version specific pg_control into a general data structure
         return (PgControl)                                                                                                         \
         {                                                                                                                          \
             .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
-            .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
             .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
             .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
         };                                                                                                                         \
@@ -134,7 +132,7 @@ Create a pg_control file for testing
         {                                                                                                                          \
             .system_identifier = pgControl.systemId,                                                                               \
             .pg_control_version = PG_CONTROL_VERSION,                                                                              \
-            .catalog_version_no = pgControl.catalogVersion,                                                                        \
+            .catalog_version_no = CATALOG_VERSION_NO,                                                                              \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
             .data_checksum_version = pgControl.pageChecksum,                                                                       \
@@ -154,7 +152,7 @@ Create a pg_control file for testing
         {                                                                                                                          \
             .system_identifier = pgControl.systemId,                                                                               \
             .pg_control_version = PG_CONTROL_VERSION,                                                                              \
-            .catalog_version_no = pgControl.catalogVersion,                                                                        \
+            .catalog_version_no = CATALOG_VERSION_NO,                                                                              \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
         };                                                                                                                         \
