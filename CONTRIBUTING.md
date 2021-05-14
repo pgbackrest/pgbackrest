@@ -47,21 +47,21 @@ The following sections provide information on some important concepts needed for
 
 ### Memory Context
 
-Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use `MEM_CONTEXT_NEW_BEGIN("somename")` for objects and `MEM_CONTEXT_TEMP_BEGIN()` for functions. See [memContext.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/memContext.h) for more details and the [Coding Example](#coding-example) below.
+Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use `MEM_CONTEXT_NEW_BEGIN("SomeName")` for objects and `MEM_CONTEXT_TEMP_BEGIN()` for functions. See [memContext.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/memContext.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Logging
 
-Logging is used in debugging with the built-in macros FUNCTION_LOG_* and FUNCTION_TEST_*, which are used to trace parameters passed to/returned from functions. FUNCTION_LOG_* macros are used for production logging whereas FUNCTION_TEST_* macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
+Logging is used in debugging with the built-in macros FUNCTION_LOG_* and FUNCTION_TEST_* which are used to trace parameters passed to/returned from functions. FUNCTION_LOG_* macros are used for production logging whereas FUNCTION_TEST_* macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
 
-Logging is also used for providing information to the user via the LOG_* macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via THROW_* macros when throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/log.h) and[error.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
+Logging is also used for providing information to the user via the LOG_* macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via THROW_* macros when throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Coding Example
 
-In the hypothetical example below, code comments (double-slash or slash-asterisk) will explain the example. Refer to the sections above and [CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md) for an introduction to the details provided here.
+In the hypothetical example below, code comments are not indented as would be appropriate in the code as they are only here to explain the example. Refer to the sections above and [CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md) for an introduction to the details provided here.
 
 #### Example: basic object construction
 ```c
-// Declare the publicly accessible variables in a structure named the object name with Pub appended
+// Declare the publicly accessible variables in a structure with Pub appended to the name
 typedef struct MyObjPub         // First letter upper case
 {
     MemContext *memContext;     // Pointer to memContext in which this object resides
@@ -75,7 +75,8 @@ struct MyObj
     const String *name;         // Pointer to lightweight string object - see string.h
 };
 
-// Declare getters and setters inline for the publicly visible variables. Only setters require "Set" appended to the name.
+// Declare getters and setters inline for the publicly visible variables.
+// Only setters require "Set" appended to the name.
 __attribute__((always_inline)) static inline unsigned int
 myObjMyData(const MyObj *const this)
 {
@@ -371,14 +372,15 @@ if (testBegin("expireBackup()"))
 
 #### Setting up the command to be run
 
-The [/harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/commonharnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the function `harnessCfgLoad()` with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command:
+The [harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the function `harnessCfgLoad()` with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command:
 ```
-StringList *argList = strLstNew();                                      // create an empty string list
-hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);                 // add the --repo-path option
-harnessCfgLoad(cfgCmdInfo, argList);                                    // load the command and option list into the test harness
+StringList *argList = strLstNew();                              // Create an empty string list
+hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);         // Add the --repo-path option
+harnessCfgLoad(cfgCmdInfo, argList);                            // Load the command and option list into the test harness
 
+// Run the test
 TEST_RESULT_STR_Z(
-    infoRender(), "No stanzas exist in the repository.\n", "text output - no stanzas");  // run the test
+    infoRender(), "No stanzas exist in the repository.\n", "text output - no stanzas");
 ```
 
 #### Storing a file
@@ -453,7 +455,7 @@ HARNESS_FORK_END();
 
 #### Testing using a shim
 
-A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Below is a simple example. See `harnessPq.h` for more details.
+A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Below is a simple example. See [harnessPq.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessPq.h) for more details.
 ```
 // Set up two standbys but no primary
 harnessPqScriptSet((HarnessPq [])
@@ -572,3 +574,32 @@ To add an option, add the following to the `<option-list>` section; if it does n
 </option>
 ```
 > **IMPORTANT:** currently a period (.) is required to end the `summary` section.
+
+### Testing the help
+
+It is important to run the `help` command unit test after adding an option in case a change is required:
+```
+pgbackrest/test/test.pl --module=command --test=help --vm-out
+```
+To verify the `help` command output, the pgBackRest executable can be built:
+```
+pgbackrest/test/test.pl --vm=none --build-only
+```
+The binary can then be used to test the help output:
+```
+test/bin/none/pgbackrest help backup repo-type
+```
+
+### Testing the documentation
+
+To quickly view the HTML documentation, the `--no-exe` option can be passed to the documentation generator in order to bypass executing the code elements:
+```
+pgbackrest/doc/doc.pl --output=html --no-exe
+```
+The generated HTML files will be placed in the `doc/output/html` directory where they can be viewed locally in a browser.
+
+If Docker is installed, the documentation generator can also be used to build Docker containers by passing the `--no-cache` option. The resulting containers can be useful for manually testing or trying out new code or features. The following demonstrates building through just the `quickstart` section of the `user-guide` without encryption.
+```
+pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache
+```
+The resulting Docker containers can be listed with `docker ps` and the container can be entered with `docker exec -it doc-pg-primary bash` for testing with the `postgres` user.

@@ -143,13 +143,13 @@
         <section id="memory-context">
             <title>Memory Context</title>
 
-            <p>Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use <code>MEM_CONTEXT_NEW_BEGIN("somename")</code> for objects and <code>MEM_CONTEXT_TEMP_BEGIN()</code> for functions. See <link url="{[github-url-src-common]}/memContext.h">memContext.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+            <p>Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use <code>MEM_CONTEXT_NEW_BEGIN("SomeName")</code> for objects and <code>MEM_CONTEXT_TEMP_BEGIN()</code> for functions. See <link url="{[github-url-src-common]}/memContext.h">memContext.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
 
         <section id="message-logging">
             <title>Logging</title>
 
-            <p>Logging is used in debugging with the built-in macros FUNCTION_LOG_* and FUNCTION_TEST_*, which are used to trace parameters passed to/returned from functions. FUNCTION_LOG_* macros are used for production logging whereas FUNCTION_TEST_* macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+            <p>Logging is used in debugging with the built-in macros FUNCTION_LOG_* and FUNCTION_TEST_* which are used to trace parameters passed to/returned from functions. FUNCTION_LOG_* macros are used for production logging whereas FUNCTION_TEST_* macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
 
             <p>Logging is also used for providing information to the user via the LOG_* macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via THROW_* macros when throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
@@ -157,12 +157,13 @@
         <section id="coding-example">
             <title>Coding Example</title>
 
-            <p>In the hypothetical example below, code comments (double-slash or slash-asterisk) will explain the example. Refer to the sections above and <link url="{[github-url-master]}/CODING.md">CODING.md</link> for an introduction to the details provided here.</p>
+            <p>In the hypothetical example below, code comments are not indented as would be appropriate in the code as they are only here to explain the example. Refer to the sections above and <link url="{[github-url-master]}/CODING.md">CODING.md</link> for an introduction to the details provided here.</p>
 
             <section id="coding-ex1">
                 <title>Example: basic object construction</title>
+
                 <code-block type="c">
-// Declare the publicly accessible variables in a structure named <objectName>Pub
+// Declare the publicly accessible variables in a structure with Pub appended to the name
 typedef struct MyObjPub         // First letter upper case
 {
     MemContext *memContext;     // Pointer to memContext in which this object resides
@@ -399,7 +400,6 @@ pgbackrest/doc/doc.pl --help
           - command/check/common
           - command/check/check
                 </code-block>
-
             </section>
 
             <section id="test-file">
@@ -421,7 +421,7 @@ if (testBegin("expireBackup()"))
             <section id="test-command">
                 <title>Setting up the command to be run</title>
 
-                <p>The <link url="{[github-url-test-common]}harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command:</p>
+                <p>The <link url="{[github-url-test-common]}/harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command:</p>
 
                 <code-block>
 StringList *argList = strLstNew();                              // Create an empty string list
@@ -515,7 +515,7 @@ HARNESS_FORK_END();
             <section id="test-shim">
                 <title>Testing using a shim</title>
 
-                <p>A <postgres/> libpq shim is provided to simulate interactions with <postgres/>. Below is a simple example. See <file>harnessPq.h</file> for more details.</p>
+                <p>A <postgres/> libpq shim is provided to simulate interactions with <postgres/>. Below is a simple example. See <link url="{[github-url-test-common]}/harnessPq.h">harnessPq.h</link> for more details.</p>
 
                 <code-block>
 // Set up two standbys but no primary
@@ -585,7 +585,8 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
 
             <section id="online-ex1">
                 <title>Example 1</title>
-            <code-block>
+
+                <code-block>
   online:
     type: boolean
     default: true
@@ -596,8 +597,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
       stanza-upgrade: {}
     command-role:
       default: {}
-            </code-block>
-
+                </code-block>
             </section>
 
             <p>Note that <id>section:</id> is not present thereby making this a command-line only option defined as follows:</p>
@@ -614,6 +614,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
 
             <section id="online-ex2">
                 <title>Example 2</title>
+
                 <code-block>
   online:
     type: boolean
@@ -628,7 +629,6 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
     command-role:
       default: {}
                 </code-block>
-
             </section>
 
             <p>At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C code, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
@@ -653,9 +653,46 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-
             <admonition type="important">currently a period (.) is required to end the <code>summary</code> section.</admonition>
         </section>
 
-<!-- CSHANG Put HELP TEST here -->
+        <section id="help-test">
+            <title>Testing the help</title>
 
+            <p>It is important to run the <cmd>help</cmd> command unit test after adding an option in case a change is required:</p>
 
-<!-- CSHANG Put DOC TEST here -->
+            <code-block>
+pgbackrest/test/test.pl --module=command --test=help --vm-out
+            </code-block>
+
+            <p>To verify the <cmd>help</cmd> command output, the <backrest/> executable can be built:</p>
+
+            <code-block>
+pgbackrest/test/test.pl --vm=none --build-only
+            </code-block>
+
+            <p>The binary can then be used to test the help output:</p>
+
+            <code-block>
+test/bin/none/pgbackrest help backup repo-type
+            </code-block>
+        </section>
+
+        <section id="doc-test">
+            <title>Testing the documentation</title>
+
+            <p>To quickly view the HTML documentation, the <code>--no-exe</code> option can be passed to the documentation generator in order to bypass executing the code elements:</p>
+
+            <code-block>
+pgbackrest/doc/doc.pl --output=html --no-exe
+            </code-block>
+
+            <p>The generated HTML files will be placed in the <file>doc/output/html</file> directory where they can be viewed locally in a browser.</p>
+
+            <p>If Docker is installed, the documentation generator can also be used to build Docker containers by passing the <code>--no-cache</code> option. The resulting containers can be useful for manually testing or trying out new code or features.  The following demonstrates building through just the <code>quickstart</code> section of the <file>user-guide</file> without encryption.</p>
+
+            <code-block>
+pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache
+            </code-block>
+
+            <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec -it doc-pg-primary bash</code> for testing with the <code>postgres</code> user.</p>
+        </section>
     </section>
 </doc>
