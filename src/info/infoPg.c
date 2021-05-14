@@ -54,7 +54,7 @@ static InfoPg *
 infoPgNewInternal(InfoPgType type)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
     InfoPg *this = memNew(sizeof(InfoPg));
@@ -77,7 +77,7 @@ InfoPg *
 infoPgNew(InfoPgType type, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
@@ -158,7 +158,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -232,7 +232,7 @@ infoPgSet(
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
-        FUNCTION_LOG_PARAM(ENUM, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);

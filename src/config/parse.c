@@ -986,7 +986,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                 // If the option is missing an argument then error
                 case ':':
-                    THROW_FMT(OptionInvalidError, "option '%s' requires argument", argList[optind - 1]);
+                    THROW_FMT(OptionInvalidError, "option '%s' requires an argument", argList[optind - 1]);
 
                 // Parse valid option
                 default:

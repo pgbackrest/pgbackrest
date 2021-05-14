@@ -16,10 +16,6 @@ Constants
 #define DATE_TIME_REGEX                                             "[0-9]{8}\\-[0-9]{6}"
 #define BACKUP_LINK_LATEST                                          "latest"
 
-STRING_EXTERN(BACKUP_TYPE_FULL_STR,                                 BACKUP_TYPE_FULL);
-STRING_EXTERN(BACKUP_TYPE_DIFF_STR,                                 BACKUP_TYPE_DIFF);
-STRING_EXTERN(BACKUP_TYPE_INCR_STR,                                 BACKUP_TYPE_INCR);
-
 /**********************************************************************************************************************************/
 String *
 backupRegExp(BackupRegExpParam param)
@@ -83,58 +79,6 @@ backupRegExp(BackupRegExpParam param)
         strCatZ(result, "$");
 
     FUNCTION_LOG_RETURN(STRING, result);
-}
-
-/**********************************************************************************************************************************/
-BackupType
-backupType(const String *type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, type);
-    FUNCTION_TEST_END();
-
-    ASSERT(type != NULL);
-
-    BackupType result;
-
-    if (strEq(type, BACKUP_TYPE_FULL_STR))
-        result = backupTypeFull;
-    else if (strEq(type, BACKUP_TYPE_DIFF_STR))
-        result = backupTypeDiff;
-    else if (strEq(type, BACKUP_TYPE_INCR_STR))
-        result = backupTypeIncr;
-    else
-        THROW_FMT(AssertError, "invalid backup type '%s'", strZ(type));
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-const String *backupTypeStr(BackupType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
-    FUNCTION_TEST_END();
-
-    ASSERT(type <= backupTypeIncr);
-
-    const String *result = NULL;
-
-    switch (type)
-    {
-        case backupTypeFull:
-            result = BACKUP_TYPE_FULL_STR;
-            break;
-
-        case backupTypeDiff:
-            result = BACKUP_TYPE_DIFF_STR;
-            break;
-
-        case backupTypeIncr:
-            result = BACKUP_TYPE_INCR_STR;
-            break;
-    }
-
-    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/

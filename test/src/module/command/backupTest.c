@@ -510,7 +510,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(0));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - skip");
@@ -594,7 +594,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - pageChecksum");
@@ -637,7 +637,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(true));             // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - noop");
@@ -779,7 +779,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
         varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeNone));   // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - copy, compress");
@@ -894,7 +894,7 @@ testRun(void)
         varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
         varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
         varLstAdd(paramList, varNewBool(false));                // delta
-        varLstAdd(paramList, varNewUInt(cipherTypeAes256Cbc));  // cipherType
+        varLstAdd(paramList, varNewUInt64(cipherTypeAes256Cbc));// cipherType
         varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
 
         TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - recopy, encrypt");
@@ -1240,7 +1240,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -1512,7 +1512,7 @@ testRun(void)
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--" CFGOPT_COMPRESS);
         hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
-        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_ERROR(cmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
@@ -1533,7 +1533,7 @@ testRun(void)
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
         strLstAddZ(argList, "--" CFGOPT_CHECKSUM_PAGE);
-        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_PGVERSION_STR), BUFSTRDEF("VER"));
@@ -1560,7 +1560,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
         strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
-        strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
@@ -1583,7 +1583,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
         strLstAddZ(argList, "--no-" CFGOPT_ONLINE);
@@ -1598,7 +1598,7 @@ testRun(void)
 
         // With repo2 the only repo configured, ensure it is chosen by confirming diff is changed to full due to no prior backups
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
-        hrnCfgArgRawZ(argList, cfgOptType, BACKUP_TYPE_DIFF);
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdBackup(), "backup");
@@ -1706,7 +1706,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-            strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--no-" CFGOPT_ARCHIVE_CHECK);
@@ -1803,7 +1803,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-            strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
@@ -1993,7 +1993,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-            strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_DIFF);
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
             strLstAddZ(argList, "--no-" CFGOPT_COMPRESS);
             strLstAddZ(argList, "--" CFGOPT_STOP_AUTO);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
@@ -2322,7 +2322,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-            strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_FULL);
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             strLstAddZ(argList, "--" CFGOPT_MANIFEST_SAVE_THRESHOLD "=1");
             strLstAddZ(argList, "--" CFGOPT_ARCHIVE_COPY);
@@ -2513,7 +2513,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-            strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -2551,7 +2551,7 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepo, "2");
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-            strLstAddZ(argList, "--" CFGOPT_TYPE "=" BACKUP_TYPE_INCR);
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
             strLstAddZ(argList, "--" CFGOPT_DELTA);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             harnessCfgLoad(cfgCmdBackup, argList);

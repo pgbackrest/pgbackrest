@@ -108,7 +108,8 @@ sub containerWrite
 
         foreach my $strBuild (reverse(keys(%{$hContainerCache})))
         {
-            if (defined($hContainerCache->{$strBuild}{$strOS}) && $hContainerCache->{$strBuild}{$strOS} eq $strScriptSha1)
+            if (defined($hContainerCache->{$strBuild}{hostArch()}{$strOS}) &&
+                $hContainerCache->{$strBuild}{hostArch()}{$strOS} eq $strScriptSha1)
             {
                 &log(INFO, "Using cached ${strTag}-${strBuild} image (${strScriptSha1}) ...");
 
@@ -142,7 +143,7 @@ sub groupCreate
     my $strName = shift;
     my $iId = shift;
 
-    return "groupadd -g${iId} ${strName}";
+    return "groupadd -f -g${iId} ${strName}";
 }
 
 sub userCreate
@@ -464,14 +465,14 @@ sub containerBuild
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
                 elsif ($strOS eq VM_F32)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-32-x86_64/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-32-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 

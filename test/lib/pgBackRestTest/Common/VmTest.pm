@@ -15,6 +15,7 @@ use Exporter qw(import);
 
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
+use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::DbVersion;
 
@@ -581,6 +582,29 @@ sub vmArchBits
 }
 
 push @EXPORT, qw(vmArchBits);
+
+####################################################################################################################################
+# Get host architecture
+####################################################################################################################################
+my $strHostArch = undef;
+
+sub hostArch
+{
+    if (!defined($strHostArch))
+    {
+        $strHostArch = trim(`uname -m`);
+
+        # Mac M1 reports arm64 but we generally need aarch64 (which Linux reports)
+        if ($strHostArch eq 'arm64')
+        {
+            $strHostArch = 'aarch64';
+        }
+    }
+
+    return $strHostArch;
+}
+
+push @EXPORT, qw(hostArch);
 
 ####################################################################################################################################
 # Does the VM support libbacktrace?

@@ -29,8 +29,6 @@ Info Command
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-STRING_STATIC(CFGOPTVAL_INFO_OUTPUT_TEXT_STR,                       "text");
-
 // Naming convention: <sectionname>_KEY_<keyname>_VAR. If the key exists in multiple sections, then <sectionname>_ is omitted.
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
@@ -106,7 +104,7 @@ Data types and structures
 typedef struct InfoRepoData
 {
     unsigned int key;                                               // User-defined repo key
-    CipherType cipher;                                              // Encryption type (0 = none)
+    CipherType cipher;                                              // Encryption type
     const String *cipherPass;                                       // Passphrase if the repo is encrypted (else NULL)
     int stanzaStatus;                                               // Status code of the the stanza on this repo
     unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
@@ -398,7 +396,7 @@ backupListAdd(
 
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
-    kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(backupData->backupType));
+    kvPut(varKv(backupInfo), BACKUP_KEY_TYPE_VAR, VARSTR(strIdToStr(backupData->backupType)));
     kvPut(
         varKv(backupInfo), BACKUP_KEY_PRIOR_VAR,
         (backupData->backupPrior != NULL ? VARSTR(backupData->backupPrior) : NULL));
@@ -640,7 +638,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         VariantList *repoSection = varLstNew();
 
         int stanzaStatusCode = -1;
-        unsigned int stanzaCipherType = 0;
+        uint64_t stanzaCipherType = cipherTypeNone;
 
         // Set the stanza name and initialize the overall stanza variables
         kvPut(varKv(stanzaInfo), KEY_NAME_VAR, VARSTR(stanzaData->name));
@@ -652,7 +650,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 
             Variant *repoInfo = varNewKv(kvNew());
             kvPut(varKv(repoInfo), REPO_KEY_KEY_VAR, VARUINT(repoData->key));
-            kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(repoData->cipher)));
+            kvPut(varKv(repoInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(repoData->cipher)));
 
             // If the stanza on this repo has the default status of ok but the backupInfo was not read, then the stanza exists on
             // other repos but not this one
@@ -745,7 +743,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
 
         // Set the overall cipher type
         if (stanzaCipherType != INFO_STANZA_STATUS_CODE_MIXED)
-            kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(cipherTypeName(stanzaCipherType)));
+            kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(stanzaCipherType)));
         else
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTRDEF(INFO_STANZA_MIXED));
 
@@ -1207,8 +1205,8 @@ infoRender(void)
 
         // Since the --set option depends on the --stanza option, the parser will error before this if the backup label is
         // specified but a stanza is not
-        if (backupLabel != NULL && !strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
-            THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for text output");
+        if (backupLabel != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_TEXT)
+            THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for " CFGOPTVAL_OUTPUT_TEXT_Z " output");
 
         // Initialize the repo index
         unsigned int repoIdxMin = 0;
@@ -1232,7 +1230,7 @@ infoRender(void)
             repoErrorList[repoIdx] = (InfoRepoData)
             {
                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
-                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoIdx)),
+                .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx),
                 .error = NULL,
             };
@@ -1304,7 +1302,7 @@ infoRender(void)
                             stanzaRepo.repoList[repoListIdx] = (InfoRepoData)
                             {
                                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
-                                .cipher = cipherType(cfgOptionIdxStr(cfgOptRepoCipherType, repoListIdx)),
+                                .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoListIdx),
                                 .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
                                 .error = NULL,
                             };
@@ -1387,7 +1385,7 @@ infoRender(void)
             infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxMin, repoIdxMax);
 
         // Format text output
-        if (strEq(cfgOptionStr(cfgOptOutput), CFGOPTVAL_INFO_OUTPUT_TEXT_STR))
+        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
         {
             // Process any stanza directories
             if  (!varLstEmpty(infoList))
@@ -1519,7 +1517,10 @@ infoRender(void)
         }
         // Format json output
         else
+        {
+            ASSERT(cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON);
             resultStr = jsonFromVar(varNewVarLst(infoList));
+        }
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

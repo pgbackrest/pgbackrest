@@ -27,7 +27,7 @@ ioClientNew(void *driver, const IoClientInterface *interface)
 
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
-    ASSERT(interface->type != NULL);
+    ASSERT(interface->type != 0);
     ASSERT(interface->name != NULL);
     ASSERT(interface->open != NULL);
     ASSERT(interface->toLog != NULL);
@@ -52,5 +52,5 @@ String *
 ioClientToLog(const IoClient *this)
 {
     return strNewFmt(
-        "{type: %s, driver: %s}", strZ(*this->pub.interface->type), strZ(this->pub.interface->toLog(this->pub.driver)));
+        "{type: %s, driver: %s}", strZ(strIdToStr(this->pub.interface->type)), strZ(this->pub.interface->toLog(this->pub.driver)));
 }

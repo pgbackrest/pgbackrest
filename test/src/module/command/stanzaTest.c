@@ -123,11 +123,11 @@ testRun(void)
 
         argList = strLstDup(argListBase);
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 3, "%s/repo3", testPath());
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 4, "%s/repo4", testPath());
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 4, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
@@ -302,7 +302,7 @@ testRun(void)
 
         argList = strLstDup(argListBase);
         hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, CIPHER_TYPE_AES_256_CBC);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 

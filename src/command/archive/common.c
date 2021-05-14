@@ -46,7 +46,7 @@ static const String *
 archiveAsyncSpoolQueue(ArchiveMode archiveMode)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, archiveMode);
+        FUNCTION_TEST_PARAM(STRING_ID, archiveMode);
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN((archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR));
@@ -57,7 +57,7 @@ void
 archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING, archiveFile);
     FUNCTION_LOG_END();
 
@@ -71,12 +71,13 @@ archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
 
 /**********************************************************************************************************************************/
 bool
-archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError)
+archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError, bool warnOnOk)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(BOOL, throwOnError);
+        FUNCTION_LOG_PARAM(BOOL, warnOnOk);
     FUNCTION_LOG_END();
 
     ASSERT(walSegment != NULL);
@@ -143,7 +144,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
             if (okFileExists)
             {
                 // If there is content in the status file it is a warning
-                if (strSize(content) != 0)
+                if (strSize(content) != 0 && warnOnOk)
                 {
                     // If error code is not success, then this was a renamed error file
                     if (code != 0)
@@ -179,7 +180,7 @@ void
 archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, message);
@@ -208,7 +209,7 @@ void
 archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(STRING, warning);
     FUNCTION_LOG_END();
@@ -233,7 +234,7 @@ void
 archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, archiveMode);
+        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
         FUNCTION_LOG_PARAM(STRING_LIST, commandExec);
     FUNCTION_LOG_END();
 

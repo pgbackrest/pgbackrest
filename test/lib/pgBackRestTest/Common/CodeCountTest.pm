@@ -56,6 +56,7 @@ sub codeCountScan
                  $strFile =~ '\.cache$' ||
                  $strFile =~ '^doc/site/' ||
                  $strFile =~ '^src/build/autom4te.cache/' ||
+                 $strFile eq 'test/Dockerfile' ||
                  $strFile eq 'test/Vagrantfile' ||
                  $strFile =~ '^test/\.vagrant/' ||
                  $strFile =~ '^test/certificate/' ||

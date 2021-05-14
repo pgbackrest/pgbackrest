@@ -392,8 +392,8 @@ IoFilter *
 cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, mode);
-        FUNCTION_LOG_PARAM(ENUM, cipherType);
+        FUNCTION_LOG_PARAM(STRING_ID, mode);
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(BUFFER, pass);                          // Use FUNCTION_TEST so passphrase is not logged
         FUNCTION_LOG_PARAM(STRING, digestName);
     FUNCTION_LOG_END();
@@ -406,10 +406,10 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 
     // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
     // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.
-    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(cipherTypeName(cipherType)));
+    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(strIdToStr(cipherType)));
 
     if (!cipher)
-        THROW_FMT(AssertError, "unable to load cipher '%s'", strZ(cipherTypeName(cipherType)));
+        THROW_FMT(AssertError, "unable to load cipher '%s'", strZ(strIdToStr(cipherType)));
 
     // Lookup digest.  If not defined it will be set to sha1.
     const EVP_MD *digest = NULL;
@@ -444,8 +444,8 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 
         // Create param list
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewUInt(mode));
-        varLstAdd(paramList, varNewUInt(cipherType));
+        varLstAdd(paramList, varNewUInt64(mode));
+        varLstAdd(paramList, varNewUInt64(cipherType));
         // ??? Using a string here is not correct since the passphrase is being passed as a buffer so may contain null characters.
         // However, since strings are used to hold the passphrase in the rest of the code this is currently valid.
         varLstAdd(paramList, varNewStr(strNewBuf(pass)));
@@ -465,7 +465,7 @@ IoFilter *
 cipherBlockNewVar(const VariantList *paramList)
 {
     return cipherBlockNew(
-        (CipherMode)varUIntForce(varLstGet(paramList, 0)), (CipherType)varUIntForce(varLstGet(paramList, 1)),
+        (CipherMode)varUInt64(varLstGet(paramList, 0)), (CipherType)varUInt64(varLstGet(paramList, 1)),
         BUFSTR(varStr(varLstGet(paramList, 2))), varLstGet(paramList, 3) == NULL ? NULL : varStr(varLstGet(paramList, 3)));
 }
 
@@ -475,8 +475,8 @@ cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMod
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
-        FUNCTION_LOG_PARAM(ENUM, type);
-        FUNCTION_LOG_PARAM(ENUM, mode);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(STRING_ID, mode);
         FUNCTION_TEST_PARAM(STRING, pass);                          // Use FUNCTION_TEST so passphrase is not logged
     FUNCTION_LOG_END();
 

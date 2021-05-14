@@ -34,6 +34,7 @@ typedef struct Manifest Manifest;
 #include "common/crypto/hash.h"
 #include "common/type/object.h"
 #include "info/info.h"
+#include "info/infoBackup.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
