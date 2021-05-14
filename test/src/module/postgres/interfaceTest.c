@@ -30,11 +30,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgControlVersion()"))
+    if (testBegin("pgVersionInfo()"))
     {
-        TEST_ERROR(pgControlVersion(70300), AssertError, "invalid PostgreSQL version 70300");
-        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_83), 833, "8.3 control version");
-        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
+        TEST_ERROR(pgVersionInfo(70300), AssertError, "invalid PostgreSQL version 70300");
+        TEST_RESULT_UINT(pgVersionInfo(PG_VERSION_83).controlVersion, 833, "8.3 control version");
+        TEST_RESULT_UINT(pgVersionInfo(PG_VERSION_13).controlVersion, 1300, "13 control version");
     }
 
     // *****************************************************************************************************************************

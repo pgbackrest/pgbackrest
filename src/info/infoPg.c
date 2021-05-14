@@ -306,7 +306,7 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
                 infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR), jsonFromUInt(pgData.catalogVersion));
             infoSaveValue(
                 infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR),
-                jsonFromUInt(pgControlVersion(pgData.version)));
+                jsonFromUInt(pgVersionInfo(pgData.version).controlVersion));
         }
 
         infoSaveValue(infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR), jsonFromUInt(pgData.id));
@@ -334,7 +334,7 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
 
                 // These need to be saved because older pgBackRest versions expect them
                 kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgData.catalogVersion));
-                kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgControlVersion(pgData.version)));
+                kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgVersionInfo(pgData.version).controlVersion));
             }
             else
                 kvPut(pgDataKv, INFO_KEY_DB_ID_VAR, VARUINT64(pgData.systemId));

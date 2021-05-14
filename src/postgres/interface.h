@@ -97,6 +97,18 @@ WAL segment size is supported for versions below 11.
 #define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
 
 /***********************************************************************************************************************************
+PostgreSQL Version Info
+
+General information about a version of PostgreSQL that should not vary between clusters.
+***********************************************************************************************************************************/
+typedef struct PgVersionInfo
+{
+    unsigned int version;
+    unsigned int controlVersion;
+    unsigned int catalogVersion;
+} PgVersionInfo;
+
+/***********************************************************************************************************************************
 PostgreSQL Control File Info
 ***********************************************************************************************************************************/
 typedef struct PgControl
@@ -128,8 +140,8 @@ Functions
 PgControl pgControlFromFile(const Storage *storage);
 PgControl pgControlFromBuffer(const Buffer *controlFile);
 
-// Get the control version for a PostgreSQL version
-uint32_t pgControlVersion(unsigned int pgVersion);
+// Get the version info for a PostgreSQL version
+PgVersionInfo pgVersionInfo(unsigned int pgVersion);
 
 // Convert version string to version number and vice versa
 unsigned int pgVersionFromStr(const String *version);

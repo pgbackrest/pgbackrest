@@ -185,9 +185,70 @@ Types from src/include/catalog/catversion.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
+#elif PG_VERSION >= PG_VERSION_13
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	202007201
+
+#elif PG_VERSION >= PG_VERSION_12
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	201909212
+
+#elif PG_VERSION >= PG_VERSION_11
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	201809051
+
+#elif PG_VERSION >= PG_VERSION_10
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	201707211
+
 #elif PG_VERSION >= PG_VERSION_96
 
-#undef CATALOG_VERSION_NO
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	201608131
 
 #elif PG_VERSION >= PG_VERSION_95
 
@@ -215,9 +276,31 @@ Types from src/include/catalog/catversion.h
 /*							yyyymmddN */
 #define CATALOG_VERSION_NO	201409291
 
+#elif PG_VERSION >= PG_VERSION_93
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	201306121
+
 #elif PG_VERSION >= PG_VERSION_92
 
-#undef CATALOG_VERSION_NO
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	201204301
 
 #elif PG_VERSION >= PG_VERSION_91
 
@@ -245,9 +328,32 @@ Types from src/include/catalog/catversion.h
 /*							yyyymmddN */
 #define CATALOG_VERSION_NO	201008051
 
+#elif PG_VERSION >= PG_VERSION_84
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	200904091
+
+
 #elif PG_VERSION >= PG_VERSION_83
 
-#undef CATALOG_VERSION_NO
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	200711281
 
 #endif
 

@@ -97,17 +97,22 @@ Read the version specific pg_control into a general data structure
 #endif
 
 /***********************************************************************************************************************************
-Get the control version
+Get the version info
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
 #elif PG_VERSION >= PG_VERSION_83
 
-#define PG_INTERFACE_CONTROL_VERSION(version)                                                                                      \
-    uint32_t                                                                                                                       \
-    pgInterfaceControlVersion##version(void)                                                                                       \
+#define PG_INTERFACE_VERSION_INFO(versionParam)                                                                                    \
+    PgVersionInfo                                                                                                                  \
+    pgInterfaceVersionInfo##versionParam(void)                                                                                     \
     {                                                                                                                              \
-        return PG_CONTROL_VERSION;                                                                                                 \
+        return (PgVersionInfo)                                                                                                     \
+        {                                                                                                                          \
+            .version = PG_VERSION,                                                                                                 \
+            .controlVersion = PG_CONTROL_VERSION,                                                                                  \
+            .catalogVersion = CATALOG_VERSION_NO,                                                                                  \
+        };                                                                                                                         \
     }
 
 #endif
@@ -223,7 +228,7 @@ Call all macros with a single macro to make the vXXX.c files as simple as possib
 #define PG_INTERFACE_BASE(version)                                                                                                 \
     PG_INTERFACE_CONTROL_IS(version)                                                                                               \
     PG_INTERFACE_CONTROL(version)                                                                                                  \
-    PG_INTERFACE_CONTROL_VERSION(version)                                                                                          \
+    PG_INTERFACE_VERSION_INFO(version)                                                                                             \
     PG_INTERFACE_WAL_IS(version)                                                                                                   \
     PG_INTERFACE_WAL(version)
 

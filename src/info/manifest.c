@@ -1937,7 +1937,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             jsonFromUInt(manifest->pub.data.pgCatalogVersion));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-control-version"),
-            jsonFromUInt(pgControlVersion(manifest->pub.data.pgVersion)));
+            jsonFromUInt(pgVersionInfo(manifest->pub.data.pgVersion).controlVersion));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_ID_STR, jsonFromUInt(manifest->pub.data.pgId));
         infoSaveValue(
