@@ -87,16 +87,15 @@ infoBackupNewInternal(void)
 
 /**********************************************************************************************************************************/
 InfoBackup *
-infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const String *cipherPassSub)
+infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
-    ASSERT(pgVersion > 0 && pgSystemId > 0 && pgCatalogVersion > 0);
+    ASSERT(pgVersion > 0 && pgSystemId > 0);
 
     InfoBackup *this = NULL;
 
@@ -106,7 +105,7 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalo
 
         // Initialize the pg data
         this->pub.infoPg = infoPgNew(infoPgBackup, cipherPassSub);
-        infoBackupPgSet(this, pgVersion, pgSystemId, pgCatalogVersion);
+        infoBackupPgSet(this, pgVersion, pgSystemId);
     }
     MEM_CONTEXT_NEW_END();
 
@@ -299,16 +298,15 @@ infoBackupSave(InfoBackup *this, IoWrite *write)
 
 /**********************************************************************************************************************************/
 InfoBackup *
-infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion)
+infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
     FUNCTION_LOG_END();
 
-    this->pub.infoPg = infoPgSet(infoBackupPg(this), infoPgBackup, pgVersion, pgSystemId, pgCatalogVersion);
+    this->pub.infoPg = infoPgSet(infoBackupPg(this), infoPgBackup, pgVersion, pgSystemId);
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }

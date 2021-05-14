@@ -70,7 +70,7 @@ typedef struct InfoBackupData
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const String *cipherPassSub);
+InfoBackup *infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub);
 
 // Create new object and load contents from IoRead
 InfoBackup *infoBackupNewLoad(IoRead *read);
@@ -92,7 +92,7 @@ infoBackupPg(const InfoBackup *const this)
     return THIS_PUB(InfoBackup)->infoPg;
 }
 
-InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
+InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 // Cipher passphrase
 __attribute__((always_inline)) static inline const String *

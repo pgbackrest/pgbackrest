@@ -86,7 +86,7 @@ cmdStanzaCreate(void)
                 cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save backup info
-                infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherPassSub);
+                infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, cipherPassSub);
 
                 infoBackupSaveFile(
                     infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR,

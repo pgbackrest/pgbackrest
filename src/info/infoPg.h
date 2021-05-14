@@ -29,7 +29,6 @@ typedef struct InfoPgData
 {
     unsigned int id;
     uint64_t systemId;
-    unsigned int catalogVersion;
     unsigned int version;
 } InfoPgData;
 
@@ -105,8 +104,7 @@ void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
 void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
 
 // Set the InfoPg object data based on values passed
-InfoPg *infoPgSet(
-    InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion);
+InfoPg *infoPgSet(InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId);
 
 /***********************************************************************************************************************************
 Macros for function logging

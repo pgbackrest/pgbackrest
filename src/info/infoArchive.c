@@ -197,7 +197,7 @@ infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 
     ASSERT(this != NULL);
 
-    this->pub.infoPg = infoPgSet(infoArchivePg(this), infoPgArchive, pgVersion, pgSystemId, 0);
+    this->pub.infoPg = infoPgSet(infoArchivePg(this), infoPgArchive, pgVersion, pgSystemId);
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
 }
