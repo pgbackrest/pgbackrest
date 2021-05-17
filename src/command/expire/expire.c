@@ -896,7 +896,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
             const StringList *historyYearList = strLstSort(storageListP(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
                 sortOrderDesc);
-            
+
             for (unsigned int historyYearIdx = 0; historyYearIdx < strLstSize(historyYearList); historyYearIdx++)
             {
                 // Get all the backup history manifests.
@@ -914,7 +914,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                     const String *historyBackupFile = strLstGet(historyList, historyIdx);
                     const String *historyBackupLabel = strLstGet(strLstNewSplitZ(historyBackupFile, "."), 0);
 
-                    // Keep the history manifests for unexpired backups and compare dates, extracted from backup labels since the 
+                    // Keep the history manifests for unexpired backups and compare dates, extracted from backup labels since the
                     // retention is set in days.
                     if (!strLstExists(currentBackupList, historyBackupLabel) &&
                         strCmp(strSubN(historyBackupLabel, 0, 8), strSubN(minBackupLabel, 0, 8)) < 0)
@@ -936,7 +936,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                 }
 
                 // Now that we removed the history manifests, we could remove the year directory if empty. However, it seems better
-                // to leave it there (and empty) to avoid the extra callback to the storage.                 
+                // to leave it there (and empty) to avoid the extra callback to the storage.
             }
         }
     }
@@ -1050,7 +1050,7 @@ cmdExpire(void)
 
                 // Remove all files on disk that are now expired
                 removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);
-                removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);               
+                removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);
                 removeExpiredHistory(infoBackup, repoIdx);
             }
             CATCH_ANY()
