@@ -211,7 +211,7 @@ pgbackrest/test/test.pl --vm=none --dry-run
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: builds required: bin
 --> P00   INFO: 69 tests selected
                 
@@ -228,7 +228,7 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -280,7 +280,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -303,7 +303,7 @@ pgbackrest/test/test.pl --vm-build --vm=u18
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: Using cached pgbackrest/test:u18-base-20200924A image (d95d53e642fc1cea4a2b8e935ea7d9739f7d1c46) ...
     P00   INFO: Building pgbackrest/test:u18-test image ...
     P00   INFO: Build Complete
@@ -316,7 +316,7 @@ pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data and containers
     P00   INFO: builds required: bin, bin host
