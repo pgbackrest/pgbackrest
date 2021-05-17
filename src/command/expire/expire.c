@@ -893,16 +893,18 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
             String *minBackupLabel = strNewFmt("%sF", buffer);
 
             // Get all the history years
-            const StringList *historyYearList = strLstSort(storageListP(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
+            const StringList *historyYearList = strLstSort(
+                storageListP(
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
                 sortOrderDesc);
 
             for (unsigned int historyYearIdx = 0; historyYearIdx < strLstSize(historyYearList); historyYearIdx++)
             {
                 // Get all the backup history manifests
                 const String *historyYear = strLstGet(historyYearList, historyYearIdx);
-                const StringList *historyList = strLstSort(storageListP(
-                    storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(historyYear)),
+                const StringList *historyList = strLstSort(
+                    storageListP(
+                        storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(historyYear)),
                         .expression = strNewFmt(
                             "%s\\.manifest\\.%s$",
                             strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
@@ -920,8 +922,8 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                         strCmp(strSubN(historyBackupLabel, 0, 8), strSubN(minBackupLabel, 0, 8)) < 0)
                     {
                         LOG_INFO_FMT(
-                        "repo%u: remove expired history backup manifest %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
-                        strZ(historyBackupFile));
+                            "repo%u: remove expired history backup manifest %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                            strZ(historyBackupFile));
 
                         // Execute the real expiration and deletion only if the dry-run mode is disabled
                         if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
