@@ -58,6 +58,23 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Use existing variable for GCS test server port."/>
+                        <commit subject="Refactor GCS token response parsing into a separate function."/>
+                        <commit subject="Add automatic GCS authentication for GCE instances.">
+                            <github-pull-request id="1395"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="jan.wieck"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="daniel.farina"/>
+                        </release-item-contributor-list>
+
+                        <p>Add automatic <proper>GCS</proper> authentication for <proper>GCE</proper> instances.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="986"/>
                         <github-pull-request id="1337"/>
 
@@ -276,6 +293,8 @@
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="daniel.farina"/>
                         </release-item-contributor-list>
 
                         <p>GCS support for repository storage.</p>
@@ -9573,6 +9592,11 @@
         <contributor id="dan.farrell">
             <contributor-name-display>Dan Farrell</contributor-name-display>
             <contributor-id type="github">farrellit</contributor-id>
+        </contributor>
+
+        <contributor id="daniel.farina">
+            <contributor-name-display>Daniel Farina</contributor-name-display>
+            <contributor-id type="github">fdr</contributor-id>
         </contributor>
 
         <contributor id="daniel.westermann">
