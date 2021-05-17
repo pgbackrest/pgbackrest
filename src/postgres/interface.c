@@ -43,10 +43,9 @@ STRING_STATIC(PG_NAME_LSN_STR,                                      "lsn");
 STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
 
 /***********************************************************************************************************************************
-Control file size.  The control file is actually 8192 bytes but only the first 512 bytes are used to prevent torn pages even on
-really old storage with 512-byte sectors.  This is true across all versions of PostgreSQL.
+The control file is 8192 bytes but only the first 512 bytes are used to prevent torn pages even on really old storage with 512-byte
+sectors. This is true across all versions of PostgreSQL.
 ***********************************************************************************************************************************/
-#define PG_CONTROL_SIZE                                             ((unsigned int)(8 * 1024))
 #define PG_CONTROL_DATA_SIZE                                        512
 
 /***********************************************************************************************************************************
@@ -75,17 +74,6 @@ typedef struct PgInterface
 
     // Convert WAL header to a common data structure
     PgWal (*wal)(const unsigned char *);
-
-#ifdef DEBUG
-    // Catalog version for testing
-    unsigned int catalogVersion;
-
-    // Create pg_control for testing
-    void (*controlTest)(PgControl, unsigned char *);
-
-    // Create WAL header for testing
-    void (*walTest)(PgWal, unsigned char *);
-#endif
 } PgInterface;
 
 static const PgInterface pgInterface[] =
@@ -99,13 +87,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs130,
         .wal = pgInterfaceWal130,
-
-#ifdef DEBUG
-        .catalogVersion = 202007201,
-
-        .controlTest = pgInterfaceControlTest130,
-        .walTest = pgInterfaceWalTest130,
-#endif
     },
     {
         .version = PG_VERSION_12,
@@ -116,13 +97,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs120,
         .wal = pgInterfaceWal120,
-
-#ifdef DEBUG
-        .catalogVersion = 201909212,
-
-        .controlTest = pgInterfaceControlTest120,
-        .walTest = pgInterfaceWalTest120,
-#endif
     },
     {
         .version = PG_VERSION_11,
@@ -133,13 +107,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs110,
         .wal = pgInterfaceWal110,
-
-#ifdef DEBUG
-        .catalogVersion = 201809051,
-
-        .controlTest = pgInterfaceControlTest110,
-        .walTest = pgInterfaceWalTest110,
-#endif
     },
     {
         .version = PG_VERSION_10,
@@ -150,13 +117,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs100,
         .wal = pgInterfaceWal100,
-
-#ifdef DEBUG
-        .catalogVersion = 201707211,
-
-        .controlTest = pgInterfaceControlTest100,
-        .walTest = pgInterfaceWalTest100,
-#endif
     },
     {
         .version = PG_VERSION_96,
@@ -167,13 +127,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs096,
         .wal = pgInterfaceWal096,
-
-#ifdef DEBUG
-        .catalogVersion = 201608131,
-
-        .controlTest = pgInterfaceControlTest096,
-        .walTest = pgInterfaceWalTest096,
-#endif
     },
     {
         .version = PG_VERSION_95,
@@ -184,13 +137,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs095,
         .wal = pgInterfaceWal095,
-
-#ifdef DEBUG
-        .catalogVersion = 201510051,
-
-        .controlTest = pgInterfaceControlTest095,
-        .walTest = pgInterfaceWalTest095,
-#endif
     },
     {
         .version = PG_VERSION_94,
@@ -201,13 +147,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs094,
         .wal = pgInterfaceWal094,
-
-#ifdef DEBUG
-        .catalogVersion = 201409291,
-
-        .controlTest = pgInterfaceControlTest094,
-        .walTest = pgInterfaceWalTest094,
-#endif
     },
     {
         .version = PG_VERSION_93,
@@ -218,13 +157,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs093,
         .wal = pgInterfaceWal093,
-
-#ifdef DEBUG
-        .catalogVersion = 201306121,
-
-        .controlTest = pgInterfaceControlTest093,
-        .walTest = pgInterfaceWalTest093,
-#endif
     },
     {
         .version = PG_VERSION_92,
@@ -235,13 +167,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs092,
         .wal = pgInterfaceWal092,
-
-#ifdef DEBUG
-        .catalogVersion = 201204301,
-
-        .controlTest = pgInterfaceControlTest092,
-        .walTest = pgInterfaceWalTest092,
-#endif
     },
     {
         .version = PG_VERSION_91,
@@ -252,13 +177,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs091,
         .wal = pgInterfaceWal091,
-
-#ifdef DEBUG
-        .catalogVersion = 201105231,
-
-        .controlTest = pgInterfaceControlTest091,
-        .walTest = pgInterfaceWalTest091,
-#endif
     },
     {
         .version = PG_VERSION_90,
@@ -269,13 +187,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs090,
         .wal = pgInterfaceWal090,
-
-#ifdef DEBUG
-        .catalogVersion = 201008051,
-
-        .controlTest = pgInterfaceControlTest090,
-        .walTest = pgInterfaceWalTest090,
-#endif
     },
     {
         .version = PG_VERSION_84,
@@ -286,13 +197,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs084,
         .wal = pgInterfaceWal084,
-
-#ifdef DEBUG
-        .catalogVersion = 200904091,
-
-        .controlTest = pgInterfaceControlTest084,
-        .walTest = pgInterfaceWalTest084,
-#endif
     },
     {
         .version = PG_VERSION_83,
@@ -303,13 +207,6 @@ static const PgInterface pgInterface[] =
 
         .walIs = pgInterfaceWalIs083,
         .wal = pgInterfaceWal083,
-
-#ifdef DEBUG
-        .catalogVersion = 200711281,
-
-        .controlTest = pgInterfaceControlTest083,
-        .walTest = pgInterfaceWalTest083,
-#endif
     },
 };
 
@@ -738,75 +635,6 @@ pgXactPath(unsigned int pgVersion)
 
     FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
 }
-
-/**********************************************************************************************************************************/
-#ifdef DEBUG
-
-unsigned int
-pgCatalogTestVersion(unsigned int pgVersion)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(pgInterfaceVersion(pgVersion)->catalogVersion);
-}
-
-#endif
-
-/**********************************************************************************************************************************/
-#ifdef DEBUG
-
-Buffer *
-pgControlTestToBuffer(PgControl pgControl)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PG_CONTROL, pgControl);
-    FUNCTION_TEST_END();
-
-    // Set defaults if values are not passed
-    pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : pgControl.pageSize;
-    pgControl.walSegmentSize = pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize;
-    pgControl.catalogVersion = pgControl.catalogVersion == 0 ?
-        pgInterfaceVersion(pgControl.version)->catalogVersion : pgControl.catalogVersion;
-
-    // Create the buffer and clear it
-    Buffer *result = bufNew(PG_CONTROL_SIZE);
-    memset(bufPtr(result), 0, bufSize(result));
-    bufUsedSet(result, bufSize(result));
-
-    // Generate pg_control
-    pgInterfaceVersion(pgControl.version)->controlTest(pgControl, bufPtr(result));
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-#endif
-
-/**********************************************************************************************************************************/
-#ifdef DEBUG
-
-void
-pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PG_WAL, pgWal);
-        FUNCTION_TEST_PARAM(BUFFER, walBuffer);
-    FUNCTION_TEST_END();
-
-    ASSERT(walBuffer != NULL);
-
-    // Set default WAL segment size if not specified
-    if (pgWal.size == 0)
-        pgWal.size = PG_WAL_SEGMENT_SIZE_DEFAULT;
-
-    // Generate WAL
-    pgInterfaceVersion(pgWal.version)->walTest(pgWal, bufPtr(walBuffer));
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-#endif
 
 /**********************************************************************************************************************************/
 unsigned int
