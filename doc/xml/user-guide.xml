@@ -18,18 +18,14 @@
         <variable key="os-debian-pg-version-min">12</variable>
         <variable key="os-debian-pg-version-max">13</variable>
 
-        <variable key="os-centos7-pg-version">9.5</variable>
-        <variable key="os-centos7-pg-version-min">9.2</variable>
-        <variable key="os-centos7-pg-version-max">9.5</variable>
-
-        <variable key="os-centos8-pg-version">10</variable>
-        <variable key="os-centos8-pg-version-min">9.6</variable>
-        <variable key="os-centos8-pg-version-max">11</variable>
+        <variable key="os-centos-pg-version">10</variable>
+        <variable key="os-centos-pg-version-min">9.6</variable>
+        <variable key="os-centos-pg-version-max">11</variable>
 
         <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
         <variable key="package">none</variable>
 
-        <!-- Defines the general OS type that will be used to generate commands.  Also supported: centos7, centos8 -->
+        <!-- Defines the general OS type that will be used to generate commands. Also supported: centos -->
         <variable key="os-type">debian</variable>
 
         <!-- Will encryption be used in the documentation? It can be useful for testing to omit encryption. -->
@@ -37,14 +33,11 @@
 
         <!-- Common if expressions for testing os-type -->
         <variable key="os-type-is-debian">'{[os-type]}' eq '{[os-debian]}'</variable>
-        <variable key="os-type-is-centos7">'{[os-type]}' eq '{[os-centos]}7'</variable>
-        <variable key="os-type-is-centos8">'{[os-type]}' eq '{[os-centos]}8'</variable>
-        <variable key="os-type-is-centos">({[os-type-is-centos7]} || {[os-type-is-centos8]})</variable>
+        <variable key="os-type-is-centos">'{[os-type]}' eq '{[os-centos]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:16.04</variable>
-        <variable key="os-image" if="{[os-type-is-centos7]}">centos:7</variable>
-        <variable key="os-image" if="{[os-type-is-centos8]}">centos:8</variable>
+        <variable key="os-image" if="{[os-type-is-centos]}">centos:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
         <variable key="user-guide-subtitle" if="{[os-type-is-centos]}">{[os-centos-title]}</variable>
@@ -67,13 +60,9 @@
         <variable key="pg-version-min" if="{[os-type-is-debian]}">{[os-debian-pg-version-min]}</variable>
         <variable key="pg-version-max" if="{[os-type-is-debian]}">{[os-debian-pg-version-max]}</variable>
 
-        <variable key="pg-version" if="{[os-type-is-centos7]}">{[os-centos7-pg-version]}</variable>
-        <variable key="pg-version-min" if="{[os-type-is-centos7]}">{[os-centos7-pg-version-min]}</variable>
-        <variable key="pg-version-max" if="{[os-type-is-centos7]}">{[os-centos7-pg-version-max]}</variable>
-
-        <variable key="pg-version" if="{[os-type-is-centos8]}">{[os-centos8-pg-version]}</variable>
-        <variable key="pg-version-min" if="{[os-type-is-centos8]}">{[os-centos8-pg-version-min]}</variable>
-        <variable key="pg-version-max" if="{[os-type-is-centos8]}">{[os-centos8-pg-version-max]}</variable>
+        <variable key="pg-version" if="{[os-type-is-centos]}">{[os-centos-pg-version]}</variable>
+        <variable key="pg-version-min" if="{[os-type-is-centos]}">{[os-centos-pg-version-min]}</variable>
+        <variable key="pg-version-max" if="{[os-type-is-centos]}">{[os-centos-pg-version-max]}</variable>
 
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
@@ -82,8 +71,7 @@
         <variable key="wal-level" if="{[pg-version]} &gt;= 9.6">replica</variable>
 
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">13</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-centos7]}">9.6</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-centos8]}">11</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-centos]}">11</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>

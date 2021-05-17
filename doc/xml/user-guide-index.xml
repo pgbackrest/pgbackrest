@@ -8,8 +8,7 @@
 
         <list>
             <list-item><link url="user-guide.html">{[os-debian-title]} / PostgreSQL {[os-debian-pg-version-min]}-{[os-debian-pg-version-max]}</link></list-item>
-            <list-item><link url="user-guide-centos8.html">{[os-centos-title]} / PostgreSQL {[os-centos8-pg-version-min]}-{[os-centos8-pg-version-max]}</link></list-item>
-            <list-item><link url="user-guide-centos7.html">{[os-centos-title]} / PostgreSQL {[os-centos7-pg-version-min]}-{[os-centos7-pg-version-max]}</link></list-item>
+            <list-item><link url="user-guide-centos.html">{[os-centos-title]} / PostgreSQL {[os-centos-pg-version-min]}-{[os-centos-pg-version-max]}</link></list-item>
         </list>
     </section>
 </doc>
