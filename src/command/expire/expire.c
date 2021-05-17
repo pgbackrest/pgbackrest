@@ -881,7 +881,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
     {
         if (cfgOptionIdxTest(cfgOptRepoRetentionHistory, repoIdx))
         {
-            // Get all the current backups in backup.info - these will not be expired.
+            // Get all the current backups in backup.info - these will not be expired
             StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
 
             // If the full backup history manifests are expired, we should expire diff and incr too. So, format the oldest full
@@ -892,14 +892,14 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                 buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&minTimestamp)) == 0, AssertError, "unable to format time");
             String *minBackupLabel = strNewFmt("%sF", buffer);
 
-            // Get all the history years.
+            // Get all the history years
             const StringList *historyYearList = strLstSort(storageListP(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
                 sortOrderDesc);
 
             for (unsigned int historyYearIdx = 0; historyYearIdx < strLstSize(historyYearList); historyYearIdx++)
             {
-                // Get all the backup history manifests.
+                // Get all the backup history manifests
                 const String *historyYear = strLstGet(historyYearList, historyYearIdx);
                 const StringList *historyList = strLstSort(storageListP(
                     storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(historyYear)),
@@ -923,7 +923,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                         "repo%u: remove expired history backup manifest %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
                         strZ(historyBackupFile));
 
-                        // Execute the real expiration and deletion only if the dry-run mode is disabled.
+                        // Execute the real expiration and deletion only if the dry-run mode is disabled
                         if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
                         {
                             storageRemoveP(
