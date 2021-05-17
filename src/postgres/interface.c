@@ -47,7 +47,7 @@ Control file size.  The control file is actually 8192 bytes but only the first 5
 really old storage with 512-byte sectors.  This is true across all versions of PostgreSQL.
 ***********************************************************************************************************************************/
 #define PG_CONTROL_SIZE                                             ((unsigned int)(8 * 1024))
-#define PG_CONTROL_DATA_SIZE                                        ((unsigned int)(512))
+#define PG_CONTROL_DATA_SIZE                                        512
 
 /***********************************************************************************************************************************
 PostgreSQL interface definitions
