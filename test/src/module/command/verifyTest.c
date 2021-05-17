@@ -1,15 +1,16 @@
 /***********************************************************************************************************************************
 Test Stanza Commands
 ***********************************************************************************************************************************/
-#include "storage/posix/storage.h"
-
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
-#include "common/harnessPq.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
+#include "storage/posix/storage.h"
+
+#include "common/harnessConfig.h"
+#include "common/harnessInfo.h"
+#include "common/harnessPostgres.h"
+#include "common/harnessPq.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -968,7 +969,7 @@ testRun(void)
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        pgWalTestToBuffer(
+        hrnPgWalToBuffer(
             (PgWal){.version = PG_VERSION_11, .systemId = 6626363367545678089, .size = 1024 * 1024}, walBuffer);
         const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
 
@@ -1532,7 +1533,7 @@ testRun(void)
         Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        pgWalTestToBuffer(
+        hrnPgWalToBuffer(
             (PgWal){.version = PG_VERSION_11, .systemId = 6626363367545678089, .size = 1024 * 1024}, walBuffer);
         const char *walBufferSha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer)));
         TEST_RESULT_VOID(

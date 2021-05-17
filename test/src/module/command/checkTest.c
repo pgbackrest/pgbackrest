@@ -1,17 +1,18 @@
 /***********************************************************************************************************************************
 Test Check Command
 ***********************************************************************************************************************************/
+#include "command/stanza/create.h"
+#include "info/infoArchive.h"
+#include "info/infoBackup.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 #include "storage/storage.intern.h"
 
-#include "command/stanza/create.h"
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
-#include "info/infoArchive.h"
-#include "info/infoBackup.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -147,7 +148,7 @@ testRun(void)
         // Create pg_control for standby
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
 
         argList = strLstNew();
         strLstAdd(argList, stanzaOpt);
@@ -181,7 +182,7 @@ testRun(void)
         // Create pg_control for primary
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg8))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665679}));
 
         // Create info files
         const Buffer *archiveInfoContent = harnessInfoChecksum(
@@ -481,14 +482,14 @@ testRun(void)
         InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_96, 6569239123849665679, NULL);
         InfoPgData archivePg = infoPgData(infoArchivePg(archiveInfo), infoPgDataCurrentId(infoArchivePg(archiveInfo)));
 
-        InfoBackup *backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_96), NULL);
+        InfoBackup *backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96), NULL);
         InfoPgData backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_RESULT_VOID(checkStanzaInfo(&archivePg, &backupPg), "stanza info files match");
 
         // Create a corrupted backup file - system id
         // -------------------------------------------------------------------------------------------------------------------------
-        backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_96), NULL);
+        backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_96), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -499,7 +500,7 @@ testRun(void)
 
         // Create a corrupted backup file - system id and version
         // -------------------------------------------------------------------------------------------------------------------------
-        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_95), NULL);
+        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_95), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -510,7 +511,7 @@ testRun(void)
 
         // Create a corrupted backup file - version
         // -------------------------------------------------------------------------------------------------------------------------
-        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_95), NULL);
+        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_95), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -521,7 +522,7 @@ testRun(void)
 
         // Create a corrupted backup file - db id
         // -------------------------------------------------------------------------------------------------------------------------
-        infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_96));
+        infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96));
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR_FMT(
@@ -544,7 +545,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         // Create info files
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");
