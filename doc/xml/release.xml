@@ -58,7 +58,11 @@
 
                 <release-feature-list>
                     <release-item>
-                        <github-pull-request id="1395"/>
+                        <commit subject="Use existing variable for GCS test server port."/>
+                        <commit subject="Refactor GCS token response parsing into a separate function."/>
+                        <commit subject="Add automatic GCS authentication for GCE instances.">
+                            <github-pull-request id="1395"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
