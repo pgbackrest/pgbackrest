@@ -918,8 +918,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
 
                     // Keep the history manifests for unexpired backups and compare dates, extracted from backup labels since the
                     // retention is set in days.
-                    if (!strLstExists(currentBackupList, historyBackupLabel) &&
-                        strCmp(strSubN(historyBackupLabel, 0, 8), strSubN(minBackupLabel, 0, 8)) < 0)
+                    if (!strLstExists(currentBackupList, historyBackupLabel) && strCmp(historyBackupLabel, minBackupLabel) < 0)
                     {
                         LOG_INFO_FMT(
                             "repo%u: remove expired history backup manifest %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
