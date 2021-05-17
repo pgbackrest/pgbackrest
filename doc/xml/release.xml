@@ -58,6 +58,17 @@
 
                 <release-feature-list>
                     <release-item>
+                        <github-pull-request id="1395"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="jan.wieck"/>
+                        </release-item-contributor-list>
+
+                        <p>Add automatic <proper>GCS</proper> authentication for <proper>GCE</proper> instances.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="986"/>
                         <github-pull-request id="1337"/>
 
