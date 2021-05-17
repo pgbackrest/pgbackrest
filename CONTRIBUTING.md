@@ -83,7 +83,7 @@ myObjMyData(const MyObj *const this)
     return THIS_PUB(MyObj)->myData;    // Use the built-in THIS_PUB macro
 }
 
-// TYPE and FROMAT macros for function logging
+// TYPE and FORMAT macros for function logging
 #define FUNCTION_LOG_MY_OBJ_TYPE                                            \
     MyObj *
 #define FUNCTION_LOG_MY_OBJ_FORMAT(value, buffer, bufferSize)               \
@@ -192,8 +192,6 @@ Examples of test runs are provided in the following sections. There are several 
 - `--vm-out` - displays the test output (helpful for monitoring the progress)
 
 - `--vm` - identifies the pre-build virtual machine when using Docker, otherwise the setting should be `none`
-
-- `--coverage-only` - selects a vm to use (although best when overridden with `--vm=f32`) and provides a coverage report in `test/result/coverage/coverage.html` or `test/result/coverage/lcov/index.html`
 
 For more options, run the test or documentation engine with the `--help` option:
 ```
@@ -477,14 +475,13 @@ TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check ind
 
 **Code Coverage**
 
-Unit tests are run and coverage of the code being tested is provided by running the test with the option `--coverage-only`. The following example would run the test set from the **define.yaml** section detailed above.
+Unit tests are run for all files that are listed in `define.yaml` and a coverage report generated for each file listed under the tag `coverage:`. Note that some files are listed in multiple `coverage:` sections for a module; in this case, each test for the file being modified should be specified for the module in which the file exists (e.g. `--module=storage --test=posix --test=gcs`, etc.) or, alternatively, simply run the module without the `--test` option. It is recommended that a `--vm` be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the **define.yaml** section detailed above.
 ```
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only
+pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u18
 ```
-> **NOTE:** If the message `
-ERROR: [125]: function not found at line` is displayed after `INFO: writing C coverage report` at the end of the test then try rerunning the test with `--vm=f32`
+> **NOTE:** Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.
 
-Because no test run is specified and `--coverage-only` has been requested, a coverage report will be generated and written to the local file system under the pgBackRest directory `test/result/coverage/lcov/index.html` and a file with only the highlighted code that has not been covered will be written to `test/result/coverage/coverage.html`.
+Because a test run has not been specified, a coverage report will be generated and written to the local file system under the pgBackRest directory `test/result/coverage/lcov/index.html` and a file with only the highlighted code that has not been covered will be written to `test/result/coverage/coverage.html`.
 
 If 100 percent code coverage has not been achieved, an error message will be displayed, for example: `ERROR: [125]: c module command/check/check is not fully covered`
 
@@ -492,7 +489,7 @@ If 100 percent code coverage has not been achieved, an error message will be dis
 
 Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option `--no-cleanup` provided. Again, continuing with the check command, from **define.yaml** above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.
 ```
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only --run=1 --no-cleanup
+pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --no-cleanup
 ```
 
 ## Adding an Option

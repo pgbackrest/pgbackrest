@@ -185,7 +185,7 @@ myObjMyData(const MyObj *const this)
     return THIS_PUB(MyObj)->myData;    // Use the built-in THIS_PUB macro
 }
 
-// TYPE and FROMAT macros for function logging
+// TYPE and FORMAT macros for function logging
 #define FUNCTION_LOG_MY_OBJ_TYPE                                            \
     MyObj *
 #define FUNCTION_LOG_MY_OBJ_FORMAT(value, buffer, bufferSize)               \
@@ -298,7 +298,6 @@ myObjDisplay(unsigned int myData)
                 <list-item><setting>--dev</setting> - sets several flags that are appropriate for development but should be omitted when performing final testing prior to submitting a Pull Request to the project.  Most importantly, it reuses object files from the previous test run to speed testing.</list-item>
                 <list-item><setting>--vm-out</setting> - displays the test output (helpful for monitoring the progress)</list-item>
                 <list-item><setting>--vm</setting> - identifies the pre-build virtual machine when using Docker, otherwise the setting should be <code>none</code></list-item>
-                <list-item><setting>--coverage-only</setting> - selects a vm to use (although best when overridden with <setting>--vm=f32</setting>) and provides a coverage report in <file>test/result/coverage/coverage.html</file> or <file>test/result/coverage/lcov/index.html</file></list-item>
             </list>
 
             <p>For more options, run the test or documentation engine with the <setting>--help</setting> option:</p>
@@ -540,16 +539,15 @@ TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check ind
             <title>Running a Unit Test</title>
 
             <p><b>Code Coverage</b></p>
-            <p>Unit tests are run and coverage of the code being tested is provided by running the test with the option <code>--coverage-only</code>. The following example would run the test set from the <b>define.yaml</b> section detailed above.</p>
+            <p>Unit tests are run for all files that are listed in <file>define.yaml</file> and a coverage report generated for each file listed under the tag <code>coverage:</code>. Note that some files are listed in multiple <code>coverage:</code> sections for a module; in this case, each test for the file being modified should be specified for the module in which the file exists (e.g. <code>--module=storage --test=posix --test=gcs</code>, etc.) or, alternatively, simply run the module without the <code>--test</code> option. It is recommended that a <code>--vm</code> be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the <b>define.yaml</b> section detailed above.</p>
 
             <code-block>
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only
+pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u18
             </code-block>
 
-<admonition type="note">If the message <code>
-ERROR: [125]: function not found at line</code> is displayed after <code>INFO: writing C coverage report</code> at the end of the test then try rerunning the test with <code>--vm=f32</code></admonition>
+<admonition type="note">Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.</admonition>
 
-            <p>Because no test run is specified and <code>--coverage-only</code> has been requested, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage/lcov/index.html</file> and a file with only the highlighted code that has not been covered will be written to <file>test/result/coverage/coverage.html</file>.
+            <p>Because a test run has not been specified, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage/lcov/index.html</file> and a file with only the highlighted code that has not been covered will be written to <file>test/result/coverage/coverage.html</file>.
 
             If 100 percent code coverage has not been achieved, an error message will be displayed, for example: <code>ERROR: [125]: c module command/check/check is not fully covered</code></p>
 
@@ -558,7 +556,7 @@ ERROR: [125]: function not found at line</code> is displayed after <code>INFO: w
             <p>Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option <code>--no-cleanup</code> provided. Again, continuing with the check command, from <b>define.yaml</b> above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.</p>
 
             <code-block>
-pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --coverage-only --run=1 --no-cleanup
+pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --no-cleanup
             </code-block>
         </section>
     </section>
