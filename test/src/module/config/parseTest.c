@@ -21,7 +21,7 @@ Option find test -- this is done a lot in the deprecated tests
 static void
 testOptionFind(const char *optionName, unsigned int optionId, unsigned int optionKeyIdx, bool negate, bool reset, bool deprecated)
 {
-    CfgParseOptionResult option = cfgParseOption(STR(optionName));
+    CfgParseOptionResult option = cfgParseOptionP(STR(optionName));
 
     TEST_RESULT_BOOL(option.found, true, "check %s found", optionName);
     TEST_RESULT_UINT(option.id, optionId, "check %s id %u", optionName, optionId);
@@ -1309,6 +1309,7 @@ testRun(void)
 
         setenv("PGBACKRESTXXX_NOTHING", "xxx", true);
         setenv("PGBACKREST_BOGUS", "xxx", true);
+        setenv("PGBACKREST_ONLIN", "xxx", true);                    // Option prefix matching not allowed in environment
         setenv("PGBACKREST_NO_DELTA", "xxx", true);
         setenv("PGBACKREST_RESET_REPO1_HOST", "", true);
         setenv("PGBACKREST_TARGET", "xxx", true);
@@ -1336,6 +1337,7 @@ testRun(void)
                     "online=y\n"
                     "pg1-path=/not/path/to/db\n"
                     "backup-standby=y\n"
+                    "backup-standb=y\n"                             // Option prefix matching not allowed in config files
                     "buffer-size=65536\n"
                     "protocol-timeout=3600\n"
                     CFGOPT_JOB_RETRY "=3\n"
@@ -1359,6 +1361,7 @@ testRun(void)
             strZ(
                 strNew(
                     "P00   WARN: environment contains invalid option 'bogus'\n"
+                    "P00   WARN: environment contains invalid option 'onlin'\n"
                     "P00   WARN: environment contains invalid negate option 'no-delta'\n"
                     "P00   WARN: environment contains invalid reset option 'reset-repo1-host'\n"
                     "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
@@ -1366,7 +1369,8 @@ testRun(void)
                     "P00   WARN: configuration file contains negate option 'no-delta'\n"
                     "P00   WARN: configuration file contains reset option 'reset-delta'\n"
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
-                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
+                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'\n"
+                    "P00   WARN: configuration file contains invalid option 'backup-standb'")));
 
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "    custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
@@ -1440,6 +1444,7 @@ testRun(void)
         TEST_ERROR(cfgOptionKeyToIdx(cfgOptPgPath, 4), AssertError, "key '4' is not valid for 'pg-path' option");
 
         unsetenv("PGBACKREST_BOGUS");
+        unsetenv("PGBACKREST_ONLIN");
         unsetenv("PGBACKREST_NO_DELTA");
         unsetenv("PGBACKREST_RESET_REPO1_HOST");
         unsetenv("PGBACKREST_TARGET");
@@ -1754,7 +1759,7 @@ testRun(void)
         testOptionFind("db-ssh-port", cfgOptPgHostPort, 0, false, false, true);
         testOptionFind("db-user", cfgOptPgHostUser, 0, false, false, true);
 
-        TEST_RESULT_BOOL(cfgParseOption(STR("no-db-user")).found, false, "no-db-user not found");
+        TEST_RESULT_BOOL(cfgParseOptionP(STR("no-db-user")).found, false, "no-db-user not found");
 
         // Only check 1-8 since 8 was the max index when these option names were deprecated
         for (unsigned int optionIdx = 0; optionIdx < 8; optionIdx++)

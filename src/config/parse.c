@@ -409,10 +409,11 @@ cfgParseOptionInfo(const int info)
 }
 
 CfgParseOptionResult
-cfgParseOption(const String *optionName)
+cfgParseOption(const String *const optionName, const CfgParseOptionParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, optionName);
+        FUNCTION_TEST_PARAM(BOOL, param.prefixMatch);
     FUNCTION_TEST_END();
 
     ASSERT(optionName != NULL);
@@ -432,25 +433,28 @@ cfgParseOption(const String *optionName)
     if (optionList[findIdx].name != NULL)
         FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findIdx].val));
 
-    // Search for a single partial match
-    unsigned int findPartialIdx = 0;
-    unsigned int findPartialTotal = 0;
-
-    for (findIdx = 0; findIdx < sizeof(optionList) / sizeof(struct option) - 1; findIdx++)
+    // Search for a single partial match if requested
+    if (param.prefixMatch)
     {
-        if (strBeginsWith(STR(optionList[findIdx].name), optionName))
+        unsigned int findPartialIdx = 0;
+        unsigned int findPartialTotal = 0;
+
+        for (findIdx = 0; findIdx < sizeof(optionList) / sizeof(struct option) - 1; findIdx++)
         {
-            findPartialIdx = findIdx;
-            findPartialTotal++;
+            if (strBeginsWith(STR(optionList[findIdx].name), optionName))
+            {
+                findPartialIdx = findIdx;
+                findPartialTotal++;
 
-            if (findPartialTotal > 1)
-                break;
+                if (findPartialTotal > 1)
+                    break;
+            }
         }
-    }
 
-    // If a single partial match was found
-    if (findPartialTotal == 1)
-        FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findPartialIdx].val));
+        // If a single partial match was found
+        if (findPartialTotal == 1)
+            FUNCTION_TEST_RETURN(cfgParseOptionInfo(optionList[findPartialIdx].val));
+    }
 
     FUNCTION_TEST_RETURN((CfgParseOptionResult){0});
 }
@@ -1010,7 +1014,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     optionName = strNew(arg);
 
                 // Lookup the option name
-                CfgParseOptionResult option = cfgParseOption(optionName);
+                CfgParseOptionResult option = cfgParseOptionP(optionName, true);
 
                 if (!option.found)
                     THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
@@ -1168,7 +1172,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     const String *value = STR(equalPtr + 1);
 
                     // Find the option
-                    CfgParseOptionResult option = cfgParseOption(key);
+                    CfgParseOptionResult option = cfgParseOptionP(key);
 
                     // Warn if the option not found
                     if (!option.found)
@@ -1269,7 +1273,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         String *key = strLstGet(keyList, keyIdx);
 
                         // Find the optionName in the main list
-                        CfgParseOptionResult option = cfgParseOption(key);
+                        CfgParseOptionResult option = cfgParseOptionP(key);
 
                         // Warn if the option not found
                         if (!option.found)

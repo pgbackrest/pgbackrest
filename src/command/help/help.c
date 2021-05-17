@@ -484,7 +484,7 @@ helpRender(void)
 
                 // Ensure the option is valid
                 const String *optionName = strLstGet(cfgCommandParam(), 0);
-                CfgParseOptionResult option = cfgParseOption(optionName);
+                CfgParseOptionResult option = cfgParseOptionP(optionName);
 
                 // If the option was not found it might be an indexed option without the index, e.g. repo-host instead of
                 // repo1-host. This is valid for help even though the parser will reject it.
