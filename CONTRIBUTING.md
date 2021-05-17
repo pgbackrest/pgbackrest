@@ -51,9 +51,9 @@ Memory is allocated inside contexts and can be long lasting (for objects) or tem
 
 ### Logging
 
-Logging is used in debugging with the built-in macros FUNCTION_LOG_* and FUNCTION_TEST_* which are used to trace parameters passed to/returned from functions. FUNCTION_LOG_* macros are used for production logging whereas FUNCTION_TEST_* macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
+Logging is used in debugging with the built-in macros `FUNCTION_LOG_*()` and `FUNCTION_TEST_*()` which are used to trace parameters passed to/returned from functions. `FUNCTION_LOG_*()` macros are used for production logging whereas `FUNCTION_TEST_*()` macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
 
-Logging is also used for providing information to the user via the LOG_* macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via THROW_* macros when throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
+Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros when throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Coding Example
 
@@ -370,15 +370,14 @@ if (testBegin("expireBackup()"))
 
 #### Setting up the command to be run
 
-The [harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the function `harnessCfgLoad()` with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command:
+The [harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the function `harnessCfgLoad()` with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command on multiple repositories, one which is encrypted:
 ```
-StringList *argList = strLstNew();                              // Create an empty string list
-hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);         // Add the --repo-path option
-harnessCfgLoad(cfgCmdInfo, argList);                            // Load the command and option list into the test harness
-
-// Run the test
-TEST_RESULT_STR_Z(
-    infoRender(), "No stanzas exist in the repository.\n", "text output - no stanzas");
+StringList *argList = strLstNew();                                  // Create an empty string list
+hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);             // Add the --repo-path option
+hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");   // Add the --repo2-path option
+hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);  // Add the --repo2-cipher-type option
+hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);        // Set environment variable for the --repo2-cipher-pass option
+harnessCfgLoad(cfgCmdInfo, argList);                                // Load the command and option list into the test harness
 ```
 
 #### Storing a file
@@ -407,7 +406,7 @@ Tests are run and results confirmed via macros that are described in [harnessTes
 
 #### Testing a log message
 
-If a function being tested logs something with `LOG_WARN`, `LOG_INFO` or other `LOG_` macro, then the logged message must be cleared before the end of the test by using the `harnessLogResult()` function.
+If a function being tested logs something with `LOG_WARN`, `LOG_INFO` or other `LOG_*()` macro, then the logged message must be cleared before the end of the test by using the `harnessLogResult()` function.
 ```
 harnessLogResult(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");

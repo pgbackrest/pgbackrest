@@ -149,9 +149,9 @@
         <section id="message-logging">
             <title>Logging</title>
 
-            <p>Logging is used in debugging with the built-in macros FUNCTION_LOG_* and FUNCTION_TEST_* which are used to trace parameters passed to/returned from functions. FUNCTION_LOG_* macros are used for production logging whereas FUNCTION_TEST_* macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+            <p>Logging is used in debugging with the built-in macros <code>FUNCTION_LOG_*()</code> and <code>FUNCTION_TEST_*()</code> which are used to trace parameters passed to/returned from functions. <code>FUNCTION_LOG_*()</code> macros are used for production logging whereas <code>FUNCTION_TEST_*()</code> macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
 
-            <p>Logging is also used for providing information to the user via the LOG_* macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via THROW_* macros when throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+            <p>Logging is also used for providing information to the user via the <code>LOG_*()</code> macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via <code>THROW_*()</code> macros when throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
 
         <section id="coding-example">
@@ -420,16 +420,15 @@ if (testBegin("expireBackup()"))
             <section id="test-command">
                 <title>Setting up the command to be run</title>
 
-                <p>The <link url="{[github-url-test-common]}/harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command:</p>
+                <p>The <link url="{[github-url-test-common]}/harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command on multiple repositories, one which is encrypted:</p>
 
                 <code-block>
-StringList *argList = strLstNew();                              // Create an empty string list
-hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);         // Add the --repo-path option
-harnessCfgLoad(cfgCmdInfo, argList);                            // Load the command and option list into the test harness
-
-// Run the test
-TEST_RESULT_STR_Z(
-    infoRender(), "No stanzas exist in the repository.\n", "text output - no stanzas");
+StringList *argList = strLstNew();                                  // Create an empty string list
+hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);             // Add the --repo-path option
+hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");   // Add the --repo2-path option
+hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);  // Add the --repo2-cipher-type option
+hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);        // Set environment variable for the --repo2-cipher-pass option
+harnessCfgLoad(cfgCmdInfo, argList);                                // Load the command and option list into the test harness
                 </code-block>
             </section>
 
@@ -462,7 +461,7 @@ HRN_STORAGE_PUT_EMPTY(
             <section id="test-log">
                 <title>Testing a log message</title>
 
-                <p>If a function being tested logs something with <id>LOG_WARN</id>, <id>LOG_INFO</id> or other <id>LOG_</id> macro, then the logged message must be cleared before the end of the test by using the <code>harnessLogResult()</code> function.</p>
+                <p>If a function being tested logs something with <code>LOG_WARN</code>, <code>LOG_INFO</code> or other <code>LOG_*()</code> macro, then the logged message must be cleared before the end of the test by using the <code>harnessLogResult()</code> function.</p>
 
                 <code-block>
 harnessLogResult(
@@ -579,7 +578,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
 
             <p>There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of passphrases, all configuration file options can be passed on the command line. To configure an option for the configuration file, the <id>section:</id> key must be present.</p>
 
-            <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, the <id>online</id> option will be used as an example:</p>
+            <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, the <code>online</code> option will be used as an example:</p>
 
             <section id="online-ex1">
                 <title>Example 1</title>
