@@ -69,8 +69,9 @@ Functions
 // old error may be reported rather than waiting for the async process to succeed or fail.
 void archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile);
 
-// Check for ok/error status files in the spool in/out directory
-bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError);
+// Check for ok/error status files in the spool in/out directory. throwOnError determines whether an error will be thrown when an
+// error file is found. warnOnOk determines whether a warning will be output when found in an ok file.
+bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError, bool warnOnOk);
 
 // Write an ok status file
 void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning);

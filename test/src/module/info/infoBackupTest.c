@@ -8,6 +8,7 @@ Test Backup Info Handler
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessPostgres.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -59,7 +60,7 @@ testRun(void)
         Buffer *contentCompare = bufNew(0);
 
         TEST_ASSIGN(
-            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_94), NULL),
+            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_94), NULL),
             "infoBackupNew() - no cipher sub");
         TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "    save backup info from new");
         TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "   check save");
@@ -74,7 +75,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupNew(
-                PG_VERSION_10, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_10),
+                PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10),
                 strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
 
@@ -93,7 +94,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         InfoPgData infoPgData = {0};
         TEST_RESULT_VOID(
-            infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_94)),
+            infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_94)),
             "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "    history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackupPg(infoBackup)), "    get current infoPgData");
@@ -699,7 +700,7 @@ testRun(void)
 
         // With the infoBackup from above, upgrade the DB so there a 2 histories then save to disk
         TEST_ASSIGN(
-            infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196, pgCatalogTestVersion(PG_VERSION_11)),
+            infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196, hrnPgCatalogVersion(PG_VERSION_11)),
             "upgrade db");
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
@@ -828,7 +829,7 @@ testRun(void)
             "HINT: has a stanza-create been performed?",
             testPath(), testPath(), testPath(), testPath());
 
-        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_10), NULL);
+        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), NULL);
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "save backup info");
 

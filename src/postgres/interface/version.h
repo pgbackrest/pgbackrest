@@ -87,48 +87,4 @@ uint32_t pgInterfaceControlVersion130(void);
 bool pgInterfaceWalIs130(const unsigned char *walFile);
 PgWal pgInterfaceWal130(const unsigned char *controlFile);
 
-/***********************************************************************************************************************************
-Test Functions
-***********************************************************************************************************************************/
-#ifdef DEBUG
-    void pgInterfaceControlTest083(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest083(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest084(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest084(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest090(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest090(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest091(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest091(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest092(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest092(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest093(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest093(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest094(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest094(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest095(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest095(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest096(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest096(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest100(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest100(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest110(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest110(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest120(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest120(PgWal pgWal, unsigned char *buffer);
-
-    void pgInterfaceControlTest130(PgControl pgControl, unsigned char *buffer);
-    void pgInterfaceWalTest130(PgWal pgWal, unsigned char *buffer);
-#endif
-
 #endif
