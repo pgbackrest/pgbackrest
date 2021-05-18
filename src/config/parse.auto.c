@@ -5872,6 +5872,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
@@ -5884,6 +5885,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)
         ),
 
         PARSE_RULE_OPTION_OPTIONAL_LIST

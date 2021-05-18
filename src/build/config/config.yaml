@@ -862,6 +862,8 @@ option:
           option: archive-async
           list:
             - true
+      restore:
+        internal: true
     command-role:
       async: {}
       default: {}

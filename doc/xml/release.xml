@@ -89,6 +89,19 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="1357"/>
+                        <github-pull-request id="1386"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove stanza archive spool path on <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1373"/>
 
                         <release-item-contributor-list>

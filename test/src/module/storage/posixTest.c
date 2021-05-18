@@ -1241,6 +1241,15 @@ testRun(void)
         TEST_RESULT_PTR(storageSpool(), storage, "get cached storage");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("STORAGE_SPOOL_ARCHIVE expression");
+
+        TEST_RESULT_STR(
+            storagePathP(storage, strNew(STORAGE_SPOOL_ARCHIVE)), strNewFmt("%s/archive/db", testPath()), "check spool path");
+        TEST_RESULT_STR(
+            storagePathP(storage, strNewFmt("%s/%s", STORAGE_SPOOL_ARCHIVE, "file.ext")),
+            strNewFmt("%s/archive/db/file.ext", testPath()), "check spool file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(storagePathP(storage, NULL), testPath(), "check base path");
         TEST_RESULT_STR(
             storagePathP(storage, strNew(STORAGE_SPOOL_ARCHIVE_OUT)), strNewFmt("%s/archive/db/out", testPath()),
