@@ -887,10 +887,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
             // If the full backup history manifests are expired, we should expire diff and incr too. So, format the oldest full
             // backup label to retain.
             const time_t minTimestamp = time(NULL) - (time_t)(cfgOptionIdxUInt(cfgOptRepoRetentionHistory, repoIdx) * SEC_PER_DAY);
-            char buffer[16];
-            THROW_ON_SYS_ERROR(strftime(
-                buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&minTimestamp)) == 0, AssertError, "unable to format time");
-            String *minBackupLabel = strNewFmt("%sF", buffer);
+            String *minBackupLabel = backupLabelFormat(backupTypeFull, NULL, minTimestamp);
 
             // Get all the history years
             const StringList *historyYearList = strLstSort(

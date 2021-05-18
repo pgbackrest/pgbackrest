@@ -38,44 +38,6 @@ Backup Command
 /**********************************************************************************************************************************
 Generate a unique backup label that does not contain a timestamp from a previous backup
 ***********************************************************************************************************************************/
-// Helper to format the backup label
-static String *
-backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING_ID, type);
-        FUNCTION_LOG_PARAM(STRING, backupLabelPrior);
-        FUNCTION_LOG_PARAM(TIME, timestamp);
-    FUNCTION_LOG_END();
-
-    ASSERT((type == backupTypeFull && backupLabelPrior == NULL) || (type != backupTypeFull && backupLabelPrior != NULL));
-    ASSERT(timestamp > 0);
-
-    // Format the timestamp
-    char buffer[16];
-    THROW_ON_SYS_ERROR(
-        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&timestamp)) == 0, AssertError, "unable to format time");
-
-    // If full label
-    String *result = NULL;
-
-    if (type == backupTypeFull)
-    {
-        result = strNewFmt("%sF", buffer);
-    }
-    // Else diff or incr label
-    else
-    {
-        // Get the full backup portion of the prior backup label
-        result = strSubN(backupLabelPrior, 0, 16);
-
-        // Append the diff/incr timestamp
-        strCatFmt(result, "_%s%s", buffer, type == backupTypeDiff ? "D" : "I");
-    }
-
-    FUNCTION_LOG_RETURN(STRING, result);
-}
-
 static String *
 backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {

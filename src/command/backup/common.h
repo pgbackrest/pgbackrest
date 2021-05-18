@@ -5,8 +5,10 @@ Common Functions and Definitions for Backup and Expire Commands
 #define COMMAND_BACKUP_COMMON_H
 
 #include <stdbool.h>
+#include <time.h>
 
 #include "common/type/string.h"
+#include "info/infoBackup.h"
 
 /***********************************************************************************************************************************
 Backup constants
@@ -32,5 +34,8 @@ String *backupRegExp(BackupRegExpParam param);
 
 // Create a symlink to the specified backup (if symlinks are supported)
 void backupLinkLatest(const String *backupLabel, unsigned int repoIdx);
+
+// Helper to format the backup label
+String *backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp);
 
 #endif
