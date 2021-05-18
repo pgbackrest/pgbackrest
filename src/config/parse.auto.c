@@ -1307,6 +1307,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_OPTIONAL_LIST
         (
+            PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
+
             PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
             (
                 PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdBackup),
@@ -1316,36 +1318,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     cfgOptOnline,
                     "0"
                 ),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
-            )
-
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdRestore),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
-            )
-
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaCreate),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
-            )
-
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdStanzaDelete),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
-            )
-
-            PARSE_RULE_OPTION_OPTIONAL_COMMAND_OVERRIDE
-            (
-                PARSE_RULE_OPTION_OPTIONAL_COMMAND(cfgCmdStop),
-
-                PARSE_RULE_OPTION_OPTIONAL_DEFAULT("0"),
             )
         ),
     ),

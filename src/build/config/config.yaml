@@ -268,22 +268,18 @@ option:
 
   force:
     type: boolean
+    default: false
     command:
       backup:
-        default: false
         depend:
           option: online
           list:
             - false
-      restore:
-        default: false
+      restore: {}
       stanza-create:
-        default: false
         internal: true
-      stanza-delete:
-        default: false
-      stop:
-        default: false
+      stanza-delete: {}
+      stop: {}
     command-role:
       default: {}
 

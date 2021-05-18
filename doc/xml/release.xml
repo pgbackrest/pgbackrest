@@ -177,6 +177,15 @@
 
                         <p>Revert to checking catalog version for all <postgres/> versions.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Simplify defaults for <br-option>--force</br-option> option.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
