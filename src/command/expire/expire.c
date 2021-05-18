@@ -910,38 +910,10 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                             strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
                             strZ(compressTypeStr(compressTypeGz)))),
                     sortOrderDesc);
-                unsigned int historyFoundNb = strLstSize(historyList);
 
-                for (unsigned int historyIdx = 0; historyIdx < strLstSize(historyList); historyIdx++)
-                {
-                    const String *historyBackupFile = strLstGet(historyList, historyIdx);
-                    const String *historyBackupLabel = strLstGet(strLstNewSplitZ(historyBackupFile, "."), 0);
-
-                    // Keep the history manifests for unexpired backups and compare dates, extracted from backup labels since the
-                    // retention is set in days.
-                    if (!strLstExists(currentBackupList, historyBackupLabel) && strCmp(historyBackupLabel, minBackupLabel) < 0)
-                    {
-                        LOG_INFO_FMT(
-                            "repo%u: remove expired history backup manifest %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
-                            strZ(historyBackupFile));
-
-                        // Execute the real expiration and deletion only if the dry-run mode is disabled
-                        if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                        {
-                            storageRemoveP(
-                                storageRepoIdxWrite(repoIdx),
-                                strNewFmt(
-                                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s",
-                                    strZ(historyYear), strZ(historyBackupFile)));
-                        }
-
-                        // Keep track of the removed files in the directory
-                        historyFoundNb--;
-                    }
-                }
-
-                // Now that we removed the history manifests, we could remove the year directory if empty
-                if(historyFoundNb <= 0)
+                // If the entire year is less than the year of the minimum backup to retain, then remove completely the directory.
+                // Otherwise find and remove individual files.
+                if(strCmp(historyYear, strSubN(minBackupLabel, 0, 4)) < 0)
                 {
                     LOG_INFO_FMT(
                         "repo%u: remove expired history backup directory %s",
@@ -956,6 +928,33 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                                 STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s",
                                 strZ(historyYear)),
                             .errorOnMissing = false, .recurse = true);
+                    }
+                }
+                else
+                {
+                    for (unsigned int historyIdx = 0; historyIdx < strLstSize(historyList); historyIdx++)
+                    {
+                        const String *historyBackupFile = strLstGet(historyList, historyIdx);
+                        const String *historyBackupLabel = strLstGet(strLstNewSplitZ(historyBackupFile, "."), 0);
+
+                        // Keep the history manifests for unexpired backups and compare dates, extracted from backup labels since
+                        // the retention is set in days.
+                        if (!strLstExists(currentBackupList, historyBackupLabel) && strCmp(historyBackupLabel, minBackupLabel) < 0)
+                        {
+                            LOG_INFO_FMT(
+                                "repo%u: remove expired history backup manifest %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                                strZ(historyBackupFile));
+
+                            // Execute the real expiration and deletion only if the dry-run mode is disabled
+                            if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                            {
+                                storageRemoveP(
+                                    storageRepoIdxWrite(repoIdx),
+                                    strNewFmt(
+                                        STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s",
+                                        strZ(historyYear), strZ(historyBackupFile)));
+                            }
+                        }
                     }
                 }
             }
