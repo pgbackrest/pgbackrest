@@ -669,6 +669,8 @@
 
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
+
+        <p>When running in <proper>GCE</proper> set <br-option>repo{[gcs-setup-repo-id]}-gcs-key-type=auto</br-option> to automatically authenticate using the instance service account.</p>
     </block-define>
 
     <!-- ======================================================================================================================= -->

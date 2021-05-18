@@ -13,6 +13,7 @@ Test Archive Get Command
 #include "storage/posix/storage.h"
 
 #include "common/harnessInfo.h"
+#include "common/harnessPostgres.h"
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
@@ -146,7 +147,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
@@ -601,7 +602,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         storagePathCreateP(storageTest, strNewFmt("%s/pg/pg_wal", testPath()));
 
@@ -760,7 +761,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_11, .systemId = 0xFACEFACEFACEFACE}));
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
@@ -791,7 +792,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0x8888888888888888}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0x8888888888888888}));
 
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
@@ -804,7 +805,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
         TEST_RESULT_INT(cmdArchiveGet(), 1, "get");
 

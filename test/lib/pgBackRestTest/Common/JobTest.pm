@@ -348,9 +348,32 @@ sub run
 
                 my @stryHarnessFile = ('common/harnessTest');
 
-                foreach my $strFile (@{$hTest->{&TESTDEF_HARNESS}})
+                foreach my $strHarness (@{$hTest->{&TESTDEF_HARNESS}})
                 {
-                    push(@stryHarnessFile, "common/harness" . ucfirst($strFile));
+                    my $bFound = false;
+                    my $strFile = "common/harness" . ucfirst($strHarness);
+
+                    # Include harness file if present
+                    if ($self->{oStorageTest}->exists("${strRepoCopyTestSrcPath}/${strFile}.c"))
+                    {
+                        push(@stryHarnessFile, $strFile);
+                        $bFound = true;
+                    }
+
+                    # Include files in the harness directory if present
+                    for my $strFileSub (
+                        $self->{oStorageTest}->list("${strRepoCopyTestSrcPath}/${strFile}",
+                        {bIgnoreMissing => true, strExpression => '\.c$'}))
+                    {
+                        push(@stryHarnessFile, "${strFile}/" . substr($strFileSub, 0, length($strFileSub) - 2));
+                        $bFound = true;
+                    }
+
+                    # Error when no harness files were found
+                    if (!$bFound)
+                    {
+                        confess &log(ERROR, "no files found for harness '${strHarness}'");
+                    }
                 }
 
                 # Generate list of core files (files to be tested/included in this unit will be excluded)

@@ -31,6 +31,8 @@ GCS Storage
 HTTP headers
 ***********************************************************************************************************************************/
 STRING_EXTERN(GCS_HEADER_UPLOAD_ID_STR,                             GCS_HEADER_UPLOAD_ID);
+STRING_STATIC(GCS_HEADER_METADATA_FLAVOR_STR,                       "metadata-flavor");
+STRING_STATIC(GCS_HEADER_GOOGLE_STR,                                "Google");
 
 /***********************************************************************************************************************************
 Query tokens
@@ -270,6 +272,41 @@ storageGcsAuthService(StorageGcs *this, time_t timeBegin)
 }
 
 /***********************************************************************************************************************************
+Get authentication token automatically for instances running in GCE.
+
+Based on the documentation at https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#applications
+***********************************************************************************************************************************/
+static StorageGcsAuthTokenResult
+storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+        FUNCTION_TEST_PARAM(TIME, timeBegin);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(timeBegin > 0);
+
+    StorageGcsAuthTokenResult result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        HttpHeader *header = httpHeaderNew(NULL);
+        httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
+        httpHeaderAdd(header, GCS_HEADER_METADATA_FLAVOR_STR, GCS_HEADER_GOOGLE_STR);
+        httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+
+        HttpRequest *request = httpRequestNewP(
+            this->authClient, HTTP_VERB_GET_STR, httpUrlPath(this->authUrl), NULL, .header = header);
+
+        result = storageGcsAuthToken(request, timeBegin);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
 Generate authorization header and add it to the supplied header list
 ***********************************************************************************************************************************/
 static void
@@ -286,37 +323,34 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Process authentication type
-        switch (this->keyType)
+        // Get the token if it was not supplied by the user
+        if (this->keyType != storageGcsKeyTypeToken)
         {
-            // Service key authentication requests a token then drops through to normal token authentication
-            case storageGcsKeyTypeService:
+            ASSERT(this->keyType == storageGcsKeyTypeAuto || this->keyType == storageGcsKeyTypeService);
+
+            time_t timeBegin = time(NULL);
+
+            // If the current token has expired then request a new one
+            if (timeBegin >= this->tokenTimeExpire)
             {
-                time_t timeBegin = time(NULL);
+                StorageGcsAuthTokenResult tokenResult = this->keyType == storageGcsKeyTypeAuto ?
+                    storageGcsAuthAuto(this, timeBegin) : storageGcsAuthService(this, timeBegin);
 
-                // If the current token has expired then request a new one
-                if (timeBegin >= this->tokenTimeExpire)
+                MEM_CONTEXT_BEGIN(this->memContext)
                 {
-                    StorageGcsAuthTokenResult tokenResult = storageGcsAuthService(this, timeBegin);
+                    strFree(this->token);
+                    this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
 
-                    MEM_CONTEXT_BEGIN(this->memContext)
-                    {
-                        strFree(this->token);
-                        this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
-
-                        // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
-                        this->tokenTimeExpire =
-                            tokenResult.timeExpire - ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
-                    }
-                    MEM_CONTEXT_END();
+                    // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
+                    this->tokenTimeExpire =
+                        tokenResult.timeExpire - ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
                 }
+                MEM_CONTEXT_END();
             }
-
-            // Token authentication
-            case storageGcsKeyTypeToken:
-                httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
-                break;
         }
+
+        // Add authorization header
+        httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -895,7 +929,7 @@ storageGcsNew(
 
     ASSERT(path != NULL);
     ASSERT(bucket != NULL);
-    ASSERT(key != NULL);
+    ASSERT(keyType == storageGcsKeyTypeAuto || key != NULL);
     ASSERT(chunkSize != 0);
 
     Storage *this = NULL;
@@ -917,6 +951,18 @@ storageGcsNew(
         // Handle auth key types
         switch (keyType)
         {
+            // Auto authentication for GCE instances
+            case storageGcsKeyTypeAuto:
+            {
+                driver->authUrl = httpUrlNewParseP(
+                    STRDEF("metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"),
+                    .type = httpProtocolTypeHttp);
+                driver->authClient = httpClientNew(
+                    sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout), timeout);
+
+                break;
+            }
+
             // Read data from file for service keys
             case storageGcsKeyTypeService:
             {

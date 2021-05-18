@@ -187,6 +187,7 @@ Option value constants
 #define CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC_Z                    "aes-256-cbc"
 #define CFGOPTVAL_REPO_CIPHER_TYPE_NONE_Z                           "none"
 
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_Z                          "auto"
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_SERVICE_Z                       "service"
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_TOKEN_Z                         "token"
 

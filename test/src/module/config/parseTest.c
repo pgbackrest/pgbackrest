@@ -1289,6 +1289,7 @@ testRun(void)
 
         setenv("PGBACKRESTXXX_NOTHING", "xxx", true);
         setenv("PGBACKREST_BOGUS", "xxx", true);
+        setenv("PGBACKREST_ONLIN", "xxx", true);                    // Option prefix matching not allowed in environment
         setenv("PGBACKREST_NO_DELTA", "xxx", true);
         setenv("PGBACKREST_RESET_REPO1_HOST", "", true);
         setenv("PGBACKREST_TARGET", "xxx", true);
@@ -1316,6 +1317,7 @@ testRun(void)
                     "online=y\n"
                     "pg1-path=/not/path/to/db\n"
                     "backup-standby=y\n"
+                    "backup-standb=y\n"                             // Option prefix matching not allowed in config files
                     "buffer-size=65536\n"
                     "protocol-timeout=3600\n"
                     CFGOPT_JOB_RETRY "=3\n"
@@ -1339,6 +1341,7 @@ testRun(void)
             strZ(
                 strNew(
                     "P00   WARN: environment contains invalid option 'bogus'\n"
+                    "P00   WARN: environment contains invalid option 'onlin'\n"
                     "P00   WARN: environment contains invalid negate option 'no-delta'\n"
                     "P00   WARN: environment contains invalid reset option 'reset-repo1-host'\n"
                     "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
@@ -1346,7 +1349,8 @@ testRun(void)
                     "P00   WARN: configuration file contains negate option 'no-delta'\n"
                     "P00   WARN: configuration file contains reset option 'reset-delta'\n"
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
-                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
+                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'\n"
+                    "P00   WARN: configuration file contains invalid option 'backup-standb'")));
 
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "    custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
@@ -1420,6 +1424,7 @@ testRun(void)
         TEST_ERROR(cfgOptionKeyToIdx(cfgOptPgPath, 4), AssertError, "key '4' is not valid for 'pg-path' option");
 
         unsetenv("PGBACKREST_BOGUS");
+        unsetenv("PGBACKREST_ONLIN");
         unsetenv("PGBACKREST_NO_DELTA");
         unsetenv("PGBACKREST_RESET_REPO1_HOST");
         unsetenv("PGBACKREST_TARGET");
