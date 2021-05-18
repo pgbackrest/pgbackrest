@@ -27,7 +27,7 @@ Exec *execNew(const String *command, const StringList *param, const String *name
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-typedef struct DbPub
+typedef struct ExecPub
 {
     MemContext *memContext;                                         // Mem context
     IoRead *ioReadExec;                                             // Wrapper for file descriptor read interface
