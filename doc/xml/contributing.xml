@@ -54,7 +54,7 @@
 
         Code fixes or new features can be submitted via pull requests. Ideas for new features and improvements to existing functionality or documentation can be <link url="{[github-url-issues]}">submitted as issues</link>. You may want to check the <link url="{[github-url-projects]}">Project Boards</link> to see if your suggestion has already been submitted.
 
-        Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>.  Please provide as much information as possible to aid in determining the cause of the problem.
+        Bug reports should be <link url="{[github-url-issues]}">submitted as issues</link>. Please provide as much information as possible to aid in determining the cause of the problem.
 
         You will always receive credit in the <link page="{[backrest-page-release]}">release notes</link> for your contributions.
 
@@ -132,7 +132,7 @@
             </execute>
         </execute-list>
 
-        <p>If using a RHEL system, the CPAN XML parser is required for running <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parse can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <code>Install latex (for building PDF)</code> is not required since testing of the docs need only be run for HTML output.</p>
+        <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-master]}/doc">doc</link> directory in the section <quote>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <quote>Install latex (for building PDF)</quote> section is not required since testing of the docs need only be run for HTML output.</p>
     </section>
 
     <section id="coding">
@@ -141,7 +141,7 @@
         <p>The following sections provide information on some important concepts needed for coding within <backrest/>.</p>
 
         <section id="memory-context">
-            <title>Memory Context</title>
+            <title>Memory Contexts</title>
 
             <p>Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use <code>MEM_CONTEXT_NEW_BEGIN("SomeName")</code> for objects and <code>MEM_CONTEXT_TEMP_BEGIN()</code> for functions. See <link url="{[github-url-src-common]}/memContext.h">memContext.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
@@ -149,9 +149,9 @@
         <section id="message-logging">
             <title>Logging</title>
 
-            <p>Logging is used in debugging with the built-in macros <code>FUNCTION_LOG_*()</code> and <code>FUNCTION_TEST_*()</code> which are used to trace parameters passed to/returned from functions. <code>FUNCTION_LOG_*()</code> macros are used for production logging whereas <code>FUNCTION_TEST_*()</code> macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+            <p>Logging is used for debugging with the built-in macros <code>FUNCTION_LOG_*()</code> and <code>FUNCTION_TEST_*()</code> which are used to trace parameters passed to/returned from functions. <code>FUNCTION_LOG_*()</code> macros are used for production logging whereas <code>FUNCTION_TEST_*()</code> macros will be compiled out of production code. For functions where no parameter is valuable enough to justify the cost of debugging in production, use <code>FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()</code>, else use <code>FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()</code>. See <link url="{[github-url-src-common]}/debug.h">debug.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
 
-            <p>Logging is also used for providing information to the user via the <code>LOG_*()</code> macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via <code>THROW_*()</code> macros when throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
+            <p>Logging is also used for providing information to the user via the <code>LOG_*()</code> macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via <code>THROW_*()</code> macros for throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
 
         <section id="coding-example">
@@ -240,6 +240,7 @@ myObjDisplay(unsigned int myData)
     FUNCTION_TEST_END();
 
     String *result = NULL;     // Result is created in the current memory context  (referred to as "prior context" below)
+
     MEM_CONTEXT_TEMP_BEGIN()   // begins a new temporary context
     {
         String *resultStr = strNew("Hello");    // Allocates a string in the temporary memory context
@@ -291,13 +292,13 @@ myObjDisplay(unsigned int myData)
 
             <p>Examples of test runs are provided in the following sections. There are several important options for running a test:</p>
             <list>
-                <list-item><setting>--dry-run</setting> - without any other otpions, this will list all the available tests</list-item>
+                <list-item><setting>--dry-run</setting> - without any other options, this will list all the available tests</list-item>
                 <list-item><setting>--module</setting> - identifies the module in which the test is located</list-item>
                 <list-item><setting>--test</setting> - the actual test set to be run</list-item>
                 <list-item><setting>--run</setting> - a number identifying the run within a test if testing a single run rather than the entire test</list-item>
-                <list-item><setting>--dev</setting> - sets several flags that are appropriate for development but should be omitted when performing final testing prior to submitting a Pull Request to the project.  Most importantly, it reuses object files from the previous test run to speed testing.</list-item>
+                <list-item><setting>--dev</setting> - sets several flags that are appropriate for development but should be omitted when performing final testing prior to submitting a Pull Request to the project. Most importantly, it reuses object files from the previous test run to speed testing.</list-item>
                 <list-item><setting>--vm-out</setting> - displays the test output (helpful for monitoring the progress)</list-item>
-                <list-item><setting>--vm</setting> - identifies the pre-build virtual machine when using Docker, otherwise the setting should be <code>none</code></list-item>
+                <list-item><setting>--vm</setting> - identifies the pre-built container when using Docker, otherwise the setting should be <code>none</code></list-item>
             </list>
 
             <p>For more options, run the test or documentation engine with the <setting>--help</setting> option:</p>
@@ -346,7 +347,7 @@ pgbackrest/doc/doc.pl --help
             <section id="with-docker" depend="/environment">
                 <title>With Docker</title>
 
-                <p>Build a container to run tests.  The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
+                <p>Build a container to run tests. The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. <id>u18</id> for <proper>Ubuntu 18.04</proper>.</p>
 
                 <execute-list host="{[host-contrib]}">
                     <title>Build a VM</title>
@@ -406,7 +407,7 @@ pgbackrest/doc/doc.pl --help
 
                 <p>Unit test files are organized in the <code>test/src/module</code> directory with the same directory structure as the source code being tested. For example, if new code is added to src/<b>command/expire</b>.c then test/src/module/<b>command/expire</b>Test.c will need to be updated.</p>
 
-                <p>Assuming that a test file already exists, new unit tests will either go in a new <code>testBegin()</code> section or be added to an existing section. Each such section is a test run. The comment string passed to the <code>testBegin()</code> should reflect the function(s) being tested in the test run. Tests within a run should use <code>TEST_TITLE()</code> with a comment string describing the test.</p>
+                <p>Assuming that a test file already exists, new unit tests will either go in a new <code>testBegin()</code> section or be added to an existing section. Each such section is a test run. The comment string passed to <code>testBegin()</code> should reflect the function(s) being tested in the test run. Tests within a run should use <code>TEST_TITLE()</code> with a comment string describing the test.</p>
 
                 <code-block>
 // *****************************************************************************************************************************
@@ -420,7 +421,7 @@ if (testBegin("expireBackup()"))
             <section id="test-command">
                 <title>Setting up the command to be run</title>
 
-                <p>The <link url="{[github-url-test-common]}/harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command on multiple repositories, one which is encrypted:</p>
+                <p>The <link url="{[github-url-test-common]}/harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the function <code>harnessCfgLoad()</code> with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command on multiple repositories, one of which is encrypted:</p>
 
                 <code-block>
 StringList *argList = strLstNew();                                  // Create an empty string list
@@ -461,10 +462,10 @@ HRN_STORAGE_PUT_EMPTY(
             <section id="test-log">
                 <title>Testing a log message</title>
 
-                <p>If a function being tested logs something with <code>LOG_WARN</code>, <code>LOG_INFO</code> or other <code>LOG_*()</code> macro, then the logged message must be cleared before the end of the test by using the <code>harnessLogResult()</code> function.</p>
+                <p>If a function being tested logs something with <code>LOG_WARN</code>, <code>LOG_INFO</code> or other <code>LOG_*()</code> macro, then the logged message must be cleared before the end of the test by using the <code>TEST_RESULT_LOG()/TEST_RESULT_LOG_FMT()</code> macros.</p>
 
                 <code-block>
-harnessLogResult(
+TEST_RESULT_LOG(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
                 </code-block>
             </section>
@@ -552,7 +553,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --vm=u18
 
             <p><b>Debugging with files</b></p>
 
-            <p>Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option <code>--no-cleanup</code> provided. Again, continuing with the check command, from <b>define.yaml</b> above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.</p>
+            <p>Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option <code>--no-cleanup</code> provided. Again, continuing with the check command, from <b>define.yaml</b> above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in <path>test/test-0</path> can be inspected.</p>
 
             <code-block>
 pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --no-cleanup
@@ -576,7 +577,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
         <section id="config-file">
             <title>config.yaml</title>
 
-            <p>There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of passphrases, all configuration file options can be passed on the command line. To configure an option for the configuration file, the <id>section:</id> key must be present.</p>
+            <p>There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of secrets, all configuration file options can be passed on the command line. To configure an option for the configuration file, the <id>section:</id> key must be present.</p>
 
             <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, the <code>online</code> option will be used as an example:</p>
 
