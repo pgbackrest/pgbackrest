@@ -12,6 +12,7 @@ Test Restore Command
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessPostgres.h"
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
@@ -1431,7 +1432,7 @@ testRun(void)
         TEST_TITLE("one database selected with tablespace id");
 
         manifest->pub.data.pgVersion = PG_VERSION_94;
-        manifest->pub.data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_94);
+        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_94);
 
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
@@ -2239,7 +2240,7 @@ testRun(void)
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
-        strLstAddZ(argList, "--" CFGOPT_TYPE "=" RECOVERY_TYPE_PRESERVE);
+        hrnCfgArgRawStrId(argList, cfgOptType, CFGOPTVAL_TYPE_PRESERVE);
         strLstAddZ(argList, "--" CFGOPT_SET "=20161219-212741F");
         strLstAddZ(argList, "--" CFGOPT_FORCE);
         harnessCfgLoad(cfgCmdRestore, argList);
@@ -2308,7 +2309,7 @@ testRun(void)
             manifest->pub.info = infoNew(NULL);
             manifest->pub.data.backupLabel = strNew(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_10;
-            manifest->pub.data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_10);
+            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
             manifest->pub.data.backupType = backupTypeFull;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 

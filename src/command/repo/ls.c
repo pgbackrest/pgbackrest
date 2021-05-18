@@ -107,12 +107,18 @@ storageListRender(IoWrite *write)
     // Get sort order
     SortOrder sortOrder = sortOrderAsc;
 
-    if (strEqZ(cfgOptionStr(cfgOptSort), "desc"))
-        sortOrder = sortOrderDesc;
-    else if (!strEqZ(cfgOptionStr(cfgOptSort), "asc"))
+    switch (cfgOptionStrId(cfgOptSort))
     {
-        ASSERT(strEqZ(cfgOptionStr(cfgOptSort), "none"));
-        sortOrder = sortOrderNone;
+        case CFGOPTVAL_SORT_DESC:
+            sortOrder = sortOrderDesc;
+            break;
+
+        case CFGOPTVAL_SORT_NONE:
+            sortOrder = sortOrderNone;
+            break;
+
+        default:
+            ASSERT(cfgOptionStrId(cfgOptSort) == CFGOPTVAL_SORT_ASC);
     }
 
     // Get path
@@ -124,7 +130,7 @@ storageListRender(IoWrite *write)
         THROW(ParamInvalidError, "only one path may be specified");
 
     // Get options
-    bool json = strEqZ(cfgOptionStr(cfgOptOutput), "json") ? true : false;
+    bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON ? true : false;
     const String *expression = cfgOptionStrNull(cfgOptFilter);
     RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
 

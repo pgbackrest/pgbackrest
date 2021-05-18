@@ -602,6 +602,32 @@ testRun(void)
             "invalid command 'BOGUS:BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on ambiguous partial option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--c");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError, "invalid option '--c'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on spaces in option name");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, " --config=/path/to");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), CommandInvalidError,
+            "invalid command ' --config=/path/to'");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--config =/path/to");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "invalid option '--config =/path/to'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew("--" BOGUS_STR));
@@ -615,7 +641,7 @@ testRun(void)
         strLstAdd(argList, strNew("--pg1-host"));
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option '--pg1-host' requires argument");
+            "option '--pg1-host' requires an argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -760,7 +786,7 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAdd(argList, strNew("--stanz=db"));                   // Partial option to test matching
         strLstAdd(argList, strNew("--pg1-path=/path1//path2"));
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
@@ -1172,8 +1198,9 @@ testRun(void)
         strLstAdd(argList, strNew("--pg1-path=/path/to/db/"));
         strLstAdd(argList, strNew("--no-online"));
         strLstAdd(argList, strNew("--no-config"));
-        strLstAdd(argList, strNew("--repo1-type=s3"));
-        strLstAdd(argList, strNew("--repo1-s3-bucket=test"));
+        strLstAdd(argList, strNew("--repo1-type"));
+        strLstAdd(argList, strNew("s3"));                           // Argument for the option above
+        strLstAdd(argList, strNew("--repo1-s3-bucket= test "));
         strLstAdd(argList, strNew("--repo1-s3-endpoint=test"));
         strLstAdd(argList, strNew("--repo1-s3-region=test"));
         strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
@@ -1205,6 +1232,7 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, 0), "/path/to/db", "    pg1-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceParam, "    pg1-path is source param");
         TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptRepoType, 0), strIdFromZ(stringIdBit6, "s3"), "    repo-type is set");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), " test ", "    repo1-s3-bucket is set and preserves spaces");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3KeySecret), "xxx", "    repo1-s3-secret is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoS3KeySecret), cfgSourceConfig, "    repo1-s3-secret is source env");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "    online is not set");
@@ -1261,6 +1289,7 @@ testRun(void)
 
         setenv("PGBACKRESTXXX_NOTHING", "xxx", true);
         setenv("PGBACKREST_BOGUS", "xxx", true);
+        setenv("PGBACKREST_ONLIN", "xxx", true);                    // Option prefix matching not allowed in environment
         setenv("PGBACKREST_NO_DELTA", "xxx", true);
         setenv("PGBACKREST_RESET_REPO1_HOST", "", true);
         setenv("PGBACKREST_TARGET", "xxx", true);
@@ -1288,6 +1317,7 @@ testRun(void)
                     "online=y\n"
                     "pg1-path=/not/path/to/db\n"
                     "backup-standby=y\n"
+                    "backup-standb=y\n"                             // Option prefix matching not allowed in config files
                     "buffer-size=65536\n"
                     "protocol-timeout=3600\n"
                     CFGOPT_JOB_RETRY "=3\n"
@@ -1311,6 +1341,7 @@ testRun(void)
             strZ(
                 strNew(
                     "P00   WARN: environment contains invalid option 'bogus'\n"
+                    "P00   WARN: environment contains invalid option 'onlin'\n"
                     "P00   WARN: environment contains invalid negate option 'no-delta'\n"
                     "P00   WARN: environment contains invalid reset option 'reset-repo1-host'\n"
                     "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
@@ -1318,7 +1349,8 @@ testRun(void)
                     "P00   WARN: configuration file contains negate option 'no-delta'\n"
                     "P00   WARN: configuration file contains reset option 'reset-delta'\n"
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
-                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
+                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'\n"
+                    "P00   WARN: configuration file contains invalid option 'backup-standb'")));
 
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "    custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
@@ -1392,6 +1424,7 @@ testRun(void)
         TEST_ERROR(cfgOptionKeyToIdx(cfgOptPgPath, 4), AssertError, "key '4' is not valid for 'pg-path' option");
 
         unsetenv("PGBACKREST_BOGUS");
+        unsetenv("PGBACKREST_ONLIN");
         unsetenv("PGBACKREST_NO_DELTA");
         unsetenv("PGBACKREST_RESET_REPO1_HOST");
         unsetenv("PGBACKREST_TARGET");

@@ -31,6 +31,8 @@ GCS Storage
 HTTP headers
 ***********************************************************************************************************************************/
 STRING_EXTERN(GCS_HEADER_UPLOAD_ID_STR,                             GCS_HEADER_UPLOAD_ID);
+STRING_STATIC(GCS_HEADER_METADATA_FLAVOR_STR,                       "metadata-flavor");
+STRING_STATIC(GCS_HEADER_GOOGLE_STR,                                "Google");
 
 /***********************************************************************************************************************************
 Query tokens
@@ -97,6 +99,61 @@ struct StorageGcs
     HttpUrl *authUrl;                                               // URL for authentication server
     HttpClient *authClient;                                         // Client to service auth requests
 };
+
+/***********************************************************************************************************************************
+Parse HTTP JSON response containing an authentication token and expiration
+
+Note that the function is intended to run directly in the caller's mem context and results will be placed in the caller's prior mem
+context.
+***********************************************************************************************************************************/
+typedef struct
+{
+    String *tokenType;
+    String *token;
+    time_t timeExpire;
+} StorageGcsAuthTokenResult;
+
+static StorageGcsAuthTokenResult
+storageGcsAuthToken(HttpRequest *request, time_t timeBegin)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(HTTP_REQUEST, request);
+        FUNCTION_TEST_PARAM(TIME, timeBegin);
+    FUNCTION_TEST_END();
+
+    StorageGcsAuthTokenResult result = {0};
+
+    // Get the response
+    KeyValue *kvResponse = jsonToKv(strNewBuf(httpResponseContent(httpRequestResponse(request, true))));
+
+    // Check for an error
+    const String *error = varStr(kvGet(kvResponse, GCS_JSON_ERROR_VAR));
+
+    if (error != NULL)
+    {
+        THROW_FMT(
+            ProtocolError, "unable to get authentication token: [%s] %s", strZ(error),
+            strZNull(varStr(kvGet(kvResponse, GCS_JSON_ERROR_DESCRIPTION_VAR))));
+    }
+
+    MEM_CONTEXT_PRIOR_BEGIN()
+    {
+        // Get token
+        result.tokenType = strDup(varStr(kvGet(kvResponse, GCS_JSON_TOKEN_TYPE_VAR)));
+        CHECK(result.tokenType != NULL);
+        result.token = strDup(varStr(kvGet(kvResponse, GCS_JSON_ACCESS_TOKEN_VAR)));
+        CHECK(result.token != NULL);
+
+        // Get expiration
+        const Variant *const expiresIn = kvGet(kvResponse, GCS_JSON_EXPIRES_IN_VAR);
+        CHECK(expiresIn != NULL);
+
+        result.timeExpire = timeBegin + (time_t)varInt64Force(expiresIn);
+    }
+    MEM_CONTEXT_PRIOR_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
 
 /***********************************************************************************************************************************
 Get authentication header for service keys
@@ -180,15 +237,8 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     FUNCTION_TEST_RETURN(result);
 }
 
-typedef struct
-{
-    String *tokenType;
-    String *token;
-    time_t timeExpire;
-} StorageGcsAuthTokenResult;
-
 static StorageGcsAuthTokenResult
-storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
+storageGcsAuthService(StorageGcs *this, time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -213,35 +263,43 @@ storageGcsAuthToken(StorageGcs *this, time_t timeBegin)
 
         HttpRequest *request = httpRequestNewP(
             this->authClient, HTTP_VERB_POST_STR, httpUrlPath(this->authUrl), NULL, .header = header, .content = BUFSTR(content));
-        HttpResponse *response = httpRequestResponse(request, true);
 
-        KeyValue *kvResponse = jsonToKv(strNewBuf(httpResponseContent(response)));
+        result = storageGcsAuthToken(request, timeBegin);
+    }
+    MEM_CONTEXT_TEMP_END();
 
-        // Check for an error
-        const String *error = varStr(kvGet(kvResponse, GCS_JSON_ERROR_VAR));
+    FUNCTION_TEST_RETURN(result);
+}
 
-        if (error != NULL)
-        {
-            THROW_FMT(
-                ProtocolError, "unable to get authentication token: [%s] %s", strZ(error),
-                strZNull(varStr(kvGet(kvResponse, GCS_JSON_ERROR_DESCRIPTION_VAR))));
-        }
+/***********************************************************************************************************************************
+Get authentication token automatically for instances running in GCE.
 
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            // Get token
-            result.tokenType = strDup(varStr(kvGet(kvResponse, GCS_JSON_TOKEN_TYPE_VAR)));
-            CHECK(result.tokenType != NULL);
-            result.token = strDup(varStr(kvGet(kvResponse, GCS_JSON_ACCESS_TOKEN_VAR)));
-            CHECK(result.token != NULL);
+Based on the documentation at https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#applications
+***********************************************************************************************************************************/
+static StorageGcsAuthTokenResult
+storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+        FUNCTION_TEST_PARAM(TIME, timeBegin);
+    FUNCTION_TEST_END();
 
-            // Get expiration
-            const Variant *const expiresIn = kvGet(kvResponse, GCS_JSON_EXPIRES_IN_VAR);
-            CHECK(expiresIn != NULL);
+    ASSERT(this != NULL);
+    ASSERT(timeBegin > 0);
 
-            result.timeExpire = timeBegin + (time_t)varInt64Force(expiresIn);
-        }
-        MEM_CONTEXT_PRIOR_END();
+    StorageGcsAuthTokenResult result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        HttpHeader *header = httpHeaderNew(NULL);
+        httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
+        httpHeaderAdd(header, GCS_HEADER_METADATA_FLAVOR_STR, GCS_HEADER_GOOGLE_STR);
+        httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+
+        HttpRequest *request = httpRequestNewP(
+            this->authClient, HTTP_VERB_GET_STR, httpUrlPath(this->authUrl), NULL, .header = header);
+
+        result = storageGcsAuthToken(request, timeBegin);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -265,37 +323,34 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Process authentication type
-        switch (this->keyType)
+        // Get the token if it was not supplied by the user
+        if (this->keyType != storageGcsKeyTypeToken)
         {
-            // Service key authentication requests a token then drops through to normal token authentication
-            case storageGcsKeyTypeService:
+            ASSERT(this->keyType == storageGcsKeyTypeAuto || this->keyType == storageGcsKeyTypeService);
+
+            time_t timeBegin = time(NULL);
+
+            // If the current token has expired then request a new one
+            if (timeBegin >= this->tokenTimeExpire)
             {
-                time_t timeBegin = time(NULL);
+                StorageGcsAuthTokenResult tokenResult = this->keyType == storageGcsKeyTypeAuto ?
+                    storageGcsAuthAuto(this, timeBegin) : storageGcsAuthService(this, timeBegin);
 
-                // If the current token has expired then request a new one
-                if (timeBegin >= this->tokenTimeExpire)
+                MEM_CONTEXT_BEGIN(this->memContext)
                 {
-                    StorageGcsAuthTokenResult tokenResult = storageGcsAuthToken(this, timeBegin);
+                    strFree(this->token);
+                    this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
 
-                    MEM_CONTEXT_BEGIN(this->memContext)
-                    {
-                        strFree(this->token);
-                        this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
-
-                        // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
-                        this->tokenTimeExpire =
-                            tokenResult.timeExpire - ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
-                    }
-                    MEM_CONTEXT_END();
+                    // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
+                    this->tokenTimeExpire =
+                        tokenResult.timeExpire - ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
                 }
+                MEM_CONTEXT_END();
             }
-
-            // Token authentication
-            case storageGcsKeyTypeToken:
-                httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
-                break;
         }
+
+        // Add authorization header
+        httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, this->token);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -874,7 +929,7 @@ storageGcsNew(
 
     ASSERT(path != NULL);
     ASSERT(bucket != NULL);
-    ASSERT(key != NULL);
+    ASSERT(keyType == storageGcsKeyTypeAuto || key != NULL);
     ASSERT(chunkSize != 0);
 
     Storage *this = NULL;
@@ -896,6 +951,18 @@ storageGcsNew(
         // Handle auth key types
         switch (keyType)
         {
+            // Auto authentication for GCE instances
+            case storageGcsKeyTypeAuto:
+            {
+                driver->authUrl = httpUrlNewParseP(
+                    STRDEF("metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"),
+                    .type = httpProtocolTypeHttp);
+                driver->authClient = httpClientNew(
+                    sckClientNew(httpUrlHost(driver->authUrl), httpUrlPort(driver->authUrl), timeout), timeout);
+
+                break;
+            }
+
             // Read data from file for service keys
             case storageGcsKeyTypeService:
             {

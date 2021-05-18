@@ -190,6 +190,7 @@ testRun(void)
     const String *const testHost = hrnServerHost();
     const unsigned int testPort = hrnServerPort(0);
     const unsigned int testPortAuth = hrnServerPort(1);
+    const unsigned int testPortMeta = hrnServerPort(2);
 
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))
@@ -298,12 +299,24 @@ testRun(void)
             }
             HARNESS_FORK_CHILD_END();
 
+            HARNESS_FORK_CHILD_BEGIN(0, true)
+            {
+                TEST_RESULT_VOID(
+                    hrnServerRunP(
+                        ioFdReadNew(strNew("meta server read"), HARNESS_FORK_CHILD_READ(), 10000), hrnServerProtocolSocket,
+                        .port = testPortMeta),
+                    "meta server run");
+            }
+            HARNESS_FORK_CHILD_END();
+
             HARNESS_FORK_PARENT_BEGIN()
             {
                 IoWrite *service = hrnServerScriptBegin(
                     ioFdWriteNew(strNew("gcs client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000));
                 IoWrite *auth = hrnServerScriptBegin(
                     ioFdWriteNew(strNew("auth client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(1), 2000));
+                IoWrite *meta = hrnServerScriptBegin(
+                    ioFdWriteNew(strNew("meta client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(2), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test service auth");
@@ -313,16 +326,14 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), testPort);
                 hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, testContainer());
                 hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
+                hrnCfgEnvRemoveRaw(cfgOptRepoGcsKey);
 
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
-
-                // Tests need the chunk size to be 16
-                ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
 
                 // Generate the auth request. The JWT part will need to be ? since it can vary in content and size.
                 const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
@@ -408,7 +419,45 @@ testRun(void)
                     strNewBuf(storageGetP(storageNewReadP(storage, strNew("file.txt")))), "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to auto auth");
+
+                hrnServerScriptClose(service);
+
+                StringList *argListAuto = strLstDup(argList);
+                hrnCfgArgRawStrId(argListAuto, cfgOptRepoGcsKeyType, storageGcsKeyTypeAuto);
+                harnessCfgLoad(cfgCmdArchivePush, argListAuto);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                // Replace the default authClient with one that points locally. The default host and url will still be used so they
+                // can be verified when testing auth.
+                ((StorageGcs *)storageDriver(storage))->authClient = httpClientNew(
+                    sckClientNew(hrnServerHost(), testPortMeta, 2000), 2000);
+
+                // Tests need the chunk size to be 16
+                ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
+
+                // Get token automatically from metadata
+                hrnServerScriptAccept(meta);
+                hrnServerScriptExpectZ(
+                    meta,
+                    "GET /computeMetadata/v1/instance/service-accounts/default/token HTTP/1.1\r\n"
+                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+                    "content-length:0\r\n"
+                    "host:metadata.google.internal\r\n"
+                    "metadata-flavor:Google\r\n"
+                    "\r\n");
+
+                testResponseP(meta, .content = "{\"access_token\":\"X\",\"token_type\":\"X\",\"expires_in\":3600}");
+                hrnServerScriptClose(meta);
+
+                // Meta service no longer needed
+                hrnServerScriptEnd(meta);
 
                 testRequestP(service, HTTP_VERB_GET, .object = "file0.txt", .query = "alt=media");
                 testResponseP(service);
@@ -829,7 +878,7 @@ testRun(void)
                     "test3.txt {}\n",
                     "check");
 
-                // // -----------------------------------------------------------------------------------------------------------------
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to token auth");
 
                 hrnServerScriptClose(service);

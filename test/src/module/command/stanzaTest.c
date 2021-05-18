@@ -1,13 +1,14 @@
 /***********************************************************************************************************************************
 Test Stanza Commands
 ***********************************************************************************************************************************/
+#include "postgres/interface.h"
+#include "postgres/version.h"
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
-#include "postgres/interface.h"
-#include "postgres/version.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -62,7 +63,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - one repo, no files exist");
         harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -559,7 +560,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -589,7 +590,7 @@ testRun(void)
         // Create pg_control with different version
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_91, .systemId = 6569239123849665699}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_91, .systemId = 6569239123849665699}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -608,7 +609,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -637,12 +638,12 @@ testRun(void)
         // Create pg_control for primary
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 6569239123849665699}));
 
         // Create pg_control for standby
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, testPath())),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 6569239123849665700}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 6569239123849665700}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -665,7 +666,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanza))),
-                pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679})),
+                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679})),
             "create pg_control");
 
         // Load Parameters
@@ -999,7 +1000,7 @@ testRun(void)
         // Create pg_control for stanza-create
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(stanzaOther))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 6569239123849665679}));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza that will not be deleted");
         harnessLogResult("P00   INFO: stanza-create for stanza 'otherstanza' on repo1");

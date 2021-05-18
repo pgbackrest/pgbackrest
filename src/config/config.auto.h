@@ -140,6 +140,97 @@ Option constants
 #define CFG_OPTION_TOTAL                                            130
 
 /***********************************************************************************************************************************
+Option value constants
+***********************************************************************************************************************************/
+#define CFGOPTVAL_ARCHIVE_MODE_OFF_Z                                "off"
+#define CFGOPTVAL_ARCHIVE_MODE_PRESERVE_Z                           "preserve"
+
+#define CFGOPTVAL_COMPRESS_TYPE_BZ2_Z                               "bz2"
+#define CFGOPTVAL_COMPRESS_TYPE_GZ_Z                                "gz"
+#define CFGOPTVAL_COMPRESS_TYPE_LZ4_Z                               "lz4"
+#define CFGOPTVAL_COMPRESS_TYPE_NONE_Z                              "none"
+#define CFGOPTVAL_COMPRESS_TYPE_ZST_Z                               "zst"
+
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG_Z                         "debug"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DETAIL_Z                        "detail"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_ERROR_Z                         "error"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_INFO_Z                          "info"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF_Z                           "off"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_TRACE_Z                         "trace"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_WARN_Z                          "warn"
+
+#define CFGOPTVAL_LOG_LEVEL_FILE_DEBUG_Z                            "debug"
+#define CFGOPTVAL_LOG_LEVEL_FILE_DETAIL_Z                           "detail"
+#define CFGOPTVAL_LOG_LEVEL_FILE_ERROR_Z                            "error"
+#define CFGOPTVAL_LOG_LEVEL_FILE_INFO_Z                             "info"
+#define CFGOPTVAL_LOG_LEVEL_FILE_OFF_Z                              "off"
+#define CFGOPTVAL_LOG_LEVEL_FILE_TRACE_Z                            "trace"
+#define CFGOPTVAL_LOG_LEVEL_FILE_WARN_Z                             "warn"
+
+#define CFGOPTVAL_LOG_LEVEL_STDERR_DEBUG_Z                          "debug"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_DETAIL_Z                         "detail"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_ERROR_Z                          "error"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_INFO_Z                           "info"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_OFF_Z                            "off"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_TRACE_Z                          "trace"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_WARN_Z                           "warn"
+
+#define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
+#define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
+
+#define CFGOPTVAL_REMOTE_TYPE_PG_Z                                  "pg"
+#define CFGOPTVAL_REMOTE_TYPE_REPO_Z                                "repo"
+
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS_Z                         "sas"
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED_Z                      "shared"
+
+#define CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC_Z                    "aes-256-cbc"
+#define CFGOPTVAL_REPO_CIPHER_TYPE_NONE_Z                           "none"
+
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_Z                          "auto"
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_SERVICE_Z                       "service"
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_TOKEN_Z                         "token"
+
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF_Z                "diff"
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_FULL_Z                "full"
+#define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR_Z                "incr"
+
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT_Z                  "count"
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME_Z                   "time"
+
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO_Z                           "auto"
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED_Z                         "shared"
+
+#define CFGOPTVAL_REPO_S3_URI_STYLE_HOST_Z                          "host"
+#define CFGOPTVAL_REPO_S3_URI_STYLE_PATH_Z                          "path"
+
+#define CFGOPTVAL_REPO_TYPE_AZURE_Z                                 "azure"
+#define CFGOPTVAL_REPO_TYPE_CIFS_Z                                  "cifs"
+#define CFGOPTVAL_REPO_TYPE_GCS_Z                                   "gcs"
+#define CFGOPTVAL_REPO_TYPE_POSIX_Z                                 "posix"
+#define CFGOPTVAL_REPO_TYPE_S3_Z                                    "s3"
+
+#define CFGOPTVAL_SORT_ASC_Z                                        "asc"
+#define CFGOPTVAL_SORT_DESC_Z                                       "desc"
+#define CFGOPTVAL_SORT_NONE_Z                                       "none"
+
+#define CFGOPTVAL_TARGET_ACTION_PAUSE_Z                             "pause"
+#define CFGOPTVAL_TARGET_ACTION_PROMOTE_Z                           "promote"
+#define CFGOPTVAL_TARGET_ACTION_SHUTDOWN_Z                          "shutdown"
+
+#define CFGOPTVAL_TYPE_DEFAULT_Z                                    "default"
+#define CFGOPTVAL_TYPE_DIFF_Z                                       "diff"
+#define CFGOPTVAL_TYPE_FULL_Z                                       "full"
+#define CFGOPTVAL_TYPE_IMMEDIATE_Z                                  "immediate"
+#define CFGOPTVAL_TYPE_INCR_Z                                       "incr"
+#define CFGOPTVAL_TYPE_NAME_Z                                       "name"
+#define CFGOPTVAL_TYPE_NONE_Z                                       "none"
+#define CFGOPTVAL_TYPE_PRESERVE_Z                                   "preserve"
+#define CFGOPTVAL_TYPE_STANDBY_Z                                    "standby"
+#define CFGOPTVAL_TYPE_TIME_Z                                       "time"
+#define CFGOPTVAL_TYPE_XID_Z                                        "xid"
+
+/***********************************************************************************************************************************
 Command enum
 ***********************************************************************************************************************************/
 typedef enum

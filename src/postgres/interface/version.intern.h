@@ -24,8 +24,6 @@ Determine if the supplied pg_control is for this version of PostgreSQL
 
 #elif PG_VERSION >= PG_VERSION_83
 
-#ifdef CATALOG_VERSION_NO
-
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
     bool                                                                                                                           \
     pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
@@ -36,19 +34,6 @@ Determine if the supplied pg_control is for this version of PostgreSQL
             ((ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                          \
             ((ControlFileData *)controlFile)->catalog_version_no == CATALOG_VERSION_NO;                                            \
     }
-
-#else
-
-#define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
-    bool                                                                                                                           \
-    pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
-    {                                                                                                                              \
-        ASSERT(controlFile != NULL);                                                                                               \
-                                                                                                                                   \
-        return ((ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION;                                         \
-    }
-
-#endif // CATALOG_VERSION_NO
 
 #endif
 
@@ -113,51 +98,6 @@ Get the control version
 #endif
 
 /***********************************************************************************************************************************
-Create a pg_control file for testing
-***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_93
-
-#define PG_INTERFACE_CONTROL_TEST(version)                                                                                         \
-    void                                                                                                                           \
-    pgInterfaceControlTest##version(PgControl pgControl, unsigned char *buffer)                                                    \
-    {                                                                                                                              \
-        ASSERT(buffer != NULL);                                                                                                    \
-                                                                                                                                   \
-        *(ControlFileData *)buffer = (ControlFileData)                                                                             \
-        {                                                                                                                          \
-            .system_identifier = pgControl.systemId,                                                                               \
-            .pg_control_version = PG_CONTROL_VERSION,                                                                              \
-            .catalog_version_no = pgControl.catalogVersion,                                                                        \
-            .blcksz = pgControl.pageSize,                                                                                          \
-            .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
-            .data_checksum_version = pgControl.pageChecksum,                                                                       \
-        };                                                                                                                         \
-    }
-
-#elif PG_VERSION >= PG_VERSION_83
-
-#define PG_INTERFACE_CONTROL_TEST(version)                                                                                         \
-    void                                                                                                                           \
-    pgInterfaceControlTest##version(PgControl pgControl, unsigned char *buffer)                                                    \
-    {                                                                                                                              \
-        ASSERT(buffer != NULL);                                                                                                    \
-        ASSERT(!pgControl.pageChecksum);                                                                                           \
-                                                                                                                                   \
-        *(ControlFileData *)buffer = (ControlFileData)                                                                             \
-        {                                                                                                                          \
-            .system_identifier = pgControl.systemId,                                                                               \
-            .pg_control_version = PG_CONTROL_VERSION,                                                                              \
-            .catalog_version_no = pgControl.catalogVersion,                                                                        \
-            .blcksz = pgControl.pageSize,                                                                                          \
-            .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
-        };                                                                                                                         \
-    }
-
-#endif
-
-/***********************************************************************************************************************************
 Determine if the supplied WAL is for this version of PostgreSQL
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
@@ -199,46 +139,13 @@ Read the version specific WAL header into a general data structure
 #endif
 
 /***********************************************************************************************************************************
-Create a WAL file file for testing
-***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_83
-
-#define PG_INTERFACE_WAL_TEST(version)                                                                                             \
-    void                                                                                                                           \
-    pgInterfaceWalTest##version(PgWal pgWal, unsigned char *buffer)                                                                \
-    {                                                                                                                              \
-        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = XLOG_PAGE_MAGIC;                                                       \
-        ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
-        ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
-        ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \
-    }
-
-#endif
-
-/***********************************************************************************************************************************
 Call all macros with a single macro to make the vXXX.c files as simple as possible
 ***********************************************************************************************************************************/
-#define PG_INTERFACE_BASE(version)                                                                                                 \
+#define PG_INTERFACE(version)                                                                                                      \
     PG_INTERFACE_CONTROL_IS(version)                                                                                               \
     PG_INTERFACE_CONTROL(version)                                                                                                  \
     PG_INTERFACE_CONTROL_VERSION(version)                                                                                          \
     PG_INTERFACE_WAL_IS(version)                                                                                                   \
     PG_INTERFACE_WAL(version)
-
-#ifdef DEBUG
-
-#define PG_INTERFACE(version)                                                                                                      \
-    PG_INTERFACE_BASE(version)                                                                                                     \
-    PG_INTERFACE_CONTROL_TEST(version)                                                                                             \
-    PG_INTERFACE_WAL_TEST(version)
-
-#else
-
-#define PG_INTERFACE(version)                                                                                                      \
-    PG_INTERFACE_BASE(version)
-
-#endif
 
 #endif

@@ -32,6 +32,7 @@ use constant BLDLCL_CONSTANT_OPTION_GROUP                           => '02-const
 use constant BLDLCL_CONSTANT_OPTION_GROUP_TOTAL                     => 'CFG_OPTION_GROUP_TOTAL';
 use constant BLDLCL_CONSTANT_OPTION                                 => '03-constantOption';
 use constant BLDLCL_CONSTANT_OPTION_TOTAL                           => 'CFG_OPTION_TOTAL';
+use constant BLDLCL_CONSTANT_OPTION_VALUE                           => '04-constantOptionValue';
 
 use constant BLDLCL_DATA_COMMAND_CONSTANT                           => '01-commandConstant';
 use constant BLDLCL_DATA_COMMAND                                    => '02-command';
@@ -65,6 +66,10 @@ my $rhBuild =
                 &BLDLCL_CONSTANT_OPTION =>
                 {
                     &BLD_SUMMARY => 'Option',
+                },
+                &BLDLCL_CONSTANT_OPTION_VALUE =>
+                {
+                    &BLD_SUMMARY => 'Option value',
                 },
             },
 
@@ -257,6 +262,66 @@ sub buildConfig
     # Set option total constant
     $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION}{&BLD_CONSTANT}
         {&BLDLCL_CONSTANT_OPTION_TOTAL}{&BLD_CONSTANT_VALUE} = $iOptionTotal;
+
+    # Build option value constants
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $rhLastConstant = undef;
+
+    foreach my $strOption (sort(keys(%{$rhConfigDefine})))
+    {
+        my $rhOption = $rhConfigDefine->{$strOption};
+
+        # Only output allowed values for string options
+        if ($rhOption->{&CFGDEF_TYPE} eq CFGDEF_TYPE_STRING)
+        {
+            # Add LF to last option value list so they are not all jumbled together
+            if (defined($rhLastConstant))
+            {
+                $rhLastConstant->{&BLD_CONSTANT_VALUE} .= "\n";
+                $rhLastConstant = undef;
+            }
+
+            # Add allowed values for the option, if any
+            my $rhValueHash = {};
+
+            if (defined($rhOption->{&CFGDEF_ALLOW_LIST}))
+            {
+                foreach my $strValue (sort(@{$rhOption->{&CFGDEF_ALLOW_LIST}}))
+                {
+                    $rhValueHash->{$strValue} = true;
+                }
+            }
+
+            # Add allowed values for the option commands, if any
+            foreach my $strCommand (sort(keys(%{$rhOption->{&CFGDEF_COMMAND}})))
+            {
+                my $rhOptionCommand = $rhOption->{&CFGDEF_COMMAND}{$strCommand};
+
+                if (defined($rhOptionCommand->{&CFGDEF_ALLOW_LIST}))
+                {
+                    foreach my $strValue (sort(@{$rhOptionCommand->{&CFGDEF_ALLOW_LIST}}))
+                    {
+                        $rhValueHash->{$strValue} = true;
+                    }
+                }
+            }
+
+            # Output list of allowed values
+            foreach my $strValue (sort(keys(%{$rhValueHash})))
+            {
+                my $strOptionValueConst = 'CFGOPTVAL_' . uc($strOption) . '_' . uc($strValue) . '_Z';
+                $strOptionValueConst =~ s/\-/_/g;
+
+                $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION_VALUE}{&BLD_CONSTANT}
+                    {$strOptionValueConst}{&BLD_CONSTANT_VALUE} = "\"${strValue}\"";
+
+                # Save last constant so an LF can be added later, if needed
+                $rhLastConstant =
+                    $rhBuild->{&BLD_FILE}{&BLDLCL_FILE_CONFIG}{&BLD_CONSTANT_GROUP}{&BLDLCL_CONSTANT_OPTION_VALUE}{&BLD_CONSTANT}
+                        {$strOptionValueConst};
+            }
+        }
+    }
 
     return $rhBuild;
 }

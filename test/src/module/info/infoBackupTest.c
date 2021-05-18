@@ -8,6 +8,7 @@ Test Backup Info Handler
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessPostgres.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -59,7 +60,7 @@ testRun(void)
         Buffer *contentCompare = bufNew(0);
 
         TEST_ASSIGN(
-            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_94), NULL),
+            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_94), NULL),
             "infoBackupNew() - no cipher sub");
         TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "    save backup info from new");
         TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "   check save");
@@ -74,7 +75,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupNew(
-                PG_VERSION_10, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_10),
+                PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10),
                 strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
 
@@ -93,7 +94,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         InfoPgData infoPgData = {0};
         TEST_RESULT_VOID(
-            infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, pgCatalogTestVersion(PG_VERSION_94)),
+            infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_94)),
             "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "    history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackupPg(infoBackup)), "    get current infoPgData");
@@ -150,7 +151,7 @@ testRun(void)
         InfoBackupData backupData = infoBackupData(infoBackup, 0);
 
         TEST_RESULT_STR_Z(backupData.backupLabel, "20161219-212741F", "full backup label");
-        TEST_RESULT_STR_Z(backupData.backupType, "full", "    backup type full");
+        TEST_RESULT_UINT(backupData.backupType, backupTypeFull, "    backup type full");
         TEST_RESULT_INT(backupData.backrestFormat, 5, "    backrest format");
         TEST_RESULT_STR_Z(backupData.backrestVersion, "2.04", "    backrest version");
         TEST_RESULT_STR_Z(backupData.backupArchiveStart, "00000007000000000000001C", "    archive start");
@@ -167,7 +168,7 @@ testRun(void)
 
         InfoBackupData *backupDataPtr = infoBackupDataByLabel(infoBackup, STRDEF("20161219-212741F_20161219-212803D"));
         TEST_RESULT_STR_Z(backupDataPtr->backupLabel, "20161219-212741F_20161219-212803D", "diff backup label");
-        TEST_RESULT_STR_Z(backupDataPtr->backupType, "diff", "    backup type diff");
+        TEST_RESULT_UINT(backupDataPtr->backupType, backupTypeDiff, "    backup type diff");
         TEST_RESULT_UINT(backupDataPtr->backupInfoRepoSize, 3159811, "    repo size");
         TEST_RESULT_UINT(backupDataPtr->backupInfoRepoSizeDelta, 15765, "    repo delta");
         TEST_RESULT_UINT(backupDataPtr->backupInfoSize, 26897030, "    backup size");
@@ -183,7 +184,7 @@ testRun(void)
         TEST_RESULT_STR_Z(backupData.backupLabel, "20161219-212741F_20161219-212918I", "incr backup label");
         TEST_RESULT_STR(backupData.backupArchiveStart, NULL, "    archive start NULL");
         TEST_RESULT_STR(backupData.backupArchiveStop, NULL, "    archive stop NULL");
-        TEST_RESULT_STR_Z(backupData.backupType, "incr", "    backup type incr");
+        TEST_RESULT_UINT(backupData.backupType, backupTypeIncr, "    backup type incr");
         TEST_RESULT_STR_Z(backupData.backupPrior, "20161219-212741F", "    backup prior exists");
         TEST_RESULT_BOOL(
             (strLstSize(backupData.backupReference) == 2 && strLstExists(backupData.backupReference, STRDEF("20161219-212741F")) &&
@@ -317,7 +318,7 @@ testRun(void)
         TEST_RESULT_INT(backupData.backupPgId, 1, "pg id");
         TEST_RESULT_STR(backupData.backupArchiveStart, NULL, "archive start NULL");
         TEST_RESULT_STR(backupData.backupArchiveStop, NULL, "archive stop NULL");
-        TEST_RESULT_STR_Z(backupData.backupType, "full", "backup type set");
+        TEST_RESULT_UINT(backupData.backupType, backupTypeFull, "backup type set");
         TEST_RESULT_STR(backupData.backupPrior, NULL, "no backup prior");
         TEST_RESULT_PTR(backupData.backupReference, NULL, "no backup reference");
         TEST_RESULT_INT(backupData.backupTimestampStart, 1565282140, "timestamp start");
@@ -424,7 +425,7 @@ testRun(void)
         TEST_RESULT_STR_Z(backupData.backrestVersion, PROJECT_VERSION, "backuprest version");
         TEST_RESULT_STR_Z(backupData.backupArchiveStart, "000000030000028500000089", "archive start set");
         TEST_RESULT_STR_Z(backupData.backupArchiveStop, "000000030000028500000090", "archive stop set");
-        TEST_RESULT_STR_Z(backupData.backupType, "diff", "backup type set");
+        TEST_RESULT_UINT(backupData.backupType, backupTypeDiff, "backup type set");
         TEST_RESULT_STR_Z(backupData.backupPrior, "20190818-084502F", "backup prior set");
         TEST_RESULT_STRLST_Z(
             backupData.backupReference,
@@ -699,7 +700,7 @@ testRun(void)
 
         // With the infoBackup from above, upgrade the DB so there a 2 histories then save to disk
         TEST_ASSIGN(
-            infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196, pgCatalogTestVersion(PG_VERSION_11)),
+            infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196, hrnPgCatalogVersion(PG_VERSION_11)),
             "upgrade db");
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
@@ -828,7 +829,7 @@ testRun(void)
             "HINT: has a stanza-create been performed?",
             testPath(), testPath(), testPath(), testPath());
 
-        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, pgCatalogTestVersion(PG_VERSION_10), NULL);
+        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), NULL);
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), "save backup info");
 
