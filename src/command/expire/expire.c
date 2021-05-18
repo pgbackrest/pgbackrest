@@ -910,6 +910,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                             strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
                             strZ(compressTypeStr(compressTypeGz)))),
                     sortOrderDesc);
+                unsigned int historyFoundNb = strLstSize(historyList);
 
                 for (unsigned int historyIdx = 0; historyIdx < strLstSize(historyList); historyIdx++)
                 {
@@ -933,11 +934,30 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                                     STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s",
                                     strZ(historyYear), strZ(historyBackupFile)));
                         }
+
+                        // Keep track of the removed files in the directory
+                        historyFoundNb--;
                     }
                 }
 
-                // Now that we removed the history manifests, we could remove the year directory if empty. However, it seems better
-                // to leave it there (and empty) to avoid the extra callback to the storage.
+                // Now that we removed the history manifests, we could remove the year directory if empty
+                if(historyFoundNb <= 0)
+                {
+                    LOG_INFO_FMT(
+                        "repo%u: remove expired history backup directory %s",
+                        cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(historyYear));
+
+                    // Execute the real expiration and deletion only if the dry-run mode is disabled
+                    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                    {
+                        storagePathRemoveP(
+                            storageRepoIdxWrite(repoIdx),
+                            strNewFmt(
+                                STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s",
+                                strZ(historyYear)),
+                            .errorOnMissing = false, .recurse = true);
+                    }
+                }
             }
         }
     }
