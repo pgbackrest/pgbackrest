@@ -14,25 +14,26 @@
 ./doc.pl
         </code-block>
 
-        <p>The user guide can be built for different platforms: <id>centos7</id>, <id>centos8</id> and <id>debian</id>. This will build the HTML user guide for CentOS/RHEL 7:</p>
+        <p>The user guide can be built for <id>rhel</id> and <id>debian</id>. This will build the HTML user guide for RHEL/CentOS:</p>
 
         <code-block type="bash">
-./doc.pl --out=html --include=user-guide --var=os-type=centos7
+./doc.pl --out=html --include=user-guide --var=os-type=rhel
         </code-block>
 
         <p>Documentation generation will build a cache of all executed statements and use the cache to build the documentation quickly if no executed statements have changed.  This makes proofing text-only edits very fast, but sometimes it is useful to do a full build without using the cache:</p>
 
         <code-block type="bash">
-./doc.pl --out=html --include=user-guide --var=os-type=centos8 --no-cache
+./doc.pl --out=html --include=user-guide --var=os-type=rhel --no-cache
         </code-block>
 
-        <p>Each <id>os-type</id> has a default container image that will be used as a base for creating hosts. For <id>centos7</id>/<id>centos8</id> these defaults are generally fine, but for <id>debian</id> it can be useful to change the image.</p>
+        <p>Each <id>os-type</id> has a default container image that will be used as a base for creating hosts but it may be useful to change the image.</p>
 
         <code-block type="bash">
 ./doc.pl --out=html --include=user-guide --var=os-type=debian --var=os-image=debian:9
+./doc.pl --out=html --include=user-guide --var=os-type=rhel --var=os-image=centos:7
         </code-block>
 
-        <p>The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation.</p>
+        <p>The following is a sample RHEL/CentOS 7 configuration that can be used for building the documentation.</p>
 
         <code-block type="bash">
 # Install docker
@@ -72,16 +73,16 @@ sudo usermod -aG docker testdoc
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=debian --var=os-image=ubuntu:16.04 --var=package=test/package/pgbackrest_2.08-0_amd64.deb
         </code-block>
 
-        <p>CentOS/RHEL 7:</p>
+        <p>RHEL/CentOS 7:</p>
 
         <code-block type="bash">
-./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos7 --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos --var=os-image=centos:7  --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
         </code-block>
 
         <p>CentOS/RHEL 8:</p>
 
         <code-block type="bash">
-./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos8 --var=package=test/package/pgbackrest-2.08-1.el8.x86_64.rpm
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos --var=os-image=centos:8 --var=package=test/package/pgbackrest-2.08-1.el8.x86_64.rpm
         </code-block>
 
         <p>Packages can be built with <file>test.pl</file> using the following configuration on top of the configuration given for building the documentation.</p>
