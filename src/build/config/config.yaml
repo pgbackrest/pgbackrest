@@ -219,9 +219,10 @@ optionGroup:
 #   If the default is a string output it as-is without quoting. This allows C defines to be used as defaults.
 #
 # negate:
-#   The option can be negated with "no" e.g. --no-compress. This applies to options that are only valid on the command line (i.e.
-#   no config section defined) and if not specifically defined, the default is false. All config file boolean options are
-#   automatically negatable.
+#   All config file boolean options are automatically negatable. This setting is used to maintain backward compatibility with older
+#   options and should not be used for new options. For instance --online would be named --offline if it were created now to avoid
+#   the need for negation. --no-config is another special case that would now be implemented with a separate boolean option,
+#   e.g. --config-ignore.
 #
 # reset:
 #   The option can be reset to default even if the default is undefined.
