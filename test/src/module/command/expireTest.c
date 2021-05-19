@@ -1428,8 +1428,7 @@ testRun(void)
             // Manifests for current backups
             "2018/20181119-152138F.manifest.gz\n"
             "2018/20181119-152900F.manifest.gz\n"
-            "2018/20181119-152900F_20181119-152500I.manifest.gz\n",
-            .recurse = true);
+            "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
 
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: remove expired history backup manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
@@ -1455,8 +1454,7 @@ testRun(void)
             // Manifests for current backups
             "2018/20181119-152138F.manifest.gz\n"
             "2018/20181119-152900F.manifest.gz\n"
-            "2018/20181119-152900F_20181119-152500I.manifest.gz\n",
-            .recurse = true);
+            "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: remove expired history backup manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
@@ -1485,8 +1483,7 @@ testRun(void)
             // Manifests for current backups are kept
             "2018/20181119-152138F.manifest.gz\n"
             "2018/20181119-152900F.manifest.gz\n"
-            "2018/20181119-152900F_20181119-152500I.manifest.gz\n",
-            .recurse = true);
+            "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: remove expired history backup manifest 20181029-152138F.manifest.gz\n"
