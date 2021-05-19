@@ -4,6 +4,7 @@ Test Expire Command
 #include <unistd.h>
 
 #include "common/io/bufferRead.h"
+#include "command/backup/common.h"
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
@@ -1408,12 +1409,9 @@ testRun(void)
                     strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
 
         // Add 21 days old full backup
-        char buffer[16];
         time_t oldBackupTimestamp_21 = (time_t)(timeBackup - (21 * SEC_PER_DAY));
-        strftime(buffer, sizeof(buffer), "%Y", localtime(&oldBackupTimestamp_21));
-        String *oldBackupYear_21 = strNewFmt("%s", buffer);
-        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&oldBackupTimestamp_21));
-        String *oldBackupLabel_21 = strNewFmt("%sF", buffer);
+        String *oldBackupLabel_21 = backupLabelFormat(backupTypeFull, NULL, oldBackupTimestamp_21);
+        String *oldBackupYear_21 = strSubN(oldBackupLabel_21, 0, 4);
         storagePutP(
             storageNewWriteP(
                 storageTest,
@@ -1422,10 +1420,8 @@ testRun(void)
 
         // Add 15 days old incr backup
         time_t oldBackupTimestamp_15 = (time_t)(timeBackup - (15 * SEC_PER_DAY));
-        strftime(buffer, sizeof(buffer), "%Y", localtime(&oldBackupTimestamp_15));
-        String *oldBackupYear_15 = strNewFmt("%s", buffer);
-        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&oldBackupTimestamp_15));
-        String *oldBackupLabel_15 = strNewFmt("%s_%sI", strZ(oldBackupLabel_21), buffer);
+        String *oldBackupLabel_15 = backupLabelFormat(backupTypeIncr, oldBackupLabel_21, oldBackupTimestamp_15);
+        String *oldBackupYear_15 = strSubN(oldBackupLabel_15, 0, 4);
         storagePutP(
             storageNewWriteP(
                 storageTest,
@@ -1434,10 +1430,8 @@ testRun(void)
 
         // Add 14 days old full backup
         time_t oldBackupTimestamp_14 = (time_t)(timeBackup - (14 * SEC_PER_DAY));
-        strftime(buffer, sizeof(buffer), "%Y", localtime(&oldBackupTimestamp_14));
-        String *oldBackupYear_14 = strNewFmt("%s", buffer);
-        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime(&oldBackupTimestamp_14));
-        String *oldBackupLabel_14 = strNewFmt("%sF", buffer);
+        String *oldBackupLabel_14 = backupLabelFormat(backupTypeFull, NULL, oldBackupTimestamp_14);
+        String *oldBackupYear_14 = strSubN(oldBackupLabel_14, 0, 4);
         storagePutP(
             storageNewWriteP(
                 storageTest, strNewFmt("%s/backup.history/%s/%s.manifest.gz",
