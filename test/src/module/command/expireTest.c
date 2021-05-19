@@ -1431,9 +1431,9 @@ testRun(void)
             "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
 
         TEST_RESULT_LOG(
-            "P00   INFO: [DRY-RUN] repo1: remove expired history backup manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
-            "P00   INFO: [DRY-RUN] repo1: remove expired history backup manifest 20181029-152138F.manifest.gz\n"
-            "P00   INFO: [DRY-RUN] repo1: remove expired history backup directory 2017");
+            "P00   INFO: [DRY-RUN] repo1: remove expired backup history manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
+            "P00   INFO: [DRY-RUN] repo1: remove expired backup history manifest 20181029-152138F.manifest.gz\n"
+            "P00   INFO: [DRY-RUN] repo1: remove expired backup history path 2017");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup history manifests older than 20 days");
@@ -1457,9 +1457,9 @@ testRun(void)
             "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
 
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: remove expired history backup manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
-            "P00   INFO: repo1: remove expired history backup manifest 20181029-152138F.manifest.gz\n"
-            "P00   INFO: repo1: remove expired history backup directory 2017");
+            "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
+            "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz\n"
+            "P00   INFO: repo1: remove expired backup history path 2017");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup history manifests older than 20 days using backup config");
@@ -1486,8 +1486,8 @@ testRun(void)
             "2018/20181119-152900F_20181119-152500I.manifest.gz\n");
 
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: remove expired history backup manifest 20181029-152138F.manifest.gz\n"
-            "P00   INFO: repo1: remove expired history backup directory 2017");
+            "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz\n"
+            "P00   INFO: repo1: remove expired backup history path 2017");
     }
 
     // *****************************************************************************************************************************

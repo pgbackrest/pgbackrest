@@ -881,7 +881,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
     {
         if (cfgOptionIdxTest(cfgOptRepoRetentionHistory, repoIdx))
         {
-            // Get all the current backups in backup.info - these will not be expired
+            // Get current backups in backup.info - these will not be expired
             StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
 
             // If the full backup history manifests are expired, we should expire diff and incr too. So, format the oldest full
@@ -889,7 +889,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
             const time_t minTimestamp = time(NULL) - (time_t)(cfgOptionIdxUInt(cfgOptRepoRetentionHistory, repoIdx) * SEC_PER_DAY);
             String *minBackupLabel = backupLabelFormat(backupTypeFull, NULL, minTimestamp);
 
-            // Get all the history years
+            // Get all history years
             const StringList *historyYearList = strLstSort(
                 storageListP(
                     storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
@@ -908,12 +908,11 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                             strZ(compressTypeStr(compressTypeGz)))),
                     sortOrderDesc);
 
-                // If the entire year is less than the year of the minimum backup to retain, then remove completely the directory.
-                // Otherwise find and remove individual files.
-                if(strCmp(historyYear, strSubN(minBackupLabel, 0, 4)) < 0)
+                // If the entire year is less than the year of the minimum backup to retain, then remove completely the directory
+                if (strCmp(historyYear, strSubN(minBackupLabel, 0, 4)) < 0)
                 {
                     LOG_INFO_FMT(
-                        "repo%u: remove expired history backup directory %s",
+                        "repo%u: remove expired backup history path %s",
                         cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx), strZ(historyYear));
 
                     // Execute the real expiration and deletion only if the dry-run mode is disabled
@@ -921,12 +920,10 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                     {
                         storagePathRemoveP(
                             storageRepoIdxWrite(repoIdx),
-                            strNewFmt(
-                                STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s",
-                                strZ(historyYear)),
-                            .errorOnMissing = false, .recurse = true);
+                            strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(historyYear)), .recurse = true);
                     }
                 }
+                // Else find and remove individual files
                 else
                 {
                     for (unsigned int historyIdx = 0; historyIdx < strLstSize(historyList); historyIdx++)
@@ -934,12 +931,11 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                         const String *historyBackupFile = strLstGet(historyList, historyIdx);
                         const String *historyBackupLabel = strLstGet(strLstNewSplitZ(historyBackupFile, "."), 0);
 
-                        // Keep the history manifests for unexpired backups and compare dates, extracted from backup labels since
-                        // the retention is set in days.
+                        // Keep backup history manifests for unexpired backups and backups newer than the oldest backup to retain
                         if (!strLstExists(currentBackupList, historyBackupLabel) && strCmp(historyBackupLabel, minBackupLabel) < 0)
                         {
                             LOG_INFO_FMT(
-                                "repo%u: remove expired history backup manifest %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+                                "repo%u: remove expired backup history manifest %s", cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
                                 strZ(historyBackupFile));
 
                             // Execute the real expiration and deletion only if the dry-run mode is disabled
