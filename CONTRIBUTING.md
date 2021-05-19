@@ -39,21 +39,21 @@ pgbackrest-dev => Clone pgBackRest repository
 git clone https://github.com/pgbackrest/pgbackrest.git
 ```
 
-If using a RHEL system, the CPAN XML parser is required for running `test.pl` and `doc.pl`. Instructions for installing Docker and the XML parse can be found in the `README.md` file of the pgBackRest [doc](https://github.com/pgbackrest/pgbackrest/blob/master/doc) directory in the section "The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation". NOTE that the `Install latex (for building PDF)` is not required since testing of the docs need only be run for HTML output.
+If using a RHEL-based system, the CPAN XML parser is required to run `test.pl` and `doc.pl`. Instructions for installing Docker and the XML parser can be found in the `README.md` file of the pgBackRest [doc](https://github.com/pgbackrest/pgbackrest/blob/master/doc) directory in the section "The following is a sample CentOS/RHEL 7 configuration that can be used for building the documentation". NOTE that the "Install latex (for building PDF)" section is not required since testing of the docs need only be run for HTML output.
 
 ## Coding
 
 The following sections provide information on some important concepts needed for coding within pgBackRest.
 
-### Memory Context
+### Memory Contexts
 
 Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use `MEM_CONTEXT_NEW_BEGIN("SomeName")` for objects and `MEM_CONTEXT_TEMP_BEGIN()` for functions. See [memContext.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/memContext.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Logging
 
-Logging is used in debugging with the built-in macros `FUNCTION_LOG_*()` and `FUNCTION_TEST_*()` which are used to trace parameters passed to/returned from functions. `FUNCTION_LOG_*()` macros are used for production logging whereas `FUNCTION_TEST_*()` macros will be compiled out of production code. For functions where no parameter is valuable for debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
+Logging is used for debugging with the built-in macros `FUNCTION_LOG_*()` and `FUNCTION_TEST_*()` which are used to trace parameters passed to/returned from functions. `FUNCTION_LOG_*()` macros are used for production logging whereas `FUNCTION_TEST_*()` macros will be compiled out of production code. For functions where no parameter is valuable enough to justify the cost of debugging in production, use `FUNCTION_TEST_BEGIN()/FUNCTION_TEST_END()`, else use `FUNCTION_LOG_BEGIN(someLogLevel)/FUNCTION_LOG_END()`. See [debug.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/debug.h) for more details and the [Coding Example](#coding-example) below.
 
-Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros when throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
+Logging is also used for providing information to the user via the `LOG_*()` macros, such as `LOG_INFO("some informational message")` and `LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))` and also via `THROW_*()` macros for throwing an error. See [log.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/log.h) and [error.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/common/error.h) for more details and the [Coding Example](#coding-example) below.
 
 ### Coding Example
 
@@ -138,6 +138,7 @@ myObjDisplay(unsigned int myData)
     FUNCTION_TEST_END();
 
     String *result = NULL;     // Result is created in the current memory context  (referred to as "prior context" below)
+
     MEM_CONTEXT_TEMP_BEGIN()   // begins a new temporary context
     {
         String *resultStr = strNew("Hello");    // Allocates a string in the temporary memory context
@@ -179,7 +180,7 @@ pgbackrest/doc/doc.pl --out=html
 
 Examples of test runs are provided in the following sections. There are several important options for running a test:
 
-- `--dry-run` - without any other otpions, this will list all the available tests
+- `--dry-run` - without any other options, this will list all the available tests
 
 - `--module` - identifies the module in which the test is located
 
@@ -191,7 +192,7 @@ Examples of test runs are provided in the following sections. There are several 
 
 - `--vm-out` - displays the test output (helpful for monitoring the progress)
 
-- `--vm` - identifies the pre-build virtual machine when using Docker, otherwise the setting should be `none`
+- `--vm` - identifies the pre-built container when using Docker, otherwise the setting should be `none`
 
 For more options, run the test or documentation engine with the `--help` option:
 ```
@@ -209,14 +210,14 @@ pgbackrest/test/test.pl --vm=none --dry-run
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: builds required: bin
---> P00   INFO: 69 tests selected
+--> P00   INFO: 68 tests selected
                 
-    P00   INFO: P1-T01/69 - vm=none, module=common, test=error
-           [filtered 66 lines of output]
-    P00   INFO: P1-T68/69 - vm=none, module=performance, test=type
-    P00   INFO: P1-T69/69 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/68 - vm=none, module=common, test=error
+           [filtered 65 lines of output]
+    P00   INFO: P1-T67/68 - vm=none, module=performance, test=type
+    P00   INFO: P1-T68/68 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -226,7 +227,7 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -278,7 +279,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -301,7 +302,7 @@ pgbackrest/test/test.pl --vm-build --vm=u18
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: Using cached pgbackrest/test:u18-base-20200924A image (d95d53e642fc1cea4a2b8e935ea7d9739f7d1c46) ...
     P00   INFO: Building pgbackrest/test:u18-test image ...
     P00   INFO: Build Complete
@@ -314,7 +315,7 @@ pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data and containers
     P00   INFO: builds required: bin, bin host
@@ -359,7 +360,7 @@ Each module is separated by a line of asterisks (*) and each test within is sepa
 
 Unit test files are organized in the `test/src/module` directory with the same directory structure as the source code being tested. For example, if new code is added to src/**command/expire**.c then test/src/module/**command/expire**Test.c will need to be updated.
 
-Assuming that a test file already exists, new unit tests will either go in a new `testBegin()` section or be added to an existing section. Each such section is a test run. The comment string passed to the `testBegin()` should reflect the function(s) being tested in the test run. Tests within a run should use `TEST_TITLE()` with a comment string describing the test.
+Assuming that a test file already exists, new unit tests will either go in a new `testBegin()` section or be added to an existing section. Each such section is a test run. The comment string passed to `testBegin()` should reflect the function(s) being tested in the test run. Tests within a run should use `TEST_TITLE()` with a comment string describing the test.
 ```
 // *****************************************************************************************************************************
 if (testBegin("expireBackup()"))
@@ -370,7 +371,7 @@ if (testBegin("expireBackup()"))
 
 #### Setting up the command to be run
 
-The [harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the function `harnessCfgLoad()` with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command on multiple repositories, one which is encrypted:
+The [harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/master/test/src/common/harnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the function `harnessCfgLoad()` with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command on multiple repositories, one of which is encrypted:
 ```
 StringList *argList = strLstNew();                                  // Create an empty string list
 hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);             // Add the --repo-path option
@@ -406,9 +407,9 @@ Tests are run and results confirmed via macros that are described in [harnessTes
 
 #### Testing a log message
 
-If a function being tested logs something with `LOG_WARN`, `LOG_INFO` or other `LOG_*()` macro, then the logged message must be cleared before the end of the test by using the `harnessLogResult()` function.
+If a function being tested logs something with `LOG_WARN`, `LOG_INFO` or other `LOG_*()` macro, then the logged message must be cleared before the end of the test by using the `TEST_RESULT_LOG()/TEST_RESULT_LOG_FMT()` macros.
 ```
-harnessLogResult(
+TEST_RESULT_LOG(
     "P00   WARN: WAL segment '000000010000000100000001' was not pushed due to error [25] and was manually skipped: error");
 ```
 
@@ -486,7 +487,7 @@ If 100 percent code coverage has not been achieved, an error message will be dis
 
 **Debugging with files**
 
-Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option `--no-cleanup` provided. Again, continuing with the check command, from **define.yaml** above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in test/test-0 can be inspected.
+Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option `--no-cleanup` provided. Again, continuing with the check command, from **define.yaml** above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in `test/test-0` can be inspected.
 ```
 pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --no-cleanup
 ```
@@ -505,7 +506,7 @@ These files are discussed in the following sections along with how to verify the
 
 ### config.yaml
 
-There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of passphrases, all configuration file options can be passed on the command line. To configure an option for the configuration file, the `section:` key must be present.
+There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of secrets, all configuration file options can be passed on the command line. To configure an option for the configuration file, the `section:` key must be present.
 
 The `option:` section is broken into sub-sections by a simple comment divider (e.g. `# Repository options`) under which the options are organized alphabetically by option name. To better explain this section, the `online` option will be used as an example:
 
@@ -553,7 +554,7 @@ online:
       default: {}
 ```
 
-At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C code, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
+At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
 ### reference.xml
 
@@ -569,7 +570,7 @@ To add an option, add the following to the `<option-list>` section; if it does n
     <example>y</example>
 </option>
 ```
-> **IMPORTANT:** currently a period (.) is required to end the `summary` section.
+> **IMPORTANT:** A period (.) is required to end the `summary` section.
 
 ### Testing the help
 
@@ -577,11 +578,11 @@ It is important to run the `help` command unit test after adding an option in ca
 ```
 pgbackrest/test/test.pl --module=command --test=help --vm-out
 ```
-To verify the `help` command output, the pgBackRest executable can be built:
+To verify the `help` command output, build the pgBackRest executable:
 ```
 pgbackrest/test/test.pl --vm=none --build-only
 ```
-The binary can then be used to test the help output:
+Use the pgBackRest executable to test the help output:
 ```
 test/bin/none/pgbackrest help backup repo-type
 ```
@@ -594,8 +595,10 @@ pgbackrest/doc/doc.pl --output=html --no-exe
 ```
 The generated HTML files will be placed in the `doc/output/html` directory where they can be viewed locally in a browser.
 
-If Docker is installed, the documentation generator can also be used to build Docker containers by passing the `--no-cache` option. The resulting containers can be useful for manually testing or trying out new code or features. The following demonstrates building through just the `quickstart` section of the `user-guide` without encryption.
+If Docker is installed, it will be used by the documentation generator to execute the code elements while building the documentation. `--no-cache` may be used to force a full build even when no code elements have changed since the last build. `--pre` will reuse the container definitions from the prior build and saves time during development.
+
+The containers created for documentation builds can be useful for manually testing or trying out new code or features. The following demonstrates building through just the `quickstart` section of the `user-guide` without encryption.
 ```
-pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache
+pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
 ```
-The resulting Docker containers can be listed with `docker ps` and the container can be entered with `docker exec -it doc-pg-primary bash` for testing with the `postgres` user.
+The resulting Docker containers can be listed with `docker ps` and the container can be entered with `docker exec -it -u postgres doc-pg-primary bash` for testing with the `postgres` user.

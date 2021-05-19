@@ -629,13 +629,13 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
                 </code-block>
             </section>
 
-            <p>At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C code, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
+            <p>At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
         </section>
 
         <section id="reference-file">
             <title>reference.xml</title>
 
-            <p>All options must be documented or the system will error during the build.  To add an option, find the command section identified by <code>command id="COMMAND"</code> section where <id>COMMAND</id> is the name of the command (e.g. <cmd>expire</cmd>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>operation-general title="General Options"</code> section.</p>
+            <p>All options must be documented or the system will error during the build. To add an option, find the command section identified by <code>command id="COMMAND"</code> section where <id>COMMAND</id> is the name of the command (e.g. <cmd>expire</cmd>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>operation-general title="General Options"</code> section.</p>
 
             <p>To add an option, add the following to the <code>&lt;option-list&gt;</code> section; if it does not exist, then wrap the following in <code>&lt;option-list&gt;</code> <code>&lt;/option-list&gt;</code>. This example uses the boolean option <code>force</code> of the <cmd>restore</cmd> command. Simply replace that with your new option and the appropriate <code>summary</code>, <code>text</code> and <code>example</code>.</p>
 
@@ -648,7 +648,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
     &lt;example>y&lt;/example&gt;
 &lt;/option&gt;
             </code-block>
-            <admonition type="important">currently a period (.) is required to end the <code>summary</code> section.</admonition>
+            <admonition type="important">A period (.) is required to end the <code>summary</code> section.</admonition>
         </section>
 
         <section id="help-test">
@@ -660,13 +660,13 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
 pgbackrest/test/test.pl --module=command --test=help --vm-out
             </code-block>
 
-            <p>To verify the <cmd>help</cmd> command output, the <backrest/> executable can be built:</p>
+            <p>To verify the <cmd>help</cmd> command output, build the <backrest/> executable:</p>
 
             <code-block>
 pgbackrest/test/test.pl --vm=none --build-only
             </code-block>
 
-            <p>The binary can then be used to test the help output:</p>
+            <p>Use the <backrest/> executable to test the help output:</p>
 
             <code-block>
 test/bin/none/pgbackrest help backup repo-type
@@ -684,13 +684,15 @@ pgbackrest/doc/doc.pl --output=html --no-exe
 
             <p>The generated HTML files will be placed in the <file>doc/output/html</file> directory where they can be viewed locally in a browser.</p>
 
-            <p>If Docker is installed, the documentation generator can also be used to build Docker containers by passing the <code>--no-cache</code> option. The resulting containers can be useful for manually testing or trying out new code or features.  The following demonstrates building through just the <code>quickstart</code> section of the <file>user-guide</file> without encryption.</p>
+            <p>If Docker is installed, it will be used by the documentation generator to execute the code elements while building the documentation. <setting>--no-cache</setting> may be used to force a full build even when no code elements have changed since the last build. <setting>--pre</setting> will reuse the container definitions from the prior build and saves time during development.</p>
+
+            <p>The containers created for documentation builds can be useful for manually testing or trying out new code or features. The following demonstrates building through just the <code>quickstart</code> section of the <file>user-guide</file> without encryption.</p>
 
             <code-block>
-pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache
+pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
             </code-block>
 
-            <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec -it doc-pg-primary bash</code> for testing with the <code>postgres</code> user.</p>
+            <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec -it -u postgres doc-pg-primary bash</code> for testing with the <code>postgres</code> user.</p>
         </section>
     </section>
 </doc>
