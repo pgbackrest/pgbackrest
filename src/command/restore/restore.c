@@ -2196,6 +2196,11 @@ cmdRestore(void)
         // Validate restore path
         restorePathValidate();
 
+        // Remove stanza archive spool path so existing files do not interfere with the new cluster. For instance, old archive-push
+        // acknowledgements could cause a new cluster to skip archiving. This should not happen if a new timeline is selected but
+        // better to be safe. Missing stanza spool paths are ignored.
+        storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_STR, .recurse = true);
+
         // Get the backup set
         RestoreBackupData backupData = restoreBackupSet();
 

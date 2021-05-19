@@ -655,7 +655,7 @@ hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOper
 #ifdef HRN_FEATURE_STRING
 
 void
-hrnTestResultStringList(const StringList *actual, const void *expected, HarnessTestResultOperation operation)
+hrnTestResultStringList(const StringList *actual, const char *expected, HarnessTestResultOperation operation)
 {
     // Return NULL if list is empty
     if (strLstEmpty(actual))
