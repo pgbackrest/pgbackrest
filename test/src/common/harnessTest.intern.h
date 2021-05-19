@@ -48,7 +48,7 @@ void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOpera
 void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation);
 
 #ifdef HRN_FEATURE_STRING
-void hrnTestResultStringList(const StringList *actual, const void *expected, HarnessTestResultOperation operation);
+void hrnTestResultStringList(const StringList *actual, const char *expected, HarnessTestResultOperation operation);
 #endif
 
 void hrnTestResultUInt64(uint64_t actual, uint64_t expected, HarnessTestResultOperation operation);
