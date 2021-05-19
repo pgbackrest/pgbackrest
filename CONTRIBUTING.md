@@ -210,14 +210,14 @@ pgbackrest/test/test.pl --vm=none --dry-run
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: builds required: bin
---> P00   INFO: 68 tests selected
+--> P00   INFO: 69 tests selected
                 
-    P00   INFO: P1-T01/68 - vm=none, module=common, test=error
-           [filtered 65 lines of output]
-    P00   INFO: P1-T67/68 - vm=none, module=performance, test=type
-    P00   INFO: P1-T68/68 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/69 - vm=none, module=common, test=error
+           [filtered 66 lines of output]
+    P00   INFO: P1-T68/69 - vm=none, module=performance, test=type
+    P00   INFO: P1-T69/69 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -227,7 +227,7 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -279,7 +279,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -302,7 +302,7 @@ pgbackrest/test/test.pl --vm-build --vm=u18
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: Using cached pgbackrest/test:u18-base-20200924A image (d95d53e642fc1cea4a2b8e935ea7d9739f7d1c46) ...
     P00   INFO: Building pgbackrest/test:u18-test image ...
     P00   INFO: Build Complete
@@ -315,7 +315,7 @@ pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
 
 --- output ---
 
-    P00   INFO: test begin - log level info
+    P00   INFO: test begin on x86_64 - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data and containers
     P00   INFO: builds required: bin, bin host
@@ -508,51 +508,72 @@ These files are discussed in the following sections along with how to verify the
 
 There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of secrets, all configuration file options can be passed on the command line. To configure an option for the configuration file, the `section:` key must be present.
 
-The `option:` section is broken into sub-sections by a simple comment divider (e.g. `# Repository options`) under which the options are organized alphabetically by option name. To better explain this section, the `online` option will be used as an example:
+The `option:` section is broken into sub-sections by a simple comment divider (e.g. `# Repository options`) under which the options are organized alphabetically by option name. To better explain this section, two hypothetical examples will be discussed. For more details, see [config.yaml](https://github.com/pgbackrest/pgbackrest/blob/master/src/build/config/config.yaml).
 
-#### Example 1
+#### Example 1: hypothetical command line only option 
 ```
-online:
-    type: boolean
-    default: true
-    negate: y
+set:
+    type: string
     command:
-      backup: {}
-      stanza-create: {}
-      stanza-upgrade: {}
-    command-role:
-      default: {}
+      backup:
+        depend:
+          option: stanza
+        required: false
+      restore:
+        default: latest
 ```
 
 Note that `section:` is not present thereby making this a command-line only option defined as follows:
 
-- `online` - the name of the option
+- `set` - the name of the option
 
 - `type` - the type of the option. Valid values for types are: `boolean`, `hash`, `integer`, `list`, `path`, `size`, `string`, and `time`
 
 
-- `negate` - being a command-line only boolean option, this rule would automatically default to false so it must be defined if the option is negatable. Ask yourself if negation makes sense, for example, would a --dry-run option make sense as --no-dry-run? If the answer is no, then this rule can be omitted as it would automatically default to false. Any boolean option that cannot be negatable, must be a command-line only and not a configuration file option as all configuration boolean options must be negatable.
-
-- `default` - sets a default for the option if the option is not provided when the command is run. The default can be global or it can be specified for a specific command in the `command` section. However, boolean values always require a default, so if it were desirable for the default to be `false` for the `stanza-create` command then it would be coded as in the [Example 2](#example-2) below.
+- `command` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are `backup` and `restore`.
 
 
-- `command` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command.
+- `backup` - details the requirements for the `--set` option for the `backup` command. It is dependent on the option `--stanza`, meaning it is only allowed to be specified for the `backup` command if the `--stanza` option has been specified. And `required: false` indicates that the `--set` option is never required, even with the dependency.
 
-#### Example 2
+
+- `restore` - details the requirements for the `--set` option for the `restore` command. Since `required:` is omitted, it is not required to be set by the user but it is required by the command and will default to `latest` if it has not been specified by the user.
+
+#### Example 2: hypothetical configuration file option
 ```
-online:
-    type: boolean
-    default: true
+repo-test-type:
+    section: global
+    type: string
+    group: repo
+    default: full
+    allow-list:
+      - full
+      - diff
+      - incr
     command:
-      backup:
-        negate: y
-      stanza-create:
-        negate: n
-      stanza-upgrade:
-        negate: y
-    command-role:
-      default: {}
+      backup: {}
+      restore: {}
 ```
+
+- `repo-test-type` - the name of the option
+
+
+- `section` - the section of the configuration file where this option is valid (omitted for command line only options, see [Example 1](#example-1-hypothetical-command-line-only-option-) above)
+
+
+- `type` - the type of the option. Valid values for types are: `boolean`, `hash`, `integer`, `list`, `path`, `size`, `string`, and `time`
+
+
+- `group` - indicates that this option is part of the `repo` group of indexed options and therefore will follow the indexing rules e.g. `repo1-test-type`.
+
+
+- `default` - sets a default for the option if the option is not provided when the command is run. The default can be global (as it is here) or it can be specified for a specific command in the command section (as in [Example 1](#example-1-hypothetical-command-line-only-option-) above).
+
+
+- `allow-list` - lists the allowable values for the option for all commands for which the option is valid.
+
+
+- `command` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are `backup` and `restore`.
+
 
 At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
@@ -601,4 +622,4 @@ The containers created for documentation builds can be useful for manually testi
 ```
 pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
 ```
-The resulting Docker containers can be listed with `docker ps` and the container can be entered with `docker exec -it -u postgres doc-pg-primary bash` for testing with the `postgres` user.
+The resulting Docker containers can be listed with `docker ps` and the container can be entered with `docker exec doc-pg-primary bash`. Additionally, the `-u` option can be added for entering the container as a specific user (e.g. `postgres`).
