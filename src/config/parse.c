@@ -177,8 +177,8 @@ typedef enum
 #define PARSE_RULE_OPTION_GROUP_ID(groupIdParam)                                                                                   \
     .groupId = groupIdParam
 
-#define PARSE_RULE_OPTION_COMMAND_ROLE_DEFAULT_VALID_LIST(...)                                                                     \
-    .commandRoleValid[cfgCmdRoleDefault] = 0 __VA_ARGS__
+#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST(...)                                                                        \
+    .commandRoleValid[cfgCmdRoleMain] = 0 __VA_ARGS__
 
 #define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST(...)                                                                       \
     .commandRoleValid[cfgCmdRoleAsync] = 0 __VA_ARGS__
@@ -931,7 +931,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                         // Try getting the command from the valid command list
                         config->command = cfgCommandId(command);
-                        config->commandRole = cfgCmdRoleDefault;
+                        config->commandRole = cfgCmdRoleMain;
 
                         // If not successful then a command role may be appended
                         if (config->command == cfgCmdNone)
@@ -1108,8 +1108,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
         if (config->paramList != NULL && !config->help && !parseRuleCommand[config->command].parameterAllowed)
             THROW(ParamInvalidError, "command does not allow parameters");
 
-        // Enable logging for default role so config file warnings will be output
-        if (resetLogLevel && config->commandRole == cfgCmdRoleDefault)
+        // Enable logging for main role so config file warnings will be output
+        if (resetLogLevel && config->commandRole == cfgCmdRoleMain)
             logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 0, 1, false);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a

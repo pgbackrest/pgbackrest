@@ -104,7 +104,7 @@ harnessCfgLoad(ConfigCommand commandId, const StringList *argListParam)
         FUNCTION_HARNESS_PARAM(STRING_LIST, argListParam);
     FUNCTION_HARNESS_END();
 
-    harnessCfgLoadRole(commandId, cfgCmdRoleDefault, argListParam);
+    harnessCfgLoadRole(commandId, cfgCmdRoleMain, argListParam);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
