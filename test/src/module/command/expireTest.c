@@ -9,6 +9,7 @@ Test Expire Command
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Helper functions
@@ -1382,192 +1383,114 @@ testRun(void)
         TEST_TITLE("expire backup history manifests older than 20 days - dry run");
 
         // Get number of days since latest unexpired backup 20181119-152138F
-        // November 19, 2018 3:21:38 PM = 1542640898
-        uint64_t timeBackup = 1542640898;
-        unsigned int historyRetentionDays =  (unsigned int)((timeNow - timeBackup) / SEC_PER_DAY) + 20;
+        unsigned int historyRetentionDays = (unsigned int)((timeNow - 1542640898) / SEC_PER_DAY) + 20;
+
+        // Add history manifests for unexpired backups
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181119-152138F.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181119-152900F.manifest.gz", "tmp");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181119-152900F_20181119-152500I.manifest.gz", "tmp");
+
+        // Add 21 day-old full backup
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181029-152138F.manifest.gz", "tmp");
+
+        // Add 15 day-old incr backup
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181029-152138F_20181104-152138I.manifest.gz", "tmp");
+
+        // Add 14 day-old full backup
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181105-152138F.manifest.gz", "tmp");
+
+        // Add one year old full backup
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2017/20171119-152138F.manifest.gz", "tmp");
 
         // Load Parameters
         argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAddZ(argList, strZ(strNewFmt("--repo1-retention-history=%u", historyRetentionDays)));
-        strLstAddZ(argList, "--dry-run");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
+        hrnCfgArgRawFmt(argList, cfgOptRepoRetentionHistory, "%u", historyRetentionDays);
+        hrnCfgArgRawBool(argList, cfgOptDryRun, true);
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        // Add history manifests for unexpired backups
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNewFmt("%s/backup.history/2018/20181119-152138F.manifest.gz", strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNewFmt("%s/backup.history/2018/20181119-152900F.manifest.gz", strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNewFmt("%s/backup.history/2018/20181119-152900F_20181119-152500I.manifest.gz",
-                    strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
+        TEST_RESULT_VOID(cmdExpire(), "expire");
 
-        // Add 21 days old full backup
-        time_t oldBackupTimestamp21 = (time_t)(timeBackup - (21 * SEC_PER_DAY));
-        String *oldBackupLabel21 = backupLabelFormat(backupTypeFull, NULL, oldBackupTimestamp21);
-        String *oldBackupYear21 = strSubN(oldBackupLabel21, 0, 4);
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                    strZ(backupStanzaPath), strZ(oldBackupYear21), strZ(oldBackupLabel21))), BUFSTRDEF("tmp"));
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/backup.history",
+            "2017/\n"
+            // Previous year history
+            "2017/20171119-152138F.manifest.gz\n"
+            "2018/\n"
+            // 21 day-old history manifest
+            "2018/20181029-152138F.manifest.gz\n"
+            // 15 day-old history manifest
+            "2018/20181029-152138F_20181104-152138I.manifest.gz\n"
+            // 14 day-old history manifest
+            "2018/20181105-152138F.manifest.gz\n"
+            // Manifests for current backups
+            "2018/20181119-152138F.manifest.gz\n"
+            "2018/20181119-152900F.manifest.gz\n"
+            "2018/20181119-152900F_20181119-152500I.manifest.gz\n",
+            .recurse = true);
 
-        // Add 15 days old incr backup
-        time_t oldBackupTimestamp15 = (time_t)(timeBackup - (15 * SEC_PER_DAY));
-        String *oldBackupLabel15 = backupLabelFormat(backupTypeIncr, oldBackupLabel21, oldBackupTimestamp15);
-        String *oldBackupYear15 = strSubN(oldBackupLabel15, 0, 4);
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                    strZ(backupStanzaPath), strZ(oldBackupYear15), strZ(oldBackupLabel15))), BUFSTRDEF("tmp"));
+        TEST_RESULT_LOG(
+            "P00   INFO: [DRY-RUN] repo1: remove expired history backup manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
+            "P00   INFO: [DRY-RUN] repo1: remove expired history backup manifest 20181029-152138F.manifest.gz\n"
+            "P00   INFO: [DRY-RUN] repo1: remove expired history backup directory 2017");
 
-        // Add 14 days old full backup
-        time_t oldBackupTimestamp14 = (time_t)(timeBackup - (14 * SEC_PER_DAY));
-        String *oldBackupLabel14 = backupLabelFormat(backupTypeFull, NULL, oldBackupTimestamp14);
-        String *oldBackupYear14 = strSubN(oldBackupLabel14, 0, 4);
-        storagePutP(
-            storageNewWriteP(
-                storageTest, strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                    strZ(backupStanzaPath), strZ(oldBackupYear14), strZ(oldBackupLabel14))), BUFSTRDEF("tmp"));
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire backup history manifests older than 20 days");
+
+        // Load config with the backup command to be sure repo-retention-history is valid
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
+        hrnCfgArgRawFmt(argList, cfgOptRepoRetentionHistory, "%u", historyRetentionDays);
+        harnessCfgLoad(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/backup.history",
+            "2018/\n"
+            // 14 day-old history manifest
+            "2018/20181105-152138F.manifest.gz\n"
+            // Manifests for current backups
+            "2018/20181119-152138F.manifest.gz\n"
+            "2018/20181119-152900F.manifest.gz\n"
+            "2018/20181119-152900F_20181119-152500I.manifest.gz\n",
+            .recurse = true);
+
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: remove expired history backup manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
+            "P00   INFO: repo1: remove expired history backup manifest 20181029-152138F.manifest.gz\n"
+            "P00   INFO: repo1: remove expired history backup directory 2017");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire backup history manifests older than 20 days using backup config");
+
+        // Add 21 day-old full backup
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2018/20181029-152138F.manifest.gz", "tmp");
 
         // Add one year old full backup
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNewFmt("%s/backup.history/2017/20171119-152138F.manifest.gz", strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2017/20171119-152138F.manifest.gz", "tmp");
 
-        // Expire 21 days old full backup history manifest will also remove the diff/incr backup history manifests related to it.
-        // History manifests for unexpired backups should also be kept.
-        TEST_RESULT_VOID(cmdExpire(), "expire (dry run) backup history manifests");
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), "backup.history/2017")), true,
-            "previous year history directory is kept");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                strZ(backupStanzaPath), strZ(oldBackupYear14), strZ(oldBackupLabel14))), true,
-            "14 days old history manifest is kept");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                strZ(backupStanzaPath), strZ(oldBackupYear15), strZ(oldBackupLabel15))), true,
-            "15 days old history manifest is kept (dry-run)");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                    strZ(backupStanzaPath), strZ(oldBackupYear21), strZ(oldBackupLabel21))), true,
-            "21 days old history manifest is kept (dry-run)");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/2018/20181119-152138F.manifest.gz",
-                    strZ(backupStanzaPath))), true, "20181119-152138F history manifest is kept");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/2018/20181119-152900F.manifest.gz",
-                    strZ(backupStanzaPath))), true, "20181119-152900F history manifest is kept");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/2018/20181119-152900F_20181119-152500I.manifest.gz",
-                    strZ(backupStanzaPath))), true, "20181119-152138F history manifest is kept");
-
-        harnessLogResult(strZ(strNewFmt(
-            "P00   INFO: [DRY-RUN] repo1: remove expired history backup manifest %s.manifest.gz\n"
-            "P00   INFO: [DRY-RUN] repo1: remove expired history backup manifest %s.manifest.gz\n"
-            "P00   INFO: [DRY-RUN] repo1: remove expired history backup directory 2017",
-            strZ(oldBackupLabel15), strZ(oldBackupLabel21))));
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire backup history manifests older than 20 days - no dry run");
-
-        argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAddZ(argList, strZ(strNewFmt("--repo1-retention-history=%u", historyRetentionDays)));
-        harnessCfgLoad(cfgCmdExpire, argList);
-
-        TEST_RESULT_VOID(cmdExpire(), "expire backup history manifests");
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), "backup.history/2017")), false,
-            "previous year history directory not removed");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                strZ(backupStanzaPath), strZ(oldBackupYear15), strZ(oldBackupLabel15))), false,
-            "15 days old history manifest removed");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                    strZ(backupStanzaPath), strZ(oldBackupYear21), strZ(oldBackupLabel21))), false,
-            "21 days old history manifest removed");
-
-        harnessLogResult(strZ(strNewFmt(
-            "P00   INFO: repo1: remove expired history backup manifest %s.manifest.gz\n"
-            "P00   INFO: repo1: remove expired history backup manifest %s.manifest.gz\n"
-            "P00   INFO: repo1: remove expired history backup directory 2017",
-            strZ(oldBackupLabel15), strZ(oldBackupLabel21))));
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire backup history manifests older than 20 days via backup command");
-
-        argList = strLstDup(argListBase);
-        strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAddZ(argList, strZ(strNewFmt("--repo1-retention-history=%u", historyRetentionDays)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH_PG);
         harnessCfgLoad(cfgCmdBackup, argList);
 
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                    strZ(backupStanzaPath), strZ(oldBackupYear21), strZ(oldBackupLabel21))), BUFSTRDEF("tmp"));
+        TEST_RESULT_VOID(cmdExpire(), "expire");
 
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                    strZ(backupStanzaPath), strZ(oldBackupYear15), strZ(oldBackupLabel15))), BUFSTRDEF("tmp"));
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/backup.history",
+            "2018/\n"
+            // 14 day-old history manifest
+            "2018/20181105-152138F.manifest.gz\n"
+            // Manifests for current backups are kept
+            "2018/20181119-152138F.manifest.gz\n"
+            "2018/20181119-152900F.manifest.gz\n"
+            "2018/20181119-152900F_20181119-152500I.manifest.gz\n",
+            .recurse = true);
 
-        storagePutP(
-            storageNewWriteP(
-                storageTest,
-                strNewFmt("%s/backup.history/2017/20171119-152138F.manifest.gz", strZ(backupStanzaPath))), BUFSTRDEF("tmp"));
-
-        TEST_RESULT_VOID(cmdExpire(), "expire backup history manifests via backup command");
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), "backup.history/2017")), false,
-            "previous year history directory not removed");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                strZ(backupStanzaPath), strZ(oldBackupYear15), strZ(oldBackupLabel15))), false,
-            "15 days old history manifest removed again");
-        TEST_RESULT_BOOL(
-            storageExistsP(
-                storageTest,
-                strNewFmt("%s/backup.history/%s/%s.manifest.gz",
-                    strZ(backupStanzaPath), strZ(oldBackupYear21), strZ(oldBackupLabel21))), false,
-            "21 days old history manifest removed again");
-
-        harnessLogResult(strZ(strNewFmt(
-            "P00   INFO: repo1: remove expired history backup manifest %s.manifest.gz\n"
-            "P00   INFO: repo1: remove expired history backup manifest %s.manifest.gz\n"
-            "P00   INFO: repo1: remove expired history backup directory 2017",
-            strZ(oldBackupLabel15), strZ(oldBackupLabel21))));
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: remove expired history backup manifest 20181029-152138F.manifest.gz\n"
+            "P00   INFO: repo1: remove expired history backup directory 2017");
     }
 
     // *****************************************************************************************************************************
