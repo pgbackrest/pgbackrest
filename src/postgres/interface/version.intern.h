@@ -24,6 +24,22 @@ Determine if the supplied pg_control is for this version of PostgreSQL
 
 #elif PG_VERSION >= PG_VERSION_83
 
+#ifdef CATALOG_VERSION_NO_MAX
+
+#define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
+    bool                                                                                                                           \
+    pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
+    {                                                                                                                              \
+        ASSERT(controlFile != NULL);                                                                                               \
+                                                                                                                                   \
+        return                                                                                                                     \
+            ((ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                          \
+            ((ControlFileData *)controlFile)->catalog_version_no >= CATALOG_VERSION_NO &&                                          \
+            ((ControlFileData *)controlFile)->catalog_version_no < (CATALOG_VERSION_NO / 100000 + 1) * 100000;                     \
+    }
+
+#else
+
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
     bool                                                                                                                           \
     pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
@@ -34,6 +50,8 @@ Determine if the supplied pg_control is for this version of PostgreSQL
             ((ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                          \
             ((ControlFileData *)controlFile)->catalog_version_no == CATALOG_VERSION_NO;                                            \
     }
+
+#endif
 
 #endif
 

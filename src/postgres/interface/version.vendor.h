@@ -177,6 +177,12 @@ Types from src/include/catalog/catversion.h
 ***********************************************************************************************************************************/
 
 // CATALOG_VERSION_NO define
+//
+// When PostgreSQL is in alpha/beta/rc the catalog version may change with each release. To prevent breakage during this period
+// define CATATLOG_VERSION_NO_MAX. This will allow the catalog version to "float" through the end of the year. After the PostgreSQL
+// release, remove CATALOG_VERSION_NO_MAX in the next pgBackRest release to lock down the catalog version. A side effect of this is
+// that during the period when the catalog number is allowed to float pgBackRest may misidentify development versions of PostgreSQL
+// for the next release as being an alpha/beta/rc for the current release. This seems a minor issue to prevent breakage.
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
@@ -192,6 +198,9 @@ Types from src/include/catalog/catversion.h
 
 /*							yyyymmddN */
 #define CATALOG_VERSION_NO	202105121
+
+// Allow the catalog version to float during the PostgreSQL 14 beta/rc period
+#define CATALOG_VERSION_NO_MAX
 
 #elif PG_VERSION >= PG_VERSION_13
 
