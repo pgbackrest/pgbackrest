@@ -117,6 +117,24 @@
 
                 <release-development-list>
                     <release-item>
+                        <commit subject="Add config/parse test where the option/value are not in the same arg."/>
+                        <commit subject="Add config/parse tests for partial options."/>
+                        <commit subject="Add config/parse tests for options and option args with spaces."/>
+                        <commit subject="Add config/parse tests for config/env partial options."/>
+                        <commit subject="Replace getopt_long() with custom implementation.">
+                            <github-pull-request id="1396"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="jan.wieck"/>
+                        </release-item-contributor-list>
+
+                        <p>Replace <code>getopt_long()</code> with custom implementation.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1377"/>
 
                         <release-item-contributor-list>

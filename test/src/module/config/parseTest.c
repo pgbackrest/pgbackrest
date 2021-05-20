@@ -21,7 +21,7 @@ Option find test -- this is done a lot in the deprecated tests
 static void
 testOptionFind(const char *optionName, unsigned int optionId, unsigned int optionKeyIdx, bool negate, bool reset, bool deprecated)
 {
-    CfgParseOptionResult option = cfgParseOption(STR(optionName));
+    CfgParseOptionResult option = cfgParseOptionP(STR(optionName));
 
     TEST_RESULT_BOOL(option.found, true, "check %s found", optionName);
     TEST_RESULT_UINT(option.id, optionId, "check %s id %u", optionName, optionId);
@@ -573,6 +573,26 @@ testRun(void)
         TEST_RESULT_INT(
             sizeof(optionResolveOrder) / sizeof(ConfigOption), CFG_OPTION_TOTAL,
             "check that the option resolve list contains an entry for every option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on single - option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "-bogus");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option '-bogus' must begin with --");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when option argument not allowed");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--online=bogus");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'online' does not allow an argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -1739,7 +1759,7 @@ testRun(void)
         testOptionFind("db-ssh-port", cfgOptPgHostPort, 0, false, false, true);
         testOptionFind("db-user", cfgOptPgHostUser, 0, false, false, true);
 
-        TEST_RESULT_BOOL(cfgParseOption(STR("no-db-user")).found, false, "no-db-user not found");
+        TEST_RESULT_BOOL(cfgParseOptionP(STR("no-db-user")).found, false, "no-db-user not found");
 
         // Only check 1-8 since 8 was the max index when these option names were deprecated
         for (unsigned int optionIdx = 0; optionIdx < 8; optionIdx++)
