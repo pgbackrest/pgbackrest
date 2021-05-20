@@ -23,6 +23,11 @@
 #         because it is used to implement the error handling, so it must do error testing in a more primitive way.
 #     * harness - Adds a harness module that contains functions to aid in testing. For example, the "log" harness includes the
 #         common/harnessLog module to aid in expect log testing.
+#       * shim - list of modules that are shimmed in the harness. This allows the harness to access static elements of the module to
+#         provide additional services for unit testing. A shim can have a 'function' list. In this case the listed functions in the
+#         C module will be appended with _SHIMMED and an implementation with the same function signature must be provided in the
+#         harness. Generally speaking this function will default to calling the original function, but after some initialization the
+#         shim may implement other logic that is useful for unit testing.
 #     * depend - Source modules that this test depends on that have not already been included in prior tests via coverage. Ideally
 #         this option would never be used because it is essentially documenting cross-dependencies in the code.
 #     * total - total runs in the test

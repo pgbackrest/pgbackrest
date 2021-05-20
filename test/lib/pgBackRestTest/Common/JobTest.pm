@@ -237,6 +237,8 @@ sub run
                 my $strRepoCopyPath = $self->{strTestPath} . '/repo';           # Path to repo copy
                 my $strRepoCopySrcPath = $strRepoCopyPath . '/src';             # Path to repo copy src
                 my $strRepoCopyTestSrcPath = $strRepoCopyPath . '/test/src';    # Path to repo copy test src
+                my $strShimSrcPath = $self->{strGCovPath} . '/src';             # Path to shim src
+                my $strShimTestSrcPath = $self->{strGCovPath} . '/test/src';    # Path to shim test src
 
                 my $bCleanAll = false;                              # Do all object files need to be cleaned?
                 my $bConfigure = false;                             # Does configure need to be run?
@@ -329,11 +331,13 @@ sub run
                         "\n" .
                     "\n" .
                     "INCLUDE =" .
+                        " \\\n\t-I\"${strShimSrcPath}\"" .
+                        " \\\n\t-I\"${strShimTestSrcPath}\"" .
                         " \\\n\t-I\"${strRepoCopySrcPath}\"" .
                         " \\\n\t-I\"${strRepoCopyTestSrcPath}\"" .
                         "\n" .
                     "\n" .
-                    "vpath \%.c ${strRepoCopySrcPath}:${strRepoCopyTestSrcPath}\n";
+                    "vpath \%.c ${strShimSrcPath}:${strShimTestSrcPath}:${strRepoCopySrcPath}:${strRepoCopyTestSrcPath}\n";
 
                 # If Makefile.param has changed then clean all files
                 if (buildPutDiffers($self->{oStorageTest}, $self->{strGCovPath} . "/Makefile.param", $strMakefileParam))
@@ -346,18 +350,125 @@ sub run
                 my $hTest = (testDefModuleTest($self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME}));
                 my $strRepoCopyTestSrcHarnessPath = $strRepoCopyTestSrcPath . '/common';
 
+                # C modules included in harness files that should not be added to the make list
+                my $rhHarnessCModule = {};
+
+                # List of harness files to include in make
                 my @stryHarnessFile = ('common/harnessTest');
 
-                foreach my $strHarness (@{$hTest->{&TESTDEF_HARNESS}})
+                foreach my $rhHarness (@{$hTest->{&TESTDEF_HARNESS}})
                 {
                     my $bFound = false;
-                    my $strFile = "common/harness" . ucfirst($strHarness);
+                    my $strFile = "common/harness" . ucfirst($rhHarness->{&TESTDEF_HARNESS_NAME});
 
                     # Include harness file if present
-                    if ($self->{oStorageTest}->exists("${strRepoCopyTestSrcPath}/${strFile}.c"))
+                    my $strHarnessSrcFile = "${strRepoCopyTestSrcPath}/${strFile}.c";
+
+                    if ($self->{oStorageTest}->exists($strHarnessSrcFile))
                     {
-                        push(@stryHarnessFile, $strFile);
                         $bFound = true;
+
+                        if (!defined($hTest->{&TESTDEF_HARNESS_SHIM_DEF}{$rhHarness->{&TESTDEF_HARNESS_NAME}}))
+                        {
+                            push(@stryHarnessFile, $strFile);
+                        }
+
+                        # Install shim
+                        my $rhShim = $rhHarness->{&TESTDEF_HARNESS_SHIM};
+
+                        if (defined($rhShim))
+                        {
+                            my $strHarnessSrc = ${$self->{oStorageTest}->get($strHarnessSrcFile)};
+
+                            # Error if there is no placeholder for the shimmed modules
+                            if ($strHarnessSrc !~ /\{\[SHIM\_MODULE\]\}/)
+                            {
+                                confess &log(ERROR, "{[SHIM_MODULE]} tag not found in '${strFile}' harness with shims");
+                            }
+
+                            # Build list of shimmed C modules
+                            my $strShimModuleList = undef;
+
+                            foreach my $strShimModule (sort(keys(%{$rhShim})))
+                            {
+                                # If there are shimmed elements the C module will need to be updated and saved to the test path
+                                if (defined($rhShim->{$strShimModule}))
+                                {
+                                    my $strShimModuleSrc = ${$self->{oStorageTest}->get(
+                                        "${strRepoCopySrcPath}/${strShimModule}.c")};
+                                    my @stryShimModuleSrcRenamed;
+                                    my $strFunctionDeclaration = undef;
+                                    my $strFunctionShim = undef;
+
+                                    foreach my $strLine (split("\n", $strShimModuleSrc))
+                                    {
+                                        # Renamed shimmed functions
+                                        foreach my $strFunction (@{$rhShim->{$strShimModule}{&TESTDEF_HARNESS_SHIM_FUNCTION}})
+                                        {
+                                            # If shimmed function declaration construction is in progress
+                                            if (defined($strFunctionShim))
+                                            {
+                                                # When the beginning of the function block is found, output both the constructed
+                                                # declaration and the renamed implementation.
+                                                if ($strLine =~ /^{/)
+                                                {
+                                                    push(@stryShimModuleSrcRenamed, trim($strFunctionDeclaration) . ";");
+                                                    push(@stryShimModuleSrcRenamed, $strFunctionShim);
+                                                    push(@stryShimModuleSrcRenamed, $strLine);
+
+                                                    $strFunctionShim = undef;
+                                                }
+                                                # Else keep constructing the declaration and implementation
+                                                else
+                                                {
+                                                    $strFunctionDeclaration .= "${strLine}\n";
+                                                    $strFunctionShim .= "${strLine}\n";
+                                                }
+                                            }
+                                            # Else search for shimmed functions
+                                            else
+                                            {
+                                                # If the function to shim is static then we need to create a declaration with the
+                                                # original name so references to the original name in the C module will compile.
+                                                # This is not necessary for extern'd functions since they should already have a
+                                                # declaration in the header file.
+                                                if ($strLine =~ /^${strFunction}\(/ && $stryShimModuleSrcRenamed[-1] =~ /^static /)
+                                                {
+                                                    my $strLineLast = pop(@stryShimModuleSrcRenamed);
+
+                                                    $strFunctionDeclaration = "${strLineLast} ${strLine}\n";
+
+                                                    $strLine =~ s/^${strFunction}\(/${strFunction}_SHIMMED\(/;
+                                                    $strFunctionShim = "${strLineLast}\n${strLine}\n";
+                                                }
+                                                # Else just append the line
+                                                else
+                                                {
+                                                    push(@stryShimModuleSrcRenamed, $strLine);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    buildPutDiffers(
+                                        $self->{oStorageTest}, "${strShimSrcPath}/${strShimModule}.c",
+                                        join("\n", @stryShimModuleSrcRenamed));
+                                }
+
+                                # Build list to include in the harness
+                                if (defined($strShimModuleList))
+                                {
+                                    $strShimModuleList .= "\n";
+                                }
+
+                                $rhHarnessCModule->{$strShimModule} = true;
+                                $strShimModuleList .= "#include \"${strShimModule}.c\"";
+                            }
+
+                            # Replace modules and save
+                            $strHarnessSrc =~ s/\{\[SHIM\_MODULE\]\}/${strShimModuleList}/g;
+                            buildPutDiffers($self->{oStorageTest}, "${strShimTestSrcPath}/${strFile}.c", $strHarnessSrc);
+                        }
                     }
 
                     # Include files in the harness directory if present
@@ -372,7 +483,7 @@ sub run
                     # Error when no harness files were found
                     if (!$bFound)
                     {
-                        confess &log(ERROR, "no files found for harness '${strHarness}'");
+                        confess &log(ERROR, "no files found for harness '$rhHarness->{&TESTDEF_HARNESS_NAME}'");
                     }
                 }
 
@@ -389,6 +500,9 @@ sub run
 
                     # Skip if no C file exists
                     next if !$self->{oStorageTest}->exists("${strRepoCopySrcPath}/${strFile}.c");
+
+                    # Skip if the C file is included in the harness
+                    next if defined($rhHarnessCModule->{$strFile});
 
                     if (!defined($hTestCoverage->{$strFile}) && !grep(/^$strFile$/, @{$hTest->{&TESTDEF_INCLUDE}}))
                     {
@@ -449,6 +563,9 @@ sub run
                     # Don't include vendor files as they are included in regular C files
                     next if $strFile =~ /vendor$/;
 
+                    # Skip if the C file is included in the harness
+                    next if defined($rhHarnessCModule->{$strFile});
+
                     # Include the C file if it exists
                     my $strCIncludeFile = "${strFile}.c";
 
@@ -466,6 +583,13 @@ sub run
 
                     $strCInclude .= (defined($strCInclude) ? "\n" : '') . "#include \"${strCIncludeFile}\"";
                     $strTestDepend .= " ${strCIncludeFile}";
+                }
+
+                # Add harnesses with shims that are first defined in this module
+                foreach my $strHarness (sort(keys(%{$hTest->{&TESTDEF_HARNESS_SHIM_DEF}})))
+                {
+                    $strCInclude .=
+                        (defined($strCInclude) ? "\n" : '') . "#include \"common/harness" . ucfirst($strHarness) . ".c\"";
                 }
 
                 # Update C test file with test module
