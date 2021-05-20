@@ -935,62 +935,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
         {
             const char *arg = argList[argListIdx];
 
-            // Command or parameter
-            if (arg[0] != '-')
-            {
-                // The first argument should be the command
-                if (!commandSet)
-                {
-                    // Try getting the command from the valid command list
-                    config->command = cfgCommandId(arg);
-                    config->commandRole = cfgCmdRoleMain;
-
-                    // If not successful then a command role may be appended
-                    if (config->command == cfgCmdNone)
-                    {
-                        const StringList *commandPart = strLstNewSplit(STR(arg), COLON_STR);
-
-                        if (strLstSize(commandPart) == 2)
-                        {
-                            // Get command id
-                            config->command = cfgCommandId(strZ(strLstGet(commandPart, 0)));
-
-                            // If command id is valid then get command role id
-                            if (config->command != cfgCmdNone)
-                                config->commandRole = cfgCommandRoleEnum(strLstGet(commandPart, 1));
-                        }
-                    }
-
-                    // Error when command does not exist
-                    if (config->command == cfgCmdNone)
-                        THROW_FMT(CommandInvalidError, "invalid command '%s'", arg);
-
-                    // Error when role is not valid for the command
-                    if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
-                        THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", arg);
-
-                    if (config->command == cfgCmdHelp)
-                        config->help = true;
-                    else
-                        commandSet = true;
-                }
-                // Additional arguments are command arguments
-                else
-                {
-                    if (config->paramList == NULL)
-                    {
-                        MEM_CONTEXT_BEGIN(config->memContext)
-                        {
-                            config->paramList = strLstNew();
-                        }
-                        MEM_CONTEXT_END();
-                    }
-
-                    strLstAddZ(config->paramList, arg);
-                }
-            }
-            // Else an option
-            else
+            // If an option
+            if (arg[0] == '-')
             {
                 // Options must start with --
                 if (arg[1] != '-')
@@ -1122,6 +1068,60 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             OptionInvalidError, "option '%s' cannot be set multiple times",
                             cfgParseOptionKeyIdxName(option.id, option.keyIdx));
                     }
+                }
+            }
+            // Else command or parameter
+            else
+            {
+                // The first argument should be the command
+                if (!commandSet)
+                {
+                    // Try getting the command from the valid command list
+                    config->command = cfgCommandId(arg);
+                    config->commandRole = cfgCmdRoleMain;
+
+                    // If not successful then a command role may be appended
+                    if (config->command == cfgCmdNone)
+                    {
+                        const StringList *commandPart = strLstNewSplit(STR(arg), COLON_STR);
+
+                        if (strLstSize(commandPart) == 2)
+                        {
+                            // Get command id
+                            config->command = cfgCommandId(strZ(strLstGet(commandPart, 0)));
+
+                            // If command id is valid then get command role id
+                            if (config->command != cfgCmdNone)
+                                config->commandRole = cfgCommandRoleEnum(strLstGet(commandPart, 1));
+                        }
+                    }
+
+                    // Error when command does not exist
+                    if (config->command == cfgCmdNone)
+                        THROW_FMT(CommandInvalidError, "invalid command '%s'", arg);
+
+                    // Error when role is not valid for the command
+                    if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
+                        THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", arg);
+
+                    if (config->command == cfgCmdHelp)
+                        config->help = true;
+                    else
+                        commandSet = true;
+                }
+                // Additional arguments are command arguments
+                else
+                {
+                    if (config->paramList == NULL)
+                    {
+                        MEM_CONTEXT_BEGIN(config->memContext)
+                        {
+                            config->paramList = strLstNew();
+                        }
+                        MEM_CONTEXT_END();
+                    }
+
+                    strLstAddZ(config->paramList, arg);
                 }
             }
         }
