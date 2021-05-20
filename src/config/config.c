@@ -184,7 +184,7 @@ cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId
 
     String *result = strNew(cfgCommandName(commandId));
 
-    if (commandRoleId != cfgCmdRoleDefault)
+    if (commandRoleId != cfgCmdRoleMain)
         strCatFmt(result, "%s%s", strZ(separator), strZ(cfgCommandRoleStr(commandRoleId)));
 
     FUNCTION_TEST_RETURN(result);
@@ -231,7 +231,7 @@ cfgCommandRoleEnum(const String *commandRole)
     FUNCTION_TEST_END();
 
     if (commandRole == NULL)
-        FUNCTION_TEST_RETURN(cfgCmdRoleDefault);
+        FUNCTION_TEST_RETURN(cfgCmdRoleMain);
     else if (strEq(commandRole, CONFIG_COMMAND_ROLE_ASYNC_STR))
         FUNCTION_TEST_RETURN(cfgCmdRoleAsync);
     else if (strEq(commandRole, CONFIG_COMMAND_ROLE_LOCAL_STR))
@@ -253,7 +253,7 @@ cfgCommandRoleStr(ConfigCommandRole commandRole)
 
     switch (commandRole)
     {
-        case cfgCmdRoleDefault:
+        case cfgCmdRoleMain:
             break;
 
         case cfgCmdRoleAsync:
@@ -292,8 +292,8 @@ cfgLockRequired(void)
 
     // Local roles never take a lock and the remote role has special logic for locking
     FUNCTION_TEST_RETURN(
-        // If a lock is required for the command and the role is default
-        (configCommandData[cfgCommand()].lockRequired && cfgCommandRole() == cfgCmdRoleDefault) ||
+        // If a lock is required for the command and the role is main
+        (configCommandData[cfgCommand()].lockRequired && cfgCommandRole() == cfgCmdRoleMain) ||
         // Or any command when the role is async
         cfgCommandRole() == cfgCmdRoleAsync);
 }

@@ -266,7 +266,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgHost, "host");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
-        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleDefault, argList);
+        harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleMain, argList);
 
         TEST_ERROR(cmdArchivePush(), HostInvalidError, "archive-push command must be run on the PostgreSQL host");
 

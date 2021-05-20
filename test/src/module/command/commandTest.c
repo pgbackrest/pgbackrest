@@ -134,7 +134,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("switch to a new command so some options are not valid");
 
-        cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleDefault);
+        cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleMain);
 
         TEST_RESULT_VOID(cmdBegin(), "command begin");
         harnessLogResult(

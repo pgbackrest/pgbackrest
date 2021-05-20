@@ -185,17 +185,17 @@ optionGroup:
 #         (B), else it will still error on the option (A).
 #
 # command-role:
-#   1) Define the command roles for a command. 'default' is valid for all commands and is therefore added programmatically.
+#   1) Define the command roles for a command. 'main' is valid for all commands and is therefore added programmatically.
 #
 #   2) Define the command roles for an option. If not defined, the option will be valid for all roles of all commands for which it
 #      is valid. If command roles are defined for the option, then they override the roles for all commands for which the option is
-#      valid. 'default' must be defined explicitly in this case. For example, if an option is only valid for the 'default' role and
-#      the async role for each command then command-role must list 'default' and 'async', meaning each command has a default role
+#      valid. 'main' must be defined explicitly in this case. For example, if an option is only valid for the 'main' role and
+#      the 'async' role for each command then command-role must list 'main' and 'async', meaning each command has a 'main' role
 #      so the option is valid for that role and for commands that have the 'async' role, it is also valid for the 'async' role of
 #      those commands.
 #
 #   3) Define the command roles for an option command override. If not defined, the option will be valid for all roles of the
-#      command or the roles specified by rule 2) above. 'default' must be defined explicitly in this case. If command roles are
+#      command or the roles specified by rule 2) above. 'main' must be defined explicitly in this case. If command roles are
 #      defined for the option command override, then they override command roles defined for the option (rule 2) above)
 #      and all roles defined for the command (rule 1) above).
 #
@@ -265,7 +265,7 @@ option:
     command:
       expire: {}
     command-role:
-      default: {}
+      main: {}
 
   force:
     type: boolean
@@ -282,7 +282,7 @@ option:
       stanza-delete: {}
       stop: {}
     command-role:
-      default: {}
+      main: {}
 
   online:
     type: boolean
@@ -293,7 +293,7 @@ option:
       stanza-create: {}
       stanza-upgrade: {}
     command-role:
-      default: {}
+      main: {}
 
   output:
     type: string
@@ -309,7 +309,7 @@ option:
           - text
           - json
     command-role:
-      default: {}
+      main: {}
 
   set:
     type: string
@@ -326,7 +326,7 @@ option:
         internal: true
         required: false
     command-role:
-      default: {}
+      main: {}
 
   stanza:
     type: string
@@ -369,7 +369,7 @@ option:
             - time
             - xid
     command-role:
-      default: {}
+      main: {}
 
   target-action:
     type: string
@@ -388,7 +388,7 @@ option:
             - time
             - xid
     command-role:
-      default: {}
+      main: {}
 
   target-exclusive:
     type: boolean
@@ -401,7 +401,7 @@ option:
             - time
             - xid
     command-role:
-      default: {}
+      main: {}
 
   target-timeline:
     type: string
@@ -417,7 +417,7 @@ option:
             - time
             - xid
     command-role:
-      default: {}
+      main: {}
 
   type:
     command:
@@ -439,7 +439,7 @@ option:
           - standby
         default: default
     command-role:
-      default: {}
+      main: {}
     type: string
 
   # Command-line only local/remote options
@@ -511,7 +511,7 @@ option:
       repo-get: {}
       repo-put: {}
     command-role:
-      default: {}
+      main: {}
 
   filter:
     type: string
@@ -519,7 +519,7 @@ option:
     command:
       repo-ls: {}
     command-role:
-      default: {}
+      main: {}
 
   ignore-missing:
     type: boolean
@@ -527,7 +527,7 @@ option:
     command:
       repo-get: {}
     command-role:
-      default: {}
+      main: {}
 
   raw:
     type: boolean
@@ -536,7 +536,7 @@ option:
       repo-get: {}
       repo-put: {}
     command-role:
-      default: {}
+      main: {}
 
   recurse:
     type: boolean
@@ -545,7 +545,7 @@ option:
       repo-ls: {}
       repo-rm: {}
     command-role:
-      default: {}
+      main: {}
 
   sort:
     type: string
@@ -557,7 +557,7 @@ option:
     command:
       repo-ls: {}
     command-role:
-      default: {}
+      main: {}
 
   # General options
   #---------------------------------------------------------------------------------------------------------------------------------
@@ -572,7 +572,7 @@ option:
       backup: {}
       check: {}
     command-role:
-      default: {}
+      main: {}
 
   buffer-size:
     section: global
@@ -630,7 +630,7 @@ option:
       verify: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
 
   # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
@@ -642,7 +642,7 @@ option:
       archive-push: {}
       backup: {}
     command-role:
-      default: {}
+      main: {}
 
   compress-level:
     section: global
@@ -652,7 +652,7 @@ option:
     command: compress
     command-role:
       async: {}
-      default: {}
+      main: {}
 
   compress-level-network:
     section: global
@@ -675,7 +675,7 @@ option:
       verify: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
 
   compress-type:
@@ -691,7 +691,7 @@ option:
     command: compress
     command-role:
       async: {}
-      default: {}
+      main: {}
 
   db-timeout:
     section: global
@@ -720,7 +720,7 @@ option:
       backup: {}
       restore: {}
     command-role:
-      default: {}
+      main: {}
 
   io-timeout:
     section: global
@@ -745,7 +745,7 @@ option:
       verify: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
 
   job-retry-interval:
@@ -807,7 +807,7 @@ option:
       verify: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
 
   protocol-timeout:
     section: global
@@ -863,7 +863,7 @@ option:
         internal: true
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
 
   tcp-keep-alive-count:
@@ -971,7 +971,7 @@ option:
       archive-get: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
 
   archive-push-queue-max:
     section: global
@@ -982,7 +982,7 @@ option:
       archive-push: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
     deprecate:
       archive-queue-max: {}
 
@@ -1000,7 +1000,7 @@ option:
             - true
       check: {}
     command-role:
-      default: {}
+      main: {}
 
   archive-copy:
     section: global
@@ -1013,7 +1013,7 @@ option:
           list:
             - true
     command-role:
-      default: {}
+      main: {}
 
   archive-header-check:
     section: global
@@ -1022,7 +1022,7 @@ option:
     command:
       archive-push: {}
     command-role:
-      default: {}
+      main: {}
       async: {}
 
   archive-mode-check:
@@ -1033,7 +1033,7 @@ option:
       backup: {}
       check: {}
     command-role:
-      default: {}
+      main: {}
     depend:
       option: archive-check
       list:
@@ -1049,7 +1049,7 @@ option:
       stanza-create: {}
       stanza-upgrade: {}
     command-role:
-      default: {}
+      main: {}
 
   checksum-page:
     section: global
@@ -1058,7 +1058,7 @@ option:
     command:
       backup: {}
     command-role:
-      default: {}
+      main: {}
 
   exclude:
     section: global
@@ -1067,7 +1067,7 @@ option:
     command:
       backup: {}
     command-role:
-      default: {}
+      main: {}
 
   expire-auto:
     section: global
@@ -1076,7 +1076,7 @@ option:
     command:
       backup: {}
     command-role:
-      default: {}
+      main: {}
 
   manifest-save-threshold:
     section: global
@@ -1086,7 +1086,7 @@ option:
     command:
       backup: {}
     command-role:
-      default: {}
+      main: {}
 
   resume:
     section: global
@@ -1095,7 +1095,7 @@ option:
     command:
       backup: {}
     command-role:
-      default: {}
+      main: {}
 
   start-fast:
     section: global
@@ -1104,7 +1104,7 @@ option:
     command:
       backup: {}
     command-role:
-      default: {}
+      main: {}
 
   stop-auto:
     section: global
@@ -1113,7 +1113,7 @@ option:
     command:
       backup: {}
     command-role:
-      default: {}
+      main: {}
 
   # Restore options
   #---------------------------------------------------------------------------------------------------------------------------------
@@ -1127,7 +1127,7 @@ option:
     command:
       restore: {}
     command-role:
-      default: {}
+      main: {}
 
   db-exclude:
     section: global
@@ -1136,7 +1136,7 @@ option:
     command:
       restore: {}
     command-role:
-      default: {}
+      main: {}
 
   db-include:
     section: global
@@ -1145,7 +1145,7 @@ option:
     command:
       restore: {}
     command-role:
-      default: {}
+      main: {}
 
   link-all:
     section: global
@@ -1154,7 +1154,7 @@ option:
     command:
       restore: {}
     command-role:
-      default: {}
+      main: {}
 
   link-map:
     section: global
@@ -1163,7 +1163,7 @@ option:
     command:
       restore: {}
     command-role:
-      default: {}
+      main: {}
 
   tablespace-map:
     section: global
@@ -1172,7 +1172,7 @@ option:
     command:
       restore: {}
     command-role:
-      default: {}
+      main: {}
 
   tablespace-map-all:
     section: global
@@ -1181,7 +1181,7 @@ option:
     command:
       restore: {}
     command-role:
-      default: {}
+      main: {}
 
   recovery-option:
     section: global
@@ -1190,7 +1190,7 @@ option:
     command:
       restore: {}
     command-role:
-      default: {}
+      main: {}
     depend:
       option: type
       list:
@@ -1229,7 +1229,7 @@ option:
     command: pg-local
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
     depend:
       option: pg-local
@@ -1252,7 +1252,7 @@ option:
       stanza-upgrade: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
     depend:
       option: pg-host
@@ -1318,7 +1318,7 @@ option:
       stanza-upgrade: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
 
   pg-path:
@@ -1391,7 +1391,7 @@ option:
       archive-get:
         command-role:
           async: {}
-          default: {}
+          main: {}
           local: {}
           remote: {}
       archive-push:
@@ -1399,41 +1399,41 @@ option:
           remote: {}
       backup:
         command-role:
-          default: {}
+          main: {}
           local: {}
       check:
         command-role:
           remote: {}
       expire:
         command-role:
-          default: {}
+          main: {}
       info:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-create:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-get:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-ls:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-put:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-rm:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       restore:
         command-role:
-          default: {}
+          main: {}
           local: {}
           remote: {}
       stanza-create:
@@ -1441,7 +1441,7 @@ option:
             remote: {}
       stanza-delete:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       stanza-upgrade:
         command-role:
@@ -1452,7 +1452,7 @@ option:
         command-role: {}
       verify:
         command-role:
-          default: {}
+          main: {}
           local: {}
           remote: {}
 
@@ -1564,7 +1564,7 @@ option:
     command:
       backup: {}
     command-role:
-      default: {}
+      main: {}
     deprecate:
       hardlink: {index: 1, reset: false}
 
@@ -1576,7 +1576,7 @@ option:
     command: repo-local
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
     depend:
       option: repo-local
@@ -1607,7 +1607,7 @@ option:
       verify: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
     depend:
       option: repo-host
@@ -1621,7 +1621,7 @@ option:
     command: repo-host-cmd
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
     default-literal: true
@@ -1651,7 +1651,7 @@ option:
     command: repo-host-cmd
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
     depend:
       option: repo-host
@@ -1666,7 +1666,7 @@ option:
     command: repo-host-cmd
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
     default: pgbackrest
     depend:
@@ -1704,7 +1704,7 @@ option:
       verify: {}
     command-role:
       async: {}
-      default: {}
+      main: {}
       local: {}
 
   repo-path:
@@ -1726,7 +1726,7 @@ option:
       backup: {}
       expire: {}
     command-role:
-      default: {}
+      main: {}
     deprecate:
       retention-archive: {index: 1, reset: false}
 
@@ -1743,7 +1743,7 @@ option:
       backup: {}
       expire: {}
     command-role:
-      default: {}
+      main: {}
     deprecate:
       retention-archive-type: {index: 1, reset: false}
 
@@ -1757,7 +1757,7 @@ option:
       backup: {}
       expire: {}
     command-role:
-      default: {}
+      main: {}
     deprecate:
       retention-diff: {index: 1, reset: false}
 
@@ -1769,7 +1769,7 @@ option:
     allow-range: [1, 9999999]
     command: repo-retention-full-type
     command-role:
-      default: {}
+      main: {}
     deprecate:
       retention-full: {index: 1, reset: false}
 
@@ -1785,7 +1785,7 @@ option:
       backup: {}
       expire: {}
     command-role:
-      default: {}
+      main: {}
 
   repo-s3-bucket:
     section: global
@@ -1939,66 +1939,66 @@ option:
       archive-get:
         command-role:
           async: {}
-          default: {}
+          main: {}
           local: {}
           remote: {}
       archive-push:
         command-role:
           async: {}
-          default: {}
+          main: {}
           local: {}
           remote: {}
       backup:
         command-role:
-          default: {}
+          main: {}
           local: {}
       check:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       expire:
         command-role:
-          default: {}
+          main: {}
       info:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-create:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-get:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-ls:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-put:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       repo-rm:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       restore:
         command-role:
-          default: {}
+          main: {}
           local: {}
           remote: {}
       stanza-create:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       stanza-delete:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       stanza-upgrade:
         command-role:
-          default: {}
+          main: {}
           remote: {}
       start:
         command-role: {}
@@ -2006,7 +2006,7 @@ option:
         command-role: {}
       verify:
         command-role:
-          default: {}
+          main: {}
           local: {}
           remote: {}
     deprecate:
