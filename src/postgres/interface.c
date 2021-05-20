@@ -79,6 +79,16 @@ typedef struct PgInterface
 static const PgInterface pgInterface[] =
 {
     {
+        .version = PG_VERSION_14,
+
+        .controlIs = pgInterfaceControlIs140,
+        .control = pgInterfaceControl140,
+        .controlVersion = pgInterfaceControlVersion140,
+
+        .walIs = pgInterfaceWalIs140,
+        .wal = pgInterfaceWal140,
+    },
+    {
         .version = PG_VERSION_13,
 
         .controlIs = pgInterfaceControlIs130,

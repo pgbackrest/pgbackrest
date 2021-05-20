@@ -477,7 +477,8 @@ sub clusterStop
     if (!$bIgnoreLogError && storageTest()->exists($self->pgLogFile()))
     {
         $self->executeSimple(
-            'grep -v "FATAL\:  57P03\: the database system is starting up" ' . $self->pgLogFile() . ' | grep "ERROR\|FATAL"',
+            'grep -v "FATAL\:  57P03\: the database system is (starting up|not yet accepting connections|"
+                "not accepting connections)" ' . $self->pgLogFile() . ' | grep "ERROR\|FATAL"',
             {iExpectedExitStatus => 1});
     }
 

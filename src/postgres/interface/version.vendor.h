@@ -95,7 +95,7 @@ typedef unsigned int Oid;
 #endif
 
 /***********************************************************************************************************************************
-Types from src/include/utils/pg_crc32.h
+Types from src/include/port/pg_crc32.h
 ***********************************************************************************************************************************/
 
 // pg_crc32/c type
@@ -179,6 +179,19 @@ Types from src/include/catalog/catversion.h
 // CATALOG_VERSION_NO define
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_14
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	202105121
 
 #elif PG_VERSION >= PG_VERSION_13
 
@@ -453,6 +466,44 @@ Types from src/include/catalog/pg_control.h
 // CheckPoint Type
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_14
+
+/*
+ * Body of CheckPoint XLOG records.  This is declared here because we keep
+ * a copy of the latest one in pg_control for possible disaster recovery.
+ * Changing this struct requires a PG_CONTROL_VERSION bump.
+ */
+typedef struct CheckPoint
+{
+	XLogRecPtr	redo;			/* next RecPtr available when we began to
+								 * create CheckPoint (i.e. REDO start point) */
+	TimeLineID	ThisTimeLineID; /* current TLI */
+	TimeLineID	PrevTimeLineID; /* previous TLI, if this record begins a new
+								 * timeline (equals ThisTimeLineID otherwise) */
+	bool		fullPageWrites; /* current full_page_writes */
+	FullTransactionId nextXid;	/* next free transaction ID */
+	Oid			nextOid;		/* next free OID */
+	MultiXactId nextMulti;		/* next free MultiXactId */
+	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
+	TransactionId oldestXid;	/* cluster-wide minimum datfrozenxid */
+	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
+	MultiXactId oldestMulti;	/* cluster-wide minimum datminmxid */
+	Oid			oldestMultiDB;	/* database with minimum datminmxid */
+	pg_time_t	time;			/* time stamp of checkpoint */
+	TransactionId oldestCommitTsXid;	/* oldest Xid with valid commit
+										 * timestamp */
+	TransactionId newestCommitTsXid;	/* newest Xid with valid commit
+										 * timestamp */
+
+	/*
+	 * Oldest XID still running. This is only needed to initialize hot standby
+	 * mode from an online checkpoint, so we only bother calculating this for
+	 * online checkpoints and only when wal_level is replica. Otherwise it's
+	 * set to InvalidTransactionId.
+	 */
+	TransactionId oldestActiveXid;
+} CheckPoint;
 
 #elif PG_VERSION >= PG_VERSION_12
 
@@ -2163,6 +2214,10 @@ Types from src/include/access/xlog_internal.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
+#elif PG_VERSION >= PG_VERSION_14
+
+#define XLOG_PAGE_MAGIC 0xD10D	/* can be used as WAL version indicator */
+
 #elif PG_VERSION >= PG_VERSION_13
 
 #define XLOG_PAGE_MAGIC 0xD106	/* can be used as WAL version indicator */
@@ -2220,6 +2275,27 @@ Types from src/include/access/xlog_internal.h
 // XLogPageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_14
+
+/*
+ * Each page of XLOG file has a header like this:
+ */
+typedef struct XLogPageHeaderData
+{
+	uint16		xlp_magic;		/* magic value for correctness checks */
+	uint16		xlp_info;		/* flag bits, see below */
+	TimeLineID	xlp_tli;		/* TimeLineID of first record on page */
+	XLogRecPtr	xlp_pageaddr;	/* XLOG address of this page */
+
+	/*
+	 * When there is not enough space on current page for whole record, we
+	 * continue on the next page.  xlp_rem_len is the number of bytes
+	 * remaining from a previous page; it tracks xl_tot_len in the initial
+	 * header.  Note that the continuation data isn't necessarily aligned.
+	 */
+	uint32		xlp_rem_len;	/* total len of remaining data for record */
+} XLogPageHeaderData;
 
 #elif PG_VERSION >= PG_VERSION_93
 
