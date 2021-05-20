@@ -863,7 +863,6 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
     FUNCTION_LOG_RETURN_VOID();
 }
 
-
 /***********************************************************************************************************************************
 Remove expired backup history manifests from repo
 ***********************************************************************************************************************************/

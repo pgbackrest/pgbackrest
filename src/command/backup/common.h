@@ -18,7 +18,7 @@ Backup constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Helper to format the backup label
+// Format a backup label from a type and timestamp with an optional prior label
 String *backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp);
 
 // Returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
