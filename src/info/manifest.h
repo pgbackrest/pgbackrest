@@ -10,11 +10,6 @@ nothing is missing or corrupt.  It is also useful for reporting, e.g. size of ba
 #ifndef INFO_MANIFEST_H
 #define INFO_MANIFEST_H
 
-#include "command/backup/common.h"
-#include "common/compress/helper.h"
-#include "common/crypto/common.h"
-#include "common/type/variantList.h"
-
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
@@ -31,7 +26,11 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct Manifest Manifest;
 
+#include "command/backup/common.h"
+#include "common/compress/helper.h"
+#include "common/crypto/common.h"
 #include "common/crypto/hash.h"
+#include "common/type/variantList.h"
 #include "common/type/object.h"
 #include "info/info.h"
 #include "info/infoBackup.h"

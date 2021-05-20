@@ -2655,6 +2655,7 @@ testRun(void)
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
         strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "--type=preserve");
         strLstAddZ(argList, "--link-map=pg_wal=../wal");
@@ -2667,6 +2668,9 @@ testRun(void)
         // completely invisible in the manifest and logging.
         TEST_SYSTEM_FMT("mv %s %s-data", strZ(pgPath), strZ(pgPath));
         TEST_SYSTEM_FMT("ln -s %s-data %s ", strZ(pgPath), strZ(pgPath));
+
+        // Create the stanza archive pool path to check that it gets removed
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE "/empty.txt");
 
         // Write recovery.conf so we don't get a preserve warning
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), BUFSTRDEF("Some Settings"));
@@ -2721,6 +2725,9 @@ testRun(void)
             "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '{[path]}/pg/global'");
+
+        // Check stanza archive spool path was removed
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Keep this test at the end since is corrupts the repo

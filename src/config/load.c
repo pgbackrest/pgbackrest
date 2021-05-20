@@ -345,8 +345,8 @@ cfgLoadLogFile(void)
                     strCatFmt(logFile, "-async");
             }
 
-            // Add command role if it is not default
-            if (cfgCommandRole() != cfgCmdRoleDefault)
+            // Add command role if it is not main
+            if (cfgCommandRole() != cfgCmdRoleMain)
                 strCatFmt(logFile, "-%s", strZ(cfgCommandRoleStr(cfgCommandRole())));
 
             // Add process id if local or remote role

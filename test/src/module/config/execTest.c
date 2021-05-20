@@ -41,7 +41,7 @@ testRun(void)
             "exec archive-get -> archive-get:async");
 
         TEST_RESULT_STRLST_Z(
-            cfgExecParam(cfgCmdBackup, cfgCmdRoleDefault, NULL, false, false),
+            cfgExecParam(cfgCmdBackup, cfgCmdRoleMain, NULL, false, false),
             "--archive-timeout=5\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
                 "--pg1-path=" TEST_PATH "/db path\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\nbackup\n",
             "exec archive-get -> backup");
@@ -69,7 +69,7 @@ testRun(void)
         kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_PATH), VARSTRDEF("/log"));
 
         TEST_RESULT_STRLST_Z(
-            cfgExecParam(cfgCmdRestore, cfgCmdRoleDefault, optionReplace, true, false),
+            cfgExecParam(cfgCmdRestore, cfgCmdRoleMain, optionReplace, true, false),
             "--db-include=1\n--db-include=2\n--exec-id=1-test\n--log-path=/log\n--pg1-path=" TEST_PATH "/db path\n"
                 "--recovery-option=a=b\n--recovery-option=c=d\n--repo1-path=/replace/path\nrestore\n",
             "exec restore -> restore");

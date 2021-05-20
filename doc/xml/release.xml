@@ -58,6 +58,23 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Use existing variable for GCS test server port."/>
+                        <commit subject="Refactor GCS token response parsing into a separate function."/>
+                        <commit subject="Add automatic GCS authentication for GCE instances.">
+                            <github-pull-request id="1395"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="jan.wieck"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="daniel.farina"/>
+                        </release-item-contributor-list>
+
+                        <p>Add automatic <proper>GCS</proper> authentication for <proper>GCE</proper> instances.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="986"/>
                         <github-pull-request id="1337"/>
 
@@ -71,6 +88,19 @@
                 </release-feature-list>
 
                 <release-improvement-list>
+                    <release-item>
+                        <github-issue id="1357"/>
+                        <github-pull-request id="1386"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove stanza archive spool path on <cmd>restore</cmd>.</p>
+                    </release-item>
+
                     <release-item>
                         <github-issue id="1373"/>
 
@@ -86,6 +116,18 @@
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1396"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <release-item-reviewer id="jan.wieck"/>
+                        </release-item-contributor-list>
+
+                        <p>Replace <code>getopt_long()</code> with custom implementation.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1377"/>
 
@@ -146,6 +188,26 @@
                         </release-item-contributor-list>
 
                         <p>Revert to checking catalog version for all <postgres/> versions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1410"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Rename default command role to main.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Simplify defaults for <br-option>--force</br-option> option.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -276,6 +338,8 @@
 
                         <release-item-contributor-list>
                             <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="daniel.farina"/>
                         </release-item-contributor-list>
 
                         <p>GCS support for repository storage.</p>
@@ -9573,6 +9637,11 @@
         <contributor id="dan.farrell">
             <contributor-name-display>Dan Farrell</contributor-name-display>
             <contributor-id type="github">farrellit</contributor-id>
+        </contributor>
+
+        <contributor id="daniel.farina">
+            <contributor-name-display>Daniel Farina</contributor-name-display>
+            <contributor-id type="github">fdr</contributor-id>
         </contributor>
 
         <contributor id="daniel.westermann">

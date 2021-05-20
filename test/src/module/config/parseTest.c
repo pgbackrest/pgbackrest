@@ -1234,11 +1234,11 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLogFile(), true, "    backup command does file logging");
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "    backup command requires remote lock");
         TEST_RESULT_STRLST_Z(cfgCommandParam(), NULL, "    check command arguments");
-        TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleDefault, "command role default enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleMain, "command role main enum");
         TEST_ERROR(cfgCommandRoleEnum(STRDEF("bogus")), CommandInvalidError, "invalid command role 'bogus'");
-        TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleDefault, "    command role is default");
+        TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleMain, "    command role is main");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "    command/role name is backup");
-        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleDefault), NULL, "    default role name is NULL");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleMain), NULL, "    main role name is NULL");
 
         TEST_RESULT_STR_Z(cfgExe(), TEST_BACKREST_EXE, "    exe is set");
 
