@@ -179,6 +179,8 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1410"/>
+
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="cynthia.shang"/>
