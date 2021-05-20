@@ -102,7 +102,7 @@ pgBackRest strives to be easy to configure and operate:
 
 ## Contributions
 
-Contributions to pgBackRest are always welcome! Please see our [Contributing Guidelines](https://github.com/pgbackrest/pgbackrest/blob/master/CONTRIBUTING.md) for details on how to contribute.
+Contributions to pgBackRest are always welcome! Please see our [Contributing Guidelines](https://github.com/pgbackrest/pgbackrest/blob/master/CONTRIBUTING.md) for details on how to contribute features, improvements or issues.
 
 ## Support
 

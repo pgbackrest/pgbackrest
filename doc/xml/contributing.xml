@@ -96,7 +96,7 @@
             </execute>
         </execute-list>
 
-        <p>Some unit tests and all the integration test require <proper>Docker</proper>.  Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
+        <p>Some unit tests and all the integration tests require <proper>Docker</proper>.  Running in containers allows us to simulate multiple hosts, test on different distributions and versions of <postgres/>, and use sudo without affecting the host system.</p>
 
         <execute-list host="{[host-contrib]}">
             <title>Install Docker</title>
@@ -157,12 +157,22 @@
         <section id="coding-example">
             <title>Coding Example</title>
 
-            <p>In the hypothetical example below, code comments are not indented as would be appropriate in the code as they are only here to explain the example. Refer to the sections above and <link url="{[github-url-master]}/CODING.md">CODING.md</link> for an introduction to the details provided here.</p>
+            <p>The example below is not actual code and is intended to provide an understanding of some of the more common coding practices in the code base. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document (<link url="{[github-url-master]}/CODING.md">CODING.md</link>) and sections above for an introduction to the concepts provided here. For an actual implementation, see <link url="{[github-url-src]}/db/db.h">db.h</link> and <link url="{[github-url-src]}/db/db.c">db.c</link>.</p>
 
             <section id="coding-ex1">
-                <title>Example: basic object construction</title>
+                <title>Example: hypothetical basic object construction</title>
 
                 <code-block type="c">
+/*
+ *  HEADER FILE - see db.h for a more complete and actual implementation example
+ */
+
+// Typedef the object declared in the C file
+typedef struct MyObj MyObj;
+
+// Constructor, and any functions in the header file, are delcared all on one line
+MyObj *myObjNew(unsigned int myData, const String *secretName);
+
 // Declare the publicly accessible variables in a structure with Pub appended to the name
 typedef struct MyObjPub         // First letter upper case
 {
@@ -170,19 +180,20 @@ typedef struct MyObjPub         // First letter upper case
     unsigned int myData;        // Contents of the myData variable
 } MyObjPub;
 
-// Declare the object type
-struct MyObj
-{
-    MyObjPub pub;               // Publicly accessible variables must be first and named "pub"
-    const String *name;         // Pointer to lightweight string object - see string.h
-};
 
-// Declare getters and setters inline for the publicly visible variables.
-// Only setters require "Set" appended to the name.
+// Declare getters and setters inline for the publicly visible variables
+// Only setters require "Set" appended to the name
 __attribute__((always_inline)) static inline unsigned int
 myObjMyData(const MyObj *const this)
 {
     return THIS_PUB(MyObj)->myData;    // Use the built-in THIS_PUB macro
+}
+
+// Destructor
+__attribute__((always_inline)) static inline void
+myObjFree(MyObj *const this)
+{
+    objFree(this);
 }
 
 // TYPE and FORMAT macros for function logging
@@ -191,15 +202,18 @@ myObjMyData(const MyObj *const this)
 #define FUNCTION_LOG_MY_OBJ_FORMAT(value, buffer, bufferSize)               \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, myObjToLog, buffer, bufferSize)
 
-// Create the logging function for displaying important information from the object
-String *
-myObjToLog(const MyObj *this)
-{
-    return strNewFmt(
-        "{name: %s, myData: %u}", this->name == NULL ? NULL_Z : strZ(this->name), myObjMyData(this));
-}
+/*
+ * C FILE - see db.c for a more complete and actual implementation example
+ */
 
-// Object constructor
+// Declare the object type
+struct MyObj
+{
+    MyObjPub pub;               // Publicly accessible variables must be first and named "pub"
+    const String *name;         // Pointer to lightweight string object - see string.h
+};
+
+// Object constructor, and any functions in the C file, have the return type and function signature on separate lines
 MyObj *
 myObjNew(unsigned int myData, const String *secretName)
 {
@@ -241,7 +255,7 @@ myObjDisplay(unsigned int myData)
 
     String *result = NULL;     // Result is created in the current memory context  (referred to as "prior context" below)
 
-    MEM_CONTEXT_TEMP_BEGIN()   // begins a new temporary context
+    MEM_CONTEXT_TEMP_BEGIN()   // Begins a new temporary context
     {
         String *resultStr = strNew("Hello");    // Allocates a string in the temporary memory context
 
@@ -259,6 +273,14 @@ myObjDisplay(unsigned int myData)
     MEM_CONTEXT_TEMP_END();      // Free everything created inside this temporary memory context - i.e resultStr
 
     FUNCTION_TEST_RETURN(STRING, result);    // Return result but do not log the value in production
+}
+
+// Create the logging function for displaying important information from the object
+String *
+myObjToLog(const MyObj *this)
+{
+    return strNewFmt(
+        "{name: %s, myData: %u}", this->name == NULL ? NULL_Z : strZ(this->name), myObjMyData(this));
 }
                 </code-block>
             </section>
@@ -594,6 +616,8 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
         required: false
       restore:
         default: latest
+    command-role:
+      main: {}
                 </code-block>
             </section>
 
@@ -608,6 +632,8 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
                 <list-item><id>backup</id> - details the requirements for the <code>--set</code> option for the <cmd>backup</cmd> command. It is dependent on the option <code>--stanza</code>, meaning it is only allowed to be specified for the <cmd>backup</cmd> command if the <code>--stanza</code> option has been specified. And <code>required: false</code> indicates that the <code>--set</code> option is never required, even with the dependency.
                 </list-item>
                 <list-item><id>restore</id> - details the requirements for the <code>--set</code> option for the <cmd>restore</cmd> command. Since <code>required:</code> is omitted, it is not required to be set by the user but it is required by the command and will default to <code>latest</code> if it has not been specified by the user.
+                </list-item>
+                <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.
                 </list-item>
             </list>
 
@@ -627,6 +653,8 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
     command:
       backup: {}
       restore: {}
+    command-role:
+      main: {}
                 </code-block>
             </section>
 
@@ -645,9 +673,11 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
                 </list-item>
                 <list-item><id>command</id> - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are <cmd>backup</cmd> and <cmd>restore</cmd>.
                 </list-item>
+                <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.
+                </list-item>
             </list>
 
-            <p>At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
+            <p>At compile time, the <file>config.auto.h</file> file will be generated to create the constants used in the code for the options. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
         </section>
 
         <section id="reference-file">

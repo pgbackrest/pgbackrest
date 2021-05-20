@@ -24,7 +24,7 @@ sudo apt-get install rsync git devscripts build-essential valgrind lcov autoconf
        zstd libzstd-dev bzip2 libbz2-dev
 ```
 
-Some unit tests and all the integration test require Docker. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of PostgreSQL, and use sudo without affecting the host system.
+Some unit tests and all the integration tests require Docker. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of PostgreSQL, and use sudo without affecting the host system.
 
 pgbackrest-dev => Install Docker
 ```
@@ -57,10 +57,20 @@ Logging is also used for providing information to the user via the `LOG_*()` mac
 
 ### Coding Example
 
-In the hypothetical example below, code comments are not indented as would be appropriate in the code as they are only here to explain the example. Refer to the sections above and [CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md) for an introduction to the details provided here.
+The example below is not actual code and is intended to provide an understanding of some of the more common coding practices in the code base. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document ([CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md)) and sections above for an introduction to the concepts provided here. For an actual implementation, see [db.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/db/db.h) and [db.c](https://github.com/pgbackrest/pgbackrest/blob/master/src/db/db.c).
 
-#### Example: basic object construction
+#### Example: hypothetical basic object construction
 ```c
+/*
+ *  HEADER FILE - see db.h for a more complete and actual implementation example
+ */
+
+// Typedef the object declared in the C file
+typedef struct MyObj MyObj;
+
+// Constructor, and any functions in the header file, are delcared all on one line
+MyObj *myObjNew(unsigned int myData, const String *secretName);
+
 // Declare the publicly accessible variables in a structure with Pub appended to the name
 typedef struct MyObjPub         // First letter upper case
 {
@@ -68,19 +78,20 @@ typedef struct MyObjPub         // First letter upper case
     unsigned int myData;        // Contents of the myData variable
 } MyObjPub;
 
-// Declare the object type
-struct MyObj
-{
-    MyObjPub pub;               // Publicly accessible variables must be first and named "pub"
-    const String *name;         // Pointer to lightweight string object - see string.h
-};
 
-// Declare getters and setters inline for the publicly visible variables.
-// Only setters require "Set" appended to the name.
+// Declare getters and setters inline for the publicly visible variables
+// Only setters require "Set" appended to the name
 __attribute__((always_inline)) static inline unsigned int
 myObjMyData(const MyObj *const this)
 {
     return THIS_PUB(MyObj)->myData;    // Use the built-in THIS_PUB macro
+}
+
+// Destructor
+__attribute__((always_inline)) static inline void
+myObjFree(MyObj *const this)
+{
+    objFree(this);
 }
 
 // TYPE and FORMAT macros for function logging
@@ -89,15 +100,18 @@ myObjMyData(const MyObj *const this)
 #define FUNCTION_LOG_MY_OBJ_FORMAT(value, buffer, bufferSize)               \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, myObjToLog, buffer, bufferSize)
 
-// Create the logging function for displaying important information from the object
-String *
-myObjToLog(const MyObj *this)
-{
-    return strNewFmt(
-        "{name: %s, myData: %u}", this->name == NULL ? NULL_Z : strZ(this->name), myObjMyData(this));
-}
+/*
+ * C FILE - see db.c for a more complete and actual implementation example
+ */
 
-// Object constructor
+// Declare the object type
+struct MyObj
+{
+    MyObjPub pub;               // Publicly accessible variables must be first and named "pub"
+    const String *name;         // Pointer to lightweight string object - see string.h
+};
+
+// Object constructor, and any functions in the C file, have the return type and function signature on separate lines
 MyObj *
 myObjNew(unsigned int myData, const String *secretName)
 {
@@ -139,7 +153,7 @@ myObjDisplay(unsigned int myData)
 
     String *result = NULL;     // Result is created in the current memory context  (referred to as "prior context" below)
 
-    MEM_CONTEXT_TEMP_BEGIN()   // begins a new temporary context
+    MEM_CONTEXT_TEMP_BEGIN()   // Begins a new temporary context
     {
         String *resultStr = strNew("Hello");    // Allocates a string in the temporary memory context
 
@@ -157,6 +171,14 @@ myObjDisplay(unsigned int myData)
     MEM_CONTEXT_TEMP_END();      // Free everything created inside this temporary memory context - i.e resultStr
 
     FUNCTION_TEST_RETURN(STRING, result);    // Return result but do not log the value in production
+}
+
+// Create the logging function for displaying important information from the object
+String *
+myObjToLog(const MyObj *this)
+{
+    return strNewFmt(
+        "{name: %s, myData: %u}", this->name == NULL ? NULL_Z : strZ(this->name), myObjMyData(this));
 }
 ```
 
@@ -521,6 +543,8 @@ set:
         required: false
       restore:
         default: latest
+    command-role:
+      main: {}
 ```
 
 Note that `section:` is not present thereby making this a command-line only option defined as follows:
@@ -538,6 +562,9 @@ Note that `section:` is not present thereby making this a command-line only opti
 
 - `restore` - details the requirements for the `--set` option for the `restore` command. Since `required:` is omitted, it is not required to be set by the user but it is required by the command and will default to `latest` if it has not been specified by the user.
 
+
+- `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
+
 #### Example 2: hypothetical configuration file option
 ```
 repo-test-type:
@@ -552,6 +579,8 @@ repo-test-type:
     command:
       backup: {}
       restore: {}
+    command-role:
+      main: {}
 ```
 
 - `repo-test-type` - the name of the option
@@ -575,7 +604,10 @@ repo-test-type:
 - `command` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are `backup` and `restore`.
 
 
-At compile time, the config.auto.h file will be generated to create the constants used in the code for the options. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
+- `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
+
+
+At compile time, the `config.auto.h` file will be generated to create the constants used in the code for the options. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
 ### reference.xml
 
