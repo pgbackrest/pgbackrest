@@ -181,6 +181,7 @@
                         <commit subject="Factor local process exec out of protocolLocalGet()."/>
                         <commit subject="Add shim feature for unit tests."/>
                         <commit subject="Add local process shim."/>
+                        <commit subject="Add log shim."/>
 
                         <p>Add local processs shim.</p>
                     </release-item>

@@ -836,15 +836,15 @@ testRun(void)
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
-        logLevelStdOut = logLevelError;
-        logLevelStdErr = logLevelError;
+        hrnLogLevelStdOutSet(logLevelError);
+        hrnLogLevelStdErrSet(logLevelError);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/2", "default pg-path");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleLocal, "    command role is local");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "    backup:local command does not require lock");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup:local", "    command/role name is backup:local");
-        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelError, "console logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "stderr logging is error");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -855,13 +855,13 @@ testRun(void)
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_REMOTE);
 
-        logLevelStdOut = logLevelError;
-        logLevelStdErr = logLevelError;
+        hrnLogLevelStdOutSet(logLevelError);
+        hrnLogLevelStdErrSet(logLevelError);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load remote config");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleRemote, "    command role is remote");
         TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "    remote role name");
-        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelError, "console logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "stderr logging is error");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -870,12 +870,12 @@ testRun(void)
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
 
-        logLevelStdOut = logLevelError;
-        logLevelStdErr = logLevelError;
+        hrnLogLevelStdOutSet(logLevelError);
+        hrnLogLevelStdErrSet(logLevelError);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load async config");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleAsync, "    command role is async");
-        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelError, "console logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "stderr logging is error");
 
         harnessLogLevelReset();
 
@@ -1158,13 +1158,13 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
 
-        logLevelStdOut = logLevelOff;
-        logLevelStdErr = logLevelOff;
+        hrnLogLevelStdOutSet(logLevelOff);
+        hrnLogLevelStdErrSet(logLevelOff);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "no command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "    command is none");
-        TEST_RESULT_INT(logLevelStdOut, logLevelWarn, "console logging is warn");
-        TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
+        TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelWarn, "console logging is warn");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelWarn, "stderr logging is warn");
         harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------

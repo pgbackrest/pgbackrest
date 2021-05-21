@@ -25,10 +25,10 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings all defaults");
 
-        TEST_RESULT_INT(logLevelStdOut, logLevelOff, "console logging is off");
-        TEST_RESULT_INT(logLevelStdErr, logLevelOff, "stderr logging is off");
-        TEST_RESULT_INT(logLevelFile, logLevelOff, "file logging is off");
-        TEST_RESULT_BOOL(logTimestamp, true, "timestamp logging is on");
+        TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelOff, "console logging is off");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelOff, "stderr logging is off");
+        TEST_RESULT_INT(hrnLogLevelFile(), logLevelOff, "file logging is off");
+        TEST_RESULT_BOOL(hrnLogTimestamp(), true, "timestamp logging is on");
     }
 
     // *****************************************************************************************************************************

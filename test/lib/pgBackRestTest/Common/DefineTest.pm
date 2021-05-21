@@ -56,8 +56,6 @@ use constant TESTDEF_DEFINE                                         => 'define';
     push @EXPORT, qw(TESTDEF_DEFINE);
 use constant TESTDEF_FEATURE                                        => 'feature';
     push @EXPORT, qw(TESTDEF_FEATURE);
-use constant TESTDEF_DEBUG_UNIT_SUPPRESS                            => 'debugUnitSuppress';
-    push @EXPORT, qw(TESTDEF_DEBUG_UNIT_SUPPRESS);
 use constant TESTDEF_HARNESS                                        => 'harness';
     push @EXPORT, qw(TESTDEF_HARNESS);
 # Harness name which must match the harness implementation file name
@@ -152,8 +150,7 @@ sub testDefLoad
 
                 # Resolve variables that can be set in the module or the test
                 foreach my $strVar (
-                    TESTDEF_DEFINE, TESTDEF_DEBUG_UNIT_SUPPRESS, TESTDEF_DB, TESTDEF_BIN_REQ, TESTDEF_VM,
-                    TESTDEF_CONTAINER_REQUIRED)
+                    TESTDEF_DEFINE, TESTDEF_DB, TESTDEF_BIN_REQ, TESTDEF_VM, TESTDEF_CONTAINER_REQUIRED)
                 {
                     $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                         $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);

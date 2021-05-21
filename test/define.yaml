@@ -10,7 +10,6 @@
 # Most options can be set for modules and tests (test option will override module option if both are set):
 #     * db - determines if the test will be run against multiple db versions
 #     * define - defines for C code (will also be applied to the test harness)
-#     * debugUnitSuppress - don't define DEBUG_UNIT for unit tests -- this is used to test unit test debugging macros
 #     * binReq - is the pgbackrest binary required for this test?
 #     * containerReq - is this test required to run in a container?
 #
@@ -79,16 +78,14 @@ unit:
       - name: assert-off
         total: 1
         define: -DNDEBUG
-        debugUnitSuppress: true
 
         coverage:
           - common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-off
-        total: 2
+        total: 1
         define: -DNDEBUG
-        debugUnitSuppress: true
 
         coverage:
           - common/debug
@@ -182,14 +179,17 @@ unit:
       - name: log
         total: 5
         feature: log
-        harness: log
+        harness:
+          name: log
+          shim:
+            common/log: ~
 
         coverage:
           - common/log
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: debug-on
-        total: 4
+        total: 3
         feature: debug
 
         coverage:
@@ -456,9 +456,6 @@ unit:
           - config/parse
           - config/parse.auto: noCode
 
-        include:
-          - common/log
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: load
         total: 4
@@ -467,7 +464,6 @@ unit:
           - config/load
 
         include:
-          - common/log
           - common/io/socket/common
 
       # ----------------------------------------------------------------------------------------------------------------------------
