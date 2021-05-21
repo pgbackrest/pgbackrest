@@ -157,20 +157,20 @@
         <section id="coding-example">
             <title>Coding Example</title>
 
-            <p>The example below is not actual code and is intended to provide an understanding of some of the more common coding practices in the code base. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document (<link url="{[github-url-master]}/CODING.md">CODING.md</link>) and sections above for an introduction to the concepts provided here. For an actual implementation, see <link url="{[github-url-src]}/db/db.h">db.h</link> and <link url="{[github-url-src]}/db/db.c">db.c</link>.</p>
+            <p>The example below is not structured like actual implementation and is intended only to provide an understanding of some of the more common coding practices. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document (<link url="{[github-url-master]}/CODING.md">CODING.md</link>) and sections above for an introduction to the concepts provided here. For an actual implementation, see <link url="{[github-url-src]}/db/db.h">db.h</link> and <link url="{[github-url-src]}/db/db.c">db.c</link>.</p>
 
             <section id="coding-ex1">
                 <title>Example: hypothetical basic object construction</title>
 
                 <code-block type="c">
 /*
- *  HEADER FILE - see db.h for a more complete and actual implementation example
+ *  HEADER FILE - see db.h for a complete implementation example
  */
 
 // Typedef the object declared in the C file
 typedef struct MyObj MyObj;
 
-// Constructor, and any functions in the header file, are delcared all on one line
+// Constructor, and any functions in the header file, are all declared on one line
 MyObj *myObjNew(unsigned int myData, const String *secretName);
 
 // Declare the publicly accessible variables in a structure with Pub appended to the name
@@ -179,7 +179,6 @@ typedef struct MyObjPub         // First letter upper case
     MemContext *memContext;     // Pointer to memContext in which this object resides
     unsigned int myData;        // Contents of the myData variable
 } MyObjPub;
-
 
 // Declare getters and setters inline for the publicly visible variables
 // Only setters require "Set" appended to the name
@@ -222,20 +221,20 @@ myObjNew(unsigned int myData, const String *secretName)
         FUNCTION_TEST_PARAM(STRING, secretName);    // FUNCTION_TEST_PARAM will not display secretName value in production logging
     FUNCTION_LOG_END();
 
-    ASSERT((secretName != NULL || myData > 0);      // Development-only assertions (will be compiled out of production code)
+    ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
 
     MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
 
     MEM_CONTEXT_NEW_BEGIN("MyObj")      // Create a long lasting memory context with the name of the object
     {
-        this = memNew(sizeof(MyObj));   // Allocate the memory size
+        this = memNew(sizeof(MyObj));   // Allocate the memory required by the object
 
         *this = (MyObj)                 // Initialize the object
         {
             .pub =
             {
                 .memContext = memContextCurrent(),      // Set the memory context to the current MyObj memory context
-                .myData = myData,                       // Copy the simple data type to the this object's memory context
+                .myData = myData,                       // Copy the simple data type to this object
             },
             .name = strDup(secretName),     // Duplicate the String data type to the this object's memory context
         };
@@ -253,20 +252,20 @@ myObjDisplay(unsigned int myData)
         FUNCTION_TEST_PARAM(UINT, myData);
     FUNCTION_TEST_END();
 
-    String *result = NULL;     // Result is created in the current memory context  (referred to as "prior context" below)
+    String *result = NULL;     // Result is created in the caller's memory context (referred to as "prior context" below)
 
-    MEM_CONTEXT_TEMP_BEGIN()   // Begins a new temporary context
+    MEM_CONTEXT_TEMP_BEGIN()   // Begin a new temporary context
     {
-        String *resultStr = strNew("Hello");    // Allocates a string in the temporary memory context
+        String *resultStr = strNew("Hello");    // Allocate a string in the temporary memory context
 
         if (myData > 1)
-            resultStr = strCatZ(" World");      // Appends a value to the string still in the temporary memory context
+            resultStr = strCatZ(" World");      // Append a value to the string still in the temporary memory context
         else
-            LOG_WARN("Am I not your World?");   // Logs a warning to the user
+            LOG_WARN("Am I not your World?");   // Log a warning to the user
 
-        MEM_CONTEXT_PRIOR_BEGIN()           // Switch to the prior context so the duplication of the string is in that context
+        MEM_CONTEXT_PRIOR_BEGIN()           // Switch to the prior context so the string duplication is in the caller's context
         {
-            result = strDup(resultStr);     // Create a copy of the string in the prior context where "result" was created
+            result = strDup(resultStr);     // Create a copy of the string in the caller's context
         }
         MEM_CONTEXT_PRIOR_END();            // Switch back to the temporary context
     }
@@ -677,7 +676,7 @@ pgbackrest/test/test.pl --vm-out --dev --module=command --test=check --run=1 --n
                 </list-item>
             </list>
 
-            <p>At compile time, the <file>config.auto.h</file> file will be generated to create the constants used in the code for the options. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
+            <p>At compile time, the <file>config.auto.h</file> file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
         </section>
 
         <section id="reference-file">

@@ -57,18 +57,18 @@ Logging is also used for providing information to the user via the `LOG_*()` mac
 
 ### Coding Example
 
-The example below is not actual code and is intended to provide an understanding of some of the more common coding practices in the code base. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document ([CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md)) and sections above for an introduction to the concepts provided here. For an actual implementation, see [db.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/db/db.h) and [db.c](https://github.com/pgbackrest/pgbackrest/blob/master/src/db/db.c).
+The example below is not structured like actual implementation and is intended only to provide an understanding of some of the more common coding practices. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document ([CODING.md](https://github.com/pgbackrest/pgbackrest/blob/master/CODING.md)) and sections above for an introduction to the concepts provided here. For an actual implementation, see [db.h](https://github.com/pgbackrest/pgbackrest/blob/master/src/db/db.h) and [db.c](https://github.com/pgbackrest/pgbackrest/blob/master/src/db/db.c).
 
 #### Example: hypothetical basic object construction
 ```c
 /*
- *  HEADER FILE - see db.h for a more complete and actual implementation example
+ *  HEADER FILE - see db.h for a complete implementation example
  */
 
 // Typedef the object declared in the C file
 typedef struct MyObj MyObj;
 
-// Constructor, and any functions in the header file, are delcared all on one line
+// Constructor, and any functions in the header file, are all declared on one line
 MyObj *myObjNew(unsigned int myData, const String *secretName);
 
 // Declare the publicly accessible variables in a structure with Pub appended to the name
@@ -77,7 +77,6 @@ typedef struct MyObjPub         // First letter upper case
     MemContext *memContext;     // Pointer to memContext in which this object resides
     unsigned int myData;        // Contents of the myData variable
 } MyObjPub;
-
 
 // Declare getters and setters inline for the publicly visible variables
 // Only setters require "Set" appended to the name
@@ -120,20 +119,20 @@ myObjNew(unsigned int myData, const String *secretName)
         FUNCTION_TEST_PARAM(STRING, secretName);    // FUNCTION_TEST_PARAM will not display secretName value in production logging
     FUNCTION_LOG_END();
 
-    ASSERT((secretName != NULL || myData > 0);      // Development-only assertions (will be compiled out of production code)
+    ASSERT(secretName != NULL || myData > 0);       // Development-only assertions (will be compiled out of production code)
 
     MyObj *this = NULL;                 // Declare the object in the parent memory context: it will live only as long as the parent
 
     MEM_CONTEXT_NEW_BEGIN("MyObj")      // Create a long lasting memory context with the name of the object
     {
-        this = memNew(sizeof(MyObj));   // Allocate the memory size
+        this = memNew(sizeof(MyObj));   // Allocate the memory required by the object
 
         *this = (MyObj)                 // Initialize the object
         {
             .pub =
             {
                 .memContext = memContextCurrent(),      // Set the memory context to the current MyObj memory context
-                .myData = myData,                       // Copy the simple data type to the this object's memory context
+                .myData = myData,                       // Copy the simple data type to this object
             },
             .name = strDup(secretName),     // Duplicate the String data type to the this object's memory context
         };
@@ -151,20 +150,20 @@ myObjDisplay(unsigned int myData)
         FUNCTION_TEST_PARAM(UINT, myData);
     FUNCTION_TEST_END();
 
-    String *result = NULL;     // Result is created in the current memory context  (referred to as "prior context" below)
+    String *result = NULL;     // Result is created in the caller's memory context (referred to as "prior context" below)
 
-    MEM_CONTEXT_TEMP_BEGIN()   // Begins a new temporary context
+    MEM_CONTEXT_TEMP_BEGIN()   // Begin a new temporary context
     {
-        String *resultStr = strNew("Hello");    // Allocates a string in the temporary memory context
+        String *resultStr = strNew("Hello");    // Allocate a string in the temporary memory context
 
         if (myData > 1)
-            resultStr = strCatZ(" World");      // Appends a value to the string still in the temporary memory context
+            resultStr = strCatZ(" World");      // Append a value to the string still in the temporary memory context
         else
-            LOG_WARN("Am I not your World?");   // Logs a warning to the user
+            LOG_WARN("Am I not your World?");   // Log a warning to the user
 
-        MEM_CONTEXT_PRIOR_BEGIN()           // Switch to the prior context so the duplication of the string is in that context
+        MEM_CONTEXT_PRIOR_BEGIN()           // Switch to the prior context so the string duplication is in the caller's context
         {
-            result = strDup(resultStr);     // Create a copy of the string in the prior context where "result" was created
+            result = strDup(resultStr);     // Create a copy of the string in the caller's context
         }
         MEM_CONTEXT_PRIOR_END();            // Switch back to the temporary context
     }
@@ -232,14 +231,14 @@ pgbackrest/test/test.pl --vm=none --dry-run
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: builds required: bin
---> P00   INFO: 69 tests selected
+--> P00   INFO: 68 tests selected
                 
-    P00   INFO: P1-T01/69 - vm=none, module=common, test=error
-           [filtered 66 lines of output]
-    P00   INFO: P1-T68/69 - vm=none, module=performance, test=type
-    P00   INFO: P1-T69/69 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/68 - vm=none, module=common, test=error
+           [filtered 65 lines of output]
+    P00   INFO: P1-T67/68 - vm=none, module=performance, test=type
+    P00   INFO: P1-T68/68 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -249,7 +248,7 @@ pgbackrest/test/test.pl --vm=none --dev --vm-out --module=common --test=wait
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -301,7 +300,7 @@ pgbackrest/test/test.pl --vm=none --dev --module=postgres
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data
     P00   INFO: builds required: none
@@ -324,7 +323,7 @@ pgbackrest/test/test.pl --vm-build --vm=u18
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: Using cached pgbackrest/test:u18-base-20200924A image (d95d53e642fc1cea4a2b8e935ea7d9739f7d1c46) ...
     P00   INFO: Building pgbackrest/test:u18-test image ...
     P00   INFO: Build Complete
@@ -337,7 +336,7 @@ pgbackrest/test/test.pl --vm=u18 --dev --module=mock --test=archive --run=2
 
 --- output ---
 
-    P00   INFO: test begin on x86_64 - log level info
+    P00   INFO: test begin - log level info
     P00   INFO: check code autogenerate
     P00   INFO: cleanup old data and containers
     P00   INFO: builds required: bin, bin host
@@ -607,7 +606,7 @@ repo-test-type:
 - `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
 
 
-At compile time, the `config.auto.h` file will be generated to create the constants used in the code for the options. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
+At compile time, the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
 ### reference.xml
 
