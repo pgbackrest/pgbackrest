@@ -47,7 +47,7 @@ testRun(void)
     if (testBegin("exitSafe()"))
     {
         harnessCfgLoad(cfgCmdHelp, strLstNew());
-        cfgCommandSet(cfgCmdNone, cfgCmdRoleDefault);
+        cfgCommandSet(cfgCmdNone, cfgCmdRoleMain);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
 

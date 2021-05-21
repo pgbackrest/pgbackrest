@@ -10,16 +10,6 @@ Debug Routines
 #include "common/type/stringz.h"
 
 /***********************************************************************************************************************************
-Extern variables that are needed for unit testing
-***********************************************************************************************************************************/
-#ifdef DEBUG_UNIT
-    #define DEBUG_UNIT_EXTERN
-#else
-    #define DEBUG_UNIT_EXTERN                                                                                                      \
-        static
-#endif
-
-/***********************************************************************************************************************************
 Base function debugging macros
 
 In debug mode parameters will always be recorded in the stack trace while in production mode they will only be recorded when the log

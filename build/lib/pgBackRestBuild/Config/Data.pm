@@ -37,9 +37,9 @@ use constant CFGCMD_VERSION                                         => 'version'
 # Command role constants - roles allowed for each command. Commands may have multiple processes that work together to implement
 # their functionality.  These roles allow each process to know what it is supposed to do.
 ####################################################################################################################################
-# Called directly by the user. This is the main part of the command that may or may not spawn other command roles.
-use constant CFGCMD_ROLE_DEFAULT                                    => 'default';
-    push @EXPORT, qw(CFGCMD_ROLE_DEFAULT);
+# Called directly by the user. This is the main process of the command that may or may not spawn other command roles.
+use constant CFGCMD_ROLE_MAIN                                       => 'main';
+    push @EXPORT, qw(CFGCMD_ROLE_MAIN);
 
 # Async worker that is spawned so the main process can return a result while work continues. An async worker may spawn local or
 # remote workers.
@@ -350,9 +350,9 @@ foreach my $strCommand (sort(keys(%{$rhCommandDefine})))
     }
 
     # All commands have the default role
-    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT}))
+    if (!defined($rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_MAIN}))
     {
-        $rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT} = {};
+        $rhCommandDefine->{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_MAIN} = {};
     }
 }
 

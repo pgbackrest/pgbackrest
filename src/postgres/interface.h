@@ -169,20 +169,6 @@ const String *pgWalPath(unsigned int pgVersion);
 const String *pgXactPath(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
-Test Functions
-***********************************************************************************************************************************/
-#ifdef DEBUG
-    // Get the catalog version for a PostgreSQL version for testing
-    unsigned int pgCatalogTestVersion(unsigned int pgVersion);
-
-    // Create pg_control for testing
-    Buffer *pgControlTestToBuffer(PgControl pgControl);
-
-    // Create WAL for testing
-    void pgWalTestToBuffer(PgWal pgWal, Buffer *walBuffer);
-#endif
-
-/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 String *pgControlToLog(const PgControl *pgControl);

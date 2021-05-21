@@ -21,7 +21,7 @@ Option find test -- this is done a lot in the deprecated tests
 static void
 testOptionFind(const char *optionName, unsigned int optionId, unsigned int optionKeyIdx, bool negate, bool reset, bool deprecated)
 {
-    CfgParseOptionResult option = cfgParseOption(STR(optionName));
+    CfgParseOptionResult option = cfgParseOptionP(STR(optionName));
 
     TEST_RESULT_BOOL(option.found, true, "check %s found", optionName);
     TEST_RESULT_UINT(option.id, optionId, "check %s id %u", optionName, optionId);
@@ -575,6 +575,26 @@ testRun(void)
             "check that the option resolve list contains an entry for every option");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on single - option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "-bogus");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option '-bogus' must begin with --");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when option argument not allowed");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--online=bogus");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
+            "option 'online' does not allow an argument");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
         strLstAdd(argList, strNew(BOGUS_STR));
@@ -816,15 +836,15 @@ testRun(void)
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
-        logLevelStdOut = logLevelError;
-        logLevelStdErr = logLevelError;
+        hrnLogLevelStdOutSet(logLevelError);
+        hrnLogLevelStdErrSet(logLevelError);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load local config");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/2", "default pg-path");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleLocal, "    command role is local");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "    backup:local command does not require lock");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup:local", "    command/role name is backup:local");
-        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelError, "console logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "stderr logging is error");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -835,13 +855,13 @@ testRun(void)
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_REMOTE);
 
-        logLevelStdOut = logLevelError;
-        logLevelStdErr = logLevelError;
+        hrnLogLevelStdOutSet(logLevelError);
+        hrnLogLevelStdErrSet(logLevelError);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load remote config");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleRemote, "    command role is remote");
         TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleRemote), "remote", "    remote role name");
-        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelError, "console logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "stderr logging is error");
 
         argList = strLstNew();
         strLstAdd(argList, strNew("pgbackrest"));
@@ -850,12 +870,12 @@ testRun(void)
         strLstAdd(argList, strNew("--log-level-stderr=info"));
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
 
-        logLevelStdOut = logLevelError;
-        logLevelStdErr = logLevelError;
+        hrnLogLevelStdOutSet(logLevelError);
+        hrnLogLevelStdErrSet(logLevelError);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "load async config");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleAsync, "    command role is async");
-        TEST_RESULT_INT(logLevelStdOut, logLevelError, "console logging is error");
-        TEST_RESULT_INT(logLevelStdErr, logLevelError, "stderr logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelError, "console logging is error");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "stderr logging is error");
 
         harnessLogLevelReset();
 
@@ -1138,13 +1158,13 @@ testRun(void)
         argList = strLstNew();
         strLstAdd(argList, strNew(TEST_BACKREST_EXE));
 
-        logLevelStdOut = logLevelOff;
-        logLevelStdErr = logLevelOff;
+        hrnLogLevelStdOutSet(logLevelOff);
+        hrnLogLevelStdErrSet(logLevelOff);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), true), "no command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "    command is none");
-        TEST_RESULT_INT(logLevelStdOut, logLevelWarn, "console logging is warn");
-        TEST_RESULT_INT(logLevelStdErr, logLevelWarn, "stderr logging is warn");
+        TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelWarn, "console logging is warn");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelWarn, "stderr logging is warn");
         harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1214,11 +1234,11 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLogFile(), true, "    backup command does file logging");
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "    backup command requires remote lock");
         TEST_RESULT_STRLST_Z(cfgCommandParam(), NULL, "    check command arguments");
-        TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleDefault, "command role default enum");
+        TEST_RESULT_UINT(cfgCommandRoleEnum(NULL), cfgCmdRoleMain, "command role main enum");
         TEST_ERROR(cfgCommandRoleEnum(STRDEF("bogus")), CommandInvalidError, "invalid command role 'bogus'");
-        TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleDefault, "    command role is default");
+        TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleMain, "    command role is main");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "    command/role name is backup");
-        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleDefault), NULL, "    default role name is NULL");
+        TEST_RESULT_STR_Z(cfgCommandRoleStr(cfgCmdRoleMain), NULL, "    main role name is NULL");
 
         TEST_RESULT_STR_Z(cfgExe(), TEST_BACKREST_EXE, "    exe is set");
 
@@ -1289,6 +1309,7 @@ testRun(void)
 
         setenv("PGBACKRESTXXX_NOTHING", "xxx", true);
         setenv("PGBACKREST_BOGUS", "xxx", true);
+        setenv("PGBACKREST_ONLIN", "xxx", true);                    // Option prefix matching not allowed in environment
         setenv("PGBACKREST_NO_DELTA", "xxx", true);
         setenv("PGBACKREST_RESET_REPO1_HOST", "", true);
         setenv("PGBACKREST_TARGET", "xxx", true);
@@ -1316,6 +1337,7 @@ testRun(void)
                     "online=y\n"
                     "pg1-path=/not/path/to/db\n"
                     "backup-standby=y\n"
+                    "backup-standb=y\n"                             // Option prefix matching not allowed in config files
                     "buffer-size=65536\n"
                     "protocol-timeout=3600\n"
                     CFGOPT_JOB_RETRY "=3\n"
@@ -1339,6 +1361,7 @@ testRun(void)
             strZ(
                 strNew(
                     "P00   WARN: environment contains invalid option 'bogus'\n"
+                    "P00   WARN: environment contains invalid option 'onlin'\n"
                     "P00   WARN: environment contains invalid negate option 'no-delta'\n"
                     "P00   WARN: environment contains invalid reset option 'reset-repo1-host'\n"
                     "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
@@ -1346,7 +1369,8 @@ testRun(void)
                     "P00   WARN: configuration file contains negate option 'no-delta'\n"
                     "P00   WARN: configuration file contains reset option 'reset-delta'\n"
                     "P00   WARN: configuration file contains command-line only option 'online'\n"
-                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
+                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'\n"
+                    "P00   WARN: configuration file contains invalid option 'backup-standb'")));
 
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "    custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
@@ -1420,6 +1444,7 @@ testRun(void)
         TEST_ERROR(cfgOptionKeyToIdx(cfgOptPgPath, 4), AssertError, "key '4' is not valid for 'pg-path' option");
 
         unsetenv("PGBACKREST_BOGUS");
+        unsetenv("PGBACKREST_ONLIN");
         unsetenv("PGBACKREST_NO_DELTA");
         unsetenv("PGBACKREST_RESET_REPO1_HOST");
         unsetenv("PGBACKREST_TARGET");
@@ -1734,7 +1759,7 @@ testRun(void)
         testOptionFind("db-ssh-port", cfgOptPgHostPort, 0, false, false, true);
         testOptionFind("db-user", cfgOptPgHostUser, 0, false, false, true);
 
-        TEST_RESULT_BOOL(cfgParseOption(STR("no-db-user")).found, false, "no-db-user not found");
+        TEST_RESULT_BOOL(cfgParseOptionP(STR("no-db-user")).found, false, "no-db-user not found");
 
         // Only check 1-8 since 8 was the max index when these option names were deprecated
         for (unsigned int optionIdx = 0; optionIdx < 8; optionIdx++)

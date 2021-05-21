@@ -18,13 +18,9 @@ Log Test Harness
 #include "common/harnessTest.h"
 
 /***********************************************************************************************************************************
-Expose log internal data for unit testing/debugging
+Include shimmed C modules
 ***********************************************************************************************************************************/
-extern LogLevel logLevelFile;
-extern int logFdFile;
-extern bool logFileBanner;
-extern unsigned int logProcessId;
-extern void logAnySet(void);
+{[SHIM_MODULE]}
 
 /***********************************************************************************************************************************
 Log settings for testing
@@ -90,6 +86,53 @@ harnessLogDryRunSet(bool dryRun)
     logDryRunTest = dryRun;
 
     logInit(logLevelTestDefault, logLevelOff, logLevelTest, false, logProcessId, 99, logDryRunTest);
+}
+
+/**********************************************************************************************************************************/
+unsigned int
+hrnLogLevelFile(void)
+{
+    return logLevelFile;
+}
+
+void hrnLogLevelFileSet(unsigned int logLevel)
+{
+    logLevelFile = logLevel;
+}
+
+unsigned int
+hrnLogLevelStdOut(void)
+{
+    return logLevelStdOut;
+}
+
+void hrnLogLevelStdOutSet(unsigned int logLevel)
+{
+    logLevelStdOut = logLevel;
+}
+
+unsigned int
+hrnLogLevelStdErr(void)
+{
+    return logLevelStdErr;
+}
+
+void hrnLogLevelStdErrSet(unsigned int logLevel)
+{
+    logLevelStdErr = logLevel;
+}
+
+/**********************************************************************************************************************************/
+bool
+hrnLogTimestamp(void)
+{
+    return logTimestamp;
+}
+
+void
+hrnLogTimestampSet(bool log)
+{
+    logTimestamp = log;
 }
 
 /***********************************************************************************************************************************

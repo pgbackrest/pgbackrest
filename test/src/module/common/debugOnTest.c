@@ -107,13 +107,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("DEBUG_UNIT_EXTERN"))
-    {
-        const char *debugUnitExtern = STRINGIFY(DEBUG_UNIT_EXTERN);
-        TEST_RESULT_Z(debugUnitExtern, "", "DEBUG_UNIT_EXTERN is blank (extern)");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("FUNCTION_DEBUG() and FUNCTION_LOG_RETURN()"))
     {
         harnessLogLevelSet(logLevelTrace);

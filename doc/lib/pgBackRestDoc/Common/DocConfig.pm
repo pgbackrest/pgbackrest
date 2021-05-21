@@ -225,7 +225,7 @@ sub process
 
             # Skip the option if it is not valid for this command and the default role. Only options valid for the default role are
             # show in help because that is the only role available to a user.
-            if (!defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_DEFAULT}))
+            if (!defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_COMMAND_ROLE}{&CFGCMD_ROLE_MAIN}))
             {
                 next;
             }

@@ -42,16 +42,15 @@ typedef struct HrnStorageListParam
     bool remove;
 } HrnStorageListParam;
 
-#define TEST_STORAGE_LIST(storage, path, list, ...)                                                                                \
-    TEST_RESULT_STRLST_Z(                                                                                                          \
-        hrnStorageList(storage, path, (HrnStorageListParam){VAR_PARAM_INIT, __VA_ARGS__}), list, "%s",                             \
-        hrnStorageListLog(storage, path, (HrnStorageListParam){VAR_PARAM_INIT, __VA_ARGS__}))
+#define TEST_STORAGE_LIST(storage, path, expected, ...)                                                                            \
+    hrnStorageList(__LINE__, storage, path, expected, (HrnStorageListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 #define TEST_STORAGE_LIST_EMPTY(storage, path, ...)                                                                                \
     TEST_STORAGE_LIST(storage, path, NULL, __VA_ARGS__)
 
-StringList *hrnStorageList(const Storage *storage, const char *path, HrnStorageListParam param);
-const char *hrnStorageListLog(const Storage *storage, const char *path, HrnStorageListParam param);
+void hrnStorageList(
+    const int line, const Storage *const storage, const char *const path, const char *const expected,
+    const HrnStorageListParam param);
 
 /***********************************************************************************************************************************
 Change the mode of a path/file

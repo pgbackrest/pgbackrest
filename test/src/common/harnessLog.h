@@ -23,6 +23,18 @@ void harnessLogResultRegExp(const char *expression);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+// Get/set log levels
+unsigned int hrnLogLevelFile(void);
+void hrnLogLevelFileSet(unsigned int logLevel);
+unsigned int hrnLogLevelStdOut(void);
+void hrnLogLevelStdOutSet(unsigned int logLevel);
+unsigned int hrnLogLevelStdErr(void);
+void hrnLogLevelStdErrSet(unsigned int logLevel);
+
+// Get/set log timestamp
+bool hrnLogTimestamp(void);
+void hrnLogTimestampSet(bool log);
+
 void harnessLogLevelReset(void);
 void harnessLogLevelSet(LogLevel logLevel);
 

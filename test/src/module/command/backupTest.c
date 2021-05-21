@@ -4,15 +4,15 @@ Test Backup Command
 #include "command/stanza/create.h"
 #include "command/stanza/upgrade.h"
 #include "common/crypto/hash.h"
-#include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
-#include "common/io/io.h"
 #include "postgres/interface/static.vendor.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
+#include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
+#include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
@@ -281,7 +281,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         Buffer *walBuffer = bufNew((size_t)pgControl.walSegmentSize);
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        pgWalTestToBuffer((PgWal){.version = pgControl.version, .systemId = pgControl.systemId}, walBuffer);
+        hrnPgWalToBuffer((PgWal){.version = pgControl.version, .systemId = pgControl.systemId}, walBuffer);
         const String *walChecksum = bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer));
 
         for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
@@ -442,18 +442,14 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // Install local command handler shim
+    static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
+    hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+
     // The tests expect the timezone to be UTC
     setenv("TZ", "UTC", true);
 
     Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
-
-    // Start a protocol server to test the protocol directly
-    Buffer *serverWrite = bufNew(8192);
-    IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
-    ioWriteOpen(serverWriteIo);
-
-    ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-    bufUsedSet(serverWrite, 0);
 
     const String *pgFile = strNew("testfile");
     const String *missingFile = strNew("missing");
@@ -470,7 +466,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("backupFile() and backupFileProtocol()"))
+    if (testBegin("backupFile()"))
     {
         // Load Parameters
         StringList *argList = strLstNew();
@@ -493,29 +489,6 @@ testRun(void)
             "pg file missing, ignoreMissing=true, no delta");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy/repo size 0");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "    skip file");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        // NULL, zero param values, ignoreMissing=true
-        varLstAdd(paramList, varNewStr(missingFile));       // pgFile
-        varLstAdd(paramList, varNewBool(true));             // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileSize
-        varLstAdd(paramList, varNewBool(true));             // pgFileCopyExactSize
-        varLstAdd(paramList, NULL);                         // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(missingFile));       // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(0));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
-        varLstAdd(paramList, NULL);                         // cipherSubPass
-
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - skip");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[3,0,0,null,null]}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
 
         // Pg file missing - ignoreMissing=false
         // -------------------------------------------------------------------------------------------------------------------------
@@ -577,9 +550,9 @@ testRun(void)
             varBool(kvGet(result.pageChecksumResult, VARSTRDEF("valid"))), false, "    pageChecksumResult valid=false");
         TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), backupPathFile), "    remove repo file");
 
-        // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        // pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit
+        TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit");
+
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(pgFile));            // pgFile
         varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
@@ -597,12 +570,19 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - pageChecksum");
-        TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite),
-            "{\"out\":[1,12,12,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",{\"align\":false,\"valid\":false}]}\n",
-            "    check result");
-        bufUsedSet(serverWrite, 0);
+        TEST_ASSIGN(
+            result,
+            backupFile(
+                pgFile, false, 8, false, NULL, true, 0xFFFFFFFFFFFFFFFF, pgFile, false, compressTypeNone, 1, backupLabel, false,
+                cipherTypeNone, NULL),
+            "backup file");
+
+        TEST_RESULT_UINT(result.copySize, 12, "copy size");
+        TEST_RESULT_UINT(result.repoSize, 12, "repo size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "checksum");
+        TEST_RESULT_STR_Z(jsonFromKv(result.pageChecksumResult), "{\"align\":false,\"valid\":false}", "page checksum");
+        TEST_STORAGE_EXISTS(storageRepo(), strZ(backupPathFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
         // File exists in repo and db, checksum match, delta set, ignoreMissing false, hasReference - NOOP
@@ -619,31 +599,6 @@ testRun(void)
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    noop");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        // pgFileChecksum, hasReference, delta
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(12));             // pgFileSize
-        varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9"));   // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(true));             // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(true));             // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
-        varLstAdd(paramList, NULL);                         // cipherSubPass
-
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - noop");
-        TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite), "{\"out\":[4,12,0,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",null]}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         // File exists in repo and db, pg checksum mismatch, delta set, ignoreMissing false, hasReference - COPY
@@ -762,31 +717,6 @@ testRun(void)
                 result.pageChecksumResult == NULL),
             true, "    compressed repo file matches");
 
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        // compression
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(9));              // pgFileSize
-        varLstAdd(paramList, varNewBool(true));             // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));   // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeGz));   // repoFileCompress
-        varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
-        varLstAdd(paramList, NULL);                         // cipherSubPass
-
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - copy, compress");
-        TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite), "{\"out\":[0,9,29,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
-
         // -------------------------------------------------------------------------------------------------------------------------
         // Create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("zerofile")), BUFSTRDEF(""));
@@ -877,30 +807,23 @@ testRun(void)
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    recopy file to encrypted repo success");
 
-        // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        // cipherType, cipherPass
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));                // pgFile
-        varLstAdd(paramList, varNewBool(false));                // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(9));                  // pgFileSize
-        varLstAdd(paramList, varNewBool(true));                 // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("1234567890123456789012345678901234567890"));   // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));                // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));                // repoFile
-        varLstAdd(paramList, varNewBool(false));                // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone));     // repoFileCompress
-        varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
-        varLstAdd(paramList, varNewBool(false));                // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeAes256Cbc));// cipherType
-        varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
+        TEST_TITLE("recopy, encrypt");
 
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - recopy, encrypt");
-        TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite), "{\"out\":[2,9,32,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
+        TEST_ASSIGN(
+            result,
+            backupFile(
+                pgFile, false, 9, true, strNew("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
+                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, strNew("12345678")),
+            "backup file");
+
+        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
+        TEST_RESULT_BOOL(
+            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+            true, "    recopy file to encrypted repo success");
     }
 
     // *****************************************************************************************************************************
@@ -998,7 +921,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_91, 1000000000000000910, pgCatalogTestVersion(PG_VERSION_91), NULL)), ConfigError,
+            backupInit(infoBackupNew(PG_VERSION_91, 1000000000000000910, hrnPgCatalogVersion(PG_VERSION_91), NULL)), ConfigError,
              "option 'backup-standby' not valid for PostgreSQL < 9.2");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1007,7 +930,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_92, .systemId = 1000000000000000920}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1019,7 +942,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, pgCatalogTestVersion(PG_VERSION_92), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_92, 1000000000000000920, hrnPgCatalogVersion(PG_VERSION_92), NULL)),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "    check backup-standby");
 
@@ -1032,7 +955,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 1000000000000001000}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1043,12 +966,12 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_11, 1000000000000001100, pgCatalogTestVersion(PG_VERSION_11), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_11, 1000000000000001100, hrnPgCatalogVersion(PG_VERSION_11), NULL)),
             BackupMismatchError,
             "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 11, system-id 1000000000000001100\n"
             "HINT: is this the correct stanza?");
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_10, 1000000000000001100, pgCatalogTestVersion(PG_VERSION_10), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_10, 1000000000000001100, hrnPgCatalogVersion(PG_VERSION_10), NULL)),
             BackupMismatchError,
             "PostgreSQL version 10, system-id 1000000000000001000 do not match stanza version 10, system-id 1000000000000001100\n"
             "HINT: is this the correct stanza?");
@@ -1059,7 +982,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_83, .systemId = 1000000000000000830}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1071,7 +994,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, pgCatalogTestVersion(PG_VERSION_83), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_83, 1000000000000000830, hrnPgCatalogVersion(PG_VERSION_83), NULL)),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStartFast), false, "    check start-fast");
 
@@ -1083,7 +1006,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1095,7 +1018,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, pgCatalogTestVersion(PG_VERSION_84), NULL)),
+            backupInit(infoBackupNew(PG_VERSION_84, 1000000000000000840, hrnPgCatalogVersion(PG_VERSION_84), NULL)),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptStopAuto), false, "    check stop-auto");
 
@@ -1107,7 +1030,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1126,7 +1049,7 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(
-            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, pgCatalogTestVersion(PG_VERSION_93), NULL))->dbPrimary),
+            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
 
@@ -1139,7 +1062,7 @@ testRun(void)
         // Create pg_control with page checksums
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .pageChecksum = true}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93, .pageChecksum = true}));
 
         argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1158,14 +1081,14 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(
-            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, pgCatalogTestVersion(PG_VERSION_93), NULL))->dbPrimary),
+            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
 
         // Create pg_control without page checksums
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1176,7 +1099,7 @@ testRun(void)
         });
 
         TEST_RESULT_VOID(
-            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, pgCatalogTestVersion(PG_VERSION_93), NULL))->dbPrimary),
+            dbFree(backupInit(infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "    check checksum-page");
     }
@@ -1200,7 +1123,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_93, .systemId = PG_VERSION_93}));
 
         harnessPqScriptSet((HarnessPq [])
         {
@@ -1222,7 +1145,7 @@ testRun(void)
         });
 
         BackupData *backupData = backupInit(
-            infoBackupNew(PG_VERSION_93, PG_VERSION_93, pgCatalogTestVersion(PG_VERSION_93), NULL));
+            infoBackupNew(PG_VERSION_93, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), NULL));
 
         TEST_RESULT_INT(backupTime(backupData, true), 1575392588, "multiple tries for sleep");
         TEST_ERROR(backupTime(backupData, true), KernelError, "PostgreSQL clock has not advanced to the next second after 3 tries");
@@ -1436,7 +1359,7 @@ testRun(void)
         // Create pg_control
         storagePutP(
             storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))),
-            pgControlTestToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
+            hrnPgControlToBuffer((PgControl){.version = PG_VERSION_84, .systemId = 1000000000000000840}));
 
         // Create stanza
         StringList *argList = strLstNew();
@@ -1687,7 +1610,7 @@ testRun(void)
                 storageNewWriteP(
                     storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path)),
                     .timeModified = backupTimeStart),
-                pgControlTestToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}));
+                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_95, .systemId = 1000000000000000950}));
 
             // Create stanza
             StringList *argList = strLstNew();
@@ -1723,7 +1646,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, pgCatalogTestVersion(PG_VERSION_95), true, false, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -1811,7 +1734,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, pgCatalogTestVersion(PG_VERSION_95), true, false, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -2007,7 +1930,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, pgCatalogTestVersion(PG_VERSION_95), true, false, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeDiff;
@@ -2149,7 +2072,7 @@ testRun(void)
                 storageNewWriteP(
                     storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path)),
                     .timeModified = backupTimeStart),
-                pgControlTestToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
+                hrnPgControlToBuffer((PgControl){.version = PG_VERSION_96, .systemId = 1000000000000000960}));
 
             // Update version
             storagePutP(
@@ -2291,7 +2214,7 @@ testRun(void)
                 storageNewWriteP(
                     storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path)),
                     .timeModified = backupTimeStart),
-                pgControlTestToBuffer(
+                hrnPgControlToBuffer(
                     (PgControl){
                         .version = PG_VERSION_11, .systemId = 1000000000000001100, .pageChecksum = true,
                         .walSegmentSize = 1024 * 1024}));
@@ -2383,7 +2306,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(
                     storageTest,
-                    strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, pgCatalogTestVersion(PG_VERSION_11)))),
+                    strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, hrnPgCatalogVersion(PG_VERSION_11)))),
                     .timeModified = backupTimeStart),
                 NULL);
 

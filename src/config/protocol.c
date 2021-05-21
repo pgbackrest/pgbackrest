@@ -29,7 +29,7 @@ configOptionProtocol(const VariantList *paramList, ProtocolServer *server)
 
         for (unsigned int optionIdx = 0; optionIdx < varLstSize(paramList); optionIdx++)
         {
-            CfgParseOptionResult option = cfgParseOption(varStr(varLstGet(paramList, optionIdx)));
+            CfgParseOptionResult option = cfgParseOptionP(varStr(varLstGet(paramList, optionIdx)));
             CHECK(option.found);
 
             varLstAdd(optionList, varDup(cfgOptionIdx(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));

@@ -433,6 +433,7 @@
 
                         <text>The following types are supported for authorization:
                         <ul>
+                            <li><id>auto</id> - Authorize using the instance service account.</li>
                             <li><id>service</id> - Service account from locally stored key.</li>
                             <li><id>token</id> - For local testing, e.g. <file>fakegcs</file>.</li>
                         </ul></text>

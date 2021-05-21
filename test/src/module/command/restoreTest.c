@@ -3,15 +3,14 @@ Test Restore Command
 ***********************************************************************************************************************************/
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
-#include "common/io/io.h"
-#include "common/io/bufferRead.h"
-#include "common/io/bufferWrite.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 #include "storage/helper.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessPostgres.h"
+#include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
@@ -147,6 +146,10 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // Install local command handler shim
+    static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_RESTORE_LIST};
+    hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
@@ -156,16 +159,6 @@ testRun(void)
         const String *repoFileReferenceFull = strNew("20190509F");
         const String *repoFile1 = strNew("pg_data/testfile");
         unsigned int repoIdx = 0;
-
-        // Start a protocol server to test the protocol directly
-        Buffer *serverWrite = bufNew(8192);
-        IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
-        ioWriteOpen(serverWriteIo);
-
-        ProtocolServer *server = protocolServerNew(
-            strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-
-        bufUsedSet(serverWrite, 0);
 
         // Load Parameters
         StringList *argList = strLstNew();
@@ -329,62 +322,6 @@ testRun(void)
                 strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNew(testUser()),
                 strNew(testGroup()), 0, true, false, NULL),
             false, "sha1 delta existing, content differs");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(repoFile1));
-        varLstAdd(paramList, varNewUInt(repoIdx));
-        varLstAdd(paramList, varNewStr(repoFileReferenceFull));
-        varLstAdd(paramList, varNewUInt(compressTypeNone));
-        varLstAdd(paramList, varNewStrZ("protocol"));
-        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewUInt64(9));
-        varLstAdd(paramList, varNewUInt64(1557432100));
-        varLstAdd(paramList, varNewStrZ("0677"));
-        varLstAdd(paramList, varNewStrZ(testUser()));
-        varLstAdd(paramList, varNewStrZ(testGroup()));
-        varLstAdd(paramList, varNewUInt64(1557432200));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, NULL);
-
-        TEST_RESULT_VOID(restoreFileProtocol(paramList, server), "protocol restore file");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":true}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
-
-        info = storageInfoP(storagePg(), strNew("protocol"));
-        TEST_RESULT_BOOL(info.exists, true, "    check exists");
-        TEST_RESULT_UINT(info.size, 9, "    check size");
-        TEST_RESULT_UINT(info.mode, 0677, "    check mode");
-        TEST_RESULT_INT(info.timeModified, 1557432100, "    check time");
-        TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
-        TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
-        TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("protocol")))), "atestfile", "    check contents");
-
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(repoFile1));
-        varLstAdd(paramList, varNewUInt(repoIdx));
-        varLstAdd(paramList, varNewStr(repoFileReferenceFull));
-        varLstAdd(paramList, varNewUInt(compressTypeNone));
-        varLstAdd(paramList, varNewStrZ("protocol"));
-        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, varNewUInt64(9));
-        varLstAdd(paramList, varNewUInt64(1557432100));
-        varLstAdd(paramList, varNewStrZ("0677"));
-        varLstAdd(paramList, varNewStrZ(testUser()));
-        varLstAdd(paramList, varNewStrZ(testGroup()));
-        varLstAdd(paramList, varNewUInt64(1557432200));
-        varLstAdd(paramList, varNewBool(true));
-        varLstAdd(paramList, varNewBool(false));
-        varLstAdd(paramList, NULL);
-
-        TEST_RESULT_VOID(restoreFileProtocol(paramList, server), "protocol restore file");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":false}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -1431,7 +1368,7 @@ testRun(void)
         TEST_TITLE("one database selected with tablespace id");
 
         manifest->pub.data.pgVersion = PG_VERSION_94;
-        manifest->pub.data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_94);
+        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_94);
 
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
@@ -2308,7 +2245,7 @@ testRun(void)
             manifest->pub.info = infoNew(NULL);
             manifest->pub.data.backupLabel = strNew(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_10;
-            manifest->pub.data.pgCatalogVersion = pgCatalogTestVersion(PG_VERSION_10);
+            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
             manifest->pub.data.backupType = backupTypeFull;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
@@ -2654,6 +2591,7 @@ testRun(void)
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH_SPOOL);
         strLstAddZ(argList, "--delta");
         strLstAddZ(argList, "--type=preserve");
         strLstAddZ(argList, "--link-map=pg_wal=../wal");
@@ -2666,6 +2604,9 @@ testRun(void)
         // completely invisible in the manifest and logging.
         TEST_SYSTEM_FMT("mv %s %s-data", strZ(pgPath), strZ(pgPath));
         TEST_SYSTEM_FMT("ln -s %s-data %s ", strZ(pgPath), strZ(pgPath));
+
+        // Create the stanza archive pool path to check that it gets removed
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE "/empty.txt");
 
         // Write recovery.conf so we don't get a preserve warning
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), BUFSTRDEF("Some Settings"));
@@ -2721,6 +2662,9 @@ testRun(void)
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '{[path]}/pg/global'");
 
+        // Check stanza archive spool path was removed
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);
+
         // -------------------------------------------------------------------------------------------------------------------------
         // Keep this test at the end since is corrupts the repo
         TEST_TITLE("remove a repo file so a restore job errors");
@@ -2733,7 +2677,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             cmdRestore(), FileMissingError,
-            "raised from local-1 protocol: unable to open missing file"
+            "raised from local-1 shim protocol: unable to open missing file"
                 " '%s/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read",
             testPath());
 
