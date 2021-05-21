@@ -275,11 +275,11 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     {
         HarnessLogReplace logReplace =
         {
-            .expression = strNew(expression),
+            .expression = strNewZ(expression),
             .regExp = regExpNew(STRDEF(expression)),
-            .expressionSub = expressionSub == NULL ? NULL : strNew(expressionSub),
+            .expressionSub = expressionSub == NULL ? NULL : strNewZ(expressionSub),
             .regExpSub = expressionSub == NULL ? NULL : regExpNew(STRDEF(expressionSub)),
-            .replacement = strNew(replacement),
+            .replacement = strNewZ(replacement),
             .matchList = strLstNew(),
             .version = version,
         };

@@ -16,7 +16,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageData = storagePosixNewP(strNew(testDataPath()), .write = true);
+    Storage *storageData = storagePosixNewP(strNewZ(testDataPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("lockStopFileName()"))
@@ -30,7 +30,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             lockStopFileName(NULL), hrnReplaceKey("{[path-data]}/lock/all" STOP_FILE_EXT), "stop file for all stanzas");
         TEST_RESULT_STR_Z(
-            lockStopFileName(strNew("db")), hrnReplaceKey("{[path-data]}/lock/db" STOP_FILE_EXT), "stop file for on stanza");
+            lockStopFileName(STRDEF("db")), hrnReplaceKey("{[path-data]}/lock/db" STOP_FILE_EXT), "stop file for on stanza");
     }
 
     // *****************************************************************************************************************************
@@ -43,9 +43,9 @@ testRun(void)
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - no stanza, no stop files");
         harnessLogResult("P00   WARN: stop file does not exist");
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageData, strNew("lock/all" STOP_FILE_EXT)), NULL), "create stop file");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageData, STRDEF("lock/all" STOP_FILE_EXT)), NULL), "create stop file");
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - no stanza, stop file exists");
-        TEST_RESULT_BOOL(storageExistsP(storageData, strNew("lock/all" STOP_FILE_EXT)), false, "    stop file removed");
+        TEST_RESULT_BOOL(storageExistsP(storageData, STRDEF("lock/all" STOP_FILE_EXT)), false, "    stop file removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
@@ -56,15 +56,15 @@ testRun(void)
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - stanza, no stop files");
         harnessLogResult("P00   WARN: stop file does not exist for stanza db");
 
-        storagePutP(storageNewWriteP(storageData, strNew("lock/all" STOP_FILE_EXT)), NULL);
+        storagePutP(storageNewWriteP(storageData, STRDEF("lock/all" STOP_FILE_EXT)), NULL);
         TEST_ERROR(lockStopTest(), StopError, "stop file exists for all stanzas");
 
-        storagePutP(storageNewWriteP(storageData, strNew("lock/db" STOP_FILE_EXT)), NULL);
+        storagePutP(storageNewWriteP(storageData, STRDEF("lock/db" STOP_FILE_EXT)), NULL);
         TEST_ERROR(lockStopTest(), StopError, "stop file exists for stanza db");
 
         TEST_RESULT_VOID(cmdStart(), "cmdStart - stanza, stop file exists");
-        TEST_RESULT_BOOL(storageExistsP(storageData, strNew("lock/db" STOP_FILE_EXT)), false, "    stanza stop file removed");
-        TEST_RESULT_BOOL(storageExistsP(storageData, strNew("lock/all" STOP_FILE_EXT)), true, "    all stop file not removed");
+        TEST_RESULT_BOOL(storageExistsP(storageData, STRDEF("lock/db" STOP_FILE_EXT)), false, "    stanza stop file removed");
+        TEST_RESULT_BOOL(storageExistsP(storageData, STRDEF("lock/all" STOP_FILE_EXT)), true, "    all stop file not removed");
     }
 
     // *****************************************************************************************************************************
@@ -88,7 +88,7 @@ testRun(void)
         harnessLogResult("P00   WARN: stop file already exists for all stanzas");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(storageRemoveP(storageData, strNew("lockpath/all" STOP_FILE_EXT)), "remove stop file");
+        TEST_RESULT_VOID(storageRemoveP(storageData, STRDEF("lockpath/all" STOP_FILE_EXT)), "remove stop file");
         TEST_RESULT_INT(system(strZ(strNewFmt("chmod 444 %s", strZ(lockPath)))), 0, "change perms");
         TEST_ERROR_FMT(
             cmdStop(), FileOpenError, "unable to get info for path/file '%s/all.stop': [13] Permission denied", strZ(lockPath));
@@ -105,7 +105,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsP(storageData, stanzaStopFile), true, "    stanza stop file created");
 
         StringList *lockPathList = NULL;
-        TEST_ASSIGN(lockPathList, storageListP(storageData, strNew("lock"), .errorOnMissing = true), "    get file list");
+        TEST_ASSIGN(lockPathList, storageListP(storageData, STRDEF("lock"), .errorOnMissing = true), "    get file list");
         TEST_RESULT_INT(strLstSize(lockPathList), 1, "    only file in lock path");
         TEST_RESULT_STR_Z(strLstGet(lockPathList, 0), "db" STOP_FILE_EXT, "    stanza stop exists");
 
@@ -150,9 +150,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 int lockFd = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
@@ -160,7 +160,7 @@ testRun(void)
                 TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "    lock the empty file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
-                ioWriteStrLine(write, strNew(""));
+                ioWriteStrLine(write, strNew());
                 // All writes are buffered so need to flush because buffer is not full
                 ioWriteFlush(write);
                 // Wait for a linefeed from the parent ioWriteLine below
@@ -173,9 +173,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -207,9 +207,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 int lockFd = open(strZ(strNewFmt("%s/empty" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
@@ -217,7 +217,7 @@ testRun(void)
                 TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "    lock the non-empty file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
-                ioWriteStrLine(write, strNew(""));
+                ioWriteStrLine(write, strNew());
                 // All writes are buffered so need to flush because buffer is not full
                 ioWriteFlush(write);
                 // Wait for a linefeed from the parent ioWriteLine below
@@ -230,9 +230,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -259,9 +259,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 TEST_RESULT_BOOL(
@@ -269,7 +269,7 @@ testRun(void)
                     true,"    child process acquires lock");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
-                ioWriteStrLine(write, strNew(""));
+                ioWriteStrLine(write, strNew());
                 // All writes are buffered so need to flush because buffer is not full
                 ioWriteFlush(write);
                 // Wait for a linefeed from the parent but it will not arrive before the process is terminated
@@ -279,9 +279,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -308,9 +308,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 int lockFd = open(strZ(strNewFmt("%s/badpid" LOCK_FILE_EXT, strZ(lockPath))), O_RDONLY, 0);
@@ -318,7 +318,7 @@ testRun(void)
                 TEST_RESULT_INT(flock(lockFd, LOCK_EX | LOCK_NB), 0, "    lock the badpid file");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
-                ioWriteStrLine(write, strNew(""));
+                ioWriteStrLine(write, strNew());
                 // All writes are buffered so need to flush because buffer is not full
                 ioWriteFlush(write);
                 // Wait for a linefeed from the parent ioWriteLine below
@@ -332,9 +332,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock

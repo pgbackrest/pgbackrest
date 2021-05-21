@@ -72,7 +72,7 @@ testServerRequestComplexProtocol(const VariantList *paramList, ProtocolServer *s
     MEM_CONTEXT_TEMP_BEGIN()
     {
         protocolServerResponse(server, varNewBool(false));
-        protocolServerWriteLine(server, strNew("LINEOFTEXT"));
+        protocolServerWriteLine(server, STRDEF("LINEOFTEXT"));
         protocolServerWriteLine(server, NULL);
         ioWriteFlush(protocolServerIoWrite(server));
     }
@@ -149,7 +149,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("repoIsLocal() and pgIsLocal()"))
@@ -241,7 +241,7 @@ testRun(void)
 
         // Create bogus client and exec with the freed memcontext to generate errors
         ProtocolClient client = {.pub = {.memContext = memContext}, .name = STRDEF("test")};
-        Exec exec = {.pub = {.memContext = memContext}, .name = STRDEF("test"), .command = strNew("test")};
+        Exec exec = {.pub = {.memContext = memContext}, .name = STRDEF("test"), .command = strNewZ("test")};
         ProtocolHelperClient protocolHelperClient = {.client = &client, .exec = &exec};
 
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
@@ -287,7 +287,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("protocolRemoteParam()"))
     {
-        storagePutP(storageNewWriteP(storageTest, strNew("pgbackrest.conf")), bufNew(0));
+        storagePutP(storageNewWriteP(storageTest, STRDEF("pgbackrest.conf")), bufNew(0));
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
@@ -423,8 +423,8 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(command, protocolCommandNew(strIdFromZ(stringIdBit5, "cmd-one")), "create command");
-            TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param1"))), command, "add param");
-            TEST_RESULT_PTR(protocolCommandParamAdd(command, varNewStr(strNew("param2"))), command, "add param");
+            TEST_RESULT_PTR(protocolCommandParamAdd(command, VARSTRDEF("param1")), command, "add param");
+            TEST_RESULT_PTR(protocolCommandParamAdd(command, VARSTRDEF("param2")), command, "add param");
 
             TEST_RESULT_PTR(protocolCommandMove(command, memContextPrior()), command, "move protocol command");
             TEST_RESULT_PTR(protocolCommandMove(NULL, memContextPrior()), NULL, "move null protocol command");
@@ -450,51 +450,51 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 // Various bogus greetings
-                ioWriteStrLine(write, strNew("bogus greeting"));
+                ioWriteStrLine(write, STRDEF("bogus greeting"));
                 ioWriteFlush(write);
-                ioWriteStrLine(write, strNew("{\"name\":999}"));
+                ioWriteStrLine(write, STRDEF("{\"name\":999}"));
                 ioWriteFlush(write);
-                ioWriteStrLine(write, strNew("{\"name\":null}"));
+                ioWriteStrLine(write, STRDEF("{\"name\":null}"));
                 ioWriteFlush(write);
-                ioWriteStrLine(write, strNew("{\"name\":\"bogus\"}"));
+                ioWriteStrLine(write, STRDEF("{\"name\":\"bogus\"}"));
                 ioWriteFlush(write);
-                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"bogus\"}"));
+                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"bogus\"}"));
                 ioWriteFlush(write);
-                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
+                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
                 ioWriteFlush(write);
 
                 // Correct greeting with noop
-                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
+                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteStrLine(write, strNew("{}"));
+                ioWriteStrLine(write, STRDEF("{}"));
                 ioWriteFlush(write);
 
                 // Throw errors
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with error text");
-                ioWriteStrLine(write, strNew("{\"err\":25,\"out\":\"sample error message\",\"errStack\":\"stack data\"}"));
+                ioWriteStrLine(write, STRDEF("{\"err\":25,\"out\":\"sample error message\",\"errStack\":\"stack data\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with no error text");
-                ioWriteStrLine(write, strNew("{\"err\":255}"));
+                ioWriteStrLine(write, STRDEF("{\"err\":255}"));
                 ioWriteFlush(write);
 
                 // No output expected
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop with parameters returned");
-                ioWriteStrLine(write, strNew("{\"out\":[\"bogus\"]}"));
+                ioWriteStrLine(write, STRDEF("{\"out\":[\"bogus\"]}"));
                 ioWriteFlush(write);
 
                 // Send output
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"test\"}", "test command");
-                ioWriteStrLine(write, strNew(".OUTPUT"));
-                ioWriteStrLine(write, strNew("{\"out\":[\"value1\",\"value2\"]}"));
+                ioWriteStrLine(write, STRDEF(".OUTPUT"));
+                ioWriteStrLine(write, STRDEF("{\"out\":[\"value1\",\"value2\"]}"));
                 ioWriteFlush(write);
 
                 // invalid line
@@ -504,17 +504,17 @@ testRun(void)
 
                 // error instead of output
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"err-i-o\"}", "error instead of output command");
-                ioWriteStrLine(write, strNew("{\"err\":255}"));
+                ioWriteStrLine(write, STRDEF("{\"err\":255}"));
                 ioWriteFlush(write);
 
                 // unexpected output
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"unexp-output\"}", "unexpected output");
-                ioWriteStrLine(write, strNew("{}"));
+                ioWriteStrLine(write, STRDEF("{}"));
                 ioWriteFlush(write);
 
                 // invalid prefix
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"i-pr\"}", "invalid prefix");
-                ioWriteStrLine(write, strNew("~line"));
+                ioWriteStrLine(write, STRDEF("~line"));
                 ioWriteFlush(write);
 
                 // Wait for exit
@@ -524,31 +524,31 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(strNew("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("client read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("client write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Various bogus greetings
                 TEST_ERROR(
-                    protocolClientNew(strNew("test client"), strNew("test"), read, write), JsonFormatError,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), JsonFormatError,
                     "expected '{' at 'bogus greeting'");
                 TEST_ERROR(
-                    protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
                     "greeting key 'name' must be string type");
                 TEST_ERROR(
-                    protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
                     "unable to find greeting key 'name'");
                 TEST_ERROR(
-                    protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
                     "expected value 'pgBackRest' for greeting key 'name' but got 'bogus'\n"
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
                 TEST_ERROR(
-                    protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
                     "expected value 'test' for greeting key 'service' but got 'bogus'\n"
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
                 TEST_ERROR(
-                    protocolClientNew(strNew("test client"), strNew("test"), read, write), ProtocolError,
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), ProtocolError,
                     "expected value '" PROJECT_VERSION "' for greeting key 'version' but got 'bogus'\n"
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
 
@@ -560,7 +560,7 @@ testRun(void)
                     TEST_ASSIGN(
                         client,
                         protocolClientMove(
-                            protocolClientNew(strNew("test client"), strNew("test"), read, write), memContextPrior()),
+                            protocolClientNew(STRDEF("test client"), STRDEF("test"), read, write), memContextPrior()),
                         "create client");
                     TEST_RESULT_VOID(protocolClientMove(NULL, memContextPrior()), "move null client");
                 }
@@ -634,9 +634,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("client read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("client write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 // Check greeting
@@ -645,14 +645,14 @@ testRun(void)
                     "check greeting");
 
                 // Noop
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"noop\"}")), "write noop");
+                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"noop\"}")), "write noop");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush noop");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{}", "noop result");
 
                 // Invalid command
                 KeyValue *result = NULL;
 
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"bogus\"}")), "write bogus");
+                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"bogus\"}")), "write bogus");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush bogus");
                 TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
                 TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 39, "    check code");
@@ -661,12 +661,12 @@ testRun(void)
                 TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Simple request
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"r-s\"}")), "write simple request");
+                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"r-s\"}")), "write simple request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush simple request");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "simple request result");
 
                 // Throw an assert error which will include a stack trace
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"assert\"}")), "write assert");
+                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"assert\"}")), "write assert");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush assert error");
                 TEST_ASSIGN(result, varKv(jsonToVar(ioReadLine(read))), "parse error result");
                 TEST_RESULT_INT(varIntForce(kvGet(result, VARSTRDEF("err"))), 25, "    check code");
@@ -674,32 +674,32 @@ testRun(void)
                 TEST_RESULT_BOOL(kvGet(result, VARSTRDEF("errStack")) != NULL, true, "    check stack exists");
 
                 // Complex request -- after process loop has been restarted
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"r-c\"}")), "write complex request");
+                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"r-c\"}")), "write complex request");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush complex request");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":false}", "complex request result");
                 TEST_RESULT_STR_Z(ioReadLine(read), ".LINEOFTEXT", "complex request result");
                 TEST_RESULT_STR_Z(ioReadLine(read), ".", "complex request result");
 
                 // Exit
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
+                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"exit\"}")), "write exit");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
 
                 // Retry errors until success
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"ezero\"}")), "write error-until-0");
+                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"ezero\"}")), "write error-until-0");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush error-until-0");
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"out\":true}", "error-until-0 result");
 
                 // Exit
-                TEST_RESULT_VOID(ioWriteStrLine(write, strNew("{\"cmd\":\"exit\"}")), "write exit");
+                TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("{\"cmd\":\"exit\"}")), "write exit");
                 TEST_RESULT_VOID(ioWriteFlush(write), "flush exit");
             }
             HARNESS_FORK_CHILD_END();
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Send greeting
@@ -710,7 +710,7 @@ testRun(void)
                     TEST_ASSIGN(
                         server,
                         protocolServerMove(
-                            protocolServerNew(strNew("test server"), strNew("test"), read, write), memContextPrior()),
+                            protocolServerNew(STRDEF("test server"), STRDEF("test"), read, write), memContextPrior()),
                         "create server");
                     TEST_RESULT_VOID(protocolServerMove(NULL, memContextPrior()), "move null server");
                 }
@@ -763,7 +763,7 @@ testRun(void)
         {
             TEST_ASSIGN(
                 job,
-                protocolParallelJobNew(varNewStr(strNew("test")), protocolCommandNew(strIdFromZ(stringIdBit5, "c"))), "new job");
+                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNew(strIdFromZ(stringIdBit5, "c"))), "new job");
             TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
             TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
         }
@@ -786,22 +786,22 @@ testRun(void)
             // Local 1
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
+                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 // Greeting with noop
-                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
+                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteStrLine(write, strNew("{}"));
+                ioWriteStrLine(write, STRDEF("{}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"c-one\",\"param\":[\"param1\",\"param2\"]}", "command1");
                 sleepMSec(4000);
-                ioWriteStrLine(write, strNew("{\"out\":1}"));
+                ioWriteStrLine(write, STRDEF("{\"out\":1}"));
                 ioWriteFlush(write);
 
                 // Wait for exit
@@ -812,27 +812,27 @@ testRun(void)
             // Local 2
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_CHILD_READ(), 10000);
+                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_CHILD_READ(), 10000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 // Greeting with noop
-                ioWriteStrLine(write, strNew("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
+                ioWriteStrLine(write, STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"noop\"}", "noop");
-                ioWriteStrLine(write, strNew("{}"));
+                ioWriteStrLine(write, STRDEF("{}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"c2\",\"param\":[\"param1\"]}", "command2");
                 sleepMSec(1000);
-                ioWriteStrLine(write, strNew("{\"out\":2}"));
+                ioWriteStrLine(write, STRDEF("{\"out\":2}"));
                 ioWriteFlush(write);
 
                 TEST_RESULT_STR_Z(ioReadLine(read), "{\"cmd\":\"c-three\",\"param\":[\"param1\"]}", "command3");
 
-                ioWriteStrLine(write, strNew("{\"err\":39,\"out\":\"very serious error\"}"));
+                ioWriteStrLine(write, STRDEF("{\"err\":39,\"out\":\"very serious error\"}"));
                 ioWriteFlush(write);
 
                 // Wait for exit
@@ -863,13 +863,13 @@ testRun(void)
 
                     TEST_ASSIGN(
                         client[clientIdx],
-                        protocolClientNew(strNewFmt("test client %u", clientIdx), strNew("test"), read, write),
+                        protocolClientNew(strNewFmt("test client %u", clientIdx), STRDEF("test"), read, write),
                         "create client %u", clientIdx);
                     TEST_RESULT_VOID(protocolParallelClientAdd(parallel, client[clientIdx]), "add client %u", clientIdx);
                 }
 
                 // Attempt to add client without an fd
-                String *protocolString = strNew(
+                const String *protocolString = STRDEF(
                     "{\"name\":\"pgBackRest\",\"service\":\"error\",\"version\":\"" PROJECT_VERSION "\"}\n"
                     "{}\n");
 
@@ -878,25 +878,25 @@ testRun(void)
                 IoWrite *write = ioBufferWriteNew(bufNew(1024));
                 ioWriteOpen(write);
 
-                ProtocolClient *clientError = protocolClientNew(strNew("error"), strNew("error"), read, write);
+                ProtocolClient *clientError = protocolClientNew(STRDEF("error"), STRDEF("error"), read, write);
                 TEST_ERROR(protocolParallelClientAdd(parallel, clientError), AssertError, "client with read fd is required");
                 protocolClientFree(clientError);
 
                 // Add jobs
                 ProtocolCommand *command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-one"));
-                protocolCommandParamAdd(command, varNewStr(strNew("param1")));
-                protocolCommandParamAdd(command, varNewStr(strNew("param2")));
-                ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(strNew("job1")), command);
+                protocolCommandParamAdd(command, VARSTRDEF("param1"));
+                protocolCommandParamAdd(command, VARSTRDEF("param2"));
+                ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("job1"), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNew(strIdFromZ(stringIdBit5, "c2"));
-                protocolCommandParamAdd(command, varNewStr(strNew("param1")));
-                job = protocolParallelJobNew(varNewStr(strNew("job2")), command);
+                protocolCommandParamAdd(command, VARSTRDEF("param1"));
+                job = protocolParallelJobNew(VARSTRDEF("job2"), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 command = protocolCommandNew(strIdFromZ(stringIdBit5, "c-three"));
-                protocolCommandParamAdd(command, varNewStr(strNew("param1")));
-                job = protocolParallelJobNew(varNewStr(strNew("job3")), command);
+                protocolCommandParamAdd(command, VARSTRDEF("param1"));
+                job = protocolParallelJobNew(VARSTRDEF("job3"), command);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 // Process jobs
@@ -1010,7 +1010,7 @@ testRun(void)
         // Start protocol with local encryption settings
         // -------------------------------------------------------------------------------------------------------------------------
         storagePut(
-            storageNewWriteP(storageTest, strNew("pgbackrest.conf")),
+            storageNewWriteP(storageTest, STRDEF("pgbackrest.conf")),
             BUFSTRDEF(
                 "[global]\n"
                 "repo1-cipher-type=aes-256-cbc\n"
@@ -1038,7 +1038,7 @@ testRun(void)
         // Start protocol with remote encryption settings
         // -------------------------------------------------------------------------------------------------------------------------
         storagePut(
-            storageNewWriteP(storageTest, strNew("pgbackrest.conf")),
+            storageNewWriteP(storageTest, STRDEF("pgbackrest.conf")),
             BUFSTRDEF(
                 "[global]\n"
                 "repo1-cipher-type=aes-256-cbc\n"

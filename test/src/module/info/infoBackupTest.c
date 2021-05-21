@@ -17,7 +17,7 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("InfoBackup"))
@@ -76,7 +76,7 @@ testRun(void)
             infoBackup,
             infoBackupNew(
                 PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10),
-                strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+                STRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -225,13 +225,13 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), "20161219-212741F_20161219-212918I\n",
             "incremental=true");
 
-        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212918I")), "delete a backup");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F_20161219-212918I")), "delete a backup");
         TEST_RESULT_STRLST_Z(
             strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc),
             "20161219-212741F\n20161219-212741F_20161219-212803D\n", "  backup deleted");
 
-        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F_20161219-212803D")), "delete all backups");
-        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, strNew("20161219-212741F")), "  deleted");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F_20161219-212803D")), "delete all backups");
+        TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F")), "  deleted");
         TEST_RESULT_UINT(strLstSize(infoBackupDataLabelList(infoBackup, NULL)), 0, "  no backups remain");
 
         // infoBackupDataToLog
@@ -509,7 +509,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
            storagePutP(storageNewWriteP(storageRepoWrite(),
-           strNew(STORAGE_REPO_BACKUP "/20190923-164324F/" BACKUP_MANIFEST_FILE)), manifestContent),
+           STRDEF(STORAGE_REPO_BACKUP "/20190923-164324F/" BACKUP_MANIFEST_FILE)), manifestContent),
            "write main manifest for pgId=2 - valid backup to add");
 
         manifestContent = harnessInfoChecksumZ
@@ -548,7 +548,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
             manifestContent), "write manifest copy for pgId=1");
 
         manifestContent = harnessInfoChecksumZ
@@ -591,7 +591,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084555F/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084555F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup pgId mismatch");
 
         manifestContent = harnessInfoChecksumZ
@@ -634,7 +634,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084666F/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084666F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup system-id mismatch");
 
         manifestContent = harnessInfoChecksumZ
@@ -677,16 +677,16 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084777F/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084777F/" BACKUP_MANIFEST_FILE)),
             manifestContent), "write manifest - invalid backup version mismatch");
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I/" BACKUP_MANIFEST_FILE)),
             manifestContentIncr), "write manifest for dependent backup that will be removed from backup.info");
 
         TEST_RESULT_VOID(
-            storagePathCreateP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F")),
+            storagePathCreateP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F")),
             "create backup on disk that is in current but no manifest");
 
         TEST_RESULT_STRLST_Z(
@@ -731,7 +731,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
-            storagePathRemoveP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I"),
+            storagePathRemoveP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I"),
             .recurse = true), "remove dependent backup from disk");
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
@@ -747,8 +747,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(
             storageCopyP(
-                storageNewReadP(storageRepo(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
-                storageNewWriteP(storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
+                storageNewReadP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT)),
+                storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE))),
                 "write manifest from copy-only for pgId=1");
 
         manifestContentIncr = harnessInfoChecksumZ
@@ -794,7 +794,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageRepoWrite(),
-            strNew(STORAGE_REPO_BACKUP "/20190818-084444F_20190924-084502D/" BACKUP_MANIFEST_FILE)),
+            STRDEF(STORAGE_REPO_BACKUP "/20190818-084444F_20190924-084502D/" BACKUP_MANIFEST_FILE)),
             manifestContentIncr), "write manifest for dependent backup to be added to full already in backup.info");
 
         TEST_RESULT_VOID(

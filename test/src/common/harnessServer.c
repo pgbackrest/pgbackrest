@@ -248,8 +248,8 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             // If running in a container use the installed certificate
             if (testContainer())
             {
-                param.certificate = strNew(HRN_SERVER_FAKE_CERT_FILE);
-                param.key = strNew(HRN_SERVER_FAKE_KEY_FILE);
+                param.certificate = strNewZ(HRN_SERVER_FAKE_CERT_FILE);
+                param.key = strNewZ(HRN_SERVER_FAKE_KEY_FILE);
             }
             // Else use a certificate from the test path -- tests will need to disable verify
             else
@@ -430,7 +430,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
 /**********************************************************************************************************************************/
 const String *hrnServerHost(void)
 {
-    return strNew(testContainer() ? HRN_SERVER_HOST : "127.0.0.1");
+    return strNewZ(testContainer() ? HRN_SERVER_HOST : "127.0.0.1");
 }
 
 /**********************************************************************************************************************************/

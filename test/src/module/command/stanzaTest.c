@@ -18,10 +18,10 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
-    String *stanza = strNew("db");
-    String *fileName = strNew("test.info");
+    const String *stanza = STRDEF("db");
+    const String *fileName = STRDEF("test.info");
     String *backupStanzaPath = strNewFmt("repo/backup/%s", strZ(stanza));
     String *backupInfoFileName = strNewFmt("%s/backup.info", strZ(backupStanzaPath));
     String *archiveStanzaPath = strNewFmt("repo/archive/%s", strZ(stanza));
@@ -68,7 +68,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - one repo, no files exist");
         harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
-        String *contentArchive = strNew
+        const String *contentArchive = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -92,7 +92,7 @@ testRun(void)
                 storageGetP(storageNewReadP(storageTest, fileName)))),
             true, "    test and stanza archive info files are equal");
 
-        String *contentBackup = strNew
+        const String *contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -149,13 +149,13 @@ testRun(void)
 
         InfoArchive *infoArchive = NULL;
         TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo2, cipherTypeAes256Cbc, strNew("12345678")),
+            infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo2, cipherTypeAes256Cbc, STRDEF("12345678")),
             "  load archive info");
         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo2, cipherTypeAes256Cbc, strNew("12345678")),
+            infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo2, cipherTypeAes256Cbc, STRDEF("12345678")),
             "  load backup info");
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
 
@@ -174,12 +174,12 @@ testRun(void)
 
         // Confirm other repo encrypted with different password
         TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo4, cipherTypeAes256Cbc, strNew("87654321")),
+            infoArchive, infoArchiveLoadFile(storageTest, archiveInfoFileNameRepo4, cipherTypeAes256Cbc, STRDEF("87654321")),
             "  load archive info");
         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "  cipher sub set");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo4, cipherTypeAes256Cbc, strNew("87654321")),
+            infoBackup, infoBackupLoadFile(storageTest, backupInfoFileNameRepo4, cipherTypeAes256Cbc, STRDEF("87654321")),
             "  load backup info");
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "  cipher sub set");
 
@@ -398,7 +398,7 @@ testRun(void)
         // checkStanzaInfo() - already checked in checkTest so just a sanity check here
         //--------------------------------------------------------------------------------------------------------------------------
         // Create a corrupted backup file - db id
-        contentBackup = strNew
+        contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -429,7 +429,7 @@ testRun(void)
         storageRemoveP(storageTest, strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName)));
 
         // Create an archive.info file and backup.info files that match but do not match the current database version
-        contentBackup = strNew
+        contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201510051\n"
@@ -447,7 +447,7 @@ testRun(void)
                 storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
-        contentArchive = strNew
+        contentArchive = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -469,7 +469,7 @@ testRun(void)
         harnessLogResult("P00   INFO: stanza-create for stanza 'db' on repo1");
 
         // Create archive.info and backup.info files that match but do not match the current database system-id
-        contentArchive = strNew
+        contentArchive = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -484,7 +484,7 @@ testRun(void)
                 storageNewWriteP(storageTest, archiveInfoFileName), harnessInfoChecksum(contentArchive)),
                 "put archive info to file");
 
-        contentBackup = strNew
+        contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -545,7 +545,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgValidate(), online=y"))
     {
-        String *pg1 = strNew("pg1");
+        const String *pg1 = STRDEF("pg1");
         String *pg1Path = strNewFmt("%s/%s", testPath(), strZ(pg1));
 
         // Load Parameters
@@ -694,7 +694,7 @@ testRun(void)
         TEST_TITLE("cmdStanzaUpgrade - info file mismatches");
 
         // Stanza with only archive.info and backup.info but no .copy files
-        String *contentBackup = strNew
+        const String *contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -712,7 +712,7 @@ testRun(void)
                 storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
-        String *contentArchive = strNew
+        const String *contentArchive = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -729,7 +729,7 @@ testRun(void)
 
         // backup info up to date but archive info db-id mismatch
         //--------------------------------------------------------------------------------------------------------------------------
-        contentArchive = strNew
+        contentArchive = STRDEF
         (
             "[db]\n"
             "db-id=2\n"
@@ -753,7 +753,7 @@ testRun(void)
 
         // backup info up to date but archive info version is not
         //--------------------------------------------------------------------------------------------------------------------------
-        contentBackup = strNew
+        contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -773,7 +773,7 @@ testRun(void)
                 storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
-        contentArchive = strNew
+        contentArchive = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -790,7 +790,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - version");
         harnessLogResult("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
-        contentArchive = strNew
+        contentArchive = STRDEF
         (
             "[db]\n"
             "db-id=2\n"
@@ -816,7 +816,7 @@ testRun(void)
 
         // archive info up to date but backup info version is not
         //--------------------------------------------------------------------------------------------------------------------------
-        contentBackup = strNew
+        contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -836,7 +836,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - version");
         harnessLogResult("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
-        contentBackup = strNew
+        contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -867,7 +867,7 @@ testRun(void)
 
         // backup info up to date but archive info system-id is not
         //--------------------------------------------------------------------------------------------------------------------------
-        contentBackup = strNew
+        contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -887,7 +887,7 @@ testRun(void)
                 storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(contentBackup)),
                 "put backup info to file");
 
-        contentArchive = strNew
+        contentArchive = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -904,7 +904,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - system-id");
         harnessLogResult("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
-        contentArchive = strNew
+        contentArchive = STRDEF
         (
             "[db]\n"
             "db-id=2\n"
@@ -930,7 +930,7 @@ testRun(void)
 
         // archive info up to date but backup info system-id is not
         //--------------------------------------------------------------------------------------------------------------------------
-        contentBackup = strNew
+        contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -950,7 +950,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - system-id");
         harnessLogResult("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
-        contentBackup = strNew
+        contentBackup = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201608131\n"
@@ -988,7 +988,7 @@ testRun(void)
         strLstAdd(argListCmd, strNewFmt("--repo1-path=%s/repo", testPath()));
 
         //--------------------------------------------------------------------------------------------------------------------------
-        String *stanzaOther = strNew("otherstanza");
+        const String *stanzaOther = STRDEF("otherstanza");
 
         // Load Parameters
         StringList *argList = strLstDup(argListCmd);

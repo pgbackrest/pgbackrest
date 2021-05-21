@@ -63,7 +63,33 @@ struct String
 
 /**********************************************************************************************************************************/
 String *
-strNew(const char *string)
+strNew(void)
+{
+    FUNCTION_TEST_VOID();
+
+    // Create object
+    String *this = memNew(sizeof(String));
+
+    *this = (String)
+    {
+        .pub =
+        {
+            // A zero-length string is not very useful so assume this string is being created for appending and allocate extra space
+            .extra = STRING_EXTRA_MIN,
+        },
+        .memContext = memContextCurrent(),
+    };
+
+    // Allocate and assign string
+    this->pub.buffer = memNew(STRING_EXTRA_MIN + 1);
+    this->pub.buffer[0] = '\0';
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+String *
+strNewZ(const char *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, string);
@@ -83,9 +109,6 @@ strNew(const char *string)
         .pub =
         {
             .size = (unsigned int)stringSize,
-
-            // A zero-length string is not very useful so assume this string is being created for appending and allocate extra space
-            .extra = stringSize == 0 ? STRING_EXTRA_MIN : 0,
         },
         .memContext = memContextCurrent(),
     };
@@ -108,7 +131,7 @@ String *strNewDbl(double value)
 
     cvtDoubleToZ(value, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNew(working));
+    FUNCTION_TEST_RETURN(strNewZ(working));
 }
 
 /**********************************************************************************************************************************/
@@ -260,7 +283,7 @@ strBase(const String *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(strNew(strBaseZ(this)));
+    FUNCTION_TEST_RETURN(strNewZ(strBaseZ(this)));
 }
 
 const char *
@@ -540,7 +563,7 @@ strDup(const String *this)
     String *result = NULL;
 
     if (this != NULL)
-        result = strNew(strZ(this));
+        result = strNewZ(strZ(this));
 
     FUNCTION_TEST_RETURN(result);
 }

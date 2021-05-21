@@ -66,7 +66,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
             }
             // Else make whatever is left the last string
             else
-                strLstAddInternal(this, strNew(stringBase));
+                strLstAddInternal(this, strNewZ(stringBase));
         }
         while (stringMatch != NULL);
     }
@@ -183,7 +183,7 @@ strLstAddZ(StringList *this, const char *string)
 
     MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {
-        result = strLstAddInternal(this, strNew(string));
+        result = strLstAddInternal(this, strNewZ(string));
     }
     MEM_CONTEXT_END();
 
@@ -227,7 +227,7 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
     ASSERT(separator != NULL);
     ASSERT(quote != NULL);
 
-    String *join = strNew("");
+    String *join = strNew();
 
     for (unsigned int listIdx = 0; listIdx < strLstSize(this); listIdx++)
     {

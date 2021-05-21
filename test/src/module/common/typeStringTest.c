@@ -41,7 +41,7 @@ testRun(void)
         TEST_RESULT_VOID(CHECK_SIZE(555), "valid size");
         TEST_ERROR(CHECK_SIZE(STRING_SIZE_MAX + 1), AssertError, "string size must be <= 1073741824 bytes");
 
-        String *string = strNew("static string");
+        String *string = strNewZ("static string");
         TEST_RESULT_STR_Z(string, "static string", "new with static string");
         TEST_RESULT_UINT(strSize(string), 13, "check size");
         TEST_RESULT_BOOL(strEmpty(string), false, "is not empty");
@@ -76,7 +76,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("empty string is allocated extra space");
 
-        TEST_ASSIGN(string, strNew(""), "new empty string");
+        TEST_ASSIGN(string, strNew(), "new empty string");
         TEST_RESULT_UINT(string->pub.size, 0, "    check size");
         TEST_RESULT_UINT(string->pub.extra, 64, "    check extra");
 
@@ -122,8 +122,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strCat*()"))
     {
-        String *string = strNew("XXXX");
-        String *string2 = strNew("ZZZZ");
+        String *string = strNewZ("XXXX");
+        String *string2 = strNewZ("ZZZZ");
 
         TEST_RESULT_STR_Z(strCat(string, STRDEF("YYYY")), "XXXXYYYY", "cat string");
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
@@ -201,23 +201,23 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strFirstUpper(), strFirstLower(), strUpper(), strLower()"))
     {
-        TEST_RESULT_STR_Z(strFirstUpper(strNew("")), "", "empty first upper");
-        TEST_RESULT_STR_Z(strFirstUpper(strNew("aaa")), "Aaa", "first upper");
-        TEST_RESULT_STR_Z(strFirstUpper(strNew("Aaa")), "Aaa", "first already upper");
+        TEST_RESULT_STR_Z(strFirstUpper(strNewZ("")), "", "empty first upper");
+        TEST_RESULT_STR_Z(strFirstUpper(strNewZ("aaa")), "Aaa", "first upper");
+        TEST_RESULT_STR_Z(strFirstUpper(strNewZ("Aaa")), "Aaa", "first already upper");
 
-        TEST_RESULT_STR_Z(strFirstLower(strNew("")), "", "empty first lower");
-        TEST_RESULT_STR_Z(strFirstLower(strNew("AAA")), "aAA", "first lower");
-        TEST_RESULT_STR_Z(strFirstLower(strNew("aAA")), "aAA", "first already lower");
+        TEST_RESULT_STR_Z(strFirstLower(strNew()), "", "empty first lower");
+        TEST_RESULT_STR_Z(strFirstLower(strNewZ("AAA")), "aAA", "first lower");
+        TEST_RESULT_STR_Z(strFirstLower(strNewZ("aAA")), "aAA", "first already lower");
 
-        TEST_RESULT_STR_Z(strLower(strNew("K123aBc")), "k123abc", "all lower");
-        TEST_RESULT_STR_Z(strLower(strNew("k123abc")), "k123abc", "already lower");
-        TEST_RESULT_STR_Z(strLower(strNew("C")), "c", "char lower");
-        TEST_RESULT_STR_Z(strLower(strNew("")), "", "empty lower");
+        TEST_RESULT_STR_Z(strLower(strNewZ("K123aBc")), "k123abc", "all lower");
+        TEST_RESULT_STR_Z(strLower(strNewZ("k123abc")), "k123abc", "already lower");
+        TEST_RESULT_STR_Z(strLower(strNewZ("C")), "c", "char lower");
+        TEST_RESULT_STR_Z(strLower(strNew()), "", "empty lower");
 
-        TEST_RESULT_STR_Z(strUpper(strNew("K123aBc")), "K123ABC", "all upper");
-        TEST_RESULT_STR_Z(strUpper(strNew("K123ABC")), "K123ABC", "already upper");
-        TEST_RESULT_STR_Z(strUpper(strNew("c")), "C", "char upper");
-        TEST_RESULT_STR_Z(strUpper(strNew("")), "", "empty upper");
+        TEST_RESULT_STR_Z(strUpper(strNewZ("K123aBc")), "K123ABC", "all upper");
+        TEST_RESULT_STR_Z(strUpper(strNewZ("K123ABC")), "K123ABC", "already upper");
+        TEST_RESULT_STR_Z(strUpper(strNewZ("c")), "C", "char upper");
+        TEST_RESULT_STR_Z(strUpper(strNew()), "", "empty upper");
     }
 
     // *****************************************************************************************************************************
@@ -229,7 +229,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strReplaceChr()"))
     {
-        TEST_RESULT_STR_Z(strReplaceChr(strNew("ABCD"), 'B', 'R'), "ARCD", "replace chr");
+        TEST_RESULT_STR_Z(strReplaceChr(strNewZ("ABCD"), 'B', 'R'), "ARCD", "replace chr");
     }
 
     // *****************************************************************************************************************************
@@ -244,14 +244,14 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("strTrim()"))
     {
-        TEST_RESULT_STR_Z(strTrim(strNew("")), "", "trim empty");
-        TEST_RESULT_STR_Z(strTrim(strNew("X")), "X", "no trim (one char)");
-        TEST_RESULT_STR_Z(strTrim(strNew("no-trim")), "no-trim", "no trim (string)");
-        TEST_RESULT_STR_Z(strTrim(strNew(" \t\r\n")), "", "all whitespace");
-        TEST_RESULT_STR_Z(strTrim(strNew(" \tbegin-only")), "begin-only", "trim begin");
-        TEST_RESULT_STR_Z(strTrim(strNew("end-only\t ")), "end-only", "trim end");
-        TEST_RESULT_STR_Z(strTrim(strNew("\n\rboth\r\n")), "both", "trim both");
-        TEST_RESULT_STR_Z(strTrim(strNew("begin \r\n\tend")), "begin \r\n\tend", "ignore whitespace in middle");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("")), "", "trim empty");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("X")), "X", "no trim (one char)");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("no-trim")), "no-trim", "no trim (string)");
+        TEST_RESULT_STR_Z(strTrim(strNewZ(" \t\r\n")), "", "all whitespace");
+        TEST_RESULT_STR_Z(strTrim(strNewZ(" \tbegin-only")), "begin-only", "trim begin");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("end-only\t ")), "end-only", "trim end");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("\n\rboth\r\n")), "both", "trim both");
+        TEST_RESULT_STR_Z(strTrim(strNewZ("begin \r\n\tend")), "begin \r\n\tend", "ignore whitespace in middle");
     }
 
     // *****************************************************************************************************************************
@@ -262,7 +262,7 @@ testRun(void)
         TEST_RESULT_INT(strChr(STRDEF("abcd"), 'i'), -1, "i not found");
         TEST_RESULT_INT(strChr(STRDEF(""), 'x'), -1, "empty string - x not found");
 
-        String *val = strNew("abcdef");
+        String *val = strNewZ("abcdef");
         TEST_ERROR(
             strTrunc(val, (int)(strSize(val) + 1)), AssertError,
             "assertion 'idx >= 0 && (size_t)idx <= strSize(this)' failed");

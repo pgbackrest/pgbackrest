@@ -74,7 +74,7 @@ testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest 
     // Get the pg-path as a string
     HarnessStorageInfoListCallbackData callbackData =
     {
-        .content = strNew(""),
+        .content = strNew(),
         .modeOmit = true,
         .modePath = 0700,
         .modeFile = 0600,
@@ -151,13 +151,13 @@ testRun(void)
     hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("restoreFile()"))
     {
-        const String *repoFileReferenceFull = strNew("20190509F");
-        const String *repoFile1 = strNew("pg_data/testfile");
+        const String *repoFileReferenceFull = STRDEF("20190509F");
+        const String *repoFile1 = STRDEF("pg_data/testfile");
         unsigned int repoIdx = 0;
 
         // Load Parameters
@@ -172,19 +172,19 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("sparse-zero"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("sparse-zero"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 0, true, false, NULL),
             false, "zero sparse 1TB file");
-        TEST_RESULT_UINT(storageInfoP(storagePg(), strNew("sparse-zero")).size, 0x10000000000UL, "    check size");
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "    check size");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("normal-zero"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 0, false, false, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("normal-zero"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 0, false, false, NULL),
             true, "zero-length file");
-        TEST_RESULT_UINT(storageInfoP(storagePg(), strNew("normal-zero")).size, 0, "    check size");
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "    check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Create a compressed encrypted repo file
@@ -198,9 +198,9 @@ testRun(void)
 
         TEST_ERROR(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, strNew("normal"),
-                strNew("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 0, false, false, strNew("badpass")),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
+                STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 0, false, false, STRDEF("badpass")),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -213,19 +213,19 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, strNew("normal"),
-                strNew("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 0, false, false, strNew("badpass")),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
+                STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 0, false, false, STRDEF("badpass")),
             true, "copy file");
 
-        StorageInfo info = storageInfoP(storagePg(), strNew("normal"));
+        StorageInfo info = storageInfoP(storagePg(), STRDEF("normal"));
         TEST_RESULT_BOOL(info.exists, true, "    check exists");
         TEST_RESULT_UINT(info.size, 7, "    check size");
         TEST_RESULT_UINT(info.mode, 0600, "    check mode");
         TEST_RESULT_INT(info.timeModified, 1557432154, "    check time");
         TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
         TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
-        TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("normal")))), "acefile", "    check contents");
+        TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("normal")))), "acefile", "    check contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Create a repo file
@@ -236,91 +236,91 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 0, true, false, NULL),
             true, "sha1 delta missing");
         TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
 
         size_t oldBufferSize = ioBufferSize();
         ioBufferSizeSet(4);
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 0, true, false, NULL),
             false, "sha1 delta existing");
 
         ioBufferSizeSet(oldBufferSize);
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 1557432155, true, true, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 1557432155, true, true, NULL),
             false, "sha1 delta force existing");
 
         // Change the existing file so it no longer matches by size
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("atestfile2"));
+        storagePutP(storageNewWriteP(storagePgWrite(), strNewZ("delta")), BUFSTRDEF("atestfile2"));
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, size differs");
         TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
 
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("atestfile2"));
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF("atestfile2"));
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 1557432155, true, true, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, size differs");
         TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
 
         // Change the existing file so it no longer matches by content
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("btestfile"));
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF("btestfile"));
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 0, true, false, NULL),
             true, "sha1 delta existing, content differs");
         TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storagePg(), strNew("delta")))), "atestfile", "    check contents");
+            strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
 
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF("btestfile"));
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF("btestfile"));
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 1557432155, true, true, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 1557432155, true, true, NULL),
             true, "delta force existing, timestamp differs");
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 1557432153, true, true, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 1557432153, true, true, NULL),
             true, "delta force existing, timestamp after copy time");
 
         // Change the existing file to zero-length
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew("delta")), BUFSTRDEF(""));
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("delta")), BUFSTRDEF(""));
 
         TEST_RESULT_BOOL(
             restoreFile(
-                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, strNew("delta"),
-                strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNew(testUser()),
-                strNew(testGroup()), 0, true, false, NULL),
+                repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNewZ(testUser()),
+                strNewZ(testGroup()), 0, true, false, NULL),
             false, "sha1 delta existing, content differs");
     }
 
@@ -347,7 +347,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg appears to be running");
 
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew("postmaster.pid")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postmaster.pid")), NULL);
 
         TEST_ERROR_FMT(
             restorePathValidate(), PgRunningError,
@@ -356,7 +356,7 @@ testRun(void)
                 "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.",
             testPath());
 
-        storageRemoveP(storagePgWrite(), strNew("postmaster.pid"), .errorOnMissing = true);
+        storageRemoveP(storagePgWrite(), STRDEF("postmaster.pid"), .errorOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on data directory does not look valid");
@@ -376,9 +376,9 @@ testRun(void)
                 " exist in the destination directories the restore will be aborted.");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew("backup.manifest")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("backup.manifest")), NULL);
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with valid PGDATA");
-        storageRemoveP(storagePgWrite(), strNew("backup.manifest"), .errorOnMissing = true);
+        storageRemoveP(storagePgWrite(), STRDEF("backup.manifest"), .errorOnMissing = true);
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -395,9 +395,9 @@ testRun(void)
                 " exist in the destination directories the restore will be aborted.");
 
         harnessCfgLoad(cfgCmdRestore, argList);
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew(PG_FILE_PGVERSION)), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION)), NULL);
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with valid PGDATA");
-        storageRemoveP(storagePgWrite(), strNew(PG_FILE_PGVERSION), .errorOnMissing = true);
+        storageRemoveP(storagePgWrite(), STRDEF(PG_FILE_PGVERSION), .errorOnMissing = true);
     }
 
     // *****************************************************************************************************************************
@@ -406,11 +406,11 @@ testRun(void)
         TEST_TITLE("system time UTC");
 
         setenv("TZ", "UTC", true);
-        TEST_RESULT_INT(getEpoch(strNew("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
-        TEST_RESULT_INT(getEpoch(strNew("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
-        TEST_RESULT_INT(getEpoch(strNew("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
-        TEST_ERROR_FMT(getEpoch(strNew("2020-13-08 16:18:15")), FormatError, "invalid date 2020-13-08");
-        TEST_ERROR_FMT(getEpoch(strNew("2020-01-08 16:68:15")), FormatError, "invalid time 16:68:15");
+        TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
+        TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
+        TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
+        TEST_ERROR_FMT(getEpoch(STRDEF("2020-13-08 16:18:15")), FormatError, "invalid date 2020-13-08");
+        TEST_ERROR_FMT(getEpoch(STRDEF("2020-01-08 16:68:15")), FormatError, "invalid time 16:68:15");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("system time America/New_York");
@@ -420,15 +420,15 @@ testRun(void)
         char timeBuffer[20];
         strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime(&testTime));
         TEST_RESULT_Z(timeBuffer, "2019-11-14 13:02:49", "check timezone set");
-        TEST_RESULT_INT(getEpoch(strNew("2019-11-14 13:02:49-0500")), 1573754569, "offset same as local");
-        TEST_RESULT_INT(getEpoch(strNew("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
-        TEST_RESULT_INT(getEpoch(strNew("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
-        TEST_RESULT_INT(getEpoch(strNew("2018-04-27 04:29:00+04:30")), 1524787140, "GMT+0430");
+        TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49-0500")), 1573754569, "offset same as local");
+        TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
+        TEST_RESULT_INT(getEpoch(STRDEF("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
+        TEST_RESULT_INT(getEpoch(STRDEF("2018-04-27 04:29:00+04:30")), 1524787140, "GMT+0430");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid target time format");
 
-        TEST_RESULT_INT(getEpoch(strNew("Tue, 15 Nov 1994 12:45:26")), 0, "invalid date time format");
+        TEST_RESULT_INT(getEpoch(STRDEF("Tue, 15 Nov 1994 12:45:26")), 0, "invalid date time format");
         TEST_RESULT_LOG(
             "P00   WARN: automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26',"
             " latest backup set will be used\n"
@@ -1900,7 +1900,7 @@ testRun(void)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
-            manifest->pub.data.backupLabel = strNew(TEST_LABEL);
+            manifest->pub.data.backupLabel = STRDEF(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_84;
             manifest->pub.data.backupType = backupTypeFull;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
@@ -1972,18 +1972,18 @@ testRun(void)
             manifest,
             storageWriteIo(
                 storageNewWriteP(storageRepoIdxWrite(0),
-                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
+                STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         // Read the manifest, set a cipher passphrase and store it to the encrypted repo
         Manifest *manifestEncrypted = manifestLoadFile(
-            storageRepoIdxWrite(0), strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE), cipherTypeNone, NULL);
+            storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE), cipherTypeNone, NULL);
         manifestCipherSubPassSet(manifestEncrypted, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
 
         // Open file for write
         IoWrite *write = storageWriteIo(
             storageNewWriteP(
                 storageRepoIdxWrite(1),
-                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE)));
+                STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE)));
 
         // Add encryption filter and save the encrypted manifest
         #define TEST_CIPHER_PASS_MANIFEST "backpass"
@@ -2114,7 +2114,7 @@ testRun(void)
             manifest,
             storageWriteIo(
                 storageNewWriteP(storageRepoWrite(),
-                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
+                STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         #undef TEST_LABEL
         #undef TEST_PGDATA
@@ -2243,7 +2243,7 @@ testRun(void)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
-            manifest->pub.data.backupLabel = strNew(TEST_LABEL);
+            manifest->pub.data.backupLabel = STRDEF(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_10;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
             manifest->pub.data.backupType = backupTypeFull;
@@ -2487,7 +2487,7 @@ testRun(void)
             manifest,
             storageWriteIo(
                 storageNewWriteP(storageRepoWrite(),
-                strNew(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
+                STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         // Add a few bogus paths/files/links to be removed in delta
         storagePathCreateP(storagePgWrite(), STRDEF("bogus1/bogus2"));

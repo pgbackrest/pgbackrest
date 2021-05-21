@@ -154,7 +154,7 @@ myObjDisplay(unsigned int myData)
 
     MEM_CONTEXT_TEMP_BEGIN()   // Begin a new temporary context
     {
-        String *resultStr = strNew("Hello");    // Allocate a string in the temporary memory context
+        String *resultStr = strNewZ("Hello");    // Allocate a string in the temporary memory context
 
         if (myData > 1)
             resultStr = strCatZ(" World");      // Append a value to the string still in the temporary memory context
@@ -443,7 +443,7 @@ HARNESS_FORK_BEGIN()
     HARNESS_FORK_CHILD_BEGIN(0, false)
     {
         TEST_RESULT_INT_NE(
-            lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+            lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
             -1, "create backup/expire lock");
 
         sleepMSec(1000);

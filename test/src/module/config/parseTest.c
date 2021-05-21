@@ -40,7 +40,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     Storage *storageTest = storagePosixNewP(FSLASH_STR);
-    Storage *storageTestWrite = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTestWrite = storagePosixNewP(strNewZ(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("size"))
@@ -82,14 +82,14 @@ testRun(void)
         // Confirm same behavior with multiple config include files
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
         strLstAdd(argList, strNewFmt("--config-include-path=%s", strZ(configIncludePath)));
-        strLstAdd(argList, strNew("--no-online"));
-        strLstAdd(argList, strNew("--reset-pg1-host"));
-        strLstAdd(argList, strNew("--reset-backup-standby"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, "--no-online");
+        strLstAddZ(argList, "--reset-pg1-host");
+        strLstAddZ(argList, "--reset-backup-standby");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
         storagePut(
             storageNewWriteP(storageTestWrite, configFile),
@@ -131,14 +131,12 @@ testRun(void)
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false),
             TEST_COMMAND_BACKUP " command with config-include");
         harnessLogResult(
-            strZ(
-                strNew(
-                    "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
-                    "P00   WARN: configuration file contains invalid option 'bogus'\n"
-                    "P00   WARN: configuration file contains negate option 'no-delta'\n"
-                    "P00   WARN: configuration file contains reset option 'reset-delta'\n"
-                    "P00   WARN: configuration file contains command-line only option 'online'\n"
-                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'")));
+            "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
+            "P00   WARN: configuration file contains invalid option 'bogus'\n"
+            "P00   WARN: configuration file contains negate option 'no-delta'\n"
+            "P00   WARN: configuration file contains reset option 'reset-delta'\n"
+            "P00   WARN: configuration file contains command-line only option 'online'\n"
+            "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'");
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptPgHost), false, "    pg1-host is not set (command line reset override)");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "    pg1-path is set");
@@ -164,8 +162,8 @@ testRun(void)
             strZ(strNewFmt("%s/global-backup.confsave", strZ(configIncludePath))));
 
         // Set up defaults
-        String *backupCmdDefConfigValue = strNew(cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
-        String *backupCmdDefConfigInclPathValue = strNew(
+        String *backupCmdDefConfigValue = strNewZ(cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
+        String *backupCmdDefConfigInclPathValue = strNewZ(
             cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
         String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
@@ -596,8 +594,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(BOGUS_STR));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, BOGUS_STR);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), CommandInvalidError,
             "invalid command 'BOGUS'");
@@ -615,8 +613,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(BOGUS_STR ":" BOGUS_STR));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, BOGUS_STR ":" BOGUS_STR);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), CommandInvalidError,
             "invalid command 'BOGUS:BOGUS'");
@@ -649,175 +647,175 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--" BOGUS_STR));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--" BOGUS_STR);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "invalid option '--BOGUS'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-host"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-host");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option '--pg1-host' requires an argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("backup"));
-        strLstAdd(argList, strNew("param1"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "backup");
+        strLstAddZ(argList, "param1");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), ParamInvalidError,
             "command does not allow parameters");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("help"));
-        strLstAdd(argList, strNew("backup"));
-        strLstAdd(argList, strNew("param1"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "backup");
+        strLstAddZ(argList, "param1");
         TEST_RESULT_VOID(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "ignore params when help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--no-online"));
-        strLstAdd(argList, strNew("--no-online"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--no-online");
+        strLstAddZ(argList, "--no-online");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'online' is negated multiple times");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--reset-pg1-host"));
-        strLstAdd(argList, strNew("--reset-pg1-host"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--reset-pg1-host");
+        strLstAddZ(argList, "--reset-pg1-host");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'pg1-host' is reset multiple times");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--no-config"));
-        strLstAdd(argList, strNew("--config=/etc/config"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--no-config");
+        strLstAddZ(argList, "--config=/etc/config");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'config' cannot be set and negated");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--reset-log-path"));
-        strLstAdd(argList, strNew("--log-path=/var/log"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--reset-log-path");
+        strLstAddZ(argList, "--log-path=/var/log");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'log-path' cannot be set and reset");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--no-delta"));
-        strLstAdd(argList, strNew("--reset-delta"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--no-delta");
+        strLstAddZ(argList, "--reset-delta");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'delta' cannot be negated and reset");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--reset-delta"));
-        strLstAdd(argList, strNew("--no-delta"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--reset-delta");
+        strLstAddZ(argList, "--no-delta");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'delta' cannot be negated and reset");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--delta"));
-        strLstAdd(argList, strNew("--delta"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--delta");
+        strLstAddZ(argList, "--delta");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'delta' cannot be set multiple times");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--compress-level=3"));
-        strLstAdd(argList, strNew("--compress-level=3"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--compress-level=3");
+        strLstAddZ(argList, "--compress-level=3");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'compress-level' cannot be set multiple times");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--online"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--online");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), CommandRequiredError, "no command found");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--manifest-save-threshold=123Q"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--manifest-save-threshold=123Q");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'123Q' is not valid for 'manifest-save-threshold' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--manifest-save-threshold=9999999999999999999p"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--manifest-save-threshold=9999999999999999999p");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'9999999999999999999p' is out of range for 'manifest-save-threshold' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--pg1-path="));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--pg1-path=");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'' must be >= 1 character for 'pg1-path' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--pg1-path=bogus"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--pg1-path=bogus");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'bogus' must begin with / for 'pg1-path' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-        strLstAdd(argList, strNew("--stanz=db"));                   // Partial option to test matching
-        strLstAdd(argList, strNew("--pg1-path=/path1//path2"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        strLstAddZ(argList, "--stanz=db");                          // Partial option to test matching
+        strLstAddZ(argList, "--pg1-path=/path1//path2");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'/path1//path2' cannot contain // for 'pg1-path' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--pg1-path=/path1/path2//"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--pg1-path=/path1/path2//");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'/path1/path2//' cannot contain // for 'pg1-path' option");
@@ -826,14 +824,14 @@ testRun(void)
         TEST_TITLE("non-default roles should not modify log levels");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAddZ(argList, "pgbackrest");
         hrnCfgArgRawZ(argList, cfgOptPg, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/path/to/2");
-        strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, "--process=1");
+        strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-        strLstAdd(argList, strNew("--log-level-stderr=info"));
+        strLstAddZ(argList, "--log-level-stderr=info");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         hrnLogLevelStdOutSet(logLevelError);
@@ -847,12 +845,12 @@ testRun(void)
         TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "stderr logging is error");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAddZ(argList, "pgbackrest");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
-        strLstAdd(argList, strNew("--process=1"));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, "--process=1");
+        strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
-        strLstAdd(argList, strNew("--log-level-stderr=info"));
+        strLstAddZ(argList, "--log-level-stderr=info");
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         hrnLogLevelStdOutSet(logLevelError);
@@ -864,10 +862,10 @@ testRun(void)
         TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "stderr logging is error");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew("pgbackrest"));
+        strLstAddZ(argList, "pgbackrest");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--log-level-stderr=info"));
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--log-level-stderr=info");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
 
         hrnLogLevelStdOutSet(logLevelError);
@@ -881,31 +879,31 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionRequiredError,
             "backup command requires option: pg1-path\nHINT: does this stanza exist?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionRequiredError,
             "backup command requires option: stanza");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--repo1-type=s3"));
-        strLstAdd(argList, strNew("--repo1-s3-key=xxx"));
-        strLstAdd(argList, strNew("--repo1-s3-bucket=xxx"));
-        strLstAdd(argList, strNew("--repo1-s3-endpoint=xxx"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--repo1-type=s3");
+        strLstAddZ(argList, "--repo1-s3-key=xxx");
+        strLstAddZ(argList, "--repo1-s3-bucket=xxx");
+        strLstAddZ(argList, "--repo1-s3-endpoint=xxx");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'repo1-s3-key' is not allowed on the command-line\n"
@@ -914,78 +912,78 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--no-config"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--repo1-s3-bucket=xxx"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--no-config");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--repo1-s3-bucket=xxx");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'repo1-s3-bucket' not valid without option 'repo1-type' = 's3'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--repo1-host-user=xxx"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--repo1-host-user=xxx");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'repo1-host-user' not valid without option 'repo1-host'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--force"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--force");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'force' not valid without option 'no-online'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--spool-path=/path/to/spool"));
-        strLstAdd(argList, strNew(TEST_COMMAND_ARCHIVE_GET));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--spool-path=/path/to/spool");
+        strLstAddZ(argList, TEST_COMMAND_ARCHIVE_GET);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'spool-path' not valid without option 'archive-async'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--recovery-option=a=b"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--recovery-option=a=b");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'recovery-option' not valid for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--target-exclusive"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--target-exclusive");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option 'target-exclusive' not valid without option 'type' in ('time', 'xid')");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--type=bogus"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--type=bogus");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'bogus' is not allowed for 'type' option");
@@ -993,65 +991,65 @@ testRun(void)
         // Lower and upper bounds for integer ranges
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--process-max=0"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--process-max=0");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'0' is out of range for 'process-max' option");
 
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--process-max=65536"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--process-max=65536");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'65536' is out of range for 'process-max' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--process-max=bogus"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--process-max=bogus");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'bogus' is not valid for 'process-max' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--protocol-timeout=.01"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--protocol-timeout=.01");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'.01' is out of range for 'protocol-timeout' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--protocol-timeout=bogus"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--protocol-timeout=bogus");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "'bogus' is not valid for 'protocol-timeout' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
         setenv("PGBACKREST_PROTOCOL_TIMEOUT", "", true);
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "environment variable 'protocol-timeout' must have a value");
@@ -1060,11 +1058,11 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--stanza=db");
         setenv("PGBACKREST_DELTA", "x", true);
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
             "environment boolean option 'delta' must be 'y' or 'n'");
@@ -1073,10 +1071,10 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
         storagePutP(
             storageNewWriteP(storageTestWrite, configFile),
@@ -1090,10 +1088,10 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
         storagePutP(
             storageNewWriteP(storageTestWrite, configFile),
@@ -1107,10 +1105,10 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
         storagePutP(
             storageNewWriteP(storageTestWrite, configFile),
@@ -1121,14 +1119,14 @@ testRun(void)
 
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            strZ(strNew("configuration file contains duplicate options ('db-path', 'pg1-path') in section '[db]'")));
+            "configuration file contains duplicate options ('db-path', 'pg1-path') in section '[db]'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
         storagePutP(
             storageNewWriteP(storageTestWrite, configFile),
@@ -1156,7 +1154,7 @@ testRun(void)
         // Test that log levels are set correctly when reset is enabled, then set them back to harness defaults
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
 
         hrnLogLevelStdOutSet(logLevelOff);
         hrnLogLevelStdErrSet(logLevelOff);
@@ -1169,8 +1167,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("help"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "help");
 
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "help command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
@@ -1178,9 +1176,9 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("help"));
-        strLstAdd(argList, strNew("version"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "version");
 
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "help for version command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
@@ -1189,9 +1187,9 @@ testRun(void)
         // Help should not fail on missing options
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("help"));
-        strLstAdd(argList, strNew("backup"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "backup");
 
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "help for backup command");
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "    help is set");
@@ -1201,29 +1199,29 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAdd(argList, strNew(TEST_COMMAND_ARCHIVE_GET));
-        strLstAdd(argList, strNew("000000010000000200000003"));
-        strLstAdd(argList, strNew("/path/to/wal/RECOVERYWAL"));
+        strLstAddZ(argList, TEST_COMMAND_ARCHIVE_GET);
+        strLstAddZ(argList, "000000010000000200000003");
+        strLstAddZ(argList, "/path/to/wal/RECOVERYWAL");
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), "command arguments");
         TEST_RESULT_STRLST_Z(
             cfgCommandParam(), "000000010000000200000003\n/path/to/wal/RECOVERYWAL\n", "    check command arguments");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db/"));
-        strLstAdd(argList, strNew("--no-online"));
-        strLstAdd(argList, strNew("--no-config"));
-        strLstAdd(argList, strNew("--repo1-type"));
-        strLstAdd(argList, strNew("s3"));                           // Argument for the option above
-        strLstAdd(argList, strNew("--repo1-s3-bucket= test "));
-        strLstAdd(argList, strNew("--repo1-s3-endpoint=test"));
-        strLstAdd(argList, strNew("--repo1-s3-region=test"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--pg1-path=/path/to/db/");
+        strLstAddZ(argList, "--no-online");
+        strLstAddZ(argList, "--no-config");
+        strLstAddZ(argList, "--repo1-type");
+        strLstAddZ(argList, "s3");                                  // Argument for the option above
+        strLstAddZ(argList, "--repo1-s3-bucket= test ");
+        strLstAddZ(argList, "--repo1-s3-endpoint=test");
+        strLstAddZ(argList, "--repo1-s3-region=test");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
         setenv("PGBACKREST_REPO1_S3_KEY", "xxx", true);
         setenv("PGBACKREST_REPO1_S3_KEY_SECRET", "xxx", true);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
@@ -1297,15 +1295,15 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--stanza=db");
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
-        strLstAdd(argList, strNew("--no-online"));
+        strLstAddZ(argList, "--no-online");
         hrnCfgArgKeyRawBool(argList, cfgOptPgLocal, 2, true);
-        strLstAdd(argList, strNew("--reset-pg1-host"));
-        strLstAdd(argList, strNew("--reset-pg3-host"));
-        strLstAdd(argList, strNew("--reset-backup-standby"));
-        strLstAdd(argList, strNew(TEST_COMMAND_BACKUP));
+        strLstAddZ(argList, "--reset-pg1-host");
+        strLstAddZ(argList, "--reset-pg3-host");
+        strLstAddZ(argList, "--reset-backup-standby");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
         setenv("PGBACKRESTXXX_NOTHING", "xxx", true);
         setenv("PGBACKREST_BOGUS", "xxx", true);
@@ -1358,19 +1356,17 @@ testRun(void)
 
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
         harnessLogResult(
-            strZ(
-                strNew(
-                    "P00   WARN: environment contains invalid option 'bogus'\n"
-                    "P00   WARN: environment contains invalid option 'onlin'\n"
-                    "P00   WARN: environment contains invalid negate option 'no-delta'\n"
-                    "P00   WARN: environment contains invalid reset option 'reset-repo1-host'\n"
-                    "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
-                    "P00   WARN: configuration file contains invalid option 'bogus'\n"
-                    "P00   WARN: configuration file contains negate option 'no-delta'\n"
-                    "P00   WARN: configuration file contains reset option 'reset-delta'\n"
-                    "P00   WARN: configuration file contains command-line only option 'online'\n"
-                    "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'\n"
-                    "P00   WARN: configuration file contains invalid option 'backup-standb'")));
+            "P00   WARN: environment contains invalid option 'bogus'\n"
+            "P00   WARN: environment contains invalid option 'onlin'\n"
+            "P00   WARN: environment contains invalid negate option 'no-delta'\n"
+            "P00   WARN: environment contains invalid reset option 'reset-repo1-host'\n"
+            "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
+            "P00   WARN: configuration file contains invalid option 'bogus'\n"
+            "P00   WARN: configuration file contains negate option 'no-delta'\n"
+            "P00   WARN: configuration file contains reset option 'reset-delta'\n"
+            "P00   WARN: configuration file contains command-line only option 'online'\n"
+            "P00   WARN: configuration file contains stanza-only option 'pg1-path' in global section 'global:backup'\n"
+            "P00   WARN: configuration file contains invalid option 'backup-standb'");
 
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,33000,33000]", "    custom job retries");
         TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptPgHost, 0), false, "    pg1-host is not set (command line reset override)");
@@ -1460,12 +1456,12 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew("--archive-push-queue-max=4503599627370496"));
-        strLstAdd(argList, strNew("--buffer-size=2MB"));
-        strLstAdd(argList, strNew("archive-push:async"));
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, "--archive-push-queue-max=4503599627370496");
+        strLstAddZ(argList, "--buffer-size=2MB");
+        strLstAddZ(argList, "archive-push:async");
 
         storagePutP(
             storageNewWriteP(storageTestWrite, configFile),
@@ -1489,34 +1485,34 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--recovery-option=a"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--recovery-option=a");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "key/value 'a' not valid for 'recovery-option' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--recovery-option=a"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--recovery-option=a");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "key/value 'a' not valid for 'recovery-option' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--db-include=abc"));
-        strLstAdd(argList, strNew("--db-include=def"));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--db-include=abc");
+        strLstAddZ(argList, "--db-include=def");
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
 
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(cfgCommandJobRetry())), "[0,15000]", "    default job retry");
@@ -1528,30 +1524,30 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew("--pg1-path=/path/to/db"));
-        strLstAdd(argList, strNew("--recovery-option=a=b"));
-        strLstAdd(argList, strNew("--recovery-option=c=de=fg hi"));
-        strLstAdd(argList, strNew("--stanza=db"));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg1-path=/path/to/db");
+        strLstAddZ(argList, "--recovery-option=a=b");
+        strLstAddZ(argList, "--recovery-option=c=de=fg hi");
+        strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptJobRetry, "0");
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
 
         TEST_RESULT_PTR(cfgCommandJobRetry(), NULL, "    no job retries");
 
         const KeyValue *recoveryKv = NULL;
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
-        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("a")))), "b", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("a"))), "b", "check recovery option");
         TEST_ASSIGN(recoveryKv, cfgOptionIdxKv(cfgOptRecoveryOption, 0), "get recovery options");
-        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("c")))), "de=fg hi", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("c"))), "de=fg hi", "check recovery option");
         TEST_RESULT_BOOL(cfgLockRequired(), false, "    restore command does not require lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
-        strLstAdd(argList, strNew("--stanza=db"));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, "--stanza=db");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
 
         storagePutP(
             storageNewWriteP(storageTestWrite, configFile),
@@ -1566,14 +1562,14 @@ testRun(void)
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
 
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
-        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("f")))), "g", "check recovery option");
-        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk")))), "l", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("f"))), "g", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("hijk"))), "l", "check recovery option");
         TEST_RESULT_UINT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 0, "check db include option size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
-        strLstAdd(argList, strNew(TEST_COMMAND_RESTORE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
 
         setenv("PGBACKREST_STANZA", "db", true);
         setenv("PGBACKREST_PG1_PATH", "/path/to/db", true);
@@ -1583,8 +1579,8 @@ testRun(void)
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_RESTORE " command");
 
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
-        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("f")))), "g", "check recovery option");
-        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, varNewStr(strNew("hijk")))), "l", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("f"))), "g", "check recovery option");
+        TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("hijk"))), "l", "check recovery option");
         TEST_RESULT_STR_Z(varStr(varLstGet(cfgOptionLst(cfgOptDbInclude), 0)), "77", "check db include option");
         TEST_RESULT_UINT(varLstSize(cfgOptionLst(cfgOptDbInclude)), 1, "check db include option size");
 
@@ -1622,9 +1618,9 @@ testRun(void)
         // Stanza options should not be loaded for commands that don't take a stanza
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
-        strLstAdd(argList, strNew(TEST_BACKREST_EXE));
+        strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAdd(argList, strNewFmt("--config=%s", strZ(configFile)));
-        strLstAdd(argList, strNew("info"));
+        strLstAddZ(argList, "info");
 
         storagePutP(
             storageNewWriteP(storageTestWrite, configFile),

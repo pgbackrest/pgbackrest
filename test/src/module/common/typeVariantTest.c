@@ -260,7 +260,7 @@ testRun(void)
         TEST_RESULT_STR(varStr(varNewStr(NULL)), NULL, "new null str");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        Variant *string = varNewStr(strNew("test-str"));
+        Variant *string = varNewStr(STRDEF("test-str"));
         TEST_RESULT_STR_Z(varStr(string), "test-str", "string pointer");
         varFree(string);
 
@@ -381,7 +381,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_PTR(varLstAdd(list, varNewInt(27)), list, "add int");
-        TEST_RESULT_PTR(varLstAdd(list, varNewStr(strNew("test-str"))), list, "add string");
+        TEST_RESULT_PTR(varLstAdd(list, varNewStr(STRDEF("test-str"))), list, "add string");
 
         TEST_RESULT_INT(varLstSize(list), 2, "list size");
 
@@ -410,8 +410,8 @@ testRun(void)
     {
         StringList *listStr = strLstNew();
 
-        strLstAdd(listStr, strNew("string1"));
-        strLstAdd(listStr, strNew("string2"));
+        strLstAdd(listStr, STRDEF("string1"));
+        strLstAdd(listStr, STRDEF("string2"));
 
         TEST_RESULT_STRLST_Z(strLstNewVarLst(varLstNewStrLst(listStr)), "string1\nstring2\n", "variant list from string list");
 

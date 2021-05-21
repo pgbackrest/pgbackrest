@@ -25,15 +25,15 @@ testRun(void)
     // PQfinish() is strictly checked
     harnessPqScriptStrictSet(true);
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
-    String *pg1 = strNew("pg1");
+    const String *pg1 = STRDEF("pg1");
     String *pg1Path = strNewFmt("%s/%s", testPath(), strZ(pg1));
     String *pg1PathOpt = strNewFmt("--pg1-path=%s", strZ(pg1Path));
-    String *pg8 = strNew("pg8");
+    const String *pg8 = STRDEF("pg8");
     String *pg8Path = strNewFmt("%s/%s", testPath(), strZ(pg8));
     String *pg8PathOpt = strNewFmt("--pg8-path=%s", strZ(pg8Path));
-    String *stanza = strNew("test1");
+    const String *stanza = STRDEF("test1");
     String *stanzaOpt = strNewFmt("--stanza=%s", strZ(stanza));
     StringList *argList = strLstNew();
 
@@ -186,7 +186,7 @@ testRun(void)
 
         // Create info files
         const Buffer *archiveInfoContent = harnessInfoChecksum(
-            strNew(
+            STRDEF(
                 "[db]\n"
                 "db-id=1\n"
                 "db-system-id=6569239123849665679\n"
@@ -198,7 +198,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR), archiveInfoContent);
 
         const Buffer *backupInfoContent = harnessInfoChecksum(
-            strNew(
+            STRDEF(
                 "[db]\n"
                 "db-catalog-version=201608131\n"
                 "db-control-version=920\n"
@@ -313,13 +313,13 @@ testRun(void)
         storagePutP(
             storageNewWriteP(
                 storageRepoIdxWrite(0),
-                strNew(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+                STRDEF(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
             buffer);
 
         storagePutP(
             storageNewWriteP(
                 storageRepoIdxWrite(1),
-                strNew(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+                STRDEF(STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
             buffer);
 
         TEST_RESULT_VOID(cmdCheck(), "check primary, WAL archived");
@@ -369,15 +369,15 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            checkArchiveCommand(strNew("")), ArchiveCommandInvalidError, "archive_command '' must contain " PROJECT_BIN);
+            checkArchiveCommand(strNew()), ArchiveCommandInvalidError, "archive_command '' must contain " PROJECT_BIN);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
-            checkArchiveCommand(strNew("backrest")), ArchiveCommandInvalidError, "archive_command 'backrest' must contain "
+            checkArchiveCommand(STRDEF("backrest")), ArchiveCommandInvalidError, "archive_command 'backrest' must contain "
             PROJECT_BIN);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(checkArchiveCommand(strNew("pgbackrest --stanza=demo archive-push %p")), true, "archive_command valid");
+        TEST_RESULT_BOOL(checkArchiveCommand(STRDEF("pgbackrest --stanza=demo archive-push %p")), true, "archive_command valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();

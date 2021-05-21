@@ -16,7 +16,7 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("InfoArchive"))
@@ -72,7 +72,7 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoArchiveNew(
-                PG_VERSION_10, 6569239123849665999, strNew("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+                PG_VERSION_10, 6569239123849665999, STRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoArchiveNew() - cipher sub");
 
         contentSave = bufNew(0);

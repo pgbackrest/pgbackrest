@@ -161,7 +161,7 @@ xmlNodeAttribute(const XmlNode *this, const String *name)
 
     if (value != NULL)
     {
-        result = strNew((char *)value);
+        result = strNewZ((char *)value);
         xmlFree(value);
     }
 
@@ -181,7 +181,7 @@ xmlNodeContent(const XmlNode *this)
     if (this != NULL)
     {
         xmlChar *content = xmlNodeGetContent(this->node);
-        result = strNew((char *)content);
+        result = strNewZ((char *)content);
         xmlFree(content);
     }
 

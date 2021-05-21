@@ -388,7 +388,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
         {
-            String *msg = strNew("- archive logs will not be expired");
+            String *msg = strNewZ("- archive logs will not be expired");
 
             // Only notify user if not time-based retention
             if (!timeBasedFullRetention)

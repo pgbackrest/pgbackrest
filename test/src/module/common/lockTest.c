@@ -15,7 +15,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("lockAcquireFile() and lockReleaseFile()"))
@@ -119,8 +119,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lockAcquire(), lockRelease()"))
     {
-        String *stanza = strNew("test");
-        String *lockPath = strNew(testPath());
+        const String *stanza = STRDEF("test");
+        String *lockPath = strNewZ(testPath());
         String *archiveLockFile = strNewFmt("%s/%s-archive" LOCK_FILE_EXT, testPath(), strZ(stanza));
         String *backupLockFile = strNewFmt("%s/%s-backup" LOCK_FILE_EXT, testPath(), strZ(stanza));
         int lockFdTest = -1;

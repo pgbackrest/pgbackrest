@@ -132,7 +132,7 @@ testRun(void)
 
         // backup.info file exists, but archive.info does not
         //--------------------------------------------------------------------------------------------------------------------------
-        String *content = strNew
+        const String *content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -209,7 +209,7 @@ testRun(void)
         // backup.info/archive.info files exist, mismatched db ids, no backup:current section so no valid backups
         // Only the current db information from the db:history will be processed.
         //--------------------------------------------------------------------------------------------------------------------------
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=3\n"
@@ -239,7 +239,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
                 sleepMSec(1000);
@@ -389,7 +389,7 @@ testRun(void)
             strZ(archiveDb2_1)))))), 0, "touch WAL1 file in prior");
 
         harnessCfgLoad(cfgCmdInfo, argList);
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -435,7 +435,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
                 sleepMSec(1000);
@@ -623,7 +623,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mixed multi-repo");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=2\n"
@@ -641,7 +641,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put archive info to file - stanza1, repo1");
 
-        content = strNew
+        content = STRDEF
         (
             "[backup:current]\n"
             "20181119-152138F={"
@@ -835,7 +835,7 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), backupStanza1Path), "backup path stanza2 directory, repo1");
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveStanza1Path), "archive path stanza2 directory, repo1");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -852,7 +852,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put archive info to file - stanza2, repo1");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -879,7 +879,7 @@ testRun(void)
         storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2backupPath)));
 
         // Write encrypted info files
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -899,7 +899,7 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
         TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201510051\n"
@@ -1013,7 +1013,7 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(write, contentLoad), "write encrypted manifest, repo2");
 
         // Create a stanza on repo2 that is not on repo1
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -1033,7 +1033,7 @@ testRun(void)
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), NULL));
         TEST_RESULT_VOID(storagePutP(write, harnessInfoChecksum(content)), "write encrypted archive.info, repo2, stanza3");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -1089,7 +1089,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
                 sleepMSec(1000);
@@ -1507,7 +1507,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 TEST_RESULT_INT_NE(
-                    lockAcquire(cfgOptionStr(cfgOptLockPath), strNew("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
+                    lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
 
                 sleepMSec(1000);
@@ -1740,7 +1740,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
-                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
                 "write manifest");
 
@@ -1810,7 +1810,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(
                 storageNewWriteP(
-                    storageRepoWrite(), strNew(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE)),
                     contentLoad),
             "write manifest");
 
@@ -1909,7 +1909,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, backups only on one");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201510051\n"
@@ -2060,7 +2060,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, current database different across repos");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=2\n"
@@ -2077,7 +2077,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageLocalWrite(), filePathName), harnessInfoChecksum(content)),
             "put archive info to file - stanza3, repo1 stanza upgraded");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -2350,7 +2350,7 @@ testRun(void)
         TEST_TITLE("encryption error");
 
         // Change repo1 to have the same cipher type as repo2 even though on disk it does not
-        content = strNew
+        content = STRDEF
         (
             "[global]\n"
             "repo-cipher-pass=123abc\n"
@@ -2494,7 +2494,7 @@ testRun(void)
         storagePathCreateP(storageLocalWrite(), archivePath2);
         storagePathCreateP(storageLocalWrite(), backupPath2);
 
-        String *content = strNew
+        const String *content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -2524,7 +2524,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put backup info to file, repo1");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -2550,7 +2550,7 @@ testRun(void)
             strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             strZ(walPath)))))), 0, "touch WAL file, stanza1, repo1");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -2580,7 +2580,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put backup info to file, repo2, same system-id, different version");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -2644,7 +2644,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, database mismatch, pg version only");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-catalog-version=201409291\n"
@@ -2674,7 +2674,7 @@ testRun(void)
                 harnessInfoChecksum(content)),
             "put backup info to file, repo2, different system-id, same version");
 
-        content = strNew
+        content = STRDEF
         (
             "[db]\n"
             "db-id=1\n"
@@ -2741,7 +2741,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNewP(strNew(testPath()));
+        Storage *storage = storagePosixNewP(strNewZ(testPath()));
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), "No stanzas exist in the repository.\n",
             "    check text");

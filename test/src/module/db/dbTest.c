@@ -63,9 +63,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("client read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("client read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("client write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("client write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 // Set options
@@ -99,7 +99,7 @@ testRun(void)
                 // Create server
                 ProtocolServer *server = NULL;
 
-                TEST_ASSIGN(server, protocolServerNew(strNew("db test server"), strNew("test"), read, write), "create server");
+                TEST_ASSIGN(server, protocolServerNew(STRDEF("db test server"), STRDEF("test"), read, write), "create server");
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_DB_LIST};
 
@@ -112,24 +112,24 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(strNew("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("server read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Create client
                 ProtocolClient *client = NULL;
                 Db *db = NULL;
 
-                TEST_ASSIGN(client, protocolClientNew(strNew("db test client"), strNew("test"), read, write), "create client");
+                TEST_ASSIGN(client, protocolClientNew(STRDEF("db test client"), STRDEF("test"), read, write), "create client");
 
                 // Open and free database
-                TEST_ASSIGN(db, dbNew(NULL, client, strNew("test")), "create db");
+                TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
                 TEST_RESULT_VOID(dbOpen(db), "open db");
                 TEST_RESULT_VOID(dbFree(db), "free db");
 
                 // Open the database, but don't free it so the server is forced to do it on shutdown
-                TEST_ASSIGN(db, dbNew(NULL, client, strNew("test")), "create db");
+                TEST_ASSIGN(db, dbNew(NULL, client, STRDEF("test")), "create db");
                 TEST_RESULT_VOID(dbOpen(db), "open db");
                 TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "    wal switch");
                 TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");

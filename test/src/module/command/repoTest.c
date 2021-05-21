@@ -20,7 +20,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("cmdRepoCreate()"))
@@ -63,7 +63,7 @@ testRun(void)
 
         // Empty directory
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageTest, strNew("repo"), .mode = 0700);
+        storagePathCreateP(storageTest, STRDEF("repo"), .mode = 0700);
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
@@ -101,9 +101,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         cfgOptionSet(cfgOptSort, cfgSourceParam, VARSTRDEF("asc"));
 
-        storagePathCreateP(storageTest, strNew("repo/bbb"));
-        storagePutP(storageNewWriteP(storageTest, strNew("repo/aaa"), .timeModified = 1578671569), BUFSTRDEF("TESTDATA"));
-        storagePutP(storageNewWriteP(storageTest, strNew("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
+        storagePathCreateP(storageTest, STRDEF("repo/bbb"));
+        storagePutP(storageNewWriteP(storageTest, STRDEF("repo/aaa"), .timeModified = 1578671569), BUFSTRDEF("TESTDATA"));
+        storagePutP(storageNewWriteP(storageTest, STRDEF("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
 
         ASSERT(system(strZ(strNewFmt("ln -s ../bbb %s/repo/link", testPath()))) == 0);
         ASSERT(system(strZ(strNewFmt("mkfifo %s/repo/pipe", testPath()))) == 0);
@@ -401,7 +401,8 @@ testRun(void)
         hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
-        strLstAdd(argList, strNew(STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+        strLstAdd(
+            argList, STRDEF(STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
         harnessCfgLoad(cfgCmdRepoPut, argList);
 
         TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(archiveFileBuffer)), "put");
@@ -454,7 +455,7 @@ testRun(void)
         hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom2");
-        strLstAdd(argList, strNew(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
+        strLstAdd(argList, STRDEF(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
         harnessCfgLoad(cfgCmdRepoPut, argList);
 
         TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(backupLabelBuffer)), "put");
@@ -702,7 +703,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
-        strLstAdd(argList, strNew(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
+        strLstAdd(argList, STRDEF(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
         harnessCfgLoad(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
@@ -743,7 +744,7 @@ testRun(void)
         TEST_TITLE("fail when path is not empty and no recurse");
 
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), strNew("path/aaa.txt")), BUFSTRDEF("TESTDATA")), "add path/file");
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("path/aaa.txt")), BUFSTRDEF("TESTDATA")), "add path/file");
         TEST_ERROR(cmdStorageRemove(), OptionInvalidError, "recurse option must be used to delete non-empty path");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -771,7 +772,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdRepoRm, argList);
 
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite(), strNew("path/aaa.txt")), BUFSTRDEF("TESTDATA")), "add path/file");
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("path/aaa.txt")), BUFSTRDEF("TESTDATA")), "add path/file");
         TEST_RESULT_VOID(cmdStorageRemove(), "remove file");
         TEST_RESULT_BOOL(storagePathExistsP(storageRepo(), STRDEF("path/aaa.txt")), false, "    check file removed");
         TEST_RESULT_BOOL(storagePathExistsP(storageRepo(), STRDEF("path")), true, "    check path exists");

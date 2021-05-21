@@ -219,7 +219,7 @@ testRun(void)
     {
         CHECK(testScale() <= 10000);
 
-        String *iniStr = strNew("[section1]\n");
+        String *iniStr = strNewZ("[section1]\n");
         unsigned int iniMax = 100000 * (unsigned int)testScale();
 
         for (unsigned int keyIdx = 0; keyIdx < iniMax; keyIdx++)

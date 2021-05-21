@@ -22,7 +22,7 @@ Test Run
 void
 testRun(void)
 {
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("struct sizes"))
@@ -181,7 +181,7 @@ testRun(void)
             "mode=\"0700\"\n"                                                                                                      \
             "user=\"{[user]}\"\n"
 
-        storagePathCreateP(storageTest, strNew("pg"), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0700, .noParentCreate = true);
 
         Storage *storagePg = storagePosixNewP(strNewFmt("%s/pg", testPath()));
         Storage *storagePgWrite = storagePosixNewP(strNewFmt("%s/pg", testPath()), .write = true);
@@ -191,7 +191,7 @@ testRun(void)
 
         // Version
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
             BUFSTRDEF("8.3\n"));
 
         // Create special file
@@ -200,62 +200,62 @@ testRun(void)
 
         // Files that will always be ignored
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_BACKUPLABELOLD), .modeFile = 0400, .timeModified = 1565282101),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_BACKUPLABELOLD), .modeFile = 0400, .timeModified = 1565282101),
             NULL);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_POSTMASTEROPTS), .modeFile = 0400, .timeModified = 1565282101),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_POSTMASTEROPTS), .modeFile = 0400, .timeModified = 1565282101),
             NULL);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_POSTMASTERPID), .modeFile = 0400, .timeModified = 1565282101),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_POSTMASTERPID), .modeFile = 0400, .timeModified = 1565282101),
             NULL);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_RECOVERYCONF), .modeFile = 0400, .timeModified = 1565282101),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_RECOVERYCONF), .modeFile = 0400, .timeModified = 1565282101),
             NULL);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_RECOVERYDONE), .modeFile = 0400, .timeModified = 1565282101),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_RECOVERYDONE), .modeFile = 0400, .timeModified = 1565282101),
             NULL);
 
         // Directories that will always be ignored
-        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
-        storagePathCreateP(storagePgWrite, strNew(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PREFIX_PGSQLTMP), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PREFIX_PGSQLTMP "2"), .mode = 0700, .noParentCreate = true);
 
         // Directories under which files will be ignored (some depending on the version)
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGDYNSHMEM), .mode = 0700, .noParentCreate = true);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGDYNSHMEM "/" BOGUS_STR), .modeFile = 0400,
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGDYNSHMEM "/" BOGUS_STR), .modeFile = 0400,
            .timeModified = 1565282101), NULL);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGNOTIFY), .mode = 0700, .noParentCreate = true);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGNOTIFY "/" BOGUS_STR), .modeFile = 0400,
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGNOTIFY "/" BOGUS_STR), .modeFile = 0400,
            .timeModified = 1565282102), NULL);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGREPLSLOT), .mode = 0700, .noParentCreate = true);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGREPLSLOT "/" BOGUS_STR), .modeFile = 0400,
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGREPLSLOT "/" BOGUS_STR), .modeFile = 0400,
            .timeModified = 1565282103), NULL);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGSERIAL), .mode = 0700, .noParentCreate = true);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGSERIAL "/" BOGUS_STR), .modeFile = 0400,
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSERIAL "/" BOGUS_STR), .modeFile = 0400,
            .timeModified = 1565282104), NULL);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGSNAPSHOTS), .mode = 0700, .noParentCreate = true);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGSNAPSHOTS "/" BOGUS_STR), .modeFile = 0400,
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSNAPSHOTS "/" BOGUS_STR), .modeFile = 0400,
            .timeModified = 1565282105), BUFSTRDEF("test"));
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGSTATTMP "/" BOGUS_STR), .modeFile = 0640,
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSTATTMP "/" BOGUS_STR), .modeFile = 0640,
            .timeModified = 1565282106), NULL);
-        storagePathCreateP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(PG_PATH_PGSUBTRANS), .mode = 0700, .noParentCreate = true);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_PATH_PGSUBTRANS "/" BOGUS_STR), .modeFile = 0400,
+            storageNewWriteP(storagePgWrite, STRDEF(PG_PATH_PGSUBTRANS "/" BOGUS_STR), .modeFile = 0400,
            .timeModified = 1565282107), NULL);
 
         // WAL directory not ignored when offline
-        storagePathCreateP(storagePgWrite, strNew("pg_xlog"), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_xlog"), .mode = 0700, .noParentCreate = true);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew("pg_xlog/" BOGUS_STR), .modeFile = 0400,
+            storageNewWriteP(storagePgWrite, STRDEF("pg_xlog/" BOGUS_STR), .modeFile = 0400,
            .timeModified = 1565282108), NULL);
-        storagePathCreateP(storagePgWrite, strNew("pg_xlog/archive_status"), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_xlog/archive_status"), .mode = 0700, .noParentCreate = true);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew("pg_xlog/archive_status/" BOGUS_STR), .modeFile = 0400,
+            storageNewWriteP(storagePgWrite, STRDEF("pg_xlog/archive_status/" BOGUS_STR), .modeFile = 0400,
            .timeModified = 1565282108), NULL);
 
         // global directory
@@ -370,13 +370,13 @@ testRun(void)
             symlink("../config/postgresql.conf", strZ(strNewFmt("%s/pg/postgresql.conf", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
-            storageNewWriteP(storageTest, strNew("config/postgresql.conf"), .modeFile = 0400, .timeModified = 1565282116),
+            storageNewWriteP(storageTest, STRDEF("config/postgresql.conf"), .modeFile = 0400, .timeModified = 1565282116),
             BUFSTRDEF("POSTGRESQLCONF"));
         THROW_ON_SYS_ERROR(
             symlink("../config/pg_hba.conf", strZ(strNewFmt("%s/pg/pg_hba.conf", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
-            storageNewWriteP(storageTest, strNew("config/pg_hba.conf"), .modeFile = 0400, .timeModified = 1565282117),
+            storageNewWriteP(storageTest, STRDEF("config/pg_hba.conf"), .modeFile = 0400, .timeModified = 1565282117),
             BUFSTRDEF("PGHBACONF"));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -384,7 +384,7 @@ testRun(void)
 
         // Version
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
             BUFSTRDEF("8.4\n"));
 
         // Tablespace 1 (old tablespace dir format)
@@ -396,11 +396,11 @@ testRun(void)
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/1/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
+                storagePgWrite, STRDEF("pg_tblspc/1/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
             BUFSTRDEF("TESTDATA"));
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/1/1/t123_123_fsm"), .modeFile = 0400, .timeModified = 1565282115),
+                storagePgWrite, STRDEF("pg_tblspc/1/1/t123_123_fsm"), .modeFile = 0400, .timeModified = 1565282115),
             BUFSTRDEF("TEMP_RELATION"));
 
         // Test manifest - mode stored for shared cluster tablespace dir, pg_xlog contents ignored because online
@@ -485,30 +485,30 @@ testRun(void)
 
         // Version
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
             BUFSTRDEF("9.0\n"));
 
         // Make 'pg_xlog/archive_status' a link (if other links in the pg_xlog dir (should not be), they will be followed and added
         // when online but archive_status (and pg_xlog), whether a link of not, will will only be followed if offline)
-        storagePathRemoveP(storagePgWrite, strNew("pg_xlog/archive_status"), .recurse = true);
+        storagePathRemoveP(storagePgWrite, STRDEF("pg_xlog/archive_status"), .recurse = true);
         storagePathCreateP(storageTest, STRDEF("archivestatus"), .mode = 0777);
         THROW_ON_SYS_ERROR(
             symlink("../../archivestatus", strZ(strNewFmt("%s/pg/pg_xlog/archive_status", testPath()))) == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_xlog/archive_status/" BOGUS_STR), .modeFile = 0400, .timeModified = 1565282120),
+                storagePgWrite, STRDEF("pg_xlog/archive_status/" BOGUS_STR), .modeFile = 0400, .timeModified = 1565282120),
             BUFSTRDEF("TESTDATA"));
 
         // Tablespace 1
         storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.0_201008051/1"), .mode = 0700);
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/1/PG_9.0_201008051/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.0_201008051/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
             BUFSTRDEF("TESTDATA"));
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/1/PG_9.0_201008051/1/t123_123_fsm"), .modeFile = 0400,
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.0_201008051/1/t123_123_fsm"), .modeFile = 0400,
                .timeModified = 1565282115), BUFSTRDEF("IGNORE_TEMP_RELATION"));
 
         // Add tablespaceList with error (no name)
@@ -612,17 +612,17 @@ testRun(void)
 
         // Version
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
             BUFSTRDEF("9.1\n"));
 
         // Create a path other than archive_status under pg_xlog for code coverage
-        storagePathCreateP(storagePgWrite, strNew("pg_xlog/somepath"), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_xlog/somepath"), .mode = 0700, .noParentCreate = true);
 
         // Add data to pg_wal to ensure it is not ignored (online or offline) until >= pgVersion 10 (file in pg_xlog log is ignored)
-        storagePathCreateP(storagePgWrite, strNew("pg_wal"), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF("pg_wal"), .mode = 0700, .noParentCreate = true);
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_wal/000000010000000000000001"), .modeFile = 0400, .timeModified = 1565282120),
+                storagePgWrite, STRDEF("pg_wal/000000010000000000000001"), .modeFile = 0400, .timeModified = 1565282120),
             BUFSTRDEF("WALDATA"));
 
         // Test manifest - temp tables, unlogged tables, pg_serial and pg_xlog files ignored
@@ -696,7 +696,7 @@ testRun(void)
 
         // Version
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
             BUFSTRDEF("9.2\n"));
 
         // create pg_xlog/wal as a link
@@ -707,7 +707,7 @@ testRun(void)
 
         // Files to conditionally ignore before 9.4
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_POSTGRESQLAUTOCONFTMP), .modeFile = 0400, .timeModified = 1565282101),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_POSTGRESQLAUTOCONFTMP), .modeFile = 0400, .timeModified = 1565282101),
             NULL);
 
         // Test manifest - pg_snapshots files ignored
@@ -773,7 +773,7 @@ testRun(void)
 
         // Version
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
             BUFSTRDEF("9.4\n"));
 
         // Put a pgcontrol (always master:true)
@@ -801,15 +801,15 @@ testRun(void)
 
         // Files to capture in version < 12 but ignore >= 12 (code coverage)
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_RECOVERYSIGNAL), .modeFile = 0400, .timeModified = 1565282101),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_RECOVERYSIGNAL), .modeFile = 0400, .timeModified = 1565282101),
             NULL);
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_STANDBYSIGNAL), .modeFile = 0400, .timeModified = 1565282101),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_STANDBYSIGNAL), .modeFile = 0400, .timeModified = 1565282101),
             NULL);
 
         // Files to capture in version < 9.6 but ignore >= 9.6 (code coverage)
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_BACKUPLABEL), .modeFile = 0400, .timeModified = 1565282101),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_BACKUPLABEL), .modeFile = 0400, .timeModified = 1565282101),
             NULL);
 
         // Tablespace 1
@@ -819,11 +819,11 @@ testRun(void)
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.4_201409291/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
             BUFSTRDEF("TESTDATA"));
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm"), .modeFile = 0400,
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm"), .modeFile = 0400,
                 .timeModified = 1565282115),
             BUFSTRDEF("IGNORE_TEMP_RELATION"));
 
@@ -838,7 +838,7 @@ testRun(void)
             NULL);
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/1/PG_9.4_201409291/1/" PG_FILE_PGVERSION), .modeFile = 0400,
+                storagePgWrite, STRDEF("pg_tblspc/1/PG_9.4_201409291/1/" PG_FILE_PGVERSION), .modeFile = 0400,
                 .timeModified = 1565282120),
             NULL);
 
@@ -849,7 +849,7 @@ testRun(void)
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
-                storagePgWrite, strNew("pg_tblspc/2/PG_9.4_201409291/1/16385"), .modeFile = 0400, .timeModified = 1565282115),
+                storagePgWrite, STRDEF("pg_tblspc/2/PG_9.4_201409291/1/16385"), .modeFile = 0400, .timeModified = 1565282115),
             BUFSTRDEF("TESTDATA"));
 
         // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
@@ -944,7 +944,7 @@ testRun(void)
 
         // Version
         storagePutP(
-            storageNewWriteP(storagePgWrite, strNew(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
+            storageNewWriteP(storagePgWrite, STRDEF(PG_FILE_PGVERSION), .modeFile = 0400, .timeModified = 1565282100),
             BUFSTRDEF("12\n"));
 
         // Tablespace link errors when correct verion not found
@@ -960,7 +960,7 @@ testRun(void)
 
         // Write a file into the directory pointed to by pg_xlog - contents will not be ignored online or offline
         storagePutP(
-            storageNewWriteP(storageTest, strNew("wal/000000020000000000000002"), .modeFile = 0400, .timeModified = 1565282100),
+            storageNewWriteP(storageTest, STRDEF("wal/000000020000000000000002"), .modeFile = 0400, .timeModified = 1565282100),
             BUFSTRDEF("OLDWAL"));
 
         // create pg_xlog/wal as a link
@@ -1131,24 +1131,24 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on path in pg_tblspc");
 
-        storagePathCreateP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somedir"), .mode = 0700, .noParentCreate = true);
+        storagePathCreateP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somedir"), .mode = 0700, .noParentCreate = true);
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
 
-        storagePathRemoveP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somedir"));
+        storagePathRemoveP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somedir"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on file in pg_tblspc");
 
-        storagePutP(storageNewWriteP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somefile")), NULL);
+        storagePutP(storageNewWriteP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somefile")), NULL);
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
-        storageRemoveP(storagePgWrite, strNew(MANIFEST_TARGET_PGTBLSPC "/somefile"));
+        storageRemoveP(storagePgWrite, STRDEF(MANIFEST_TARGET_PGTBLSPC "/somefile"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link that points to nothing");
@@ -1316,7 +1316,7 @@ testRun(void)
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         Manifest *manifestPrior = manifestNewInternal();
-        manifestPrior->pub.data.backupLabel = strNew("20190101-010101F");
+        manifestPrior->pub.data.backupLabel = STRDEF("20190101-010101F");
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){
@@ -2123,12 +2123,12 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
+            storagePutP(storageNewWriteP(storageTest, STRDEF(BACKUP_MANIFEST_FILE INFO_COPY_EXT)), content), "write copy");
         TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "    check file loaded");
         TEST_RESULT_STR_Z(manifestData(manifest)->backrestVersion, PROJECT_VERSION, "    check backrest version");
 
-        storageRemoveP(storageTest, strNew(BACKUP_MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
+        storageRemoveP(storageTest, STRDEF(BACKUP_MANIFEST_FILE INFO_COPY_EXT), .errorOnMissing = true);
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, BACKUP_MANIFEST_FILE_STR), content), "write main");

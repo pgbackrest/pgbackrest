@@ -68,17 +68,17 @@ testRun(void)
     if (testBegin("helpRenderText()"))
     {
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("this is a short sentence"), false, 0, false, 80), "this is a short sentence", "one line");
+            helpRenderText(STRDEF("this is a short sentence"), false, 0, false, 80), "this is a short sentence", "one line");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("this is a short sentence"), false, 4, false, 14),
+            helpRenderText(STRDEF("this is a short sentence"), false, 4, false, 14),
             "this is a\n"
             "    short\n"
             "    sentence",
             "three lines, no indent first");
 
         TEST_RESULT_STR_Z(
-            helpRenderText(strNew("This is a short paragraph.\n\nHere is another one."), true, 2, true, 16),
+            helpRenderText(STRDEF("This is a short paragraph.\n\nHere is another one."), true, 2, true, 16),
             "  This is a\n"
             "  short\n"
             "  paragraph.\n"
@@ -506,7 +506,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNewP(strNew(testPath()));
+        Storage *storage = storagePosixNewP(strNewZ(testPath()));
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), generalHelp, "    check text");
     }
 

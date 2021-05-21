@@ -182,7 +182,7 @@ cfgCommandRoleNameParam(ConfigCommand commandId, ConfigCommandRole commandRoleId
         FUNCTION_TEST_PARAM(STRING, separator);
     FUNCTION_TEST_END();
 
-    String *result = strNew(cfgCommandName(commandId));
+    String *result = strNewZ(cfgCommandName(commandId));
 
     if (commandRoleId != cfgCmdRoleMain)
         strCatFmt(result, "%s%s", strZ(separator), strZ(cfgCommandRoleStr(commandRoleId)));

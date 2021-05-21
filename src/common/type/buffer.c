@@ -217,7 +217,7 @@ bufHex(const Buffer *this)
 
     ASSERT(this != NULL);
 
-    String *result = strNew("");
+    String *result = strNew();
 
     for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(this); bufferIdx++)
         strCatFmt(result, "%02x", bufPtrConst(this)[bufferIdx]);

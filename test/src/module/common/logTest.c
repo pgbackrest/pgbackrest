@@ -181,7 +181,7 @@ testRun(void)
         String *logTime = strNewN(logBuffer, 23);
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                strNew("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
+                STRDEF("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
             true, "check timestamp format: %s", strZ(logTime));
 
         // Redirect output to files

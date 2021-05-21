@@ -64,8 +64,8 @@ testRun(void)
         unsetenv("PGBACKREST_REPO1_HOST");
 
         KeyValue *optionReplace = kvNew();
-        kvPut(optionReplace, varNewStr(strNew("repo1-path")), varNewStr(strNew("/replace/path")));
-        kvPut(optionReplace, varNewStr(strNew("stanza")), NULL);
+        kvPut(optionReplace, VARSTRDEF("repo1-path"), VARSTRDEF("/replace/path"));
+        kvPut(optionReplace, VARSTRDEF("stanza"), NULL);
         kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_PATH), VARSTRDEF("/log"));
 
         TEST_RESULT_STRLST_Z(

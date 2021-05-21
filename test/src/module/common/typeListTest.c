@@ -53,12 +53,12 @@ testRun(void)
 
         TEST_ASSIGN(list, lstNewP(sizeof(String *), .comparator = lstComparatorStr), "new list with params");
 
-        String *string1 = strNew("string1");
+        const String *string1 = STRDEF("string1");
         TEST_RESULT_STR_Z(*(String **)lstAdd(list, &string1), "string1", "    add string1");
-        String *string2 = strNew("string2");
+        const String *string2 = STRDEF("string2");
         TEST_RESULT_VOID(lstAdd(list, &string2), "    add string2");
 
-        String *string3 = strNew("string3");
+        const String *string3 = STRDEF("string3");
         TEST_RESULT_PTR(lstFindDefault(list, &string3, (void *)1), (void *)1, "    find string3 returns default");
         TEST_RESULT_BOOL(lstExists(list, &string3), false, "    string3 does not exist");
         TEST_RESULT_STR_Z(*(String **)lstFind(list, &string2), "string2", "    find string2");

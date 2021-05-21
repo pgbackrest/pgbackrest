@@ -42,8 +42,11 @@ typedef struct String String;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
+// Create a new empty string
+String *strNew(void);
+
 // Create a new string from a zero-terminated string
-String *strNew(const char *string);
+String *strNewZ(const char *const string);
 
 // Create a new string from a buffer. If the buffer has a NULL character this may not work as expected. All the data will be copied
 // but only the data before the NULL character will be used as a string.

@@ -156,7 +156,7 @@ testBackupValidate(const Storage *storage, const String *path)
         FUNCTION_HARNESS_PARAM(STRING, path);
     FUNCTION_HARNESS_END();
 
-    String *result = strNew("");
+    String *result = strNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -189,7 +189,7 @@ testBackupValidate(const Storage *storage, const String *path)
         Buffer *manifestSaveBuffer = bufNew(0);
         manifestSave(manifest, ioBufferWriteNew(manifestSaveBuffer));
 
-        String *manifestEdit = strNew("");
+        String *manifestEdit = strNew();
         StringList *manifestLine = strLstNewSplitZ(strTrim(strNewBuf(manifestSaveBuffer)), "\n");
         bool bSkipSection = false;
 
@@ -449,11 +449,11 @@ testRun(void)
     // The tests expect the timezone to be UTC
     setenv("TZ", "UTC", true);
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
-    const String *pgFile = strNew("testfile");
-    const String *missingFile = strNew("missing");
-    const String *backupLabel = strNew("20190718-155825F");
+    const String *pgFile = STRDEF("testfile");
+    const String *missingFile = STRDEF("missing");
+    const String *backupLabel = STRDEF("20190718-155825F");
     const String *backupPathFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(pgFile));
     BackupFileResult result = {0};
     VariantList *paramList = varLstNew();
@@ -589,7 +589,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true,
+                pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "file in db and repo, checksum equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
@@ -605,7 +605,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, strNew("1234567890123456789012345678901234567890"), false, 0, pgFile, true,
+                pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, true,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "file in db and repo, pg checksum not equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
@@ -620,7 +620,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9999999, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true,
+                pgFile, false, 9999999, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, true,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 24, "    copy=repo=pgFile size");
@@ -637,7 +637,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, STRDEF(BOGUS_STR), false,
+                pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, STRDEF(BOGUS_STR), false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "backup file");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
@@ -655,7 +655,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
+                pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "    db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 18, "    copy=repo=pgFile size");
@@ -673,7 +673,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                missingFile, true, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
+                missingFile, true, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
                 compressTypeNone, 1, backupLabel, true, cipherTypeNone, NULL),
             "    file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy=repo=0 size");
@@ -704,7 +704,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, compressTypeGz,
+                pgFile, false, 9, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false, compressTypeGz,
                 3, backupLabel, false, cipherTypeNone, NULL),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
 
@@ -719,13 +719,13 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied
-        storagePutP(storageNewWriteP(storagePgWrite(), strNew("zerofile")), BUFSTRDEF(""));
+        storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("zerofile")), BUFSTRDEF(""));
 
         // No prior checksum, no compression, no pageChecksum, no delta, no hasReference
         TEST_ASSIGN(
             result,
             backupFile(
-                strNew("zerofile"), false, 0, true, NULL, false, 0, strNew("zerofile"), false, compressTypeNone, 1, backupLabel,
+                STRDEF("zerofile"), false, 0, true, NULL, false, 0, STRDEF("zerofile"), false, compressTypeNone, 1, backupLabel,
                 false, cipherTypeNone, NULL),
             "zero-sized pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy=repo=pgFile size 0");
@@ -763,7 +763,7 @@ testRun(void)
             result,
             backupFile(
                 pgFile, false, 9, true, NULL, false, 0, pgFile, false, compressTypeNone, 1, backupLabel, false, cipherTypeAes256Cbc,
-                strNew("12345678")),
+                STRDEF("12345678")),
             "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
 
         TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
@@ -779,8 +779,8 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 8, true, strNew("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
-                compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, strNew("12345678")),
+                pgFile, false, 8, true, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, pgFile, false,
+                compressTypeNone, 1, backupLabel, true, cipherTypeAes256Cbc, STRDEF("12345678")),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 8, "    copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
@@ -796,8 +796,8 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, strNew("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
-                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, strNew("12345678")),
+                pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
+                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF("12345678")),
             "pg and repo file exists, repo checksum no match, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
@@ -813,8 +813,8 @@ testRun(void)
         TEST_ASSIGN(
             result,
             backupFile(
-                pgFile, false, 9, true, strNew("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
-                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, strNew("12345678")),
+                pgFile, false, 9, true, STRDEF("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
+                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, STRDEF("12345678")),
             "backup file");
 
         TEST_RESULT_UINT(result.copySize, 9, "    copy size set");

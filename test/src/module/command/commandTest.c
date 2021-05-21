@@ -107,7 +107,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command end with error");
 
-        TEST_RESULT_VOID(cmdEnd(25, strNew("aborted with exception [025]")), "command end");
+        TEST_RESULT_VOID(cmdEnd(25, STRDEF("aborted with exception [025]")), "command end");
         harnessLogResult("P00   INFO: restore command end: aborted with exception [025]");
 
         // -------------------------------------------------------------------------------------------------------------------------

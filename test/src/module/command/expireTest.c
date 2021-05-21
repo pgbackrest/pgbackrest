@@ -14,7 +14,7 @@ Helper functions
 ***********************************************************************************************************************************/
 void
 archiveGenerate(
-    Storage *storageTest, String *archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
+    Storage *storageTest, const String *archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
     const char *majorWal)
 {
     // For simplicity, only allow 2 digits
@@ -39,7 +39,7 @@ archiveGenerate(
 String *
 archiveExpectList(const unsigned int start, unsigned int end, const char *majorWal)
 {
-    String *result = strNew("");
+    String *result = strNew();
 
     // For simplicity, only allow 2 digits
     if (end > 99)
@@ -68,11 +68,11 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
-    String *backupStanzaPath = strNew("repo/backup/db");
+    const String *backupStanzaPath = STRDEF("repo/backup/db");
     String *backupInfoFileName = strNewFmt("%s/backup.info", strZ(backupStanzaPath));
-    String *archiveStanzaPath = strNew("repo/archive/db");
+    const String *archiveStanzaPath = STRDEF("repo/archive/db");
     String *archiveInfoFileName = strNewFmt("%s/archive.info", strZ(archiveStanzaPath));
 
     StringList *argListBase = strLstNew();
@@ -167,8 +167,8 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
 
         // Create backup directories and manifest files
-        String *full1 = strNew("20181119-152138F");
-        String *full2 = strNew("20181119-152800F");
+        const String *full1 = STRDEF("20181119-152138F");
+        const String *full2 = STRDEF("20181119-152800F");
         String *full1Path = strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(full1));
         String *full2Path = strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(full2));
 
@@ -750,7 +750,7 @@ testRun(void)
             removeExpiredArchive(infoBackup, false, 0),
             "full counts as differential and incremental associated with differential expires");
 
-        String *result = strNew("");
+        String *result = strNew();
         strCatFmt(
             result,
             "%s%s%s%s",
@@ -784,7 +784,7 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "differential and full count as an incremental");
 
-        result = strNew("");
+        result = strNew();
         strCatFmt(
             result,
             "%s%s%s",
@@ -882,7 +882,7 @@ testRun(void)
             storagePathExistsP(storageTest, strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanzaPath))), true,
             "archive sub path repo1 not removed");
 
-        String *backupLabel = strNew("20181119-152138F");
+        const String *backupLabel = STRDEF("20181119-152138F");
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageTest, STRDEF("repo2/backup/db/backup.info"), cipherTypeNone, NULL),
             "get backup.info repo2");
@@ -939,7 +939,7 @@ testRun(void)
             "repo1: backup.info.copy moved to backup.info.copy.save");
 
         // Rename archive.info file on repo2 to cause error
-        String *archiveInfoFileNameRepo2 = strNew("repo2/archive/db/archive.info");
+        const String *archiveInfoFileNameRepo2 = STRDEF("repo2/archive/db/archive.info");
         TEST_RESULT_VOID(
             storageMoveP(storageTest,
                 storageNewReadP(storageTest, archiveInfoFileNameRepo2),
@@ -1871,7 +1871,7 @@ testRun(void)
         strLstAddZ(argList, "--set=20181119-152900F");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        String *archiveRemaining = strNew("");
+        String *archiveRemaining = strNew();
         strCatFmt(
             archiveRemaining, "%s%s", strZ(archiveExpectList(2, 4, "0000000100000000")),
             strZ(archiveExpectList(6, 10, "0000000100000000")));
@@ -2009,7 +2009,7 @@ testRun(void)
         storageRemoveP(
             storageTest, strNewFmt("%s/20181119-152850F_20181119-152252D/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath)));
 
-        String *adhocBackupLabel = strNew("20181119-152850F_20181119-152252D");
+        const String *adhocBackupLabel = STRDEF("20181119-152850F_20181119-152252D");
         TEST_RESULT_UINT(expireAdhocBackup(infoBackup, adhocBackupLabel, 0), 1, "adhoc expire last dependent backup");
         TEST_RESULT_VOID(
             removeExpiredBackup(infoBackup, adhocBackupLabel, 0), "code coverage: removeExpireBackup with no manifests");
@@ -2067,7 +2067,7 @@ testRun(void)
             "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"                \
                 "\"db-version\":\"12\"}\n"
 
-        String *backupInfoContent = strNew(
+        const String *backupInfoContent = STRDEF(
             TEST_BACKUP_CURRENT
             TEST_BACKUP_DB);
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName), harnessInfoChecksum(backupInfoContent));
@@ -2076,7 +2076,7 @@ testRun(void)
             harnessInfoChecksum(backupInfoContent));
 
         // Adhoc backup and resumable backup manifests
-        String *manifestContent = strNew(
+        const String *manifestContent = STRDEF(
                 "[backup]\n"
                 "backup-archive-start=\"000000010000000000000009\"\n"
                 "backup-label=null\n"
@@ -2156,7 +2156,7 @@ testRun(void)
             "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}",
             .cipherType = cipherTypeAes256Cbc);
 
-        backupInfoContent = strNew(
+        backupInfoContent = STRDEF(
             TEST_BACKUP_CURRENT
             "\n"
             "[cipher]\n"

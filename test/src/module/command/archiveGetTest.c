@@ -24,7 +24,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("queueNeed()"))
@@ -40,11 +40,11 @@ testRun(void)
         size_t walSegmentSize = 16 * 1024 * 1024;
 
         TEST_ERROR_FMT(
-            queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
             PathMissingError, "unable to list file info for missing path '%s/spool/archive/test1/in'", testPath());
 
         // -------------------------------------------------------------------------------------------------------------------------
-        storagePathCreateP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN));
+        storagePathCreateP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN));
 
         TEST_RESULT_STRLST_Z(
             queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
@@ -54,7 +54,7 @@ testRun(void)
         queueSize = (16 * 1024 * 1024) * 3;
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(strNew("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
             "000000010000000100000001\n000000010000000100000002\n000000010000000100000003\n", "empty queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -65,11 +65,11 @@ testRun(void)
         HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF", walSegmentBuffer);
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(strNew("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92),
+            queueNeed(STRDEF("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92),
             "000000010000000200000000\n000000010000000200000001\n", "queue has wal < 9.3");
 
         TEST_RESULT_STRLST_Z(
-            storageListP(storageSpoolWrite(), strNew(STORAGE_SPOOL_ARCHIVE_IN)), "0000000100000001000000FE\n", "check queue");
+            storageListP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN)), "0000000100000001000000FE\n", "check queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg >= 9.3 and ok/junk status files");
@@ -94,7 +94,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000B00000000.ok");
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(strNew("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11),
+            queueNeed(STRDEF("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11),
             "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal >= 9.3");
 
         TEST_STORAGE_LIST(
@@ -554,7 +554,7 @@ testRun(void)
             "P00   INFO: get 3 WAL file(s) from archive: 0000000100000001000000FE...000000010000000200000000");
 
         TEST_RESULT_STR_Z(
-            strNewBuf(storageGetP(storageNewReadP(storageSpool(), strNew(STORAGE_SPOOL_ARCHIVE_IN "/global.error")))),
+            strNewBuf(storageGetP(storageNewReadP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN "/global.error")))),
             "102\nlocal-1 process terminated unexpectedly [102]: unable to execute 'pgbackrest-bogus': "
                 "[2] No such file or directory",
             "check global error");
@@ -708,9 +708,9 @@ testRun(void)
         {
             HARNESS_FORK_CHILD_BEGIN(0, true)
             {
-                IoRead *read = ioFdReadNew(strNew("child read"), HARNESS_FORK_CHILD_READ(), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("child read"), HARNESS_FORK_CHILD_READ(), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("child write"), HARNESS_FORK_CHILD_WRITE(), 2000);
                 ioWriteOpen(write);
 
                 TEST_RESULT_VOID(
@@ -720,7 +720,7 @@ testRun(void)
                     "acquire lock");
 
                 // Let the parent know the lock has been acquired and wait for the parent to allow lock release
-                ioWriteStrLine(write, strNew(""));
+                ioWriteStrLine(write, strNew());
                 ioWriteFlush(write);
                 ioReadLine(read);
 
@@ -730,9 +730,9 @@ testRun(void)
 
             HARNESS_FORK_PARENT_BEGIN()
             {
-                IoRead *read = ioFdReadNew(strNew("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
+                IoRead *read = ioFdReadNew(STRDEF("parent read"), HARNESS_FORK_PARENT_READ_PROCESS(0), 2000);
                 ioReadOpen(read);
-                IoWrite *write = ioFdWriteNew(strNew("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
+                IoWrite *write = ioFdWriteNew(STRDEF("parent write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
                 // Wait for the child to acquire the lock
@@ -1082,7 +1082,7 @@ testRun(void)
         IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
         ioWriteOpen(serverWriteIo);
 
-        ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
+        ProtocolServer *server = protocolServerNew(STRDEF("test"), STRDEF("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
         bufUsedSet(serverWrite, 0);
 
         // Add archive-async and spool path

@@ -25,9 +25,9 @@ testRun(void)
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_VERIFY_LIST};
     hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
 
-    Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
 
-    String *stanza = strNew("db");
+    const String *stanza = STRDEF("db");
     String *backupStanzaPath = strNewFmt("repo/backup/%s", strZ(stanza));
     String *backupInfoFileName = strNewFmt("%s/" INFO_BACKUP_FILE, strZ(backupStanzaPath));
     String *backupInfoFileNameCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName));
@@ -260,7 +260,7 @@ testRun(void)
         );
 
         Manifest *manifest = NULL;
-        String *backupLabel = strNew("20181119-152138F");
+        const String *backupLabel = STRDEF("20181119-152138F");
         String *manifestFile = strNewFmt("%s/%s/" BACKUP_MANIFEST_FILE, strZ(backupStanzaPath), strZ(backupLabel));
         String *manifestFileCopy = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile));
         unsigned int jobErrorTotal = 0;
@@ -438,7 +438,7 @@ testRun(void)
 
         VerifyArchiveResult archiveResult =
         {
-            .archiveId = strNew("9.4-1"),
+            .archiveId = strNewZ("9.4-1"),
             .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
         };
         List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator =  archiveIdComparator);
@@ -510,7 +510,7 @@ testRun(void)
         // Clear the range lists and rerun the test with PG_VERSION_92 to ensure FF is reported as an error
         lstClear(archiveIdResult->walRangeList);
         errTotal = 0;
-        archiveIdResult->archiveId = strNew("9.2-1");
+        archiveIdResult->archiveId = strNewZ("9.2-1");
         archiveIdResult->pgWalInfo.version = PG_VERSION_92;
 
         strLstAddZ(walFileList, "000000020000000200000001");
@@ -569,7 +569,7 @@ testRun(void)
         // Clear the range lists and update the version > 9.2 so missing FF is considered a gap in the WAL ranges
         lstClear(archiveIdResult->walRangeList);
         errTotal = 0;
-        archiveIdResult->archiveId = strNew("9.6-1");
+        archiveIdResult->archiveId = strNewZ("9.6-1");
         archiveIdResult->pgWalInfo.version = PG_VERSION_96;
 
         strLstAddZ(walFileList, "000000020000000200000003-123456");
@@ -708,7 +708,7 @@ testRun(void)
         TEST_TITLE("verifyLogInvalidResult() - missing file");
 
         TEST_RESULT_UINT(
-            verifyLogInvalidResult(STORAGE_REPO_ARCHIVE_STR, verifyFileMissing, 0, strNew("missingfilename")),
+            verifyLogInvalidResult(STORAGE_REPO_ARCHIVE_STR, verifyFileMissing, 0, STRDEF("missingfilename")),
             0, "file missing message");
         harnessLogResult("P00   WARN: file missing 'missingfilename'");
 
@@ -720,14 +720,14 @@ testRun(void)
 
         VerifyArchiveResult archiveIdResult =
         {
-            .archiveId = strNew("9.6-1"),
+            .archiveId = strNewZ("9.6-1"),
             .totalWalFile = 1,
             .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator =  lstComparatorStr),
         };
         VerifyWalRange walRange =
         {
-            .start = strNew("0"),
-            .stop = strNew("2"),
+            .start = strNewZ("0"),
+            .stop = strNewZ("2"),
             .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
         };
 
@@ -742,14 +742,14 @@ testRun(void)
 
         VerifyInvalidFile invalidFile =
         {
-            .fileName = strNew("file"),
+            .fileName = strNewZ("file"),
             .reason = verifyFileMissing,
         };
         lstAdd(walRange.invalidFileList, &invalidFile);
 
         VerifyBackupResult backupResult =
         {
-            .backupLabel = strNew("test-backup-label"),
+            .backupLabel = strNewZ("test-backup-label"),
             .status = backupInvalid,
             .totalFileVerify = 1,
             .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator =  lstComparatorStr),
@@ -769,7 +769,7 @@ testRun(void)
         TEST_TITLE("verifyAddInvalidWalFile() - file missing (coverage test)");
 
         TEST_RESULT_VOID(
-            verifyAddInvalidWalFile(archiveIdResult.walRangeList, verifyFileMissing, strNew("test"), strNew("3")), "coverage test");
+            verifyAddInvalidWalFile(archiveIdResult.walRangeList, verifyFileMissing, STRDEF("test"), STRDEF("3")), "coverage test");
     }
 
     // *****************************************************************************************************************************
@@ -891,7 +891,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyFile()");
 
-        String *filePathName =  strNewFmt(STORAGE_REPO_ARCHIVE "/testfile");
+        const String *filePathName = STRDEF(STORAGE_REPO_ARCHIVE "/testfile");
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), filePathName), BUFSTRDEF("")), "put zero-sized file");
         TEST_RESULT_UINT(verifyFile(filePathName, STRDEF(HASH_TYPE_SHA1_ZERO), 0, NULL), verifyOk, "file ok");
 
@@ -903,7 +903,7 @@ testRun(void)
                 strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), fileChecksum, 0, NULL), verifyFileMissing, "file missing");
 
         // Create a compressed encrypted repo file
-        filePathName = strNew(STORAGE_REPO_BACKUP "/testfile.gz");
+        filePathName = STRDEF(STORAGE_REPO_BACKUP "/testfile.gz");
         StorageWrite *write = storageNewWriteP(storageRepoWrite(), filePathName);
         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
         ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
@@ -911,10 +911,10 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(write, BUFSTRZ(fileContents)), "write encrypted, compressed file");
 
         TEST_RESULT_UINT(
-            verifyFile(filePathName, fileChecksum, fileSize, strNew("pass")), verifyOk, "file encrypted compressed ok");
+            verifyFile(filePathName, fileChecksum, fileSize, STRDEF("pass")), verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
-                filePathName, strNew("badchecksum"), fileSize, strNew("pass")), verifyChecksumMismatch,
+                filePathName, STRDEF("badchecksum"), fileSize, STRDEF("pass")), verifyChecksumMismatch,
                 "file encrypted compressed checksum mismatch");
     }
 
@@ -979,14 +979,13 @@ testRun(void)
 
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
         harnessLogResult(
-            strZ(strNew(
-                "P00   WARN: no backups exist in the repo\n"
-                "P00  ERROR: [028]: duplicate WAL '000000020000000700000FFE' for '11-2' exists, skipping\n"
-                "P00   WARN: path '11-2/0000000200000007' does not contain any valid WAL to be processed\n"
-                "P00   INFO: Results:\n"
-                "              archiveId: 11-2, total WAL checked: 2, total valid WAL: 0\n"
-                "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
-                "              backup: none found")));
+            "P00   WARN: no backups exist in the repo\n"
+            "P00  ERROR: [028]: duplicate WAL '000000020000000700000FFE' for '11-2' exists, skipping\n"
+            "P00   WARN: path '11-2/0000000200000007' does not contain any valid WAL to be processed\n"
+            "P00   INFO: Results:\n"
+            "              archiveId: 11-2, total WAL checked: 2, total valid WAL: 0\n"
+            "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "              backup: none found");
 
         harnessLogLevelReset();
 
@@ -1034,24 +1033,22 @@ testRun(void)
         unsigned int errorTotal = 0;
         TEST_RESULT_STR_Z(
             verifyProcess(&errorTotal),
-            strZ(strNew(
-                "Results:\n"
-                "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
-                "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
-                "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
-                "  backup: none found")),
+            "Results:\n"
+            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
+            "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
+            "  backup: none found",
             "verifyProcess() results");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
         harnessLogResult(
-            strZ(strNew(
-                "P00   WARN: no backups exist in the repo\n"
-                "P00   WARN: archive path '9.4-1' is empty\n"
-                "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
-                "P01  ERROR: [028]: invalid checksum "
-                    "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-                "P01  ERROR: [028]: invalid size "
-                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
-                "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000")));
+            "P00   WARN: no backups exist in the repo\n"
+            "P00   WARN: archive path '9.4-1' is empty\n"
+            "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
+            "P01  ERROR: [028]: invalid checksum "
+                "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01  ERROR: [028]: invalid size "
+                "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, start next timeline");
@@ -1087,11 +1084,10 @@ testRun(void)
 
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
         harnessLogResult(
-            strZ(strNew(
-                "P01  ERROR: [028]: invalid checksum "
-                    "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-                "P01  ERROR: [028]: invalid size "
-                    "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'")));
+            "P01  ERROR: [028]: invalid checksum "
+                "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01  ERROR: [028]: invalid size "
+                "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files - various archive/backup errors");
@@ -1113,12 +1109,12 @@ testRun(void)
                 walBuffer),
             "write WAL - file not readable");
 
-        String *backupLabelPriorNoManifest = strNew("20181119-152800F");
+        const String *backupLabelPriorNoManifest = STRDEF("20181119-152800F");
         TEST_RESULT_VOID(
             storagePathCreateP(storageTest, strNewFmt("%s/%s", strZ(backupStanzaPath), strZ(backupLabelPriorNoManifest))),
             "prior backup path missing manifests");
 
-        String *backupLabelManifestNoTargetFile = strNew("20181119-152810F");
+        const String *backupLabelManifestNoTargetFile = STRDEF("20181119-152810F");
         const Buffer *contentLoad = harnessInfoChecksumZ
         (
             TEST_MANIFEST_HEADER
@@ -1134,7 +1130,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, manifestFileNoTarget), contentLoad), "write manifest without target files");
 
         // Create full backup with files
-        String *backupLabel = strNew("20181119-152900F");
+        const String *backupLabel = STRDEF("20181119-152900F");
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/%s/pg_data/PG_VERSION", strZ(backupStanzaPath),
@@ -1183,10 +1179,10 @@ testRun(void)
             "write valid manifest copy");
 
         // Create a manifest for the dependent that has references
-        String *backupLabelDependent = strNew("20181119-152900F_20181119-152909D");
+        const String *backupLabelDependent = STRDEF("20181119-152900F_20181119-152909D");
 
         // Create an unprocessed backup label with a file that will be referenced in this manifest
-        String *unprocessedBackup = strNew("UNPROCESSEDBACKUP");
+        const String *unprocessedBackup = STRDEF("UNPROCESSEDBACKUP");
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, strNewFmt("%s/%s/pg_data/testother", strZ(backupStanzaPath),
             strZ(unprocessedBackup)), .modeFile = 0200), BUFSTRZ(fileContents)), "put unreadable file to unprocessed backup");
@@ -1299,9 +1295,9 @@ testRun(void)
         harnessCfgLoad(cfgCmdVerify, argList);
 
         // Backup labels
-        String *backupLabelFull = strNew("20181119-152900F");
-        String *backupLabelDiff = strNew("20181119-152900F_20181119-152909D");
-        String *backupLabelFullDb2 = strNew("20201119-163000F");
+        const String *backupLabelFull = STRDEF("20181119-152900F");
+        const String *backupLabelDiff = STRDEF("20181119-152900F_20181119-152909D");
+        const String *backupLabelFullDb2 = STRDEF("20201119-163000F");
 
         #define TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                \
             "20181119-152900F_20181119-152909D={"                                                                                  \

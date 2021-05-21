@@ -1166,7 +1166,7 @@ backupJobResult(
                             checksumPageErrorList = varVarLst(kvGet(checksumPageResult, VARSTRDEF("error")));
                             ASSERT(!varLstEmpty(checksumPageErrorList));
 
-                            String *error = strNew("");
+                            String *error = strNew();
                             unsigned int errorTotalMin = 0;
 
                             for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
