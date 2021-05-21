@@ -397,7 +397,7 @@ helpRender(void)
 
                 for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
                 {
-                    if (cfgParseOptionValid(commandId, cfgCmdRoleDefault, optionId) && !optionData[optionId].internal)
+                    if (cfgParseOptionValid(commandId, cfgCmdRoleMain, optionId) && !optionData[optionId].internal)
                     {
                         const String *section = optionData[optionId].section;
 
@@ -484,7 +484,7 @@ helpRender(void)
 
                 // Ensure the option is valid
                 const String *optionName = strLstGet(cfgCommandParam(), 0);
-                CfgParseOptionResult option = cfgParseOption(optionName);
+                CfgParseOptionResult option = cfgParseOptionP(optionName);
 
                 // If the option was not found it might be an indexed option without the index, e.g. repo-host instead of
                 // repo1-host. This is valid for help even though the parser will reject it.
@@ -500,7 +500,7 @@ helpRender(void)
                 }
 
                 // Error when option is not found or is invalid for the current command
-                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleDefault, option.id))
+                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleMain, option.id))
                     THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
 
                 // Output option summary and description. Add a warning for internal options.

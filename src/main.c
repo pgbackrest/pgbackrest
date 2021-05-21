@@ -131,7 +131,7 @@ main(int argListSize, const char *argList[])
                     {
                         // Switch to expire command
                         cmdEnd(0, NULL);
-                        cfgCommandSet(cfgCmdExpire, cfgCmdRoleDefault);
+                        cfgCommandSet(cfgCmdExpire, cfgCmdRoleMain);
                         cfgLoadLogFile();
                         cmdBegin();
 
