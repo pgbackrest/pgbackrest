@@ -178,6 +178,14 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Factor local process exec out of protocolLocalGet()."/>
+                        <commit subject="Add shim feature for unit tests."/>
+                        <commit subject="Add local process shim."/>
+
+                        <p>Add local processs shim.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1381"/>
 
                         <release-item-contributor-list>

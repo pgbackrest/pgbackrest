@@ -2,7 +2,6 @@
 Test Stanza Commands
 ***********************************************************************************************************************************/
 #include "common/io/bufferRead.h"
-#include "common/io/bufferWrite.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
@@ -12,6 +11,8 @@ Test Stanza Commands
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
 
+#include "common/harnessProtocol.h"
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -19,6 +20,10 @@ void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Install local command handler shim
+    static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_VERIFY_LIST};
+    hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
 
     Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
 
@@ -877,7 +882,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("verifyFile() and verifyFileProtocol()"))
+    if (testBegin("verifyFile()"))
     {
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
@@ -911,26 +916,6 @@ testRun(void)
             verifyFile(
                 filePathName, strNew("badchecksum"), fileSize, strNew("pass")), verifyChecksumMismatch,
                 "file encrypted compressed checksum mismatch");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verifyFileProtocol()");
-
-        // Start a protocol server to test the protocol directly
-        Buffer *serverWrite = bufNew(8192);
-        IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
-        ioWriteOpen(serverWriteIo);
-        ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-        bufUsedSet(serverWrite, 0);
-
-        VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(filePathName));
-        varLstAdd(paramList, varNewStr(fileChecksum));
-        varLstAdd(paramList, varNewUInt64(fileSize));
-        varLstAdd(paramList, varNewStrZ("pass"));
-
-        TEST_RESULT_VOID(verifyFileProtocol(paramList, server), "protocol verify file");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":0}\n", "check result");
-        bufUsedSet(serverWrite, 0);
     }
 
     // *****************************************************************************************************************************
@@ -1271,7 +1256,7 @@ testRun(void)
                     "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
                 "P01  ERROR: [039]: invalid result "
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
-                    "local-1 protocol: unable to open file "
+                    "local-1 shim protocol: unable to open file "
                     "'%s/%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read: "
                     "[13] Permission denied\n"
                 "P00   WARN: unable to open missing file '%s/%s/20181119-152800F/backup.manifest' for read\n"
@@ -1283,8 +1268,8 @@ testRun(void)
                 "P01  ERROR: [028]: file missing '20181119-152900F_20181119-152909D/pg_data/testmissing'\n"
                 "P00   WARN: unable to open missing file '%s/%s/20181119-153000F/backup.manifest' for read\n"
                 "P00   INFO: backup '20181119-153000F' appears to be in progress, skipping\n"
-                "P01  ERROR: [039]: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 protocol: unable "
-                    "to open file '%s/%s/UNPROCESSEDBACKUP/pg_data/testother' for read: [13] Permission denied\n"
+                "P01  ERROR: [039]: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
+                    " unable to open file '%s/%s/UNPROCESSEDBACKUP/pg_data/testother' for read: [13] Permission denied\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001\n"

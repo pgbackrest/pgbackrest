@@ -582,6 +582,12 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: protocol
         total: 9
+        harness:
+          name: protocol
+          shim:
+            protocol/helper:
+              function:
+                - protocolLocalExec
         containerReq: true
         binReq: true
 
@@ -760,7 +766,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
         total: 12
-        binReq: true
 
         coverage:
           - command/restore/file
@@ -783,7 +788,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
         total: 10
-        binReq: true
 
         coverage:
           - command/backup/backup
@@ -814,7 +818,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify
         total: 8
-        binReq: true
 
         coverage:
           - command/verify/file

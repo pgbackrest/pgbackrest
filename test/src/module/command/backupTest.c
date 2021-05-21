@@ -4,9 +4,7 @@ Test Backup Command
 #include "command/stanza/create.h"
 #include "command/stanza/upgrade.h"
 #include "common/crypto/hash.h"
-#include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
-#include "common/io/io.h"
 #include "postgres/interface/static.vendor.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
@@ -14,6 +12,7 @@ Test Backup Command
 #include "common/harnessConfig.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
+#include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
@@ -443,18 +442,14 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // Install local command handler shim
+    static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
+    hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+
     // The tests expect the timezone to be UTC
     setenv("TZ", "UTC", true);
 
     Storage *storageTest = storagePosixNewP(strNew(testPath()), .write = true);
-
-    // Start a protocol server to test the protocol directly
-    Buffer *serverWrite = bufNew(8192);
-    IoWrite *serverWriteIo = ioBufferWriteNew(serverWrite);
-    ioWriteOpen(serverWriteIo);
-
-    ProtocolServer *server = protocolServerNew(strNew("test"), strNew("test"), ioBufferReadNew(bufNew(0)), serverWriteIo);
-    bufUsedSet(serverWrite, 0);
 
     const String *pgFile = strNew("testfile");
     const String *missingFile = strNew("missing");
@@ -471,7 +466,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("backupFile() and backupFileProtocol()"))
+    if (testBegin("backupFile()"))
     {
         // Load Parameters
         StringList *argList = strLstNew();
@@ -494,29 +489,6 @@ testRun(void)
             "pg file missing, ignoreMissing=true, no delta");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "    copy/repo size 0");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "    skip file");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        // NULL, zero param values, ignoreMissing=true
-        varLstAdd(paramList, varNewStr(missingFile));       // pgFile
-        varLstAdd(paramList, varNewBool(true));             // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileSize
-        varLstAdd(paramList, varNewBool(true));             // pgFileCopyExactSize
-        varLstAdd(paramList, NULL);                         // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(missingFile));       // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(0));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
-        varLstAdd(paramList, NULL);                         // cipherSubPass
-
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - skip");
-        TEST_RESULT_STR_Z(strNewBuf(serverWrite), "{\"out\":[3,0,0,null,null]}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
 
         // Pg file missing - ignoreMissing=false
         // -------------------------------------------------------------------------------------------------------------------------
@@ -578,9 +550,9 @@ testRun(void)
             varBool(kvGet(result.pageChecksumResult, VARSTRDEF("valid"))), false, "    pageChecksumResult valid=false");
         TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), backupPathFile), "    remove repo file");
 
-        // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        // pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit
+        TEST_TITLE("pgFileSize, ignoreMissing=false, backupLabel, pgFileChecksumPage, pgFileChecksumPageLsnLimit");
+
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(pgFile));            // pgFile
         varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
@@ -598,12 +570,19 @@ testRun(void)
         varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
         varLstAdd(paramList, NULL);                         // cipherSubPass
 
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - pageChecksum");
-        TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite),
-            "{\"out\":[1,12,12,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",{\"align\":false,\"valid\":false}]}\n",
-            "    check result");
-        bufUsedSet(serverWrite, 0);
+        TEST_ASSIGN(
+            result,
+            backupFile(
+                pgFile, false, 8, false, NULL, true, 0xFFFFFFFFFFFFFFFF, pgFile, false, compressTypeNone, 1, backupLabel, false,
+                cipherTypeNone, NULL),
+            "backup file");
+
+        TEST_RESULT_UINT(result.copySize, 12, "copy size");
+        TEST_RESULT_UINT(result.repoSize, 12, "repo size");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
+        TEST_RESULT_STR_Z(result.copyChecksum, "c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9", "checksum");
+        TEST_RESULT_STR_Z(jsonFromKv(result.pageChecksumResult), "{\"align\":false,\"valid\":false}", "page checksum");
+        TEST_STORAGE_EXISTS(storageRepo(), strZ(backupPathFile));
 
         // -------------------------------------------------------------------------------------------------------------------------
         // File exists in repo and db, checksum match, delta set, ignoreMissing false, hasReference - NOOP
@@ -620,31 +599,6 @@ testRun(void)
             (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    noop");
-
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        // pgFileChecksum, hasReference, delta
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(12));             // pgFileSize
-        varLstAdd(paramList, varNewBool(false));            // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9"));   // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(true));             // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone)); // repoFileCompress
-        varLstAdd(paramList, varNewInt(1));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(true));             // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
-        varLstAdd(paramList, NULL);                         // cipherSubPass
-
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - noop");
-        TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite), "{\"out\":[4,12,0,\"c3ae4687ea8ccd47bfdb190dbe7fd3b37545fdb9\",null]}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         // File exists in repo and db, pg checksum mismatch, delta set, ignoreMissing false, hasReference - COPY
@@ -763,31 +717,6 @@ testRun(void)
                 result.pageChecksumResult == NULL),
             true, "    compressed repo file matches");
 
-        // Check protocol function directly
-        // -------------------------------------------------------------------------------------------------------------------------
-        // compression
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));            // pgFile
-        varLstAdd(paramList, varNewBool(false));            // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(9));              // pgFileSize
-        varLstAdd(paramList, varNewBool(true));             // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"));   // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));            // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));              // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));            // repoFile
-        varLstAdd(paramList, varNewBool(false));            // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeGz));   // repoFileCompress
-        varLstAdd(paramList, varNewInt(3));                 // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));       // backupLabel
-        varLstAdd(paramList, varNewBool(false));            // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeNone)); // cipherType
-        varLstAdd(paramList, NULL);                         // cipherSubPass
-
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - copy, compress");
-        TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite), "{\"out\":[0,9,29,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
-
         // -------------------------------------------------------------------------------------------------------------------------
         // Create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied
         storagePutP(storageNewWriteP(storagePgWrite(), strNew("zerofile")), BUFSTRDEF(""));
@@ -878,30 +807,23 @@ testRun(void)
                 storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
             true, "    recopy file to encrypted repo success");
 
-        // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
-        // cipherType, cipherPass
-        paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(pgFile));                // pgFile
-        varLstAdd(paramList, varNewBool(false));                // pgFileIgnoreMissing
-        varLstAdd(paramList, varNewUInt64(9));                  // pgFileSize
-        varLstAdd(paramList, varNewBool(true));                 // pgFileCopyExactSize
-        varLstAdd(paramList, varNewStrZ("1234567890123456789012345678901234567890"));   // pgFileChecksum
-        varLstAdd(paramList, varNewBool(false));                // pgFileChecksumPage
-        varLstAdd(paramList, varNewUInt64(0));                  // pgFileChecksumPageLsnLimit
-        varLstAdd(paramList, varNewStr(pgFile));                // repoFile
-        varLstAdd(paramList, varNewBool(false));                // repoFileHasReference
-        varLstAdd(paramList, varNewUInt(compressTypeNone));     // repoFileCompress
-        varLstAdd(paramList, varNewInt(0));                     // repoFileCompressLevel
-        varLstAdd(paramList, varNewStr(backupLabel));           // backupLabel
-        varLstAdd(paramList, varNewBool(false));                // delta
-        varLstAdd(paramList, varNewUInt64(cipherTypeAes256Cbc));// cipherType
-        varLstAdd(paramList, varNewStrZ("12345678"));           // cipherPass
+        TEST_TITLE("recopy, encrypt");
 
-        TEST_RESULT_VOID(backupFileProtocol(paramList, server), "protocol backup file - recopy, encrypt");
-        TEST_RESULT_STR_Z(
-            strNewBuf(serverWrite), "{\"out\":[2,9,32,\"9bc8ab2dda60ef4beed07d1e19ce0676d5edde67\",null]}\n", "    check result");
-        bufUsedSet(serverWrite, 0);
+        TEST_ASSIGN(
+            result,
+            backupFile(
+                pgFile, false, 9, true, strNew("1234567890123456789012345678901234567890"), false, 0, pgFile, false,
+                compressTypeNone, 0, backupLabel, false, cipherTypeAes256Cbc, strNew("12345678")),
+            "backup file");
+
+        TEST_RESULT_UINT(result.copySize, 9, "    copy size set");
+        TEST_RESULT_UINT(result.repoSize, 32, "    repo size set");
+        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "    recopy file");
+        TEST_RESULT_BOOL(
+            (strEqZ(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67") &&
+                storageExistsP(storageRepo(), backupPathFile) && result.pageChecksumResult == NULL),
+            true, "    recopy file to encrypted repo success");
     }
 
     // *****************************************************************************************************************************
