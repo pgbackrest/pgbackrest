@@ -230,6 +230,18 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-pull-request id="1400"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Update contributing documentation.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1365"/>
 
                         <release-item-contributor-list>
