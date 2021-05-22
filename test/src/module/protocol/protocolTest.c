@@ -864,8 +864,9 @@ testRun(void)
                     TEST_ASSIGN(
                         client[clientIdx],
                         protocolClientNew(strNewFmt("test client %u", clientIdx), STRDEF("test"), read, write),
-                        "create client %u", clientIdx);
-                    TEST_RESULT_VOID(protocolParallelClientAdd(parallel, client[clientIdx]), "add client %u", clientIdx);
+                        strZ(strNewFmt("create client %u", clientIdx)));
+                    TEST_RESULT_VOID(
+                        protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("add client %u", clientIdx)));
                 }
 
                 // Attempt to add client without an fd
@@ -963,7 +964,7 @@ testRun(void)
                 TEST_TITLE("free clients");
 
                 for (unsigned int clientIdx = 0; clientIdx < clientTotal; clientIdx++)
-                    TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), "free client %u", clientIdx);
+                    TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), strZ(strNewFmt("free client %u", clientIdx)));
             }
             HARNESS_FORK_PARENT_END();
         }

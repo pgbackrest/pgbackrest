@@ -325,7 +325,8 @@ testRun(void)
                 else
                 {
                     TEST_RESULT_STR(
-                        strLstAdd(list, strNewFmt("STR%02d", listIdx)), strNewFmt("STR%02d", listIdx), "add item %d", listIdx);
+                        strLstAdd(list, strNewFmt("STR%02d", listIdx)), strNewFmt("STR%02d", listIdx),
+                        strZ(strNewFmt("add item %d", listIdx)));
                 }
             }
 
@@ -344,9 +345,7 @@ testRun(void)
                 TEST_RESULT_STR(strLstGet(list, listIdx), NULL, "check null item");
             }
             else
-            {
-                TEST_RESULT_STR(strLstGet(list, listIdx), strNewFmt("STR%02u", listIdx), "check item %u", listIdx);
-            }
+                TEST_RESULT_STR(strLstGet(list, listIdx), strNewFmt("STR%02u", listIdx), strZ(strNewFmt("check item %u", listIdx)));
         }
 
         TEST_RESULT_VOID(strLstFree(list), "free string list");
@@ -418,7 +417,7 @@ testRun(void)
             }
             else
             {
-                TEST_RESULT_Z_STR(szList[listIdx], strNewFmt("STR%02u", listIdx), "check item %u", listIdx);
+                TEST_RESULT_Z_STR(szList[listIdx], strNewFmt("STR%02u", listIdx), strZ(strNewFmt("check item %u", listIdx)));
             }
         }
 

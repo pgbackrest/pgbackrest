@@ -265,9 +265,7 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(testContext)
         {
-            TEST_ASSIGN(
-                manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, NULL, NULL),
-                "build with %" PRIu64 " files", driver.fileTotal);
+            TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, NULL, NULL), "build files");
         }
         MEM_CONTEXT_END();
 
@@ -356,8 +354,8 @@ testRun(void)
         for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
         {
             TEST_RESULT_UINT(
-                varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal, "check stat %u",
-                statIdx);
+                varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal,
+                strZ(strNewFmt("check stat %u", statIdx)));
         }
     }
 

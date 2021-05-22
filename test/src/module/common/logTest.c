@@ -182,7 +182,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             regExpMatchOne(
                 STRDEF("^20[0-9]{2}\\-[0-1][0-9]\\-[0-3][0-9] [0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9]\\.[0-9]{3}$"), logTime),
-            true, "check timestamp format: %s", strZ(logTime));
+            true, "check timestamp format");
 
         // Redirect output to files
         const char *const stdoutFile = TEST_PATH "/stdout.log";

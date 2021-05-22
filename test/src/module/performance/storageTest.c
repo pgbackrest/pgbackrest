@@ -203,8 +203,7 @@ testRun(void)
 
                 // Storage info list
                 TEST_RESULT_VOID(
-                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL),
-                    "list %" PRIu64 " remote files", fileTotal);
+                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, NULL), "list remote files");
 
                 TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 

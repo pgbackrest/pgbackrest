@@ -23,12 +23,12 @@ testOptionFind(const char *optionName, unsigned int optionId, unsigned int optio
 {
     CfgParseOptionResult option = cfgParseOptionP(STR(optionName));
 
-    TEST_RESULT_BOOL(option.found, true, "check %s found", optionName);
-    TEST_RESULT_UINT(option.id, optionId, "check %s id %u", optionName, optionId);
-    TEST_RESULT_UINT(option.keyIdx, optionKeyIdx, "check %s key idx %u", optionName, optionKeyIdx);
-    TEST_RESULT_BOOL(option.negate, negate, "check %s negate %d", optionName, negate);
-    TEST_RESULT_BOOL(option.reset, reset, "check %s reset %d", optionName, reset);
-    TEST_RESULT_BOOL(option.deprecated, deprecated, "check %s deprecated %d", optionName, deprecated);
+    TEST_RESULT_BOOL(option.found, true, strZ(strNewFmt("check %s found", optionName)));
+    TEST_RESULT_UINT(option.id, optionId, strZ(strNewFmt("check %s id %u", optionName, optionId)));
+    TEST_RESULT_UINT(option.keyIdx, optionKeyIdx, strZ(strNewFmt("check %s key idx %u", optionName, optionKeyIdx)));
+    TEST_RESULT_BOOL(option.negate, negate, strZ(strNewFmt("check %s negate %d", optionName, negate)));
+    TEST_RESULT_BOOL(option.reset, reset, strZ(strNewFmt("check %s reset %d", optionName, reset)));
+    TEST_RESULT_BOOL(option.deprecated, deprecated, strZ(strNewFmt("check %s deprecated %d", optionName, deprecated)));
 }
 
 /***********************************************************************************************************************************
