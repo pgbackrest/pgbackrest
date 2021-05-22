@@ -1977,7 +1977,7 @@ testRun(void)
                 FileOpenError, "unable to create symlink");
 
             // Special files should not be in the repo
-            TEST_SYSTEM_FMT(
+            HRN_SYSTEM_FMT(
                 "mkfifo -m 666 %s",
                 strZ(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/pipe", strZ(resumeLabel)))));
 
@@ -2255,8 +2255,8 @@ testRun(void)
 
             // Move pg1-path and put a link in its place. This tests that backup works when pg1-path is a symlink yet should be
             // completely invisible in the manifest and logging.
-            TEST_SYSTEM_FMT("mv %s %s-data", strZ(pg1Path), strZ(pg1Path));
-            TEST_SYSTEM_FMT("ln -s %s-data %s ", strZ(pg1Path), strZ(pg1Path));
+            HRN_SYSTEM_FMT("mv %s %s-data", strZ(pg1Path), strZ(pg1Path));
+            HRN_SYSTEM_FMT("ln -s %s-data %s ", strZ(pg1Path), strZ(pg1Path));
 
             // Zeroed file which passes page checksums
             Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT);

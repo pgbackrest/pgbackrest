@@ -98,7 +98,7 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_TITLE("compressed output can be decompressed with command-line tool");
 
     storagePutP(storageNewWriteP(storageTest, STRDEF("test.cmp")), compressed);
-    TEST_SYSTEM_FMT("%s " TEST_PATH "/test.cmp > " TEST_PATH "/test.out", decompressCmd);
+    HRN_SYSTEM_FMT("%s " TEST_PATH "/test.cmp > " TEST_PATH "/test.out", decompressCmd);
     TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
 
     TEST_RESULT_BOOL(

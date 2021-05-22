@@ -147,7 +147,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("special info");
 
-        TEST_SYSTEM_FMT("mkfifo -m 666 %s", strZ(storagePathP(storageTest, STRDEF("repo/fifo"))));
+        HRN_SYSTEM_FMT("mkfifo -m 666 %s", strZ(storagePathP(storageTest, STRDEF("repo/fifo"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, STRDEF("fifo")), "valid fifo");
         TEST_RESULT_STR(info.name, NULL, "    name is not set");
@@ -164,7 +164,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("link info");
 
-        TEST_SYSTEM_FMT("ln -s ../repo/test %s", strZ(storagePathP(storageTest, STRDEF("repo/link"))));
+        HRN_SYSTEM_FMT("ln -s ../repo/test %s", strZ(storagePathP(storageTest, STRDEF("repo/link"))));
 
         TEST_ASSIGN(info, storageInfoP(storageRemote, STRDEF("link")), "valid link");
         TEST_RESULT_STR(info.name, NULL, "    name is not set");

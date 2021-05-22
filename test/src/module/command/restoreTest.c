@@ -969,7 +969,7 @@ testRun(void)
         manifestPathAdd(manifest, &path);
         manifestFileAdd(manifest, &file);
 
-        TEST_SYSTEM_FMT("sudo chown 77777:77777 %s", strZ(pgPath));
+        HRN_SYSTEM_FMT("sudo chown 77777:77777 %s", strZ(pgPath));
 
         userLocalData.userName = STRDEF("root");
         userLocalData.groupName = STRDEF("root");
@@ -1101,7 +1101,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty and ignore recovery.conf");
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -1117,7 +1117,7 @@ testRun(void)
             "P00 DETAIL: check '" TEST_PATH "/conf' exists\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "normal restore ignore recovery.conf");
@@ -1130,7 +1130,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty and PG12 and preserve but no recovery files");
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         manifest->pub.data.pgVersion = PG_VERSION_12;
 
@@ -1144,7 +1144,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty and ignore PG12 recovery files");
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)});
 
@@ -1163,7 +1163,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty and PG12");
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -1734,7 +1734,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type none");
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         storagePutP(
             storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
@@ -1757,7 +1757,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type standby and remove existing recovery settings");
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         storagePutP(
             storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
@@ -1795,7 +1795,7 @@ testRun(void)
 
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_12, STRDEF("/pg"));
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR), BUFSTRDEF("# DO NOT MODIFY\n"));
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_STANDBYSIGNAL_STR), NULL);
@@ -1818,7 +1818,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type default");
 
-        TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
+        HRN_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
         storagePutP(
             storageNewWriteP(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF_STR),
@@ -2062,7 +2062,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("bogus-file")), NULL);
 
         // Add a special file that will be removed
-        TEST_SYSTEM_FMT("mkfifo %s/pipe", strZ(pgPath));
+        HRN_SYSTEM_FMT("mkfifo %s/pipe", strZ(pgPath));
 
         // Overwrite PG_VERSION with bogus content that will not be detected by delta force because the time and size are the same
         storagePutP(
@@ -2603,8 +2603,8 @@ testRun(void)
 
         // Move pg1-path and put a link in its place. This tests that restore works when pg1-path is a symlink yet should be
         // completely invisible in the manifest and logging.
-        TEST_SYSTEM_FMT("mv %s %s-data", strZ(pgPath), strZ(pgPath));
-        TEST_SYSTEM_FMT("ln -s %s-data %s ", strZ(pgPath), strZ(pgPath));
+        HRN_SYSTEM_FMT("mv %s %s-data", strZ(pgPath), strZ(pgPath));
+        HRN_SYSTEM_FMT("ln -s %s-data %s ", strZ(pgPath), strZ(pgPath));
 
         // Create the stanza archive pool path to check that it gets removed
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE "/empty.txt");

@@ -852,8 +852,8 @@ testRun(void)
         TEST_TITLE("expire via backup command");
 
         // Copy the repo to another repo
-        TEST_SYSTEM("mkdir " TEST_PATH "/repo2");
-        TEST_SYSTEM("cp -r " TEST_PATH "/repo/* " TEST_PATH "/repo2/");
+        HRN_SYSTEM("mkdir " TEST_PATH "/repo2");
+        HRN_SYSTEM("cp -r " TEST_PATH "/repo/* " TEST_PATH "/repo2/");
 
         // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);

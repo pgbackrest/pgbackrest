@@ -250,9 +250,9 @@ Macros to compare results of common data types
     TEST_RESULT_UINT_INT_PARAM(statement, expected, harnessTestResultOperationEq, comment)
 
 /***********************************************************************************************************************************
-Test system calls
+System call harness
 ***********************************************************************************************************************************/
-#define TEST_SYSTEM(command)                                                                                                       \
+#define HRN_SYSTEM(command)                                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
         int TEST_SYSTEM_FMT_result = system(command);                                                                              \
@@ -265,7 +265,7 @@ Test system calls
         }                                                                                                                          \
     } while (0)
 
-#define TEST_SYSTEM_FMT(...)                                                                                                       \
+#define HRN_SYSTEM_FMT(...)                                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
         char TEST_SYSTEM_FMT_buffer[8192];                                                                                         \
@@ -273,7 +273,7 @@ Test system calls
         if (snprintf(TEST_SYSTEM_FMT_buffer, sizeof(TEST_SYSTEM_FMT_buffer), __VA_ARGS__) >= (int)sizeof(TEST_SYSTEM_FMT_buffer))  \
             THROW_FMT(AssertError, "command needs more than the %zu characters available", sizeof(TEST_SYSTEM_FMT_buffer));        \
                                                                                                                                    \
-        TEST_SYSTEM(TEST_SYSTEM_FMT_buffer);                                                                                       \
+        HRN_SYSTEM(TEST_SYSTEM_FMT_buffer);                                                                                        \
     } while (0)
 
 /***********************************************************************************************************************************

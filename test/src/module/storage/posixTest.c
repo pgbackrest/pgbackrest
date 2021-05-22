@@ -138,7 +138,7 @@ testRun(void)
         const String *fileExists = STRDEF(TEST_PATH "/exists");
         const String *pathExists = STRDEF(TEST_PATH "/pathExists");
         TEST_RESULT_INT(system(strZ(strNewFmt("touch %s", strZ(fileExists)))), 0, "create exists file");
-        TEST_SYSTEM_FMT("mkdir %s", strZ(pathExists));
+        HRN_SYSTEM_FMT("mkdir %s", strZ(pathExists));
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists), true, "file exists");
         TEST_RESULT_BOOL(storageExistsP(storageTest, pathExists), false, "not a file");
