@@ -149,7 +149,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("repoIsLocal() and pgIsLocal()"))
@@ -296,9 +296,9 @@ testRun(void)
         strLstAddZ(argList, "--repo1-host=repo-host");
         strLstAddZ(argList, "--repo1-host-user=repo-host-user");
         // Local config settings should never be passed to the remote
-        strLstAdd(argList, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
-        strLstAdd(argList, strNewFmt("--config-include-path=%s", testPath()));
-        strLstAdd(argList, strNewFmt("--config-path=%s", testPath()));
+        strLstAddZ(argList, "--config=" TEST_PATH "/pgbackrest.conf");
+        strLstAddZ(argList, "--config-include-path=" TEST_PATH);
+        strLstAddZ(argList, "--config-path=" TEST_PATH);
         strLstAddZ(argList, "archive-get");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
@@ -992,8 +992,8 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAddZ(argList, "--repo1-host=localhost");
-        strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
+        strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH);
         harnessCfgLoad(cfgCmdInfo, argList);
 
         ProtocolClient *client = NULL;
@@ -1020,10 +1020,10 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--protocol-timeout=10");
-        strLstAdd(argList, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
+        strLstAddZ(argList, "--config=" TEST_PATH "/pgbackrest.conf");
         strLstAddZ(argList, "--repo1-host=localhost");
-        strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
+        strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH);
         strLstAddZ(argList, "--process=999");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypePg);
         harnessCfgLoadRole(cfgCmdArchiveGet, cfgCmdRoleLocal, argList);
@@ -1050,14 +1050,14 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--pg1-path=/pg");
         strLstAddZ(argList, "--protocol-timeout=10");
-        strLstAdd(argList, strNewFmt("--repo1-host-config=%s/pgbackrest.conf", testPath()));
+        strLstAddZ(argList, "--repo1-host-config=" TEST_PATH "/pgbackrest.conf");
         strLstAddZ(argList, "--repo1-host=localhost");
-        strLstAdd(argList, strNewFmt("--repo1-host-user=%s", testUser()));
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
-        strLstAdd(argList, strNewFmt("--repo2-host-config=%s/pgbackrest.conf", testPath()));
+        strLstAddZ(argList, "--repo1-host-user=" TEST_USER);
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH);
+        strLstAddZ(argList, "--repo2-host-config=" TEST_PATH "/pgbackrest.conf");
         strLstAddZ(argList, "--repo2-host=localhost");
-        strLstAdd(argList, strNewFmt("--repo2-host-user=%s", testUser()));
-        strLstAdd(argList, strNewFmt("--repo2-path=%s2", testPath()));
+        strLstAddZ(argList, "--repo2-host-user=" TEST_USER);
+        strLstAddZ(argList, "--repo2-path=" TEST_PATH "2");
         harnessCfgLoad(cfgCmdCheck, argList);
 
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 0), NULL, "check repo1 cipher pass before");
@@ -1077,8 +1077,8 @@ testRun(void)
         strLstAddZ(argList, "--protocol-timeout=10");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--pg1-host=localhost");
-        strLstAdd(argList, strNewFmt("--pg1-host-user=%s", testUser()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", testPath()));
+        strLstAddZ(argList, "--pg1-host-user=" TEST_USER);
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH);
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 0), "get remote protocol");

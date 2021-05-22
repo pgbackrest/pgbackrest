@@ -24,7 +24,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("queueNeed()"))
@@ -33,15 +33,15 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test1");
         strLstAddZ(argList, "--archive-async");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");
-        strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argList, "--spool-path=" TEST_PATH "/spool");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         size_t queueSize = 16 * 1024 * 1024;
         size_t walSegmentSize = 16 * 1024 * 1024;
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
-            PathMissingError, "unable to list file info for missing path '%s/spool/archive/test1/in'", testPath());
+            PathMissingError, "unable to list file info for missing path '" TEST_PATH "/spool/archive/test1/in'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         storagePathCreateP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN));
@@ -574,7 +574,7 @@ testRun(void)
         hrnCfgArgRawZ(argBaseList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawZ(argBaseList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argBaseList, cfgOptArchiveTimeout, "1");
-        hrnCfgArgRawFmt(argBaseList, cfgOptLockPath, "%s/lock", testDataPath());
+        hrnCfgArgRawZ(argBaseList, cfgOptLockPath, HRN_PATH "/lock");
         strLstAddZ(argBaseList, CFGCMD_ARCHIVE_GET);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -604,7 +604,7 @@ testRun(void)
             storagePgWrite(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_10, .systemId = 0xFACEFACEFACEFACE}));
 
-        storagePathCreateP(storageTest, strNewFmt("%s/pg/pg_wal", testPath()));
+        storagePathCreateP(storageTest, STRDEF(TEST_PATH "/pg/pg_wal"));
 
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));

@@ -87,7 +87,7 @@ testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest 
         "pg path info list for restore compare");
 
     // Compare
-    TEST_RESULT_STR_Z(callbackData.content, hrnReplaceKey(compare), "    compare result manifest");
+    TEST_RESULT_STR_Z(callbackData.content, compare, "    compare result manifest");
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -151,7 +151,7 @@ testRun(void)
     hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("restoreFile()"))
@@ -163,8 +163,8 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         harnessCfgLoad(cfgCmdRestore, argList);
 
         // Create the pg path
@@ -173,16 +173,16 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("sparse-zero"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 0, true, false, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), true, 0x10000000000UL, 1557432154, 0600, TEST_USER_STR,
+                TEST_GROUP_STR, 0, true, false, NULL),
             false, "zero sparse 1TB file");
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("sparse-zero")).size, 0x10000000000UL, "    check size");
 
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("normal-zero"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 0, false, false, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
+                false, false, NULL),
             true, "zero-length file");
         TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("normal-zero")).size, 0, "    check size");
 
@@ -199,8 +199,8 @@ testRun(void)
         TEST_ERROR(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
-                STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 0, false, false, STRDEF("badpass")),
+                STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
+                false, false, STRDEF("badpass")),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -214,8 +214,8 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeGz, STRDEF("normal"),
-                STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 0, false, false, STRDEF("badpass")),
+                STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"), false, 7, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
+                false, false, STRDEF("badpass")),
             true, "copy file");
 
         StorageInfo info = storageInfoP(storagePg(), STRDEF("normal"));
@@ -223,8 +223,8 @@ testRun(void)
         TEST_RESULT_UINT(info.size, 7, "    check size");
         TEST_RESULT_UINT(info.mode, 0600, "    check mode");
         TEST_RESULT_INT(info.timeModified, 1557432154, "    check time");
-        TEST_RESULT_STR_Z(info.user, testUser(), "    check user");
-        TEST_RESULT_STR_Z(info.group, testGroup(), "    check group");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "    check user");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "    check group");
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("normal")))), "acefile", "    check contents");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -237,8 +237,8 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 0, true, false, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
+                true, false, NULL),
             true, "sha1 delta missing");
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
@@ -249,8 +249,8 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 0, true, false, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
+                true, false, NULL),
             false, "sha1 delta existing");
 
         ioBufferSizeSet(oldBufferSize);
@@ -258,8 +258,8 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 1557432155, true, true, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
+                1557432155, true, true, NULL),
             false, "sha1 delta force existing");
 
         // Change the existing file so it no longer matches by size
@@ -268,8 +268,8 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 0, true, false, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
+                true, false, NULL),
             true, "sha1 delta existing, size differs");
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
@@ -279,8 +279,8 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 1557432155, true, true, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
+                1557432155, true, true, NULL),
             true, "delta force existing, size differs");
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
@@ -291,8 +291,8 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 0, true, false, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
+                true, false, NULL),
             true, "sha1 delta existing, content differs");
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storagePg(), STRDEF("delta")))), "atestfile", "    check contents");
@@ -302,15 +302,15 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 1557432155, true, true, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
+                1557432155, true, true, NULL),
             true, "delta force existing, timestamp differs");
 
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 1557432153, true, true, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 9, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR,
+                1557432153, true, true, NULL),
             true, "delta force existing, timestamp after copy time");
 
         // Change the existing file to zero-length
@@ -319,16 +319,16 @@ testRun(void)
         TEST_RESULT_BOOL(
             restoreFile(
                 repoFile1, repoIdx, repoFileReferenceFull, compressTypeNone, STRDEF("delta"),
-                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, strNewZ(testUser()),
-                strNewZ(testGroup()), 0, true, false, NULL),
+                STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"), false, 0, 1557432154, 0600, TEST_USER_STR, TEST_GROUP_STR, 0,
+                true, false, NULL),
             false, "sha1 delta existing, content differs");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("restorePathValidate()"))
     {
-        const String *pgPath = strNewFmt("%s/pg", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on data directory missing");
@@ -339,7 +339,7 @@ testRun(void)
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pgPath)));
         harnessCfgLoad(cfgCmdRestore, argList);
 
-        TEST_ERROR_FMT(restorePathValidate(), PathMissingError, "$PGDATA directory '%s/pg' does not exist", testPath());
+        TEST_ERROR(restorePathValidate(), PathMissingError, "$PGDATA directory '" TEST_PATH "/pg' does not exist");
 
         // Create PGDATA
         storagePathCreateP(storagePgWrite(), NULL);
@@ -354,7 +354,7 @@ testRun(void)
             "unable to restore while PostgreSQL is running\n"
                 "HINT: presence of 'postmaster.pid' in '%s/pg' indicates PostgreSQL is running.\n"
                 "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.",
-            testPath());
+            TEST_PATH);
 
         storageRemoveP(storagePgWrite(), STRDEF("postmaster.pid"), .errorOnMissing = true);
 
@@ -371,7 +371,7 @@ testRun(void)
         TEST_RESULT_VOID(restorePathValidate(), "restore --delta with invalid PGDATA");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "--delta set to false");
         TEST_RESULT_LOG(
-            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '{[path]}/pg' to"
+            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
                 " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                 " exist in the destination directories the restore will be aborted.");
 
@@ -382,15 +382,15 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         strLstAddZ(argList, "--force");
         harnessCfgLoad(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(restorePathValidate(), "restore --force with invalid PGDATA");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "--force set to false");
         TEST_RESULT_LOG(
-            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '{[path]}/pg' to"
+            "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
                 " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
                 " exist in the destination directories the restore will be aborted.");
 
@@ -441,8 +441,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("restoreBackupSet()"))
     {
-        const String *pgPath = strNewFmt("%s/pg", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -479,7 +479,7 @@ testRun(void)
         TEST_TITLE("target time");
         setenv("TZ", "UTC", true);
 
-        const String *repoPath2 = strNewFmt("%s/repo2", testPath());
+        const String *repoPath2 = STRDEF(TEST_PATH "/repo2");
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -640,8 +640,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("restoreManifestMap()"))
     {
-        const String *pgPath = strNewFmt("%s/pg", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_94, pgPath);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -657,7 +657,7 @@ testRun(void)
         TEST_RESULT_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is not remapped");
 
         // Now change pg1-path so the data directory gets remapped
-        pgPath = strNewFmt("%s/pg2", testPath());
+        pgPath = STRDEF(TEST_PATH "/pg2");
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
@@ -667,7 +667,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestMap(manifest), "base directory is remapped");
         TEST_RESULT_STR(manifestTargetFind(manifest, MANIFEST_TARGET_PGDATA_STR)->path, pgPath, "base directory is remapped");
-        TEST_RESULT_LOG("P00   INFO: remap data directory to '{[path]}/pg2'");
+        TEST_RESULT_LOG("P00   INFO: remap data directory to '" TEST_PATH "/pg2'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remap tablespaces");
@@ -880,7 +880,7 @@ testRun(void)
     {
         userInitInternal();
 
-        const String *pgPath = strNewFmt("%s/pg", testPath());
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is not root and all ownership is good");
@@ -899,8 +899,8 @@ testRun(void)
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
         TEST_RESULT_LOG(
-            "P00   WARN: unknown user '{[user]}' in backup manifest mapped to current user\n"
-            "P00   WARN: unknown group '{[group]}' in backup manifest mapped to current group");
+            "P00   WARN: unknown user '" TEST_USER "' in backup manifest mapped to current user\n"
+            "P00   WARN: unknown group '" TEST_GROUP "' in backup manifest mapped to current group");
 
         userInitInternal();
 
@@ -948,7 +948,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
-        TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '{[group]}'");
+        TEST_RESULT_LOG("P00   WARN: unknown group in backup manifest mapped to '" TEST_GROUP "'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is root and group is bad");
@@ -961,7 +961,7 @@ testRun(void)
 
         TEST_RESULT_VOID(restoreManifestOwner(manifest), "check ownership");
 
-        TEST_RESULT_LOG("P00   WARN: unknown user in backup manifest mapped to '{[user]}'");
+        TEST_RESULT_LOG("P00   WARN: unknown user in backup manifest mapped to '" TEST_USER "'");
 
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef TEST_CONTAINER_REQUIRED
@@ -995,26 +995,26 @@ testRun(void)
         TEST_TITLE("restoreCleanOwnership() update to root (existing)");
 
         // Expect an error here since we can't really set ownership to root
-        TEST_ERROR_FMT(
-            restoreCleanOwnership(STR(testPath()), STRDEF("root"), STRDEF("root"), userId(), groupId(), false), FileOwnerError,
-            "unable to set ownership for '%s': [1] Operation not permitted", testPath());
+        TEST_ERROR(
+            restoreCleanOwnership(TEST_PATH_STR, STRDEF("root"), STRDEF("root"), userId(), groupId(), false), FileOwnerError,
+            "unable to set ownership for '" TEST_PATH "': [1] Operation not permitted");
 
-        TEST_RESULT_LOG("P00 DETAIL: update ownership for '{[path]}'");
+        TEST_RESULT_LOG("P00 DETAIL: update ownership for '" TEST_PATH "'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restoreCleanOwnership() update to bogus (new)");
 
         // Will succeed because bogus will be remapped to the current user/group
-        restoreCleanOwnership(STR(testPath()), STRDEF("bogus"), STRDEF("bogus"), 0, 0, true);
+        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), STRDEF("bogus"), 0, 0, true);
 
         // Test again with only group for coverage
-        restoreCleanOwnership(STR(testPath()), STRDEF("bogus"), STRDEF("bogus"), userId(), 0, true);
+        restoreCleanOwnership(TEST_PATH_STR, STRDEF("bogus"), STRDEF("bogus"), userId(), 0, true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("directory with bad permissions/mode");
 
-        const String *pgPath = strNewFmt("%s/pg", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
 
         StringList *argList = strLstNew();
@@ -1025,26 +1025,26 @@ testRun(void)
 
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0600);
 
-        userLocalData.userId = getuid() + 1;
+        userLocalData.userId = TEST_USER_ID + 1;
 
         TEST_ERROR_FMT(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' not owned by current user", testPath());
+            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' not owned by current user", TEST_PATH);
 
-        TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
+        TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         userLocalData.userRoot = true;
 
         TEST_ERROR_FMT(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
+            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", TEST_PATH);
 
-        TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
+        TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         userInitInternal();
 
         TEST_ERROR_FMT(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", testPath());
+            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", TEST_PATH);
 
-        TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
+        TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         storagePathRemoveP(storagePgWrite(), NULL);
         storagePathCreateP(storagePgWrite(), NULL, .mode = 0700);
@@ -1058,9 +1058,9 @@ testRun(void)
             restoreCleanBuild(manifest), PathNotEmptyError,
             "unable to restore to path '%s/pg' because it contains files\n"
                 "HINT: try using --delta if this is what you intended.",
-            testPath());
+            TEST_PATH);
 
-        TEST_RESULT_LOG("P00 DETAIL: check '{[path]}/pg' exists");
+        TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty");
@@ -1079,9 +1079,9 @@ testRun(void)
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/conf' exists\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/conf' exists\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when linked file already exists without delta");
@@ -1093,11 +1093,11 @@ testRun(void)
             restoreCleanBuild(manifest), FileExistsError,
             "unable to restore file '%s/conf/pg_hba.conf' because it already exists\n"
             "HINT: try using --delta if this is what you intended.",
-            testPath());
+            TEST_PATH);
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/conf' exists");
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/conf' exists");
 
         storageRemoveP(storagePgWrite(), STRDEF("../conf/pg_hba.conf"), .errorOnMissing = true);
 
@@ -1116,9 +1116,9 @@ testRun(void)
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/conf' exists\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/conf' exists\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
 
         TEST_SYSTEM_FMT("rm -rf %s/*", strZ(pgPath));
 
@@ -1126,9 +1126,9 @@ testRun(void)
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "normal restore ignore recovery.conf");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/conf' exists\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/conf' exists\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty and PG12 and preserve but no recovery files");
@@ -1140,9 +1140,9 @@ testRun(void)
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/conf' exists\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/conf' exists\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty and ignore PG12 recovery files");
@@ -1158,10 +1158,10 @@ testRun(void)
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/conf' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/conf' exists\n"
             "P00 DETAIL: skip 'postgresql.auto.conf' -- recovery type is preserve\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("succeed when all directories empty and PG12");
@@ -1177,9 +1177,9 @@ testRun(void)
         TEST_RESULT_VOID(restoreCleanBuild(manifest), "restore");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/conf' exists\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/conf' exists\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../conf/pg_hba.conf'");
     }
 
     // *****************************************************************************************************************************
@@ -1504,12 +1504,11 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
-            hrnReplaceKey(
-                RECOVERY_SETTING_HEADER
-                "a_setting = 'a'\n"
-                "b_setting = 'b'\n"
-                "restore_command = '{[project-exe]} --lock-path={[path-data]}/lock --log-path={[path-data]} --pg1-path=/pg"
-                    " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n"),
+            RECOVERY_SETTING_HEADER
+            "a_setting = 'a'\n"
+            "b_setting = 'b'\n"
+            "restore_command = '" TEST_PROJECT_EXE " --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
+                " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
             "check recovery options");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1689,7 +1688,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("restoreRecoveryWrite*()"))
     {
-        const String *pgPath = strNewFmt("%s/pg", testPath());
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
         storagePathCreateP(storageTest, pgPath, .mode = 0700);
 
         const String *restoreLabel = STRDEF("LABEL");
@@ -1733,7 +1732,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: postgresql.auto.conf does not exist -- creating to contain recovery settings\n"
-            "P00   INFO: write {[path]}/pg/postgresql.auto.conf");
+            "P00   INFO: write " TEST_PATH "/pg/postgresql.auto.conf");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type none");
@@ -1756,7 +1755,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
         TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
 
-        TEST_RESULT_LOG("P00   INFO: write updated {[path]}/pg/postgresql.auto.conf");
+        TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type standby and remove existing recovery settings");
@@ -1792,7 +1791,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), false, "recovery.signal exists");
         TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), true, "standby.signal missing");
 
-        TEST_RESULT_LOG("P00   INFO: write updated {[path]}/pg/postgresql.auto.conf");
+        TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PG12 restore type preserve");
@@ -1842,15 +1841,15 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_RECOVERYSIGNAL_STR), true, "recovery.signal exists");
         TEST_RESULT_BOOL(storageExistsP(storagePg(), PG_FILE_STANDBYSIGNAL_STR), false, "standby.signal missing");
 
-        TEST_RESULT_LOG("P00   INFO: write updated {[path]}/pg/postgresql.auto.conf");
+        TEST_RESULT_LOG("P00   INFO: write updated " TEST_PATH "/pg/postgresql.auto.conf");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("cmdRestore()"))
     {
-        const String *pgPath = strNewFmt("%s/pg", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
-        const String *repoPathEncrpyt = strNewFmt("%s/repo-encrypt", testPath());
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
+        const String *repoPathEncrpyt = STRDEF(TEST_PATH "/repo-encrypt");
 
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
@@ -1938,7 +1937,7 @@ testRun(void)
             manifestTargetAdd(
                 manifest, &(ManifestTarget){
                     .type = manifestTargetTypeLink, .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"),
-                    .path = strNewFmt("%s/ts/1", testPath()), .tablespaceId = 1, .tablespaceName = STRDEF("ts1")});
+                    .path = STRDEF(TEST_PATH "/ts/1"), .tablespaceId = 1, .tablespaceName = STRDEF("ts1")});
             manifestPathAdd(
                 manifest, &(ManifestPath){
                     .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC), .mode = 0700, .group = groupName(),
@@ -1952,7 +1951,7 @@ testRun(void)
             manifestLinkAdd(
                 manifest, &(ManifestLink){
                     .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/1"),
-                    .destination = strNewFmt("%s/ts/1", testPath()), .group = groupName(), .user = userName()});
+                    .destination = STRDEF(TEST_PATH "/ts/1"), .group = groupName(), .user = userName()});
 
             // pg_tblspc/1/16384 path
             manifestPathAdd(
@@ -2008,21 +2007,21 @@ testRun(void)
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
             "P00   INFO: repo2: restore backup set 20161219-212741F\n"
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/ts/1' exists\n"
-            "P00 DETAIL: update mode for '{[path]}/pg' to 0700\n"
-            "P00 DETAIL: create path '{[path]}/pg/global'\n"
-            "P00 DETAIL: create path '{[path]}/pg/pg_tblspc'\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
-            "P00 DETAIL: create path '{[path]}/pg/pg_tblspc/1/16384'\n"
-            "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P00   INFO: write {[path]}/pg/recovery.conf\n"
-            "P00 DETAIL: sync path '{[path]}/pg'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/ts/1' exists\n"
+            "P00 DETAIL: update mode for '" TEST_PATH "/pg' to 0700\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100%%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P00   INFO: write " TEST_PATH "/pg/recovery.conf\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '{[path]}/pg/global'", testPath(), testPath(), testPath(), testPath())));
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'", TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH)));
 
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
         storageRemoveP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .errorOnMissing = true);
@@ -2033,11 +2032,11 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
             "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d={[path]}/ts/1}\n");
+            "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
-            ". {link, d={[path]}/ts/1}\n"
+            ". {link, d=" TEST_PATH "/ts/1}\n"
             "16384 {path}\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2124,26 +2123,26 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: restore backup set 20161219-212741F\n"
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/ts/1' exists\n"
-            "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
-            "P00 DETAIL: remove invalid file '{[path]}/pg/bogus-file'\n"
-            "P00 DETAIL: remove link '{[path]}/pg/pg_tblspc/1' because destination changed\n"
-            "P00 DETAIL: remove special file '{[path]}/pg/pipe'\n"
-            "P00   INFO: remove invalid files/links/paths from '{[path]}/ts/1'\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/pg_tblspc/1' to '{[path]}/ts/1'\n"
-            "P01 DETAIL: restore file {[path]}/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860 (4B, 50%)"
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/ts/1' exists\n"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/bogus-file'\n"
+            "P00 DETAIL: remove link '" TEST_PATH "/pg/pg_tblspc/1' because destination changed\n"
+            "P00 DETAIL: remove special file '" TEST_PATH "/pg/pipe'\n"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1'\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
+                " (4B, 50%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P01   INFO: restore file {[path]}/pg/tablespace_map (0B, 50%)\n"
-            "P01   INFO: restore file {[path]}/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
-                " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P00   WARN: recovery type is preserve but recovery file does not exist at '{[path]}/pg/recovery.conf'\n"
-            "P00 DETAIL: sync path '{[path]}/pg'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
+            "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '{[path]}/pg/global'");
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2151,12 +2150,12 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
             "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d={[path]}/ts/1}\n"
+            "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
             "tablespace_map {file, s=0, t=1482182860}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
-            ". {link, d={[path]}/ts/1}\n"
+            ". {link, d=" TEST_PATH "/ts/1}\n"
             "16384 {path}\n"
             "16384/PG_VERSION {file, s=4, t=1482182860}\n");
 
@@ -2185,21 +2184,21 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: restore backup set 20161219-212741F\n"
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/ts/1' exists\n"
-            "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
-            "P00   INFO: remove invalid files/links/paths from '{[path]}/ts/1'\n"
-            "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 50%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P01   INFO: restore file {[path]}/pg/tablespace_map (0B, 50%)\n"
-            "P01   INFO: restore file {[path]}/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/ts/1' exists\n"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1'\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/PG_VERSION (4B, 50%) checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/tablespace_map (0B, 50%)\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100%)"
                 " checksum 797e375b924134687cbf9eacd37a4355f3d825e4\n"
-            "P00   WARN: recovery type is preserve but recovery file does not exist at '{[path]}/pg/recovery.conf'\n"
-            "P00 DETAIL: sync path '{[path]}/pg'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/16384'\n"
+            "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '{[path]}/pg/global'");
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2207,12 +2206,12 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
             "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d={[path]}/ts/1}\n"
+            "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
             "tablespace_map {file, s=0, t=1482182860}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
-            ". {link, d={[path]}/ts/1}\n"
+            ". {link, d=" TEST_PATH "/ts/1}\n"
             "16384 {path}\n"
             "16384/PG_VERSION {file, s=4, t=1482182860}\n");
 
@@ -2455,7 +2454,7 @@ testRun(void)
             manifestTargetAdd(
                 manifest, &(ManifestTarget){
                     .type = manifestTargetTypeLink, .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"),
-                    .path = strNewFmt("%s/ts/1", testPath()), .tablespaceId = 1, .tablespaceName = STRDEF("ts1")});
+                    .path = STRDEF(TEST_PATH "/ts/1"), .tablespaceId = 1, .tablespaceName = STRDEF("ts1")});
             manifestPathAdd(
                 manifest, &(ManifestPath){
                     .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC), .mode = 0700, .group = groupName(),
@@ -2473,7 +2472,7 @@ testRun(void)
             manifestLinkAdd(
                 manifest, &(ManifestLink){
                     .name = STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/1"),
-                    .destination = strNewFmt("%s/ts/1", testPath()), .group = groupName(), .user = userName()});
+                    .destination = STRDEF(TEST_PATH "/ts/1"), .group = groupName(), .user = userName()});
 
             // Always sort
             lstSort(manifest->pub.targetList, sortOrderAsc);
@@ -2505,48 +2504,53 @@ testRun(void)
             "P00   INFO: map link 'pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00   INFO: map link 'pg_wal' to '../wal'\n"
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/config' exists\n"
-            "P00 DETAIL: check '{[path]}/wal' exists\n"
-            "P00 DETAIL: check '{[path]}/ts/1/PG_10_201707211' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/config' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/wal' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_10_201707211' exists\n"
             "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
-            "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
-            "P00 DETAIL: remove invalid path '{[path]}/pg/bogus1'\n"
-            "P00 DETAIL: remove invalid path '{[path]}/pg/global/bogus3'\n"
-            "P00 DETAIL: remove invalid link '{[path]}/pg/pg_wal2'\n"
-            "P00 DETAIL: remove invalid file '{[path]}/pg/tablespace_map'\n"
-            "P00 DETAIL: create path '{[path]}/pg/base'\n"
-            "P00 DETAIL: create path '{[path]}/pg/base/1'\n"
-            "P00 DETAIL: create path '{[path]}/pg/base/16384'\n"
-            "P00 DETAIL: create path '{[path]}/pg/base/32768'\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
-            "P00 DETAIL: create symlink '{[path]}/pg/postgresql.conf' to '../config/postgresql.conf'\n"
-            "P01   INFO: restore file {[path]}/pg/base/32768/32769 (32KB, 49%) checksum a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
-            "P01   INFO: restore file {[path]}/pg/base/16384/16385 (16KB, 74%) checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
-            "P01   INFO: restore file {[path]}/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: remove invalid path '" TEST_PATH "/pg/bogus1'\n"
+            "P00 DETAIL: remove invalid path '" TEST_PATH "/pg/global/bogus3'\n"
+            "P00 DETAIL: remove invalid link '" TEST_PATH "/pg/pg_wal2'\n"
+            "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/tablespace_map'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg/base'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg/base/1'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg/base/16384'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg/base/32768'\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
+            "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%) checksum"
+                " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, 74%) checksum"
+                " d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
                 " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
-            "P01   INFO: restore file {[path]}/pg/base/1/2 (8KB, 99%) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
-            "P01   INFO: restore file {[path]}/pg/postgresql.conf (15B, 99%) checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
-            "P01   INFO: restore file {[path]}/pg/pg_hba.conf (11B, 99%) checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01   INFO: restore file {[path]}/pg/base/32768/PG_VERSION (4B, 99%)"
+            "P01   INFO: restore file " TEST_PATH "/pg/base/1/2 (8KB, 99%) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/postgresql.conf (15B, 99%) checksum"
+                " 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/pg_hba.conf (11B, 99%) checksum"
+                " 401215e092779574988a854d8c7caed7f91dba4b\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (4B, 99%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01   INFO: restore file {[path]}/pg/base/16384/PG_VERSION (4B, 99%)"
+            "P01   INFO: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, 99%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01   INFO: restore file {[path]}/pg/base/1/PG_VERSION (4B, 99%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01   INFO: restore file {[path]}/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01   INFO: restore file {[path]}/pg/global/999 (0B, 100%)\n"
-            "P00 DETAIL: sync path '{[path]}/config'\n"
-            "P00 DETAIL: sync path '{[path]}/pg'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/base'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/base/1'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/base/16384'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/base/32768'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/PG_10_201707211'\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/base/1/PG_VERSION (4B, 99%) checksum"
+                " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01   INFO: restore file " TEST_PATH "/pg/global/999 (0B, 100%)\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/base/1'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/base/16384'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/base/32768'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_wal'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
-            "P00 DETAIL: sync path '{[path]}/pg/global'");
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2567,13 +2571,13 @@ testRun(void)
             "global/pg_control {file, s=8192, t=1482182860}\n"
             "pg_hba.conf {link, d=../config/pg_hba.conf}\n"
             "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d={[path]}/ts/1}\n"
+            "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
             "pg_wal {link, d=../wal}\n"
             "postgresql.conf {link, d=../config/postgresql.conf}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
-            ". {link, d={[path]}/ts/1}\n"
+            ". {link, d=" TEST_PATH "/ts/1}\n"
             "16384 {path}\n"
             "16384/PG_VERSION {file, s=4, t=1482182860}\n"
             "PG_10_201707211 {path}\n");
@@ -2620,47 +2624,47 @@ testRun(void)
             "P00   INFO: map link 'postgresql.conf' to '../config/postgresql.conf'\n"
             "P00 DETAIL: databases found for selective restore (1, 16384, 32768)\n"
             "P00 DETAIL: databases excluded (zeroed) from selective restore (32768)\n"
-            "P00 DETAIL: check '{[path]}/pg' exists\n"
-            "P00 DETAIL: check '{[path]}/config' exists\n"
-            "P00 DETAIL: check '{[path]}/wal' exists\n"
-            "P00 DETAIL: check '{[path]}/ts/1/PG_10_201707211' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/config' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/wal' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_10_201707211' exists\n"
             "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
             "P00 DETAIL: remove 'global/pg_control' so cluster will not start if restore does not complete\n"
-            "P00   INFO: remove invalid files/links/paths from '{[path]}/pg'\n"
-            "P00   INFO: remove invalid files/links/paths from '{[path]}/wal'\n"
-            "P00   INFO: remove invalid files/links/paths from '{[path]}/ts/1/PG_10_201707211'\n"
-            "P01 DETAIL: restore zeroed file {[path]}/pg/base/32768/32769 (32KB, 49%)\n"
-            "P01 DETAIL: restore file {[path]}/pg/base/16384/16385 - exists and matches backup (16KB, 74%)"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/wal'\n"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_10_201707211'\n"
+            "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, 49%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, 74%)"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
-            "P01   INFO: restore file {[path]}/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
+            "P01   INFO: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, 87%)"
                 " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
-            "P01 DETAIL: restore file {[path]}/pg/base/1/2 - exists and matches backup (8KB, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 - exists and matches backup (8KB, 99%)"
                 " checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
-            "P01 DETAIL: restore file {[path]}/pg/postgresql.conf - exists and matches backup (15B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf - exists and matches backup (15B, 99%)"
                 " checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
-            "P01 DETAIL: restore file {[path]}/pg/pg_hba.conf - exists and matches backup (11B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf - exists and matches backup (11B, 99%)"
                 " checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01 DETAIL: restore file {[path]}/pg/base/32768/PG_VERSION - exists and matches backup (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION - exists and matches backup (4B, 99%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file {[path]}/pg/base/16384/PG_VERSION - exists and matches backup (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION - exists and matches backup (4B, 99%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file {[path]}/pg/base/1/PG_VERSION - exists and matches backup (4B, 99%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (4B, 99%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file {[path]}/pg/PG_VERSION - exists and matches backup (4B, 100%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (4B, 100%)"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file {[path]}/pg/global/999 - exists and is zero size (0B, 100%)\n"
-            "P00 DETAIL: sync path '{[path]}/config'\n"
-            "P00 DETAIL: sync path '{[path]}/pg'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/base'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/base/1'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/base/16384'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/base/32768'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_wal'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1'\n"
-            "P00 DETAIL: sync path '{[path]}/pg/pg_tblspc/1/PG_10_201707211'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, 100%)\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/base/1'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/base/16384'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/base/32768'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_wal'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
-            "P00 DETAIL: sync path '{[path]}/pg/global'");
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);
@@ -2679,7 +2683,7 @@ testRun(void)
             cmdRestore(), FileMissingError,
             "raised from local-1 shim protocol: unable to open missing file"
                 " '%s/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read",
-            testPath());
+            TEST_PATH);
 
         // Free local processes that were not freed because of the error
         protocolFree();

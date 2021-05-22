@@ -40,7 +40,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     Storage *storageTest = storagePosixNewP(FSLASH_STR);
-    Storage *storageTestWrite = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTestWrite = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("size"))
@@ -69,9 +69,9 @@ testRun(void)
     if (testBegin("cfgFileLoad()"))
     {
         StringList *argList = NULL;
-        String *configFile = strNewFmt("%s/test.config", testPath());
+        const String *configFile = STRDEF(TEST_PATH "/test.config");
 
-        String *configIncludePath = strNewFmt("%s/conf.d", testPath());
+        const String *configIncludePath = STRDEF(TEST_PATH "/conf.d");
         mkdir(strZ(configIncludePath), 0750);
 
         // Check old config file constants
@@ -165,7 +165,7 @@ testRun(void)
         String *backupCmdDefConfigValue = strNewZ(cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfig));
         String *backupCmdDefConfigInclPathValue = strNewZ(
             cfgParseOptionDefault(cfgCommandId(TEST_COMMAND_BACKUP), cfgOptConfigIncludePath));
-        String *oldConfigDefault = strNewFmt("%s%s", testPath(), PGBACKREST_CONFIG_ORIG_PATH_FILE);
+        const String *oldConfigDefault = STRDEF(TEST_PATH PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
         // Create the option structure and initialize with 0
         ParseOption parseOptionList[CFG_OPTION_TOTAL] = {{0}};
@@ -226,13 +226,13 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].indexList[0].valueList = value;
 
         value = strLstNew();
-        strLstAdd(value, strNewFmt("%s/%s", testPath(), BOGUS_STR));
+        strLstAddZ(value, TEST_PATH "/" BOGUS_STR);
 
         parseOptionList[cfgOptConfig].indexList[0].valueList = value;
 
         TEST_ERROR_FMT(
             cfgFileLoad(storageTest, parseOptionList, backupCmdDefConfigValue, backupCmdDefConfigInclPathValue, oldConfigDefault),
-            FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(strNewFmt("%s/BOGUS", testPath())));
+            FileMissingError, STORAGE_ERROR_READ_MISSING, TEST_PATH "/BOGUS");
 
         strLstFree(parseOptionList[cfgOptConfig].indexList[0].valueList);
         strLstFree(parseOptionList[cfgOptConfigIncludePath].indexList[0].valueList);
@@ -414,7 +414,7 @@ testRun(void)
 
         // Pass --config-path
         value = strLstNew();
-        strLstAddZ(value, testPath());
+        strLstAddZ(value, TEST_PATH);
 
         parseOptionList[cfgOptConfigPath].indexListTotal = 1;
         parseOptionList[cfgOptConfigPath].indexList = memNew(sizeof(ParseOptionValue));
@@ -475,9 +475,8 @@ testRun(void)
         // Copy the configFile to pgbackrest.conf (default is /etc/pgbackrest/pgbackrest.conf and new value is testPath so copy the
         // config file (that was not read in the previous test) to pgbackrest.conf so it will be read by the override
         TEST_RESULT_INT(
-            system(
-                strZ(strNewFmt("cp %s %s", strZ(configFile), strZ(strNewFmt("%s/pgbackrest.conf", testPath()))))), 0,
-                "copy configFile to pgbackrest.conf");
+            system(strZ(strNewFmt("cp %s " TEST_PATH "/pgbackrest.conf", strZ(configFile)))), 0,
+            "copy configFile to pgbackrest.conf");
 
         parseOptionList[cfgOptConfig].indexList[0].found = false;
         parseOptionList[cfgOptConfig].indexList[0].source = cfgSourceDefault;
@@ -486,7 +485,7 @@ testRun(void)
         parseOptionList[cfgOptConfigIncludePath].indexList[0].source = cfgSourceDefault;
 
         value = strLstNew();
-        strLstAddZ(value, testPath());
+        strLstAddZ(value, TEST_PATH);
 
         parseOptionList[cfgOptConfigPath].indexList[0].valueList = value;
 
@@ -566,7 +565,7 @@ testRun(void)
     if (testBegin("configParse()"))
     {
         StringList *argList = NULL;
-        String *configFile = strNewFmt("%s/test.config", testPath());
+        const String *configFile = STRDEF(TEST_PATH "/test.config");
 
         TEST_RESULT_INT(
             sizeof(optionResolveOrder) / sizeof(ConfigOption), CFG_OPTION_TOTAL,

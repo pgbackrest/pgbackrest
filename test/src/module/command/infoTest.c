@@ -22,7 +22,7 @@ testRun(void)
     setenv("TZ", "UTC", true);
 
     // Create the repo directories
-    String *repoPath = strNewFmt("%s/repo", testPath());
+    const String *repoPath = STRDEF(TEST_PATH "/repo");
     String *archivePath = strNewFmt("%s/%s", strZ(repoPath), "archive");
     String *backupPath = strNewFmt("%s/%s", strZ(repoPath), "backup");
     String *archiveStanza1Path = strNewFmt("%s/stanza1", strZ(archivePath));
@@ -330,7 +330,7 @@ testRun(void)
 
         StringList *argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -349,7 +349,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         argList2 = strLstDup(argListText);
         strLstAddZ(argList2, "--stanza=stanza1");
-        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
@@ -873,8 +873,8 @@ testRun(void)
             "put backup info to file - stanza2, repo1");
 
         // Create encrypted repo2
-        String *repo2archivePath =  strNewFmt("%s/repo2/archive", testPath());
-        String *repo2backupPath =  strNewFmt("%s/repo2/backup", testPath());
+        const String *repo2archivePath = STRDEF(TEST_PATH "/repo2/archive");
+        const String *repo2backupPath = STRDEF(TEST_PATH "/repo2/backup");
         storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2archivePath)));
         storagePathCreateP(storageLocalWrite(), strNewFmt("%s/stanza1", strZ(repo2backupPath)));
 
@@ -1077,7 +1077,7 @@ testRun(void)
         // Set up the configuration
         StringList *argListMultiRepo = strLstNew();
         hrnCfgArgRawZ(argListMultiRepo, cfgOptRepoPath, TEST_PATH_REPO);
-        hrnCfgArgKeyRawFmt(argListMultiRepo, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argListMultiRepo, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argListMultiRepo, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
 
@@ -2357,12 +2357,12 @@ testRun(void)
         );
 
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageLocalWrite(), strNewFmt("%s/pgbackrest.conf", testPath())),
-                BUFSTR(content)), "put pgbackrest.conf file");
+            storagePutP(storageNewWriteP(storageLocalWrite(), STRDEF(TEST_PATH "/pgbackrest.conf")), BUFSTR(content)),
+            "put pgbackrest.conf file");
 
         argList2 = strLstDup(argListMultiRepo);
         strLstAddZ(argList2, "--repo-cipher-type=aes-256-cbc");
-        strLstAdd(argList2, strNewFmt("--config=%s/pgbackrest.conf", testPath()));
+        strLstAddZ(argList2, "--config=" TEST_PATH "/pgbackrest.conf");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR(
@@ -2489,8 +2489,8 @@ testRun(void)
 
         storagePathCreateP(storageLocalWrite(), archivePath);
         storagePathCreateP(storageLocalWrite(), backupPath);
-        String *archivePath2 = strNewFmt("%s/repo2/%s", testPath(), "archive");
-        String *backupPath2 = strNewFmt("%s/repo2/%s", testPath(), "backup");
+        String *archivePath2 = strNewFmt(TEST_PATH "/repo2/%s", "archive");
+        String *backupPath2 = strNewFmt(TEST_PATH "/repo2/%s", "backup");
         storagePathCreateP(storageLocalWrite(), archivePath2);
         storagePathCreateP(storageLocalWrite(), backupPath2);
 
@@ -2609,7 +2609,7 @@ testRun(void)
         StringList *argList2 = strLstNew();
         hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
-        hrnCfgArgKeyRawFmt(argList2, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         harnessCfgLoad(cfgCmdInfo, argList2);
 
         // Note that although the time on the backup in repo2 > repo1, repo1 current db is not the same because of the version so
@@ -2731,7 +2731,7 @@ testRun(void)
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
-        String *stdoutFile = strNewFmt("%s/stdout.info", testPath());
+        const String *stdoutFile = STRDEF(TEST_PATH "/stdout.info");
 
         THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
@@ -2741,7 +2741,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNewP(strNewZ(testPath()));
+        Storage *storage = storagePosixNewP(TEST_PATH_STR);
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), "No stanzas exist in the repository.\n",
             "    check text");
@@ -2756,26 +2756,26 @@ testRun(void)
         TEST_TITLE("repo-level error");
 
         TEST_RESULT_VOID(
-            storagePathCreateP(
-                storageLocalWrite(), strNewFmt("%s/repo2", testPath()), .mode = 0200), "repo directory with bad permissions");
+            storagePathCreateP(storageLocalWrite(), STRDEF(TEST_PATH "/repo2"), .mode = 0200),
+            "repo directory with bad permissions");
 
         argList = strLstNew();
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 1, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: [invalid]\n"
             "    status: error (other)\n"
-            "            [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
-            "    cipher: none\n", testPath()),
+            "            [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup': [13] Permission denied\n"
+            "    cipher: none\n",
             "text - invalid stanza");
 
         hrnCfgArgRawZ(argList, cfgOptOutput, "json");
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "["
                 "{"
                     "\"archive\":[],"
@@ -2789,8 +2789,8 @@ testRun(void)
                             "\"key\":1,"
                             "\"status\":{"
                                 "\"code\":99,"
-                                "\"message\":\"[PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission"
-                                " denied\""
+                                "\"message\":\"[PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup':"
+                                    " [13] Permission denied\""
                             "}"
                         "}"
                     "],"
@@ -2800,33 +2800,34 @@ testRun(void)
                         "\"message\":\"other\""
                         "}"
                 "}"
-            "]", testPath()),
+            "]",
             "json - invalid stanza");
 
         argList = strLstNew();
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 1, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptStanza, "stanza1");
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: error (other)\n"
-            "            [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
-            "    cipher: none\n", testPath()),
+            "            [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup': [13] Permission denied\n"
+            "    cipher: none\n",
             "text - stanza requested");
 
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
         harnessCfgLoad(cfgCmdInfo, argList);
 
-        TEST_RESULT_STR(
-            infoRender(), strNewFmt(
+        TEST_RESULT_STR_Z(
+            infoRender(),
             "stanza: stanza1\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [PathOpenError] unable to list file info for path '%s/repo2/backup': [13] Permission denied\n"
+            "               [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup':"
+                " [13] Permission denied\n"
             "        repo2: error (missing stanza path)\n"
-            "    cipher: none\n", testPath()),
+            "    cipher: none\n",
             "text - stanza repo structure exists");
     }
 

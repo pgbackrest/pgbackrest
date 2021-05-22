@@ -23,7 +23,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // Start a protocol server to test the protocol directly
     Buffer *serverWrite = bufNew(8192);
@@ -40,8 +40,8 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/db", testPath()));
-        strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/db");
+        strLstAddZ(argList, "--spool-path=" TEST_PATH "/spool");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
         harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
@@ -69,7 +69,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_wal/archive_status/000000010000000100000006.ready")), NULL);
 
         TEST_RESULT_STRLST_Z(
-            archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath())),
+            archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal")),
             "000000010000000100000002\n000000010000000100000005\n000000010000000100000006\n", "ready list");
 
         TEST_RESULT_STRLST_Z(
@@ -95,7 +95,7 @@ testRun(void)
 
         // Queue max is high enough that no WAL will be dropped
         TEST_RESULT_BOOL(
-            archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath()))), false,
+            archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), false,
             "wal is not dropped");
 
         // Now set queue max low enough that WAL will be dropped
@@ -104,7 +104,7 @@ testRun(void)
         harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListDrop);
 
         TEST_RESULT_BOOL(
-            archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(strNewFmt("%s/db/pg_wal", testPath()))), true,
+            archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), true,
             "wal is dropped");
     }
 
@@ -113,8 +113,8 @@ testRun(void)
     {
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         // Check mismatched pg_control and archive.info
@@ -184,8 +184,8 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test");
-        strLstAdd(argList, strNewFmt("--repo2-path=%s/repo2", testPath()));
-        strLstAdd(argList, strNewFmt("--repo4-path=%s/repo4", testPath()));
+        strLstAddZ(argList, "--repo2-path=" TEST_PATH "/repo2");
+        strLstAddZ(argList, "--repo4-path=" TEST_PATH "/repo4");
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         // repo2 has correct info
@@ -290,8 +290,8 @@ testRun(void)
 
         // Create pg_control and archive.info
         // -------------------------------------------------------------------------------------------------------------------------
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
@@ -323,7 +323,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
-            "WAL file '{[path]}/pg/pg_wal/000000010000000100000001' version 10, system-id 18072658121562454734 do not match"
+            "WAL file '" TEST_PATH "/pg/pg_wal/000000010000000100000001' version 10, system-id 18072658121562454734 do not match"
                 " stanza version 11, system-id 18072658121562454734");
 
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
@@ -334,7 +334,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveMismatchError,
-            "WAL file '{[path]}/pg/pg_wal/000000010000000100000001' version 11, system-id 17055110554209741999 do not match"
+            "WAL file '" TEST_PATH "/pg/pg_wal/000000010000000100000001' version 11, system-id 17055110554209741999 do not match"
                 " stanza version 11, system-id 18072658121562454734");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -405,8 +405,8 @@ testRun(void)
 
         argListTemp = strLstNew();
         strLstAddZ(argListTemp, "--" CFGOPT_STANZA "=test");
-        hrnCfgArgRawFmt(argListTemp, cfgOptRepoPath, "%s/repo", testPath());
-        strLstAdd(argListTemp, strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath()));
+        hrnCfgArgRawZ(argListTemp, cfgOptRepoPath, TEST_PATH "/repo");
+        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_wal/000000010000000100000002");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(
@@ -476,7 +476,7 @@ testRun(void)
         // Check protocol function directly
         // -------------------------------------------------------------------------------------------------------------------------
         VariantList *paramList = varLstNew();
-        varLstAdd(paramList, varNewStr(strNewFmt("%s/pg/pg_wal/000000010000000100000002", testPath())));
+        varLstAdd(paramList, varNewStrZ(TEST_PATH "/pg/pg_wal/000000010000000100000002"));
         varLstAdd(paramList, varNewBool(true));
         varLstAdd(paramList, varNewUInt64(PG_VERSION_11));
         varLstAdd(paramList, varNewUInt64(0xFACEFACEFACEFACE));
@@ -537,11 +537,11 @@ testRun(void)
         // Push encrypted WAL segment
         argListTemp = strLstNew();
         hrnCfgArgRawZ(argListTemp, cfgOptStanza, "test");
-        hrnCfgArgKeyRawFmt(argListTemp, cfgOptPgPath, 1, "%s/pg", testPath());
-        hrnCfgArgKeyRawFmt(argListTemp, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argListTemp, cfgOptPgPath, 1, TEST_PATH "/pg");
+        hrnCfgArgKeyRawZ(argListTemp, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argListTemp, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "badpassphrase");
-        hrnCfgArgKeyRawFmt(argListTemp, cfgOptRepoPath, 3, "%s/repo3", testPath());
+        hrnCfgArgKeyRawZ(argListTemp, cfgOptRepoPath, 3, TEST_PATH "/repo3");
         hrnCfgArgRawNegate(argListTemp, cfgOptCompress);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000002");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
@@ -577,7 +577,7 @@ testRun(void)
             strZ(
                 strNewFmt(
                     "archive-push command encountered error(s):\n"
-                    "repo2: [FileOpenError] unable to open file '{[path]}/repo2/archive/test/11-1/0000000100000001"
+                    "repo2: [FileOpenError] unable to open file '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001"
                         "/000000010000000100000002-%s' for write: [13] Permission denied", walBuffer2Sha1)));
 
         TEST_RESULT_BOOL(
@@ -628,10 +628,11 @@ testRun(void)
         TEST_ERROR(
             cmdArchivePush(), CommandError,
             "archive-push command encountered error(s):\n"
-            "repo2: [FileOpenError] unable to load info file '{[path]}/repo2/archive/test/archive.info' or"
-                " '{[path]}/repo2/archive/test/archive.info.copy':\n"
-            "FileOpenError: unable to open file '{[path]}/repo2/archive/test/archive.info' for read: [13] Permission denied\n"
-            "FileOpenError: unable to open file '{[path]}/repo2/archive/test/archive.info.copy' for read: [13] Permission denied\n"
+            "repo2: [FileOpenError] unable to load info file '" TEST_PATH "/repo2/archive/test/archive.info' or"
+                " '" TEST_PATH "/repo2/archive/test/archive.info.copy':\n"
+            "FileOpenError: unable to open file '" TEST_PATH "/repo2/archive/test/archive.info' for read: [13] Permission denied\n"
+            "FileOpenError: unable to open file '" TEST_PATH "/repo2/archive/test/archive.info.copy' for read:"
+                " [13] Permission denied\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
@@ -651,8 +652,8 @@ testRun(void)
         TEST_ERROR(
             cmdArchivePush(), CommandError,
             "archive-push command encountered error(s):\n"
-            "repo2: [PathOpenError] unable to list file info for path '{[path]}/repo2/archive/test/11-1/0000000100000001': [13]"
-                " Permission denied");
+            "repo2: [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001':"
+                " [13] Permission denied");
 
         // Make sure WAL got pushed to repo3
         TEST_STORAGE_REMOVE(
@@ -697,10 +698,10 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--archive-timeout=1");
-        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testPath()));
-        strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--lock-path=" TEST_PATH "/lock");
+        strLstAddZ(argList, "--spool-path=" TEST_PATH " /spool");
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "pg_wal/bogus");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
@@ -718,9 +719,9 @@ testRun(void)
         strLstAddZ(argList, "--stanza=test");
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--no-compress");
-        strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--spool-path=" TEST_PATH "/spool");
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--log-subprocess");
 
         storagePutP(
@@ -739,7 +740,7 @@ testRun(void)
         // Write out an error file that will be ignored on the first pass, then the async process will write a new one
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argListTemp = strLstDup(argList);
-        strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
+        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         storagePathCreateP(storagePgWrite(), STRDEF("pg_xlog/archive_status"));
@@ -755,7 +756,7 @@ testRun(void)
         // Acquire a lock so the async process will not be able to run -- this will result in a timeout
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
-        strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
+        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
         strLstAddZ(argListTemp, "--archive-timeout=1");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
@@ -807,7 +808,7 @@ testRun(void)
         // Actually push a WAL file
         // -------------------------------------------------------------------------------------------------------------------------
         argListTemp = strLstDup(argList);
-        strLstAdd(argListTemp, strNewFmt("%s/pg/pg_xlog/000000010000000100000001", testPath()));
+        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/archive_status/000000010000000100000001.ready")), NULL);
@@ -833,10 +834,10 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "--stanza=test");
         hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
-        strLstAdd(argList, strNewFmt("--spool-path=%s/spool", testPath()));
+        strLstAddZ(argList, "--spool-path=" TEST_PATH "/spool");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         strLstAddZ(argList, "--log-subprocess");
         harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
@@ -851,7 +852,7 @@ testRun(void)
         storagePathRemoveP(storagePgWrite(), STRDEF("pg_xlog/archive_status"), .recurse = true);
         storagePathCreateP(storagePgWrite(), STRDEF("pg_xlog/archive_status"));
 
-        strLstAdd(argList, strNewFmt("%s/pg/pg_xlog", testPath()));
+        strLstAddZ(argList, TEST_PATH "/pg/pg_xlog");
         harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
         TEST_ERROR(cmdArchivePushAsync(), AssertError, "no WAL files to process");
@@ -868,7 +869,7 @@ testRun(void)
         TEST_TITLE("add repo, push already pushed WAL and new WAL");
 
         // Add repo3
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 3, "%s/repo3", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
         harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argList);
 
         storagePutP(
@@ -892,16 +893,14 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/archive_status/000000010000000100000002.ready")), NULL);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
-        harnessLogResult(
-            strZ(
-                strNewFmt(
-                    "P00   INFO: push 2 WAL file(s) to archive: 000000010000000100000001...000000010000000100000002\n"
-                    "P01   WARN: WAL file '000000010000000100000001' already exists in the repo1 archive with the same checksum\n"
-                    "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
-                    "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
-                    "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
-                        "[55] raised from local-1 protocol: " STORAGE_ERROR_READ_MISSING,
-                    strZ(strNewFmt("%s/pg/pg_xlog/000000010000000100000002", testPath())))));
+        TEST_RESULT_LOG_FMT(
+            "P00   INFO: push 2 WAL file(s) to archive: 000000010000000100000001...000000010000000100000002\n"
+            "P01   WARN: WAL file '000000010000000100000001' already exists in the repo1 archive with the same checksum\n"
+            "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
+            "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
+            "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
+                "[55] raised from local-1 protocol: " STORAGE_ERROR_READ_MISSING,
+            TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_RESULT_BOOL(
             storageExistsP(

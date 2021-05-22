@@ -22,7 +22,7 @@ Test Run
 void
 testRun(void)
 {
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("struct sizes"))
@@ -155,36 +155,36 @@ testRun(void)
         #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE                                                                           \
             "\n"                                                                                                                   \
             "[target:file:default]\n"                                                                                              \
-            "group=\"{[group]}\"\n"                                                                                                \
+            "group=\"" TEST_GROUP "\"\n"                                                                                           \
             "master=false\n"                                                                                                       \
             "mode=\"0400\"\n"                                                                                                      \
-            "user=\"{[user]}\"\n"
+            "user=\"" TEST_USER "\"\n"
 
         #define TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE                                                                            \
             "\n"                                                                                                                   \
             "[target:file:default]\n"                                                                                              \
-            "group=\"{[group]}\"\n"                                                                                                \
+            "group=\"" TEST_GROUP "\"\n"                                                                                           \
             "master=true\n"                                                                                                        \
             "mode=\"0400\"\n"                                                                                                      \
-            "user=\"{[user]}\"\n"
+            "user=\"" TEST_USER "\"\n"
 
         #define TEST_MANIFEST_LINK_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
             "[target:link:default]\n"                                                                                              \
-            "group=\"{[group]}\"\n"                                                                                                \
-            "user=\"{[user]}\"\n"
+            "group=\"" TEST_GROUP "\"\n"                                                                                           \
+            "user=\"" TEST_USER "\"\n"
 
         #define TEST_MANIFEST_PATH_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
             "[target:path:default]\n"                                                                                              \
-            "group=\"{[group]}\"\n"                                                                                                \
+            "group=\"" TEST_GROUP "\"\n"                                                                                           \
             "mode=\"0700\"\n"                                                                                                      \
-            "user=\"{[user]}\"\n"
+            "user=\"" TEST_USER "\"\n"
 
         storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0700, .noParentCreate = true);
 
-        Storage *storagePg = storagePosixNewP(strNewFmt("%s/pg", testPath()));
-        Storage *storagePgWrite = storagePosixNewP(strNewFmt("%s/pg", testPath()), .write = true);
+        Storage *storagePg = storagePosixNewP(STRDEF(TEST_PATH "/pg"));
+        Storage *storagePgWrite = storagePosixNewP(STRDEF(TEST_PATH "/pg"), .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("8.3 with custom exclusions and special file");
@@ -195,7 +195,7 @@ testRun(void)
             BUFSTRDEF("8.3\n"));
 
         // Create special file
-        String *specialFile = strNewFmt("%s/pg/testpipe", testPath());
+        const String *const specialFile = STRDEF(TEST_PATH "/pg/testpipe");
         TEST_RESULT_INT(system(strZ(strNewFmt("mkfifo -m 666 %s", strZ(specialFile)))), 0, "create pipe");
 
         // Files that will always be ignored
@@ -288,13 +288,13 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER
                 TEST_MANIFEST_DB_83
                 TEST_MANIFEST_OPTION_ALL
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
@@ -323,13 +323,13 @@ testRun(void)
                 "pg_data/pg_subtrans={}\n"
                 "pg_data/pg_xlog={}\n"
                 "pg_data/pg_xlog/archive_status={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         TEST_RESULT_LOG(
-            "P00   INFO: exclude contents of '{[path]}/pg/base' from backup using 'base/' exclusion\n"
-            "P00   INFO: exclude '{[path]}/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion\n"
-            "P00   WARN: exclude special file '{[path]}/pg/testpipe' from backup");
+            "P00   INFO: exclude contents of '" TEST_PATH "/pg/base' from backup using 'base/' exclusion\n"
+            "P00   INFO: exclude '" TEST_PATH "/pg/global/pg_internal.init' from backup using 'global/pg_internal.init' exclusion\n"
+            "P00   WARN: exclude special file '" TEST_PATH "/pg/testpipe' from backup");
 
         storageRemoveP(storageTest, specialFile, .errorOnMissing = true);
 
@@ -367,14 +367,12 @@ testRun(void)
         // Config directory and file links
         storagePathCreateP(storageTest, STRDEF("config"), .mode = 0700);
         THROW_ON_SYS_ERROR(
-            symlink("../config/postgresql.conf", strZ(strNewFmt("%s/pg/postgresql.conf", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+            symlink("../config/postgresql.conf", TEST_PATH "/pg/postgresql.conf") == -1, FileOpenError, "unable to create symlink");
         storagePutP(
             storageNewWriteP(storageTest, STRDEF("config/postgresql.conf"), .modeFile = 0400, .timeModified = 1565282116),
             BUFSTRDEF("POSTGRESQLCONF"));
         THROW_ON_SYS_ERROR(
-            symlink("../config/pg_hba.conf", strZ(strNewFmt("%s/pg/pg_hba.conf", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+            symlink("../config/pg_hba.conf", TEST_PATH "/pg/pg_hba.conf") == -1, FileOpenError, "unable to create symlink");
         storagePutP(
             storageNewWriteP(storageTest, STRDEF("config/pg_hba.conf"), .modeFile = 0400, .timeModified = 1565282117),
             BUFSTRDEF("PGHBACONF"));
@@ -391,9 +389,7 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("ts/1"), .mode = 0777);
         storagePathCreateP(storageTest, STRDEF("ts/1/1"), .mode = 0700);
         storagePathCreateP(storagePgWrite, MANIFEST_TARGET_PGTBLSPC_STR, .mode = 0700, .noParentCreate = true);
-        THROW_ON_SYS_ERROR(
-            symlink("../../ts/1", strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+        THROW_ON_SYS_ERROR(symlink("../../ts/1", TEST_PATH "/pg/pg_tblspc/1") == -1, FileOpenError, "unable to create symlink");
         storagePutP(
             storageNewWriteP(
                 storagePgWrite, STRDEF("pg_tblspc/1/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
@@ -412,7 +408,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER
                 TEST_MANIFEST_DB_84
                 TEST_MANIFEST_OPTION_ARCHIVE
@@ -420,7 +416,7 @@ testRun(void)
                 TEST_MANIFEST_OPTION_ONLINE_TRUE
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
@@ -474,7 +470,7 @@ testRun(void)
                 "pg_tblspc={}\n"
                 "pg_tblspc/1={\"mode\":\"0777\"}\n"
                 "pg_tblspc/1/1={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // Remove directory
@@ -493,7 +489,7 @@ testRun(void)
         storagePathRemoveP(storagePgWrite, STRDEF("pg_xlog/archive_status"), .recurse = true);
         storagePathCreateP(storageTest, STRDEF("archivestatus"), .mode = 0777);
         THROW_ON_SYS_ERROR(
-            symlink("../../archivestatus", strZ(strNewFmt("%s/pg/pg_xlog/archive_status", testPath()))) == -1, FileOpenError,
+            symlink("../../archivestatus", TEST_PATH "/pg/pg_xlog/archive_status") == -1, FileOpenError,
             "unable to create symlink");
         storagePutP(
             storageNewWriteP(
@@ -541,13 +537,13 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER
                 TEST_MANIFEST_DB_90
                 TEST_MANIFEST_OPTION_ALL
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "pg_data/pg_xlog/archive_status={\"path\":\"../../archivestatus\",\"type\":\"link\"}\n"
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
@@ -599,12 +595,11 @@ testRun(void)
                 "pg_tblspc/1={}\n"
                 "pg_tblspc/1/PG_9.0_201008051={}\n"
                 "pg_tblspc/1/PG_9.0_201008051/1={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // Remove symlinks and directories
-        THROW_ON_SYS_ERROR(
-            unlink(strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+        THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
         storagePathRemoveP(storageTest, STRDEF("ts/1/PG_9.0_201008051"), .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -634,7 +629,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER
                 TEST_MANIFEST_DB_91
                 TEST_MANIFEST_OPTION_ARCHIVE
@@ -642,7 +637,7 @@ testRun(void)
                 TEST_MANIFEST_OPTION_ONLINE_TRUE
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "pg_data/pg_xlog/archive_status={\"path\":\"../../archivestatus\",\"type\":\"link\"}\n"
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
@@ -684,7 +679,7 @@ testRun(void)
                 "pg_data/pg_xlog={}\n"
                 "pg_data/pg_xlog/archive_status={\"mode\":\"0777\"}\n"
                 "pg_data/pg_xlog/somepath={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // Remove pg_xlog and the directory that archive_status link pointed to
@@ -701,9 +696,7 @@ testRun(void)
 
         // create pg_xlog/wal as a link
         storagePathCreateP(storageTest, STRDEF("wal"), .mode = 0700);
-        THROW_ON_SYS_ERROR(
-            symlink(strZ(strNewFmt("%s/wal", testPath())), strZ(strNewFmt("%s/pg/pg_xlog", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+        THROW_ON_SYS_ERROR(symlink(TEST_PATH "/wal", TEST_PATH "/pg/pg_xlog") == -1, FileOpenError, "unable to create symlink");
 
         // Files to conditionally ignore before 9.4
         storagePutP(
@@ -719,15 +712,15 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER
                 TEST_MANIFEST_DB_92
                 TEST_MANIFEST_OPTION_ALL
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_data/pg_xlog={\"path\":\"{[path]}/wal\",\"type\":\"link\"}\n"
+                "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
@@ -746,7 +739,7 @@ testRun(void)
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
-                "pg_data/pg_xlog={\"destination\":\"{[path]}/wal\"}\n"
+                "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
                 "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
                 TEST_MANIFEST_LINK_DEFAULT
                 "\n"
@@ -765,7 +758,7 @@ testRun(void)
                 "pg_data/pg_tblspc={}\n"
                 "pg_data/pg_wal={}\n"
                 "pg_data/pg_xlog={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -814,9 +807,7 @@ testRun(void)
 
         // Tablespace 1
         storagePathCreateP(storageTest, STRDEF("ts/1/PG_9.4_201409291/1"), .mode = 0700);
-        THROW_ON_SYS_ERROR(
-            symlink("../../ts/1", strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+        THROW_ON_SYS_ERROR(symlink("../../ts/1", TEST_PATH "/pg/pg_tblspc/1") == -1, FileOpenError, "unable to create symlink");
         storagePutP(
             storageNewWriteP(
                 storagePgWrite, STRDEF("pg_tblspc/1/PG_9.4_201409291/1/16384"), .modeFile = 0400, .timeModified = 1565282115),
@@ -844,9 +835,7 @@ testRun(void)
 
         // Tablespace 2
         storagePathCreateP(storageTest, STRDEF("ts/2/PG_9.4_201409291/1"), .mode = 0700);
-        THROW_ON_SYS_ERROR(
-            symlink("../../ts/2", strZ(strNewFmt("%s/pg/pg_tblspc/2", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+        THROW_ON_SYS_ERROR(symlink("../../ts/2", TEST_PATH "/pg/pg_tblspc/2") == -1, FileOpenError, "unable to create symlink");
         storagePutP(
             storageNewWriteP(
                 storagePgWrite, STRDEF("pg_tblspc/2/PG_9.4_201409291/1/16385"), .modeFile = 0400, .timeModified = 1565282115),
@@ -861,7 +850,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER
                 TEST_MANIFEST_DB_94
                 TEST_MANIFEST_OPTION_ARCHIVE
@@ -869,9 +858,9 @@ testRun(void)
                 TEST_MANIFEST_OPTION_ONLINE_FALSE
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_data/pg_xlog={\"path\":\"{[path]}/wal\",\"type\":\"link\"}\n"
+                "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
                 "pg_tblspc/2={\"path\":\"../../ts/2\",\"tablespace-id\":\"2\",\"tablespace-name\":\"ts2\",\"type\":\"link\"}\n"
@@ -903,7 +892,7 @@ testRun(void)
                 "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
                 "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
                 "pg_data/pg_tblspc/2={\"destination\":\"../../ts/2\"}\n"
-                "pg_data/pg_xlog={\"destination\":\"{[path]}/wal\"}\n"
+                "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
                 "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
                 TEST_MANIFEST_LINK_DEFAULT
                 "\n"
@@ -932,7 +921,7 @@ testRun(void)
                 "pg_tblspc/2={}\n"
                 "pg_tblspc/2/PG_9.4_201409291={}\n"
                 "pg_tblspc/2/PG_9.4_201409291/1={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         storageRemoveP(storageTest, STRDEF("pg/pg_tblspc/2"), .errorOnMissing = true);
@@ -952,11 +941,10 @@ testRun(void)
             manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), false, false, NULL, NULL),
             FileOpenError,
             "unable to get info for missing path/file '%s/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or directory",
-            testPath());
+            TEST_PATH);
 
         // Remove the link inside pg/pg_tblspc
-        THROW_ON_SYS_ERROR(
-            unlink(strZ(strNewFmt("%s/pg/pg_tblspc/1", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+        THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
 
         // Write a file into the directory pointed to by pg_xlog - contents will not be ignored online or offline
         storagePutP(
@@ -985,7 +973,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER
                 TEST_MANIFEST_DB_12
                 TEST_MANIFEST_OPTION_ARCHIVE
@@ -993,9 +981,9 @@ testRun(void)
                 TEST_MANIFEST_OPTION_ONLINE_TRUE
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_data/pg_xlog={\"path\":\"{[path]}/wal\",\"type\":\"link\"}\n"
+                "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
@@ -1020,7 +1008,7 @@ testRun(void)
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
-                "pg_data/pg_xlog={\"destination\":\"{[path]}/wal\"}\n"
+                "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
                 "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
                 TEST_MANIFEST_LINK_DEFAULT
                 "\n"
@@ -1042,7 +1030,7 @@ testRun(void)
                 "pg_data/pg_wal={}\n"
                 "pg_data/pg_xact={}\n"
                 "pg_data/pg_xlog={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1057,15 +1045,15 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER
                 TEST_MANIFEST_DB_13
                 TEST_MANIFEST_OPTION_ALL
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_data/pg_xlog={\"path\":\"{[path]}/wal\",\"type\":\"link\"}\n"
+                "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
@@ -1089,7 +1077,7 @@ testRun(void)
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
-                "pg_data/pg_xlog={\"destination\":\"{[path]}/wal\"}\n"
+                "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
                 "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
                 TEST_MANIFEST_LINK_DEFAULT
                 "\n"
@@ -1111,22 +1099,19 @@ testRun(void)
                 "pg_data/pg_wal={}\n"
                 "pg_data/pg_xact={}\n"
                 "pg_data/pg_xlog={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to pg_data");
 
-        THROW_ON_SYS_ERROR(
-            symlink(strZ(strNewFmt("%s/pg/base", testPath())), strZ(strNewFmt("%s/pg/link", testPath()))) == -1,
-            FileOpenError, "unable to create symlink");
+        THROW_ON_SYS_ERROR(symlink(TEST_PATH "/pg/base", TEST_PATH "/pg/link") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
-            LinkDestinationError, "link 'link' destination '{[path]}/pg/base' is in PGDATA");
+            LinkDestinationError, "link 'link' destination '" TEST_PATH "/pg/base' is in PGDATA");
 
-        THROW_ON_SYS_ERROR(
-            unlink(strZ(strNewFmt("%s/pg/link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+        THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link") == -1, FileRemoveError, "unable to remove symlink");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on path in pg_tblspc");
@@ -1153,31 +1138,26 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link that points to nothing");
 
-        THROW_ON_SYS_ERROR(
-            symlink("../bogus-link", strZ(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileOpenError,
-            "unable to create symlink");
+        THROW_ON_SYS_ERROR(symlink("../bogus-link", TEST_PATH "/pg/link-to-link") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, true, NULL, NULL), FileOpenError,
-            "unable to get info for missing path/file '{[path]}/pg/link-to-link': [2] No such file or directory");
+            "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link': [2] No such file or directory");
 
-        THROW_ON_SYS_ERROR(
-            unlink(strZ(strNewFmt("%s/pg/link-to-link", testPath()))) == -1, FileRemoveError, "unable to remove symlink");
+        THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link-to-link") == -1, FileRemoveError, "unable to remove symlink");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to a link");
 
         storagePathCreateP(storageTest, STRDEF("linktestdir"), .mode = 0777);
         THROW_ON_SYS_ERROR(
-            symlink(strZ(strNewFmt("%s/linktestdir", testPath())), strZ(strNewFmt("%s/linktest", testPath()))) == -1,
-            FileOpenError, "unable to create symlink");
+            symlink(TEST_PATH "/linktestdir", TEST_PATH "/linktest") == -1, FileOpenError, "unable to create symlink");
         THROW_ON_SYS_ERROR(
-            symlink(strZ(strNewFmt("%s/linktest", testPath())), strZ(strNewFmt("%s/pg/linktolink", testPath()))) == -1,
-            FileOpenError, "unable to create symlink");
+            symlink(TEST_PATH "/linktest", TEST_PATH "/pg/linktolink") == -1, FileOpenError, "unable to create symlink");
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, NULL, NULL),
-            LinkDestinationError, "link '%s/pg/linktolink' cannot reference another link '%s/linktest'", testPath(), testPath());
+            LinkDestinationError, "link '" TEST_PATH "/pg/linktolink' cannot reference another link '" TEST_PATH "/linktest'");
 
         #undef TEST_MANIFEST_HEADER
         #undef TEST_MANIFEST_DB_83
@@ -1339,7 +1319,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
                 "option-delta=false\n"
                 TEST_MANIFEST_HEADER_POST
@@ -1357,7 +1337,7 @@ testRun(void)
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1389,7 +1369,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
                 "option-delta=true\n"
                 TEST_MANIFEST_HEADER_POST
@@ -1406,7 +1386,7 @@ testRun(void)
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1443,7 +1423,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
                 "option-delta=true\n"
                 TEST_MANIFEST_HEADER_POST
@@ -1459,7 +1439,7 @@ testRun(void)
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1495,7 +1475,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
                 "option-delta=true\n"
                 TEST_MANIFEST_HEADER_POST
@@ -1510,7 +1490,7 @@ testRun(void)
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1557,7 +1537,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(hrnReplaceKey(
+            strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
                 "option-delta=true\n"
                 "option-hardlink=false\n"
@@ -1572,7 +1552,7 @@ testRun(void)
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT))),
+                TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         #undef TEST_MANIFEST_HEADER_PRE
@@ -2058,12 +2038,11 @@ testRun(void)
     {
         Manifest *manifest = NULL;
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             manifestLoadFile(storageTest, BACKUP_MANIFEST_FILE_STR, cipherTypeNone, NULL), FileMissingError,
-            "unable to load backup manifest file '%s/backup.manifest' or '%s/backup.manifest.copy':\n"
-            "FileMissingError: unable to open missing file '%s/backup.manifest' for read\n"
-            "FileMissingError: unable to open missing file '%s/backup.manifest.copy' for read",
-            testPath(), testPath(), testPath(), testPath());
+            "unable to load backup manifest file '" TEST_PATH "/backup.manifest' or '" TEST_PATH "/backup.manifest.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/backup.manifest' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/backup.manifest.copy' for read");
 
         // Also use this test to check that extra sections/keys are ignored using coverage.
         // -------------------------------------------------------------------------------------------------------------------------

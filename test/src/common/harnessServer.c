@@ -254,8 +254,8 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
             // Else use a certificate from the test path -- tests will need to disable verify
             else
             {
-                param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
-                param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".key", testRepoPath());
+                param.certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".crt", hrnPathRepo());
+                param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".key", hrnPathRepo());
             }
         }
 

@@ -19,7 +19,7 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--repo1-type=cifs");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s", testPath()));
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;

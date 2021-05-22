@@ -25,7 +25,7 @@ testRun(void)
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_VERIFY_LIST};
     hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
 
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     const String *stanza = STRDEF("db");
     String *backupStanzaPath = strNewFmt("repo/backup/%s", strZ(stanza));
@@ -37,7 +37,7 @@ testRun(void)
 
     StringList *argListBase = strLstNew();
     strLstAdd(argListBase, strNewFmt("--stanza=%s", strZ(stanza)));
-    strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
+    strLstAddZ(argListBase, "--repo1-path=" TEST_PATH "/repo");
 
     const char *fileContents = "acefile";
     uint64_t fileSize = 7;
@@ -285,7 +285,7 @@ testRun(void)
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
             "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not "
                 "in the backup.info history, skipping",
-            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel))));
+            TEST_PATH, strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun test with db-system-id invalid and no main");
@@ -325,7 +325,7 @@ testRun(void)
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
             "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not "
                 "in the backup.info history, skipping",
-            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
+            TEST_PATH, strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun copy test with db-id invalid");
@@ -364,7 +364,7 @@ testRun(void)
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
             "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 0, version 9.4, system-id 6625592122879095702) is not "
                 "in the backup.info history, skipping",
-            testPath(), strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
+            TEST_PATH, strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing main manifest, errored copy");
@@ -384,7 +384,7 @@ testRun(void)
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, testPath(), strZ(backupStanzaPath), strZ(backupLabel),
+            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_PATH, strZ(backupStanzaPath), strZ(backupLabel),
             strZ(backupLabel))));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -798,8 +798,8 @@ testRun(void)
             "P00  ERROR: [029]: No usable backup.info file\n"
             "P00   WARN: unable to open missing file '%s/%s/archive.info' for read\n"
             "P00   WARN: unable to open missing file '%s/%s/archive.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable archive.info file", testPath(), strZ(backupStanzaPath), testPath(),
-            strZ(archiveStanzaPath), testPath(), strZ(archiveStanzaPath))));
+            "P00  ERROR: [029]: No usable archive.info file", TEST_PATH, strZ(backupStanzaPath), TEST_PATH,
+            strZ(archiveStanzaPath), TEST_PATH, strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, backup.info.copy valid, archive.info not exist, archive copy checksum invalid");
@@ -816,7 +816,7 @@ testRun(void)
             "P00   WARN: unable to open missing file '%s/%s/archive.info' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:ARCHIVE>/archive.info.copy\n"
-            "P00  ERROR: [029]: No usable archive.info file", testPath(), strZ(archiveStanzaPath))));
+            "P00  ERROR: [029]: No usable archive.info file", TEST_PATH, strZ(archiveStanzaPath))));
 
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -862,7 +862,7 @@ testRun(void)
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
             "P00   WARN: unable to open missing file '%s/%s/archive.info.copy' for read\n"
-            "P00   WARN: no archives or backups exist in the repo", testPath(), strZ(backupStanzaPath), testPath(),
+            "P00   WARN: no archives or backups exist in the repo", TEST_PATH, strZ(backupStanzaPath), TEST_PATH,
             strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -877,7 +877,7 @@ testRun(void)
             strZ(strNewFmt(
             "P00   WARN: unable to open missing file '%s/%s/backup.info' for read\n"
             "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable backup.info file", testPath(), strZ(backupStanzaPath), testPath(),
+            "P00  ERROR: [029]: No usable backup.info file", TEST_PATH, strZ(backupStanzaPath), TEST_PATH,
             strZ(backupStanzaPath))));
     }
 
@@ -924,7 +924,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         // Load Parameters with multi-repo
         StringList *argList = strLstDup(argListBase);
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 4, "%s/repo4", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
         harnessCfgLoad(cfgCmdVerify, argList);
 
         // Store valid archive/backup info files
@@ -1094,7 +1094,7 @@ testRun(void)
 
         // Load Parameters - single non-default repo
         argList = strLstNew();
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
         hrnCfgArgRawFmt(argList, cfgOptStanza, "%s", strZ(stanza));
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         harnessCfgLoad(cfgCmdVerify, argList);
@@ -1281,8 +1281,8 @@ testRun(void)
                                                                                                             "total valid files: 2\n"
                 "                missing: 1, checksum invalid: 1, size invalid: 0, other: 1\n"
                 "              backup: 20181119-153000F, status: in-progress, total files checked: 0, total valid files: 0",
-                testPath(), strZ(archiveStanzaPath), testPath(), strZ(backupStanzaPath), testPath(), strZ(backupStanzaPath),
-                testPath(), strZ(backupStanzaPath), testPath(), strZ(backupStanzaPath), testPath(), strZ(backupStanzaPath))));
+                TEST_PATH, strZ(archiveStanzaPath), TEST_PATH, strZ(backupStanzaPath), TEST_PATH, strZ(backupStanzaPath),
+                TEST_PATH, strZ(backupStanzaPath), TEST_PATH, strZ(backupStanzaPath), TEST_PATH, strZ(backupStanzaPath))));
 
         harnessLogLevelReset();
     }

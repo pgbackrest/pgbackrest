@@ -611,8 +611,7 @@ testRun(void)
         TEST_ERROR(ioFdWriteOneStr(999999, STRDEF("test")), FileWriteError, "unable to write to fd: [9] Bad file descriptor");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        String *fileName = strNewFmt("%s/test.txt", testPath());
-        int fd = open(strZ(fileName), O_CREAT | O_TRUNC | O_WRONLY, 0700);
+        int fd = open(TEST_PATH "/test.txt", O_CREAT | O_TRUNC | O_WRONLY, 0700);
 
         TEST_RESULT_VOID(ioFdWriteOneStr(fd, STRDEF("test1\ntest2")), "write string to file");
 

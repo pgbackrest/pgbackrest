@@ -230,7 +230,7 @@ testRun(void)
     hrnCfgArgRaw(commonArgWithoutEndpointList, cfgOptRepoS3Region, region);
 
     // TLS can only be verified in a container
-    if (!testContainer())
+    if (!TEST_IN_CONTAINER)
         hrnCfgArgRawBool(commonArgWithoutEndpointList, cfgOptRepoStorageVerifyTls, false);
 
     // Config settings that are required for every test (with endpoint)
@@ -265,7 +265,7 @@ testRun(void)
             strNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
                     ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
-                cvtBoolToConstZ(testContainer())),
+                cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -319,7 +319,7 @@ testRun(void)
         argList = strLstDup(commonArgWithoutEndpointList);
         hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "custom.endpoint:333");
         hrnCfgArgRawZ(argList, cfgOptRepoStorageCaPath, "/path/to/cert");
-        hrnCfgArgRawFmt(argList, cfgOptRepoStorageCaFile, "%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageCaFile, HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".crt");
         hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
@@ -331,7 +331,7 @@ testRun(void)
             strNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
                     ", timeout: 60000}}, timeout: 60000, verifyPeer: %s}}, reusable: 0, timeout: 60000}",
-                cvtBoolToConstZ(testContainer())),
+                cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
         // -------------------------------------------------------------------------------------------------------------------------

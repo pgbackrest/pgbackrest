@@ -106,11 +106,11 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             if (info->mode != 0640)
                 THROW_FMT(AssertError, "'%s' mode is not 0640", strZ(manifestName));
 
-            if (!strEqZ(info->user, testUser()))
-                THROW_FMT(AssertError, "'%s' user should be '%s'", strZ(manifestName), testUser());
+            if (!strEq(info->user, TEST_USER_STR))
+                THROW_FMT(AssertError, "'%s' user should be '" TEST_USER "'", strZ(manifestName));
 
-            if (!strEqZ(info->group, testGroup()))
-                THROW_FMT(AssertError, "'%s' group should be '%s'", strZ(manifestName), testGroup());
+            if (!strEq(info->group, TEST_GROUP_STR))
+                THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(manifestName));
 
             break;
         }
@@ -132,11 +132,11 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
             if (info->mode != 0750)
                 THROW_FMT(AssertError, "'%s' mode is not 00750", strZ(info->name));
 
-            if (!strEqZ(info->user, testUser()))
-                THROW_FMT(AssertError, "'%s' user should be '%s'", strZ(info->name), testUser());
+            if (!strEq(info->user, TEST_USER_STR))
+                THROW_FMT(AssertError, "'%s' user should be '" TEST_USER "'", strZ(info->name));
 
-            if (!strEqZ(info->group, testGroup()))
-                THROW_FMT(AssertError, "'%s' group should be '%s'", strZ(info->name), testGroup());
+            if (!strEq(info->group, TEST_GROUP_STR))
+                THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(info->name));
 
             break;
         }
@@ -248,8 +248,8 @@ typedef struct TestBackupPqScriptParam
 static void
 testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqScriptParam param)
 {
-    const char *pg1Path = strZ(strNewFmt("%s/pg1", testPath()));
-    const char *pg2Path = strZ(strNewFmt("%s/pg2", testPath()));
+    const char *pg1Path = TEST_PATH "/pg1";
+    const char *pg2Path = TEST_PATH "/pg2";
 
     // If no timeline specified then use timeline 1
     param.timeline = param.timeline == 0 ? 1 : param.timeline;
@@ -449,7 +449,7 @@ testRun(void)
     // The tests expect the timezone to be UTC
     setenv("TZ", "UTC", true);
 
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     const String *pgFile = STRDEF("testfile");
     const String *missingFile = STRDEF("missing");
@@ -471,8 +471,8 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         strLstAddZ(argList, "--repo1-retention-full=1");
         harnessCfgLoad(cfgCmdBackup, argList);
 
@@ -492,11 +492,11 @@ testRun(void)
 
         // Pg file missing - ignoreMissing=false
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             backupFile(
                 missingFile, false, 0, true, NULL, false, 0, missingFile, false, compressTypeNone, 1, backupLabel, false,
                 cipherTypeNone, NULL),
-            FileMissingError, "unable to open missing file '%s/pg/missing' for read", testPath());
+            FileMissingError, "unable to open missing file '" TEST_PATH "/pg/missing' for read");
 
         // Create a pg file to backup
         storagePutP(storageNewWriteP(storagePgWrite(), pgFile), BUFSTRDEF("atestfile"));
@@ -743,8 +743,8 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         strLstAddZ(argList, "--repo1-retention-full=1");
         strLstAddZ(argList, "--repo1-cipher-type=aes-256-cbc");
         setenv("PGBACKREST_REPO1_CIPHER_PASS", "12345678", true);
@@ -829,8 +829,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupLabelCreate()"))
     {
-        const String *pg1Path = strNewFmt("%s/pg1", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -903,8 +903,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupInit()"))
     {
-        const String *pg1Path = strNewFmt("%s/pg1", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
@@ -1107,8 +1107,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupTime()"))
     {
-        const String *pg1Path = strNewFmt("%s/pg1", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sleep retries and stall error");
@@ -1156,7 +1156,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupResumeFind()"))
     {
-        const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test1");
@@ -1345,8 +1345,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdBackup() offline"))
     {
-        const String *pg1Path = strNewFmt("%s/pg1", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
+        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
 
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
@@ -1413,8 +1413,9 @@ testRun(void)
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: --no-online passed and postmaster.pid exists but --force was passed so backup will continue though it"
                 " looks like " PG_NAME " is running and the backup will probably not be consistent\n"
-            "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
-            "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, 100%%) checksum e3db315c260e79211b7b52587123b7aa060f30ab\n"
+            "P01   INFO: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99%%) checksum %s\n"
+            "P01   INFO: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100%%) checksum"
+                " e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: full backup size = 8KB\n"
             "P00   INFO: new backup label = [FULL-1]",
             TEST_64BIT() ?
@@ -1467,7 +1468,7 @@ testRun(void)
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: incr backup cannot alter 'checksum-page' option to 'true', reset to 'false' from [FULL-1]\n"
             "P00   WARN: backup '[DIFF-1]' cannot be resumed: new backup type 'incr' does not match resumable backup type 'diff'\n"
-            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
+            "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: incr backup size = 3B\n"
@@ -1493,7 +1494,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
+            "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-1]\n"
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: diff backup size = 3B\n"
@@ -1505,7 +1506,7 @@ testRun(void)
         // Create stanza on a second repo
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
@@ -1545,7 +1546,7 @@ testRun(void)
             "P00   INFO: repo option not specified, defaulting to repo1\n"
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
-            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
+            "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum 6f1894088c578e4f0b9888e8e8a997d93cbbc0c5\n"
             "P00   INFO: diff backup size = 3B\n"
             "P00   INFO: new backup label = [DIFF-3]");
 
@@ -1563,7 +1564,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdBackup(), "backup");
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
-            "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
+            "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00   INFO: diff backup size = 3B\n"
             "P00   INFO: new backup label = [DIFF-4]");
         TEST_RESULT_UINT(
@@ -1578,9 +1579,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdBackup() online"))
     {
-        const String *pg1Path = strNewFmt("%s/pg1", testPath());
-        const String *repoPath = strNewFmt("%s/repo", testPath());
-        const String *pg2Path = strNewFmt("%s/pg2", testPath());
+        const String *pg1Path = STRDEF(TEST_PATH "/pg1");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
+        const String *pg2Path = STRDEF(TEST_PATH "/pg2");
 
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
@@ -1678,9 +1679,9 @@ testRun(void)
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
                 "P00   WARN: resumable backup 20191002-070640F of same type exists -- remove invalid files and resume\n"
-                "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: checksum resumed file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
@@ -1697,7 +1698,7 @@ testRun(void)
                 "pg_data/postgresql.conf {file, s=11}\n"
                 "--------\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"size\":3"
@@ -1830,28 +1831,29 @@ testRun(void)
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
                 "P00   WARN: resumable backup 20191003-105320F of same type exists -- remove invalid files and resume\n"
-                "P00 DETAIL: remove path '{[path]}/repo/backup/test1/20191003-105320F/pg_data/bogus_path' from resumed backup\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus' from resumed backup"
-                    " (mismatched compression type)\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/bogus.gz' from resumed backup"
-                    " (missing in manifest)\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/global/pg_control.gz' from resumed"
-                    " backup (no checksum in resumed manifest)\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/not-in-resume.gz' from resumed backup"
-                    " (missing in resumed manifest)\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/size-mismatch.gz' from resumed backup"
-                    " (mismatched size)\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/time-mismatch.gz' from resumed backup"
-                    " (mismatched timestamp)\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F/pg_data/zero-size.gz' from resumed backup"
-                    " (zero size)\n"
-                "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/time-mismatch (4B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/size-mismatch (4B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/zero-size (0B, [PCT])\n"
+                "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/bogus_path' from resumed"
+                    " backup\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/global/bogus' from resumed"
+                    " backup (mismatched compression type)\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/global/bogus.gz' from resumed"
+                    " backup (missing in manifest)\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/global/pg_control.gz' from"
+                    " resumed backup (no checksum in resumed manifest)\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/not-in-resume.gz' from resumed"
+                    " backup (missing in resumed manifest)\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/size-mismatch.gz' from resumed"
+                    " backup (mismatched size)\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/time-mismatch.gz' from resumed"
+                    " backup (mismatched timestamp)\n"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/zero-size.gz' from resumed"
+                    " backup (zero size)\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/time-mismatch (4B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/size-mismatch (4B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/zero-size (0B, [PCT])\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D95D3000000000, lsn = 5d95d30/800000\n"
@@ -1875,7 +1877,7 @@ testRun(void)
                 "pg_data/zero-size.gz {file, s=0}\n"
                 "--------\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"size\":3"
@@ -2000,21 +2002,21 @@ testRun(void)
                 "P00   WARN: file 'time-mismatch2' has timestamp in the future, enabling delta checksum\n"
                 "P00   WARN: resumable backup 20191003-105320F_20191004-144000D of same type exists"
                     " -- remove invalid files and resume\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/PG_VERSION.gz'"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/PG_VERSION.gz'"
                     " from resumed backup (reference in manifest)\n"
-                "P00   WARN: remove special file '{[path]}/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/pipe'"
+                "P00   WARN: remove special file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/pipe'"
                     " from resumed backup\n"
-                "P00 DETAIL: remove file '{[path]}/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/resume-ref.gz'"
+                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/resume-ref.gz'"
                     " from resumed backup (reference in resumed manifest)\n"
-                "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/time-mismatch2 does not have expected checksum"
                     " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
                     " an issue unless the resumed backup path in the repository is known to be corrupted.\n"
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
-                "P01   INFO: backup file {[path]}/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/resume-ref (0B, [PCT])\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/resume-ref (0B, [PCT])\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191003-105320F\n"
                 "P00 DETAIL: hardlink pg_data/global/pg_control to 20191003-105320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
@@ -2038,7 +2040,7 @@ testRun(void)
                 "pg_data/time-mismatch2.gz {file, s=4}\n"
                 "--------\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"reference\":\"20191003-105320F\""
@@ -2173,7 +2175,7 @@ testRun(void)
                 "pg_data/postgresql.conf {file, s=11}\n"
                 "--------\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"f5b7e6d36dc0113f61b36c700817d42b96f7b037\",\"size\":3"
@@ -2327,17 +2329,18 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB5DE000000000, lsn = 5db5de0/0\n"
-                "P01   INFO: backup file {[path]}/pg1/base/1/3 (32KB, [PCT]) checksum [SHA1]\n"
-                "P00   WARN: invalid page checksums found in file {[path]}/pg1/base/1/3 at pages 0, 2-3\n"
-                "P01   INFO: backup file {[path]}/pg1/base/1/4 (24KB, [PCT]) checksum [SHA1]\n"
-                "P00   WARN: invalid page checksum found in file {[path]}/pg1/base/1/4 at page 1\n"
-                "P01   INFO: backup file {[path]}/pg1/base/1/2 (8KB, [PCT]) checksum [SHA1]\n"
-                "P00   WARN: page misalignment in file {[path]}/pg1/base/1/2: file size 8193 is not divisible by page size 8192\n"
-                "P01   INFO: backup file {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
-                "P01   INFO: backup file {[path]}/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/base/1/3 (32KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: invalid page checksums found in file " TEST_PATH "/pg1/base/1/3 at pages 0, 2-3\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/base/1/4 (24KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/base/1/4 at page 1\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/base/1/2 (8KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/2: file size 8193 is not divisible by page size"
+                    " 8192\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01   INFO: backup file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
                 "P00   INFO: full backup size = [SIZE]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB5DE000000002, lsn = 5db5de0/280000\n"
@@ -2375,7 +2378,7 @@ testRun(void)
                     "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n"
                     "--------\n"
                     "[backup:target]\n"
-                    "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                    "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                     "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
                         ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                     "\n"
@@ -2492,10 +2495,10 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000002C05DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
                 "            HINT: this is normal after restoring from backup or promoting a standby.\n"
-                "P01 DETAIL: match file from prior backup {[path]}/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup {[path]}/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup {[path]}/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup {[path]}/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/base/1/1 to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/global/pg_control to 20191027-181320F\n"
@@ -2530,7 +2533,7 @@ testRun(void)
                 "pg_tblspc/32768/PG_11_201809051/1/5.gz {file, s=0}\n"
                 "--------\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg1\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                 "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
                     ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                 "\n"

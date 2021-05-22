@@ -19,7 +19,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageData = storagePosixNewP(strNewZ(testDataPath()), .write = true);
+    const Storage *const hrnStorage = storagePosixNewP(HRN_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("cmdRemote()"))
@@ -158,7 +158,7 @@ testRun(void)
                 protocolClientNoOp(client);
 
                 TEST_RESULT_BOOL(
-                    storageExistsP(storagePosixNewP(strNewZ(testDataPath())), STRDEF("lock/test-archive" LOCK_FILE_EXT)),
+                    storageExistsP(storagePosixNewP(HRN_PATH_STR), STRDEF("lock/test-archive" LOCK_FILE_EXT)),
                     true, "lock exists");
 
                 protocolClientFree(client);
@@ -191,13 +191,13 @@ testRun(void)
                 IoWrite *write = ioFdWriteNew(STRDEF("server write"), HARNESS_FORK_PARENT_WRITE_PROCESS(0), 2000);
                 ioWriteOpen(write);
 
-                storagePutP(storageNewWriteP(storageData, STRDEF("lock/all" STOP_FILE_EXT)), NULL);
+                storagePutP(storageNewWriteP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), NULL);
 
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR, read, write), StopError,
                     "raised from test: stop file exists for all stanzas");
 
-                storageRemoveP(storageData, STRDEF("lock/all" STOP_FILE_EXT));
+                storageRemoveP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT));
             }
             HARNESS_FORK_PARENT_END();
         }

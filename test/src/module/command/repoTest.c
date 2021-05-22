@@ -20,13 +20,13 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("cmdRepoCreate()"))
     {
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--repo-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--repo-path=" TEST_PATH_REPO);
         harnessCfgLoad(cfgCmdRepoCreate, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ testRun(void)
     if (testBegin("cmdStorageList() and storageListRender()"))
     {
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--repo-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--repo-path=" TEST_PATH_REPO);
         strLstAddZ(argList, "--output=text");
         strLstAddZ(argList, "--sort=none");
         harnessCfgLoad(cfgCmdRepoLs, argList);
@@ -105,8 +105,8 @@ testRun(void)
         storagePutP(storageNewWriteP(storageTest, STRDEF("repo/aaa"), .timeModified = 1578671569), BUFSTRDEF("TESTDATA"));
         storagePutP(storageNewWriteP(storageTest, STRDEF("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
 
-        ASSERT(system(strZ(strNewFmt("ln -s ../bbb %s/repo/link", testPath()))) == 0);
-        ASSERT(system(strZ(strNewFmt("mkfifo %s/repo/pipe", testPath()))) == 0);
+        ASSERT(system("ln -s ../bbb " TEST_PATH "/repo/link") == 0);
+        ASSERT(system("mkfifo " TEST_PATH "/repo/pipe") == 0);
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
@@ -168,7 +168,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
-        String *stdoutFile = strNewFmt("%s/stdout.txt", testPath());
+        const String *stdoutFile = STRDEF(TEST_PATH "/stdout.txt");
 
         THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
@@ -297,7 +297,7 @@ testRun(void)
         TEST_TITLE("error when missing destination");
 
         StringList *argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         harnessCfgLoad(cfgCmdRepoPut, argList);
 
         TEST_ERROR(storagePutProcess(ioBufferReadNew(fileBuffer)), ParamRequiredError, "destination file required");
@@ -314,7 +314,7 @@ testRun(void)
         TEST_TITLE("put an encrypted file with custom key");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
         strLstAdd(argList, fileEncCustomName);
@@ -326,7 +326,7 @@ testRun(void)
         TEST_TITLE("put a raw file");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--raw");
         strLstAdd(argList, fileRawName);
@@ -348,7 +348,7 @@ testRun(void)
         TEST_TITLE("put encrypted archive.info");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE);
         harnessCfgLoad(cfgCmdRepoPut, argList);
@@ -359,7 +359,7 @@ testRun(void)
         TEST_TITLE("put encrypted archive.info.copy");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE ".copy");
         harnessCfgLoad(cfgCmdRepoPut, argList);
@@ -370,7 +370,7 @@ testRun(void)
         TEST_TITLE("put encrypted backup.info");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE);
         harnessCfgLoad(cfgCmdRepoPut, argList);
@@ -381,7 +381,7 @@ testRun(void)
         TEST_TITLE("put encrypted backup.info.copy");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE ".copy");
         harnessCfgLoad(cfgCmdRepoPut, argList);
@@ -398,7 +398,7 @@ testRun(void)
         bufUsedSet(archiveFileBuffer, bufSize(archiveFileBuffer));
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
         strLstAdd(
@@ -414,7 +414,7 @@ testRun(void)
         TEST_TITLE("put encrypted backup.manifest");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE);
@@ -426,7 +426,7 @@ testRun(void)
         TEST_TITLE("put encrypted backup.manifest.copy");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE ".copy");
@@ -452,7 +452,7 @@ testRun(void)
         TEST_TITLE("put encrypted backup_label");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom2");
         strLstAdd(argList, STRDEF(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
@@ -464,7 +464,7 @@ testRun(void)
         TEST_TITLE("error when missing source");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         harnessCfgLoad(cfgCmdRepoGet, argList);
 
         TEST_ERROR(storageGetProcess(ioBufferWriteNew(bufNew(0))), ParamRequiredError, "source file required");
@@ -484,7 +484,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
-        strLstAdd(argList, strNewFmt("%s/repo/%s", testPath(), strZ(fileName)));
+        strLstAdd(argList, strNewFmt(TEST_PATH "/repo/%s", strZ(fileName)));
         harnessCfgLoad(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
@@ -495,7 +495,7 @@ testRun(void)
         TEST_TITLE("get an encrypted file with custom key");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--" CFGOPT_CIPHER_PASS "=custom");
         strLstAdd(argList, fileEncCustomName);
@@ -509,7 +509,7 @@ testRun(void)
         TEST_TITLE("get a raw file");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, "--raw");
         strLstAdd(argList, fileRawName);
@@ -519,7 +519,7 @@ testRun(void)
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
-        String *stdoutFile = strNewFmt("%s/repo/stdout.txt", testPath());
+        const String *stdoutFile = STRDEF(TEST_PATH "/repo/stdout.txt");
 
         THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
@@ -536,7 +536,7 @@ testRun(void)
         TEST_TITLE("ignore missing file");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         strLstAddZ(argList, "--" CFGOPT_IGNORE_MISSING);
         strLstAddZ(argList, BOGUS_STR);
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -558,13 +558,13 @@ testRun(void)
         writeBuffer = bufNew(0);
         TEST_ERROR(
             storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
-            strZ(strNewFmt("absolute path '/somewhere/%s' is not in base path '%s/repo'", INFO_ARCHIVE_FILE, testPath())));
+            "absolute path '/somewhere/" INFO_ARCHIVE_FILE "' is not in base path '" TEST_PATH "/repo'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get file in repo root directory error");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAdd(argList, fileEncCustomName);
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -578,7 +578,7 @@ testRun(void)
         TEST_TITLE("get encrypted archive.info - stanza mismatch");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test2");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE);
@@ -592,7 +592,7 @@ testRun(void)
         TEST_TITLE("get encrypted archive.info");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE);
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -605,7 +605,7 @@ testRun(void)
         TEST_TITLE("get encrypted archive.info.copy");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE ".copy");
@@ -619,7 +619,7 @@ testRun(void)
         TEST_TITLE("get encrypted backup.info");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE);
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -632,7 +632,7 @@ testRun(void)
         TEST_TITLE("get encrypted backup.info.copy");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE ".copy");
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -648,10 +648,13 @@ testRun(void)
         TEST_TITLE("get encrypted WAL archive file");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
-        strLstAdd(argList, strNewFmt(
-            "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",testPath()));
+        strLstAdd(
+            argList,
+            strNewFmt(
+                "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                TEST_PATH));
         harnessCfgLoad(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
@@ -662,7 +665,7 @@ testRun(void)
         TEST_TITLE("get encrypted backup.manifest");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE);
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -675,7 +678,7 @@ testRun(void)
         TEST_TITLE("get encrypted backup.manifest.copy");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE ".copy");
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -688,7 +691,7 @@ testRun(void)
         TEST_TITLE("get encrypted backup.history manifest");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/backup.history/2020/label.manifest.gz");
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -701,7 +704,7 @@ testRun(void)
         TEST_TITLE("get encrypted backup_label");
 
         argList = strLstNew();
-        hrnCfgArgRawFmt(argList, cfgOptRepoPath, "%s/repo", testPath());
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH_REPO);
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAdd(argList, STRDEF(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
         harnessCfgLoad(cfgCmdRepoGet, argList);
@@ -722,7 +725,7 @@ testRun(void)
     if (testBegin("cmdStorageRemove()"))
     {
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--repo-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--repo-path=" TEST_PATH "/repo");
         harnessCfgLoad(cfgCmdRepoRm, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------

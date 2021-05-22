@@ -72,7 +72,7 @@ harnessLogInit(void)
     logInit(logLevelTestDefault, logLevelOff, logLevelInfo, false, logProcessId, 99, false);
     logFileBanner = true;
 
-    snprintf(logFile, sizeof(logFile), "%s/expect.log", testDataPath());
+    snprintf(logFile, sizeof(logFile), "%s/expect.log", hrnPath());
     logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
     logAnySet();
 
@@ -401,8 +401,6 @@ harnessLogResult(const char *expected)
 
     harnessLogLoad(logFile);
     hrnLogReplace();
-
-    expected = hrnReplaceKey(expected);
 
     if (strcmp(harnessLogBuffer, expected) != 0)
     {

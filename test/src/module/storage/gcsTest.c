@@ -184,7 +184,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // Get test host and ports
     const String *const testHost = hrnServerHost();
@@ -327,7 +327,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
                 hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), testPort);
-                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, testContainer());
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
                 harnessCfgLoad(cfgCmdArchivePush, argList);
                 hrnCfgEnvRemoveRaw(cfgOptRepoGcsKey);

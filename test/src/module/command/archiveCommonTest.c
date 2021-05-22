@@ -19,13 +19,13 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("archiveAsyncErrorClear() and archiveAsyncStatus()"))
     {
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
+        strLstAddZ(argList, "--spool-path=" TEST_PATH);
         strLstAddZ(argList, "--archive-async");
         strLstAddZ(argList, "--archive-timeout=1");
         strLstAddZ(argList, "--stanza=db");
@@ -38,9 +38,9 @@ testRun(void)
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModeGet, segment, false, true), false, "directory and status file not present");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        mkdir(strZ(strNewFmt("%s/archive", testPath())), 0750);
-        mkdir(strZ(strNewFmt("%s/archive/db", testPath())), 0750);
-        mkdir(strZ(strNewFmt("%s/archive/db/out", testPath())), 0750);
+        mkdir(TEST_PATH "/archive", 0750);
+        mkdir(TEST_PATH "/archive/db", 0750);
+        mkdir(TEST_PATH "/archive/db/out", 0750);
 
         TEST_RESULT_BOOL(archiveAsyncStatus(archiveModePush, segment, false, true), false, "status file not present");
 
@@ -134,7 +134,7 @@ testRun(void)
     if (testBegin("archiveAsyncStatusErrorWrite() and archiveAsyncStatusOkWrite()"))
     {
         StringList *argList = strLstNew();
-        strLstAdd(argList, strNewFmt("--spool-path=%s", testPath()));
+        strLstAddZ(argList, "--spool-path=" TEST_PATH);
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, "--" CFGOPT_ARCHIVE_ASYNC);
@@ -219,7 +219,7 @@ testRun(void)
         THROW_ON_SYS_ERROR(chdir("/") != 0, PathMissingError, "unable to chdir()");
         TEST_ERROR(
             walPath(STRDEF("relative/path"), pgPathLink, STRDEF("test")), OptionInvalidValueError,
-            "PostgreSQL working directory '/' is not the same as option pg1-path '{[path]}/pg-link'\n"
+            "PostgreSQL working directory '/' is not the same as option pg1-path '" TEST_PATH "/pg-link'\n"
                 "HINT: is the PostgreSQL data_directory configured the same as the pg1-path option?");
 
         TEST_ERROR(
@@ -236,7 +236,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
+        strLstAddZ(argList, "--repo-path=" TEST_PATH);
         strLstAddZ(argList, "archive-get");
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 

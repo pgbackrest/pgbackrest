@@ -642,7 +642,7 @@ testRun(void)
         strLstAddZ(argList, "--pg4-path=/path/to/pg4");
         strLstAddZ(argList, "--pg4-port=5433");
         strLstAddZ(argList, "--pg5-host=localhost");
-        strLstAdd(argList, strNewFmt("--pg5-host-user=%s", testUser()));
+        strLstAddZ(argList, "--pg5-host-user=" TEST_USER);
         strLstAddZ(argList, "--pg5-path=/path/to/pg5");
         strLstAddZ(argList, "--pg8-path=/path/to/pg8");
         strLstAddZ(argList, "--pg8-port=5434");

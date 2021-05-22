@@ -18,7 +18,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     const String *stanza = STRDEF("db");
     const String *fileName = STRDEF("test.info");
@@ -30,15 +30,15 @@ testRun(void)
     StringList *argListBase = strLstNew();
     strLstAddZ(argListBase, "--no-online");
     strLstAdd(argListBase, strNewFmt("--stanza=%s", strZ(stanza)));
-    strLstAdd(argListBase, strNewFmt("--pg1-path=%s/%s", testPath(), strZ(stanza)));
-    strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
+    strLstAdd(argListBase, strNewFmt("--pg1-path=" TEST_PATH "/%s", strZ(stanza)));
+    strLstAddZ(argListBase, "--repo1-path=" TEST_PATH "/repo");
 
     // *****************************************************************************************************************************
     if (testBegin("cmdStanzaCreate(), checkStanzaInfo(), cmdStanzaDelete()"))
     {
         // Load Parameters
         StringList *argList =  strLstDup(argListBase);
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 
         TEST_ERROR_FMT(
@@ -123,11 +123,11 @@ testRun(void)
         TEST_TITLE("cmdStanzaCreate success - multi-repo and encryption");
 
         argList = strLstDup(argListBase);
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 3, "%s/repo3", testPath());
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 4, "%s/repo4", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
@@ -242,12 +242,12 @@ testRun(void)
         TEST_TITLE("cmdStanzaDelete - multi-repo and encryption, delete");
 
         StringList *argListCmd = strLstNew();
-        hrnCfgArgKeyRawFmt(argListCmd, cfgOptRepoPath, 1, "%s/repo", testPath());
-        hrnCfgArgKeyRawFmt(argListCmd, cfgOptRepoPath, 2, "%s/repo2", testPath());
-        hrnCfgArgKeyRawFmt(argListCmd, cfgOptRepoPath, 3, "%s/repo3", testPath());
-        hrnCfgArgKeyRawFmt(argListCmd, cfgOptRepoPath, 4, "%s/repo4", testPath());
+        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 1, TEST_PATH "/repo");
+        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 3, TEST_PATH "/repo3");
+        hrnCfgArgKeyRawZ(argListCmd, cfgOptRepoPath, 4, TEST_PATH "/repo4");
         hrnCfgArgRawFmt(argListCmd, cfgOptStanza, "%s", strZ(stanza));
-        hrnCfgArgKeyRawFmt(argListCmd, cfgOptPgPath, 1, "%s/%s", testPath(), strZ(stanza));
+        hrnCfgArgKeyRawFmt(argListCmd, cfgOptPgPath, 1, TEST_PATH "/%s", strZ(stanza));
 
         TEST_ERROR_FMT(
             harnessCfgLoad(cfgCmdStanzaDelete, argListCmd), OptionRequiredError, "stanza-delete command requires option: repo\n"
@@ -302,7 +302,7 @@ testRun(void)
         TEST_TITLE("cmdStanzaCreate errors");
 
         argList = strLstDup(argListBase);
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
@@ -546,13 +546,13 @@ testRun(void)
     if (testBegin("pgValidate(), online=y"))
     {
         const String *pg1 = STRDEF("pg1");
-        String *pg1Path = strNewFmt("%s/%s", testPath(), strZ(pg1));
+        String *pg1Path = strNewFmt(TEST_PATH "/%s", strZ(pg1));
 
         // Load Parameters
         StringList *argList = strLstNew();
         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));
         strLstAdd(argList, strNewFmt("--pg1-path=%s", strZ(pg1Path)));
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // pgControl and database match
@@ -613,8 +613,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(
-                1, "dbname='postgres' port=5432", PG_VERSION_92, strZ(strNewFmt("%s/pg2", testPath())), false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg2", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
@@ -622,17 +621,17 @@ testRun(void)
             pgValidate(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
             " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
             "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters.",
-            strZ(pgVersionToStr(PG_VERSION_92)), strZ(strNewFmt("%s/pg2", testPath())), strZ(pgVersionToStr(PG_VERSION_92)),
+            strZ(pgVersionToStr(PG_VERSION_92)), TEST_PATH "/pg2", strZ(pgVersionToStr(PG_VERSION_92)),
             strZ(pg1Path), strZ(pg1Path));
 
         // Primary at pg2
         //--------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s", testPath()));
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH);
         strLstAdd(argList, strNewFmt("--pg2-path=%s", strZ(pg1Path)));
         strLstAddZ(argList, "--pg2-port=5434");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for primary
@@ -642,12 +641,12 @@ testRun(void)
 
         // Create pg_control for standby
         storagePutP(
-            storageNewWriteP(storageTest, strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, testPath())),
+            storageNewWriteP(storageTest, STRDEF(TEST_PATH "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
             hrnPgControlToBuffer((PgControl){.version = PG_VERSION_94, .systemId = 6569239123849665700}));
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, testPath(), true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH, true, NULL, NULL),
             HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5434", PG_VERSION_92, strZ(pg1Path), false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
@@ -671,7 +670,7 @@ testRun(void)
 
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
 
         TEST_ERROR_FMT(
@@ -985,7 +984,7 @@ testRun(void)
     {
         // Load Parameters
         StringList *argListCmd = strLstNew();
-        strLstAdd(argListCmd, strNewFmt("--repo1-path=%s/repo", testPath()));
+        strLstAddZ(argListCmd, "--repo1-path=" TEST_PATH "/repo");
 
         //--------------------------------------------------------------------------------------------------------------------------
         const String *stanzaOther = STRDEF("otherstanza");
@@ -993,7 +992,7 @@ testRun(void)
         // Load Parameters
         StringList *argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanzaOther)));
-        strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strZ(stanzaOther)));
+        strLstAdd(argList, strNewFmt("--pg1-path=" TEST_PATH "/%s", strZ(stanzaOther)));
         strLstAddZ(argList, "--no-online");
         harnessCfgLoad(cfgCmdStanzaCreate, argList);
 
@@ -1007,7 +1006,7 @@ testRun(void)
 
         argList = strLstDup(argListCmd);
         strLstAdd(argList, strNewFmt("--stanza=%s", strZ(stanza)));
-        strLstAdd(argList,strNewFmt("--pg1-path=%s/%s", testPath(), strZ(stanza)));
+        strLstAdd(argList, strNewFmt("--pg1-path=" TEST_PATH "/%s", strZ(stanza)));
         harnessCfgLoad(cfgCmdStanzaDelete, argList);
 
         // stanza already deleted
@@ -1057,7 +1056,7 @@ testRun(void)
                 "create stop file");
         TEST_ERROR_FMT(
             cmdStanzaDelete(), FileRemoveError,
-            "unable to remove '%s/repo/backup/%s/20190708-154306F/backup.manifest': [20] Not a directory", testPath(),
+            "unable to remove '%s/repo/backup/%s/20190708-154306F/backup.manifest': [20] Not a directory", TEST_PATH,
             strZ(stanza));
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, strNewFmt("repo/backup/%s/20190708-154306F", strZ(stanza))), "remove backup directory");
@@ -1119,7 +1118,7 @@ testRun(void)
 
         // Specify repo option
         StringList *argListDel = strLstDup(argList);
-        hrnCfgArgKeyRawFmt(argListDel, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argListDel, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argListDel, cfgOptRepo, "2");
         harnessCfgLoad(cfgCmdStanzaDelete, argListDel);
 
@@ -1136,8 +1135,8 @@ testRun(void)
 
         argList = strLstDup(argListCmd);
         hrnCfgArgRaw(argList, cfgOptStanza, stanza);
-        hrnCfgArgKeyRawFmt(argList, cfgOptPgPath, 1, "%s/%s", testPath(), strZ(stanza));
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawFmt(argList, cfgOptPgPath, 1, TEST_PATH "/%s", strZ(stanza));
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         strLstAddZ(argList,"--force");
         harnessCfgLoad(cfgCmdStanzaDelete, argList);

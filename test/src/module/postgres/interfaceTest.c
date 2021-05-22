@@ -13,7 +13,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("pgVersionFromStr() and pgVersionToStr()"))
@@ -185,7 +185,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgWalFromBuffer() and pgWalFromFile()"))
     {
-        String *walFile = strNewFmt("%s/0000000F0000000F0000000F", testPath());
+        const String *walFile = STRDEF(TEST_PATH "/0000000F0000000F0000000F");
 
         // Create a bogus control file, initially not in long format)
         // --------------------------------------------------------------------------------------------------------------------------

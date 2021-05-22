@@ -28,19 +28,6 @@ void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
 // Write a buffer to a file
 void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize);
 
-// Replace common test values in a string and return a buffer with the replacements.
-//
-// Note that the returned buffer will be overwritten with each call.  Values that can be replaced are:
-//
-// {[path]} - the current test path
-// {[path-data]} - the current test data path
-// {[user-id]} - the current test user id
-// {[user]} - the current test user
-// {[group-id]} - the current test group id
-// {[group]} - the current test group
-// {[project-exe]} - the project exe
-const char *hrnReplaceKey(const char *string);
-
 // Diff two strings using command-line diff tool
 const char *hrnDiff(const char *actual, const char *expected);
 
@@ -56,33 +43,12 @@ uint64_t testTimeMSecBegin(void);
 // The path and name of the test executable
 const char *testExe(void);
 
-// Path where test data is written
-const char *testPath(void);
-
-// Path to a copy of the repository
-const char *testRepoPath(void);
-
-// Test OS user
-const char *testUser(void);
-
-// Test OS group
-const char *testGroup(void);
-
 // Is this test running in a container?
 bool testContainer(void);
-
-// Location of the data path were the harness can write data that won't be visible to the test
-const char *testDataPath(void);
 
 // Get the 0-based index of the test.  Useful for modifying resources like port numbers to avoid conflicts when running tests in
 // parallel.
 unsigned int testIdx(void);
-
-// Location of the project exe
-const char *testProjectExe(void);
-
-// For scaling performance tests
-uint64_t testScale(void);
 
 /***********************************************************************************************************************************
 Test that an expected error is actually thrown and error when it isn't
@@ -106,7 +72,7 @@ Test that an expected error is actually thrown and error when it isn't
     {                                                                                                                              \
         TEST_ERROR_catch = true;                                                                                                   \
                                                                                                                                    \
-        if (strcmp(errorMessage(), hrnReplaceKey(errorMessageExpected)) != 0 || errorType() != &errorTypeExpected)                 \
+        if (strcmp(errorMessage(), errorMessageExpected) != 0 || errorType() != &errorTypeExpected)                                \
             THROW_FMT(                                                                                                             \
                 TestError, "EXPECTED %s: %s\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),              \
                 errorMessageExpected, errorName(), errorMessage(), errorStackTrace());                                             \
@@ -241,9 +207,9 @@ Macros to compare results of common data types
 #define TEST_RESULT_STR_Z(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_Z(strZNull(statement), resultExpected, __VA_ARGS__)
 #define TEST_RESULT_STR_KEYRPL(statement, resultExpected, ...)                                                                     \
-    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(strZ(resultExpected)), __VA_ARGS__)
+    TEST_RESULT_Z(strZNull(statement), strZ(resultExpected), __VA_ARGS__)
 #define TEST_RESULT_STR_Z_KEYRPL(statement, resultExpected, ...)                                                                   \
-    TEST_RESULT_Z(strZNull(statement), hrnReplaceKey(resultExpected), __VA_ARGS__)
+    TEST_RESULT_Z(strZNull(statement), resultExpected, __VA_ARGS__)
 #define TEST_RESULT_Z_STR(statement, resultExpected, ...)                                                                          \
     TEST_RESULT_Z(statement, strZNull(resultExpected), __VA_ARGS__)
 
@@ -290,13 +256,13 @@ Test system calls
 #define TEST_SYSTEM(command)                                                                                                       \
     do                                                                                                                             \
     {                                                                                                                              \
-        int TEST_SYSTEM_FMT_result = system(hrnReplaceKey(command));                                                               \
+        int TEST_SYSTEM_FMT_result = system(command);                                                                              \
                                                                                                                                    \
         if (TEST_SYSTEM_FMT_result != 0)                                                                                           \
         {                                                                                                                          \
             THROW_FMT(                                                                                                             \
-                AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", hrnReplaceKey(command),                \
-                TEST_SYSTEM_FMT_result, errorStackTrace());                                                                        \
+                AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", command, TEST_SYSTEM_FMT_result,       \
+                errorStackTrace());                                                                                                \
         }                                                                                                                          \
     } while (0)
 

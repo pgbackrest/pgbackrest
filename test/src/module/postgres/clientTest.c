@@ -35,7 +35,7 @@ testRun(void)
         if (system("sudo pg_ctlcluster 11 test start") != 0)
             THROW(AssertError, "unable to start cluster");
 
-        if (system(strZ(strNewFmt("sudo -u postgres psql -c 'create user %s superuser'", testUser()))) != 0)
+        if (system("sudo -u postgres psql -c 'create user " TEST_USER " superuser'") != 0)
             THROW(AssertError, "unable to create superuser");
 #endif
 
@@ -105,15 +105,15 @@ testRun(void)
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_CONNECTDB, .param = strZ(
-                strNewFmt("[\"dbname='postgres' port=5432 user='%s' host='/var/run/postgresql'\"]", testUser()))},
+            {.function = HRNPQ_CONNECTDB,
+                .param = "[\"dbname='postgres' port=5432 user='" TEST_USER "' host='/var/run/postgresql'\"]"},
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
             {.function = NULL}
         });
 #endif
 
         TEST_ASSIGN(
-            client, pgClientOpen(pgClientNew(STRDEF("/var/run/postgresql"), 5432, STRDEF("postgres"), strNewZ(testUser()), 500)),
+            client, pgClientOpen(pgClientNew(STRDEF("/var/run/postgresql"), 5432, STRDEF("postgres"), TEST_USER_STR, 500)),
             "new client");
 
         // Invalid query

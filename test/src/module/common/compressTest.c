@@ -83,7 +83,7 @@ testSuite(CompressType type, const char *decompressCmd)
     varLstAdd(compressParamList, varNewUInt(1));
 
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     TEST_TITLE("simple data");
 
@@ -98,7 +98,7 @@ testSuite(CompressType type, const char *decompressCmd)
     TEST_TITLE("compressed output can be decompressed with command-line tool");
 
     storagePutP(storageNewWriteP(storageTest, STRDEF("test.cmp")), compressed);
-    TEST_SYSTEM_FMT("%s {[path]}/test.cmp > {[path]}/test.out", decompressCmd);
+    TEST_SYSTEM_FMT("%s " TEST_PATH "/test.cmp > " TEST_PATH "/test.out", decompressCmd);
     TEST_RESULT_BOOL(bufEq(decompressed, storageGetP(storageNewReadP(storageTest, STRDEF("test.out")))), true, "check output");
 
     TEST_RESULT_BOOL(

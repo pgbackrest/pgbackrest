@@ -18,8 +18,8 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "5");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/db path", testPath()));
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/db path");
         strLstAddZ(argList, "--pg2-path=/db2");
         strLstAddZ(argList, "--log-subprocess");
         strLstAddZ(argList, "--no-config");
@@ -50,8 +50,8 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=test1");
-        strLstAdd(argList, strNewFmt("--repo1-path=%s/repo", testPath()));
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/db path", testPath()));
+        strLstAddZ(argList, "--repo1-path=" TEST_PATH "/repo");
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/db path");
         strLstAddZ(argList, "--db-include=1");
         strLstAddZ(argList, "--db-include=2");
         strLstAddZ(argList, "--recovery-option=a=b");

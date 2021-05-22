@@ -144,8 +144,8 @@ testRun(void)
     if (testBegin("storageInfoList()"))
     {
         // One million files represents a fairly large cluster
-        CHECK(testScale() <= 2000);
-        uint64_t fileTotal = (uint64_t)1000000 * testScale();
+        CHECK(TEST_SCALE <= 2000);
+        uint64_t fileTotal = (uint64_t)1000000 * TEST_SCALE;
 
         HARNESS_FORK_BEGIN()
         {
@@ -223,8 +223,8 @@ testRun(void)
         ioBufferSizeSet(4 * 1024 * 1024);
 
         // 1MB is a fairly normal table size
-        CHECK(testScale() <= 1024 * 1024 * 1024);
-        uint64_t blockTotal = (uint64_t)1 * testScale();
+        CHECK(TEST_SCALE <= 1024 * 1024 * 1024);
+        uint64_t blockTotal = (uint64_t)1 * TEST_SCALE;
 
         // Set iteration
         unsigned int iteration = 1;
@@ -234,7 +234,7 @@ testRun(void)
         uint64_t rateOut = 0; // MB/s (0 disables)
 
         // Get the sample pages from disk
-        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(STR(testRepoPath())), STRDEF("test/data/filecopy.table.bin")));
+        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(HRN_PATH_REPO_STR), STRDEF("test/data/filecopy.table.bin")));
         ASSERT(bufUsed(block) == 1024 * 1024);
 
         // Build the input buffer

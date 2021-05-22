@@ -17,7 +17,7 @@ void
 testRun(void)
 {
     // Create default storage object for testing
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
     if (testBegin("InfoBackup"))
@@ -450,7 +450,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, "--stanza=db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
-        strLstAdd(argList, strNewFmt("--repo-path=%s", testPath()));
+        strLstAddZ(argList, "--repo-path=" TEST_PATH);
         harnessCfgLoad(cfgCmdArchiveGet, argList);
 
         // Create manifest for upgrade db (id=2), save to disk
@@ -820,14 +820,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("infoBackupLoadFile() and infoBackupSaveFile()"))
     {
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherTypeNone, NULL), FileMissingError,
-            "unable to load info file '%s/backup.info' or '%s/backup.info.copy':\n"
-            "FileMissingError: unable to open missing file '%s/backup.info' for read\n"
-            "FileMissingError: unable to open missing file '%s/backup.info.copy' for read\n"
+            "unable to load info file '" TEST_PATH "/backup.info' or '" TEST_PATH "/backup.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info.copy' for read\n"
             "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "HINT: has a stanza-create been performed?",
-            testPath(), testPath(), testPath(), testPath());
+            "HINT: has a stanza-create been performed?");
 
         InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), NULL);
         TEST_RESULT_VOID(

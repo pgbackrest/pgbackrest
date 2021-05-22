@@ -68,7 +68,7 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    Storage *storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+    Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     const String *backupStanzaPath = STRDEF("repo/backup/db");
     String *backupInfoFileName = strNewFmt("%s/backup.info", strZ(backupStanzaPath));
@@ -77,7 +77,7 @@ testRun(void)
 
     StringList *argListBase = strLstNew();
     strLstAddZ(argListBase, "--stanza=db");
-    strLstAdd(argListBase, strNewFmt("--repo1-path=%s/repo", testPath()));
+    strLstAddZ(argListBase, "--repo1-path=" TEST_PATH "/repo");
 
     StringList *argListAvoidWarn = strLstDup(argListBase);
     strLstAddZ(argListAvoidWarn, "--repo1-retention-full=1");  // avoid warning
@@ -854,8 +854,8 @@ testRun(void)
         TEST_TITLE("expire via backup command");
 
         // Copy the repo to another repo
-        TEST_SYSTEM_FMT("mkdir %s/repo2", testPath());
-        TEST_SYSTEM_FMT("cp -r %s/repo/* %s/repo2/", testPath(), testPath());
+        TEST_SYSTEM("mkdir " TEST_PATH "/repo2");
+        TEST_SYSTEM("cp -r " TEST_PATH "/repo/* " TEST_PATH "/repo2/");
 
         // Configure multi-repo and set the repo option to expire the second repo (non-default) files
         argList = strLstDup(argListBase);
@@ -863,7 +863,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-diff=3");
         strLstAddZ(argList, "--repo1-retention-archive=2");
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "2");
@@ -871,7 +871,7 @@ testRun(void)
 
         StringList *argList2 = strLstDup(argList);
         hrnCfgArgRawZ(argList2, cfgOptRepo, "2");
-        strLstAdd(argList2, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList2, "--pg1-path=" TEST_PATH "/pg");
         harnessCfgLoad(cfgCmdBackup, argList2);
 
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
@@ -914,7 +914,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionDiff, 2, "2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionArchive, 2, "1");
@@ -967,11 +967,11 @@ testRun(void)
                 "            HINT: has a stanza-create been performed?\n"
                 "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
                 " archiving scheme.",
-                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
-                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
-                testPath(), strZ(archiveInfoFileNameRepo2), testPath(),
-                strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))), testPath(), strZ(archiveInfoFileNameRepo2),
-                testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))))));
+                TEST_PATH, strZ(backupInfoFileName), TEST_PATH, strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
+                TEST_PATH, strZ(backupInfoFileName), TEST_PATH, strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
+                TEST_PATH, strZ(archiveInfoFileNameRepo2), TEST_PATH,
+                strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))), TEST_PATH, strZ(archiveInfoFileNameRepo2),
+                TEST_PATH, strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(archiveInfoFileNameRepo2))))));
 
         // Restore saved archive.info file
         TEST_RESULT_VOID(
@@ -1004,8 +1004,8 @@ testRun(void)
                 " stop = 000000020000000000000007\n"
                 "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
                 "P00 DETAIL: [DRY-RUN] repo2: 10-2 no archive to remove",
-                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
-                testPath(), strZ(backupInfoFileName), testPath(), strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))));
+                TEST_PATH, strZ(backupInfoFileName), TEST_PATH, strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))),
+                TEST_PATH, strZ(backupInfoFileName), TEST_PATH, strZ(strNewFmt("%s" INFO_COPY_EXT, strZ(backupInfoFileName))))));
 
         // Restore saved backup.info files
         TEST_RESULT_VOID(
@@ -1057,7 +1057,7 @@ testRun(void)
             "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004,"
             " stop = 000000020000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
-            "P00 DETAIL: [DRY-RUN] repo2: 10-2 no archive to remove", testPath(), strZ(archiveStanzaPath))));
+            "P00 DETAIL: [DRY-RUN] repo2: 10-2 no archive to remove", TEST_PATH, strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, archive and backups removed");
@@ -1090,7 +1090,7 @@ testRun(void)
             " start = 000000020000000000000009\n"
             "P00 DETAIL: repo2: 9.4-1 remove archive, start = 000000020000000000000004, stop = 000000020000000000000007\n"
             "P00 DETAIL: repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
-            "P00 DETAIL: repo2: 10-2 no archive to remove", testPath(), strZ(archiveStanzaPath))));
+            "P00 DETAIL: repo2: 10-2 no archive to remove", TEST_PATH, strZ(archiveStanzaPath))));
 
         TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, backupInfoFileName, cipherTypeNone, NULL), "get backup.info");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup.info updated on disk");
@@ -1150,12 +1150,12 @@ testRun(void)
         archiveGenerate(storageTest, archiveStanzaPath, 1, 1, "9.4-1", "0000000100000000");
         argList = strLstDup(argListAvoidWarn);
         strLstAddZ(argList, "--repo1-retention-archive=1");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         harnessCfgLoad(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
         harnessLogResult(
-            strZ(strNewFmt("P00   INFO: repo1: remove archive path %s/%s/9.4-1", testPath(), strZ(archiveStanzaPath))));
+            strZ(strNewFmt("P00   INFO: repo1: remove archive path %s/%s/9.4-1", TEST_PATH, strZ(archiveStanzaPath))));
 
         //--------------------------------------------------------------------------------------------------------------------------
         storagePutP(storageNewWriteP(storageTest, backupInfoFileName),
@@ -1354,7 +1354,7 @@ testRun(void)
         // Load Parameters
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--repo1-retention-full=2");
-        strLstAdd(argList, strNewFmt("--pg1-path=%s/pg", testPath()));
+        strLstAddZ(argList, "--pg1-path=" TEST_PATH "/pg");
         harnessCfgLoad(cfgCmdBackup, argList);
 
         storagePutP(
@@ -1737,7 +1737,7 @@ testRun(void)
                 "option-online=false\n"
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[db]\n"
                 "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
@@ -1942,7 +1942,7 @@ testRun(void)
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"
             "P00   INFO: repo1: remove archive path %s/repo/archive/db/9.4-1\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
-            "P00 DETAIL: repo1: 12-2 no archive to remove", testPath())));
+            "P00 DETAIL: repo1: 12-2 no archive to remove", TEST_PATH)));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on expire last full backup on disk");
@@ -2026,7 +2026,7 @@ testRun(void)
 
         argList = strLstDup(argListAvoidWarn);
         hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152850F_20181119-152252D");
-        hrnCfgArgKeyRawFmt(argList, cfgOptRepoPath, 2, "%s/repo2", testPath());
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
@@ -2103,7 +2103,7 @@ testRun(void)
                 "option-online=false\n"
                 "\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"{[path]}/pg\",\"type\":\"path\"}\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[db]\n"
                 "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
@@ -2136,8 +2136,8 @@ testRun(void)
 
         // Create encrypted repo2 with same data from repo1 and ensure results are reported the same. This will test that the
         // manifest can be read on encrypted repos.
-        String *repo2ArchiveStanzaPath =  strNewFmt("%s/repo2/archive/db", testPath());
-        String *repo2BackupStanzaPath =  strNewFmt("%s/repo2/backup/db", testPath());
+        const String *repo2ArchiveStanzaPath = STRDEF(TEST_PATH "/repo2/archive/db");
+        const String *repo2BackupStanzaPath = STRDEF(TEST_PATH "/repo2/backup/db");
         storagePathCreateP(storageLocalWrite(), repo2ArchiveStanzaPath);
         storagePathCreateP(storageLocalWrite(), repo2BackupStanzaPath);
 

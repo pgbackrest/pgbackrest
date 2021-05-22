@@ -470,7 +470,7 @@ testRun(void)
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--pg1-path=/path");
-        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
+        strLstAddZ(argList, "--lock-path=" HRN_PATH "/lock");
         strLstAddZ(argList, "--log-path=/bogus");
         strLstAddZ(argList, "--log-level-file=info");
         strLstAddZ(argList, "backup");
@@ -491,7 +491,7 @@ testRun(void)
         StringList *argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=db");
-        strLstAdd(argList, strNewFmt("--" CFGOPT_LOCK_PATH "=%s/lock", testDataPath()));
+        strLstAddZ(argList, "--" CFGOPT_LOCK_PATH "=" HRN_PATH "/lock");
         strLstAddZ(argList, CFGCMD_EXPIRE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
@@ -600,8 +600,8 @@ testRun(void)
         strLstAddZ(argList, "--stanza=db");
         strLstAddZ(argList, "--pg1-path=/path");
         strLstAddZ(argList, "--repo1-retention-full=1");
-        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
-        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--lock-path=" HRN_PATH "/lock");
+        strLstAddZ(argList, "--log-path=" TEST_PATH);
         strLstAddZ(argList, "--log-level-console=off");
         strLstAddZ(argList, "--log-level-stderr=off");
         strLstAddZ(argList, "--log-level-file=warn");
@@ -611,7 +611,7 @@ testRun(void)
         strLstAddZ(argList, "backup");
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
-        TEST_RESULT_INT(lstat(strZ(strNewFmt("%s/db-backup.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/db-backup.log", &statLog), 0, "   check log file exists");
         TEST_RESULT_PTR_NE(cfgOptionStr(cfgOptExecId), NULL, "   exec-id is set");
         TEST_RESULT_BOOL(socketLocal.init, true, "   check socketLocal.init");
         TEST_RESULT_BOOL(socketLocal.block, false, "   check socketLocal.block");
@@ -627,7 +627,7 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
         strLstAddZ(argList, "--stanza=db");
-        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--log-path=" TEST_PATH);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to");
         strLstAddZ(argList, "--process=1");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
@@ -636,14 +636,14 @@ testRun(void)
         strLstAddZ(argList, CFGCMD_BACKUP ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(lstat(strZ(strNewFmt("%s/db-backup-local-001.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/db-backup-local-001.log", &statLog), 0, "   check log file exists");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptExecId), "1111-fe70d611", "   exec-id is preserved");
 
         // Remote command opens log file with special filename
         // -------------------------------------------------------------------------------------------------------------------------
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--log-path=" TEST_PATH);
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
         strLstAddZ(argList, "--" CFGOPT_LOG_SUBPROCESS);
@@ -651,14 +651,14 @@ testRun(void)
         strLstAddZ(argList, CFGCMD_INFO ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(lstat(strZ(strNewFmt("%s/all-info-remote-000.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/all-info-remote-000.log", &statLog), 0, "   check log file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remote command without archive-async option");
 
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--log-path=" TEST_PATH);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
@@ -668,15 +668,14 @@ testRun(void)
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_REMOTE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(
-            lstat(strZ(strNewFmt("%s/test-archive-get-remote-001.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-get-remote-001.log", &statLog), 0, "   check log file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local command with archive-async option");
 
         argList = strLstNew();
         strLstAddZ(argList, "pgbackrest");
-        strLstAdd(argList, strNewFmt("--log-path=%s", testPath()));
+        strLstAddZ(argList, "--log-path=" TEST_PATH);
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
         strLstAddZ(argList, "--" CFGOPT_LOG_LEVEL_FILE "=info");
@@ -686,24 +685,21 @@ testRun(void)
         strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH ":" CONFIG_COMMAND_ROLE_LOCAL);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(
-            lstat(strZ(strNewFmt("%s/test-archive-push-async-local-001.log", testPath())), &statLog), 0,
-            "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-push-async-local-001.log", &statLog), 0, "   check log file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive-get command with async role");
 
         argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
-        strLstAdd(argList, strNewFmt("--" CFGOPT_LOG_PATH "=%s", testPath()));
-        strLstAdd(argList, strNewFmt("--lock-path=%s/lock", testDataPath()));
+        strLstAddZ(argList, "--" CFGOPT_LOG_PATH "=" TEST_PATH);
+        strLstAddZ(argList, "--lock-path=" HRN_PATH "/lock");
         strLstAddZ(argList, "--" CFGOPT_STANZA "=test");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET ":" CONFIG_COMMAND_ROLE_ASYNC);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
-        TEST_RESULT_INT(
-            lstat(strZ(strNewFmt("%s/test-archive-get-async.log", testPath())), &statLog), 0, "   check log file exists");
+        TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-get-async.log", &statLog), 0, "   check log file exists");
 
         lockRelease(true);
     }

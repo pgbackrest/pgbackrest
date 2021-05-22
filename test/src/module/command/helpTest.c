@@ -496,7 +496,7 @@ testRun(void)
 
         // Redirect stdout to a file
         int stdoutSave = dup(STDOUT_FILENO);
-        String *stdoutFile = strNewFmt("%s/stdout.help", testPath());
+        const String *stdoutFile = STRDEF(TEST_PATH "/stdout.help");
 
         THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
@@ -506,7 +506,7 @@ testRun(void)
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);
 
-        Storage *storage = storagePosixNewP(strNewZ(testPath()));
+        Storage *storage = storagePosixNewP(TEST_PATH_STR);
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, stdoutFile))), generalHelp, "    check text");
     }
 

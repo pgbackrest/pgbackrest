@@ -620,10 +620,14 @@ sub run
                 $strTestC =~ s/\{\[C\_TEST\_CONTAINER\]\}/$strContainer/g;
                 $strTestC =~ s/\{\[C\_TEST\_PROJECT\_EXE\]\}/$strProjectExePath/g;
                 $strTestC =~ s/\{\[C\_TEST\_PATH\]\}/$strTestPathC/g;
+                $strTestC =~ s/\{\[C\_TEST\_USER\]\}/${\TEST_USER}/g;
+                $strTestC =~ s/\{\[C\_TEST\_USER\_ID\]\}/${\TEST_USER_ID}/g;
+                $strTestC =~ s/\{\[C\_TEST\_GROUP\]\}/${\TEST_GROUP}/g;
+                $strTestC =~ s/\{\[C\_TEST\_GROUP\_ID\]\}/${\TEST_GROUP_ID}/g;
                 $strTestC =~ s/\{\[C\_TEST\_PGB\_PATH\]\}/$strRepoCopyPath/g;
-                $strTestC =~ s/\{\[C\_TEST\_DATA_PATH\]\}/$self->{strDataPath}/g;
+                $strTestC =~ s/\{\[C\_HRN\_PATH\]\}/$self->{strDataPath}/g;
                 $strTestC =~ s/\{\[C\_TEST\_IDX\]\}/$self->{iVmIdx}/g;
-                $strTestC =~ s/\{\[C\_TEST\_REPO_PATH\]\}/$self->{strBackRestBase}/g;
+                $strTestC =~ s/\{\[C\_HRN\_PATH\_REPO\]\}/$self->{strBackRestBase}/g;
                 $strTestC =~ s/\{\[C\_TEST\_SCALE\]\}/$self->{iScale}/g;
 
                 my $strLogTimestampC = $self->{bLogTimestamp} ? 'true' : 'false';

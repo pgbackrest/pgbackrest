@@ -256,8 +256,8 @@ testRun(void)
                 TEST_RESULT_VOID(
                     hrnServerRunP(
                         ioFdReadNew(STRDEF("test server read"), HARNESS_FORK_CHILD_READ(), 5000), hrnServerProtocolTls,
-                        .certificate = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "-alt-name.crt", testRepoPath()),
-                        .key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".key", testRepoPath())),
+                        .certificate = STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-alt-name.crt"),
+                        .key = STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".key")),
                     "tls alt name server run");
             }
             HARNESS_FORK_CHILD_END();
@@ -292,7 +292,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("test.pgbackrest.org"), hrnServerPort(0), 5000), STRDEF("test.pgbackrest.org"),
-                            0, true, strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "-ca.crt", testRepoPath()), NULL)),
+                            0, true, STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-ca.crt"), NULL)),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -306,7 +306,7 @@ testRun(void)
                         tlsClientNew(
                             sckClientNew(STRDEF("host.test2.pgbackrest.org"), hrnServerPort(0), 5000),
                             STRDEF("host.test2.pgbackrest.org"), 0, true,
-                            strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "-ca.crt", testRepoPath()), NULL)),
+                            STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-ca.crt"), NULL)),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -319,7 +319,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("test3.pgbackrest.org"), hrnServerPort(0), 5000), STRDEF("test3.pgbackrest.org"),
-                            0, true, strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "-ca.crt", testRepoPath()), NULL)),
+                            0, true, STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX "-ca.crt"), NULL)),
                     CryptoError,
                     "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
 
@@ -333,7 +333,7 @@ testRun(void)
                     ioClientOpen(
                         tlsClientNew(
                             sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000), STRDEF("X"), 0, true,
-                            strNewFmt("%s/" HRN_SERVER_CERT_PREFIX ".crt", testRepoPath()),
+                            STRDEF(HRN_PATH_REPO "/" HRN_SERVER_CERT_PREFIX ".crt"),
                         NULL)),
                     CryptoError,
                     "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
@@ -386,7 +386,7 @@ testRun(void)
                 TEST_ASSIGN(
                     client,
                     tlsClientNew(
-                        sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 0, testContainer(), NULL,
+                        sckClientNew(hrnServerHost(), hrnServerPort(0), 5000), hrnServerHost(), 0, TEST_IN_CONTAINER, NULL,
                         NULL),
                     "new client");
 
