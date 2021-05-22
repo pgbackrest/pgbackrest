@@ -346,7 +346,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
-        harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
+        TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
 
         TEST_RESULT_BOOL(
             storageExistsP(
@@ -374,7 +374,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_wal/000000010000000100000001")), walBuffer1);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
-        harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
+        TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
 
         TEST_RESULT_BOOL(
             storageExistsP(
@@ -382,7 +382,7 @@ testRun(void)
             true, "check repo for WAL file");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment again");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: WAL file '000000010000000100000001' already exists in the repo1 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
@@ -423,7 +423,7 @@ testRun(void)
             "write WAL tmp file");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
-        harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
+        TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
             storageExistsP(
@@ -444,7 +444,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_wal/00000001.history")), BUFSTRDEF("FAKEHISTORY"));
 
         TEST_RESULT_VOID(cmdArchivePush(), "push a history file");
-        harnessLogResult("P00   INFO: pushed WAL file '00000001.history' to the archive");
+        TEST_RESULT_LOG("P00   INFO: pushed WAL file '00000001.history' to the archive");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, STRDEF("repo/archive/test/11-1/00000001.history")), true, "check repo for history file");
@@ -460,7 +460,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "drop WAL file");
-        harnessLogResult("P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");
+        TEST_RESULT_LOG("P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");
 
         argListTemp = strLstDup(argList);
         strLstAddZ(argListTemp, "--archive-push-queue-max=1GB");
@@ -468,7 +468,7 @@ testRun(void)
         harnessCfgLoad(cfgCmdArchivePush, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push WAL file again");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
@@ -548,7 +548,7 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
-        harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
+        TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_RESULT_BOOL(
             storageExistsP(
@@ -595,7 +595,7 @@ testRun(void)
         TEST_TITLE("push WAL to one repo");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
@@ -609,7 +609,7 @@ testRun(void)
         TEST_TITLE("WAL already exists in both repos");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: WAL file '000000010000000100000002' already exists in the repo2 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   WARN: WAL file '000000010000000100000002' already exists in the repo3 archive with the same checksum\n"
@@ -822,7 +822,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/000000010000000100000001")), walBuffer1);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
-        harnessLogResult("P00   INFO: pushed WAL file '000000010000000100000001' to the archive asynchronously");
+        TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive asynchronously");
 
         TEST_RESULT_BOOL(
             storageExistsP(
@@ -933,7 +933,7 @@ testRun(void)
         harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000002\n"
             "P01 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
 
@@ -957,7 +957,7 @@ testRun(void)
         storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000002.ok"));
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000002\n"
             "P01   WARN: WAL file '000000010000000100000002' already exists in the repo1 archive with the same checksum\n"
             "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
@@ -981,7 +981,7 @@ testRun(void)
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg_xlog/archive_status/000000010000000100000003.ready")), NULL);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segment");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000003\n"
             "P01 DETAIL: pushed WAL file '000000010000000100000003' to the archive");
 
@@ -1008,7 +1008,7 @@ testRun(void)
         harnessCfgLoadRole(cfgCmdArchivePush, cfgCmdRoleAsync, argListTemp);
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: push 2 WAL file(s) to archive: 000000010000000100000001...000000010000000100000002\n"
             "P00   WARN: dropped WAL file '000000010000000100000001' because archive queue exceeded 16MB\n"
             "P00   WARN: dropped WAL file '000000010000000100000002' because archive queue exceeded 16MB");

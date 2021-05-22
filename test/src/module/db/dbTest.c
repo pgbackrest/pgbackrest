@@ -516,7 +516,7 @@ testRun(void)
         });
 
         TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: unable to check pg-1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
                 " error");
 

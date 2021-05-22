@@ -59,7 +59,7 @@ testRun(void)
         });
 
         TEST_ERROR(cmdCheck(), ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: unable to check pg-1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
 
         // Standby only, repo local
@@ -139,9 +139,7 @@ testRun(void)
         TEST_ERROR_FMT(
             cmdCheck(), FileMissingError, "unable to open missing file '%s' for read",
             strZ(strNewFmt("%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, strZ(pg1Path))));
-        harnessLogResult(
-            strZ(strNewFmt("P00   WARN: option '%s' is enabled but standby is not properly configured",
-            cfgOptionName(cfgOptBackupStandby))));
+        TEST_RESULT_LOG("P00   WARN: option '" CFGOPT_BACKUP_STANDBY "' is enabled but standby is not properly configured");
 
         // Standby and primary database
         // -------------------------------------------------------------------------------------------------------------------------
@@ -226,7 +224,7 @@ testRun(void)
 
         // Error on primary but standby check ok
         TEST_ERROR(cmdCheck(), ArchiveDisabledError, "archive_mode must be enabled");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: check repo1 (standby)\n"
             "P00   INFO: switch wal not performed because this is a standby");
 
@@ -258,7 +256,9 @@ testRun(void)
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
             TEST_PATH "/repo2/archive/test1/archive.info", TEST_PATH "/repo2/archive/test1/archive.info.copy");
-        harnessLogResult("P00   INFO: check repo1 (standby)\nP00   INFO: check repo2 (standby)");
+        TEST_RESULT_LOG(
+            "P00   INFO: check repo1 (standby)\n"
+            "P00   INFO: check repo2 (standby)");
 
         // Single primary
         // -------------------------------------------------------------------------------------------------------------------------
@@ -291,7 +291,7 @@ testRun(void)
             "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
             "HINT: check the PostgreSQL server log for errors.\n"
             "HINT: run the 'start' command if the stanza was previously stopped.");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: check repo1 configuration (primary)\n"
             "P00   INFO: check repo2 configuration (primary)\n"
             "P00   INFO: check repo1 archive for WAL (primary)");
@@ -324,18 +324,15 @@ testRun(void)
             buffer);
 
         TEST_RESULT_VOID(cmdCheck(), "check primary, WAL archived");
-        harnessLogResult(
-            strZ(
-                strNewFmt(
-                    "P00   INFO: check repo1 configuration (primary)\n"
-                    "P00   INFO: check repo2 configuration (primary)\n"
-                    "P00   INFO: check repo1 archive for WAL (primary)\n"
-                    "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo/archive/test1/9.2-1/"
-                        "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
-                    "P00   INFO: check repo2 archive for WAL (primary)\n"
-                    "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '%s/repo2/archive/test1/9.2-1/"
-                        "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2",
-                    TEST_PATH, TEST_PATH)));
+        TEST_RESULT_LOG(
+            "P00   INFO: check repo1 configuration (primary)\n"
+            "P00   INFO: check repo2 configuration (primary)\n"
+            "P00   INFO: check repo1 archive for WAL (primary)\n"
+            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/9.2-1/"
+                "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
+            "P00   INFO: check repo2 archive for WAL (primary)\n"
+            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo2/archive/test1/9.2-1/"
+                "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2");
 
         // Primary == NULL (for test coverage)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -551,7 +548,7 @@ testRun(void)
 
         // Create info files
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");
-        harnessLogResult("P00   INFO: stanza-create for stanza 'test1' on repo1");
+        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
 
         // Version mismatch
         TEST_ERROR(

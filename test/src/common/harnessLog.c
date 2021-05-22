@@ -416,52 +416,6 @@ harnessLogResult(const char *expected)
 }
 
 /***********************************************************************************************************************************
-Compare log to a regexp
-
-After the comparison the log is cleared so the next result can be compared.
-***********************************************************************************************************************************/
-void
-harnessLogResultRegExp(const char *expression)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STRINGZ, expression);
-
-        FUNCTION_HARNESS_ASSERT(expression != NULL);
-    FUNCTION_HARNESS_END();
-
-    regex_t regExp;
-
-    TRY_BEGIN()
-    {
-        harnessLogLoad(logFile);
-
-        // Compile the regexp and process errors
-        int result = 0;
-
-        if ((result = regcomp(&regExp, expression, REG_NOSUB | REG_EXTENDED)) != 0)
-        {
-            char buffer[4096];
-            regerror(result, NULL, buffer, sizeof(buffer));
-            THROW(FormatError, buffer);
-        }
-
-        // Do the match
-        if (regexec(&regExp, harnessLogBuffer, 0, NULL, 0) != 0)
-            THROW_FMT(AssertError, "\n\nexpected log regexp:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expression, harnessLogBuffer);
-
-        close(logFdFile);
-        logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
-    }
-    FINALLY()
-    {
-        regfree(&regExp);
-    }
-    TRY_END();
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Make sure nothing is left in the log after all tests have completed
 ***********************************************************************************************************************************/
 void

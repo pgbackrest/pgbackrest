@@ -720,7 +720,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             backupData.backupLabel, "20190923-164324F", "backups not on disk removed, dependent backup removed and not added back, "
             "valid backup on disk added, manifest copy-only ignored");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
             "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
             "P00   WARN: invalid backup '20190818-084502F_20190820-084502I' cannot be added to current backups\n"
@@ -736,7 +736,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "reconstruct does not attempt to add back dependent backup");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
             "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
@@ -809,7 +809,7 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, NULL),
             "20190818-084444F\n20190818-084444F_20190924-084502D\n20190923-164324F\n",
             "previously ignored pgId=1 manifest copy-only now added before existing, and add dependent found");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084444F' found in repository added to backup.info\n"
             "P00   WARN: backup '20190818-084444F_20190924-084502D' found in repository added to backup.info\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"

@@ -246,7 +246,7 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: cannot free inactive context\n"
             "P00   WARN: cannot free inactive context");
     }

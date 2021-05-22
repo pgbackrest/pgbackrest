@@ -39,7 +39,7 @@ testRun(void)
 
         TEST_RESULT_VOID(lockStopTest(), "no stop files without stanza");
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - no stanza, no stop files");
-        harnessLogResult("P00   WARN: stop file does not exist");
+        TEST_RESULT_LOG("P00   WARN: stop file does not exist");
 
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), NULL), "create stop file");
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - no stanza, stop file exists");
@@ -52,7 +52,7 @@ testRun(void)
 
         TEST_RESULT_VOID(lockStopTest(), "no stop files with stanza");
         TEST_RESULT_VOID(cmdStart(), "    cmdStart - stanza, no stop files");
-        harnessLogResult("P00   WARN: stop file does not exist for stanza db");
+        TEST_RESULT_LOG("P00   WARN: stop file does not exist for stanza db");
 
         storagePutP(storageNewWriteP(hrnStorage, STRDEF("lock/all" STOP_FILE_EXT)), NULL);
         TEST_ERROR(lockStopTest(), StopError, "stop file exists for all stanzas");
@@ -83,7 +83,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStop(), "no stanza, stop file already exists");
-        harnessLogResult("P00   WARN: stop file already exists for all stanzas");
+        TEST_RESULT_LOG("P00   WARN: stop file already exists for all stanzas");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storageRemoveP(hrnStorage, STRDEF("lockpath/all" STOP_FILE_EXT)), "remove stop file");
@@ -109,7 +109,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(cmdStop(), "stanza, stop file already exists");
-        harnessLogResult("P00   WARN: stop file already exists for stanza db");
+        TEST_RESULT_LOG("P00   WARN: stop file already exists for stanza db");
         TEST_RESULT_VOID(storageRemoveP(hrnStorage, stanzaStopFile), "    remove stop file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -123,7 +123,7 @@ testRun(void)
             storagePutP(storageNewWriteP(hrnStorage, strNewFmt("%s/bad" LOCK_FILE_EXT, strZ(lockPath)), .modeFile = 0222), NULL),
             "create a lock file that cannot be opened");
         TEST_RESULT_VOID(cmdStop(), "    stanza, create stop file but unable to open lock file");
-        harnessLogResult(strZ(strNewFmt("P00   WARN: unable to open lock file %s/bad" LOCK_FILE_EXT, strZ(lockPath))));
+        TEST_RESULT_LOG_FMT("P00   WARN: unable to open lock file %s/bad" LOCK_FILE_EXT, strZ(lockPath));
         TEST_RESULT_VOID(
             storagePathRemoveP(hrnStorage, lockPath, .recurse = true, .errorOnMissing = true), "    remove the lock path");
 
@@ -289,7 +289,7 @@ testRun(void)
                     cmdStop(),
                     "    stanza, create stop file, force - lock file with another process lock, processId is valid");
 
-                harnessLogResult(strZ(strNewFmt("P00   INFO: sent term signal to process %d", HARNESS_FORK_PROCESS_ID(0))));
+                TEST_RESULT_LOG_FMT("P00   INFO: sent term signal to process %d", HARNESS_FORK_PROCESS_ID(0));
             }
             HARNESS_FORK_PARENT_END();
         }
@@ -340,7 +340,7 @@ testRun(void)
 
                 TEST_RESULT_VOID(
                     cmdStop(), "    stanza, create stop file, force - lock file with another process lock, processId is invalid");
-                harnessLogResult("P00   WARN: unable to send term signal to process -32768");
+                TEST_RESULT_LOG("P00   WARN: unable to send term signal to process -32768");
                 TEST_RESULT_BOOL(storageExistsP(hrnStorage, stanzaStopFile), true, "    stanza stop file not removed");
 
                 // Notify the child to release the lock

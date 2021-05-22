@@ -273,11 +273,11 @@ testRun(void)
 
         harnessLogLevelSet(logLevelWarn);
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-            " of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), set option"
-                " 'repo1-retention-full' to the maximum.");
+                " of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
+                " maximum.");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
 
         strLstAddZ(argList, "--repo1-retention-full=1");
@@ -295,11 +295,11 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive-type=incr");
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-            " of space\n"
-                "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full'"
-                " to the maximum.\n"
+                " of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
+                " maximum.\n"
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=incr' but option"
                 " 'repo1-retention-archive' is not set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
@@ -310,11 +310,11 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-archive-type=diff");
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-            " of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), set option"
-                " 'repo1-retention-full' to the maximum.\n"
+                " of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
+                " maximum.\n"
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option"
                 " 'repo1-retention-archive' nor option 'repo1-retention-diff' is set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "    repo1-retention-archive not set");
@@ -322,11 +322,11 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-diff=2");
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-            " of space\n"
-            "            HINT: to retain full backups indefinitely (without warning), set option"
-                " 'repo1-retention-full' to the maximum.");
+                " of space\n"
+            "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
+                " maximum.");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 2, "    repo1-retention-archive set to retention-diff");
 
         argList = strLstNew();
@@ -337,7 +337,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-retention-full=1");
 
         TEST_RESULT_VOID(harnessCfgLoad(cfgCmdExpire, argList), "load config for retention warning");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
                 " to the maximum.");
@@ -458,7 +458,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 6, "    compress-level=6");
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "    compress is not valid");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: 'compress' and 'compress-type' options should not both be set\n"
             "            HINT: 'compress-type' is preferred and 'compress' is deprecated.");
     }

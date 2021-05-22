@@ -18,7 +18,6 @@ void hrnLogReplaceAdd(const char *expression, const char *expressionSub, const c
 void hrnLogReplaceClear(void);
 
 void harnessLogResult(const char *expected);
-void harnessLogResultRegExp(const char *expression);
 
 /***********************************************************************************************************************************
 Getters/Setters

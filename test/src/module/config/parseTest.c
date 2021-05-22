@@ -130,7 +130,7 @@ testRun(void)
         TEST_RESULT_VOID(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false),
             TEST_COMMAND_BACKUP " command with config-include");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: configuration file contains option 'recovery-option' invalid for section 'db:backup'\n"
             "P00   WARN: configuration file contains invalid option 'bogus'\n"
             "P00   WARN: configuration file contains negate option 'no-delta'\n"
@@ -1354,7 +1354,7 @@ testRun(void)
                     cfgParseOptionKeyIdxName(cfgOptPgHost, 1), cfgParseOptionKeyIdxName(cfgOptPgPath, 1))));
 
         TEST_RESULT_VOID(configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), TEST_COMMAND_BACKUP " command");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: environment contains invalid option 'bogus'\n"
             "P00   WARN: environment contains invalid option 'onlin'\n"
             "P00   WARN: environment contains invalid negate option 'no-delta'\n"

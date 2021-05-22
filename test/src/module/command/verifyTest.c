@@ -280,12 +280,11 @@ testRun(void)
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT "' for read\n"
             "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.2, system-id 6625592122879095702) is not "
                 "in the backup.info history, skipping",
-            TEST_PATH, strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel))));
+            strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun test with db-system-id invalid and no main");
@@ -319,13 +318,12 @@ testRun(void)
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg system-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
             "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not "
                 "in the backup.info history, skipping",
-            TEST_PATH, strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
+            strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun copy test with db-id invalid");
@@ -358,13 +356,12 @@ testRun(void)
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg db-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: %s/backup.manifest is missing or unusable, using copy\n"
             "P00  ERROR: [028]: '%s' may not be recoverable - PG data (id 0, version 9.4, system-id 6625592122879095702) is not "
                 "in the backup.info history, skipping",
-            TEST_PATH, strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel))));
+            strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel), strZ(backupLabel));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing main manifest, errored copy");
@@ -380,12 +377,11 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, manifestFileCopy), contentLoad), "write invalid manifest copy");
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/%s/" BACKUP_MANIFEST_FILE "' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_PATH, strZ(backupStanzaPath), strZ(backupLabel),
-            strZ(backupLabel))));
+                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strZ(backupStanzaPath), strZ(backupLabel), strZ(backupLabel));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("current backup true");
@@ -396,12 +392,12 @@ testRun(void)
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
-        harnessLogResult(
-            strZ(strNewFmt(
+        TEST_RESULT_LOG_FMT(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE "\n"
+                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE "\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(backupLabel), strZ(backupLabel))));
+                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strZ(backupLabel), strZ(backupLabel));
 
         // Write a valid manifest with a manifest copy that is invalid
         contentLoad = harnessInfoChecksumZ
@@ -426,7 +422,7 @@ testRun(void)
         TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
-        harnessLogResult(strZ(strNewFmt("P00   WARN: backup '%s' manifest.copy does not match manifest", strZ(backupLabel))));
+        TEST_RESULT_LOG_FMT("P00   WARN: backup '%s' manifest.copy does not match manifest", strZ(backupLabel));
     }
 
     // *****************************************************************************************************************************
@@ -474,7 +470,7 @@ testRun(void)
         TEST_RESULT_UINT(errTotal, 1, "duplicate WAL error");
         TEST_RESULT_UINT(strLstSize(walFileList), 0, "all WAL removed from WAL file list");
         TEST_RESULT_UINT(lstSize(archiveIdResult->walRangeList), 0, "no range");
-        harnessLogResult("P00  ERROR: [028]: duplicate WAL '000000020000000200000000' for '9.4-1' exists, skipping");
+        TEST_RESULT_LOG("P00  ERROR: [028]: duplicate WAL '000000020000000200000000' for '9.4-1' exists, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("FF Wal not skipped > 9.2, duplicates at beginning and end of list are removed");
@@ -500,7 +496,7 @@ testRun(void)
             "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00  ERROR: [028]: duplicate WAL '000000020000000100000000' for '9.4-1' exists, skipping\n"
             "P00  ERROR: [028]: duplicate WAL '000000020000000200000001' for '9.4-1' exists, skipping");
 
@@ -531,7 +527,7 @@ testRun(void)
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00  ERROR: [028]: invalid WAL '0000000200000001000000FF' for '9.2-1' exists, skipping\n"
             "P00  ERROR: [028]: duplicate WAL '000000020000000200000001' for '9.2-1' exists, skipping");
 
@@ -694,7 +690,7 @@ testRun(void)
             verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
             "20181119-153000F", "current backup, missing archive");
         TEST_RESULT_UINT(errTotal, 1, "error logged");
-        harnessLogResult("P00  ERROR: [044]: archiveIds '12-3' are not in the archive.info history list");
+        TEST_RESULT_LOG("P00  ERROR: [044]: archiveIds '12-3' are not in the archive.info history list");
 
         errTotal = 0;
         strLstAddZ(archiveIdList, "13-4");
@@ -702,7 +698,7 @@ testRun(void)
             verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
             "20181119-153000F", "test multiple archiveIds on disk not in archive.info");
         TEST_RESULT_UINT(errTotal, 1, "error logged");
-        harnessLogResult("P00  ERROR: [044]: archiveIds '12-3, 13-4' are not in the archive.info history list");
+        TEST_RESULT_LOG("P00  ERROR: [044]: archiveIds '12-3, 13-4' are not in the archive.info history list");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyLogInvalidResult() - missing file");
@@ -710,7 +706,7 @@ testRun(void)
         TEST_RESULT_UINT(
             verifyLogInvalidResult(STORAGE_REPO_ARCHIVE_STR, verifyFileMissing, 0, STRDEF("missingfilename")),
             0, "file missing message");
-        harnessLogResult("P00   WARN: file missing 'missingfilename'");
+        TEST_RESULT_LOG("P00   WARN: file missing 'missingfilename'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyRender() - missing file, empty invalidList");
@@ -790,16 +786,15 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, backupInfoFileName), contentLoad), "write invalid backup.info");
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
-        harnessLogResult(
-            strZ(strNewFmt(
+        TEST_RESULT_LOG_FMT(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
                 "<REPO:BACKUP>/backup.info\n"
-            "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/backup.info.copy' for read\n"
             "P00  ERROR: [029]: No usable backup.info file\n"
-            "P00   WARN: unable to open missing file '%s/%s/archive.info' for read\n"
-            "P00   WARN: unable to open missing file '%s/%s/archive.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable archive.info file", TEST_PATH, strZ(backupStanzaPath), TEST_PATH,
-            strZ(archiveStanzaPath), TEST_PATH, strZ(archiveStanzaPath))));
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/archive.info' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/archive.info.copy' for read\n"
+            "P00  ERROR: [029]: No usable archive.info file",
+            strZ(backupStanzaPath), strZ(archiveStanzaPath), strZ(archiveStanzaPath));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info invalid checksum, backup.info.copy valid, archive.info not exist, archive copy checksum invalid");
@@ -809,15 +804,14 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, backupInfoFileNameCopy), backupInfoBase), "write valid backup.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
-        harnessLogResult(
-            strZ(strNewFmt(
+        TEST_RESULT_LOG_FMT(
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:BACKUP>/backup.info\n"
-            "P00   WARN: unable to open missing file '%s/%s/archive.info' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/archive.info' for read\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:ARCHIVE>/archive.info.copy\n"
-            "P00  ERROR: [029]: No usable archive.info file", TEST_PATH, strZ(archiveStanzaPath))));
-
+            "P00  ERROR: [029]: No usable archive.info file",
+            strZ(archiveStanzaPath));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info and copy valid but checksum mismatch, archive.info checksum invalid, archive.info copy valid");
@@ -829,7 +823,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, archiveInfoFileNameCopy), archiveInfoBase), "write valid archive.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: backup.info.copy does not match backup.info\n"
             "P00   WARN: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:ARCHIVE>/archive.info\n"
@@ -848,7 +842,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, archiveInfoFileName), archiveInfoMultiHistoryBase),
             "write valid archive.info");
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: archive.info.copy does not match archive.info\n"
             "P00   WARN: no archives or backups exist in the repo");
 
@@ -858,12 +852,11 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageTest, backupInfoFileNameCopy), "remove backup.info.copy");
         TEST_RESULT_VOID(storageRemoveP(storageTest, archiveInfoFileNameCopy), "remove archive.info.copy");
         TEST_RESULT_VOID(cmdVerify(), "usable backup and archive info files");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
-            "P00   WARN: unable to open missing file '%s/%s/archive.info.copy' for read\n"
-            "P00   WARN: no archives or backups exist in the repo", TEST_PATH, strZ(backupStanzaPath), TEST_PATH,
-            strZ(archiveStanzaPath))));
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/backup.info.copy' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/archive.info.copy' for read\n"
+            "P00   WARN: no archives or backups exist in the repo",
+            strZ(backupStanzaPath), strZ(archiveStanzaPath));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info and copy missing, archive.info and copy valid");
@@ -873,12 +866,11 @@ testRun(void)
             storagePutP(storageNewWriteP(storageTest, archiveInfoFileNameCopy), archiveInfoMultiHistoryBase),
             "write valid and matching archive.info.copy");
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
-        harnessLogResult(
-            strZ(strNewFmt(
-            "P00   WARN: unable to open missing file '%s/%s/backup.info' for read\n"
-            "P00   WARN: unable to open missing file '%s/%s/backup.info.copy' for read\n"
-            "P00  ERROR: [029]: No usable backup.info file", TEST_PATH, strZ(backupStanzaPath), TEST_PATH,
-            strZ(backupStanzaPath))));
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/backup.info' for read\n"
+            "P00   WARN: unable to open missing file '" TEST_PATH "/%s/backup.info.copy' for read\n"
+            "P00  ERROR: [029]: No usable backup.info file",
+            strZ(backupStanzaPath), strZ(backupStanzaPath));
     }
 
     // *****************************************************************************************************************************
@@ -978,7 +970,7 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         TEST_ERROR(cmdVerify(), RuntimeError, "1 fatal errors encountered, see log for details");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: no backups exist in the repo\n"
             "P00  ERROR: [028]: duplicate WAL '000000020000000700000FFE' for '11-2' exists, skipping\n"
             "P00   WARN: path '11-2/0000000200000007' does not contain any valid WAL to be processed\n"
@@ -1040,7 +1032,7 @@ testRun(void)
             "  backup: none found",
             "verifyProcess() results");
         TEST_RESULT_UINT(errorTotal, 2, "errors");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   WARN: no backups exist in the repo\n"
             "P00   WARN: archive path '9.4-1' is empty\n"
             "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
@@ -1083,7 +1075,7 @@ testRun(void)
         harnessLogLevelSet(logLevelError);
 
         TEST_ERROR(cmdVerify(), RuntimeError, "2 fatal errors encountered, see log for details");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P01  ERROR: [028]: invalid checksum "
                 "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
             "P01  ERROR: [028]: invalid size "
@@ -1242,8 +1234,7 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         TEST_ERROR(cmdVerify(), RuntimeError, "7 fatal errors encountered, see log for details");
-        harnessLogResult(
-            strZ(strNewFmt(
+        TEST_RESULT_LOG_FMT(
                 "P00   WARN: archive path '9.4-1' is empty\n"
                 "P00   WARN: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
                 "P01  ERROR: [028]: invalid checksum "
@@ -1252,20 +1243,20 @@ testRun(void)
                     "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
                 "P01  ERROR: [039]: invalid result "
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
-                    "local-1 shim protocol: unable to open file "
-                    "'%s/%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read: "
-                    "[13] Permission denied\n"
-                "P00   WARN: unable to open missing file '%s/%s/20181119-152800F/backup.manifest' for read\n"
-                "P00   WARN: unable to open missing file '%s/%s/20181119-152800F/backup.manifest.copy' for read\n"
+                    "local-1 shim protocol: unable to open file '" TEST_PATH
+                    "/%s/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
+                    " [13] Permission denied\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/%s/20181119-152800F/backup.manifest' for read\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/%s/20181119-152800F/backup.manifest.copy' for read\n"
                 "P00   WARN: manifest missing for '20181119-152800F' - backup may have expired\n"
-                "P00   WARN: unable to open missing file '%s/%s/20181119-152810F/backup.manifest.copy' for read\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/%s/20181119-152810F/backup.manifest.copy' for read\n"
                 "P00  ERROR: [028]: backup '20181119-152810F' manifest does not contain any target files to verify\n"
                 "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
                 "P01  ERROR: [028]: file missing '20181119-152900F_20181119-152909D/pg_data/testmissing'\n"
-                "P00   WARN: unable to open missing file '%s/%s/20181119-153000F/backup.manifest' for read\n"
+                "P00   WARN: unable to open missing file '" TEST_PATH "/%s/20181119-153000F/backup.manifest' for read\n"
                 "P00   INFO: backup '20181119-153000F' appears to be in progress, skipping\n"
                 "P01  ERROR: [039]: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
-                    " unable to open file '%s/%s/UNPROCESSEDBACKUP/pg_data/testother' for read: [13] Permission denied\n"
+                    " unable to open file '" TEST_PATH "/%s/UNPROCESSEDBACKUP/pg_data/testother' for read: [13] Permission denied\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
                 "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001\n"
@@ -1278,11 +1269,11 @@ testRun(void)
                 "              backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 2\n"
                 "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
                 "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 5, "
-                                                                                                            "total valid files: 2\n"
+                    "total valid files: 2\n"
                 "                missing: 1, checksum invalid: 1, size invalid: 0, other: 1\n"
                 "              backup: 20181119-153000F, status: in-progress, total files checked: 0, total valid files: 0",
-                TEST_PATH, strZ(archiveStanzaPath), TEST_PATH, strZ(backupStanzaPath), TEST_PATH, strZ(backupStanzaPath),
-                TEST_PATH, strZ(backupStanzaPath), TEST_PATH, strZ(backupStanzaPath), TEST_PATH, strZ(backupStanzaPath))));
+                strZ(archiveStanzaPath), strZ(backupStanzaPath), strZ(backupStanzaPath), strZ(backupStanzaPath),
+                strZ(backupStanzaPath), strZ(backupStanzaPath));
 
         harnessLogLevelReset();
     }
@@ -1407,18 +1398,17 @@ testRun(void)
 
         // The error for the referenced file is logged twice because it is checked again by the second backup since the first backup
         // verification had not yet completed before the second backup verification began
-        harnessLogResult(
-            strZ(strNewFmt(
-                "P00   WARN: no archives exist in the repo\n"
-                "P01  ERROR: [028]: invalid checksum '%s/pg_data/PG_VERSION'\n"
-                "P01  ERROR: [028]: invalid checksum '%s/pg_data/PG_VERSION'\n"
-                "P00   INFO: Results:\n"
-                "              archiveId: none found\n"
-                "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
-                "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
-                "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
-                "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0",
-                strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelDiff))));
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: no archives exist in the repo\n"
+            "P01  ERROR: [028]: invalid checksum '%s/pg_data/PG_VERSION'\n"
+            "P01  ERROR: [028]: invalid checksum '%s/pg_data/PG_VERSION'\n"
+            "P00   INFO: Results:\n"
+            "              archiveId: none found\n"
+            "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
+            "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
+            "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
+            "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0",
+            strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelDiff));
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid backup, prior backup verification complete - referenced file not checked");
@@ -1527,22 +1517,21 @@ testRun(void)
 
         TEST_ERROR(cmdVerify(), RuntimeError, "3 fatal errors encountered, see log for details");
 
-        harnessLogResult(
-            strZ(strNewFmt(
-                "P01  ERROR: [028]: invalid checksum '%s/pg_data/PG_VERSION'\n"
-                "P01  ERROR: [028]: invalid size '%s/pg_data/base/1/555_init'\n"
-                "P01  ERROR: [028]: file missing '%s/pg_data/base/1/555_init.1'\n"
-                "P00   INFO: Results:\n"
-                "              archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
-                "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
-                "              backup: %s, status: invalid, total files checked: 3, total valid files: 0\n"
-                "                missing: 1, checksum invalid: 1, size invalid: 1, other: 0\n"
-                "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
-                "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
-                "              backup: %s, status: valid, total files checked: 1, total valid files: 1\n"
-                "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0",
-                strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull),
-                strZ(backupLabelDiff), strZ(backupLabelFullDb2))));
+        TEST_RESULT_LOG_FMT(
+            "P01  ERROR: [028]: invalid checksum '%s/pg_data/PG_VERSION'\n"
+            "P01  ERROR: [028]: invalid size '%s/pg_data/base/1/555_init'\n"
+            "P01  ERROR: [028]: file missing '%s/pg_data/base/1/555_init.1'\n"
+            "P00   INFO: Results:\n"
+            "              archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
+            "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "              backup: %s, status: invalid, total files checked: 3, total valid files: 0\n"
+            "                missing: 1, checksum invalid: 1, size invalid: 1, other: 0\n"
+            "              backup: %s, status: invalid, total files checked: 1, total valid files: 0\n"
+            "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
+            "              backup: %s, status: valid, total files checked: 1, total valid files: 1\n"
+            "                missing: 0, checksum invalid: 0, size invalid: 0, other: 0",
+            strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull), strZ(backupLabelFull),
+            strZ(backupLabelDiff), strZ(backupLabelFullDb2));
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
