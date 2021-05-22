@@ -168,7 +168,7 @@ testRun(void)
         TEST_RESULT_BOOL(repoIsLocal(0), true, "repo is local");
         TEST_RESULT_VOID(repoIsLocalVerify(), "    local verified");
         TEST_RESULT_VOID(repoIsLocalVerifyIdx(0), "    local by index verified");
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             repoIsLocalVerifyIdx(cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1), HostInvalidError,
             "archive-get command must be run on the repository host");
 
@@ -182,7 +182,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(repoIsLocal(0), false, "repo is remote");
-        TEST_ERROR_FMT(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
+        TEST_ERROR(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg1 is local");
@@ -210,7 +210,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_BOOL(pgIsLocal(0), false, "pg1 is remote");
-        TEST_ERROR_FMT(pgIsLocalVerify(), HostInvalidError, "restore command must be run on the PostgreSQL host");
+        TEST_ERROR(pgIsLocalVerify(), HostInvalidError, "restore command must be run on the PostgreSQL host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg7 is not local");

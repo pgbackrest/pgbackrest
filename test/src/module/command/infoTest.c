@@ -2749,8 +2749,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         strLstAddZ(argList, "--set=bogus");
 
-        TEST_ERROR_FMT(
-            harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
+        TEST_ERROR(harnessCfgLoad(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo-level error");

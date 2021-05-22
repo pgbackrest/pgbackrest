@@ -349,12 +349,11 @@ testRun(void)
 
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("postmaster.pid")), NULL);
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             restorePathValidate(), PgRunningError,
             "unable to restore while PostgreSQL is running\n"
-                "HINT: presence of 'postmaster.pid' in '%s/pg' indicates PostgreSQL is running.\n"
-                "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.",
-            TEST_PATH);
+            "HINT: presence of 'postmaster.pid' in '" TEST_PATH "/pg' indicates PostgreSQL is running.\n"
+            "HINT: remove 'postmaster.pid' only if PostgreSQL is not running.");
 
         storageRemoveP(storagePgWrite(), STRDEF("postmaster.pid"), .errorOnMissing = true);
 
@@ -409,8 +408,8 @@ testRun(void)
         TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
         TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
         TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
-        TEST_ERROR_FMT(getEpoch(STRDEF("2020-13-08 16:18:15")), FormatError, "invalid date 2020-13-08");
-        TEST_ERROR_FMT(getEpoch(STRDEF("2020-01-08 16:68:15")), FormatError, "invalid time 16:68:15");
+        TEST_ERROR(getEpoch(STRDEF("2020-13-08 16:18:15")), FormatError, "invalid date 2020-13-08");
+        TEST_ERROR(getEpoch(STRDEF("2020-01-08 16:68:15")), FormatError, "invalid time 16:68:15");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("system time America/New_York");
@@ -454,7 +453,7 @@ testRun(void)
         TEST_TITLE("error when no backups are present");
 
         HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
-        TEST_ERROR_FMT(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
+        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
         TEST_RESULT_LOG("P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -617,7 +616,7 @@ testRun(void)
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
         HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
 
-        TEST_ERROR_FMT(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
+        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore\n"
             "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
@@ -1027,22 +1026,22 @@ testRun(void)
 
         userLocalData.userId = TEST_USER_ID + 1;
 
-        TEST_ERROR_FMT(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' not owned by current user", TEST_PATH);
+        TEST_ERROR(
+            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '" TEST_PATH "/pg' not owned by current user");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         userLocalData.userRoot = true;
 
-        TEST_ERROR_FMT(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", TEST_PATH);
+        TEST_ERROR(
+            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
         userInitInternal();
 
-        TEST_ERROR_FMT(
-            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '%s/pg' without rwx permissions", TEST_PATH);
+        TEST_ERROR(
+            restoreCleanBuild(manifest), PathOpenError, "unable to restore to path '" TEST_PATH "/pg' without rwx permissions");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
@@ -1054,11 +1053,10 @@ testRun(void)
 
         storagePutP(storageNewWriteP(storagePgWrite(), PG_FILE_RECOVERYCONF_STR), NULL);
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             restoreCleanBuild(manifest), PathNotEmptyError,
-            "unable to restore to path '%s/pg' because it contains files\n"
-                "HINT: try using --delta if this is what you intended.",
-            TEST_PATH);
+            "unable to restore to path '" TEST_PATH "/pg' because it contains files\n"
+                "HINT: try using --delta if this is what you intended.");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
@@ -1089,11 +1087,10 @@ testRun(void)
         storageRemoveP(storagePgWrite(), STRDEF("pg_hba.conf"));
         storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("../conf/pg_hba.conf")), NULL);
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             restoreCleanBuild(manifest), FileExistsError,
-            "unable to restore file '%s/conf/pg_hba.conf' because it already exists\n"
-            "HINT: try using --delta if this is what you intended.",
-            TEST_PATH);
+            "unable to restore file '" TEST_PATH "/conf/pg_hba.conf' because it already exists\n"
+            "HINT: try using --delta if this is what you intended.");
 
         TEST_RESULT_LOG(
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
@@ -2679,11 +2676,10 @@ testRun(void)
         // Set log level to warn
         harnessLogLevelSet(logLevelWarn);
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             cmdRestore(), FileMissingError,
             "raised from local-1 shim protocol: unable to open missing file"
-                " '%s/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read",
-            TEST_PATH);
+                " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read");
 
         // Free local processes that were not freed because of the error
         protocolFree();

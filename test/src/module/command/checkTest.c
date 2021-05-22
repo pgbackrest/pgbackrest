@@ -58,7 +58,7 @@ testRun(void)
             {.function = NULL}
         });
 
-        TEST_ERROR_FMT(cmdCheck(), ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+        TEST_ERROR(cmdCheck(), ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
         harnessLogResult(
             "P00   WARN: unable to check pg-1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
 
@@ -172,10 +172,11 @@ testRun(void)
         });
 
         TEST_ERROR_FMT(
-            cmdCheck(), DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s'"
-            " read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            cmdCheck(), DbMismatchError,
+            "version '" PG_VERSION_92_STR "' and path '" TEST_PATH "' queried from cluster do not match version '" PG_VERSION_92_STR
+                "' and '%s' read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
-            strZ(pgVersionToStr(PG_VERSION_92)), TEST_PATH, strZ(pgVersionToStr(PG_VERSION_92)), strZ(pg1Path), strZ(pg1Path));
+            strZ(pg1Path), strZ(pg1Path));
 
         // Standby
         // -------------------------------------------------------------------------------------------------------------------------
@@ -224,7 +225,7 @@ testRun(void)
         });
 
         // Error on primary but standby check ok
-        TEST_ERROR_FMT(cmdCheck(), ArchiveDisabledError, "archive_mode must be enabled");
+        TEST_ERROR(cmdCheck(), ArchiveDisabledError, "archive_mode must be enabled");
         harnessLogResult(
             "P00   INFO: check repo1 (standby)\n"
             "P00   INFO: switch wal not performed because this is a standby");
@@ -248,15 +249,15 @@ testRun(void)
         // Stanza has not yet been created on repo2 but is created (and checked) on repo1
         TEST_ERROR_FMT(
             cmdCheck(), FileMissingError,
-            "unable to load info file '%s/repo2/archive/test1/archive.info' or '%s/repo2/archive/test1/archive.info.copy':\n"
+            "unable to load info file '" TEST_PATH "/repo2/archive/test1/archive.info' or"
+                " '" TEST_PATH "/repo2/archive/test1/archive.info.copy':\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "HINT: is archive_command configured correctly in postgresql.conf?\n"
             "HINT: has a stanza-create been performed?\n"
             "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-            TEST_PATH, TEST_PATH, strZ(strNewFmt("%s/repo2/archive/test1/archive.info", TEST_PATH)),
-            strZ(strNewFmt("%s/repo2/archive/test1/archive.info.copy", TEST_PATH)));
+            TEST_PATH "/repo2/archive/test1/archive.info", TEST_PATH "/repo2/archive/test1/archive.info.copy");
         harnessLogResult("P00   INFO: check repo1 (standby)\nP00   INFO: check repo2 (standby)");
 
         // Single primary
@@ -364,17 +365,15 @@ testRun(void)
     if (testBegin("checkDbConfig(), checkArchiveCommand()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            checkArchiveCommand(NULL), ArchiveCommandInvalidError, "archive_command '[null]' must contain " PROJECT_BIN);
+        TEST_ERROR(checkArchiveCommand(NULL), ArchiveCommandInvalidError, "archive_command '[null]' must contain " PROJECT_BIN);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            checkArchiveCommand(strNew()), ArchiveCommandInvalidError, "archive_command '' must contain " PROJECT_BIN);
+        TEST_ERROR(checkArchiveCommand(strNew()), ArchiveCommandInvalidError, "archive_command '' must contain " PROJECT_BIN);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR_FMT(
-            checkArchiveCommand(STRDEF("backrest")), ArchiveCommandInvalidError, "archive_command 'backrest' must contain "
-            PROJECT_BIN);
+        TEST_ERROR(
+            checkArchiveCommand(STRDEF("backrest")), ArchiveCommandInvalidError,
+            "archive_command 'backrest' must contain " PROJECT_BIN);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_BOOL(checkArchiveCommand(STRDEF("pgbackrest --stanza=demo archive-push %p")), true, "archive_command valid");
@@ -408,20 +407,19 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false), DbMismatchError,
-            "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
-            PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "version '" PG_VERSION_92_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_94_STR "' and"
+                " '%s' read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.",
-            strZ(pgVersionToStr(PG_VERSION_92)), strZ(pg1Path), strZ(pgVersionToStr(PG_VERSION_94)), strZ(pg1Path), strZ(pg1Path));
+            strZ(pg1Path), strZ(pg1Path), strZ(pg1Path));
 
         // Path mismatch
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             checkDbConfig(PG_VERSION_92, db.standbyIdx, db.standby, true), DbMismatchError,
-            "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
-            PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "version '" PG_VERSION_92_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_92_STR "' and"
+                " '%s' read from '%s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg8-path and pg8-port settings likely reference different clusters.",
-            strZ(pgVersionToStr(PG_VERSION_92)), strZ(dbPgDataPath(db.standby)), strZ(pgVersionToStr(PG_VERSION_92)), strZ(pg8Path),
-            strZ(pg8Path));
+            strZ(dbPgDataPath(db.standby)), strZ(pg8Path), strZ(pg8Path));
 
         // archive-check=false
         // -------------------------------------------------------------------------------------------------------------------------
@@ -462,7 +460,7 @@ testRun(void)
         });
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), FeatureNotSupportedError,
             "archive_mode=always not supported");
 
@@ -492,8 +490,9 @@ testRun(void)
         backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_96), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
-        TEST_ERROR_FMT(
-            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError, "backup info file and archive info file do not match\n"
+        TEST_ERROR(
+            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError,
+            "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
             "HINT: this may be a symptom of repository corruption!");
@@ -503,8 +502,9 @@ testRun(void)
         backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_95), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
-        TEST_ERROR_FMT(
-            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError, "backup info file and archive info file do not match\n"
+        TEST_ERROR(
+            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError,
+            "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.5, system-id = 6569239123849665999\n"
             "HINT: this may be a symptom of repository corruption!");
@@ -514,8 +514,9 @@ testRun(void)
         backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_95), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
-        TEST_ERROR_FMT(
-            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError, "backup info file and archive info file do not match\n"
+        TEST_ERROR(
+            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError,
+            "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
@@ -525,8 +526,9 @@ testRun(void)
         infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96));
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
-        TEST_ERROR_FMT(
-            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError, "backup info file and archive info file do not match\n"
+        TEST_ERROR(
+            checkStanzaInfo(&archivePg, &backupPg), FileInvalidError,
+            "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
@@ -552,7 +554,7 @@ testRun(void)
         harnessLogResult("P00   INFO: stanza-create for stanza 'test1' on repo1");
 
         // Version mismatch
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             checkStanzaInfoPg(
                 storageRepoIdx(0), PG_VERSION_94, 6569239123849665679, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
                 cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
@@ -562,7 +564,7 @@ testRun(void)
             "HINT: did an error occur during stanza-upgrade?");
 
         // SystemId mismatch
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             checkStanzaInfoPg(
                 storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
                 cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),

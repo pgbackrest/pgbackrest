@@ -297,7 +297,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL, .errorOnMissing = true),
-            PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(strNewFmt("%s/BOGUS", TEST_PATH)));
+            PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, TEST_PATH "/BOGUS");
 
         TEST_RESULT_BOOL(
             storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
@@ -432,7 +432,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR_FMT(
             storageListP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING,
-            strZ(strNewFmt("%s/BOGUS", TEST_PATH)));
+            TEST_PATH "/BOGUS");
 
         TEST_RESULT_PTR(storageListP(storageTest, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
         TEST_RESULT_UINT(strLstSize(storageListP(storageTest, STRDEF(BOGUS_STR))), 0, "empty list for missing dir");
@@ -633,16 +633,16 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub1")), "create sub1");
         TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub1")).mode, 0750, "check sub1 dir mode");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub1")), "create sub1 again");
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub1"), .errorOnExists = true), PathCreateError,
-            "unable to create path '%s/sub1': [17] File exists", TEST_PATH);
+            "unable to create path '" TEST_PATH "/sub1': [17] File exists");
 
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub2"), .mode = 0777), "create sub2 with custom mode");
         TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub2")).mode, 0777, "check sub2 dir mode");
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub3/sub4"), .noParentCreate = true), PathCreateError,
-            "unable to create path '%s/sub3/sub4': [2] No such file or directory", TEST_PATH);
+            "unable to create path '" TEST_PATH "/sub3/sub4': [2] No such file or directory");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub3/sub4")), "create sub3/sub4");
 
         TEST_RESULT_INT(system(strZ(strNewFmt("rm -rf %s/sub*", TEST_PATH))), 0, "remove sub paths");
@@ -815,9 +815,9 @@ testRun(void)
     {
         Storage *storageTest = storagePosixNewP(STRDEF("/"), .write = true);
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, TEST_PATH_STR)), FileReadError,
-            "unable to read '%s': [21] Is a directory", TEST_PATH);
+            "unable to read '" TEST_PATH "': [21] Is a directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const String *emptyFile = STRDEF(TEST_PATH "/test.empty");
@@ -848,9 +848,9 @@ testRun(void)
         TEST_RESULT_UINT(bufSize(buffer), 4, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TEST", bufSize(buffer)) == 0, true, "check content");
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt")), .exactSize = 64), FileReadError,
-            "unable to read 64 byte(s) from '%s/test.txt'", TEST_PATH);
+            "unable to read 64 byte(s) from '" TEST_PATH "/test.txt'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         ioBufferSizeSet(2);
@@ -878,9 +878,9 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("missing")), "remove missing file");
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
-            "unable to remove '%s/missing': [2] No such file or directory", TEST_PATH);
+            "unable to remove '" TEST_PATH "/missing': [2] No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
         const String *fileExists = STRDEF(TEST_PATH "/exists");

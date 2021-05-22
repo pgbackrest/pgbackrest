@@ -494,8 +494,7 @@ testRun(void)
         strLstAddZ(argList, "--repo1-host=/repo/not/local");
         harnessCfgLoad(cfgCmdExpire, argList);
 
-        TEST_ERROR_FMT(
-            cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
+        TEST_ERROR(cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check stop file");
@@ -508,7 +507,7 @@ testRun(void)
             storagePutP(
                 storageNewWriteP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), BUFSTRDEF("")),
                 "create stop file");
-        TEST_ERROR_FMT(cmdExpire(), StopError, "stop file exists for stanza db");
+        TEST_ERROR(cmdExpire(), StopError, "stop file exists for stanza db");
         TEST_RESULT_VOID(
             storageRemoveP(storageLocalWrite(), lockStopFileName(cfgOptionStr(cfgOptStanza))), "remove the stop file");
 

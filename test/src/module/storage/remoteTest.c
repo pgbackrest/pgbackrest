@@ -337,8 +337,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             strZ(strNewBuf(storageGetP(storageNewReadP(storageRemote, STRDEF("test.txt"))))), FileMissingError,
-            "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_READ_MISSING,
-            strZ(strNewFmt("%s/repo/test.txt", TEST_PATH)));
+            "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_READ_MISSING, TEST_PATH "/repo/test.txt");
 
         storagePutP(storageNewWriteP(storageTest, STRDEF("repo/test.txt")), contentBuf);
 
@@ -623,10 +622,9 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));     // noParentCreate (true=error if it does not have a parent, false=create parent)
         varLstAdd(paramList, varNewUInt64(0));      // path mode
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             storageRemotePathCreateProtocol(paramList, server), PathCreateError,
-            "raised from remote-0 protocol on 'localhost': unable to create path '%s/repo/testpath': [17] File exists",
-            TEST_PATH);
+            "raised from remote-0 protocol on 'localhost': unable to create path '" TEST_PATH "/repo/testpath': [17] File exists");
 
         // Error if parent path not exist
         path = STRDEF("parent/testpath");
@@ -636,10 +634,10 @@ testRun(void)
         varLstAdd(paramList, varNewBool(true));     // noParentCreate (true=error if it does not have a parent, false=create parent)
         varLstAdd(paramList, varNewUInt64(0));      // path mode
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             storageRemotePathCreateProtocol(paramList, server), PathCreateError,
-            "raised from remote-0 protocol on 'localhost': unable to create path '%s/repo/parent/testpath': "
-            "[2] No such file or directory", TEST_PATH);
+            "raised from remote-0 protocol on 'localhost': unable to create path '" TEST_PATH "/repo/parent/testpath': [2] No such"
+                " file or directory");
 
         // Create parent and path with default mode
         paramList = varLstNew();
@@ -716,10 +714,10 @@ testRun(void)
         varLstAdd(paramList, varNewStr(strNewFmt(TEST_PATH "/repo/%s", strZ(file))));
         varLstAdd(paramList, varNewBool(true));
 
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             storageRemoteRemoveProtocol(paramList, server), FileRemoveError,
-            "raised from remote-0 protocol on 'localhost': unable to remove '%s/repo/file.txt': "
-            "[2] No such file or directory", TEST_PATH);
+            "raised from remote-0 protocol on 'localhost': unable to remove '" TEST_PATH "/repo/file.txt': [2] No such file or"
+                " directory");
 
         paramList = varLstNew();
         varLstAdd(paramList, varNewStr(strNewFmt(TEST_PATH "/repo/%s", strZ(file))));
@@ -762,8 +760,7 @@ testRun(void)
         varLstAdd(paramList, varNewStrZ(TEST_PATH "/repo/anewpath"));
         TEST_ERROR_FMT(
             storageRemotePathSyncProtocol(paramList, server), PathMissingError,
-            "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_PATH_SYNC_MISSING,
-            strZ(strNewFmt("%s/repo/anewpath", TEST_PATH)));
+            "raised from remote-0 protocol on 'localhost': " STORAGE_ERROR_PATH_SYNC_MISSING, TEST_PATH "/repo/anewpath");
     }
 
     protocolFree();

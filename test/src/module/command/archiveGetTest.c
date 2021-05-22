@@ -609,7 +609,7 @@ testRun(void)
         strLstAddZ(argList, TEST_PATH_PG "/pg_wal/RECOVERYXLOG");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR_FMT(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
+        TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
         harnessLogResult(
             "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "/archive/test1/archive.info' or '"
@@ -630,7 +630,7 @@ testRun(void)
         strLstAddZ(argList, "--archive-async");
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
-        TEST_ERROR_FMT(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
+        TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
         harnessLogResult(
             "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH_REPO "/archive/test1/archive.info' or '"

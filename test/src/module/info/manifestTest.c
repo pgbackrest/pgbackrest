@@ -937,11 +937,11 @@ testRun(void)
             BUFSTRDEF("12\n"));
 
         // Tablespace link errors when correct verion not found
-        TEST_ERROR_FMT(
+        TEST_ERROR(
             manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), false, false, NULL, NULL),
             FileOpenError,
-            "unable to get info for missing path/file '%s/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or directory",
-            TEST_PATH);
+            "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or"
+                " directory");
 
         // Remove the link inside pg/pg_tblspc
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
