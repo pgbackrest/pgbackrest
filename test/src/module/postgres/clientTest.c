@@ -29,14 +29,9 @@ testRun(void)
         // Create and start the test database
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef HARNESS_PQ_REAL
-        if (system("sudo pg_createcluster 11 test") != 0)
-            THROW(AssertError, "unable to create cluster");
-
-        if (system("sudo pg_ctlcluster 11 test start") != 0)
-            THROW(AssertError, "unable to start cluster");
-
-        if (system("sudo -u postgres psql -c 'create user " TEST_USER " superuser'") != 0)
-            THROW(AssertError, "unable to create superuser");
+        HRN_SYSTEM("sudo pg_createcluster 11 test");
+        HRN_SYSTEM("sudo pg_ctlcluster 11 test start");
+        HRN_SYSTEM("sudo -u postgres psql -c 'create user " TEST_USER " superuser'");
 #endif
 
         // Test connection error

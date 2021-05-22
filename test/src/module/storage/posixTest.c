@@ -30,11 +30,8 @@ storageTestPathExpression(const String *expression, const String *path)
 Macro to create a path and file that cannot be accessed
 ***********************************************************************************************************************************/
 #define TEST_CREATE_NOPERM()                                                                                                       \
-    TEST_RESULT_INT(                                                                                                               \
-        system(                                                                                                                    \
-            strZ(strNewFmt("sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strZ(pathNoPerm), strZ(fileNoPerm),       \
-            strZ(fileNoPerm)))),                                                                                                   \
-        0, "create no perm path/file");
+    HRN_SYSTEM_FMT(                                                                                                                \
+        "sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strZ(pathNoPerm), strZ(fileNoPerm), strZ(fileNoPerm))
 
 /***********************************************************************************************************************************
 Test Run
@@ -137,13 +134,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         const String *fileExists = STRDEF(TEST_PATH "/exists");
         const String *pathExists = STRDEF(TEST_PATH "/pathExists");
-        TEST_RESULT_INT(system(strZ(strNewFmt("touch %s", strZ(fileExists)))), 0, "create exists file");
+        HRN_SYSTEM_FMT("touch %s", strZ(fileExists));
         HRN_SYSTEM_FMT("mkdir %s", strZ(pathExists));
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists), true, "file exists");
         TEST_RESULT_BOOL(storageExistsP(storageTest, pathExists), false, "not a file");
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, fileExists), false, "not a path");
-        TEST_RESULT_INT(system(strZ(strNewFmt("rm %s", strZ(fileExists)))), 0, "remove exists file");
+        HRN_SYSTEM_FMT("rm %s", strZ(fileExists));
 
         // -------------------------------------------------------------------------------------------------------------------------
         HARNESS_FORK_BEGIN()
@@ -151,7 +148,7 @@ testRun(void)
             HARNESS_FORK_CHILD_BEGIN(0, false)
             {
                 sleepMSec(250);
-                TEST_RESULT_INT(system(strZ(strNewFmt("touch %s", strZ(fileExists)))), 0, "create exists file");
+                HRN_SYSTEM_FMT("touch %s", strZ(fileExists));
             }
             HARNESS_FORK_CHILD_END();
 
@@ -163,7 +160,7 @@ testRun(void)
         }
         HARNESS_FORK_END();
 
-        TEST_RESULT_INT(system(strZ(strNewFmt("rm %s", strZ(fileExists)))), 0, "remove exists file");
+        HRN_SYSTEM_FMT("rm %s", strZ(fileExists));
     }
 
     // *****************************************************************************************************************************
@@ -226,7 +223,7 @@ testRun(void)
         HRN_STORAGE_TIME(storageTest, strZ(fileName), 1555155555);
 
 #ifdef TEST_CONTAINER_REQUIRED
-        TEST_RESULT_INT(system(strZ(strNewFmt("sudo chown 99999:99999 %s", strZ(fileName)))), 0, "set invalid user/group");
+        HRN_SYSTEM_FMT("sudo chown 99999:99999 %s", strZ(fileName));
 #endif // TEST_CONTAINER_REQUIRED
 
         TEST_ASSIGN(info, storageInfoP(storageTest, fileName), "get file info");
@@ -246,7 +243,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         const String *linkName = STRDEF(TEST_PATH "/testlink");
-        TEST_RESULT_INT(system(strZ(strNewFmt("ln -s /tmp %s", strZ(linkName)))), 0, "create link");
+        HRN_SYSTEM_FMT("ln -s /tmp %s", strZ(linkName));
 
         TEST_ASSIGN(info, storageInfoP(storageTest, linkName), "get link info");
         TEST_RESULT_STR(info.name, NULL, "    name is not set");
@@ -272,7 +269,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         const String *pipeName = STRDEF(TEST_PATH "/testpipe");
-        TEST_RESULT_INT(system(strZ(strNewFmt("mkfifo -m 666 %s", strZ(pipeName)))), 0, "create pipe");
+        HRN_SYSTEM_FMT("mkfifo -m 666 %s", strZ(pipeName));
 
         TEST_ASSIGN(info, storageInfoP(storageTest, pipeName), "get info from pipe (special file)");
         TEST_RESULT_STR(info.name, NULL, "    name is not set");
@@ -339,13 +336,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef TEST_CONTAINER_REQUIRED
         storagePathCreateP(storageTest, STRDEF("pg/.include"), .mode = 0755);
-        ASSERT(system(strZ(strNewFmt("sudo chown 77777:77777 %s/pg/.include", TEST_PATH))) == 0);
+        HRN_SYSTEM("sudo chown 77777:77777 " TEST_PATH "/pg/.include");
 #endif // TEST_CONTAINER_REQUIRED
 
         storagePutP(storageNewWriteP(storageTest, STRDEF("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
 
-        ASSERT(system(strZ(strNewFmt("ln -s ../file %s/pg/link", TEST_PATH))) == 0);
-        ASSERT(system(strZ(strNewFmt("mkfifo -m 777 %s/pg/pipe", TEST_PATH))) == 0);
+        HRN_SYSTEM("ln -s ../file " TEST_PATH "/pg/link");
+        HRN_SYSTEM("mkfifo -m 777 " TEST_PATH "/pg/pipe");
 
         callbackData = (HarnessStorageInfoListCallbackData)
         {
@@ -373,7 +370,7 @@ testRun(void)
             "    check content");
 
 #ifdef TEST_CONTAINER_REQUIRED
-        ASSERT(system(strZ(strNewFmt("sudo rmdir %s/pg/.include", TEST_PATH))) == 0);
+        HRN_SYSTEM("sudo rmdir " TEST_PATH "/pg/.include");
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -645,7 +642,7 @@ testRun(void)
             "unable to create path '" TEST_PATH "/sub3/sub4': [2] No such file or directory");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub3/sub4")), "create sub3/sub4");
 
-        TEST_RESULT_INT(system(strZ(strNewFmt("rm -rf %s/sub*", TEST_PATH))), 0, "remove sub paths");
+        HRN_SYSTEM("rm -rf " TEST_PATH "/sub*");
     }
 
     // *****************************************************************************************************************************
@@ -664,7 +661,7 @@ testRun(void)
 
 #ifdef TEST_CONTAINER_REQUIRED
 
-        TEST_RESULT_INT(system(strZ(strNewFmt("sudo mkdir -p -m 700 %s", strZ(pathRemove2)))), 0, "create noperm paths");
+        HRN_SYSTEM_FMT("sudo mkdir -p -m 700 %s", strZ(pathRemove2));
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE ": [13] Permission denied",
@@ -674,7 +671,7 @@ testRun(void)
             STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strZ(strNewFmt("sudo chmod 777 %s", strZ(pathRemove1)))), 0, "top path can be removed");
+        HRN_SYSTEM_FMT("sudo chmod 777 %s", strZ(pathRemove1));
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
@@ -683,17 +680,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         String *fileRemove = strNewFmt("%s/remove.txt", strZ(pathRemove2));
 
-        TEST_RESULT_INT(
-            system(strZ(strNewFmt(
-                "sudo chmod 755 %s && sudo touch %s && sudo chmod 777 %s", strZ(pathRemove2), strZ(fileRemove), strZ(fileRemove)))),
-            0, "add no perm file");
+        HRN_SYSTEM_FMT(
+            "sudo chmod 755 %s && sudo touch %s && sudo chmod 777 %s", strZ(pathRemove2), strZ(fileRemove), strZ(fileRemove));
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
             STORAGE_ERROR_PATH_REMOVE_FILE ": [13] Permission denied", strZ(fileRemove));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strZ(strNewFmt("sudo chmod 777 %s", strZ(pathRemove2)))), 0, "bottom path can be removed");
+        HRN_SYSTEM_FMT("sudo chmod 777 %s", strZ(pathRemove2));
 
         TEST_RESULT_VOID(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");
@@ -702,7 +697,7 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strZ(strNewFmt("mkdir -p %s", strZ(pathRemove2)))), 0, "create subpaths");
+        HRN_SYSTEM_FMT("mkdir -p %s", strZ(pathRemove2));
 
         TEST_RESULT_VOID(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");
@@ -747,7 +742,7 @@ testRun(void)
         TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strZ(strNewFmt("touch %s", strZ(fileName)))), 0, "create read file");
+        HRN_SYSTEM_FMT("touch %s", strZ(fileName));
 
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "    open file");
         TEST_RESULT_INT(ioReadFd(storageReadIo(file)), ((StorageReadPosix *)file->driver)->fd, "check read fd");
@@ -884,7 +879,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         const String *fileExists = STRDEF(TEST_PATH "/exists");
-        TEST_RESULT_INT(system(strZ(strNewFmt("touch %s", strZ(fileExists)))), 0, "create exists file");
+        HRN_SYSTEM_FMT("touch %s", strZ(fileExists));
 
         TEST_RESULT_VOID(storageRemoveP(storageTest, fileExists), "remove exists file");
 

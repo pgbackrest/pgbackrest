@@ -474,9 +474,7 @@ testRun(void)
 
         // Copy the configFile to pgbackrest.conf (default is /etc/pgbackrest/pgbackrest.conf and new value is testPath so copy the
         // config file (that was not read in the previous test) to pgbackrest.conf so it will be read by the override
-        TEST_RESULT_INT(
-            system(strZ(strNewFmt("cp %s " TEST_PATH "/pgbackrest.conf", strZ(configFile)))), 0,
-            "copy configFile to pgbackrest.conf");
+        HRN_SYSTEM_FMT("cp %s " TEST_PATH "/pgbackrest.conf", strZ(configFile));
 
         parseOptionList[cfgOptConfig].indexList[0].found = false;
         parseOptionList[cfgOptConfig].indexList[0].source = cfgSourceDefault;
@@ -509,7 +507,7 @@ testRun(void)
         // config default and config-include-path passed - but no config files in the include path - only in the default path
         // rm command is split below because code counter is confused by what looks like a comment.
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(system(strZ(strNewFmt("rm -rf %s/" "*", strZ(configIncludePath)))), 0, "remove all include files");
+        HRN_SYSTEM_FMT("rm -rf %s/" "*", strZ(configIncludePath));
 
         value = strLstNew();
         strLstAdd(value, configIncludePath);
@@ -529,9 +527,7 @@ testRun(void)
 
         // config default and config-include-path passed - only empty file in the include path and nothing in either config defaults
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(
-            system(strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/empty.conf", strZ(configIncludePath)))))), 0,
-            "add empty conf file to include directory");
+        HRN_SYSTEM_FMT("touch %s/empty.conf", strZ(configIncludePath));
 
         value = strLstNew();
         strLstAdd(value, configIncludePath);

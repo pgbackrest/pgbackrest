@@ -241,12 +241,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         // Add test hosts
 #ifdef TEST_CONTAINER_REQUIRED
-        if (system(                                                                                         // {uncoverable_branch}
-                "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" |"
-                    " sudo tee -a /etc/hosts > /dev/null") != 0)
-        {
-            THROW(AssertError, "unable to add test hosts to /etc/hosts");                                   // {uncovered+}
-        }
+        HRN_SYSTEM(
+            "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" | sudo tee -a /etc/hosts >"
+                " /dev/null");
 
         HARNESS_FORK_BEGIN()
         {

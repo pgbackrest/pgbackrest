@@ -23,7 +23,7 @@ testRun(void)
         const String *archiveLock = STRDEF(TEST_PATH "/main-archive" LOCK_FILE_EXT);
         int lockFdTest = -1;
 
-        TEST_RESULT_INT(system(strZ(strNewFmt("touch %s", strZ(archiveLock)))), 0, "touch lock file");
+        HRN_SYSTEM_FMT("touch %s", strZ(archiveLock));
         TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLock, STRDEF("1-test"), 0, true), "get lock");
         TEST_RESULT_BOOL(lockFdTest != -1, true, "lock succeeds");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLock), true, "lock file was created");
@@ -42,7 +42,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail file lock on the same exec-id when lock file is empty");
 
-        TEST_RESULT_INT(system(strZ(strNewFmt("echo '' > %s", strZ(archiveLock)))), 0, "overwrite lock file");
+        HRN_SYSTEM_FMT("echo '' > %s", strZ(archiveLock));
 
         TEST_ERROR(lockAcquireFile(archiveLock, STRDEF("2-test"), 0, true), LockAcquireError,
             strZ(
@@ -69,7 +69,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         const String *dirLock = STRDEF(TEST_PATH "/dir" LOCK_FILE_EXT);
 
-        TEST_RESULT_INT(system(strZ(strNewFmt("mkdir -p 750 %s", strZ(dirLock)))), 0, "create dirtest.lock dir");
+        HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(dirLock));
 
         TEST_ERROR(
             lockAcquireFile(dirLock, STRDEF("1-test"), 0, true), LockAcquireError,
@@ -77,8 +77,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         const String *noPermLock = STRDEF(TEST_PATH "/noperm/noperm");
-        TEST_RESULT_INT(system(strZ(strNewFmt("mkdir -p 750 %s", strZ(strPath(noPermLock))))), 0, "create noperm dir");
-        TEST_RESULT_INT(system(strZ(strNewFmt("chmod 000 %s", strZ(strPath(noPermLock))))), 0, "chmod noperm dir");
+        HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(strPath(noPermLock)));
+        HRN_SYSTEM_FMT("chmod 000 %s", strZ(strPath(noPermLock)));
 
         TEST_ERROR(
             lockAcquireFile(noPermLock, STRDEF("1-test"), 100, true), LockAcquireError,

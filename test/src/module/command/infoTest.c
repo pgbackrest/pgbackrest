@@ -363,18 +363,18 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         String *archiveDb1_1 = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_1), "create db1 archive WAL1 directory");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archiveDb1_1)))))), 0, "touch WAL1 file");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archiveDb1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveDb1_1))));
 
         String *archiveDb1_2 = strNewFmt("%s/9.4-1/0000000200000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_2), "create db1 archive WAL2 directory");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archiveDb1_2)))))), 0, "touch WAL2 file");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archiveDb1_2))));
 
         String *archiveDb1_3 = strNewFmt("%s/9.4-1/0000000300000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archiveDb1_3), "create db1 archive WAL3 directory");
@@ -384,9 +384,9 @@ testRun(void)
             storagePutP(storageNewWriteP(storageLocalWrite(), archiveDb3Wal), bufNew(0)), "create db3 archive WAL3 file");
 
         // Create a WAL file in 9.3-2 so that a prior will show
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archiveDb2_1)))))), 0, "touch WAL1 file in prior");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archiveDb2_1))));
 
         harnessCfgLoad(cfgCmdInfo, argList);
         content = STRDEF
@@ -934,27 +934,27 @@ testRun(void)
         // Add WAL on repo1 and encrypted repo2 for stanza1
         String *archive1Db1_1 = strNewFmt("%s/9.5-2/0000000100000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive1Db1_1), "create db1 archive WAL directory, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-ee61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000005-abc123f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive1Db1_1)))))), 0, "touch WAL file, repo1");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive1Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archive1Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000004-ee61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive1Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000005-abc123f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive1Db1_1))));
 
         String *archive2Db1_1 = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(repo2archivePath));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive2Db1_1), "create db1 archive WAL directory, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000004-ff61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archive2Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000004-ff61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive2Db1_1))));
 
         // Add a manifest on the encrypted repo2
         #define TEST_MANIFEST_HEADER2                                                                                              \
@@ -1067,12 +1067,12 @@ testRun(void)
 
         archive2Db1_1 = strNewFmt("%s/stanza3/9.4-1/0000000100000000", strZ(repo2archivePath));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), archive2Db1_1), "create db1 archive WAL directory, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-2261b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
-            strZ(archive2Db1_1)))))), 0, "touch WAL file, repo2");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(archive2Db1_1))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-2261b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz", strZ(archive2Db1_1))));
 
         // Set up the configuration
         StringList *argListMultiRepo = strLstNew();
@@ -2543,12 +2543,12 @@ testRun(void)
 
         String *walPath = strNewFmt("%s/9.4-1/0000000100000000", strZ(archiveStanza1Path));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo1, archive directory");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo1");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo1");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-22dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
 
         content = STRDEF
         (
@@ -2599,12 +2599,12 @@ testRun(void)
 
         walPath = strNewFmt("%s/stanza1/9.5-1/0000000100000000", strZ(archivePath2));
         TEST_RESULT_VOID(storagePathCreateP(storageLocalWrite(), walPath), "create stanza1, repo2, archive directory");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo2");
-        TEST_RESULT_INT(system(
-            strZ(strNewFmt("touch %s", strZ(strNewFmt("%s/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz",
-            strZ(walPath)))))), 0, "touch WAL file, stanza1, repo2");
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000001-11dff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
+        HRN_SYSTEM_FMT(
+            "touch %s",
+            strZ(strNewFmt("%s/000000010000000000000002-222ff2b7552a9d66e4bae1a762488a6885e7082c.gz", strZ(walPath))));
 
         StringList *argList2 = strLstNew();
         hrnCfgArgRawZ(argList2, cfgOptRepoPath, TEST_PATH_REPO);

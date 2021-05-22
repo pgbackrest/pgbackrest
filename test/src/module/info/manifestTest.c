@@ -196,7 +196,7 @@ testRun(void)
 
         // Create special file
         const String *const specialFile = STRDEF(TEST_PATH "/pg/testpipe");
-        TEST_RESULT_INT(system(strZ(strNewFmt("mkfifo -m 666 %s", strZ(specialFile)))), 0, "create pipe");
+        HRN_SYSTEM_FMT("mkfifo -m 666 %s", strZ(specialFile));
 
         // Files that will always be ignored
         storagePutP(

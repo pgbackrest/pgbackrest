@@ -87,10 +87,10 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(storageRemoveP(hrnStorage, STRDEF("lockpath/all" STOP_FILE_EXT)), "remove stop file");
-        TEST_RESULT_INT(system(strZ(strNewFmt("chmod 444 %s", strZ(lockPath)))), 0, "change perms");
+        HRN_SYSTEM_FMT("chmod 444 %s", strZ(lockPath));
         TEST_ERROR_FMT(
             cmdStop(), FileOpenError, "unable to get info for path/file '%s/all.stop': [13] Permission denied", strZ(lockPath));
-        TEST_RESULT_INT(system(strZ(strNewFmt("chmod 700 %s", strZ(lockPath)))), 0, "change perms");
+        HRN_SYSTEM_FMT("chmod 700 %s", strZ(lockPath));
         TEST_RESULT_VOID(
             storagePathRemoveP(hrnStorage, lockPath, .recurse = true, .errorOnMissing = true), "    remove the lock path");
 

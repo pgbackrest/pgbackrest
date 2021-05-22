@@ -105,8 +105,8 @@ testRun(void)
         storagePutP(storageNewWriteP(storageTest, STRDEF("repo/aaa"), .timeModified = 1578671569), BUFSTRDEF("TESTDATA"));
         storagePutP(storageNewWriteP(storageTest, STRDEF("repo/bbb/ccc")), BUFSTRDEF("TESTDATA2"));
 
-        ASSERT(system("ln -s ../bbb " TEST_PATH "/repo/link") == 0);
-        ASSERT(system("mkfifo " TEST_PATH "/repo/pipe") == 0);
+        HRN_SYSTEM("ln -s ../bbb " TEST_PATH "/repo/link");
+        HRN_SYSTEM("mkfifo " TEST_PATH "/repo/pipe");
 
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARSTRDEF("text"));
