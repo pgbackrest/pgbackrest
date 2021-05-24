@@ -58,11 +58,11 @@ Ubuntu 16.04:
 ```
 RHEL/CentOS 7:
 ```bash
-./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos --var=os-image=centos:7  --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:7  --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
 ```
 CentOS/RHEL 8:
 ```bash
-./doc.pl --out=html --include=user-guide --no-cache --var=os-type=centos --var=os-image=centos:8 --var=package=test/package/pgbackrest-2.08-1.el8.x86_64.rpm
+./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:8 --var=package=test/package/pgbackrest-2.08-1.el8.x86_64.rpm
 ```
 Packages can be built with `test.pl` using the following configuration on top of the configuration given for building the documentation.
 ```bash
