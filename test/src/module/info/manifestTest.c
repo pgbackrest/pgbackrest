@@ -530,29 +530,6 @@ testRun(void)
         varLstAdd(tablespace, varNewStrZ("tblspc1"));  // tablespaceName
         varLstAdd(tablespaceList, varNewVarLst(tablespace));
 
-        // Add more tablespaces to test bug
-        // for (unsigned int tsIdx = 3; tsIdx <= 4001; tsIdx++)
-        // {
-        //     storagePathCreateP(storageTest, strNewFmt("ts/%u/PG_9.0_201008051/1", tsIdx), .mode = 0700);
-        //     THROW_ON_SYS_ERROR(
-        //         symlink(strZ(strNewFmt("../../ts/%u", tsIdx)), strZ(strNewFmt("%s/pg/pg_tblspc/%u", testPath(), tsIdx))) == -1, FileOpenError,
-        //         "unable to create symlink");
-        //     storagePutP(
-        //         storageNewWriteP(
-        //             storagePgWrite, strNewFmt("pg_tblspc/%u/PG_9.0_201008051/1/16384", tsIdx), .modeFile = 0400,
-        //             .timeModified = 1565282115),
-        //         BUFSTRDEF("TESTDATA"));
-        //     storagePutP(
-        //         storageNewWriteP(
-        //             storagePgWrite, strNewFmt("pg_tblspc/%u/PG_9.0_201008051/1/t123_123_fsm", tsIdx), .modeFile = 0400,
-        //            .timeModified = 1565282115), BUFSTRDEF("IGNORE_TEMP_RELATION"));
-        //
-        //     tablespace = varLstNew();
-        //     varLstAdd(tablespace, varNewUInt(tsIdx));
-        //     varLstAdd(tablespace, varNewStr(strNewFmt("tblspc%u", tsIdx)));  // tablespaceName
-        //     varLstAdd(tablespaceList, varNewVarLst(tablespace));
-        // }
-
         // Test manifest - temp tables and pg_notify files ignored
         TEST_ASSIGN(
             manifest,
@@ -1935,7 +1912,7 @@ testRun(void)
         TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on link to subpath of another link destination");
+        TEST_TITLE("error on link to subpath of another link destination (prior ordering)");
 
         manifestTargetAdd(
             manifest, &(ManifestTarget){
@@ -1944,6 +1921,17 @@ testRun(void)
             manifestLinkCheck(manifest), LinkDestinationError,
             "link 'base/2' (/pg/base-1/base-2) destination is a subdirectory of link 'base/1' (/pg/base-1)");
         manifestTargetRemove(manifest, STRDEF("pg_data/base/2"));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on link to subpath of another link destination (subsequent ordering)");
+
+        manifestTargetAdd(
+            manifest, &(ManifestTarget){
+               .name = STRDEF("pg_data/base/pg"), .type = manifestTargetTypeLink, .path = STRDEF("../..")});
+        TEST_ERROR(
+            manifestLinkCheck(manifest), LinkDestinationError,
+            "link 'base/1' (/pg/base-1) destination is a subdirectory of link 'base/pg' (/pg)");
+        manifestTargetRemove(manifest, STRDEF("pg_data/base/pg"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to same destination path");
@@ -1992,6 +1980,7 @@ testRun(void)
         manifestTargetRemove(manifest, STRDEF("pg_data/test.sh"));
         manifestTargetRemove(manifest, STRDEF("pg_data/test2.sh"));
 
+        // -------------------------------------------------------------------------------------------------------------------------
         // ManifestFile getters
         const ManifestFile *file = NULL;
         TEST_ERROR(

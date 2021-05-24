@@ -501,27 +501,58 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
                 unsigned int linkIdx = lstFindIdx(linkCheck->linkList, &path);
                 ASSERT(linkIdx != LIST_NOT_FOUND);
 
-                // Check the link destination path to be sure it is not a subpath of a prior link destination path. Skip file
-                // links since they are allowed to be in the same path with each other and in the parent path of a linked
-                // destination path.
-                for (unsigned int priorLinkIdx = linkIdx - 1; priorLinkIdx < linkIdx; priorLinkIdx--)
+                // Check path links against other links (file links have already been checked)
+                if (target1->file == NULL)
                 {
-                    const ManifestLinkCheckItem *const priorLink = lstGet(linkCheck->linkList, priorLinkIdx);
-
-                    if (strBeginsWith(path, priorLink->path))
+                    // Check the link destination path to be sure it is not a subpath of a prior link destination path
+                    for (unsigned int priorLinkIdx = linkIdx - 1; priorLinkIdx < linkIdx; priorLinkIdx--)
                     {
-                        const ManifestTarget *const target2 = manifestTarget(this, priorLink->targetIdx);
+                        const ManifestLinkCheckItem *const priorLink = lstGet(linkCheck->linkList, priorLinkIdx);
 
-                        THROW_FMT(
-                            LinkDestinationError,
-                            "link '%s' (%s) destination is a subdirectory of link '%s' (%s)",
-                            strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)),
-                            strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
+                        // Skip file links since they are allowed to be in the same path with each other and in the parent path of a
+                        // linked destination path.
+                        if (priorLink->file != NULL)
+                            continue;
+
+                        if (strBeginsWith(path, priorLink->path))
+                        {
+                            const ManifestTarget *const target2 = manifestTarget(this, priorLink->targetIdx);
+
+                            THROW_FMT(
+                                LinkDestinationError,
+                                "link '%s' (%s) destination is a subdirectory of link '%s' (%s)",
+                                strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)),
+                                strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)));
+                        }
+
+                        // Stop once the first prior path link has been checked since it must be a parent (if there is one)
+                        break;
                     }
 
-                    // Stop once the first prior path link has been checked since it must be a parent (if there is one)
-                    if (priorLink->file == NULL)
+                    // Check the link destination path to be sure it is not a parent path of a subsequent link destination path
+                    for (unsigned int nextLinkIdx = linkIdx + 1; nextLinkIdx < lstSize(linkCheck->linkList); nextLinkIdx++)
+                    {
+                        const ManifestLinkCheckItem *const nextLink = lstGet(linkCheck->linkList, nextLinkIdx);
+
+                        // Skip file links since they are allowed to be in the same path with each other and in the parent path of a
+                        // linked destination path.
+                        if (nextLink->file != NULL)
+                            continue;
+
+                        if (strBeginsWith(nextLink->path, path))
+                        {
+                            const ManifestTarget *const target2 = manifestTarget(this, nextLink->targetIdx);
+
+                            THROW_FMT(
+                                LinkDestinationError,
+                                "link '%s' (%s) destination is a subdirectory of link '%s' (%s)",
+                                strZ(manifestPathPg(target2->name)), strZ(manifestTargetPath(this, target2)),
+                                strZ(manifestPathPg(target1->name)), strZ(manifestTargetPath(this, target1)));
+                        }
+
+                        // Stop once the first next path link has been checked since it must be a subpath (if there is one)
                         break;
+                    }
                 }
             }
         }
