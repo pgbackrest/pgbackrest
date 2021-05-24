@@ -60,7 +60,7 @@ RHEL/CentOS 7:
 ```bash
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:7  --var=package=test/package/pgbackrest-2.08-1.el7.x86_64.rpm
 ```
-CentOS/RHEL 8:
+RHEL/CentOS 8:
 ```bash
 ./doc.pl --out=html --include=user-guide --no-cache --var=os-type=rhel --var=os-image=centos:8 --var=package=test/package/pgbackrest-2.08-1.el8.x86_64.rpm
 ```
