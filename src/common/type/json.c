@@ -229,7 +229,7 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
         FUNCTION_TEST_PARAM_P(UINT, jsonPos);
     FUNCTION_TEST_END();
 
-    String *result = strNew("");
+    String *result = strNew();
 
     if (json[*jsonPos] != '"')
         THROW_FMT(JsonFormatError, "expected '\"' at '%s'", json + *jsonPos);
@@ -618,7 +618,7 @@ jsonFromInt(int number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtIntToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNew(working));
+    FUNCTION_TEST_RETURN(strNewZ(working));
 }
 
 String *
@@ -631,7 +631,7 @@ jsonFromInt64(int64_t number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtInt64ToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNew(working));
+    FUNCTION_TEST_RETURN(strNewZ(working));
 }
 
 String *
@@ -644,7 +644,7 @@ jsonFromUInt(unsigned int number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtUIntToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNew(working));
+    FUNCTION_TEST_RETURN(strNewZ(working));
 }
 
 String *
@@ -657,7 +657,7 @@ jsonFromUInt64(uint64_t number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtUInt64ToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNew(working));
+    FUNCTION_TEST_RETURN(strNewZ(working));
 }
 
 /**********************************************************************************************************************************/
@@ -769,7 +769,7 @@ jsonFromStr(const String *string)
         FUNCTION_TEST_PARAM(STRING, string);
     FUNCTION_TEST_END();
 
-    String *json = strNew("");
+    String *json = strNew();
     jsonFromStrInternal(json, string);
 
     FUNCTION_TEST_RETURN(json);
@@ -787,7 +787,7 @@ jsonFromKvInternal(const KeyValue *kv)
 
     ASSERT(kv != NULL);
 
-    String *result = strNew("{");
+    String *result = strNewZ("{");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -930,7 +930,7 @@ jsonFromVar(const Variant *var)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *jsonStr = strNew("");
+        String *jsonStr = strNew();
 
         // If VariantList then process each item in the array. Currently the list must be KeyValue types.
         if (var == NULL)

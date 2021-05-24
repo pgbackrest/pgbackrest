@@ -41,7 +41,7 @@ testRun(void)
         TEST_RESULT_STR(infoCipherPass(infoPgInfo(infoPg)), NULL, "  cipherPass NULL");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
-        TEST_ASSIGN(infoPg, infoPgNew(infoPgArchive, strNew("123xyz")), "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
+        TEST_ASSIGN(infoPg, infoPgNew(infoPgArchive, STRDEF("123xyz")), "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
         TEST_RESULT_STR_Z(infoCipherPass(infoPgInfo(infoPg)), "123xyz", "  cipherPass set");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
@@ -77,7 +77,7 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgBackup, strNew("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679,
+                infoPgNew(infoPgBackup, STRDEF("123xyz")), infoPgBackup, PG_VERSION_94, 6569239123849665679,
                 hrnPgCatalogVersion(PG_VERSION_94)),
             "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
@@ -113,7 +113,7 @@ testRun(void)
             "[later]\n"
             "key=\"value\"\n");
 
-        String *callbackContent = strNew("");
+        String *callbackContent = strNew();
         InfoPg *infoPg = NULL;
 
         TEST_ASSIGN(
@@ -165,7 +165,7 @@ testRun(void)
             "20161219-212741F={}\n"
             CONTENT_DB_HISTORY);
 
-        callbackContent = strNew("");
+        callbackContent = strNew();
 
         TEST_ASSIGN(infoPg, infoPgNewLoad(ioBufferReadNew(contentLoad), infoPgBackup, NULL, NULL), "load file");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");

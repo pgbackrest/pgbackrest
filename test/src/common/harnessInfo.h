@@ -11,8 +11,8 @@ Write info to a file and add the checksum
 ***********************************************************************************************************************************/
 #define HRN_INFO_PUT(storage, file, info, ...)                                                                                     \
     TEST_RESULT_VOID(                                                                                                              \
-        hrnStoragePut(storage, file, harnessInfoChecksumZ(info), (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}), "put info %s",\
-        hrnStoragePutLog(storage, file, LF_BUF, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}))
+        hrnStoragePut(storage, file, harnessInfoChecksumZ(info), (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}),               \
+        strZ(strNewFmt("put info %s", hrnStoragePutLog(storage, file, LF_BUF, (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__}))))
 
 /***********************************************************************************************************************************
 Functions

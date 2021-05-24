@@ -1050,7 +1050,7 @@ formatTextDb(
         }
     }
 
-    String *resultCurrent = strNew("\n    db (current)");
+    String *resultCurrent = strNewZ("\n    db (current)");
     bool displayCurrent = false;
 
     for (unsigned int dbGrpIdx = backupDbGrpIdxMin; dbGrpIdx < backupDbGrpIdxMax; dbGrpIdx++)
@@ -1327,7 +1327,7 @@ infoRender(void)
         }
 
         VariantList *infoList = varLstNew();
-        String *resultStr = strNew("");
+        String *resultStr = strNew();
 
         // Record any repository-level errors with each stanza -- if there are no stanzas and one was not requested, then create an
         // "[invalid]" one for reporting
@@ -1513,7 +1513,7 @@ infoRender(void)
                 }
             }
             else
-                resultStr = strNew("No stanzas exist in the repository.\n");
+                resultStr = strNewZ("No stanzas exist in the repository.\n");
         }
         // Format json output
         else

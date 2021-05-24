@@ -745,7 +745,7 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
 
             // Create the result config file
             if (*config == NULL)
-                *config = strNew("");
+                *config = strNew();
             // Else add an LF in case the previous file did not end with one
             else
 
@@ -918,7 +918,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
             {
                 .memContext = MEM_CONTEXT_NEW(),
                 .command = cfgCmdNone,
-                .exe = strNew(argList[0]),
+                .exe = strNewZ(argList[0]),
             };
         }
         MEM_CONTEXT_NEW_END();
@@ -954,10 +954,10 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                 if (equalPtr)
                 {
                     optionName = strNewN(arg, (size_t)(equalPtr - arg));
-                    optionArg = strNew(equalPtr + 1);
+                    optionArg = strNewZ(equalPtr + 1);
                 }
                 else
-                    optionName = strNew(arg);
+                    optionName = strNewZ(arg);
 
                 // Lookup the option name
                 CfgParseOptionResult option = cfgParseOptionP(optionName, true);
@@ -975,7 +975,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         if (argListIdx == argListSize - 1)
                             THROW_FMT(OptionInvalidError, "option '--%s' requires an argument", strZ(optionName));
 
-                        optionArg = strNew(argList[++argListIdx]);
+                        optionArg = strNewZ(argList[++argListIdx]);
                     }
                 }
                 // Else error if an argument was found with the option

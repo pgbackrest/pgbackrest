@@ -107,19 +107,12 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("DEBUG_UNIT_EXTERN"))
-    {
-        const char *debugUnitExtern = STRINGIFY(DEBUG_UNIT_EXTERN);
-        TEST_RESULT_Z(debugUnitExtern, "", "DEBUG_UNIT_EXTERN is blank (extern)");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("FUNCTION_DEBUG() and FUNCTION_LOG_RETURN()"))
     {
         harnessLogLevelSet(logLevelTrace);
         testFunction1(99, false, NULL, NULL, NULL, 1.17, 0755);
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
                 " paramBoolP: null, paramBoolPP: null, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
@@ -134,7 +127,7 @@ testRun(void)
 
         testFunction1(99, false, testBoolP, testBoolPP, testVoidP, 1.17, 0755);
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
                 " paramBoolP: *true, paramBoolPP: **true, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
@@ -146,7 +139,7 @@ testRun(void)
 
         testFunction1(99, false, testBoolP, testBoolPP, testVoidP, 1.17, 0755);
 
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
                 " paramBoolP: null, paramBoolPP: *null, paramVoidP: *void, paramDouble: 1.17, paramMode: 0755)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
@@ -157,7 +150,7 @@ testRun(void)
         harnessLogLevelReset();
         testFunction1(55, true, NULL, NULL, NULL, 0.99, 0755);
 
-        harnessLogResult("");
+        TEST_RESULT_LOG("");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

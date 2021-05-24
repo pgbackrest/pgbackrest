@@ -317,7 +317,7 @@ void
 hrnStoragePut(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param)
 {
     // Add compression extension to file name
-    String *fileStr = strNew(file);
+    String *fileStr = strNewZ(file);
     compressExtCat(fileStr, param.compressType);
 
     // Create file
@@ -349,7 +349,7 @@ const char *
 hrnStoragePutLog(const Storage *storage, const char *file, const Buffer *buffer, HrnStoragePutParam param)
 {
     // Empty if buffer is NULL
-    String *log = strNew(buffer == NULL || bufEmpty(buffer) ? "(empty) " : "");
+    String *log = strNewZ(buffer == NULL || bufEmpty(buffer) ? "(empty) " : "");
 
     // Add compression detail
     if (param.compressType != compressTypeNone)

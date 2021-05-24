@@ -742,7 +742,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
                     if (end[2] == 0)
                         THROW_FMT(AssertError, "path '%s' should not end in '/'", strZ(pathExp));
 
-                    path = strNew(end + 2);
+                    path = strNewZ(end + 2);
                 }
 
                 // Evaluate the path

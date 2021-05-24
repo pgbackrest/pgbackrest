@@ -323,7 +323,7 @@ strIdToStr(const StringId strId)
     char buffer[STRID_MAX + 1];
     buffer[strIdToZN(strId, buffer)] = '\0';
 
-    FUNCTION_TEST_RETURN(strNew(buffer));
+    FUNCTION_TEST_RETURN(strNewZ(buffer));
 }
 
 /**********************************************************************************************************************************/

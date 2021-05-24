@@ -19,9 +19,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("backupRegExp()"))
     {
-        String *full = strNew("20181119-152138F");
-        String *incr = strNew("20181119-152138F_20181119-152152I");
-        String *diff = strNew("20181119-152138F_20181119-152152D");
+        const String *full = STRDEF("20181119-152138F");
+        const String *incr = STRDEF("20181119-152138F_20181119-152152I");
+        const String *diff = STRDEF("20181119-152138F_20181119-152152D");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
@@ -45,10 +45,10 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), true, "    match full");
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                filter, strNew("12341234-123123F_12341234-123123IG")), false, "    does not match with trailing character");
+                filter, STRDEF("12341234-123123F_12341234-123123IG")), false, "    does not match with trailing character");
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                filter, strNew("A12341234-123123F_12341234-123123I")), false, "    does not match with leading character");
+                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "    does not match with leading character");
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.full = true, .differential = true);
@@ -78,7 +78,7 @@ testRun(void)
         TEST_RESULT_BOOL(regExpMatchOne(filter, full), false, "   does not match full");
         TEST_RESULT_BOOL(
             regExpMatchOne(
-                filter, strNew("A12341234-123123F_12341234-123123I")), false, "   does not match with leading character");
+                filter, STRDEF("A12341234-123123F_12341234-123123I")), false, "   does not match with leading character");
 
         // -------------------------------------------------------------------------------------------------------------------------
         filter = backupRegExpP(.incremental = true);

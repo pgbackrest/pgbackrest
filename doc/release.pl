@@ -234,29 +234,16 @@ eval
         # Remove all docker containers to get consistent IP address assignments
         executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});
 
-        # Generate deployment docs for RHEL/Centos 7
-        if (!defined($strVm) || $strVm eq VM_CO7)
-        {
-            &log(INFO, "Generate RHEL/CentOS 7 documentation");
-
-            executeTest("${strDocExe} --deploy --key-var=os-type=centos7 --out=pdf", {bShowOutputAsync => true});
-
-            if (!defined($strVm))
-            {
-                executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=pdf");
-            }
-        }
-
-        # Generate deployment docs for RHEL/Centos 8
+        # Generate deployment docs for RHEL/Centos
         if (!defined($strVm) || $strVm eq VM_CO8)
         {
-            &log(INFO, "Generate RHEL/CentOS 8 documentation");
+            &log(INFO, "Generate RHEL/CentOS documentation");
 
-            executeTest("${strDocExe} --deploy --key-var=os-type=centos8 --out=pdf", {bShowOutputAsync => true});
+            executeTest("${strDocExe} --deploy --key-var=os-type=rhel --out=pdf", {bShowOutputAsync => true});
 
             if (!defined($strVm))
             {
-                executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos8 --out=pdf");
+                executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=rhel --out=pdf");
             }
         }
 
@@ -274,13 +261,9 @@ eval
             &log(INFO, "Generate full documentation for review");
 
             executeTest(
-            "${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=html --var=project-url-root=index.html");
-            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
-
-            executeTest(
-                "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos8 --out=html" .
+                "${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=rhel --out=html" .
                     " --var=project-url-root=index.html");
-            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos8.html");
+            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-rhel.html");
 
             executeTest(
                 "${strDocExe} --deploy --out-preserve --cache-only --out=man --out=html --var=project-url-root=index.html");
@@ -297,11 +280,8 @@ eval
         my $strDocExeVersion =
             ${strDocExe} . ($bDev ? ' --dev' : ' --deploy --cache-only') . ' --var=project-url-root=index.html --out=html';
 
-        executeTest("${strDocExeVersion} --key-var=os-type=centos7");
-        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
-
-        executeTest("${strDocExeVersion} --out-preserve --key-var=os-type=centos8");
-        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos8.html");
+        executeTest("${strDocExeVersion} --out-preserve --key-var=os-type=rhel");
+        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-rhel.html");
 
         $oStorageDoc->remove("$strDocHtml/release.html");
         executeTest("${strDocExeVersion} --out-preserve --exclude=release");
@@ -317,10 +297,8 @@ eval
         {
             &log(INFO, "Generate website documentation");
 
-            executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=centos7 --out=html");
-            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos7.html");
-            executeTest("${strDocExe} --deploy --out-preserve --cache-only --key-var=os-type=centos8 --out=html");
-            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-centos8.html");
+            executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=rhel --out=html");
+            $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-rhel.html");
             executeTest("${strDocExe} --deploy --out-preserve --cache-only --out=html");
 
             # Deploy to repository

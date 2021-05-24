@@ -36,7 +36,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameter");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async --archive-timeout=10"
                 " --exec-id=1-test --pg1-path=/pg1 --stanza=test");
 
@@ -54,7 +54,7 @@ testRun(void)
         harnessCfgLoadRaw(strLstSize(argList), strLstPtr(argList));
 
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameters");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --archive-async --exec-id=1-test"
                 " --pg1-path=/pg1 --stanza=test");
 
@@ -85,7 +85,7 @@ testRun(void)
              " --recovery-option=standby_mode=on --recovery-option=primary_conninfo=blah --repo1-cipher-pass=<redacted>"           \
              " --repo1-cipher-type=aes-256-cbc --reset-repo1-host --repo1-path=\"/path/to the/repo\" --stanza=test"
 
-        harnessLogResult("P00   INFO: restore command begin " PROJECT_VERSION ":" RESULT_OPTION);
+        TEST_RESULT_LOG("P00   INFO: restore command begin " PROJECT_VERSION ":" RESULT_OPTION);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check options in cache");
@@ -107,8 +107,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command end with error");
 
-        TEST_RESULT_VOID(cmdEnd(25, strNew("aborted with exception [025]")), "command end");
-        harnessLogResult("P00   INFO: restore command end: aborted with exception [025]");
+        TEST_RESULT_VOID(cmdEnd(25, STRDEF("aborted with exception [025]")), "command end");
+        TEST_RESULT_LOG("P00   INFO: restore command end: aborted with exception [025]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command end with time");
@@ -137,7 +137,7 @@ testRun(void)
         cfgCommandSet(cfgCmdArchiveGet, cfgCmdRoleMain);
 
         TEST_RESULT_VOID(cmdBegin(), "command begin");
-        harnessLogResult(
+        TEST_RESULT_LOG(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": --no-config --exec-id=1-test --log-timestamp"
             " --pg1-path=/pg1 --pg2-path=/pg2 --repo1-cipher-pass=<redacted> --repo1-cipher-type=aes-256-cbc --reset-repo1-host"
             " --repo1-path=\"/path/to the/repo\" --stanza=test");

@@ -32,6 +32,21 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1354"/>
+                        <github-pull-request id="1356"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="avinash.vallarapu"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="avinash.vallarapu"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue when checking links for large numbers of tablespaces.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1368"/>
                         <github-pull-request id="1374"/>
 
@@ -178,6 +193,15 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Factor local process exec out of protocolLocalGet()."/>
+                        <commit subject="Add shim feature for unit tests."/>
+                        <commit subject="Add local process shim."/>
+                        <commit subject="Add log shim."/>
+
+                        <p>Add local processs shim.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1381"/>
 
                         <release-item-contributor-list>
@@ -220,6 +244,29 @@
 
             <release-doc-list>
                 <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1400"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Update contributing documentation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1405"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="cynthia.shang"/>
+                        </release-item-contributor-list>
+
+                        <p>Consolidate <proper>RHEL</proper>/<proper>CentOS</proper> user guide into a single document.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1365"/>
 
@@ -9509,6 +9556,11 @@
         <contributor id="argdenis">
             <contributor-name-display>argdenis</contributor-name-display>
             <contributor-id type="github">argdenis</contributor-id>
+        </contributor>
+
+        <contributor id="avinash.vallarapu">
+            <contributor-name-display>Avinash Vallarapu</contributor-name-display>
+            <contributor-id type="github">avinashvallarapu</contributor-id>
         </contributor>
 
         <contributor id="bastian.wegge">

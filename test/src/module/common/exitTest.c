@@ -58,10 +58,10 @@ testRun(void)
         harnessCfgLoad(cfgCmdArchivePush, argList);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error");
-        harnessLogResult("P00   INFO: archive-push command end: completed successfully");
+        TEST_RESULT_LOG("P00   INFO: archive-push command end: completed successfully");
 
         TEST_RESULT_INT(exitSafe(1, false, signalTypeNone), 1, "exit with no error");
-        harnessLogResult("P00   INFO: archive-push command end: completed successfully");
+        TEST_RESULT_LOG("P00   INFO: archive-push command end: completed successfully");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TRY_BEGIN()
@@ -71,7 +71,7 @@ testRun(void)
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            harnessLogResult(
+            TEST_RESULT_LOG(
                 "P00  ERROR: [122]: test error message\n"
                 "P00   INFO: archive-push command end: aborted with exception [122]");
         }
@@ -94,7 +94,7 @@ testRun(void)
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            harnessLogResult(
+            TEST_RESULT_LOG(
                 "P00  DEBUG:     " TEST_PGB_PATH "/src/common/exit::exitSafe: (result: 0, error: true, signalType: 0)\n"
                 "P00  ERROR: [122]: test debug error message\n"
                 "            --------------------------------------------------------------------\n"
@@ -125,7 +125,7 @@ testRun(void)
         CATCH_ANY()
         {
             exitSafe(0, true, signalTypeNone);
-            harnessLogResult(
+            TEST_RESULT_LOG(
                 "P00 ASSERT: [025]: test assert message\n"
                 "            --------------------------------------------------------------------\n"
                 "            If SUBMITTING AN ISSUE please provide the following information:\n"
@@ -145,12 +145,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeNone), errorTypeCode(&TermError), "exit on term with no signal");
-        harnessLogResult("P00   INFO: archive-push:async command end: terminated on signal from child process");
+        TEST_RESULT_LOG("P00   INFO: archive-push:async command end: terminated on signal from child process");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_INT(
             exitSafe(errorTypeCode(&TermError), false, signalTypeTerm), errorTypeCode(&TermError), "exit on term with SIGTERM");
-        harnessLogResult("P00   INFO: archive-push:async command end: terminated on signal [SIGTERM]");
+        TEST_RESULT_LOG("P00   INFO: archive-push:async command end: terminated on signal [SIGTERM]");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
